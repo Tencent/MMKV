@@ -1,11 +1,11 @@
 //
-//  PBCoder.mm
+//  MiniPBCoder.mm
 //  PBCoder
 //
 //  Created by Guo Ling on 4/14/13.
 //  Copyright (c) 2013 Guo Ling. All rights reserved.
 //
-#import "PBCoder.h"
+#import "MiniPBCoder.h"
 #include <sys/stat.h>
 #import <vector>
 #import <string>
@@ -19,7 +19,7 @@
 #define PBInfo(format, ...)		NSLog(format, ##__VA_ARGS__)
 #define PBDebug(format, ...)	NSLog(format, ##__VA_ARGS__)
 
-@implementation PBCoder {
+@implementation MiniPBCoder {
 	NSObject* m_obj;
 	
 	BOOL m_isTopObject;
@@ -101,7 +101,7 @@
 			case PBEncodeItemType_NSDate:
 			{
 				NSDate* oDate = (__bridge NSDate*)encodeItem->value.objectValue;
-				m_outputStream->writeDoubleNoTag(oDate.timeIntervalSince1970);
+				m_outputStream->writeDouble(oDate.timeIntervalSince1970);
 				break;
 			}
 			case PBEncodeItemType_NSContainer:
@@ -150,7 +150,7 @@
 		NSDate* oDate = (NSDate*)obj;
 		encodeItem->type = PBEncodeItemType_NSDate;
 		encodeItem->value.objectValue = (__bridge void*)oDate;
-		encodeItem->valueSize = computeDoubleSizeNoTag(oDate.timeIntervalSince1970);
+		encodeItem->valueSize = computeDoubleSize(oDate.timeIntervalSince1970);
 		encodeItem->compiledSize = encodeItem->valueSize;
 		return index;	// double has fixed compilesize
 	}
@@ -240,7 +240,7 @@
 +(NSData*) encodeDataWithObject:(NSObject*)obj {
 	if (obj) {
 		@try {
-			PBCoder* oCoder = [[PBCoder alloc] initForWritingWithTarget:obj];
+			MiniPBCoder* oCoder = [[MiniPBCoder alloc] initForWritingWithTarget:obj];
             NSData* oData = [oCoder getEncodeDataWithForceWriteSize:false];
 			
 			return oData;
@@ -318,7 +318,7 @@
 	
 	id obj = nil;
 	@try {
-		PBCoder* oCoder = [[PBCoder alloc] initForReadingWithData:oData];
+		MiniPBCoder* oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
 		obj = [oCoder decodeOneObject:nil ofClass:cls];
 	} @catch(NSException *exception) {
 		PBError(@"%@", exception);
@@ -333,7 +333,7 @@
     
 	id obj = nil;
 	@try {
-		PBCoder* oCoder = [[PBCoder alloc] initForReadingWithData:oData];
+		MiniPBCoder* oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
 		if (cls == [NSDictionary class] || cls == [NSMutableDictionary class]) {
 			obj = [oCoder decodeOneDictionaryOfValueClass:valueClass ignoreSize:true];
 		} else {

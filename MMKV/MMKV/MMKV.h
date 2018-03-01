@@ -21,7 +21,7 @@
 // object: NSString/NSData/NSDate
 -(BOOL)setObject:(id)obj forKey:(NSString*)key;
 
--(BOOL)setBool:(BOOL)value forKey:(NSString*)key;
+-(BOOL)setBool:(bool)value forKey:(NSString*)key;
 
 -(BOOL)setInt32:(int32_t)value forKey:(NSString*)key;
 
@@ -31,10 +31,14 @@
 
 -(BOOL)setUInt64:(uint64_t)value forKey:(NSString*)key;
 
+-(BOOL)setFloat:(float)value forKey:(NSString*)key;
+
+-(BOOL)setDouble:(double)value forKey:(NSString*)key;
+
 -(id)getObjectOfClass:(Class)cls forKey:(NSString*)key;
 
--(BOOL)getBoolForKey:(NSString*)key;
--(BOOL)getBoolForKey:(NSString*)key defaultValue:(BOOL)defaultValue;
+-(bool)getBoolForKey:(NSString*)key;
+-(bool)getBoolForKey:(NSString*)key defaultValue:(bool)defaultValue;
 
 -(int32_t)getInt32ForKey:(NSString*)key;
 -(int32_t)getInt32ForKey:(NSString*)key defaultValue:(int32_t)defaultValue;
@@ -47,6 +51,12 @@
 
 -(uint64_t)getUInt64ForKey:(NSString*)key;
 -(uint64_t)getUInt64ForKey:(NSString*)key defaultValue:(uint64_t)defaultValue;
+
+-(float)getFloatForKey:(NSString*)key;
+-(float)getFloatForKey:(NSString*)key defaultValue:(float)defaultValue;
+
+-(double)getDoubleForKey:(NSString*)key;
+-(double)getDoubleForKey:(NSString*)key defaultValue:(double)defaultValue;
 
 -(BOOL)containsKey:(NSString*)key;
 

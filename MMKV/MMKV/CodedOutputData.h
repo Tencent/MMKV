@@ -42,17 +42,17 @@ public:
 	
 	void writeData(int32_t fieldNumber, NSData* value);
 	
-	void writeDoubleNoTag(Float64 value);
-	void writeFloatNoTag(Float32 value);
-	void writeUInt64NoTag(int64_t value);
-	void writeInt64NoTag(int64_t value);
-	void writeInt32NoTag(int32_t value);
-	void writeFixed32NoTag(int32_t value);
-	void writeBoolNoTag(BOOL value);
-	void writeStringNoTag(NSString* value);
-	void writeStringNoTag(NSString* value, NSUInteger numberOfBytes);
-	void writeDataNoTag(NSData* value);
-	void writeUInt32NoTag(int32_t value);
+	void writeDouble(Float64 value);
+	void writeFloat(Float32 value);
+	void writeUInt64(int64_t value);
+	void writeInt64(int64_t value);
+	void writeInt32(int32_t value);
+	void writeFixed32(int32_t value);
+	void writeBool(BOOL value);
+	void writeString(NSString* value);
+	void writeString(NSString* value, NSUInteger numberOfBytes);
+	void writeData(NSData* value);
+	void writeUInt32(int32_t value);
 };
 
 #endif

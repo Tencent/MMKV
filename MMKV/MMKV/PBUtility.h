@@ -73,16 +73,16 @@ static inline int64_t logicalRightShift64(int64_t value, int32_t spaces) {
 	return convertUInt64ToInt64((convertInt64ToUInt64(value) >> spaces));
 }
 
-int32_t computeDoubleSizeNoTag(Float64 value);
-int32_t computeFloatSizeNoTag(Float32 value);
-int32_t computeUInt64SizeNoTag(int64_t value);
-int32_t computeInt64SizeNoTag(int64_t value);
-int32_t computeInt32SizeNoTag(int32_t value);
-int32_t computeFixed32SizeNoTag(int32_t value);
-int32_t computeBoolSizeNoTag(BOOL value);
-int32_t computeStringSizeNoTag(NSString* value);
-int32_t computeDataSizeNoTag(NSData* value);
-int32_t computeUInt32SizeNoTag(int32_t value);
+int32_t computeDoubleSize(Float64 value);
+int32_t computeFloatSize(Float32 value);
+int32_t computeUInt64Size(int64_t value);
+int32_t computeInt64Size(int64_t value);
+int32_t computeInt32Size(int32_t value);
+int32_t computeFixed32Size(int32_t value);
+int32_t computeBoolSize(BOOL value);
+int32_t computeStringSize(NSString* value);
+int32_t computeDataSize(NSData* value);
+int32_t computeUInt32Size(int32_t value);
 
 /**
  * Compute the number of bytes that would be needed to encode a varint.

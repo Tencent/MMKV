@@ -16,12 +16,13 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
+//	[self funcionalTest];
+
 	int loops = 10000;
 	m_arrStrings = [NSMutableArray arrayWithCapacity:loops];
 	for (size_t index = 0; index < loops; index++) {
 		[m_arrStrings addObject:[NSString stringWithFormat:@"%s-%d", __FILE__, rand()]];
 	}
-
 	[self mmkvBaselineTest:loops];
 	[self userDefaultBaselineTest:loops];
 }
@@ -44,9 +45,12 @@
 	[mmkv setUInt64:std::numeric_limits<uint64_t>::max() forKey:@"uint64"];
 	NSLog(@"uint64:%llu", [mmkv getInt64ForKey:@"uint64"]);
 	
-	// TODO: float & double
-//	[mmkv setFloat:3.1415926 forKey:@"float"];
+	[mmkv setFloat:-3.1415926 forKey:@"float"];
+	NSLog(@"float:%f", [mmkv getFloatForKey:@"float"]);
 	
+	[mmkv setDouble:std::numeric_limits<double>::max() forKey:@"double"];
+	NSLog(@"double:%f", [mmkv getDoubleForKey:@"double"]);
+
 	[mmkv setObject:@"hello, mmkv" forKey:@"string"];
 	NSLog(@"string:%@", [mmkv getObjectOfClass:NSString.class forKey:@"string"]);
 	
@@ -59,35 +63,41 @@
 }
 
 -(void)mmkvBaselineTest:(int)loops {
-	NSDate *startDate = [NSDate date];
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
 
-	MMKV* mmkv = [MMKV defaultMMKV];
-	for (int index = 0; index < loops; index++) {
-		int32_t tmp = [mmkv getInt32ForKey:@"int32_max"];
-		tmp = rand();
-		[mmkv setInt32:tmp forKey:@"int32_max"];
+		MMKV* mmkv = [MMKV defaultMMKV];
+		for (int index = 0; index < loops; index++) {
+			int32_t tmp = rand();
+			[mmkv setInt32:tmp forKey:@"testInt"];
+			tmp = [mmkv getInt32ForKey:@"testInt"];
 
-		NSString* str = m_arrStrings[index];
-		[mmkv setObject:str forKey:@"testStr"];
+			NSString* str = m_arrStrings[index];
+			[mmkv setObject:str forKey:@"testStr"];
+			str = [mmkv getObjectOfClass:NSString.class forKey:@"testStr"];
+		}
+		NSDate *endDate = [NSDate date];
+		NSLog(@"mmkv %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate]);
 	}
-	NSDate *endDate = [NSDate date];
-	NSLog(@"mmkv %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate]);
 }
 
 -(void)userDefaultBaselineTest:(int)loops {
-	NSDate *startDate = [NSDate date];
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
 
-	NSUserDefaults* userdefault = [NSUserDefaults standardUserDefaults];
-	for (int index = 0; index < loops; index++) {
-		NSInteger tmp = [userdefault integerForKey:@"int32_max"];
-		tmp = rand();
-		[userdefault setInteger:tmp forKey:@"int32_max"];
-		
-		NSString* str = m_arrStrings[index];
-		[userdefault setObject:str forKey:@"testStr"];
+		NSUserDefaults* userdefault = [NSUserDefaults standardUserDefaults];
+		for (int index = 0; index < loops; index++) {
+			NSInteger tmp = rand();
+			[userdefault setInteger:tmp forKey:@"testInt"];
+			tmp = [userdefault integerForKey:@"testInt"];
+			
+			NSString* str = m_arrStrings[index];
+			[userdefault setObject:str forKey:@"testStr"];
+			str = [userdefault objectForKey:@"testStr"];
+		}
+		NSDate *endDate = [NSDate date];
+		NSLog(@"NSUserDefaults %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate]);
 	}
-	NSDate *endDate = [NSDate date];
-	NSLog(@"NSUserDefaults %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate]);
 }
 
 @end

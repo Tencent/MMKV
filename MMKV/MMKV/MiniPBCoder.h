@@ -1,5 +1,5 @@
 //
-//  PBCoder.h
+//  MiniPBCoder.h
 //  PBCoder
 //
 //  Created by Guo Ling on 4/14/13.
@@ -10,7 +10,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface PBCoder : NSObject
+@interface MiniPBCoder : NSObject
 
 +(NSData*) encodeDataWithObject:(id)obj;
 

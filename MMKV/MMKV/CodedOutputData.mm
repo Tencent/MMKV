@@ -27,23 +27,23 @@ CodedOutputData::~CodedOutputData() {
 	position = 0;
 }
 
-void CodedOutputData::writeDoubleNoTag(Float64 value) {
+void CodedOutputData::writeDouble(Float64 value) {
 	this->writeRawLittleEndian64(convertFloat64ToInt64(value));
 }
 
-void CodedOutputData::writeFloatNoTag(Float32 value) {
+void CodedOutputData::writeFloat(Float32 value) {
 	this->writeRawLittleEndian32(convertFloat32ToInt32(value));
 }
 
-void CodedOutputData::writeUInt64NoTag(int64_t value) {
+void CodedOutputData::writeUInt64(int64_t value) {
 	this->writeRawVarint64(value);
 }
 
-void CodedOutputData::writeInt64NoTag(int64_t value) {
+void CodedOutputData::writeInt64(int64_t value) {
 	this->writeRawVarint64(value);
 }
 
-void CodedOutputData::writeInt32NoTag(int32_t value) {
+void CodedOutputData::writeInt32(int32_t value) {
 	if (value >= 0) {
 		this->writeRawVarint32(value);
 	} else {
@@ -52,15 +52,15 @@ void CodedOutputData::writeInt32NoTag(int32_t value) {
 	}
 }
 
-void CodedOutputData::writeFixed32NoTag(int32_t value) {
+void CodedOutputData::writeFixed32(int32_t value) {
 	this->writeRawLittleEndian32(value);
 }
 
-void CodedOutputData::writeBoolNoTag(BOOL value) {
+void CodedOutputData::writeBool(BOOL value) {
 	this->writeRawByte(value ? 1 : 0);
 }
 
-void CodedOutputData::writeStringNoTag(NSString* value) {
+void CodedOutputData::writeString(NSString* value) {
 	NSUInteger numberOfBytes = [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
 	this->writeRawVarint32((int32_t)numberOfBytes);
 	//	memcpy(bufferPointer + position, ((uint8_t*)value.bytes), numberOfBytes);
@@ -74,7 +74,7 @@ void CodedOutputData::writeStringNoTag(NSString* value) {
 	position += numberOfBytes;
 }
 
-void CodedOutputData::writeStringNoTag(NSString* value, NSUInteger numberOfBytes) {
+void CodedOutputData::writeString(NSString* value, NSUInteger numberOfBytes) {
 	[value getBytes:bufferPointer + position
 		  maxLength:numberOfBytes
 		 usedLength:0
@@ -86,12 +86,12 @@ void CodedOutputData::writeStringNoTag(NSString* value, NSUInteger numberOfBytes
 }
 
 
-void CodedOutputData::writeDataNoTag(NSData* value) {
+void CodedOutputData::writeData(NSData* value) {
 	this->writeRawVarint32((int32_t)value.length);
 	this->writeRawData(value);
 }
 
-void CodedOutputData::writeUInt32NoTag(int32_t value) {
+void CodedOutputData::writeUInt32(int32_t value) {
 	this->writeRawVarint32(value);
 }
 

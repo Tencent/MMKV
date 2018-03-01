@@ -8,7 +8,7 @@
 
 #import "MMKV.h"
 #import <UIKit/UIKit.h>
-#import "PBCoder.h"
+#import "MiniPBCoder.h"
 #import "PBUtility.h"
 #import "CodedInputData.h"
 #import "CodedOutputData.h"
@@ -147,7 +147,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	}
 	
 	if (m_crcPtr != NULL && m_crcPtr != MAP_FAILED) {
-		munmap(m_crcPtr, computeFixed32SizeNoTag(0));
+		munmap(m_crcPtr, computeFixed32Size(0));
 		m_crcPtr = NULL;
 	}
 	if (m_crcFd > 0) {
@@ -210,7 +210,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		if (m_ptr == MAP_FAILED) {
 			CommonError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
 		} else {
-			const int offset = computeFixed32SizeNoTag(0);
+			const int offset = computeFixed32Size(0);
 			NSData* lenBuffer = [NSData dataWithBytesNoCopy:m_ptr length:offset freeWhenDone:NO];
 			@try {
 				m_actualSize = CodedInputData(lenBuffer).readFixed32();
@@ -222,7 +222,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 				if (m_actualSize < m_size && m_actualSize+offset <= m_size) {
 					if ([self checkFileCRCValid] == YES) {
 						NSData* inputBuffer = [NSData dataWithBytesNoCopy:m_ptr+offset length:m_actualSize freeWhenDone:NO];
-						m_dic = [PBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+						m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
 						m_output = new CodedOutputData(m_ptr+offset+m_actualSize, m_size-offset-m_actualSize);
 					} else {
 						[self writeAcutalSize:0];
@@ -346,7 +346,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 -(BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(CodedOutputData* output))block {
 	@try {
 		if (m_isInBackground) {
-			static const int offset = computeFixed32SizeNoTag(0);
+			static const int offset = computeFixed32Size(0);
 			static const int pagesize = getpagesize();
 			size_t realOffset = offset + m_actualSize - size;
 			size_t pageOffset = (realOffset / pagesize) * pagesize;
@@ -387,8 +387,8 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	
 	if (newSize >= m_output->spaceLeft()) {
 		// try a full rewrite to make space
-		static const int offset = computeFixed32SizeNoTag(0);
-		NSData* data = [PBCoder encodeDataWithObject:m_dic];
+		static const int offset = computeFixed32Size(0);
+		NSData* data = [MiniPBCoder encodeDataWithObject:m_dic];
 		size_t lenNeeded = data.length + offset + newSize;
 		size_t futureUsage = newSize * std::max<size_t>(8, (m_dic.count+1)/2);
 		// 1. no space for a full rewrite, double it
@@ -450,7 +450,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	
 	char* actualSizePtr = m_ptr;
 	char* tmpPtr = NULL;
-	static const int offset = computeFixed32SizeNoTag(0);
+	static const int offset = computeFixed32Size(0);
 	
 	if (m_isInBackground) {
 		tmpPtr = m_ptr;
@@ -465,7 +465,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	
 	@try {
 		CodedOutputData output(actualSizePtr, offset);
-		output.writeFixed32NoTag((int32_t)actualSize);
+		output.writeFixed32((int32_t)actualSize);
 	} @catch(NSException *exception) {
 		CommonError(@"%@", exception);
 	}
@@ -494,7 +494,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return NO;
 	}
 	if (m_actualSize == 0) {
-		NSData* allData = [PBCoder encodeDataWithObject:m_dic];
+		NSData* allData = [MiniPBCoder encodeDataWithObject:m_dic];
 		if (allData.length > 0) {
 			BOOL ret = [self writeAcutalSize:allData.length];
 			if (ret) {
@@ -511,10 +511,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	} else {
 		BOOL ret = [self writeAcutalSize:m_actualSize + size];
 		if (ret) {
-			static const int offset = computeFixed32SizeNoTag(0);
+			static const int offset = computeFixed32Size(0);
 			ret = [self protectFromBackgroundWritting:size writeBlock:^(CodedOutputData *output) {
-				output->writeStringNoTag(key);
-				output->writeDataNoTag(data);				// note: write size of data
+				output->writeString(key);
+				output->writeData(data);				// note: write size of data
 			}];
 			if (ret) {
 				[self updateCRCDigest:(const uint8_t*)m_ptr+offset+m_actualSize-size withSize:size];
@@ -545,9 +545,9 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return YES;
 	}
 	
-	NSData* allData = [PBCoder encodeDataWithObject:m_dic];
+	NSData* allData = [MiniPBCoder encodeDataWithObject:m_dic];
 	if (allData.length > 0 && [self isFileValid]) {
-		int offset = computeFixed32SizeNoTag(0);
+		int offset = computeFixed32Size(0);
 		if (allData.length + offset <= m_size) {
 			BOOL ret = [self writeAcutalSize:allData.length];
 			if (ret) {
@@ -580,7 +580,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 // assuming m_ptr & m_size is set
 -(BOOL)checkFileCRCValid {
 	if (m_ptr != NULL && m_ptr != MAP_FAILED) {
-		int offset = computeFixed32SizeNoTag(0);
+		int offset = computeFixed32Size(0);
 		m_crcDigest = (uint32_t)crc32(0, (const uint8_t*)m_ptr+offset, (uint32_t)m_actualSize);
 		
 		// for backwark compatibility
@@ -607,7 +607,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 -(void)recaculateCRCDigest {
 	if (m_ptr != NULL && m_ptr != MAP_FAILED) {
 		m_crcDigest = 0;
-		int offset = computeFixed32SizeNoTag(0);
+		int offset = computeFixed32Size(0);
 		[self updateCRCDigest:(const uint8_t*)m_ptr+offset withSize:m_actualSize];
 	}
 }
@@ -625,7 +625,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return;
 	}
 	
-	static const size_t bufferLength = computeFixed32SizeNoTag(0);
+	static const size_t bufferLength = computeFixed32Size(0);
 	if (m_isInBackground) {
 		if (mlock(m_crcPtr, bufferLength) != 0) {
 			CommonError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_crcPtr, errno, strerror(errno));
@@ -636,7 +636,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	
 	@try {
 		CodedOutputData output(m_crcPtr, bufferLength);
-		output.writeFixed32NoTag((int32_t)m_crcDigest);
+		output.writeFixed32((int32_t)m_crcDigest);
 	} @catch(NSException *exception) {
 		CommonError(@"%@", exception);
 	}
@@ -688,18 +688,18 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (obj == nil || key.length <= 0) {
 		return FALSE;
 	}
-	NSData* data = [PBCoder encodeDataWithObject:obj];
+	NSData* data = [MiniPBCoder encodeDataWithObject:obj];
 	return [self setData:data forKey:key];
 }
 
--(BOOL)setBool:(BOOL)value forKey:(NSString*)key {
+-(BOOL)setBool:(bool)value forKey:(NSString*)key {
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeBoolSizeNoTag(value);
+	size_t size = computeBoolSize(value);
 	NSMutableData* data = [NSMutableData dataWithLength:size];
 	CodedOutputData output(data);
-	output.writeBoolNoTag(value);
+	output.writeBool(value);
 	
 	return [self setData:data forKey:key];
 }
@@ -708,10 +708,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeInt32SizeNoTag(value);
+	size_t size = computeInt32Size(value);
 	NSMutableData* data = [NSMutableData dataWithLength:size];
 	CodedOutputData output(data);
-	output.writeInt32NoTag(value);
+	output.writeInt32(value);
 	
 	return [self setData:data forKey:key];
 }
@@ -720,10 +720,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeUInt32SizeNoTag(value);
+	size_t size = computeUInt32Size(value);
 	NSMutableData* data = [NSMutableData dataWithLength:size];
 	CodedOutputData output(data);
-	output.writeUInt32NoTag(value);
+	output.writeUInt32(value);
 	
 	return [self setData:data forKey:key];
 }
@@ -732,10 +732,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeInt64SizeNoTag(value);
+	size_t size = computeInt64Size(value);
 	NSMutableData* data = [NSMutableData dataWithLength:size];
 	CodedOutputData output(data);
-	output.writeInt64NoTag(value);
+	output.writeInt64(value);
 	
 	return [self setData:data forKey:key];
 }
@@ -744,10 +744,34 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeUInt64SizeNoTag(value);
+	size_t size = computeUInt64Size(value);
 	NSMutableData* data = [NSMutableData dataWithLength:size];
 	CodedOutputData output(data);
-	output.writeUInt64NoTag(value);
+	output.writeUInt64(value);
+	
+	return [self setData:data forKey:key];
+}
+
+-(BOOL)setFloat:(float)value forKey:(NSString*)key {
+	if (key.length <= 0) {
+		return FALSE;
+	}
+	size_t size = computeFloatSize(value);
+	NSMutableData* data = [NSMutableData dataWithLength:size];
+	CodedOutputData output(data);
+	output.writeFloat(value);
+	
+	return [self setData:data forKey:key];
+}
+
+-(BOOL)setDouble:(double)value forKey:(NSString*)key {
+	if (key.length <= 0) {
+		return FALSE;
+	}
+	size_t size = computeDoubleSize(value);
+	NSMutableData* data = [NSMutableData dataWithLength:size];
+	CodedOutputData output(data);
+	output.writeDouble(value);
 	
 	return [self setData:data forKey:key];
 }
@@ -758,7 +782,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	}
 	NSData* data = [self getDataForKey:key];
 	if (data.length > 0) {
-		return [PBCoder decodeObjectOfClass:cls fromData:data];
+		return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
 	}
 	return nil;
 }
@@ -769,15 +793,15 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	}
 	NSData* data = [self getDataForKey:key];
 	if (data.length > 0) {
-		return [PBCoder decodeContainerOfClass:[NSMutableArray class] withValueClass:cls fromData:data];
+		return [MiniPBCoder decodeContainerOfClass:[NSMutableArray class] withValueClass:cls fromData:data];
 	}
 	return nil;
 }
 
--(BOOL)getBoolForKey:(NSString*)key {
+-(bool)getBoolForKey:(NSString*)key {
 	return [self getBoolForKey:key defaultValue:FALSE];
 }
--(BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
+-(bool)getBoolForKey:(NSString *)key defaultValue:(bool)defaultValue {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
@@ -862,6 +886,44 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		@try {
 			CodedInputData input(data);
 			return input.readUInt64();
+		} @catch(NSException *exception) {
+			CommonError(@"%@", exception);
+		}
+	}
+	return defaultValue;
+}
+
+-(float)getFloatForKey:(NSString*)key {
+	return [self getFloatForKey:key defaultValue:0];
+}
+-(float)getFloatForKey:(NSString*)key defaultValue:(float)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	NSData* data = [self getDataForKey:key];
+	if (data.length > 0) {
+		@try {
+			CodedInputData input(data);
+			return input.readFloat();
+		} @catch(NSException *exception) {
+			CommonError(@"%@", exception);
+		}
+	}
+	return defaultValue;
+}
+
+-(double)getDoubleForKey:(NSString*)key {
+	return [self getDoubleForKey:key defaultValue:0];
+}
+-(double)getDoubleForKey:(NSString*)key defaultValue:(double)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	NSData* data = [self getDataForKey:key];
+	if (data.length > 0) {
+		@try {
+			CodedInputData input(data);
+			return input.readDouble();
 		} @catch(NSException *exception) {
 			CommonError(@"%@", exception);
 		}
@@ -983,7 +1045,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	}
 	
 	// 计算原kv crc值
-	const int offset = computeFixed32SizeNoTag(0);
+	const int offset = computeFixed32Size(0);
 	size_t actualSize = 0;
 	fileData = [NSData dataWithContentsOfFile:kvPath];
 	@try {

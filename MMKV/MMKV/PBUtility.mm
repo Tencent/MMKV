@@ -18,7 +18,7 @@ static const int32_t LITTLE_ENDIAN_64_SIZE = 8;
  * Compute the number of bytes that would be needed to encode a
  * {@code double} field, including tag.
  */
-int32_t computeDoubleSizeNoTag(Float64 value) {
+int32_t computeDoubleSize(Float64 value) {
 	return LITTLE_ENDIAN_64_SIZE;
 }
 
@@ -27,7 +27,7 @@ int32_t computeDoubleSizeNoTag(Float64 value) {
  * Compute the number of bytes that would be needed to encode a
  * {@code float} field, including tag.
  */
-int32_t computeFloatSizeNoTag(Float32 value) {
+int32_t computeFloatSize(Float32 value) {
 	return LITTLE_ENDIAN_32_SIZE;
 }
 
@@ -36,7 +36,7 @@ int32_t computeFloatSizeNoTag(Float32 value) {
  * Compute the number of bytes that would be needed to encode a
  * {@code uint64} field, including tag.
  */
-int32_t computeUInt64SizeNoTag(int64_t value) {
+int32_t computeUInt64Size(int64_t value) {
 	return computeRawVarint64Size(value);
 }
 
@@ -45,7 +45,7 @@ int32_t computeUInt64SizeNoTag(int64_t value) {
  * Compute the number of bytes that would be needed to encode an
  * {@code int64} field, including tag.
  */
-int32_t computeInt64SizeNoTag(int64_t value) {
+int32_t computeInt64Size(int64_t value) {
 	return computeRawVarint64Size(value);
 }
 
@@ -54,7 +54,7 @@ int32_t computeInt64SizeNoTag(int64_t value) {
  * Compute the number of bytes that would be needed to encode an
  * {@code int32} field, including tag.
  */
-int32_t computeInt32SizeNoTag(int32_t value) {
+int32_t computeInt32Size(int32_t value) {
 	if (value >= 0) {
 		return computeRawVarint32Size(value);
 	} else {
@@ -68,7 +68,7 @@ int32_t computeInt32SizeNoTag(int32_t value) {
  * Compute the number of bytes that would be needed to encode a
  * {@code fixed32} field, including tag.
  */
-int32_t computeFixed32SizeNoTag(int32_t value) {
+int32_t computeFixed32Size(int32_t value) {
 	return LITTLE_ENDIAN_32_SIZE;
 }
 
@@ -77,7 +77,7 @@ int32_t computeFixed32SizeNoTag(int32_t value) {
  * Compute the number of bytes that would be needed to encode a
  * {@code bool} field, including tag.
  */
-int32_t computeBoolSizeNoTag(BOOL value) {
+int32_t computeBoolSize(BOOL value) {
 	return 1;
 }
 
@@ -86,7 +86,7 @@ int32_t computeBoolSizeNoTag(BOOL value) {
  * Compute the number of bytes that would be needed to encode a
  * {@code string} field, including tag.
  */
-int32_t computeStringSizeNoTag(NSString* value) {
+int32_t computeStringSize(NSString* value) {
 	//  NSData* data = [value dataUsingEncoding:NSUTF8StringEncoding);
 	//  return computeRawVarint32Size(data.length) + data.length;
 	NSUInteger numberOfBytes = [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
@@ -105,7 +105,7 @@ int32_t computeRawStringSize(NSString* value) {
  * Compute the number of bytes that would be needed to encode a
  * {@code bytes} field, including tag.
  */
-int32_t computeDataSizeNoTag(NSData* value) {
+int32_t computeDataSize(NSData* value) {
 	return int32_t(computeRawVarint32Size((int32_t)value.length) + value.length);
 }
 
@@ -114,7 +114,7 @@ int32_t computeDataSizeNoTag(NSData* value) {
  * Compute the number of bytes that would be needed to encode a
  * {@code uint32} field, including tag.
  */
-int32_t computeUInt32SizeNoTag(int32_t value) {
+int32_t computeUInt32Size(int32_t value) {
 	return computeRawVarint32Size(value);
 }
 
