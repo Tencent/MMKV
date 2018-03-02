@@ -72,12 +72,12 @@
 			[mmkv setInt32:tmp forKey:@"testInt"];
 			tmp = [mmkv getInt32ForKey:@"testInt"];
 
-			NSString* str = m_arrStrings[index];
-			[mmkv setObject:str forKey:@"testStr"];
-			str = [mmkv getObjectOfClass:NSString.class forKey:@"testStr"];
+//			NSString* str = m_arrStrings[index];
+//			[mmkv setObject:str forKey:@"testStr"];
+//			str = [mmkv getObjectOfClass:NSString.class forKey:@"testStr"];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"mmkv %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate]);
+		NSLog(@"mmkv %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
 	}
 }
 
@@ -91,12 +91,12 @@
 			[userdefault setInteger:tmp forKey:@"testInt"];
 			tmp = [userdefault integerForKey:@"testInt"];
 			
-			NSString* str = m_arrStrings[index];
-			[userdefault setObject:str forKey:@"testStr"];
-			str = [userdefault objectForKey:@"testStr"];
+//			NSString* str = m_arrStrings[index];
+//			[userdefault setObject:str forKey:@"testStr"];
+//			str = [userdefault objectForKey:@"testStr"];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"NSUserDefaults %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate]);
+		NSLog(@"NSUserDefaults %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
 	}
 }
 
