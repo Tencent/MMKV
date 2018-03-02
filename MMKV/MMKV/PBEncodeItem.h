@@ -62,7 +62,6 @@ struct PBEncodeItem
 	
 	~PBEncodeItem()
 	{
-		// release tmpObjectValue, currently only NSNumber will generate it
 		if (type == PBEncodeItemType_NSString) {
 			if (value.tmpObjectValue != NULL) {
 				CFRelease(value.tmpObjectValue);

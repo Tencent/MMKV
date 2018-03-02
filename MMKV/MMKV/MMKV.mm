@@ -17,27 +17,11 @@
 #import <unistd.h>
 #import <zlib.h>
 #import <algorithm>
+#import "ScopedLock.hpp"
 
-#define CommonError(format, ...)	NSLog(format, ##__VA_ARGS__)
-#define CommonWarning(format, ...)	NSLog(format, ##__VA_ARGS__)
-#define CommonInfo(format, ...)		NSLog(format, ##__VA_ARGS__)
-#define CommonDebug(format, ...)	NSLog(format, ##__VA_ARGS__)
-
-class CScopedLock
-{
-	NSRecursiveLock* m_oLock;
-
-public:
-	CScopedLock(NSRecursiveLock* oLock) : m_oLock(oLock)
-	{
-		[m_oLock lock];
-	}
-	~CScopedLock()
-	{
-		[m_oLock unlock];
-		m_oLock = nil;
-	}
-};
+#define MMKVError(format, ...)	NSLog(format, ##__VA_ARGS__)
+#define MMKVWarning(format, ...)	NSLog(format, ##__VA_ARGS__)
+#define MMKVInfo(format, ...)		NSLog(format, ##__VA_ARGS__)
 
 static NSMutableDictionary* g_instanceDic;
 static NSRecursiveLock* g_instanceLock;
@@ -74,7 +58,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			g_instanceDic = [NSMutableDictionary dictionary];
 			g_instanceLock = [[NSRecursiveLock alloc] init];
 			
-			CommonInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
+			MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 		});
 	}
 }
@@ -119,7 +103,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		} else {
 			m_isInBackground = NO;
 		}
-		CommonInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long)appState);
+		MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long)appState);
 		
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
@@ -161,10 +145,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 -(void)onMemoryWarning {
 	CScopedLock lock(m_lock);
 	
-	CommonInfo(@"cleaning on memory warning %@", m_mmapID);
+	MMKVInfo(@"cleaning on memory warning %@", m_mmapID);
 	
 	if (m_needLoadFromFile) {
-		CommonInfo(@"ignore %@", m_mmapID);
+		MMKVInfo(@"ignore %@", m_mmapID);
 		return;
 	}
 	m_needLoadFromFile = YES;
@@ -176,14 +160,14 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	CScopedLock lock(m_lock);
 	
 	m_isInBackground = YES;
-	CommonInfo(@"m_isInBackground:%d", m_isInBackground);
+	MMKVInfo(@"m_isInBackground:%d", m_isInBackground);
 }
 
 -(void)didBecomeActive {
 	CScopedLock lock(m_lock);
 	
 	m_isInBackground = NO;
-	CommonInfo(@"m_isInBackground:%d", m_isInBackground);
+	MMKVInfo(@"m_isInBackground:%d", m_isInBackground);
 }
 
 #pragma mark - really dirty work
@@ -191,7 +175,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 -(void)loadFromFile {
 	m_fd = open(m_path.UTF8String, O_RDWR, S_IRWXU);
 	if (m_fd <= 0) {
-		CommonError(@"fail to open:%@, %s", m_path, strerror(errno));
+		MMKVError(@"fail to open:%@, %s", m_path, strerror(errno));
 	} else {
 		m_size = 0;
 		struct stat st = {};
@@ -202,22 +186,22 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
 			m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1 ) * DEFAULT_MMAP_SIZE;
 			if (ftruncate(m_fd, m_size) != 0) {
-				CommonError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
+				MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
 				m_size = (size_t)st.st_size;
 			}
 		}
 		m_ptr = (char*)mmap(NULL, m_size, PROT_READ|PROT_WRITE, MAP_SHARED, m_fd, 0);
 		if (m_ptr == MAP_FAILED) {
-			CommonError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
+			MMKVError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
 		} else {
 			const int offset = computeFixed32Size(0);
 			NSData* lenBuffer = [NSData dataWithBytesNoCopy:m_ptr length:offset freeWhenDone:NO];
 			@try {
 				m_actualSize = CodedInputData(lenBuffer).readFixed32();
 			} @catch(NSException *exception) {
-				CommonError(@"%@", exception);
+				MMKVError(@"%@", exception);
 			}
-			CommonInfo(@"loading [%@] with %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
+			MMKVInfo(@"loading [%@] with %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
 			if (m_actualSize > 0) {
 				if (m_actualSize < m_size && m_actualSize+offset <= m_size) {
 					if ([self checkFileCRCValid] == YES) {
@@ -230,7 +214,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 						[self recaculateCRCDigest];
 					}
 				} else {
-					CommonError(@"load [%@] error: %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
+					MMKVError(@"load [%@] error: %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
 					[self writeAcutalSize:0];
 					m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
 					[self recaculateCRCDigest];
@@ -239,7 +223,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 				m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
 				[self recaculateCRCDigest];
 			}
-			CommonInfo(@"loaded [%@] with %zu values", m_mmapID, (unsigned long)m_dic.count);
+			MMKVInfo(@"loaded [%@] with %zu values", m_mmapID, (unsigned long)m_dic.count);
 		}
 	}
 	if (m_dic == nil) {
@@ -247,7 +231,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	}
 	
 	if (![self isFileValid]) {
-		CommonWarning(@"[%@] file not valid", m_mmapID);
+		MMKVWarning(@"[%@] file not valid", m_mmapID);
 	}
 	
 	[MMKV tryResetFileProtection:m_path];
@@ -266,13 +250,13 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 }
 
 -(void)clearAll {
-	CommonInfo(@"cleaning all values [%@]", m_mmapID);
+	MMKVInfo(@"cleaning all values [%@]", m_mmapID);
 	
 	CScopedLock lock(m_lock);
 	
 	if (m_needLoadFromFile) {
 		if (remove(m_path.UTF8String) != 0) {
-			CommonError(@"fail to remove file %@", m_mmapID);
+			MMKVError(@"fail to remove file %@", m_mmapID);
 		}
 		m_needLoadFromFile = NO;
 		[self loadFromFile];
@@ -291,23 +275,23 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		size_t size = std::min<size_t>(DEFAULT_MMAP_SIZE, m_size);
 		memset(m_ptr, 0, size);
 		if (msync(m_ptr, size, MS_SYNC) != 0) {
-			CommonError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
+			MMKVError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
 		}
 		if (munmap(m_ptr, m_size) != 0) {
-			CommonError(@"fail to munmap [%@], %s", m_mmapID, strerror(errno));
+			MMKVError(@"fail to munmap [%@], %s", m_mmapID, strerror(errno));
 		}
 	}
 	m_ptr = NULL;
 	
 	if (m_fd > 0) {
 		if (m_size != DEFAULT_MMAP_SIZE) {
-			CommonInfo(@"truncating [%@] from %zu to %d", m_mmapID, m_size, DEFAULT_MMAP_SIZE);
+			MMKVInfo(@"truncating [%@] from %zu to %d", m_mmapID, m_size, DEFAULT_MMAP_SIZE);
 			if (ftruncate(m_fd, DEFAULT_MMAP_SIZE) != 0) {
-				CommonError(@"fail to truncate [%@] to size %d, %s", m_mmapID, DEFAULT_MMAP_SIZE, strerror(errno));
+				MMKVError(@"fail to truncate [%@] to size %d, %s", m_mmapID, DEFAULT_MMAP_SIZE, strerror(errno));
 			}
 		}
 		if (close(m_fd) != 0) {
-			CommonError(@"fail to close [%@], %s", m_mmapID, strerror(errno));
+			MMKVError(@"fail to close [%@], %s", m_mmapID, strerror(errno));
 		}
 	}
 	m_fd = 0;
@@ -328,14 +312,14 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	
 	if (m_ptr != NULL && m_ptr != MAP_FAILED) {
 		if (munmap(m_ptr, m_size) != 0) {
-			CommonError(@"fail to munmap [%@], %s", m_mmapID, strerror(errno));
+			MMKVError(@"fail to munmap [%@], %s", m_mmapID, strerror(errno));
 		}
 	}
 	m_ptr = NULL;
 	
 	if (m_fd > 0) {
 		if (close(m_fd) != 0) {
-			CommonError(@"fail to close [%@], %s", m_mmapID, strerror(errno));
+			MMKVError(@"fail to close [%@], %s", m_mmapID, strerror(errno));
 		}
 	}
 	m_fd = 0;
@@ -354,7 +338,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			size_t mmapSize = offset + m_actualSize - pageOffset;
 			char* ptr = m_ptr+pageOffset;
 			if (mlock(ptr, mmapSize) != 0) {
-				CommonError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
+				MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
 				// just fail on this condition, otherwise app will crash anyway
 				//block(m_output);
 				return NO;
@@ -368,7 +352,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			block(m_output);
 		}
 	} @catch(NSException *exception) {
-		  CommonError(@"%@", exception);
+		  MMKVError(@"%@", exception);
 		  return NO;
 	}
 	
@@ -381,7 +365,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	[self checkLoadData];
 	
 	if (![self isFileValid]) {
-		CommonWarning(@"[%@] file not valid", m_mmapID);
+		MMKVWarning(@"[%@] file not valid", m_mmapID);
 		return NO;
 	}
 	
@@ -398,27 +382,27 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			do {
 				m_size *= 2;
 			} while (lenNeeded + futureUsage >= m_size);
-			CommonInfo(@"extending [%@] file size from %zu to %zu, incoming size:%zu, futrue usage:%zu",
+			MMKVInfo(@"extending [%@] file size from %zu to %zu, incoming size:%zu, futrue usage:%zu",
 					   m_mmapID, oldSize, m_size, newSize, futureUsage);
 			
 			// if we can't extend size, rollback to old state
 			if (ftruncate(m_fd, m_size) != 0) {
-				CommonError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
+				MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
 				m_size = oldSize;
 				return NO;
 			}
 			
 			if (munmap(m_ptr, oldSize) != 0) {
-				CommonError(@"fail to munmap [%@], %s", m_mmapID, strerror(errno));
+				MMKVError(@"fail to munmap [%@], %s", m_mmapID, strerror(errno));
 			}
 			m_ptr = (char*)mmap(m_ptr, m_size, PROT_READ|PROT_WRITE, MAP_SHARED, m_fd, 0);
 			if (m_ptr == MAP_FAILED) {
-				CommonError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
+				MMKVError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
 			}
 			
 			// check if we fail to make more space
 			if (![self isFileValid]) {
-				CommonWarning(@"[%@] file not valid", m_mmapID);
+				MMKVWarning(@"[%@] file not valid", m_mmapID);
 				return NO;
 			}
 			// keep m_output consistent with m_ptr -- writeAcutalSize: may fail
@@ -455,7 +439,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (m_isInBackground) {
 		tmpPtr = m_ptr;
 		if (mlock(tmpPtr, offset) != 0) {
-			CommonError(@"fail to mmap [%@], %d:%s", m_mmapID, errno, strerror(errno));
+			MMKVError(@"fail to mmap [%@], %d:%s", m_mmapID, errno, strerror(errno));
 			// just fail on this condition, otherwise app will crash anyway
 			return NO;
 		} else {
@@ -467,7 +451,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		CodedOutputData output(actualSizePtr, offset);
 		output.writeFixed32((int32_t)actualSize);
 	} @catch(NSException *exception) {
-		CommonError(@"%@", exception);
+		MMKVError(@"%@", exception);
 	}
 	m_actualSize = actualSize;
 	
@@ -536,7 +520,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return YES;
 	}
 	if (![self isFileValid]) {
-		CommonWarning(@"[%@] file not valid", m_mmapID);
+		MMKVWarning(@"[%@] file not valid", m_mmapID);
 		return NO;
 	}
 	
@@ -573,7 +557,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (m_fd > 0 && m_size > 0 && m_output != NULL && m_ptr != NULL && m_ptr != MAP_FAILED) {
 		return YES;
 	}
-	//	CommonWarning(@"[%@] file not valid", m_mmapID);
+	//	MMKVWarning(@"[%@] file not valid", m_mmapID);
 	return NO;
 }
 
@@ -585,7 +569,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		
 		// for backwark compatibility
 		if ([MMKV FileExist:m_crcPath] == NO) {
-			CommonInfo(@"crc32 file not found:%@", m_crcPath);
+			MMKVInfo(@"crc32 file not found:%@", m_crcPath);
 			return YES;
 		}
 		NSData* oData = [NSData dataWithContentsOfFile:m_crcPath];
@@ -594,12 +578,12 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(oData);
 			crc32 = input.readFixed32();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 		if (m_crcDigest == crc32) {
 			return YES;
 		}
-		CommonError(@"check crc [%@] fail, crc32:%u, m_crcDigest:%u", m_mmapID, crc32, m_crcDigest);
+		MMKVError(@"check crc [%@] fail, crc32:%u, m_crcDigest:%u", m_mmapID, crc32, m_crcDigest);
 	}
 	return NO;
 }
@@ -628,7 +612,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	static const size_t bufferLength = computeFixed32Size(0);
 	if (m_isInBackground) {
 		if (mlock(m_crcPtr, bufferLength) != 0) {
-			CommonError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_crcPtr, errno, strerror(errno));
+			MMKVError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_crcPtr, errno, strerror(errno));
 			// just fail on this condition, otherwise app will crash anyway
 			return;
 		}
@@ -638,7 +622,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		CodedOutputData output(m_crcPtr, bufferLength);
 		output.writeFixed32((int32_t)m_crcDigest);
 	} @catch(NSException *exception) {
-		CommonError(@"%@", exception);
+		MMKVError(@"%@", exception);
 	}
 	if (m_isInBackground) {
 		munlock(m_crcPtr, bufferLength);
@@ -652,7 +636,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		}
 		m_crcFd = open(m_crcPath.UTF8String, O_RDWR, S_IRWXU);
 		if (m_crcFd <= 0) {
-			CommonError(@"fail to open:%@, %s", m_crcPath, strerror(errno));
+			MMKVError(@"fail to open:%@, %s", m_crcPath, strerror(errno));
 			[MMKV RemoveFile:m_crcPath];
 		} else {
 			size_t size = 0;
@@ -664,7 +648,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			if (size < fileLegth) {
 				size = fileLegth;
 				if (ftruncate(m_crcFd, size) != 0) {
-					CommonError(@"fail to truncate [%@] to size %zu, %s", m_crcPath, size, strerror(errno));
+					MMKVError(@"fail to truncate [%@] to size %zu, %s", m_crcPath, size, strerror(errno));
 					close(m_crcFd);
 					m_crcFd = -1;
 					[MMKV RemoveFile:m_crcPath];
@@ -673,7 +657,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			}
 			m_crcPtr = (char*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, m_crcFd, 0);
 			if (m_crcPtr == MAP_FAILED) {
-				CommonError(@"fail to mmap [%@], %s", m_crcPath, strerror(errno));
+				MMKVError(@"fail to mmap [%@], %s", m_crcPath, strerror(errno));
 				close(m_crcFd);
 				m_crcFd = -1;
 			}
@@ -683,7 +667,6 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 #pragma mark - set & get
 
-// object: NSString/NSData/NSDate/NSNumber/PBCoding
 -(BOOL)setObject:(id)obj forKey:(NSString*)key {
 	if (obj == nil || key.length <= 0) {
 		return FALSE;
@@ -811,7 +794,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(data);
 			return input.readBool();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 	}
 	return defaultValue;
@@ -830,7 +813,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(data);
 			return input.readInt32();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 	}
 	return defaultValue;
@@ -849,7 +832,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(data);
 			return input.readUInt32();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 	}
 	return defaultValue;
@@ -868,7 +851,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(data);
 			return input.readInt64();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 	}
 	return defaultValue;
@@ -887,7 +870,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(data);
 			return input.readUInt64();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 	}
 	return defaultValue;
@@ -906,7 +889,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(data);
 			return input.readFloat();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 	}
 	return defaultValue;
@@ -925,7 +908,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			CodedInputData input(data);
 			return input.readDouble();
 		} @catch(NSException *exception) {
-			CommonError(@"%@", exception);
+			MMKVError(@"%@", exception);
 		}
 	}
 	return defaultValue;
@@ -955,13 +938,13 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (block == nil) {
 		return;
 	}
-	CommonInfo(@"enumerate [%@] begin", m_mmapID);
+	MMKVInfo(@"enumerate [%@] begin", m_mmapID);
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
 	[m_dic enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
 		block(key, stop);
 	}];
-	CommonInfo(@"enumerate [%@] finish", m_mmapID);
+	MMKVInfo(@"enumerate [%@] finish", m_mmapID);
 }
 
 // Expensive! use -[MMKV removeValuesForKeys:] for more than one key
@@ -984,7 +967,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	[self checkLoadData];
 	[m_dic removeObjectsForKeys:arrKeys];
 	
-	CommonInfo(@"remove [%@] %lu keys, %lu remain", m_mmapID, (unsigned long)arrKeys.count, (unsigned long)m_dic.count);
+	MMKVInfo(@"remove [%@] %lu keys, %lu remain", m_mmapID, (unsigned long)arrKeys.count, (unsigned long)m_dic.count);
 	
 	[self fullWriteback];
 }
@@ -997,7 +980,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return;
 	}
 	if (msync(m_ptr, m_size, MS_SYNC) != 0) {
-		CommonError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
+		MMKVError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
 	}
 }
 
@@ -1006,7 +989,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString* nsLibraryPath = (NSString*)[paths firstObject];
 	if ([nsLibraryPath length] > 0) {
-		return [nsLibraryPath stringByAppendingFormat:@"/MMappedKV/%@", mmapID];
+		return [nsLibraryPath stringByAppendingFormat:@"/mmkv/%@", mmapID];
 	} else {
 		return @"";
 	}
@@ -1093,12 +1076,12 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	//path is not null && is not '/'
 	NSError* err;
 	if([nsPath length] > 1 && ![oFileMgr createDirectoryAtPath:nsPath withIntermediateDirectories:YES attributes:nil error:&err]) {
-		CommonError(@"create file path:%@ fail:%@", nsPath, [err localizedDescription]);
+		MMKVError(@"create file path:%@ fail:%@", nsPath, [err localizedDescription]);
 		return NO;
 	}
 	// create file again
 	if(![oFileMgr createFileAtPath:nsFilePath contents:nil attributes:fileAttr]) {
-		CommonError(@"create file path:%@ fail.", nsFilePath);
+		MMKVError(@"create file path:%@ fail.", nsFilePath);
 		return NO;
 	}
 	return YES;
@@ -1108,7 +1091,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 {
 	int ret = rmdir(nsFilePath.UTF8String);
 	if (ret != 0) {
-		CommonError(@"remove file failed. filePath=%@, err=%s", nsFilePath, strerror(errno));
+		MMKVError(@"remove file failed. filePath=%@, err=%s", nsFilePath, strerror(errno));
 		return NO;
 	}
 	return YES;
@@ -1118,14 +1101,14 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	@autoreleasepool {
 		NSDictionary* attr = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL];
 		NSString* protection = [attr valueForKey:NSFileProtectionKey];
-		CommonInfo(@"protection on [%@] is %@", path, protection);
+		MMKVInfo(@"protection on [%@] is %@", path, protection);
 		if ([protection isEqualToString:NSFileProtectionCompleteUntilFirstUserAuthentication] == NO) {
 			NSMutableDictionary* newAttr = [NSMutableDictionary dictionaryWithDictionary:attr];
 			[newAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
 			NSError* err = nil;
 			[[NSFileManager defaultManager] setAttributes:newAttr ofItemAtPath:path error:&err];
 			if (err != nil) {
-				CommonError(@"fail to set attribute %@ on [%@]: %@", NSFileProtectionCompleteUntilFirstUserAuthentication, path, err);
+				MMKVError(@"fail to set attribute %@ on [%@]: %@", NSFileProtectionCompleteUntilFirstUserAuthentication, path, err);
 			}
 		}
 	}

@@ -118,9 +118,11 @@
 	}
 }
 
-// prepare size and value, not tag
-// a basic object's tag is to be juded by caller, so no tag by now
--(size_t) prepareBasicObjectForEncode:(NSObject*)obj {
+// prepare size and value
+-(size_t) prepareObjectForEncode:(NSObject*)obj {
+	if (!obj) {
+		return m_encodeItems->size();
+	}
 	m_encodeItems->push_back(PBEncodeItem());
 	PBEncodeItem* encodeItem = &(m_encodeItems->back());
 	size_t index = m_encodeItems->size() - 1;
@@ -130,11 +132,9 @@
 		NSString* str = (NSString*) obj;
 		encodeItem->type = PBEncodeItemType_NSString;
 		size_t maxSize = MAX(1, [str maximumLengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-		if (m_formatBufferSize < maxSize)
-		{
+		if (m_formatBufferSize < maxSize) {
 			m_formatBufferSize = maxSize;
-			if (m_formatBuffer)
-			{
+			if (m_formatBuffer) {
 				free(m_formatBuffer);
 			}
 			m_formatBuffer = malloc(m_formatBufferSize);
@@ -177,9 +177,8 @@
 			}
 #endif
             
-			size_t keyIndex = [self prepareBasicObjectForEncode:key];
-			if (keyIndex < m_encodeItems->size())
-			{
+			size_t keyIndex = [self prepareObjectForEncode:key];
+			if (keyIndex < m_encodeItems->size()) {
 				size_t valueIndex = [self prepareObjectForEncode:value];
 				if (valueIndex < m_encodeItems->size()) {
 					(*m_encodeItems)[index].valueSize += (*m_encodeItems)[keyIndex].compiledSize;
@@ -203,19 +202,7 @@
 	return index;
 }
 
-// prepare size and value, not tag
-// an object's tag is to be juded by caller, so no tag by now
--(size_t) prepareObjectForEncode:(id)obj {
-	if (!obj) {
-		return m_encodeItems->size();
-	}
-	// a basic object's tag is to be juded by caller, so no tag by now
-	return [self prepareBasicObjectForEncode:obj];
-	
-	return m_encodeItems->size();
-}
-
--(NSData*) getEncodeDataWithForceWriteSize:(bool)forceWriteSize {
+-(NSData*) getEncodeData {
 	if (m_outputData != nil) {
 		return m_outputData;
 	}
@@ -241,7 +228,7 @@
 	if (obj) {
 		@try {
 			MiniPBCoder* oCoder = [[MiniPBCoder alloc] initForWritingWithTarget:obj];
-            NSData* oData = [oCoder getEncodeDataWithForceWriteSize:false];
+            NSData* oData = [oCoder getEncodeData];
 			
 			return oData;
 		} @catch(NSException *exception) {
@@ -254,7 +241,7 @@
 
 #pragma mark - decode
 
--(NSMutableDictionary*) decodeOneDictionaryOfValueClass:(Class)cls ignoreSize:(bool)ignoreSize {
+-(NSMutableDictionary*) decodeOneDictionaryOfValueClass:(Class)cls {
 	m_isTopObject = NO;
 	if (cls == NULL) {
 		return nil;
@@ -263,16 +250,9 @@
 	NSMutableDictionary* dic = [NSMutableDictionary dictionary];
 	
 	int32_t length = m_inputStream->readRawVarint32();
-	int32_t	limit = 0;
-	if (ignoreSize) {
-		limit = m_inputStream->pushLimit(static_cast<int32_t>(m_inputData.length) - computeRawVarint32Size(length));
-	} else {
-		limit = m_inputStream->pushLimit(length);
-	}
+	int32_t	limit = m_inputStream->pushLimit(static_cast<int32_t>(m_inputData.length) - computeRawVarint32Size(length));
 	
-	while ((ignoreSize && !m_inputStream->isAtEnd()) ||
-		   (!ignoreSize && m_inputStream->bytesUntilLimit() > 0))
-	{
+	while (!m_inputStream->isAtEnd()) {
 		NSString* nsKey = m_inputStream->readString();
 		if (nsKey) {
 			id value = [self decodeOneObject:nil ofClass:cls];
@@ -335,7 +315,7 @@
 	@try {
 		MiniPBCoder* oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
 		if (cls == [NSDictionary class] || cls == [NSMutableDictionary class]) {
-			obj = [oCoder decodeOneDictionaryOfValueClass:valueClass ignoreSize:true];
+			obj = [oCoder decodeOneDictionaryOfValueClass:valueClass];
 		} else {
 			PBError(@"%@ not recognized as container", NSStringFromClass(cls));
 		}
