@@ -1,9 +1,9 @@
 # MMKV——iOS 下基于 mmap 的高性能通用 key-value 组件
-MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从2015年中至今，在 iOS 微信上使用已有近 3 年，其性能和稳定性经过了时间的验证。目前已经[内部开源](http://git.code.oa.com/wechat-team/mmkv)，欢迎 star、提issue和mr。
+MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从2015年中至今，在 iOS 微信上使用已有近 3 年，其性能和稳定性经过了时间的验证。
 
 
 ## MMKV 源起
-在 iOS 微信的日常运营中，时不时就会爆发特殊文字引起 iOS 系统的 crash，[参考文章](http://www.qq.com)，文章里面设计的技术方案是在关键代码前后进行计数器的加减，通过检查计数器的异常，来发现引起闪退的异常文字。在会话列表、会话界面等有大量cell的地方，希望新加的计时器不会影响滑动性能；另外这些计数器还要永久存储下来——因为闪退随时可能发生。这就需要一个性能非常高的通用 key-value 存储组件，我们考察了 NSUserDefaults、SQLite 等常见组件，发现都没能满足如此苛刻的性能要求。考虑到这个防 crash 方案最主要的诉求还是实时写入，而 mmap 内存映射文件刚好满足这种需求，我们尝试通过它来实现一套 key-value 组件。
+在 iOS 微信的日常运营中，时不时就会爆发特殊文字引起 iOS 系统的 crash，[参考文章](http://km.oa.com/articles/show/357120)，文章里面设计的技术方案是在关键代码前后进行计数器的加减，通过检查计数器的异常，来发现引起闪退的异常文字。在会话列表、会话界面等有大量cell的地方，希望新加的计时器不会影响滑动性能；另外这些计数器还要永久存储下来——因为闪退随时可能发生。这就需要一个性能非常高的通用 key-value 存储组件，我们考察了 NSUserDefaults、SQLite 等常见组件，发现都没能满足如此苛刻的性能要求。考虑到这个防 crash 方案最主要的诉求还是实时写入，而 mmap 内存映射文件刚好满足这种需求，我们尝试通过它来实现一套 key-value 组件。
 
 ## MMKV 原理
 ### 内存准备
@@ -104,7 +104,7 @@ MMKV 提供一个全局的实例，可以直接使用：
 #### 支持以下 ObjC 类型：NSString、NSData、NSDate
 
 ## MMKV 性能
-写了个简单的测试，将 MMKV、NSUserDefaults 的性能进行对比，具体代码见 [git repo](http://git.code.oa.com/wechat-team/mmkv)。
+写了个简单的测试，将 MMKV、NSUserDefaults 的性能进行对比，具体代码见MMKVDemo。
 
 ![image](http://imgcache.oa.com/photos/31601/o_eb10400503149bc2bf2c3f44e01c877b.jpg)
 
