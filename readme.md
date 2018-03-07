@@ -106,7 +106,7 @@ MMKV 提供一个全局的实例，可以直接使用：
 ## MMKV 性能
 写了个简单的测试，将 MMKV、NSUserDefaults 的性能进行对比，具体代码见MMKVDemo。
 
-![image](http://imgcache.oa.com/photos/31601/o_eb10400503149bc2bf2c3f44e01c877b.jpg)
+![image](http://imgcache.oa.com/photos/31601/3b5a30acb12158f3a3de668452b4bac0.jpg)
 
 测试环境：iPhone X 256G, iOS 11.2.6，单位：ms。
 
