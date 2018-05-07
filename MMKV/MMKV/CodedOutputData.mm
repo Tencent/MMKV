@@ -35,7 +35,7 @@ void CodedOutputData::writeFloat(Float32 value) {
 	this->writeRawLittleEndian32(convertFloat32ToInt32(value));
 }
 
-void CodedOutputData::writeUInt64(int64_t value) {
+void CodedOutputData::writeUInt64(uint64_t value) {
 	this->writeRawVarint64(value);
 }
 
@@ -91,7 +91,7 @@ void CodedOutputData::writeData(NSData* value) {
 	this->writeRawData(value);
 }
 
-void CodedOutputData::writeUInt32(int32_t value) {
+void CodedOutputData::writeUInt32(uint32_t value) {
 	this->writeRawVarint32(value);
 }
 

@@ -90,7 +90,7 @@
 			NSInteger tmp = rand();
 			[userdefault setInteger:tmp forKey:@"testInt"];
 			tmp = [userdefault integerForKey:@"testInt"];
-			
+//			[userdefault synchronize];
 //			NSString* str = m_arrStrings[index];
 //			[userdefault setObject:str forKey:@"testStr"];
 //			str = [userdefault objectForKey:@"testStr"];

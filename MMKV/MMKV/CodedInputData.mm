@@ -58,7 +58,7 @@ Float32 CodedInputData::readFloat() {
 
 
 /** Read a {@code uint64} field value from the stream. */
-int64_t CodedInputData::readUInt64() {
+uint64_t CodedInputData::readUInt64() {
 	return this->readRawVarint64();
 }
 
@@ -126,7 +126,7 @@ NSData* CodedInputData::readData() {
 
 
 /** Read a {@code uint32} field value from the stream. */
-int32_t CodedInputData::readUInt32() {
+uint32_t CodedInputData::readUInt32() {
 	return this->readRawVarint32();
 }
 

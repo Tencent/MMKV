@@ -21,7 +21,7 @@
 // object: NSString/NSData/NSDate
 -(BOOL)setObject:(id)obj forKey:(NSString*)key;
 
--(BOOL)setBool:(bool)value forKey:(NSString*)key;
+-(BOOL)setBool:(BOOL)value forKey:(NSString*)key;
 
 -(BOOL)setInt32:(int32_t)value forKey:(NSString*)key;
 

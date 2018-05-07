@@ -44,7 +44,7 @@ public:
 	
 	void writeDouble(Float64 value);
 	void writeFloat(Float32 value);
-	void writeUInt64(int64_t value);
+	void writeUInt64(uint64_t value);
 	void writeInt64(int64_t value);
 	void writeInt32(int32_t value);
 	void writeFixed32(int32_t value);
@@ -52,7 +52,7 @@ public:
 	void writeString(NSString* value);
 	void writeString(NSString* value, NSUInteger numberOfBytes);
 	void writeData(NSData* value);
-	void writeUInt32(int32_t value);
+	void writeUInt32(uint32_t value);
 };
 
 #endif

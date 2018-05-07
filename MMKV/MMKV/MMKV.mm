@@ -675,7 +675,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	return [self setData:data forKey:key];
 }
 
--(BOOL)setBool:(bool)value forKey:(NSString*)key {
+-(BOOL)setBool:(BOOL)value forKey:(NSString*)key {
 	if (key.length <= 0) {
 		return FALSE;
 	}
@@ -766,17 +766,6 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	NSData* data = [self getDataForKey:key];
 	if (data.length > 0) {
 		return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
-	}
-	return nil;
-}
-
-- (NSMutableArray*)getArrayOfValueType:(Class)cls forKey:(NSString*)key {
-	if (key.length <= 0) {
-		return nil;
-	}
-	NSData* data = [self getDataForKey:key];
-	if (data.length > 0) {
-		return [MiniPBCoder decodeContainerOfClass:[NSMutableArray class] withValueClass:cls fromData:data];
 	}
 	return nil;
 }
@@ -1089,7 +1078,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 + (BOOL) RemoveFile:(NSString*)nsFilePath
 {
-	int ret = rmdir(nsFilePath.UTF8String);
+	int ret = remove(nsFilePath.UTF8String);
 	if (ret != 0) {
 		MMKVError(@"remove file failed. filePath=%@, err=%s", nsFilePath, strerror(errno));
 		return NO;

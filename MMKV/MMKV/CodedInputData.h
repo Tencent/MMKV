@@ -36,8 +36,8 @@ public:
 	BOOL readBool();
 	Float64 readDouble();
 	Float32 readFloat();
-	int64_t readUInt64();
-	int32_t readUInt32();
+	uint64_t readUInt64();
+	uint32_t readUInt32();
 	int64_t readInt64();
 	int32_t readInt32();
 	int32_t readFixed32();
