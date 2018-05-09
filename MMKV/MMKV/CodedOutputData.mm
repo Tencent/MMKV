@@ -111,20 +111,6 @@ void CodedOutputData::seek(size_t addedSize) {
 	}
 }
 
-/**
- * Verifies that {@link #spaceLeft()} returns zero.  It's common to create
- * a byte array that is exactly big enough to hold a message, then write to
- * it with a {@code WXPBCodedOutputStream}.  Calling {@code checkNoSpaceLeft()}
- * after writing verifies that the message was actually as big as expected,
- * which can help catch bugs.
- */
-void CodedOutputData::checkNoSpaceLeft() {
-	if (this->spaceLeft() != 0) {
-		//NSLog(@"IllegalState-Did not write as much data as expected.");
-		@throw [NSException exceptionWithName:@"IllegalState" reason:@"Did not write as much data as expected." userInfo:nil];
-	}
-}
-
 
 /** Write a single byte. */
 void CodedOutputData::writeRawByte(uint8_t value) {

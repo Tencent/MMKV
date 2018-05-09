@@ -14,9 +14,7 @@ class CodedOutputData {
 	uint8_t* bufferPointer;
 	size_t bufferLength;
     int32_t position;
-	
-	void checkNoSpaceLeft();
-	
+
 public:
 	CodedOutputData(void* ptr, size_t len);
 	CodedOutputData(NSMutableData* odata);
@@ -39,9 +37,7 @@ public:
 	
 	void writeRawData(NSData* data);
 	void writeRawData(NSData* data, int32_t offset, int32_t length);
-	
-	void writeData(int32_t fieldNumber, NSData* value);
-	
+
 	void writeDouble(Float64 value);
 	void writeFloat(Float32 value);
 	void writeUInt64(uint64_t value);
