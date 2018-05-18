@@ -1,0 +1,91 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+
+android {
+    signingConfigs {
+        config {
+            keyAlias 'key0'
+            keyPassword 'mmkv.wxg'
+            storeFile file('/Users/lingol/AndroidStudioProjects/key1')
+            storePassword 'mmkv.wxg'
+        }
+    }
+    compileSdkVersion 27
+    defaultConfig {
+//        applicationId "com.tencent.mmkv"
+        minSdkVersion 16
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0.1"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-fexceptions"
+                arguments "-DANDROID_STL=c++_shared"
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
+        }
+        debug {
+            jniDebuggable true
+            signingConfig signingConfigs.config
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+    defaultPublishConfig 'debug'
+    publishNonDefault true
+}
+
+configurations {
+    deployerJars
+}
+
+dependencies {
+    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
+}
+
+uploadArchives {
+    repositories.mavenDeployer {
+        configuration = configurations.deployerJars
+
+//      repository(url: "file://localhost/tmp/localmvn/")
+//        repository(url: "http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots") {
+//            authentication(userName: RDM_USR, password: RDM_PWD)
+//        }
+      repository(url: "http://maven.oa.com/nexus/content/repositories/thirdparty") {
+          authentication(userName: RDM_USR, password: RDM_PWD)
+      }
+        pom.project {
+            groupId 'com.tencent'
+            artifactId 'mmkv'
+            version '1.0.1'
+            packaging 'aar'
+
+            inceptionYear '2018'
+            licenses {
+                license {
+                    name 'BSD 3-Clause License'
+                    url 'https://opensource.org/licenses/BSD-3-Clause'
+                    distribution 'repo'
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
