@@ -1,5 +1,6 @@
 package com.tencent.mmkv;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
 
@@ -11,7 +12,11 @@ import java.util.Set;
 
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // call on program start
-    public static native void initialize(String rootDir);
+    public static String initialize(Context context) {
+        String rootDir = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        initialize(rootDir);
+        return rootDir;
+    }
 
     // call on program exit
     public static native void onExit();
@@ -306,6 +311,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private MMKV(long handle) {
         nativeHandle = handle;
     }
+
+    private static native void initialize(String rootDir);
 
     private native static long getMMKVWithID(String mmapID);
 

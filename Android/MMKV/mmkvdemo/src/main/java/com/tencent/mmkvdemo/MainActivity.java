@@ -23,15 +23,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String rootDir = getFilesDir().getAbsolutePath() + "/mmkv";
-        MMKV.initialize(rootDir);
+        String rootDir = MMKV.initialize(this);
+        System.out.println("mmkv root: " + rootDir);
 
         TextView tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(rootDir);
 
 
-        testMMKV();
-        testImportSharedPreferences();
+//        testMMKV();
+//        testImportSharedPreferences();
 //        final Handler handler = new Handler();
 //        handler.postDelayed(new Runnable() {
 //            @Override
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }, 10000);
 
-        int loops = 100;
+        int loops = 1000;
         m_arrStrings = new String[loops];
         m_arrKeys = new String[loops];
         m_arrIntKeys = new String[loops];
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mmkvBaselineTest(loops);
-//        sharedPreferencesBaselineTest(loops);
+        sharedPreferencesBaselineTest(loops);
         sqliteBaselineTest(loops);
     }
 
@@ -129,17 +129,17 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences preferences = getSharedPreferences("default2", MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         for (int index = 0; index < loops; index++) {
-            int tmp = r.nextInt();
-            String key = m_arrIntKeys[index];
-            editor.putInt(key, tmp);
-            editor.commit();
-            tmp = preferences.getInt(key, 0);
+//            int tmp = r.nextInt();
+//            String key = m_arrIntKeys[index];
+//            editor.putInt(key, tmp);
+//            editor.apply();
+//            tmp = preferences.getInt(key, 0);
 
-//            final String str = m_arrStrings[index];
-//            final String key = m_arrKeys[index];
-//            editor.putString(key, str);
-////            editor.commit();
-//            final String tmp = preferences.getString(key, null);
+            final String str = m_arrStrings[index];
+            final String key = m_arrKeys[index];
+            editor.putString(key, str);
+            editor.apply();
+            final String tmp = preferences.getString(key, null);
         }
 //        editor.commit();
         long endTime = System.currentTimeMillis();
@@ -184,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
 
         MMKV kv = MMKV.mmkvWithID("imported");
         kv.importFromSharedPreferences(preferences);
+        editor.clear().commit();
 
         System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
 
