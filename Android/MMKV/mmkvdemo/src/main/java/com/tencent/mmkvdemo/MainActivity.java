@@ -65,26 +65,26 @@ public class MainActivity extends AppCompatActivity {
     private void testMMKV() {
         MMKV kv = MMKV.defaultMMKV();
 
-//        kv.encode("bool", true);
+        kv.encode("bool", true);
         System.out.println("bool: " + kv.decodeBool("bool"));
 
-//        kv.encode("int", Integer.MIN_VALUE);
+        kv.encode("int", Integer.MIN_VALUE);
         System.out.println("int: " + kv.decodeInt("int"));
 
-//        kv.encode("long", Long.MAX_VALUE);
+        kv.encode("long", Long.MAX_VALUE);
         System.out.println("long: " + kv.decodeLong("long"));
 
-//        kv.encode("float", -3.14f);
+        kv.encode("float", -3.14f);
         System.out.println("float: " + kv.decodeFloat("float"));
 
-//        kv.encode("double", Double.MIN_VALUE);
+        kv.encode("double", Double.MIN_VALUE);
         System.out.println("double: " + kv.decodeDouble("double"));
 
-//        kv.encode("string", "Hello from mmkv");
+        kv.encode("string", "Hello from mmkv");
         System.out.println("string: " + kv.decodeString("string"));
 
-//        byte[] bytes = {'m', 'm', 'k', 'v'};
-//        kv.encode("bytes", bytes);
+        byte[] bytes = {'m', 'm', 'k', 'v'};
+        kv.encode("bytes", bytes);
         System.out.println("bytes: " + new String(kv.decodeBytes("bytes")));
 
         System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
@@ -92,9 +92,10 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("containsKey[string]: " + kv.containsKey("string"));
 
         kv.removeValueForKey("bool");
+        System.out.println("bool: " + kv.decodeBool("bool"));
         kv.removeValuesForKeys(new String[]{"int", "long"});
-        kv.sync();
 //        kv.clearAll();
+        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
         System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
     }
 

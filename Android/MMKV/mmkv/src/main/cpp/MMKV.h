@@ -48,8 +48,10 @@ class MMKV {
 
     bool protectFromBackgroundWritting(size_t size, std::function<void(CodedOutputData*)> writerBlock);
 
-    bool setDataForKey(MMBuffer&& data, const std::string& key);
     const MMBuffer& getDataForKey(const std::string& key);
+    bool setDataForKey(MMBuffer&& data, const std::string& key);
+    bool removeDataForKey(const std::string& key);
+    bool appendDataWithKey(const MMBuffer& data, const std::string& key);
 
 public:
     MMKV(const std::string& mmapID);
@@ -111,9 +113,7 @@ public:
     //void enumerateKeys(std::function<void (const std::string&key, bool& stop)> block);
     std::vector<std::string> allKeys();
 
-    // Expensive! use removeValuesForKeys for more than one key
     void removeValueForKey(const std::string& key);
-
     void removeValuesForKeys(const std::vector<std::string>& arrKeys);
 
     void clearAll();
@@ -122,7 +122,6 @@ public:
     // unless you care about out of battery
     void sync();
 
-    // for CrashProtected Only!!
     static bool isFileValid(const std::string& mmapID);
 };
 

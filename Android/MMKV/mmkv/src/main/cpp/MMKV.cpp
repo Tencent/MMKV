@@ -430,16 +430,21 @@ bool MMKV::writeAcutalSize(size_t actualSize) {
     return true;
 }
 
+const MMBuffer& MMKV::getDataForKey(const std::string &key) {
+    ScopedLock lock(m_lock);
+    checkLoadData();
+    auto itr = m_dic.find(key);
+    if (itr != m_dic.end()) {
+        return itr->second;
+    }
+    static MMBuffer nan(0);
+    return nan;
+}
+
 bool MMKV::setDataForKey(MMBuffer&& data, const std::string &key) {
     if (data.length() == 0 || key.empty()) {
         return false;
     }
-    size_t keyLength = key.length();
-    size_t size = keyLength + computeRawVarint32Size((int32_t)keyLength);		// size needed to encode the key
-    size += data.length() + computeRawVarint32Size((int32_t)data.length());			// size needed to encode the value
-
-    ScopedLock lock(m_lock);
-    bool hasEnoughSize = ensureMemorySize(size);
 
 //    m_dic[key] = std::move(data);
     auto itr = m_dic.find(key);
@@ -448,6 +453,31 @@ bool MMKV::setDataForKey(MMBuffer&& data, const std::string &key) {
     } else {
         itr->second = std::move(data);
     }
+
+    return appendDataWithKey(itr->second, key);
+}
+
+bool MMKV::removeDataForKey(const std::string &key) {
+    if (key.empty()) {
+        return false;
+    }
+
+    auto deleteCount = m_dic.erase(key);
+    if (deleteCount > 0) {
+        static MMBuffer nan(0);
+        return appendDataWithKey(nan, key);
+    }
+
+    return false;
+}
+
+bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
+    size_t keyLength = key.length();
+    size_t size = keyLength + computeRawVarint32Size((int32_t)keyLength);		// size needed to encode the key
+    size += data.length() + computeRawVarint32Size((int32_t)data.length());		// size needed to encode the value
+
+    ScopedLock lock(m_lock);
+    bool hasEnoughSize = ensureMemorySize(size);
 
     if (!hasEnoughSize || !isFileValid()) {
         return false;
@@ -473,7 +503,7 @@ bool MMKV::setDataForKey(MMBuffer&& data, const std::string &key) {
             static const int offset = computeFixed32Size(0);
             ret = protectFromBackgroundWritting(size, [&](CodedOutputData *output) {
                 output->writeString(key);
-                output->writeData(itr->second);				// note: write size of data
+                output->writeData(data);				// note: write size of data
             });
             if (ret) {
                 updateCRCDigest((const uint8_t*)m_ptr+offset+m_actualSize-size, size);
@@ -481,17 +511,6 @@ bool MMKV::setDataForKey(MMBuffer&& data, const std::string &key) {
         }
         return ret;
     }
-}
-
-const MMBuffer& MMKV::getDataForKey(const std::string &key) {
-    ScopedLock lock(m_lock);
-    checkLoadData();
-    auto itr = m_dic.find(key);
-    if (itr != m_dic.end()) {
-        return itr->second;
-    }
-    static MMBuffer nan(0);
-    return nan;
 }
 
 bool MMKV::fullWriteback() {
@@ -897,22 +916,26 @@ std::vector<std::string> MMKV::allKeys() {
     return keys;
 }
 
-// Expensive! use -[MMKV removeValuesForKeys:] for more than one key
 void MMKV::removeValueForKey(const std::string &key) {
     if (key.empty()) {
         return;
     }
     ScopedLock lock(m_lock);
     checkLoadData();
-    m_dic.erase(key);
-
-    fullWriteback();
+//    m_dic.erase(key);
+//
+//    fullWriteback();
+    removeDataForKey(key);
 }
 
 void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
     if (arrKeys.empty()) {
         return;
     }
+    if (arrKeys.size() == 1) {
+        return removeValueForKey(arrKeys[0]);
+    }
+
     ScopedLock lock(m_lock);
     checkLoadData();
     for (const auto& key : arrKeys) {

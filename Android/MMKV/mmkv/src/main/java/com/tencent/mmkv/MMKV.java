@@ -139,7 +139,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return totalSize(nativeHandle);
     }
 
-    // Expensive! use removeValuesForKeys for more than one key
     public void removeValueForKey(String key) {
         removeValueForKey(nativeHandle, key);
     }
@@ -152,7 +151,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // unless you care about out of battery
     public native void sync();
 
-    // for CrashProtected Only!!
     public static native boolean isFileValid(String mmapID);
 
     // SharedPreferences migration

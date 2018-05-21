@@ -297,7 +297,11 @@ std::unordered_map<std::string, MMBuffer> MiniPBCoder::decodeOneMap() {
         const auto& key = m_inputStream->readString();
         if (key.length() > 0) {
             auto value = m_inputStream->readData();
-            dic[key] = std::move(value);
+            if (value.length() > 0) {
+                dic[key] = std::move(value);
+            } else {
+                dic.erase(key);
+            }
         }
     }
     m_inputStream->popLimit(limit);
