@@ -9,10 +9,10 @@
 #include <sys/stat.h>
 #import <vector>
 #import <string>
-#import "WireFormat.h"
-#import "PBEncodeItem.h"
-#import "CodedInputData.h"
-#import "CodedOutputData.h"
+#import "MiniWireFormat.h"
+#import "MiniPBEncodeItem.h"
+#import "MiniCodedInputData.h"
+#import "MiniCodedOutputData.h"
 
 #define PBError(format, ...)	NSLog(format, ##__VA_ARGS__)
 #define PBWarning(format, ...)	NSLog(format, ##__VA_ARGS__)
@@ -24,11 +24,11 @@
 	
 	BOOL m_isTopObject;
 	NSData* m_inputData;
-	CodedInputData* m_inputStream;
+	MiniCodedInputData* m_inputStream;
 	
 	NSMutableData* m_outputData;
-	CodedOutputData* m_outputStream;
-	std::vector<PBEncodeItem>* m_encodeItems;
+	MiniCodedOutputData* m_outputStream;
+	std::vector<MiniPBEncodeItem>* m_encodeItems;
 	
 	void* m_formatBuffer;
 	size_t m_formatBufferSize;
@@ -38,7 +38,7 @@
 	if (self = [super init]) {
 		m_isTopObject = YES;
         m_inputData = data;
-		m_inputStream = new CodedInputData(data);
+		m_inputStream = new MiniCodedInputData(data);
 	}
 	return self;
 }
@@ -80,7 +80,7 @@
 // write object using prepared m_encodeItems[]
 -(void) writeRootObject {
 	for (size_t index = 0, total = m_encodeItems->size(); index < total; index++) {
-		PBEncodeItem* encodeItem = &(*m_encodeItems)[index];
+		MiniPBEncodeItem* encodeItem = &(*m_encodeItems)[index];
 		switch (encodeItem->type) {
 			case PBEncodeItemType_NSString:
 			{
@@ -123,8 +123,8 @@
 	if (!obj) {
 		return m_encodeItems->size();
 	}
-	m_encodeItems->push_back(PBEncodeItem());
-	PBEncodeItem* encodeItem = &(m_encodeItems->back());
+	m_encodeItems->push_back(MiniPBEncodeItem());
+	MiniPBEncodeItem* encodeItem = &(m_encodeItems->back());
 	size_t index = m_encodeItems->size() - 1;
     
 	if ([obj isKindOfClass:[NSString class]])
@@ -207,14 +207,14 @@
 		return m_outputData;
 	}
     
-	m_encodeItems = new std::vector<PBEncodeItem>();
+	m_encodeItems = new std::vector<MiniPBEncodeItem>();
 	size_t index = [self prepareObjectForEncode:m_obj];
-	PBEncodeItem* oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : NULL;
+	MiniPBEncodeItem* oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : NULL;
 	if (oItem && oItem->compiledSize > 0) {
 		// non-protobuf object(NSString/NSArray, etc) need to to write SIZE as well as DATA,
 		// so compiledSize is used,
 		m_outputData = [NSMutableData dataWithLength:oItem->compiledSize];
-		m_outputStream = new CodedOutputData(m_outputData);
+		m_outputStream = new MiniCodedOutputData(m_outputData);
 
 		[self writeRootObject];
 		

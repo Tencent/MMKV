@@ -1,5 +1,5 @@
 //
-//  CodedInputData.h
+//  MiniCodedInputData.h
 //  MicroMessenger
 //
 //  Created by Guo Ling on 4/26/13.
@@ -10,7 +10,7 @@
 
 #import <Foundation/Foundation.h>
 
-class CodedInputData {
+class MiniCodedInputData {
 	uint8_t* bufferPointer;
 	int32_t bufferSize;
 	int32_t bufferSizeAfterLimit;
@@ -28,8 +28,8 @@ class CodedInputData {
 	int32_t sizeLimit;
 
 public:
-	CodedInputData(NSData* oData);
-	~CodedInputData();
+	MiniCodedInputData(NSData* oData);
+	~MiniCodedInputData();
 	
 	bool isAtEnd() { return bufferPos == bufferSize; };
 	

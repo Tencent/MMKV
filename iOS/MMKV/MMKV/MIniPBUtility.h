@@ -1,5 +1,5 @@
 //
-//  PBUtility.h
+//  MiniPBUtility.h
 //  PBCoder
 //
 //  Created by Guo Ling on 4/19/13.

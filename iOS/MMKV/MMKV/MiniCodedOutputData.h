@@ -1,5 +1,5 @@
 //
-//  CodedOutputData.h
+//  MiniCodedOutputData.h
 //  PBCoder
 //
 //  Created by Ling Guo on 4/17/14.
@@ -10,15 +10,15 @@
 
 #import <Foundation/Foundation.h>
 
-class CodedOutputData {
+class MiniCodedOutputData {
 	uint8_t* bufferPointer;
 	size_t bufferLength;
     int32_t position;
 
 public:
-	CodedOutputData(void* ptr, size_t len);
-	CodedOutputData(NSMutableData* odata);
-	~CodedOutputData();
+	MiniCodedOutputData(void* ptr, size_t len);
+	MiniCodedOutputData(NSMutableData* odata);
+	~MiniCodedOutputData();
 	
 	int32_t spaceLeft();
 	void seek(size_t addedSize);

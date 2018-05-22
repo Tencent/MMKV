@@ -1,5 +1,5 @@
 //
-//  PBEncodeItem.h
+//  MiniPBEncodeItem.h
 //  PBCoder
 //
 //  Created by Guo Ling on 4/19/13.
@@ -10,7 +10,7 @@
 
 #ifdef __cplusplus
 
-enum PBEncodeItemType {
+enum MiniPBEncodeItemType {
 	PBEncodeItemType_None,
 	PBEncodeItemType_NSString,
 	PBEncodeItemType_NSData,
@@ -18,9 +18,9 @@ enum PBEncodeItemType {
 	PBEncodeItemType_NSContainer,
 };
 
-struct PBEncodeItem
+struct MiniPBEncodeItem
 {
-	PBEncodeItemType type;
+	MiniPBEncodeItemType type;
 	int32_t compiledSize;
 	int32_t valueSize;
 	union {
@@ -28,13 +28,13 @@ struct PBEncodeItem
 		void* tmpObjectValue;	// this object should release on dealloc
 	} value;
 	
-	PBEncodeItem()
+	MiniPBEncodeItem()
 		:type(PBEncodeItemType_None), compiledSize(0), valueSize(0)
 	{
 		memset(&value, 0, sizeof(value));
 	}
 	
-	PBEncodeItem(const PBEncodeItem& other)
+	MiniPBEncodeItem(const MiniPBEncodeItem& other)
 		:type(other.type), compiledSize(other.compiledSize), valueSize(other.valueSize), value(other.value)
 	{
 		if (type == PBEncodeItemType_NSString) {
@@ -44,7 +44,7 @@ struct PBEncodeItem
 		}
 	}
 	
-	PBEncodeItem& operator = (const PBEncodeItem& other)
+	MiniPBEncodeItem& operator = (const MiniPBEncodeItem& other)
 	{
 		type = other.type;
 		compiledSize = other.compiledSize;
@@ -60,7 +60,7 @@ struct PBEncodeItem
 		return *this;
 	}
 	
-	~PBEncodeItem()
+	~MiniPBEncodeItem()
 	{
 		if (type == PBEncodeItemType_NSString) {
 			if (value.tmpObjectValue != NULL) {

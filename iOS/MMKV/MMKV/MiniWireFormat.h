@@ -1,12 +1,12 @@
 //
-//  WireFormat.h
+//  MiniWireFormat.h
 //  PBCoder
 //
 //  Created by Guo Ling on 4/19/13.
 //  Copyright (c) 2013 Guo Ling. All rights reserved.
 //
 
-#import "PBUtility.h"
+#import "MiniPBUtility.h"
 
 typedef enum {
 	PBWireFormatVarint = 0,

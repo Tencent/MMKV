@@ -1,29 +1,29 @@
 //
-//  CodedInputData.mm
+//  MiniCodedInputData.mm
 //  MicroMessenger
 //
 //  Created by Guo Ling on 4/26/13.
 //  Copyright (c) 2013 Tencent. All rights reserved.
 //
 
-#import "CodedInputData.h"
-#import "PBUtility.h"
-#import "WireFormat.h"
+#import "MiniCodedInputData.h"
+#import "MiniPBUtility.h"
+#import "MiniWireFormat.h"
 
 static const int32_t DEFAULT_RECURSION_LIMIT = 64;
 static const int32_t DEFAULT_SIZE_LIMIT = 64 << 20;  // 64MB
 
-CodedInputData::CodedInputData(NSData* oData)
+MiniCodedInputData::MiniCodedInputData(NSData* oData)
 	: bufferPointer((uint8_t*)oData.bytes), bufferSize((int32_t)oData.length), bufferSizeAfterLimit(0), bufferPos(0), lastTag(0), currentLimit(INT_MAX), recursionDepth(0), recursionLimit(DEFAULT_RECURSION_LIMIT), sizeLimit(DEFAULT_SIZE_LIMIT)
 {
 }
 
-CodedInputData::~CodedInputData() {
+MiniCodedInputData::~MiniCodedInputData() {
 	bufferPointer = NULL;
 	bufferSize = 0;
 }
 
-BOOL CodedInputData::skipField(int32_t tag) {
+BOOL MiniCodedInputData::skipField(int32_t tag) {
 	switch (PBWireFormatGetTagWireType(tag)) {
 		case PBWireFormatVarint:
 			this->readInt32();
@@ -46,49 +46,49 @@ BOOL CodedInputData::skipField(int32_t tag) {
 
 
 /** Read a {@code double} field value from the stream. */
-Float64 CodedInputData::readDouble() {
+Float64 MiniCodedInputData::readDouble() {
 	return convertInt64ToFloat64(this->readRawLittleEndian64());
 }
 
 
 /** Read a {@code float} field value from the stream. */
-Float32 CodedInputData::readFloat() {
+Float32 MiniCodedInputData::readFloat() {
 	return convertInt32ToFloat32(this->readRawLittleEndian32());
 }
 
 
 /** Read a {@code uint64} field value from the stream. */
-uint64_t CodedInputData::readUInt64() {
+uint64_t MiniCodedInputData::readUInt64() {
 	return this->readRawVarint64();
 }
 
 
 /** Read an {@code int64} field value from the stream. */
-int64_t CodedInputData::readInt64() {
+int64_t MiniCodedInputData::readInt64() {
 	return this->readRawVarint64();
 }
 
 
 /** Read an {@code int32} field value from the stream. */
-int32_t CodedInputData::readInt32() {
+int32_t MiniCodedInputData::readInt32() {
 	return this->readRawVarint32();
 }
 
 
 /** Read a {@code fixed32} field value from the stream. */
-int32_t CodedInputData::readFixed32() {
+int32_t MiniCodedInputData::readFixed32() {
 	return this->readRawLittleEndian32();
 }
 
 
 /** Read a {@code bool} field value from the stream. */
-BOOL CodedInputData::readBool() {
+BOOL MiniCodedInputData::readBool() {
 	return this->readRawVarint32() != 0;
 }
 
 
 /** Read a {@code string} field value from the stream. */
-NSString* CodedInputData::readString() {
+NSString* MiniCodedInputData::readString() {
 	int32_t size = this->readRawVarint32();
 	if (size <= (bufferSize - bufferPos) && size > 0) {
 		// Fast path:  We already have the bytes in a contiguous buffer, so
@@ -110,7 +110,7 @@ NSString* CodedInputData::readString() {
 
 
 /** Read a {@code bytes} field value from the stream. */
-NSData* CodedInputData::readData() {
+NSData* MiniCodedInputData::readData() {
 	int32_t size = this->readRawVarint32();
 	if (size < bufferSize - bufferPos && size > 0) {
 		// Fast path:  We already have the bytes in a contiguous buffer, so
@@ -126,7 +126,7 @@ NSData* CodedInputData::readData() {
 
 
 /** Read a {@code uint32} field value from the stream. */
-uint32_t CodedInputData::readUInt32() {
+uint32_t MiniCodedInputData::readUInt32() {
 	return this->readRawVarint32();
 }
 
@@ -136,7 +136,7 @@ uint32_t CodedInputData::readUInt32() {
  * Read a raw Varint from the stream.  If larger than 32 bits, discard the
  * upper bits.
  */
-int32_t CodedInputData::readRawVarint32() {
+int32_t MiniCodedInputData::readRawVarint32() {
 	int8_t tmp = this->readRawByte();
 	if (tmp >= 0) {
 		return tmp;
@@ -175,7 +175,7 @@ int32_t CodedInputData::readRawVarint32() {
 
 
 /** Read a raw Varint from the stream. */
-int64_t CodedInputData::readRawVarint64() {
+int64_t MiniCodedInputData::readRawVarint64() {
 	int32_t shift = 0;
 	int64_t result = 0;
 	while (shift < 64) {
@@ -194,7 +194,7 @@ int64_t CodedInputData::readRawVarint64() {
 
 
 /** Read a 32-bit little-endian integer from the stream. */
-int32_t CodedInputData::readRawLittleEndian32() {
+int32_t MiniCodedInputData::readRawLittleEndian32() {
 	int8_t b1 = this->readRawByte();
 	int8_t b2 = this->readRawByte();
 	int8_t b3 = this->readRawByte();
@@ -208,7 +208,7 @@ int32_t CodedInputData::readRawLittleEndian32() {
 
 
 /** Read a 64-bit little-endian integer from the stream. */
-int64_t CodedInputData::readRawLittleEndian64() {
+int64_t MiniCodedInputData::readRawLittleEndian64() {
 	int8_t b1 = this->readRawByte();
 	int8_t b2 = this->readRawByte();
 	int8_t b3 = this->readRawByte();
@@ -232,7 +232,7 @@ int64_t CodedInputData::readRawLittleEndian64() {
 /**
  * Set the maximum message size.  In order to prevent malicious
  * messages from exhausting memory or causing integer overflows,
- * {@code CodedInputData} limits how large a message may be.
+ * {@code MiniCodedInputData} limits how large a message may be.
  * The default limit is 64MB.  You should set this limit as small
  * as you can without harming your app's functionality.  Note that
  * size limits only apply when reading from an {@code InputStream}, not
@@ -240,7 +240,7 @@ int64_t CodedInputData::readRawLittleEndian64() {
  *
  * @return the old limit.
  */
-int32_t CodedInputData::setSizeLimit(int32_t limit) {
+int32_t MiniCodedInputData::setSizeLimit(int32_t limit) {
 	if (limit < 0) {
 		//NSLog(@"InvalidProtocolBuffer-size limit cannot be negative");
 		//return -1;
@@ -258,7 +258,7 @@ int32_t CodedInputData::setSizeLimit(int32_t limit) {
  *
  * @return the old limit.
  */
-int32_t CodedInputData::pushLimit(int32_t byteLimit) {
+int32_t MiniCodedInputData::pushLimit(int32_t byteLimit) {
 	if (byteLimit < 0) {
 		// NSLog(@"InvalidProtocolBuffer-negativeSize");
 		//return -1;
@@ -281,7 +281,7 @@ int32_t CodedInputData::pushLimit(int32_t byteLimit) {
 }
 
 
-void CodedInputData::recomputeBufferSizeAfterLimit() {
+void MiniCodedInputData::recomputeBufferSizeAfterLimit() {
 	bufferSize += bufferSizeAfterLimit;
 	int32_t bufferEnd = bufferSize;
 	if (bufferEnd > currentLimit) {
@@ -299,7 +299,7 @@ void CodedInputData::recomputeBufferSizeAfterLimit() {
  *
  * @param oldLimit The old limit, as returned by {@code pushLimit}.
  */
-void CodedInputData::popLimit(int32_t oldLimit) {
+void MiniCodedInputData::popLimit(int32_t oldLimit) {
 	currentLimit = oldLimit;
 	this->recomputeBufferSizeAfterLimit();
 }
@@ -309,7 +309,7 @@ void CodedInputData::popLimit(int32_t oldLimit) {
  * Returns the number of bytes to be read before the current limit.
  * If no limit is set, returns -1.
  */
-int32_t CodedInputData::bytesUntilLimit() {
+int32_t MiniCodedInputData::bytesUntilLimit() {
 	if (currentLimit == INT_MAX) {
 		return -1;
 	}
@@ -324,7 +324,7 @@ int32_t CodedInputData::bytesUntilLimit() {
  * @throws InvalidProtocolBufferException The end of the stream or the current
  *                                        limit was reached.
  */
-int8_t CodedInputData::readRawByte() {
+int8_t MiniCodedInputData::readRawByte() {
 	if (bufferPos == bufferSize) {
         NSString *reason = [NSString stringWithFormat:@"reach end, bufferPos: %d, bufferSize: %d", bufferPos, bufferSize];
 		@throw [NSException exceptionWithName:@"InvalidProtocolBuffer" reason:reason userInfo:nil];
@@ -341,7 +341,7 @@ int8_t CodedInputData::readRawByte() {
  * @throws InvalidProtocolBufferException The end of the stream or the current
  *                                        limit was reached.
  */
-NSData* CodedInputData::readRawData(int32_t size) {
+NSData* MiniCodedInputData::readRawData(int32_t size) {
 	if (size < 0) {
 		//NSLog(@"InvalidProtocolBuffer-negativeSize");
 		//return nil;
@@ -377,7 +377,7 @@ NSData* CodedInputData::readRawData(int32_t size) {
  * @throws InvalidProtocolBufferException The end of the stream or the current
  *                                        limit was reached.
  */
-void CodedInputData::skipRawData(int32_t size) {
+void MiniCodedInputData::skipRawData(int32_t size) {
 	if (size < 0) {
 		//NSLog(@"InvalidProtocolBuffer-negativeSize");
 		//return;

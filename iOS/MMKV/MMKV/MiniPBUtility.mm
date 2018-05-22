@@ -1,13 +1,13 @@
 //
-//  PBUtility.mm
+//  MiniPBUtility.mm
 //  PBCoder
 //
 //  Created by Guo Ling on 4/26/13.
 //  Copyright (c) 2013 Tencent. All rights reserved.
 //
 
-#import "PBUtility.h"
-#import "WireFormat.h"
+#import "MiniPBUtility.h"
+#import "MiniWireFormat.h"
 
 
 static const int32_t LITTLE_ENDIAN_32_SIZE = 4;
