@@ -31,6 +31,10 @@ add_library( # Sets the name of the library.
              src/main/cpp/MiniPBCoder.cpp
              src/main/cpp/MMBuffer.h
              src/main/cpp/MMBuffer.cpp
+             src/main/cpp/InterProcessLock.h
+             src/main/cpp/InterProcessLock.cpp
+             src/main/cpp/MmapedFile.h
+             src/main/cpp/MmapedFile.cpp
              )
 
 # Searches for a specified prebuilt library and stores the path as a

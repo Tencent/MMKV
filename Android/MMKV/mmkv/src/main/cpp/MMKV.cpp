@@ -19,6 +19,7 @@
 #include "PBUtility.h"
 #include "MiniPBCoder.h"
 #include "MMKVLog.h"
+#include "MmapedFile.h"
 
 using namespace std;
 
@@ -31,11 +32,6 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 static string mappedKVPathWithID(const string& mmapID);
 static string crcPathWithMappedKVPath(const string& path);
-static bool mkpath(char *path);
-static bool isFileExist(const string& nsFilePath);
-static int createFile(const string& nsFilePath);
-static bool removeFile(const string &nsFilePath);
-static MMBuffer* readWholeFile(const char *path);
 
 MMKV::MMKV(const std::string& mmapID) : m_mmapID(mmapID) {
     m_lock = ScopedLock::GenRecursiveLock();
@@ -1021,124 +1017,3 @@ static string crcPathWithMappedKVPath(const string& path) {
     return path + ".crc";
 }
 
-static bool isFileExist(const string& nsFilePath) {
-    if(nsFilePath.empty()) {
-        return false;
-    }
-
-    struct stat temp;
-    return lstat(nsFilePath.c_str(), &temp) == 0;
-}
-
-static int createFile(const string& nsFilePath) {
-    // try create file at once
-    int fd = open(nsFilePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
-    if (fd <= 0) {
-        MMKVError("fail to open:%s, %s", nsFilePath.c_str(), strerror(errno));
-    } else {
-        return fd;
-    }
-
-    // create parent directories
-    char* path = strdup(nsFilePath.c_str());
-    auto parentSucess = mkpath(dirname(path));
-    free(path);
-    if (!parentSucess) {
-        return -1;
-    }
-
-    // create file again
-    fd = open(nsFilePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
-    if (fd <= 0) {
-        MMKVError("fail to open:%s, %s", nsFilePath.c_str(), strerror(errno));
-    }
-    return fd;
-}
-
-static bool mkpath(char *path) {
-    struct stat sb= {};
-    bool done = false;
-    char* slash = path;
-
-    while (!done) {
-        slash += strspn(slash, "/");
-        slash += strcspn(slash, "/");
-
-        done = (*slash == '\0');
-        *slash = '\0';
-
-        if (stat(path, &sb) != 0) {
-            if (errno != ENOENT || mkdir(path, 0777) != 0) {
-                MMKVWarning("%s", path);
-                return false;
-            }
-        } else if (!S_ISDIR(sb.st_mode)) {
-            MMKVWarning("%s: %s", path, strerror(ENOTDIR));
-            return false;
-        }
-
-        *slash = '/';
-    }
-
-    return true;
-}
-
-static bool removeFile(const string &nsFilePath) {
-    int ret = unlink(nsFilePath.c_str());
-    if (ret != 0) {
-        MMKVError("remove file failed. filePath=%s, err=%s", nsFilePath.c_str(), strerror(errno));
-        return false;
-    }
-    return true;
-}
-
-static MMBuffer* readWholeFile(const char *path) {
-    MMBuffer* buffer = nullptr;
-    int fd = open(path, O_RDONLY);
-    if (fd > 0) {
-        auto fileLength = lseek(fd, 0, SEEK_END);
-        if (fileLength > 0) {
-            buffer = new MMBuffer(fileLength);
-            lseek(fd, 0, SEEK_SET);
-            auto readSize = read(fd, buffer->getPtr(), fileLength);
-            if (readSize != -1) {
-//                fileSize = readSize;
-            } else {
-                MMKVWarning("fail to read %s: %s", path, strerror(errno));
-
-                delete buffer;
-                buffer = nullptr;
-            }
-        }
-        close(fd);
-    } else {
-        MMKVWarning("fail to open %s: %s", path, strerror(errno));
-    }
-    return buffer;
-}
-
-#pragma mark - test
-
-void testPBCoder() {
-    string buffer(1024, 0);
-    CodedOutputData output((void*)buffer.data(), buffer.length());
-    output.writeInt32(1024);
-    output.writeString("Hello, std::string");
-    output.writeDouble(3.1415926);
-
-    CodedInputData input((void*)buffer.data(), (int32_t)buffer.length());
-    MMKVInfo("%d", input.readInt32());
-    MMKVInfo("%s", input.readString().c_str());
-    MMKVInfo("%f", input.readDouble());
-
-    unordered_map<string, MMBuffer> map;
-    char str[] = "开心";
-    map["123"] = MMBuffer(str, sizeof(str), true);
-    char file[]  = __FILE__;
-    map[to_string(__LINE__)] = MMBuffer(file, sizeof(file), true);
-    auto result = MiniPBCoder::encodeDataWithObject(map);
-    auto newMap = MiniPBCoder::decodeMap(result);
-    for (auto& itr : newMap) {
-        MMKVInfo("%s = %s", itr.first.c_str(), itr.second.getPtr());
-    }
-}

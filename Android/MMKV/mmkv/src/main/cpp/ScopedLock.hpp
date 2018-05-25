@@ -24,12 +24,14 @@ public:
 
     static pthread_mutex_t* GenRecursiveLock()
     {
-        auto lock = new pthread_mutex_t;
+        pthread_mutexattr_t attr;
+        pthread_mutexattr_init(&attr);
+        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
-        pthread_mutexattr_t Attr;
-        pthread_mutexattr_init(&Attr);
-        pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE);
-        pthread_mutex_init(lock, &Attr);
+        auto lock = new pthread_mutex_t;
+        pthread_mutex_init(lock, &attr);
+
+        pthread_mutexattr_destroy(&attr);
 
         return  lock;
     }
