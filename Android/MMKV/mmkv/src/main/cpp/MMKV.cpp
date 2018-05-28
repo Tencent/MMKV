@@ -24,7 +24,7 @@
 using namespace std;
 
 static unordered_map<std::string, MMKV*>* g_instanceDic;
-static pthread_mutex_t* g_instanceLock;
+static ThreadLock* g_instanceLock;
 static std::string g_rootDir;
 const int DEFAULT_MMAP_SIZE = getpagesize();
 
@@ -33,9 +33,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 static string mappedKVPathWithID(const string& mmapID);
 static string crcPathWithMappedKVPath(const string& path);
 
-MMKV::MMKV(const std::string& mmapID) : m_mmapID(mmapID) {
-    m_lock = ScopedLock::GenRecursiveLock();
-
+MMKV::MMKV(const std::string& mmapID) : m_mmapID(mmapID), m_lock() {
     m_fd = -1;
     m_ptr = nullptr;
     m_size = 0;
@@ -77,8 +75,6 @@ MMKV::~MMKV() {
         close(m_crcFd);
         m_crcFd = -1;
     }
-
-    ScopedLock::DestroyRecursiveLock(m_lock);
 }
 
 MMKV* MMKV::defaultMMKV() {
@@ -87,7 +83,7 @@ MMKV* MMKV::defaultMMKV() {
 
 void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV*>;
-    g_instanceLock = ScopedLock::GenRecursiveLock();
+    g_instanceLock = new ThreadLock();
 
     MMKVInfo("pagesize:%d", DEFAULT_MMAP_SIZE);
 }
@@ -108,7 +104,7 @@ MMKV* MMKV::mmkvWithID(const std::string &mmapID) {
     if (mmapID.empty()) {
         return nullptr;
     }
-    ScopedLock lock(g_instanceLock);
+    ScopedLock lock(g_instanceLock->getLock());
 
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
@@ -120,7 +116,7 @@ MMKV* MMKV::mmkvWithID(const std::string &mmapID) {
 }
 
 void MMKV::onExit() {
-    ScopedLock lock(g_instanceLock);
+    ScopedLock lock(g_instanceLock->getLock());
 
     for (auto &itr : *g_instanceDic) {
         MMKV* kv = itr.second;
@@ -203,7 +199,7 @@ void MMKV::loadFromFile() {
 }
 
 void MMKV::checkLoadData() {
-    //ScopedLock lock(m_lock);
+    //ScopedLock lock(m_lock.getLock());
 
     if (!m_needLoadFromFile) {
         return;
@@ -215,7 +211,7 @@ void MMKV::checkLoadData() {
 void MMKV::clearAll() {
     MMKVInfo("cleaning all values [%s]", m_mmapID.c_str());
 
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
 
     if (m_needLoadFromFile) {
         if (remove(m_path.c_str()) != 0) {
@@ -266,7 +262,7 @@ void MMKV::clearAll() {
 
 void MMKV::clearMemoryState() {
     MMKVInfo("clearMemoryState [%s]", m_mmapID.c_str());
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
 
     m_dic.clear();
 
@@ -427,7 +423,7 @@ bool MMKV::writeAcutalSize(size_t actualSize) {
 }
 
 const MMBuffer& MMKV::getDataForKey(const std::string &key) {
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     checkLoadData();
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
@@ -472,7 +468,7 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     size_t size = keyLength + computeRawVarint32Size((int32_t)keyLength);		// size needed to encode the key
     size += data.length() + computeRawVarint32Size((int32_t)data.length());		// size needed to encode the value
 
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     bool hasEnoughSize = ensureMemorySize(size);
 
     if (!hasEnoughSize || !isFileValid()) {
@@ -510,7 +506,7 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
 }
 
 bool MMKV::fullWriteback() {
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     if (m_needLoadFromFile) {
         return true;
     }
@@ -870,26 +866,26 @@ bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &res
 #pragma mark - enumerate
 
 bool MMKV::containsKey(const std::string &key) {
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     checkLoadData();
     return m_dic.find(key) != m_dic.end();
 }
 
 size_t MMKV::count() {
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     checkLoadData();
     return m_dic.size();
 }
 
 size_t MMKV::totalSize() {
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     checkLoadData();
     return m_size;
 }
 
 //void MMKV::enumerateKeys(std::function<void(const std::string &key, bool &stop)> block) {
 //    MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-//    ScopedLock lock(m_lock);
+//    ScopedLock lock(m_lock.getLock());
 //    checkLoadData();
 //
 //    bool stop = false;
@@ -902,7 +898,7 @@ size_t MMKV::totalSize() {
 //    MMKVInfo("enumerate [%s] finish", m_mmapID.c_str());
 //}
 std::vector<std::string> MMKV::allKeys() {
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     checkLoadData();
 
     vector<string> keys;
@@ -916,7 +912,7 @@ void MMKV::removeValueForKey(const std::string &key) {
     if (key.empty()) {
         return;
     }
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     checkLoadData();
 //    m_dic.erase(key);
 //
@@ -932,7 +928,7 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
         return removeValueForKey(arrKeys[0]);
     }
 
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     checkLoadData();
     for (const auto& key : arrKeys) {
         m_dic.erase(key);
@@ -944,7 +940,7 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
 #pragma mark - file
 
 void MMKV::sync() {
-    ScopedLock lock(m_lock);
+    ScopedLock lock(m_lock.getLock());
     if (m_needLoadFromFile || !isFileValid()) {
         return;
     }

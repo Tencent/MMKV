@@ -5,18 +5,18 @@
 #ifndef MMKV_MMKV_H
 #define MMKV_MMKV_H
 
-#include <pthread.h>
 #include <cstdint>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include "ThreadLock.h"
 
 class CodedOutputData;
 class MMBuffer;
 
 class MMKV {
-    pthread_mutex_t* m_lock;
+    ThreadLock m_lock;
     std::unordered_map<std::string, MMBuffer> m_dic;
     std::string m_path;
     std::string m_crcPath;

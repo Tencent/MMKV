@@ -4,9 +4,19 @@
 
 #include "InterProcessLock.h"
 #include "MmapedFile.h"
+#include "MMKVLog.h"
 
-InterProcessLock::InterProcessLock(const std::string &path) : m_mmapFile(nullptr) {
+enum {
+    UninitializedSegment = 0,
+    InitializingSegment,
+    InitializedSegment,
+};
+
+InterProcessLock::InterProcessLock(const std::string &path) : m_mmaped(nullptr), m_mmapFile(nullptr) {
     m_mmapFile = new MmapedFile(path);
+    m_mmaped = reinterpret_cast<decltype(m_mmaped)>(m_mmapFile->getMemory());
+
+    initLock();
 }
 
 InterProcessLock::~InterProcessLock() {
@@ -14,12 +24,15 @@ InterProcessLock::~InterProcessLock() {
         delete m_mmapFile;
         m_mmapFile = nullptr;
     }
+    m_mmaped = nullptr;
 }
 
 void InterProcessLock::initLock() {
-    int32_t status = InitializingSegment;
-    m_mmaped.m_initStatus.compare_exchange_strong(status, UninitializedSegment);
-    if (status == UninitializedSegment) {
+    int32_t status = UninitializedSegment;
+    auto exchanged = m_mmaped->m_initStatus.compare_exchange_strong(status, InitializingSegment);
+    if (exchanged /*&& status == UninitializedSegment*/) {
+        MMKVInfo("Initializing %s ...", m_mmapFile->getName().c_str());
+
         pthread_mutexattr_t attr;
         pthread_mutexattr_init(&attr);
         pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
@@ -27,17 +40,28 @@ void InterProcessLock::initLock() {
         //pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
         pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
-        pthread_mutex_init(&m_mmaped.m_lock, &attr);
+        pthread_mutex_init(&m_mmaped->m_lock, &attr);
 
         pthread_mutexattr_destroy(&attr);
 
-        m_mmaped.m_initStatus.store(InitializedSegment);
+        m_mmaped->m_initStatus.store(InitializedSegment);
+
+        MMKVInfo("Initialized %s", m_mmapFile->getName().c_str());
     } else if (status == InitializingSegment) {
-        while (m_mmaped.m_initStatus.load() != InitializedSegment) {
+        MMKVInfo("Waiting %s ...", m_mmapFile->getName().c_str());
+        while (m_mmaped->m_initStatus.load() != InitializedSegment) {
             // sleep wait...
         }
-        // return directory?
+        MMKVInfo("Done waiting %s ...", m_mmapFile->getName().c_str());
     } else if (status == InitializedSegment) {
-        // return directory?
+        MMKVInfo("Someone already initialized %s", m_mmapFile->getName().c_str());
+    } else {
+        MMKVError("This should never happen, m_initStatus=%d", status);
+    }
+}
+
+pthread_mutex_t* InterProcessLock::getLock() {
+    if (m_mmaped) {
+        return &m_mmaped->m_lock;
     }
 }

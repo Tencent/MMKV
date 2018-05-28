@@ -70,6 +70,10 @@ size_t MmapedFile::getFileSize() {
     return m_segmentSize;
 }
 
+std::string& MmapedFile::getName() {
+    return m_name;
+}
+
 bool MmapedFile::truncate(size_t length) {
     MMKVInfo("extending [%s] file size from %zu to %zu",
              m_name.c_str(), m_segmentSize, length);

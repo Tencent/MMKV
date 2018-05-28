@@ -23,6 +23,7 @@ public:
 
     size_t getFileSize();
     void* getMemory();
+    std::string& getName();
 
     bool truncate(size_t length);
 };
