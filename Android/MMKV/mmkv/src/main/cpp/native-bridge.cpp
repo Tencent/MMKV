@@ -92,6 +92,7 @@ static vector<string> jarray2vector(JNIEnv* env, jobjectArray array) {
     for (jsize i = 0; i < size; i++) {
         jstring str = (jstring) env->GetObjectArrayElement(array, i);
         keys.push_back(jstring2string(env, str));
+        env->DeleteLocalRef(str);
     }
     return keys;
 }
@@ -100,7 +101,9 @@ static jobjectArray vector2jarray(JNIEnv* env, const vector<string>& arr) {
     if (!arr.empty()) {
         jobjectArray result = env->NewObjectArray(arr.size(), env->FindClass("java/lang/String"), nullptr);
         for (size_t index = 0; index < arr.size(); index++) {
-            env->SetObjectArrayElement(result, index, string2jstring(env, arr[index]));
+            jstring value = string2jstring(env, arr[index]);
+            env->SetObjectArrayElement(result, index, value);
+            env->DeleteLocalRef(value);
         }
         return result;
     }

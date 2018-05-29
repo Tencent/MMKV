@@ -1084,7 +1084,7 @@ static bool mkpath(char *path) {
 }
 
 static bool removeFile(const string &nsFilePath) {
-    int ret = rmdir(nsFilePath.c_str());
+    int ret = unlink(nsFilePath.c_str());
     if (ret != 0) {
         MMKVError("remove file failed. filePath=%s, err=%s", nsFilePath.c_str(), strerror(errno));
         return false;
