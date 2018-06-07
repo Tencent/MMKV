@@ -17,7 +17,7 @@ repositories {
     }
 }
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.5'
+    implementation 'com.tencent:mmkv:1.0.6'
 }
 ```
 
