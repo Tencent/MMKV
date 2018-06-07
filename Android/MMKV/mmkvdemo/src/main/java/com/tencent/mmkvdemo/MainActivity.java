@@ -34,25 +34,20 @@ public class MainActivity extends AppCompatActivity {
         TextView tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(rootDir);
 
-        final int loops = 10000;
+        final int loops = 1000;
 
         final Button button = findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mmkvBaselineTest(loops);
+                sharedPreferencesBaselineTest(loops);
+                sqliteBaselineTest(loops);
             }
         });
 
+        testMMKV();
 //        testInterProcessLock();
-//        testMMKV();
 //        testImportSharedPreferences();
-//        final Handler handler = new Handler();
-//        handler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                mmkvBaselineTest(10000);
-//            }
-//        }, 10000);
 
         m_arrStrings = new String[loops];
         m_arrKeys = new String[loops];
@@ -63,10 +58,6 @@ public class MainActivity extends AppCompatActivity {
             m_arrKeys[index] = "testStr_" + index;
             m_arrIntKeys[index] = "int_" + index;
         }
-
-//        mmkvBaselineTest(loops);
-//        sharedPreferencesBaselineTest(loops);
-//        sqliteBaselineTest(loops);
     }
 
     @Override
