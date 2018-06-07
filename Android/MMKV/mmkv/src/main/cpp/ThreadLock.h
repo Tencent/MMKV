@@ -18,6 +18,10 @@ public:
     pthread_mutex_t* getLock(){
         return &m_lock;
     }
+
+    void lock();
+    bool try_lock();
+    void unlock();
 };
 
 

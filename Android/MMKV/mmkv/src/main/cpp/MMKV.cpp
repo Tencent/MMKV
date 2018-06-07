@@ -2,6 +2,7 @@
 // Created by Ling Guo on 2018/4/4.
 //
 
+#include "MmapedFile.h"
 #include "MMBuffer.h"
 #include "MMKV.h"
 #include <sys/mman.h>
@@ -19,21 +20,35 @@
 #include "PBUtility.h"
 #include "MiniPBCoder.h"
 #include "MMKVLog.h"
-#include "MmapedFile.h"
+#include "InterProcessLock.h"
 
 using namespace std;
 
 static unordered_map<std::string, MMKV*>* g_instanceDic;
-static ThreadLock* g_instanceLock;
+static ThreadLock g_instanceLock;
 static std::string g_rootDir;
 const int DEFAULT_MMAP_SIZE = getpagesize();
 
 #define DEFAULT_MMAP_ID "mmkv.default"
+constexpr int Fixed32Size = computeFixed32Size(0);
 
 static string mappedKVPathWithID(const string& mmapID);
 static string crcPathWithMappedKVPath(const string& path);
 
-MMKV::MMKV(const std::string& mmapID) : m_mmapID(mmapID), m_lock() {
+enum : bool {
+    KeepSequence = false,
+    IncreaseSequence = true,
+};
+
+MMKV::MMKV(const std::string& mmapID, bool interProcess)
+        : m_mmapID(mmapID),
+          m_path(mappedKVPathWithID(mmapID)),
+          m_crcPath(crcPathWithMappedKVPath(m_path)),
+          m_metaFile(m_crcPath),
+          m_fileLock(m_metaFile.getFd()),
+          m_sharedProcessLock(&m_fileLock, SharedLockType),
+          m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType),
+          m_isInterProcess(interProcess) {
     m_fd = -1;
     m_ptr = nullptr;
     m_size = 0;
@@ -44,46 +59,28 @@ MMKV::MMKV(const std::string& mmapID) : m_mmapID(mmapID), m_lock() {
     m_needLoadFromFile = true;
 
     m_crcDigest = 0;
-    m_crcFd = -1;
-    m_crcPtr = nullptr;
 
-    m_path = mappedKVPathWithID(mmapID);
-    m_crcPath = crcPathWithMappedKVPath(m_path);
+    m_sharedProcessLock.m_enable = m_isInterProcess;
+    m_exclusiveProcessLock.m_enable = m_isInterProcess;
 
-    loadFromFile();
+    // sensitive zone
+    {
+        SCOPEDLOCK(m_sharedProcessLock);
+        loadFromFile();
+    }
 }
 
 MMKV::~MMKV() {
-    if (m_ptr != MAP_FAILED && m_ptr != nullptr) {
-        munmap(m_ptr, m_size);
-        m_ptr = nullptr;
-    }
-    if (m_fd > 0) {
-        close(m_fd);
-        m_fd = -1;
-    }
-    if (m_output) {
-        delete m_output;
-        m_output = nullptr;
-    }
-
-    if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
-        munmap(m_crcPtr, computeFixed32Size(0));
-        m_crcPtr = nullptr;
-    }
-    if (m_crcFd > 0) {
-        close(m_crcFd);
-        m_crcFd = -1;
-    }
+    clearMemoryState();
 }
 
-MMKV* MMKV::defaultMMKV() {
-    return mmkvWithID(DEFAULT_MMAP_ID);
+MMKV* MMKV::defaultMMKV(bool interProcess) {
+    return mmkvWithID(DEFAULT_MMAP_ID, interProcess);
 }
 
 void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV*>;
-    g_instanceLock = new ThreadLock();
+    g_instanceLock = ThreadLock();
 
     MMKVInfo("pagesize:%d", DEFAULT_MMAP_SIZE);
 }
@@ -99,24 +96,24 @@ void MMKV::initializeMMKV(const std::string& rootDir) {
     MMKVInfo("root dir: %s", g_rootDir.c_str());
 }
 
-MMKV* MMKV::mmkvWithID(const std::string &mmapID) {
+MMKV* MMKV::mmkvWithID(const std::string &mmapID, bool interProcess) {
 
     if (mmapID.empty()) {
         return nullptr;
     }
-    ScopedLock lock(g_instanceLock->getLock());
+    SCOPEDLOCK(g_instanceLock);
 
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
         return itr->second;
     }
-    auto kv = new MMKV(mmapID);
+    auto kv = new MMKV(mmapID, interProcess);
     (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
 
 void MMKV::onExit() {
-    ScopedLock lock(g_instanceLock->getLock());
+    SCOPEDLOCK(g_instanceLock);
 
     for (auto &itr : *g_instanceDic) {
         MMKV* kv = itr.second;
@@ -132,57 +129,50 @@ const std::string& MMKV::mmapID() {
 #pragma mark - really dirty work
 
 void MMKV::loadFromFile() {
-    if(!isFileExist(m_path)) {
-        m_fd = createFile(m_path);
-    } else {
-        m_fd = open(m_path.c_str(), O_RDWR, S_IRWXU);
-    }
+    m_metaInfo.read(m_metaFile.getMemory());
+
+    m_fd = open(m_path.c_str(), O_RDWR | O_CREAT, S_IRWXU);
     if (m_fd <= 0) {
         MMKVError("fail to open:%s, %s", m_path.c_str(), strerror(errno));
     } else {
         m_size = 0;
-        struct stat st = {};
+        struct stat st = {0};
         if (fstat(m_fd, &st) != -1) {
-            m_size = (size_t)st.st_size;
+            m_size = (size_t) st.st_size;
         }
         // round up to (n * pagesize)
         if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
-            m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1 ) * DEFAULT_MMAP_SIZE;
+            m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
             if (ftruncate(m_fd, m_size) != 0) {
                 MMKVError("fail to truncate [%s] to size %zu, %s", m_mmapID.c_str(), m_size, strerror(errno));
-                m_size = (size_t)st.st_size;
+                m_size = (size_t) st.st_size;
             }
         }
-        m_ptr = (char*)mmap(NULL, m_size, PROT_READ|PROT_WRITE, MAP_SHARED, m_fd, 0);
+        m_ptr = (char *) mmap(NULL, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
         if (m_ptr == MAP_FAILED) {
             MMKVError("fail to mmap [%s], %s", m_mmapID.c_str(), strerror(errno));
         } else {
-            const int offset = computeFixed32Size(0);
-            try {
-                m_actualSize = CodedInputData(m_ptr, offset).readFixed32();
-            } catch (exception& exception) {
-                MMKVError("%s", exception.what());
-            }
+            memcpy(&m_actualSize, m_ptr, Fixed32Size);
             MMKVInfo("loading [%s] with %zu size in total, file size is %zu", m_mmapID.c_str(), m_actualSize, m_size);
+            bool loaded = false;
             if (m_actualSize > 0) {
-                if (m_actualSize < m_size && m_actualSize+offset <= m_size) {
+                if (m_actualSize < m_size && m_actualSize + Fixed32Size <= m_size) {
                     if (checkFileCRCValid()) {
-                        MMBuffer inputBuffer(m_ptr+offset, m_actualSize, true);
+                        MMKVInfo("loading [%s] with crc %zu sequence %zu", m_mmapID.c_str(), m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
+                        MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
                         m_dic = MiniPBCoder::decodeMap(inputBuffer);
-                        m_output = new CodedOutputData(m_ptr+offset+m_actualSize, m_size-offset-m_actualSize);
-                    } else {
-                        writeAcutalSize(0);
-                        m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
-                        recaculateCRCDigest();
+                        m_output = new CodedOutputData(m_ptr + Fixed32Size + m_actualSize, m_size - Fixed32Size - m_actualSize);
+                        loaded = true;
                     }
-                } else {
-                    MMKVError("load [%s] error: %zu size in total, file size is %zu", m_mmapID.c_str(), m_actualSize, m_size);
-                    writeAcutalSize(0);
-                    m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
-                    recaculateCRCDigest();
                 }
-            } else {
-                m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
+            }
+            if (!loaded) {
+                SCOPEDLOCK(m_exclusiveProcessLock);
+
+                if (m_actualSize > 0) {
+                    writeAcutalSize(0);
+                }
+                m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
                 recaculateCRCDigest();
             }
             MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
@@ -193,40 +183,103 @@ void MMKV::loadFromFile() {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
     }
 
-//    [MMKV tryResetFileProtection:m_path];
-//    [MMKV tryResetFileProtection:m_crcPath];
     m_needLoadFromFile = false;
 }
 
-void MMKV::checkLoadData() {
-    //ScopedLock lock(m_lock.getLock());
+// read from last position
+void MMKV::partialLoadFromFile() {
+    m_metaInfo.read(m_metaFile.getMemory());
 
-    if (!m_needLoadFromFile) {
-        return;
+    size_t oldActualSize = m_actualSize;
+    try {
+        m_actualSize = CodedInputData(m_ptr, Fixed32Size).readFixed32();
+    } catch (exception &exception) {
+        MMKVError("%s", exception.what());
     }
-    m_needLoadFromFile = false;
+    MMKVInfo("loading [%s] with file size %zu, oldActualSize %zu, newActualSize %zu",
+             m_mmapID.c_str(), m_size, oldActualSize, m_actualSize);
+
+    if (m_actualSize > 0) {
+        if (m_actualSize < m_size && m_actualSize + Fixed32Size <= m_size) {
+            if (m_actualSize > oldActualSize) {
+                size_t bufferSize = m_actualSize - oldActualSize;
+                MMBuffer inputBuffer(m_ptr + Fixed32Size + oldActualSize, bufferSize, MMBufferNoCopy);
+                // incremental update crc digest
+                m_crcDigest = (uint32_t)crc32(m_crcDigest, (const uint8_t *)inputBuffer.getPtr(), inputBuffer.length());
+                if (m_crcDigest == m_metaInfo.m_crcDigest) {
+                    auto dic = MiniPBCoder::decodeMap(inputBuffer, bufferSize);
+                    for (auto &itr : dic) {
+                        //m_dic[itr.first] = std::move(itr.second);
+                        auto target = m_dic.find(itr.first);
+                        if (target == m_dic.end()) {
+                            m_dic.emplace(itr.first, std::move(itr.second));
+                        } else {
+                            target->second = std::move(itr.second);
+                        }
+                    }
+                    m_output->seek(bufferSize);
+
+                    MMKVInfo("partial loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
+                    return;
+                } else {
+                    MMKVError("m_crcDigest[%zu] != m_metaInfo.m_crcDigest[%zu]", m_crcDigest, m_metaInfo.m_crcDigest);
+                }
+            }
+        }
+    }
+    // something is wrong, do a full load
+    clearMemoryState();
     loadFromFile();
 }
 
-void MMKV::clearAll() {
-    MMKVInfo("cleaning all values [%s]", m_mmapID.c_str());
-
-    ScopedLock lock(m_lock.getLock());
-
+void MMKV::checkLoadData() {
     if (m_needLoadFromFile) {
-        if (remove(m_path.c_str()) != 0) {
-            MMKVError("fail to remove file %s", m_path.c_str());
-        }
+        SCOPEDLOCK(m_sharedProcessLock);
+
+        m_needLoadFromFile = false;
         loadFromFile();
         return;
     }
-
-    m_dic.clear();
-
-    if (m_output) {
-        delete m_output;
+    if (!m_isInterProcess) {
+        return;
     }
-    m_output = nullptr;
+
+    // TODO: atomic lock m_metaFile?
+    MMKVMetaInfo metaInfo;
+    metaInfo.read(m_metaFile.getMemory());
+    if (m_metaInfo.m_sequence != metaInfo.m_sequence) {
+        MMKVInfo("[%s] oldSeq %zu, newSeq %zu", m_mmapID.c_str(), m_metaInfo.m_sequence, metaInfo.m_sequence);
+        SCOPEDLOCK(m_sharedProcessLock);
+
+        clearMemoryState();
+        loadFromFile();
+    } else if (m_metaInfo.m_crcDigest != metaInfo.m_crcDigest) {
+        MMKVInfo("[%s] oldCrc %zu, newCrc %zu", m_mmapID.c_str(), m_metaInfo.m_crcDigest, metaInfo.m_crcDigest);
+        SCOPEDLOCK(m_sharedProcessLock);
+
+        struct stat st = {0};
+        fstat(m_fd, &st);
+        size_t fileSize = (size_t) st.st_size;
+        if (m_size != fileSize) {
+            MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(), m_size, fileSize);
+            clearMemoryState();
+            loadFromFile();
+        } else {
+            partialLoadFromFile();
+        }
+    }
+}
+
+void MMKV::clearAll() {
+    MMKVInfo("cleaning all key-values from [%s]", m_mmapID.c_str());
+    SCOPEDLOCK(m_lock);
+    SCOPEDLOCK(m_exclusiveProcessLock);
+
+    if (m_needLoadFromFile) {
+        removeFile(m_path.c_str());
+        loadFromFile();
+        return;
+    }
 
     if (m_ptr && m_ptr != MAP_FAILED) {
         // for truncate
@@ -235,12 +288,7 @@ void MMKV::clearAll() {
         if (msync(m_ptr, size, MS_SYNC) != 0) {
             MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
         }
-        if (munmap(m_ptr, m_size) != 0) {
-            MMKVError("fail to munmap [%s], %s", m_mmapID.c_str(), strerror(errno));
-        }
     }
-    m_ptr = nullptr;
-
     if (m_fd > 0) {
         if (m_size != DEFAULT_MMAP_SIZE) {
             MMKVInfo("truncating [%s] from %zu to %d", m_mmapID.c_str(), m_size, DEFAULT_MMAP_SIZE);
@@ -248,21 +296,19 @@ void MMKV::clearAll() {
                 MMKVError("fail to truncate [%s] to size %d, %s", m_mmapID.c_str(), DEFAULT_MMAP_SIZE, strerror(errno));
             }
         }
-        if (close(m_fd) != 0) {
-            MMKVError("fail to close [%s], %s", m_mmapID.c_str(), strerror(errno));
-        }
     }
-    m_fd = 0;
-    m_size = 0;
-    m_actualSize = 0;
-    m_crcDigest = 0;
 
+    clearMemoryState();
     loadFromFile();
 }
 
 void MMKV::clearMemoryState() {
     MMKVInfo("clearMemoryState [%s]", m_mmapID.c_str());
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
+    if (m_needLoadFromFile) {
+        return;
+    }
+    m_needLoadFromFile = true;
 
     m_dic.clear();
 
@@ -323,8 +369,6 @@ bool MMKV::protectFromBackgroundWritting(size_t size, std::function<void(CodedOu
 // since we use append mode, when -[setData: forKey:] many times, space may not be enough
 // try a full rewrite to make space
 bool MMKV::ensureMemorySize(size_t newSize) {
-    checkLoadData();
-
     if (!isFileValid()) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
         return false;
@@ -395,11 +439,10 @@ bool MMKV::writeAcutalSize(size_t actualSize) {
 
     char* actualSizePtr = m_ptr;
     char* tmpPtr = NULL;
-    static const int offset = computeFixed32Size(0);
 
     if (m_isInBackground) {
         tmpPtr = m_ptr;
-        if (mlock(tmpPtr, offset) != 0) {
+        if (mlock(tmpPtr, Fixed32Size) != 0) {
             MMKVError("fail to mmap [%s], %d:%s", m_mmapID.c_str(), errno, strerror(errno));
             // just fail on this condition, otherwise app will crash anyway
             return false;
@@ -408,22 +451,17 @@ bool MMKV::writeAcutalSize(size_t actualSize) {
         }
     }
 
-    try {
-        CodedOutputData output(actualSizePtr, offset);
-        output.writeFixed32((int32_t)actualSize);
-    } catch(exception& exception) {
-        MMKVError("%s", exception.what());
-    }
+    memcpy(actualSizePtr, &actualSize, Fixed32Size);
     m_actualSize = actualSize;
 
-    if (tmpPtr && tmpPtr != MAP_FAILED) {
-        munlock(tmpPtr, offset);
+    if (tmpPtr) {
+        munlock(tmpPtr, Fixed32Size);
     }
     return true;
 }
 
 const MMBuffer& MMKV::getDataForKey(const std::string &key) {
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
     checkLoadData();
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
@@ -437,6 +475,9 @@ bool MMKV::setDataForKey(MMBuffer&& data, const std::string &key) {
     if (data.length() == 0 || key.empty()) {
         return false;
     }
+    SCOPEDLOCK(m_lock);
+    SCOPEDLOCK(m_exclusiveProcessLock);
+    checkLoadData();
 
 //    m_dic[key] = std::move(data);
     auto itr = m_dic.find(key);
@@ -468,7 +509,8 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     size_t size = keyLength + computeRawVarint32Size((int32_t)keyLength);		// size needed to encode the key
     size += data.length() + computeRawVarint32Size((int32_t)data.length());		// size needed to encode the value
 
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_exclusiveProcessLock);
+
     bool hasEnoughSize = ensureMemorySize(size);
 
     if (!hasEnoughSize || !isFileValid()) {
@@ -498,7 +540,7 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
                 output->writeData(data);				// note: write size of data
             });
             if (ret) {
-                updateCRCDigest((const uint8_t*)m_ptr+offset+m_actualSize-size, size);
+                updateCRCDigest((const uint8_t*)m_ptr+offset+m_actualSize-size, size, KeepSequence);
             }
         }
         return ret;
@@ -506,7 +548,6 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
 }
 
 bool MMKV::fullWriteback() {
-    ScopedLock lock(m_lock.getLock());
     if (m_needLoadFromFile) {
         return true;
     }
@@ -521,15 +562,15 @@ bool MMKV::fullWriteback() {
     }
 
     auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
+    SCOPEDLOCK(m_exclusiveProcessLock);
     if (allData.length() > 0 && isFileValid()) {
-        int offset = computeFixed32Size(0);
-        if (allData.length() + offset <= m_size) {
+        if (allData.length() + Fixed32Size <= m_size) {
             bool ret = writeAcutalSize(allData.length());
             if (ret) {
                 delete m_output;
-                m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
+                m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
                 ret = protectFromBackgroundWritting(m_actualSize, [&](CodedOutputData *output) {
-                    output->writeRawData(allData);		// note: don't write size of data
+                    output->writeRawData(allData);        // note: don't write size of data
                 });
                 if (ret) {
                     recaculateCRCDigest();
@@ -538,7 +579,7 @@ bool MMKV::fullWriteback() {
             return ret;
         } else {
             // ensureMemorySize will extend file & full rewrite, no need to write back again
-            return ensureMemorySize(allData.length()+offset-m_size);
+            return ensureMemorySize(allData.length() + Fixed32Size - m_size);
         }
     }
     return false;
@@ -556,31 +597,19 @@ bool MMKV::isFileValid() {
 // assuming m_ptr & m_size is set
 bool MMKV::checkFileCRCValid() {
     if (m_ptr && m_ptr != MAP_FAILED) {
-        int offset = computeFixed32Size(0);
-        m_crcDigest = (uint32_t)crc32(0, (const uint8_t*)m_ptr+offset, (uint32_t)m_actualSize);
+        constexpr int offset = computeFixed32Size(0);
+        m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
 
         // for backward compatibility
         if (!isFileExist(m_crcPath)) {
             MMKVInfo("crc32 file not found:%s", m_crcPath.c_str());
             return true;
         }
-        uint32_t crc32 = 0;
-        {
-            MMBuffer* data = readWholeFile(m_crcPath.c_str());
-            if (data) {
-                try {
-                    CodedInputData input(data->getPtr(), data->length());
-                    crc32 = input.readFixed32();
-                } catch (exception& exception) {
-                    MMKVError("%s", exception.what());
-                }
-                delete data;
-            }
-        }
-        if (m_crcDigest == crc32) {
+        m_metaInfo.read(m_metaFile.getMemory());
+        if (m_crcDigest == m_metaInfo.m_crcDigest) {
             return true;
         }
-        MMKVError("check crc [%s] fail, crc32:%u, m_crcDigest:%u", m_mmapID.c_str(), crc32, m_crcDigest);
+        MMKVError("check crc [%s] fail, crc32:%u, m_crcDigest:%u", m_mmapID.c_str(), m_metaInfo.m_crcDigest, m_crcDigest);
     }
     return false;
 }
@@ -588,77 +617,41 @@ bool MMKV::checkFileCRCValid() {
 void MMKV::recaculateCRCDigest() {
     if (m_ptr && m_ptr != MAP_FAILED) {
         m_crcDigest = 0;
-        int offset = computeFixed32Size(0);
-        updateCRCDigest((const uint8_t *)m_ptr+offset, m_actualSize);
+        constexpr int offset = computeFixed32Size(0);
+        updateCRCDigest((const uint8_t *)m_ptr+offset, m_actualSize, IncreaseSequence);
     }
 }
 
-void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
+void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence) {
     if (!ptr) {
         return;
     }
     m_crcDigest = (uint32_t)crc32(m_crcDigest, ptr, (uint32_t)length);
 
-    if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
-        prepareCRCFile();
-    }
-    if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
+    void * crcPtr = m_metaFile.getMemory();
+    if (crcPtr == nullptr || crcPtr == MAP_FAILED) {
         return;
     }
 
-    static const size_t bufferLength = computeFixed32Size(0);
     if (m_isInBackground) {
-        if (mlock(m_crcPtr, bufferLength) != 0) {
-            MMKVError("fail to mlock crc [%s]-%p, %d:%s", m_mmapID.c_str(), m_crcPtr, errno, strerror(errno));
+        if (mlock(crcPtr, m_metaFile.getFileSize()) != 0) {
+            MMKVError("fail to mlock crc [%s]-%p, %d:%s", m_mmapID.c_str(), crcPtr, errno, strerror(errno));
             // just fail on this condition, otherwise app will crash anyway
             return;
         }
     }
 
-    try {
-        CodedOutputData output(m_crcPtr, bufferLength);
-        output.writeFixed32((int32_t)m_crcDigest);
-    } catch (exception& e) {
-        MMKVError("%s", e.what());
+    m_metaInfo.m_crcDigest = m_crcDigest;
+    if (increaseSequence) {
+        m_metaInfo.m_sequence++;
     }
-    if (m_isInBackground) {
-        munlock(m_crcPtr, bufferLength);
+    if (m_metaInfo.m_version == 0) {
+        m_metaInfo.m_version = 1;
     }
-}
+    m_metaInfo.write(crcPtr);
 
-void MMKV::prepareCRCFile() {
-    if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
-        if (!isFileExist(m_crcPath.c_str())) {
-            createFile(m_crcPath.c_str());
-        }
-        m_crcFd = open(m_crcPath.c_str(), O_RDWR, S_IRWXU);
-        if (m_crcFd <= 0) {
-            MMKVError("fail to open:%s, %s", m_crcPath.c_str(), strerror(errno));
-            removeFile(m_crcPath);
-        } else {
-            size_t size = 0;
-            struct stat st = {};
-            if (fstat(m_crcFd, &st) != -1) {
-                size = (size_t)st.st_size;
-            }
-            int fileLegth = DEFAULT_MMAP_SIZE;
-            if (size < fileLegth) {
-                size = fileLegth;
-                if (ftruncate(m_crcFd, size) != 0) {
-                    MMKVError("fail to truncate [%s] to size %zu, %s", m_crcPath.c_str(), size, strerror(errno));
-                    close(m_crcFd);
-                    m_crcFd = -1;
-                    removeFile(m_crcPath);
-                    return;
-                }
-            }
-            m_crcPtr = (char*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, m_crcFd, 0);
-            if (m_crcPtr == MAP_FAILED) {
-                MMKVError("fail to mmap [%s], %s", m_crcPath.c_str(), strerror(errno));
-                close(m_crcFd);
-                m_crcFd = -1;
-            }
-        }
+    if (m_isInBackground) {
+        munlock(crcPtr, m_metaFile.getFileSize());
     }
 }
 
@@ -866,26 +859,26 @@ bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &res
 #pragma mark - enumerate
 
 bool MMKV::containsKey(const std::string &key) {
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
     checkLoadData();
     return m_dic.find(key) != m_dic.end();
 }
 
 size_t MMKV::count() {
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
     checkLoadData();
     return m_dic.size();
 }
 
 size_t MMKV::totalSize() {
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
     checkLoadData();
     return m_size;
 }
 
 //void MMKV::enumerateKeys(std::function<void(const std::string &key, bool &stop)> block) {
 //    MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-//    ScopedLock lock(m_lock.getLock());
+//    SCOPEDLOCK(m_lock);
 //    checkLoadData();
 //
 //    bool stop = false;
@@ -898,7 +891,7 @@ size_t MMKV::totalSize() {
 //    MMKVInfo("enumerate [%s] finish", m_mmapID.c_str());
 //}
 std::vector<std::string> MMKV::allKeys() {
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
     checkLoadData();
 
     vector<string> keys;
@@ -912,11 +905,10 @@ void MMKV::removeValueForKey(const std::string &key) {
     if (key.empty()) {
         return;
     }
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
+    SCOPEDLOCK(m_exclusiveProcessLock);
     checkLoadData();
-//    m_dic.erase(key);
-//
-//    fullWriteback();
+
     removeDataForKey(key);
 }
 
@@ -928,7 +920,8 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
         return removeValueForKey(arrKeys[0]);
     }
 
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
+    SCOPEDLOCK(m_exclusiveProcessLock);
     checkLoadData();
     for (const auto& key : arrKeys) {
         m_dic.erase(key);
@@ -940,10 +933,11 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
 #pragma mark - file
 
 void MMKV::sync() {
-    ScopedLock lock(m_lock.getLock());
+    SCOPEDLOCK(m_lock);
     if (m_needLoadFromFile || !isFileValid()) {
         return;
     }
+    SCOPEDLOCK(m_exclusiveProcessLock);
     if (msync(m_ptr, m_size, MS_SYNC) != 0) {
         MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
     }
@@ -967,8 +961,9 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     MMBuffer* data = readWholeFile(crcPath.c_str());
     if (data) {
         try {
-            CodedInputData input(data->getPtr(), data->length());
-            crcFile = input.readFixed32();
+            MMKVMetaInfo metaInfo;
+            metaInfo.read(data->getPtr());
+            crcFile = metaInfo.m_crcDigest;
         } catch (exception& e) {
             // 有异常，无效
             delete data;

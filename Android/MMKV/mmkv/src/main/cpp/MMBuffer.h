@@ -7,6 +7,11 @@
 
 #include <stdint.h>
 
+enum : bool {
+    MMBufferCopy = false,
+    MMBufferNoCopy = true,
+};
+
 class MMBuffer {
 private:
     void* ptr;
@@ -21,7 +26,7 @@ public:
     }
 
     MMBuffer(size_t length = 0);
-    MMBuffer(void* source, size_t length, bool noCopy = false);
+    MMBuffer(void* source, size_t length, bool noCopy = MMBufferCopy);
     MMBuffer(MMBuffer&& other) noexcept;
     MMBuffer&operator =(MMBuffer&& other) noexcept;
     ~MMBuffer();

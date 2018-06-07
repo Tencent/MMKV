@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.support.annotation.Nullable;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -21,15 +20,31 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // call on program exit
     public static native void onExit();
 
+    static public final boolean SINGLE_THREAD_MODE = false;
+
+    static public final boolean MULTI_THREAD_MODE = true;
+
     public static MMKV mmkvWithID(String mmapID) {
-        long handle = getMMKVWithID(mmapID);
+        long handle = getMMKVWithID(mmapID, false);
+        return new MMKV(handle);
+    }
+
+    public static MMKV mmkvWithID(String mmapID, boolean threadMode) {
+        long handle = getMMKVWithID(mmapID, threadMode);
         return new MMKV(handle);
     }
 
     public static MMKV defaultMMKV() {
-        long handle = getDefaultMMKV();
+        long handle = getDefaultMMKV(false);
         return new MMKV(handle);
     }
+
+    public static MMKV defaultMMKV(boolean threadMode) {
+        long handle = getDefaultMMKV(threadMode);
+        return new MMKV(handle);
+    }
+//    public native void lock();
+//    public native void unlock();
 
     public native String mmapID();
 
@@ -166,23 +181,23 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             return 0;
         }
 
-        for (Map.Entry<String, ?> entry: kvs.entrySet()) {
+        for (Map.Entry<String, ?> entry : kvs.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
             if (value instanceof Boolean) {
-                encodeBool(nativeHandle, key, (boolean)value);
+                encodeBool(nativeHandle, key, (boolean) value);
             } else if (value instanceof Integer) {
-                encodeInt(nativeHandle, key, (int)value);
+                encodeInt(nativeHandle, key, (int) value);
             } else if (value instanceof Long) {
-                encodeLong(nativeHandle, key, (long)value);
+                encodeLong(nativeHandle, key, (long) value);
             } else if (value instanceof Float) {
-                encodeFloat(nativeHandle, key, (float)value);
+                encodeFloat(nativeHandle, key, (float) value);
             } else if (value instanceof Double) {
-                encodeDouble(nativeHandle, key, (double)value);
+                encodeDouble(nativeHandle, key, (double) value);
             } else if (value instanceof String) {
-                encodeString(nativeHandle, key, (String)value);
+                encodeString(nativeHandle, key, (String) value);
             } else if (value instanceof Set) {
-                encode(key, (Set<String>)value);
+                encode(key, (Set<String>) value);
             } else {
                 System.out.println("unknown type: " + value.getClass());
             }
@@ -314,9 +329,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void initialize(String rootDir);
 
-    private native static long getMMKVWithID(String mmapID);
+    private native static long getMMKVWithID(String mmapID, boolean isMultiThread);
 
-    private native static long getDefaultMMKV();
+    private native static long getDefaultMMKV(boolean isMultiThread);
 
     private native boolean encodeBool(long handle, String key, boolean value);
 

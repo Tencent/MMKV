@@ -1,8 +1,13 @@
 package com.tencent.mmkvdemo;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.tencent.mmkv.MMKV;
@@ -29,7 +34,16 @@ public class MainActivity extends AppCompatActivity {
         TextView tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(rootDir);
 
+        final int loops = 10000;
 
+        final Button button = findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mmkvBaselineTest(loops);
+            }
+        });
+
+//        testInterProcessLock();
 //        testMMKV();
 //        testImportSharedPreferences();
 //        final Handler handler = new Handler();
@@ -40,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }, 10000);
 
-        int loops = 1000;
         m_arrStrings = new String[loops];
         m_arrKeys = new String[loops];
         m_arrIntKeys = new String[loops];
@@ -51,15 +64,33 @@ public class MainActivity extends AppCompatActivity {
             m_arrIntKeys[index] = "int_" + index;
         }
 
-        mmkvBaselineTest(loops);
-        sharedPreferencesBaselineTest(loops);
-        sqliteBaselineTest(loops);
+//        mmkvBaselineTest(loops);
+//        sharedPreferencesBaselineTest(loops);
+//        sqliteBaselineTest(loops);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         MMKV.onExit();
+    }
+
+    private void testInterProcessLock() {
+        final String key = "interprocess_int";
+        final MMKV kv = MMKV.defaultMMKV(MMKV.MULTI_THREAD_MODE);
+        kv.encode(key, 1024);
+
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(MyService.KEY_NAME, key);
+        intent.putExtra(MyService.BUNDLED_LISTENER, new ResultReceiver(new Handler()) {
+            @Override
+            protected void onReceiveResult(int resultCode, Bundle resultData) {
+                super.onReceiveResult(resultCode, resultData);
+                int value = kv.decodeInt(key);
+                System.out.println(key + " = " + value);
+            }
+        });
+        startService(intent);
     }
 
     private void testMMKV() {
@@ -105,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
 
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID("baseline2");
+        MMKV mmkv = MMKV.mmkvWithID("baseline2", MMKV.SINGLE_THREAD_MODE);
         for (int index = 0; index < loops; index++) {
 //            int tmp = r.nextInt();
 //            String key = m_arrIntKeys[index];

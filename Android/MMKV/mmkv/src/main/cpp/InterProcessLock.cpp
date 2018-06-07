@@ -3,65 +3,110 @@
 //
 
 #include "InterProcessLock.h"
-#include "MmapedFile.h"
+#include <unistd.h>
 #include "MMKVLog.h"
 
-enum {
-    UninitializedSegment = 0,
-    InitializingSegment,
-    InitializedSegment,
-};
-
-InterProcessLock::InterProcessLock(const std::string &path) : m_mmaped(nullptr), m_mmapFile(nullptr) {
-    m_mmapFile = new MmapedFile(path);
-    m_mmaped = reinterpret_cast<decltype(m_mmaped)>(m_mmapFile->getMemory());
-
-    initLock();
-}
-
-InterProcessLock::~InterProcessLock() {
-    if (m_mmapFile) {
-        delete m_mmapFile;
-        m_mmapFile = nullptr;
+static short LockType2FlockType(LockType lockType) {
+    switch (lockType) {
+        case SharedLockType :
+            return F_RDLCK;
+        case ExclusiveLockType:
+            return F_WRLCK;
     }
-    m_mmaped = nullptr;
 }
 
-void InterProcessLock::initLock() {
-    int32_t status = UninitializedSegment;
-    auto exchanged = m_mmaped->m_initStatus.compare_exchange_strong(status, InitializingSegment);
-    if (exchanged /*&& status == UninitializedSegment*/) {
-        MMKVInfo("Initializing %s ...", m_mmapFile->getName().c_str());
+FileLock::FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {
+    m_lockInfo.l_type = F_WRLCK;
+    m_lockInfo.l_start = 0;
+    m_lockInfo.l_whence = SEEK_SET;
+    m_lockInfo.l_len = 0;
+    m_lockInfo.l_pid = 0;
+}
 
-        pthread_mutexattr_t attr;
-        pthread_mutexattr_init(&attr);
-        pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-        // TODO: robust mutex
-        //pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+bool FileLock::doLock(LockType lockType, int cmd) {
+    bool unLockFirstIfNeeded = false;
 
-        pthread_mutex_init(&m_mmaped->m_lock, &attr);
-
-        pthread_mutexattr_destroy(&attr);
-
-        m_mmaped->m_initStatus.store(InitializedSegment);
-
-        MMKVInfo("Initialized %s", m_mmapFile->getName().c_str());
-    } else if (status == InitializingSegment) {
-        MMKVInfo("Waiting %s ...", m_mmapFile->getName().c_str());
-        while (m_mmaped->m_initStatus.load() != InitializedSegment) {
-            // sleep wait...
+    if (lockType == SharedLockType) {
+        m_sharedLockCount++;
+        // don't want shared-lock to break any existing locks
+        if (m_sharedLockCount > 1 || m_exclusiveLockCount > 0) {
+            return true;
         }
-        MMKVInfo("Done waiting %s ...", m_mmapFile->getName().c_str());
-    } else if (status == InitializedSegment) {
-        MMKVInfo("Someone already initialized %s", m_mmapFile->getName().c_str());
     } else {
-        MMKVError("This should never happen, m_initStatus=%d", status);
+        m_exclusiveLockCount++;
+        // don't want exclusive-lock to break existing exclusive-locks
+        if (m_exclusiveLockCount > 1) {
+            return true;
+        }
+        // prevent deadlock
+        if (m_sharedLockCount > 0) {
+            unLockFirstIfNeeded = true;
+        }
+    }
+
+    m_lockInfo.l_type = LockType2FlockType(lockType);
+    if (unLockFirstIfNeeded) {
+        // try lock
+        auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        if (ret == 0) {
+            return true;
+        }
+        // lets be gentleman: unlock my shared-lock to prevent deadlock
+        auto type = m_lockInfo.l_type;
+        m_lockInfo.l_type = F_UNLCK;
+        fcntl(m_fd, F_SETLK, &m_lockInfo);
+        m_lockInfo.l_type = type;
+    }
+
+    auto ret = fcntl(m_fd, cmd, &m_lockInfo);
+    if (ret != 0) {
+        MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        return false;
+    } else {
+        return true;
     }
 }
 
-pthread_mutex_t* InterProcessLock::getLock() {
-    if (m_mmaped) {
-        return &m_mmaped->m_lock;
+bool FileLock::lock(LockType lockType) {
+    return doLock(lockType, F_SETLKW);
+}
+
+bool FileLock::try_lock(LockType lockType) {
+    return doLock(lockType, F_SETLK);
+}
+
+bool FileLock::unlock(LockType lockType) {
+    bool unlockToSharedLock = false;
+
+    if (lockType == SharedLockType) {
+        if (m_sharedLockCount == 0) {
+            return false;
+        }
+        m_sharedLockCount--;
+        // don't want shared-lock to break any existing locks
+        if (m_sharedLockCount > 0 || m_exclusiveLockCount > 0) {
+            return true;
+        }
+    } else {
+        if (m_exclusiveLockCount == 0) {
+            return false;
+        }
+        m_exclusiveLockCount--;
+        if (m_exclusiveLockCount > 0) {
+            return true;
+        }
+        // restore shared-lock when all exclusive-locks are done
+        if (m_sharedLockCount > 0) {
+            unlockToSharedLock = true;
+        }
+    }
+
+    m_lockInfo.l_type = (short)(unlockToSharedLock ? F_RDLCK : F_UNLCK);
+    auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+    if (ret != 0) {
+        MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        return false;
+    } else {
+        return true;
     }
 }

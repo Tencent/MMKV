@@ -6,6 +6,8 @@
 #define MMKV_MMKVLOG_H
 
 #include <android/log.h>
+#include <cstring>
+#include <errno.h>
 
 #define APPNAME "MMKV"
 

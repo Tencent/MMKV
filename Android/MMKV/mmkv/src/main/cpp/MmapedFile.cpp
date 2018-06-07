@@ -18,13 +18,9 @@ using namespace std;
 const int DEFAULT_MMAP_SIZE = getpagesize();
 
 MmapedFile::MmapedFile(const std::string &path) : m_name(path) {
-    if (!isFileExist(m_name.c_str())) {
-        createFile(m_name.c_str());
-    }
-    m_fd = open(m_name.c_str(), O_RDWR, S_IRWXU);
+    m_fd = open(m_name.c_str(), O_RDWR | O_CREAT, S_IRWXU);
     if (m_fd <= 0) {
         MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
-        removeFile(m_name);
     } else {
         m_segmentSize = 0;
         struct stat st = {};
@@ -60,18 +56,6 @@ MmapedFile::~MmapedFile() {
         close(m_fd);
         m_fd = -1;
     }
-}
-
-void* MmapedFile::getMemory() {
-    return m_segmentPtr;
-}
-
-size_t MmapedFile::getFileSize() {
-    return m_segmentSize;
-}
-
-std::string& MmapedFile::getName() {
-    return m_name;
 }
 
 bool MmapedFile::truncate(size_t length) {
@@ -163,7 +147,7 @@ bool mkpath(char *path) {
 }
 
 bool removeFile(const string &nsFilePath) {
-    int ret = rmdir(nsFilePath.c_str());
+    int ret = unlink(nsFilePath.c_str());
     if (ret != 0) {
         MMKVError("remove file failed. filePath=%s, err=%s", nsFilePath.c_str(), strerror(errno));
         return false;

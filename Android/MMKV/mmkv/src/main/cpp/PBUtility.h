@@ -72,12 +72,24 @@ static inline int64_t logicalRightShift64(int64_t value, int32_t spaces) {
     return convertUInt64ToInt64((convertInt64ToUInt64(value) >> spaces));
 }
 
-uint32_t computeDoubleSize(double value);
-uint32_t computeFloatSize(float value);
-uint32_t computeUInt64Size(int64_t value);
+#define LITTLE_ENDIAN_32_SIZE 4
+#define LITTLE_ENDIAN_64_SIZE 8
+
+constexpr uint32_t computeDoubleSize(double value) {
+    return LITTLE_ENDIAN_64_SIZE;
+}
+
+constexpr uint32_t computeFloatSize(float value) {
+    return LITTLE_ENDIAN_32_SIZE;
+}
+
 uint32_t computeInt64Size(int64_t value);
 uint32_t computeInt32Size(int32_t value);
-uint32_t computeFixed32Size(int32_t value);
+
+constexpr uint32_t computeFixed32Size(int32_t value) {
+    return LITTLE_ENDIAN_32_SIZE;
+}
+
 uint32_t computeBoolSize(bool value);
 // TODO: string & buffer support
 //int32_t computeStringSize(NSString* value);

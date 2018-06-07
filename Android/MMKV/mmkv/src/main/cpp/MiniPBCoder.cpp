@@ -287,11 +287,16 @@ std::vector<std::string> MiniPBCoder::decodeOneSet() {
     return v;
 }
 
-std::unordered_map<std::string, MMBuffer> MiniPBCoder::decodeOneMap() {
+std::unordered_map<std::string, MMBuffer> MiniPBCoder::decodeOneMap(size_t size) {
     std::unordered_map<std::string, MMBuffer> dic;
 
-    int32_t length = m_inputStream->readRawVarint32();
-    int32_t	limit = m_inputStream->pushLimit(static_cast<int32_t>(m_inputData->length()) - computeRawVarint32Size(length));
+    int32_t	limit = INT_MAX;
+    if (size > 0) {
+        limit = m_inputStream->pushLimit(size);
+    } else {
+        int32_t length = m_inputStream->readRawVarint32();
+        limit = m_inputStream->pushLimit(static_cast<int32_t>(m_inputData->length()) - computeRawVarint32Size(length));
+    }
 
     while (!m_inputStream->isAtEnd()) {
         const auto& key = m_inputStream->readString();
@@ -330,11 +335,11 @@ MMBuffer MiniPBCoder::decodeBytes(const MMBuffer &oData) {
     return MMBuffer(0);
 }
 
-std::unordered_map<std::string, MMBuffer> MiniPBCoder::decodeMap(const MMBuffer& oData) {
+std::unordered_map<std::string, MMBuffer> MiniPBCoder::decodeMap(const MMBuffer& oData, size_t size) {
     std::unordered_map<std::string, MMBuffer> dic;
     try {
         MiniPBCoder oCoder(&oData);
-        dic = oCoder.decodeOneMap();
+        dic = oCoder.decodeOneMap(size);
     } catch(const exception& e) {
         MMKVError("%s", e.what());
     }

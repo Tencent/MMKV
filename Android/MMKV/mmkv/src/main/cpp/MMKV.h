@@ -11,12 +11,19 @@
 #include <unordered_map>
 #include <functional>
 #include "ThreadLock.h"
+#include "InterProcessLock.h"
+#include "MmapedFile.h"
+#include "MMKVMetaInfo.hpp"
 
 class CodedOutputData;
 class MMBuffer;
 
+enum : bool {
+    MMKV_SINGLE_PROCESS = false,
+    MMKV_MULTI_PROCESS = true,
+};
+
 class MMKV {
-    ThreadLock m_lock;
     std::unordered_map<std::string, MMBuffer> m_dic;
     std::string m_path;
     std::string m_crcPath;
@@ -31,17 +38,22 @@ class MMKV {
     bool m_needLoadFromFile;
 
     uint32_t m_crcDigest;
-    int m_crcFd;
-    char* m_crcPtr;
+    MmapedFile m_metaFile;
+    MMKVMetaInfo m_metaInfo;
+
+    ThreadLock m_lock;
+    FileLock m_fileLock;
+    InterProcessLock m_sharedProcessLock;
+    InterProcessLock m_exclusiveProcessLock;
 
     void loadFromFile();
+    void partialLoadFromFile();
     void checkLoadData();
     void clearMemoryState();
     bool isFileValid();
     bool checkFileCRCValid();
     void recaculateCRCDigest();
-    void updateCRCDigest(const uint8_t* ptr, size_t length);
-    void prepareCRCFile();
+    void updateCRCDigest(const uint8_t* ptr, size_t length, bool increaseSequence = false);
     bool writeAcutalSize(size_t actualSize);
     bool ensureMemorySize(size_t newSize);
     bool fullWriteback();
@@ -53,22 +65,28 @@ class MMKV {
     bool removeDataForKey(const std::string& key);
     bool appendDataWithKey(const MMBuffer& data, const std::string& key);
 
+    // just forbid it for possibly misuse
+    MMKV(const MMKV& other) = delete;
+    MMKV& operator =(const MMKV& other) = delete;
+
 public:
-    MMKV(const std::string& mmapID);
+    MMKV(const std::string& mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
     ~MMKV();
 
     static void initializeMMKV(const std::string& rootDir);
 
     // a generic purpose instance
-    static MMKV* defaultMMKV();
+    static MMKV* defaultMMKV(bool interProcess = MMKV_SINGLE_PROCESS);
 
     /* mmapID: any unique ID (com.tencent.xin.pay, etc)
      * if you want a per-user mmkv, you could merge user-id within mmapID */
-    static MMKV* mmkvWithID(const std::string& mmapID);
+    static MMKV* mmkvWithID(const std::string& mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
 
     static void onExit();
 
     const std::string& mmapID();
+
+    const bool m_isInterProcess;
 
     bool setStringForKey(const std::string& value, const std::string& key);
 

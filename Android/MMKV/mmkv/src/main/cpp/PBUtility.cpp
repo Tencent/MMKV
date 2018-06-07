@@ -6,37 +6,6 @@
 #include "WireFormat.h"
 
 
-static const uint32_t LITTLE_ENDIAN_32_SIZE = 4;
-static const uint32_t LITTLE_ENDIAN_64_SIZE = 8;
-
-
-/**
- * Compute the number of bytes that would be needed to encode a
- * {@code double} field, including tag.
- */
-uint32_t computeDoubleSize(double value) {
-    return LITTLE_ENDIAN_64_SIZE;
-}
-
-
-/**
- * Compute the number of bytes that would be needed to encode a
- * {@code float} field, including tag.
- */
-uint32_t computeFloatSize(float value) {
-    return LITTLE_ENDIAN_32_SIZE;
-}
-
-
-/**
- * Compute the number of bytes that would be needed to encode a
- * {@code uint64} field, including tag.
- */
-uint32_t computeUInt64Size(int64_t value) {
-    return computeRawVarint64Size(value);
-}
-
-
 /**
  * Compute the number of bytes that would be needed to encode an
  * {@code int64} field, including tag.
@@ -57,15 +26,6 @@ uint32_t computeInt32Size(int32_t value) {
         // Must sign-extend.
         return 10;
     }
-}
-
-
-/**
- * Compute the number of bytes that would be needed to encode a
- * {@code fixed32} field, including tag.
- */
-uint32_t computeFixed32Size(int32_t value) {
-    return LITTLE_ENDIAN_32_SIZE;
 }
 
 

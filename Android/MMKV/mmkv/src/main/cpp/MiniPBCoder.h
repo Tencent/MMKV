@@ -43,7 +43,7 @@ private:
     std::string decodeOneString();
     MMBuffer decodeOneBytes();
     std::vector<std::string> decodeOneSet();
-    std::unordered_map<std::string, MMBuffer> decodeOneMap();
+    std::unordered_map<std::string, MMBuffer> decodeOneMap(size_t size = 0);
 
 public:
 
@@ -55,7 +55,7 @@ public:
     static std::string decodeString(const MMBuffer& oData);
     static MMBuffer decodeBytes(const MMBuffer& oData);
     static std::vector<std::string> decodeSet(const MMBuffer& oData);
-    static std::unordered_map<std::string, MMBuffer> decodeMap(const MMBuffer& oData);
+    static std::unordered_map<std::string, MMBuffer> decodeMap(const MMBuffer& oData, size_t size = 0);
 };
 
 

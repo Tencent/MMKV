@@ -5,31 +5,53 @@
 #ifndef MMKV_SCOPEDLOCK_HPP
 #define MMKV_SCOPEDLOCK_HPP
 
-#include <pthread.h>
+#include "MMKVLog.h"
 
+template <typename T>
 class ScopedLock {
-    pthread_mutex_t *m_oLock;
+    T *m_lock;
 
     // just forbid it for possibly misuse
-    ScopedLock(const ScopedLock& other) = delete;
-    ScopedLock& operator =(const ScopedLock& other) = delete;
+    ScopedLock(const ScopedLock<T> &other) = delete;
+
+    ScopedLock &operator=(const ScopedLock<T> &other) = delete;
 
 public:
-    ScopedLock(pthread_mutex_t *oLock)
-            : m_oLock(oLock)
-    {
-        if (m_oLock) {
-            pthread_mutex_lock(m_oLock);
-        }
+    ScopedLock(T *oLock) : m_lock(oLock) {
+        lock();
     }
 
     ~ScopedLock() {
-        if (m_oLock) {
-            pthread_mutex_unlock(m_oLock);
-            m_oLock = nullptr;
+        unlock();
+        m_lock = nullptr;
+    }
+
+    void lock() {
+        if (m_lock) {
+            m_lock->lock();
+        }
+    }
+
+    bool try_lock() {
+        if (m_lock) {
+            return m_lock->try_lock();
+        }
+        return false;
+    }
+
+    void unlock() {
+        if (m_lock) {
+            m_lock->unlock();
         }
     }
 };
+
+
+#define SCOPEDLOCK(lock)            _SCOPEDLOCK(lock, __COUNTER__)
+#define _SCOPEDLOCK(lock, counter)  __SCOPEDLOCK(lock, counter)
+#define __SCOPEDLOCK(lock, counter) ScopedLock<decltype(lock)> __scopedLock##counter(&lock)
+//#include <type_traits>
+//#define __SCOPEDLOCK(lock, counter) ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
 
 
 #endif //MMKV_SCOPEDLOCK_HPP

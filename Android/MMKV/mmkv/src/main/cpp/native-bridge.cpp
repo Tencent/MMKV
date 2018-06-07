@@ -20,40 +20,6 @@ string getFilesDir(JNIEnv *env, jobject obj) {
     return result;
 }
 
-void testMMKV(JNIEnv *env, jobject obj) {
-    string root = getFilesDir(env, obj);
-    MMKV::initializeMMKV(root + "/mmkv");
-    MMKV* kv = MMKV::defaultMMKV();
-
-//    kv->setInt32(__LINE__, "int");
-    MMKVInfo("%d", kv->getInt32ForKey("int"));
-
-//    kv->setInt64(std::numeric_limits<int64_t>::min(), "int64");
-    MMKVInfo("int64:%ld", kv->getInt64ForKey("int64"));
-
-//    kv->setUInt64(std::numeric_limits<uint64_t>::max(), "uint64");
-    MMKVInfo("uint64:%lu", kv->getInt64ForKey("uint64"));
-
-//    kv->setFloat(-3.1415926f, "float");
-    MMKVInfo("float:%f", kv->getFloatForKey("float"));
-
-//    kv->setDouble(std::numeric_limits<double>::max(), "double");
-    MMKVInfo("double:%f", kv->getDoubleForKey("double"));
-
-//    kv->setStringForKey(__FILE__, "string");
-    string str;
-    kv->getStringForKey("string", str);
-    MMKVInfo("%s", str.c_str());
-}
-
-extern "C" JNIEXPORT JNICALL
-jstring Java_com_tencent_mmkv_MainActivity_stringFromJNI(JNIEnv *env, jobject obj) {
-//    testPBCoder();
-//    testMMKV(env, obj);
-    string root = getFilesDir(env, obj);
-    return env->NewStringUTF(root.c_str());
-}
-
 extern "C" JNIEXPORT JNICALL
 void Java_com_tencent_mmkv_MMKV_initialize(JNIEnv *env, jobject obj, jstring rootDir) {
     const char *kstr = env->GetStringUTFChars(rootDir, nullptr);
@@ -111,15 +77,15 @@ static jobjectArray vector2jarray(JNIEnv* env, const vector<string>& arr) {
 }
 
 extern "C" JNIEXPORT JNICALL
-jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(JNIEnv *env, jobject obj, jstring mmapID) {
+jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(JNIEnv *env, jobject obj, jstring mmapID, jboolean isMultiThread) {
     string str = jstring2string(env, mmapID);
-    MMKV* kv = MMKV::mmkvWithID(str);
+    MMKV* kv = MMKV::mmkvWithID(str, isMultiThread);
     return (jlong)kv;
 }
 
 extern "C" JNIEXPORT JNICALL
-jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNIEnv *env, jobject obj) {
-    MMKV* kv = MMKV::defaultMMKV();
+jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNIEnv *env, jobject obj, jboolean isMultiThread) {
+    MMKV* kv = MMKV::defaultMMKV(isMultiThread);
     return (jlong)kv;
 }
 
@@ -399,3 +365,20 @@ jobjectArray Java_com_tencent_mmkv_MMKV_decodeStringSet(JNIEnv *env, jobject ins
     }
     return nullptr;
 }
+/*
+extern "C" JNIEXPORT void JNICALL
+Java_com_tencent_mmkv_MMKV_lock(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->lock();
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_tencent_mmkv_MMKV_unlock(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->unlock();
+    }
+}
+*/

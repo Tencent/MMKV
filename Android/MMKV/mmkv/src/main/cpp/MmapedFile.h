@@ -21,9 +21,21 @@ public:
     MmapedFile(const std::string& path);
     ~MmapedFile();
 
-    size_t getFileSize();
-    void* getMemory();
-    std::string& getName();
+    size_t getFileSize() {
+        return m_segmentSize;
+    }
+
+    void* getMemory() {
+        return m_segmentPtr;
+    }
+
+    std::string& getName() {
+        return m_name;
+    }
+
+    int getFd() {
+        return m_fd;
+    }
 
     bool truncate(size_t length);
 };
