@@ -167,6 +167,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public native void clearAll();
 
+    // call on memory warning
+    public native void clearMemoryCache();
+
     // you don't need to call this, really, I mean it
     // unless you care about out of battery
     public native void sync();

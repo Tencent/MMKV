@@ -49,7 +49,6 @@ class MMKV {
     void loadFromFile();
     void partialLoadFromFile();
     void checkLoadData();
-    void clearMemoryState();
     bool isFileValid();
     bool checkFileCRCValid();
     void recaculateCRCDigest();
@@ -135,6 +134,9 @@ public:
     void removeValuesForKeys(const std::vector<std::string>& arrKeys);
 
     void clearAll();
+
+    // call on memory warning
+    void clearMemoryState();
 
     // you don't need to call this, really, I mean it
     // unless you care about out of battery

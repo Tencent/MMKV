@@ -122,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("bool: " + kv.decodeBool("bool"));
         kv.removeValuesForKeys(new String[]{"int", "long"});
 //        kv.clearAll();
+        kv.clearMemoryCache();
         System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
         System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
     }

@@ -382,3 +382,11 @@ Java_com_tencent_mmkv_MMKV_unlock(JNIEnv *env, jobject instance) {
     }
 }
 */
+
+extern "C" JNIEXPORT JNICALL
+void Java_com_tencent_mmkv_MMKV_clearMemoryCache(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->clearMemoryState();
+    }
+}
