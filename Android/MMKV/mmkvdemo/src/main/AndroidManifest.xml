@@ -29,6 +29,12 @@
             android:exported="false"
             android:process=":mmkvdemo_svr_1">
         </service>
+
+        <provider android:name=".MultiProcessSharedPreferences"
+            android:authorities=".MultiProcessSharedPreferences"
+            android:process=".MultiProcessSharedPreferences"
+            android:exported="false">
+        </provider>
     </application>
 
 </manifest>
