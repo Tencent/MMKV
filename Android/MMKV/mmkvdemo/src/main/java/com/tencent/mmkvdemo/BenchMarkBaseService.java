@@ -1,12 +1,8 @@
 package com.tencent.mmkvdemo;
 
-import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.os.ResultReceiver;
 import android.support.annotation.Nullable;
 
 import com.tencent.mmkv.MMKV;
@@ -40,7 +36,7 @@ public abstract class BenchMarkBaseService extends Service {
         {
             long startTime = System.currentTimeMillis();
 
-            MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
+            MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
 
             long endTime = System.currentTimeMillis();
             System.out.println("load [" + MMKV_ID + "]: " + (endTime - startTime) + "ms");
@@ -73,7 +69,7 @@ public abstract class BenchMarkBaseService extends Service {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
@@ -105,7 +101,7 @@ public abstract class BenchMarkBaseService extends Service {
     private void mmkvBatchReadInt(String caller) {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = mmkv.decodeInt(key);
@@ -134,7 +130,7 @@ public abstract class BenchMarkBaseService extends Service {
     private void mmkvBatchWriteString(String caller) {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
         for (int index = 0; index < m_loops; index++) {
             final String valueStr = m_arrStrings[index];
             final String strKey = m_arrKeys[index];
@@ -165,7 +161,7 @@ public abstract class BenchMarkBaseService extends Service {
     private void mmkvBatchReadString(String caller) {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
         for (int index = 0; index < m_loops; index++) {
             final String strKey = m_arrKeys[index];
             final String tmpStr = mmkv.decodeString(strKey);
