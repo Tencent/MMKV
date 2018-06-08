@@ -66,6 +66,10 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     protected void batchWriteInt(String caller) {
+        mmkvBatchWriteInt(caller);
+        sqliteWriteInt(caller);
+    }
+    private void mmkvBatchWriteInt(String caller) {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
@@ -76,10 +80,29 @@ public abstract class BenchMarkBaseService extends Service {
             mmkv.encode(key, tmp);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " batchWriteInt: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println(caller + " mmkv write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+    }
+    private void sqliteWriteInt(String caller) {
+        Random r = new Random();
+        long startTime = System.currentTimeMillis();
+
+        SQLIteKV sqlIteKV = new SQLIteKV(this);
+//        sqlIteKV.beginTransaction();
+        for (int index = 0; index < m_loops; index++) {
+            int tmp = r.nextInt();
+            String key = m_arrIntKeys[index];
+            sqlIteKV.putInt(key, tmp);
+        }
+//        sqlIteKV.endTransaction();
+        long endTime = System.currentTimeMillis();
+        System.out.println(caller + " sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
 
     protected void batchReadInt(String caller) {
+        mmkvBatchReadInt(caller);
+        sqliteReadInt(caller);
+    }
+    private void mmkvBatchReadInt(String caller) {
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
@@ -88,10 +111,27 @@ public abstract class BenchMarkBaseService extends Service {
             int tmp = mmkv.decodeInt(key);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " batchReadInt: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println(caller + " mmkv read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+    }
+    private void sqliteReadInt(String caller) {
+        long startTime = System.currentTimeMillis();
+
+        SQLIteKV sqlIteKV = new SQLIteKV(this);
+//        sqlIteKV.beginTransaction();
+        for (int index = 0; index < m_loops; index++) {
+            String key = m_arrIntKeys[index];
+            int tmp = sqlIteKV.getInt(key);
+        }
+//        sqlIteKV.endTransaction();
+        long endTime = System.currentTimeMillis();
+        System.out.println(caller + " sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
 
     protected void batchWriteString(String caller) {
+        mmkvBatchWriteString(caller);
+        sqliteWriteString(caller);
+    }
+    private void mmkvBatchWriteString(String caller) {
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
@@ -101,10 +141,28 @@ public abstract class BenchMarkBaseService extends Service {
             mmkv.encode(strKey, valueStr);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " batchWriteString: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println(caller + " mmkv write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+    }
+    private void sqliteWriteString(String caller) {
+        long startTime = System.currentTimeMillis();
+
+        SQLIteKV sqlIteKV = new SQLIteKV(this);
+//        sqlIteKV.beginTransaction();
+        for (int index = 0; index < m_loops; index++) {
+            final String value = m_arrStrings[index];
+            final String key = m_arrKeys[index];
+            sqlIteKV.putString(key, value);
+        }
+//        sqlIteKV.endTransaction();
+        long endTime = System.currentTimeMillis();
+        System.out.println(caller + " sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
 
     protected void batchReadString(String caller) {
+        mmkvBatchReadString(caller);
+        sqliteReadString(caller);
+    }
+    private void mmkvBatchReadString(String caller) {
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_THREAD_MODE);
@@ -113,40 +171,20 @@ public abstract class BenchMarkBaseService extends Service {
             final String tmpStr = mmkv.decodeString(strKey);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " batchReadString: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println(caller + " mmkv read String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+    private void sqliteReadString(String caller) {
+        long startTime = System.currentTimeMillis();
 
-    static class MMKVTask extends AsyncTask<ResultReceiver, Void, Void> {
-        @Override
-        protected Void doInBackground(ResultReceiver... params) {
-            MMKV kv = MMKV.defaultMMKV(MMKV.MULTI_THREAD_MODE);
-            int value = kv.decodeInt(m_key);
-            System.out.println(m_key + " = " + value);
-            value++;
-            kv.encode(m_key, value);
-//            kv.clearAll();
-
-            ResultReceiver receiver = params[0];
-            Bundle bundle = new Bundle();
-            bundle.putString("value", "30");
-            receiver.send(Activity.RESULT_OK, bundle);
-
-            return null;
+        SQLIteKV sqlIteKV = new SQLIteKV(this);
+//        sqlIteKV.beginTransaction();
+        for (int index = 0; index < m_loops; index++) {
+            final String key = m_arrKeys[index];
+            final String tmp = sqlIteKV.getString(key);
         }
-
-        MMKVTask(String key) {
-            m_key = key;
-        }
-        private String m_key;
-    }
-
-    static class KillSelf extends AsyncTask<Service, Void, Void> {
-        @Override
-        protected Void doInBackground(Service... services) {
-            System.out.println("killing BenchMarkBaseService...");
-            services[0].stopSelf();
-            return null;
-        }
+//        sqlIteKV.endTransaction();
+        long endTime = System.currentTimeMillis();
+        System.out.println(caller + " sqlite read String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
 
     @Nullable
