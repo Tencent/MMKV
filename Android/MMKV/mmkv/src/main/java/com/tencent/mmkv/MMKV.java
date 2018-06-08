@@ -25,7 +25,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     static public final boolean MULTI_THREAD_MODE = true;
 
     public static MMKV mmkvWithID(String mmapID) {
-        long handle = getMMKVWithID(mmapID, false);
+        long handle = getMMKVWithID(mmapID, SINGLE_THREAD_MODE);
         return new MMKV(handle);
     }
 
@@ -35,7 +35,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public static MMKV defaultMMKV() {
-        long handle = getDefaultMMKV(false);
+        long handle = getDefaultMMKV(SINGLE_THREAD_MODE);
         return new MMKV(handle);
     }
 
