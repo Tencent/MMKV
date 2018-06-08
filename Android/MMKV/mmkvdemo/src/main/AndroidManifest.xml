@@ -23,6 +23,12 @@
             android:exported="false"
             android:process=":mmkvdemo_svr">
         </service>
+        <service
+            android:name=".MyService_1"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":mmkvdemo_svr_1">
+        </service>
     </application>
 
 </manifest>

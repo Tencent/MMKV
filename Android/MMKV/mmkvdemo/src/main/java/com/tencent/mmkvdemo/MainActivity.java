@@ -28,36 +28,54 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String rootDir = MMKV.initialize(this);
-        System.out.println("mmkv root: " + rootDir);
+        String rootDir = "mmkv root: " + MMKV.initialize(this);
+        System.out.println(rootDir);
 
         TextView tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(rootDir);
 
-        final int loops = 1000;
-
         final Button button = findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
+            final Baseline baseline = new Baseline(getApplicationContext(), 1000);
+
             public void onClick(View v) {
-                mmkvBaselineTest(loops);
-                sharedPreferencesBaselineTest(loops);
-                sqliteBaselineTest(loops);
+                baseline.mmkvBaselineTest();
+                baseline.sharedPreferencesBaselineTest();
+                baseline.sqliteBaselineTest();
+            }
+        });
+
+        final Button button_read_int = findViewById(R.id.button_read_int);
+        button_read_int.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                interProcessBaselineTest(BenchMarkBaseService.CMD_READ_INT);
+            }
+        });
+
+        final Button button_write_int = findViewById(R.id.button_write_int);
+        button_write_int.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                interProcessBaselineTest(BenchMarkBaseService.CMD_WRITE_INT);
+            }
+        });
+
+        final Button button_read_string = findViewById(R.id.button_read_string);
+        button_read_string.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                interProcessBaselineTest(BenchMarkBaseService.CMD_READ_STRING);
+            }
+        });
+
+        final Button button_write_string = findViewById(R.id.button_write_string);
+        button_write_string.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                interProcessBaselineTest(BenchMarkBaseService.CMD_WRITE_STRING);
             }
         });
 
         testMMKV();
 //        testInterProcessLock();
 //        testImportSharedPreferences();
-
-        m_arrStrings = new String[loops];
-        m_arrKeys = new String[loops];
-        m_arrIntKeys = new String[loops];
-        Random r = new Random();
-        for (int index = 0; index < loops; index++) {
-            m_arrStrings[index] = "MMKV-" + r.nextInt();
-            m_arrKeys[index] = "testStr_" + index;
-            m_arrIntKeys[index] = "int_" + index;
-        }
     }
 
     @Override
@@ -67,20 +85,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testInterProcessLock() {
-        final String key = "interprocess_int";
-        final MMKV kv = MMKV.defaultMMKV(MMKV.MULTI_THREAD_MODE);
-        kv.encode(key, 1024);
-
         Intent intent = new Intent(this, MyService.class);
-        intent.putExtra(MyService.KEY_NAME, key);
-        intent.putExtra(MyService.BUNDLED_LISTENER, new ResultReceiver(new Handler()) {
-            @Override
-            protected void onReceiveResult(int resultCode, Bundle resultData) {
-                super.onReceiveResult(resultCode, resultData);
-                int value = kv.decodeInt(key);
-                System.out.println(key + " = " + value);
-            }
-        });
         startService(intent);
     }
 
@@ -121,75 +126,6 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
     }
 
-    private void mmkvBaselineTest(int loops) {
-        Random r = new Random();
-
-
-        long startTime = System.currentTimeMillis();
-
-        MMKV mmkv = MMKV.mmkvWithID("baseline2", MMKV.SINGLE_THREAD_MODE);
-        for (int index = 0; index < loops; index++) {
-//            int tmp = r.nextInt();
-//            String key = m_arrIntKeys[index];
-//            mmkv.encode(key, tmp);
-//            tmp = mmkv.decodeInt(key);
-
-            final String valueStr = m_arrStrings[index];
-            final String strKey = m_arrKeys[index];
-            mmkv.encode(strKey, valueStr);
-            final String tmpStr = mmkv.decodeString(strKey);
-        }
-        long endTime = System.currentTimeMillis();
-        System.out.println("MMKV: loop[" + loops +"]: " + (endTime-startTime) + "ms");
-    }
-
-    private void sharedPreferencesBaselineTest(int loops) {
-        Random r = new Random();
-
-        long startTime = System.currentTimeMillis();
-
-        SharedPreferences preferences = getSharedPreferences("default2", MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        for (int index = 0; index < loops; index++) {
-//            int tmp = r.nextInt();
-//            String key = m_arrIntKeys[index];
-//            editor.putInt(key, tmp);
-//            editor.apply();
-//            tmp = preferences.getInt(key, 0);
-
-            final String str = m_arrStrings[index];
-            final String key = m_arrKeys[index];
-            editor.putString(key, str);
-            editor.apply();
-            final String tmp = preferences.getString(key, null);
-        }
-//        editor.commit();
-        long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences: loop[" + loops +"]: " + (endTime-startTime) + "ms");
-    }
-
-    private void sqliteBaselineTest(int loops) {
-        Random r = new Random();
-
-        long startTime = System.currentTimeMillis();
-
-        SQLIteKV sqlIteKV = new SQLIteKV(this.getApplicationContext());
-//        sqlIteKV.beginTransaction();
-        for (int index = 0; index < loops; index++) {
-//            int tmp = r.nextInt();
-//            String key = m_arrIntKeys[index];
-//            sqlIteKV.putInt(key, tmp);
-//            tmp = sqlIteKV.getInt(key);
-
-            final String value = m_arrStrings[index];
-            final String key = m_arrKeys[index];
-            sqlIteKV.putString(key, value);
-            final String tmp = sqlIteKV.getString(key);
-        }
-//        sqlIteKV.endTransaction();
-        long endTime = System.currentTimeMillis();
-        System.out.println("sqlite: loop[" + loops + "]: " + (endTime - startTime) + "ms");
-    }
 
     private void testImportSharedPreferences() {
         SharedPreferences preferences = getSharedPreferences("imported", MODE_PRIVATE);
@@ -219,7 +155,13 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("string-set: " + kv.getStringSet("string-set", null));
     }
 
-    private String[] m_arrStrings;
-    private String[] m_arrKeys;
-    private String[] m_arrIntKeys;
+    private void interProcessBaselineTest(String cmd) {
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, cmd);
+        startService(intent);
+
+        intent = new Intent(this, MyService_1.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, cmd);
+        startService(intent);
+    }
 }

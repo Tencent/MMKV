@@ -1,34 +1,19 @@
 package com.tencent.mmkvdemo;
 
-import android.app.Activity;
-import android.app.Service;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Process;
 import android.os.ResultReceiver;
 import android.support.annotation.Nullable;
-import android.os.Process;
+
 import com.tencent.mmkv.MMKV;
 
-public class MyService extends BenchMarkBaseService {
-    private static final String CALLER = "MyService";
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        System.out.println("onCreate MyService");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        System.out.println("onDestroy MyService");
-    }
+public class MyService_1 extends BenchMarkBaseService {
+    private static final String CALLER = "MyService_1";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("MyService onStartCommand");
+        System.out.println("MyService_1 onStartCommand");
         String cmd = intent.getStringExtra(CMD_ID);
         if (cmd.equals(CMD_READ_INT)) {
             super.batchReadInt(CALLER);
@@ -40,5 +25,17 @@ public class MyService extends BenchMarkBaseService {
             super.batchWriteString(CALLER);
         }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        System.out.println("onCreate MyService_1");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        System.out.println("onDestroy MyService_1");
     }
 }
