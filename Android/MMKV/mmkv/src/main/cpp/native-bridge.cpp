@@ -21,24 +21,16 @@ void Java_com_tencent_mmkv_MMKV_nativeInit(JNIEnv *env, jobject instance) {
     g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
 }
 
-string getFilesDir(JNIEnv *env, jobject obj) {
-    jclass cls = env->GetObjectClass(obj);
-    jmethodID getFilesDir = env->GetMethodID(cls, "getFilesDir", "()Ljava/io/File;");
-    jobject dirObj = env->CallObjectMethod(obj,getFilesDir);
-    jclass dir = env->GetObjectClass(dirObj);
-    jmethodID getStoragePath = env->GetMethodID(dir, "getAbsolutePath", "()Ljava/lang/String;");
-    jstring path = (jstring)env->CallObjectMethod(dirObj, getStoragePath);
-    const char *pathStr = env->GetStringUTFChars(path, 0);
-    string result(pathStr);
-    env->ReleaseStringUTFChars(path, pathStr);
-    return result;
-}
-
 extern "C" JNIEXPORT JNICALL
 void Java_com_tencent_mmkv_MMKV_initialize(JNIEnv *env, jobject obj, jstring rootDir) {
+    if (!rootDir) {
+        return;
+    }
     const char *kstr = env->GetStringUTFChars(rootDir, nullptr);
     MMKV::initializeMMKV(kstr);
-    env->ReleaseStringUTFChars(rootDir, kstr);
+    if (kstr) {
+        env->ReleaseStringUTFChars(rootDir, kstr);
+    }
 }
 
 extern "C" JNIEXPORT JNICALL
@@ -54,7 +46,9 @@ static MMKV* getMMKV(JNIEnv *env, jobject obj) {
 static string jstring2string(JNIEnv* env, jstring str) {
     const char *kstr = env->GetStringUTFChars(str, nullptr);
     string result(kstr);
-    env->ReleaseStringUTFChars(str, kstr);
+    if (kstr) {
+        env->ReleaseStringUTFChars(str, kstr);
+    }
     return result;
 }
 

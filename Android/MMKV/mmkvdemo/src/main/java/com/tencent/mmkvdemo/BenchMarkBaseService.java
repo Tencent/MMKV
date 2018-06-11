@@ -11,10 +11,6 @@ import com.tencent.mmkv.MMKV;
 import java.util.Random;
 
 public abstract class BenchMarkBaseService extends Service {
-    static {
-        System.loadLibrary("mmkv");
-    }
-
     public static final String CMD_ID = "cmd_id";
     public static final String CMD_READ_INT = "cmd_read_int";
     public static final String CMD_WRITE_INT = "cmd_write_int";
