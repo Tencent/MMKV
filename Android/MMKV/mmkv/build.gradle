@@ -32,8 +32,8 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.config
-            debuggable true
-            jniDebuggable true
+//            debuggable true
+//            jniDebuggable true
         }
         debug {
             jniDebuggable true
