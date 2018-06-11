@@ -32,6 +32,11 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.config
+            externalNativeBuild {
+                cmake {
+                    cppFlags "-fvisibility=hidden"
+                }
+            }
 //            debuggable true
 //            jniDebuggable true
         }
