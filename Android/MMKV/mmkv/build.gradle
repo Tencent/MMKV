@@ -17,7 +17,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 27
         versionCode 1
-        versionName "1.0.7"
+        versionName "1.0.8"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -76,7 +76,7 @@ uploadArchives {
         pom.project {
             groupId 'com.tencent'
             artifactId 'mmkv'
-            version '1.0.7'
+            version '1.0.8'
             packaging 'aar'
 
             inceptionYear '2018'

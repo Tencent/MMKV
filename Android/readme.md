@@ -17,21 +17,8 @@ repositories {
     }
 }
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.7'
+    implementation 'com.tencent:mmkv:1.0.8'
 }
-```
-
-* 在 App 启动时初始化 MMKV，设定 MMKV 的根目录（files/mmkv/），例如在 MainActivity 里：
-
-```
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        String rootDir = MMKV.initialize(this);
-        System.out.println("mmkv root: " + rootDir);
-        ……
-	}
 ```
 
 * MMKV 提供一个全局的实例，可以直接使用：
@@ -76,6 +63,14 @@ import com.tencent.mmkv.MMKV;
 
 ```
         MMKV* mmkv = MMKV.mmkvWithID("MyID");
+        mmkv.encode("bool", true);
+        ……
+```
+
+* 如果业务需要多进程访问，那么在初始化的时候加上标志位 MMKV.MULTI\_PROCESS\_MODE：
+
+```
+        MMKV* mmkv = MMKV.mmkvWithID("InterProcessKV", MMKV.MULTI_PROCESS_MODE);
         mmkv.encode("bool", true);
         ……
 ```
