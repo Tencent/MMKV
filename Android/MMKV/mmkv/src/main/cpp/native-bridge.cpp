@@ -12,7 +12,11 @@ static jfieldID g_fileID = nullptr;
 
 extern "C" JNIEXPORT JNICALL
 void Java_com_tencent_mmkv_MMKV_nativeInit(JNIEnv *env, jobject instance) {
-    g_cls = (jclass)instance;
+    if (g_cls) {
+        env->DeleteGlobalRef(g_cls);
+    }
+    g_cls = reinterpret_cast<jclass>(env->NewGlobalRef(instance));
+
     // J is the type signature for long:
     g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
 }
