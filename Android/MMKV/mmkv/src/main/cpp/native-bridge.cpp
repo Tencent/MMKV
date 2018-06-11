@@ -7,6 +7,16 @@
 
 using namespace std;
 
+static jclass g_cls = nullptr;
+static jfieldID g_fileID = nullptr;
+
+extern "C" JNIEXPORT JNICALL
+void Java_com_tencent_mmkv_MMKV_nativeInit(JNIEnv *env, jobject instance) {
+    g_cls = (jclass)instance;
+    // J is the type signature for long:
+    g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
+}
+
 string getFilesDir(JNIEnv *env, jobject obj) {
     jclass cls = env->GetObjectClass(obj);
     jmethodID getFilesDir = env->GetMethodID(cls, "getFilesDir", "()Ljava/io/File;");
@@ -33,10 +43,7 @@ void Java_com_tencent_mmkv_MMKV_onExit(JNIEnv *env, jobject obj) {
 }
 
 static MMKV* getMMKV(JNIEnv *env, jobject obj) {
-    jclass c = env->GetObjectClass(obj);
-    // J is the type signature for long:
-    jfieldID fileID = env->GetFieldID(c, "nativeHandle", "J");
-    jlong handle = env->GetLongField(obj, fileID);
+    jlong handle = env->GetLongField(obj, g_fileID);
     return reinterpret_cast<MMKV *>(handle);
 }
 

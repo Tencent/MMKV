@@ -10,6 +10,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
+
+    static {
+        nativeInit();
+    }
+
     // call on program start
     public static String initialize(Context context) {
         String rootDir = context.getFilesDir().getAbsolutePath() + "/mmkv";
@@ -375,6 +380,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native long totalSize(long handle);
 
     private native void removeValueForKey(long handle, String key);
+
+    private static native void nativeInit();
 
     private long nativeHandle;
 }
