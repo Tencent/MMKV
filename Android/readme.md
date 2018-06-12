@@ -20,6 +20,18 @@ dependencies {
     implementation 'com.tencent:mmkv:1.0.8'
 }
 ```
+* 在 App 启动时初始化 MMKV，设定 MMKV 的根目录（files/mmkv/），例如在 MainActivity 里：
+
+```
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    String rootDir = MMKV.initialize(this);
+    System.out.println("mmkv root: " + rootDir);
+    ……
+}
+```
 
 * MMKV 提供一个全局的实例，可以直接使用：
 

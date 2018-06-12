@@ -333,6 +333,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // jni
+    private long nativeHandle;
+
+    private static native void nativeInit();
+
     private MMKV(long handle) {
         nativeHandle = handle;
     }
@@ -382,8 +386,4 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native long totalSize(long handle);
 
     private native void removeValueForKey(long handle, String key);
-
-    private static native void nativeInit();
-
-    private long nativeHandle;
 }
