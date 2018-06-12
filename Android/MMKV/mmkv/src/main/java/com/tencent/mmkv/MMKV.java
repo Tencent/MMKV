@@ -13,8 +13,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static {
         System.loadLibrary("mmkv");
-
-        nativeInit();
     }
 
     // call on program start
@@ -334,8 +332,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // jni
     private long nativeHandle;
-
-    private static native void nativeInit();
 
     private MMKV(long handle) {
         nativeHandle = handle;
