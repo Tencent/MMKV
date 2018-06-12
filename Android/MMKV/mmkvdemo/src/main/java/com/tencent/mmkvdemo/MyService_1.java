@@ -1,12 +1,6 @@
 package com.tencent.mmkvdemo;
 
 import android.content.Intent;
-import android.os.IBinder;
-import android.os.Process;
-import android.os.ResultReceiver;
-import android.support.annotation.Nullable;
-
-import com.tencent.mmkv.MMKV;
 
 public class MyService_1 extends BenchMarkBaseService {
     private static final String CALLER = "MyService_1";

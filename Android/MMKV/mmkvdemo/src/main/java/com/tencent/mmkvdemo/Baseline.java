@@ -1,9 +1,12 @@
 package com.tencent.mmkvdemo;
+
 import android.content.Context;
 import android.content.SharedPreferences;
-import com.tencent.mmkv.MMKV;
-import java.util.Random;
 import static android.content.Context.MODE_PRIVATE;
+
+import java.util.Random;
+
+import com.tencent.mmkv.MMKV;
 
 public final class Baseline {
     private String[] m_arrStrings;
@@ -34,6 +37,7 @@ public final class Baseline {
         mmkvBatchWriteString();
         mmkvBatchReadString();
     }
+
     private void mmkvBatchWriteInt() {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
@@ -45,8 +49,9 @@ public final class Baseline {
             mmkv.encode(key, tmp);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV write int: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("MMKV write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void mmkvBatchReadInt() {
         long startTime = System.currentTimeMillis();
 
@@ -56,8 +61,9 @@ public final class Baseline {
             int tmp = mmkv.decodeInt(key);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV read int: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("MMKV read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void mmkvBatchWriteString() {
         long startTime = System.currentTimeMillis();
 
@@ -68,8 +74,9 @@ public final class Baseline {
             mmkv.encode(strKey, valueStr);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV write String: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("MMKV write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void mmkvBatchReadString() {
         long startTime = System.currentTimeMillis();
 
@@ -79,7 +86,7 @@ public final class Baseline {
             String tmpStr = mmkv.decodeString(strKey);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV read String: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("MMKV read String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
 
     public void sharedPreferencesBaselineTest() {
@@ -88,6 +95,7 @@ public final class Baseline {
         spBatchWrieString();
         spBatchReadStrinfg();
     }
+
     private void spBatchWriteInt() {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
@@ -102,8 +110,9 @@ public final class Baseline {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences write int: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("SharedPreferences write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void spBatchReadInt() {
         long startTime = System.currentTimeMillis();
 
@@ -113,8 +122,9 @@ public final class Baseline {
             int tmp = preferences.getInt(key, 0);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences read int: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("SharedPreferences read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void spBatchWrieString() {
         long startTime = System.currentTimeMillis();
 
@@ -128,8 +138,9 @@ public final class Baseline {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences write String: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("SharedPreferences write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void spBatchReadStrinfg() {
         long startTime = System.currentTimeMillis();
 
@@ -139,7 +150,7 @@ public final class Baseline {
             final String tmp = preferences.getString(key, null);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences read String: loop[" + m_loops +"]: " + (endTime-startTime) + "ms");
+        System.out.println("SharedPreferences read String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
 
     public void sqliteBaselineTest() {
@@ -148,6 +159,7 @@ public final class Baseline {
         sqliteWriteString();
         sqliteReadString();
     }
+
     private void sqliteWriteInt() {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
@@ -163,6 +175,7 @@ public final class Baseline {
         long endTime = System.currentTimeMillis();
         System.out.println("sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void sqliteReadInt() {
         long startTime = System.currentTimeMillis();
 
@@ -176,6 +189,7 @@ public final class Baseline {
         long endTime = System.currentTimeMillis();
         System.out.println("sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void sqliteWriteString() {
         long startTime = System.currentTimeMillis();
 
@@ -190,6 +204,7 @@ public final class Baseline {
         long endTime = System.currentTimeMillis();
         System.out.println("sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
     }
+
     private void sqliteReadString() {
         long startTime = System.currentTimeMillis();
 

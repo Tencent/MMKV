@@ -6,9 +6,9 @@ import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-import com.tencent.mmkv.MMKV;
-
 import java.util.Random;
+
+import com.tencent.mmkv.MMKV;
 
 public abstract class BenchMarkBaseService extends Service {
     public static final String CMD_ID = "cmd_id";
