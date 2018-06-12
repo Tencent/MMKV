@@ -11,15 +11,31 @@ static jclass g_cls = nullptr;
 static jfieldID g_fileID = nullptr;
 
 extern "C" JNIEXPORT JNICALL
-void Java_com_tencent_mmkv_MMKV_nativeInit(JNIEnv *env, jobject instance) {
+jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+    JNIEnv* env;
+    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
+        return -1;
+    }
+
+    // Get jclass with env->FindClass.
     if (g_cls) {
         env->DeleteGlobalRef(g_cls);
     }
+    static const char* clsName = "com/tencent/mmkv/MMKV";
+    jclass instance = env->FindClass(clsName);
+    if (!instance) {
+        MMKVError("fail to locate class: %s", clsName);
+        return -2;
+    }
     g_cls = reinterpret_cast<jclass>(env->NewGlobalRef(instance));
-
-    // J is the type signature for long:
     g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
+    if (!g_cls) {
+        MMKVError("fail to locate fileID");
+    }
+
+    return JNI_VERSION_1_6;
 }
+
 
 extern "C" JNIEXPORT JNICALL
 void Java_com_tencent_mmkv_MMKV_initialize(JNIEnv *env, jobject obj, jstring rootDir) {
