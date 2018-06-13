@@ -34,7 +34,6 @@ class MMKV {
     size_t m_actualSize;
     CodedOutputData* m_output;
 
-    bool m_isInBackground;
     bool m_needLoadFromFile;
 
     uint32_t m_crcDigest;
@@ -56,8 +55,6 @@ class MMKV {
     bool writeAcutalSize(size_t actualSize);
     bool ensureMemorySize(size_t newSize);
     bool fullWriteback();
-
-    bool protectFromBackgroundWritting(size_t size, std::function<void(CodedOutputData*)> writerBlock);
 
     const MMBuffer& getDataForKey(const std::string& key);
     bool setDataForKey(MMBuffer&& data, const std::string& key);

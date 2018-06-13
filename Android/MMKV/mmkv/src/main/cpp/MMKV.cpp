@@ -55,7 +55,6 @@ MMKV::MMKV(const std::string& mmapID, bool interProcess)
     m_actualSize = 0;
     m_output = nullptr;
 
-    m_isInBackground = false;
     m_needLoadFromFile = true;
 
     m_crcDigest = 0;
@@ -334,38 +333,6 @@ void MMKV::clearMemoryState() {
     m_actualSize = 0;
 }
 
-bool MMKV::protectFromBackgroundWritting(size_t size, std::function<void(CodedOutputData*)> writerBlock) {
-    try {
-        if (m_isInBackground) {
-            static const int offset = computeFixed32Size(0);
-            static const int pagesize = getpagesize();
-            size_t realOffset = offset + m_actualSize - size;
-            size_t pageOffset = (realOffset / pagesize) * pagesize;
-            size_t pointerOffset = realOffset - pageOffset;
-            size_t mmapSize = offset + m_actualSize - pageOffset;
-            char* ptr = m_ptr+pageOffset;
-            if (mlock(ptr, mmapSize) != 0) {
-                MMKVError("fail to mlock [%s], %s", m_mmapID.c_str(), strerror(errno));
-                // just fail on this condition, otherwise app will crash anyway
-                //writerBlock(m_output);
-                return false;
-            } else {
-                CodedOutputData output(ptr + pointerOffset, size);
-                writerBlock(&output);
-                m_output->seek(size);
-            }
-            munlock(ptr, mmapSize);
-        } else {
-            writerBlock(m_output);
-        }
-    } catch (exception& exception) {
-        MMKVError("%s", exception.what());
-        return false;
-    }
-
-    return true;
-}
-
 // since we use append mode, when -[setData: forKey:] many times, space may not be enough
 // try a full rewrite to make space
 bool MMKV::ensureMemorySize(size_t newSize) {
@@ -422,12 +389,8 @@ bool MMKV::ensureMemorySize(size_t newSize) {
 
         delete m_output;
         m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
-        bool ret = protectFromBackgroundWritting(m_actualSize, [&](CodedOutputData *output) {
-            output->writeRawData(data);
-        });
-        if (ret) {
-            recaculateCRCDigest();
-        }
+        m_output->writeRawData(data);
+        recaculateCRCDigest();
         return ret;
     }
     return true;
@@ -437,26 +400,9 @@ bool MMKV::writeAcutalSize(size_t actualSize) {
     assert(m_ptr != 0);
     assert(m_ptr != MAP_FAILED);
 
-    char* actualSizePtr = m_ptr;
-    char* tmpPtr = NULL;
-
-    if (m_isInBackground) {
-        tmpPtr = m_ptr;
-        if (mlock(tmpPtr, Fixed32Size) != 0) {
-            MMKVError("fail to mmap [%s], %d:%s", m_mmapID.c_str(), errno, strerror(errno));
-            // just fail on this condition, otherwise app will crash anyway
-            return false;
-        } else {
-            actualSizePtr = tmpPtr;
-        }
-    }
-
-    memcpy(actualSizePtr, &actualSize, Fixed32Size);
+    memcpy(m_ptr, &actualSize, Fixed32Size);
     m_actualSize = actualSize;
 
-    if (tmpPtr) {
-        munlock(tmpPtr, Fixed32Size);
-    }
     return true;
 }
 
@@ -521,12 +467,8 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
         if (allData.length() > 0) {
             bool ret = writeAcutalSize(allData.length());
             if (ret) {
-                ret = protectFromBackgroundWritting(m_actualSize, [&](CodedOutputData *output) {
-                    output->writeRawData(allData);		// note: don't write size of data
-                });
-                if (ret) {
-                    recaculateCRCDigest();
-                }
+                m_output->writeRawData(allData);		// note: don't write size of data
+                recaculateCRCDigest();
             }
             return ret;
         }
@@ -535,13 +477,9 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
         bool ret = writeAcutalSize(m_actualSize + size);
         if (ret) {
             static const int offset = computeFixed32Size(0);
-            ret = protectFromBackgroundWritting(size, [&](CodedOutputData *output) {
-                output->writeString(key);
-                output->writeData(data);				// note: write size of data
-            });
-            if (ret) {
-                updateCRCDigest((const uint8_t*)m_ptr+offset+m_actualSize-size, size, KeepSequence);
-            }
+            m_output->writeString(key);
+            m_output->writeData(data);				// note: write size of data
+            updateCRCDigest((const uint8_t*)m_ptr+offset+m_actualSize-size, size, KeepSequence);
         }
         return ret;
     }
@@ -569,12 +507,8 @@ bool MMKV::fullWriteback() {
             if (ret) {
                 delete m_output;
                 m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
-                ret = protectFromBackgroundWritting(m_actualSize, [&](CodedOutputData *output) {
-                    output->writeRawData(allData);        // note: don't write size of data
-                });
-                if (ret) {
-                    recaculateCRCDigest();
-                }
+                m_output->writeRawData(allData);        // note: don't write size of data
+                recaculateCRCDigest();
             }
             return ret;
         } else {
@@ -633,14 +567,6 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
         return;
     }
 
-    if (m_isInBackground) {
-        if (mlock(crcPtr, m_metaFile.getFileSize()) != 0) {
-            MMKVError("fail to mlock crc [%s]-%p, %d:%s", m_mmapID.c_str(), crcPtr, errno, strerror(errno));
-            // just fail on this condition, otherwise app will crash anyway
-            return;
-        }
-    }
-
     m_metaInfo.m_crcDigest = m_crcDigest;
     if (increaseSequence) {
         m_metaInfo.m_sequence++;
@@ -649,10 +575,6 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
         m_metaInfo.m_version = 1;
     }
     m_metaInfo.write(crcPtr);
-
-    if (m_isInBackground) {
-        munlock(crcPtr, m_metaFile.getFileSize());
-    }
 }
 
 #pragma mark - set & get
