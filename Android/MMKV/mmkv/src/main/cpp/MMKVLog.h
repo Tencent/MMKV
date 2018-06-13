@@ -19,14 +19,14 @@
 #define MMKVError(format, ...)	    __android_log_print(ANDROID_LOG_ERROR, APPNAME, format, ##__VA_ARGS__)
 #define MMKVWarning(format, ...)	__android_log_print(ANDROID_LOG_WARN, APPNAME, format, ##__VA_ARGS__)
 #define MMKVInfo(format, ...)		__android_log_print(ANDROID_LOG_INFO, APPNAME, format, ##__VA_ARGS__)
-#define MMKDebug(format, ...)	    __android_log_print(ANDROID_LOG_DEBUG, APPNAME, format, ##__VA_ARGS__)
+#define MMKVDebug(format, ...)	    __android_log_print(ANDROID_LOG_DEBUG, APPNAME, format, ##__VA_ARGS__)
 
 #else
 
 #define MMKVError(format, ...)	    {}
 #define MMKVWarning(format, ...)	{}
 #define MMKVInfo(format, ...)		{}
-#define MMKDebug(format, ...)	    {}
+#define MMKVDebug(format, ...)	    {}
 
 #endif
 
