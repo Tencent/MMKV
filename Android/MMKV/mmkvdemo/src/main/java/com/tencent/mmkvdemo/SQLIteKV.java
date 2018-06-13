@@ -36,6 +36,7 @@ public final class SQLIteKV {
     }
     private SQLIteKVDBHelper m_dbHelper;
     private SQLiteDatabase m_writetableDB;
+    private SQLiteDatabase m_readableDB;
 
     public SQLIteKV(Context context) {
         m_dbHelper = new SQLIteKVDBHelper(context);
@@ -43,10 +44,7 @@ public final class SQLIteKV {
     }
 
     public void beginTransaction() {
-        if (m_writetableDB == null) {
-            m_writetableDB = m_dbHelper.getWritableDatabase();
-        }
-        m_writetableDB.beginTransaction();
+        getWritetableDB().beginTransaction();
     }
 
     public void endTransaction() {
@@ -56,27 +54,45 @@ public final class SQLIteKV {
             } finally {
                 m_writetableDB.endTransaction();
             }
-            m_writetableDB.close();
-            m_writetableDB = null;
         }
     }
 
     private SQLiteDatabase getWritetableDB() {
-        return (m_writetableDB != null) ? m_writetableDB : m_dbHelper.getWritableDatabase();
+        if (m_writetableDB == null) {
+            m_writetableDB = m_dbHelper.getWritableDatabase();
+        }
+        return m_writetableDB;
+    }
+
+    private SQLiteDatabase getReadableDatabase() {
+        if (m_readableDB == null) {
+            m_readableDB = m_dbHelper.getReadableDatabase();
+        }
+        return m_readableDB;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        if (m_readableDB != null) {
+            m_readableDB.close();
+        }
+        if (m_writetableDB != null) {
+            m_writetableDB.close();
+        }
+        super.finalize();
     }
 
     public boolean putInt(String key, int value) {
         ContentValues contentValues = new ContentValues();
         contentValues.put("k", key);
         contentValues.put("v", value);
-        SQLiteDatabase db = getWritetableDB();
-        long rowID = db.insert(SQLIteKVDBHelper.TABLE_NAME_INT, null, contentValues);
+        long rowID = getWritetableDB().insert(SQLIteKVDBHelper.TABLE_NAME_INT, null, contentValues);
         return rowID != -1;
     }
 
     public int getInt(String key) {
         int value = 0;
-        Cursor cursor = m_dbHelper.getReadableDatabase().rawQuery("select v from " + SQLIteKVDBHelper.TABLE_NAME_INT + " where k=?", new String[]{ key });
+        Cursor cursor = getReadableDatabase().rawQuery("select v from " + SQLIteKVDBHelper.TABLE_NAME_INT + " where k=?", new String[]{ key });
         if(cursor.moveToFirst()) {
             value = cursor.getInt(cursor.getColumnIndex("v"));
         }
@@ -88,14 +104,13 @@ public final class SQLIteKV {
         ContentValues contentValues = new ContentValues();
         contentValues.put("k", key);
         contentValues.put("v", value);
-        SQLiteDatabase db = getWritetableDB();
-        long rowID = db.insert(SQLIteKVDBHelper.TABLE_NAME_STR, null, contentValues);
+        long rowID = getWritetableDB().insert(SQLIteKVDBHelper.TABLE_NAME_STR, null, contentValues);
         return rowID != -1;
     }
 
     public String getString(String key) {
         String value = null;
-        Cursor cursor = m_dbHelper.getReadableDatabase().rawQuery("select v from " + SQLIteKVDBHelper.TABLE_NAME_STR + " where k=?", new String[]{ key });
+        Cursor cursor = getReadableDatabase().rawQuery("select v from " + SQLIteKVDBHelper.TABLE_NAME_STR + " where k=?", new String[]{ key });
         if(cursor.moveToFirst()) {
             value = cursor.getString(cursor.getColumnIndex("v"));
         }
