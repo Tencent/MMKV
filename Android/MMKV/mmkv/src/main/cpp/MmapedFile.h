@@ -36,8 +36,6 @@ public:
     int getFd() {
         return m_fd;
     }
-
-    bool truncate(size_t length);
 };
 
 class MMBuffer;
@@ -47,5 +45,6 @@ extern bool isFileExist(const std::string& nsFilePath);
 extern int createFile(const std::string& nsFilePath);
 extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer* readWholeFile(const char *path);
+extern bool zeroFillFile(int fd, int startPos, size_t size);
 
 #endif //MMKV_MMAPEDFILE_H

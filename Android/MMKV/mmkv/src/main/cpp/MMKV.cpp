@@ -141,11 +141,13 @@ void MMKV::loadFromFile() {
         }
         // round up to (n * pagesize)
         if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+            size_t oldSize = m_size;
             m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
             if (ftruncate(m_fd, m_size) != 0) {
                 MMKVError("fail to truncate [%s] to size %zu, %s", m_mmapID.c_str(), m_size, strerror(errno));
                 m_size = (size_t) st.st_size;
             }
+            zeroFillFile(m_fd, oldSize, m_size - oldSize);
         }
         m_ptr = (char *) mmap(NULL, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
         if (m_ptr == MAP_FAILED) {
@@ -359,6 +361,11 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 m_size = oldSize;
                 return false;
             }
+            if (!zeroFillFile(m_fd, oldSize, m_size - oldSize)) {
+                MMKVError("fail to zeroFile [%s] to size %zu, %s", m_mmapID.c_str(), m_size, strerror(errno));
+                m_size = oldSize;
+                return false;
+            }
 
             if (munmap(m_ptr, oldSize) != 0) {
                 MMKVError("fail to munmap [%s], %s", m_mmapID.c_str(), strerror(errno));
@@ -373,15 +380,9 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 MMKVWarning("[%s] file not valid", m_mmapID.c_str());
                 return false;
             }
-            // keep m_output consistent with m_ptr -- writeAcutalSize: may fail
-            delete m_output;
-            m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
-            m_output->seek(m_actualSize);
         }
 
-        if (!writeAcutalSize(data.length())) {
-            return false;
-        }
+        writeAcutalSize(data.length());
 
         delete m_output;
         m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
@@ -391,14 +392,12 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     return true;
 }
 
-bool MMKV::writeAcutalSize(size_t actualSize) {
+void MMKV::writeAcutalSize(size_t actualSize) {
     assert(m_ptr != 0);
     assert(m_ptr != MAP_FAILED);
 
     memcpy(m_ptr, &actualSize, Fixed32Size);
     m_actualSize = actualSize;
-
-    return true;
 }
 
 const MMBuffer& MMKV::getDataForKey(const std::string &key) {
@@ -460,23 +459,19 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     if (m_actualSize == 0) {
         auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
         if (allData.length() > 0) {
-            bool ret = writeAcutalSize(allData.length());
-            if (ret) {
-                m_output->writeRawData(allData);		// note: don't write size of data
-                recaculateCRCDigest();
-            }
-            return ret;
+            writeAcutalSize(allData.length());
+            m_output->writeRawData(allData);        // note: don't write size of data
+            recaculateCRCDigest();
+            return true;
         }
         return false;
     } else {
-        bool ret = writeAcutalSize(m_actualSize + size);
-        if (ret) {
-            static const int offset = computeFixed32Size(0);
-            m_output->writeString(key);
-            m_output->writeData(data);				// note: write size of data
-            updateCRCDigest((const uint8_t*)m_ptr+offset+m_actualSize-size, size, KeepSequence);
-        }
-        return ret;
+        writeAcutalSize(m_actualSize + size);
+        m_output->writeString(key);
+        m_output->writeData(data);                // note: write size of data
+        updateCRCDigest((const uint8_t *) m_ptr + Fixed32Size + m_actualSize - size, size, KeepSequence);
+
+        return true;
     }
 }
 
@@ -498,14 +493,12 @@ bool MMKV::fullWriteback() {
     SCOPEDLOCK(m_exclusiveProcessLock);
     if (allData.length() > 0 && isFileValid()) {
         if (allData.length() + Fixed32Size <= m_size) {
-            bool ret = writeAcutalSize(allData.length());
-            if (ret) {
-                delete m_output;
-                m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
-                m_output->writeRawData(allData);        // note: don't write size of data
-                recaculateCRCDigest();
-            }
-            return ret;
+            writeAcutalSize(allData.length());
+            delete m_output;
+            m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
+            m_output->writeRawData(allData);        // note: don't write size of data
+            recaculateCRCDigest();
+            return true;
         } else {
             // ensureMemorySize will extend file & full rewrite, no need to write back again
             return ensureMemorySize(allData.length() + Fixed32Size - m_size);

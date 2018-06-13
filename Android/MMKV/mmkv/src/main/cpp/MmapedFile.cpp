@@ -30,7 +30,7 @@ MmapedFile::MmapedFile(const std::string &path) : m_name(path) {
         int fileLegth = DEFAULT_MMAP_SIZE;
         if (m_segmentSize < fileLegth) {
             m_segmentSize = fileLegth;
-            if (ftruncate(m_fd, m_segmentSize) != 0) {
+            if (ftruncate(m_fd, m_segmentSize) != 0 || !zeroFillFile(m_fd, 0, m_segmentSize)) {
                 MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(), m_segmentSize, strerror(errno));
                 close(m_fd);
                 m_fd = -1;
@@ -56,30 +56,6 @@ MmapedFile::~MmapedFile() {
         close(m_fd);
         m_fd = -1;
     }
-}
-
-bool MmapedFile::truncate(size_t length) {
-    MMKVInfo("extending [%s] file size from %zu to %zu",
-             m_name.c_str(), m_segmentSize, length);
-
-    auto oldSize = m_segmentSize;
-    m_segmentSize = length;
-    // if we can't extend size, rollback to old state
-    if (ftruncate(m_fd, m_segmentSize) != 0) {
-        MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(), m_segmentSize, strerror(errno));
-        m_segmentSize = oldSize;
-        return false;
-    }
-
-    if (munmap(m_segmentPtr, oldSize) != 0) {
-        MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
-    }
-    m_segmentPtr = (char*)mmap(m_segmentPtr, m_segmentSize, PROT_READ|PROT_WRITE, MAP_SHARED, m_fd, 0);
-    if (m_segmentPtr == MAP_FAILED) {
-        MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
-        return false;
-    }
-    return true;
 }
 
 #pragma mark - file
@@ -178,4 +154,31 @@ MMBuffer* readWholeFile(const char *path) {
         MMKVWarning("fail to open %s: %s", path, strerror(errno));
     }
     return buffer;
+}
+
+bool zeroFillFile(int fd, int startPos, size_t size) {
+    if (fd < 0 || startPos < 0) {
+        return false;
+    }
+
+    if (lseek(fd, startPos, SEEK_SET) < 0) {
+        MMKVError("fail to lseek fd[%d], error:%s", fd, strerror(errno));
+        return false;
+    }
+
+    static const char zeros[4096] = {0};
+    while (size >= sizeof(zeros)) {
+        if (write(fd, zeros, sizeof(zeros)) < 0) {
+            MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
+            return false;
+        }
+        size -= sizeof(zeros);
+    }
+    if (size > 0) {
+        if (write(fd, zeros, size) < 0) {
+            MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
+            return false;
+        }
+    }
+    return true;
 }

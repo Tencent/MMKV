@@ -52,7 +52,7 @@ class MMKV {
     bool checkFileCRCValid();
     void recaculateCRCDigest();
     void updateCRCDigest(const uint8_t* ptr, size_t length, bool increaseSequence = false);
-    bool writeAcutalSize(size_t actualSize);
+    void writeAcutalSize(size_t actualSize);
     bool ensureMemorySize(size_t newSize);
     bool fullWriteback();
 
