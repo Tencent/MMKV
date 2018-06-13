@@ -5,6 +5,8 @@
 #include "CodedOutputData.h"
 #include "WireFormat.h"
 #include "PBUtility.h"
+#include "MMKVLog.h"
+
 using namespace std;
 
 CodedOutputData::CodedOutputData(void* ptr, size_t len) {
@@ -72,7 +74,7 @@ void CodedOutputData::seek(size_t addedSize) {
     position += addedSize;
 
     if (position > bufferLength) {
-        throw "OutOfSpace";
+        MMKVError("OutOfSpace");
     }
 }
 
@@ -80,7 +82,8 @@ void CodedOutputData::seek(size_t addedSize) {
 /** Write a single byte. */
 void CodedOutputData::writeRawByte(uint8_t value) {
     if (position == bufferLength) {
-        throw "position: " + to_string(position) + ", bufferLength: " + to_string(bufferLength);
+        MMKVError("position: %d, bufferLength: %d", position, bufferLength);
+        return;
     }
 
     bufferPointer[position++] = value;

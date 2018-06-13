@@ -190,11 +190,7 @@ void MMKV::partialLoadFromFile() {
     m_metaInfo.read(m_metaFile.getMemory());
 
     size_t oldActualSize = m_actualSize;
-    try {
-        m_actualSize = CodedInputData(m_ptr, Fixed32Size).readFixed32();
-    } catch (exception &exception) {
-        MMKVError("%s", exception.what());
-    }
+    memcpy(&m_actualSize, m_ptr, Fixed32Size);
     MMKVInfo("loading [%s] with file size %zu, oldActualSize %zu, newActualSize %zu",
              m_mmapID.c_str(), m_size, oldActualSize, m_actualSize);
 
@@ -391,7 +387,6 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         m_output = new CodedOutputData(m_ptr+offset, m_size-offset);
         m_output->writeRawData(data);
         recaculateCRCDigest();
-        return ret;
     }
     return true;
 }
@@ -692,12 +687,8 @@ bool MMKV::getBoolForKey(const std::string &key, bool defaultValue) {
     }
     auto& data = getDataForKey(key);
     if (data.length() > 0) {
-        try {
-            CodedInputData input(data.getPtr(), data.length());
-            return input.readBool();
-        } catch (exception& e) {
-            MMKVError("%s", e.what());
-        }
+        CodedInputData input(data.getPtr(), data.length());
+        return input.readBool();
     }
     return defaultValue;
 }
@@ -708,12 +699,8 @@ int32_t MMKV::getInt32ForKey(const std::string &key, int32_t defaultValue) {
     }
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        try {
-            CodedInputData input(data.getPtr(), data.length());
-            return input.readInt32();
-        } catch (exception &e) {
-            MMKVError("%s", e.what());
-        }
+        CodedInputData input(data.getPtr(), data.length());
+        return input.readInt32();
     }
     return defaultValue;
 }
@@ -724,12 +711,8 @@ int64_t MMKV::getInt64ForKey(const std::string &key, int64_t defaultValue) {
     }
     auto& data = getDataForKey(key);
     if (data.length() > 0) {
-        try {
-            CodedInputData input(data.getPtr(), data.length());
-            return input.readInt64();
-        } catch (exception& e) {
-            MMKVError("%s", e.what());
-        }
+        CodedInputData input(data.getPtr(), data.length());
+        return input.readInt64();
     }
     return defaultValue;
 }
@@ -740,12 +723,8 @@ float MMKV::getFloatForKey(const std::string &key, float defaultValue) {
     }
     auto& data = getDataForKey(key);
     if (data.length() > 0) {
-        try {
-            CodedInputData input(data.getPtr(), data.length());
-            return input.readFloat();
-        } catch (exception& e) {
-            MMKVError("%s", e.what());
-        }
+        CodedInputData input(data.getPtr(), data.length());
+        return input.readFloat();
     }
     return defaultValue;
 }
@@ -756,12 +735,8 @@ double MMKV::getDoubleForKey(const std::string &key, double defaultValue) {
     }
     auto& data = getDataForKey(key);
     if (data.length() > 0) {
-        try {
-            CodedInputData input(data.getPtr(), data.length());
-            return input.readDouble();
-        } catch (exception& e) {
-            MMKVError("%s", e.what());
-        }
+        CodedInputData input(data.getPtr(), data.length());
+        return input.readDouble();
     }
     return defaultValue;
 }
@@ -880,17 +855,11 @@ bool MMKV::isFileValid(const std::string &mmapID) {
 
     // 读取crc文件值
     uint32_t crcFile = 0;
-    MMBuffer* data = readWholeFile(crcPath.c_str());
+    MMBuffer *data = readWholeFile(crcPath.c_str());
     if (data) {
-        try {
-            MMKVMetaInfo metaInfo;
-            metaInfo.read(data->getPtr());
-            crcFile = metaInfo.m_crcDigest;
-        } catch (exception& e) {
-            // 有异常，无效
-            delete data;
-            return false;
-        }
+        MMKVMetaInfo metaInfo;
+        metaInfo.read(data->getPtr());
+        crcFile = metaInfo.m_crcDigest;
         delete data;
     } else {
         return false;
@@ -899,22 +868,17 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     // 计算原kv crc值
     const int offset = computeFixed32Size(0);
     size_t actualSize = 0;
-    MMBuffer* fileData = readWholeFile(kvPath.c_str());
+    MMBuffer *fileData = readWholeFile(kvPath.c_str());
     if (fileData) {
-        try {
-            actualSize = CodedInputData(fileData->getPtr(), fileData->length()).readFixed32();
-        } catch(exception& e) {
-            // 有异常，无效
-            delete fileData;
-            return false;
-        }
+        actualSize = CodedInputData(fileData->getPtr(), fileData->length()).readFixed32();
         if (actualSize > fileData->length() - offset) {
             // 长度异常，无效
             delete fileData;
             return false;
         }
 
-        uint32_t crcDigest = (uint32_t)crc32(0, (const uint8_t*)fileData->getPtr() + offset, (uint32_t)actualSize);
+        uint32_t crcDigest = (uint32_t) crc32(0, (const uint8_t *) fileData->getPtr() + offset,
+                                              (uint32_t) actualSize);
 
         delete fileData;
         return crcFile == crcDigest;

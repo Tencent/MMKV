@@ -21,7 +21,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags "-fexceptions"
+                cppFlags "-fno-exceptions"
                 arguments "-DANDROID_STL=c++_shared"
                 abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
@@ -34,7 +34,7 @@ android {
             signingConfig signingConfigs.config
             externalNativeBuild {
                 cmake {
-                    cppFlags "-fvisibility=hidden"
+                    cppFlags "-fvisibility=hidden", "-fno-unwind-tables", "-fno-asynchronous-unwind-tables"
                 }
             }
 //            debuggable true

@@ -6,6 +6,8 @@
 #include "PBUtility.h"
 #include "WireFormat.h"
 #include <limits.h>
+#include "MMKVLog.h"
+
 using namespace std;
 
 static const int32_t DEFAULT_RECURSION_LIMIT = 64;
@@ -59,13 +61,14 @@ bool CodedInputData::readBool() {
 string CodedInputData::readString() {
     int32_t size = this->readRawVarint32();
     if (size <= (bufferSize - bufferPos) && size > 0) {
-        string result((char*)(bufferPointer + bufferPos), size);
+        string result((char *) (bufferPointer + bufferPos), size);
         bufferPos += size;
         return result;
     } else if (size == 0) {
         return "";
     } else {
-        throw "Inavlid Size: " + to_string(size);
+        MMKVError("Inavlid Size: %d", size);
+        return "";
     }
 }
 
@@ -117,7 +120,7 @@ int32_t CodedInputData::readRawVarint32() {
                             return result;
                         }
                     }
-                    throw "InvalidProtocolBuffer-malformedVarint";
+                    MMKVError("InvalidProtocolBuffer-malformedVarint");
                 }
             }
         }
@@ -138,7 +141,8 @@ int64_t CodedInputData::readRawVarint64() {
         }
         shift += 7;
     }
-    throw "InvalidProtocolBuffer-malformedVarint";
+    MMKVError("InvalidProtocolBuffer-malformedVarint");
+    return 0;
 }
 
 
@@ -186,12 +190,14 @@ int64_t CodedInputData::readRawLittleEndian64() {
  */
 int32_t CodedInputData::pushLimit(int32_t byteLimit) {
     if (byteLimit < 0) {
-        throw  "InvalidProtocolBuffer-negativeSize";
+        MMKVError("InvalidProtocolBuffer-negativeSize");
+        return currentLimit;
     }
-    byteLimit +=  bufferPos;
+    byteLimit += bufferPos;
     int32_t oldLimit = currentLimit;
     if (byteLimit > oldLimit) {
-        throw "InvalidProtocolBuffer-truncatedMessage";
+        MMKVError("InvalidProtocolBuffer-truncatedMessage");
+        return currentLimit;
     }
     currentLimit = byteLimit;
 
@@ -232,7 +238,8 @@ void CodedInputData::popLimit(int32_t oldLimit) {
  */
 int8_t CodedInputData::readRawByte() {
     if (bufferPos == bufferSize) {
-        throw "reach end, bufferPos: " + to_string(bufferPos) + ", bufferSize: " + to_string(bufferSize);
+        MMKVError("reach end, bufferPos: %d, bufferSize: %d", bufferPos, bufferSize);
+        return 0;
     }
     int8_t* bytes = (int8_t*)bufferPointer;
     return bytes[bufferPos++];
@@ -247,23 +254,26 @@ int8_t CodedInputData::readRawByte() {
  */
 MMBuffer CodedInputData::readRawData(int32_t size) {
     if (size < 0) {
-        throw "InvalidProtocolBuffer negativeSize";
+        MMKVError("InvalidProtocolBuffer negativeSize");
+        return MMBuffer(0);
     }
 
     if (bufferPos + size > currentLimit) {
         // Read to the end of the stream anyway.
         this->skipRawData(currentLimit - bufferPos);
         // Then fail.
-        throw "InvalidProtocolBuffer truncatedMessage";
+        MMKVError("InvalidProtocolBuffer truncatedMessage");
+        return MMBuffer(0);
     }
 
     if (size <= bufferSize - bufferPos) {
         // We have all the bytes we need already.
-        MMBuffer data(((int8_t*) bufferPointer) + bufferPos, size);
+        MMBuffer data(((int8_t *) bufferPointer) + bufferPos, size);
         bufferPos += size;
         return data;
     } else {
-        throw "InvalidProtocolBuffer truncatedMessage";
+        MMKVError("InvalidProtocolBuffer truncatedMessage");
+        return MMBuffer(0);
     }
 }
 
@@ -276,20 +286,20 @@ MMBuffer CodedInputData::readRawData(int32_t size) {
  */
 void CodedInputData::skipRawData(int32_t size) {
     if (size < 0) {
-        throw "InvalidProtocolBuffer-negativeSize";
+        MMKVError("InvalidProtocolBuffer-negativeSize");
     }
 
     if (bufferPos + size > currentLimit) {
         // Read to the end of the stream anyway.
         this->skipRawData(currentLimit - bufferPos);
         // Then fail.
-        throw "InvalidProtocolBuffer-truncatedMessage";
+        MMKVError("InvalidProtocolBuffer-truncatedMessage");
     }
 
     if (size <= (bufferSize - bufferPos)) {
         // We have all the bytes we need already.
         bufferPos += size;
     } else {
-        throw "InvalidProtocolBuffer-truncatedMessage";
+        MMKVError("InvalidProtocolBuffer-truncatedMessage");
     }
 }
