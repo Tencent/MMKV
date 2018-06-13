@@ -47,10 +47,11 @@ private:
 
 public:
 
-    static MMBuffer encodeDataWithObject(const std::string& str);
-    static MMBuffer encodeDataWithObject(const MMBuffer& buffer);
-    static MMBuffer encodeDataWithObject(const std::vector<std::string>& vector);
-    static MMBuffer encodeDataWithObject(const std::unordered_map<std::string, MMBuffer>& map);
+    template <typename T>
+    static MMBuffer encodeDataWithObject(const T& obj) {
+        MiniPBCoder pbcoder;
+        return pbcoder.getEncodeData(obj);
+    }
 
     static std::string decodeString(const MMBuffer& oData);
     static MMBuffer decodeBytes(const MMBuffer& oData);

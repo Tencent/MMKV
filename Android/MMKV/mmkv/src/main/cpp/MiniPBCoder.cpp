@@ -214,54 +214,6 @@ MMBuffer MiniPBCoder::getEncodeData(const std::unordered_map<std::string, MMBuff
     return std::move(*m_outputData);
 }
 
-MMBuffer MiniPBCoder::encodeDataWithObject(const std::string& str) {
-    try {
-        MiniPBCoder pbcoder;
-        auto data = pbcoder.getEncodeData(str);
-        return data;
-    } catch (const std::exception& e) {
-        MMKVError("%s", e.what());
-    }
-
-    return MMBuffer(0);
-}
-
-MMBuffer MiniPBCoder::encodeDataWithObject(const MMBuffer &buffer) {
-    try {
-        MiniPBCoder pbcoder;
-        auto data = pbcoder.getEncodeData(buffer);
-        return data;
-    } catch (const std::exception& e) {
-        MMKVError("%s", e.what());
-    }
-
-    return MMBuffer(0);
-}
-
-MMBuffer MiniPBCoder::encodeDataWithObject(const std::vector<std::string> &v) {
-    try {
-        MiniPBCoder pbcoder;
-        auto data = pbcoder.getEncodeData(v);
-        return data;
-    } catch (const std::exception& e) {
-        MMKVError("%s", e.what());
-    }
-
-    return MMBuffer(0);
-}
-
-MMBuffer MiniPBCoder::encodeDataWithObject(const std::unordered_map<std::string, MMBuffer>& map) {
-    try {
-        MiniPBCoder pbcoder;
-        auto data = pbcoder.getEncodeData(map);
-        return data;
-    } catch (const std::exception& e) {
-        MMKVError("%s", e.what());
-    }
-
-    return MMBuffer(0);
-}
-
 #pragma mark - decode
 
 std::string MiniPBCoder::decodeOneString() {
@@ -315,44 +267,21 @@ std::unordered_map<std::string, MMBuffer> MiniPBCoder::decodeOneMap(size_t size)
 }
 
 string MiniPBCoder::decodeString(const MMBuffer& oData) {
-    string obj;
-    try {
-        MiniPBCoder oCoder(&oData);
-        obj = oCoder.decodeOneString();
-    } catch(const exception& e) {
-        MMKVError("%s", e.what());
-    }
-    return obj;
+    MiniPBCoder oCoder(&oData);
+    return oCoder.decodeOneString();
 }
 
 MMBuffer MiniPBCoder::decodeBytes(const MMBuffer &oData) {
-    try {
-        MiniPBCoder oCoder(&oData);
-        return oCoder.decodeOneBytes();
-    } catch(const exception& e) {
-        MMKVError("%s", e.what());
-    }
-    return MMBuffer(0);
+    MiniPBCoder oCoder(&oData);
+    return oCoder.decodeOneBytes();
 }
 
 std::unordered_map<std::string, MMBuffer> MiniPBCoder::decodeMap(const MMBuffer& oData, size_t size) {
-    std::unordered_map<std::string, MMBuffer> dic;
-    try {
-        MiniPBCoder oCoder(&oData);
-        dic = oCoder.decodeOneMap(size);
-    } catch(const exception& e) {
-        MMKVError("%s", e.what());
-    }
-    return dic;
+    MiniPBCoder oCoder(&oData);
+    return oCoder.decodeOneMap(size);
 }
 
 std::vector<std::string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
-    vector<string> v;
-    try {
-        MiniPBCoder oCoder(&oData);
-        v = oCoder.decodeOneSet();
-    } catch(const exception& e) {
-        MMKVError("%s", e.what());
-    }
-    return v;
+    MiniPBCoder oCoder(&oData);
+    return oCoder.decodeOneSet();
 }
