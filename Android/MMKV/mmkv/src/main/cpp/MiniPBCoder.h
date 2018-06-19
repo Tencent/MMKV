@@ -17,16 +17,16 @@ class CodedInputData;
 class CodedOutputData;
 
 class MiniPBCoder {
-    const MMBuffer *m_inputData;
-    CodedInputData *m_inputStream;
+    const MMBuffer *m_inputBuffer;
+    CodedInputData *m_inputData;
 
-    MMBuffer *m_outputData;
-    CodedOutputData *m_outputStream;
+    MMBuffer *m_outputBuffer;
+    CodedOutputData *m_outputData;
     std::vector<PBEncodeItem> *m_encodeItems;
 
 private:
     MiniPBCoder();
-    MiniPBCoder(const MMBuffer *inputData);
+    MiniPBCoder(const MMBuffer *inputBuffer);
     ~MiniPBCoder();
 
     void writeRootObject();

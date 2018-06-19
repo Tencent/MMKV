@@ -15,33 +15,33 @@
 using namespace std;
 
 MiniPBCoder::MiniPBCoder() {
+    m_inputBuffer = nullptr;
     m_inputData = nullptr;
-    m_inputStream = nullptr;
 
+    m_outputBuffer = nullptr;
     m_outputData = nullptr;
-    m_outputStream = nullptr;
     m_encodeItems = nullptr;
 }
 
 MiniPBCoder::~MiniPBCoder() {
-    if (m_inputStream) {
-        delete m_inputStream;
+    if (m_inputData) {
+        delete m_inputData;
+    }
+    if (m_outputBuffer) {
+        delete m_outputBuffer;
     }
     if (m_outputData) {
         delete m_outputData;
-    }
-    if (m_outputStream) {
-        delete m_outputStream;
     }
     if (m_encodeItems) {
         delete m_encodeItems;
     }
 }
 
-MiniPBCoder::MiniPBCoder(const MMBuffer *inputData) : MiniPBCoder() {
-    m_inputData = inputData;
-    m_inputStream =
-        new CodedInputData(m_inputData->getPtr(), static_cast<int32_t>(m_inputData->length()));
+MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
+    m_inputBuffer = inputBuffer;
+    m_inputData =
+        new CodedInputData(m_inputBuffer->getPtr(), static_cast<int32_t>(m_inputBuffer->length()));
 }
 
 #pragma mark - encode
@@ -52,15 +52,15 @@ void MiniPBCoder::writeRootObject() {
         PBEncodeItem *encodeItem = &(*m_encodeItems)[index];
         switch (encodeItem->type) {
             case PBEncodeItemType_String: {
-                m_outputStream->writeString(*(encodeItem->value.strValue));
+                m_outputData->writeString(*(encodeItem->value.strValue));
                 break;
             }
             case PBEncodeItemType_Data: {
-                m_outputStream->writeData(*(encodeItem->value.bufferValue));
+                m_outputData->writeData(*(encodeItem->value.bufferValue));
                 break;
             }
             case PBEncodeItemType_Container: {
-                m_outputStream->writeRawVarint32(encodeItem->valueSize);
+                m_outputData->writeRawVarint32(encodeItem->valueSize);
                 break;
             }
             case PBEncodeItemType_None: {
@@ -164,13 +164,13 @@ MMBuffer MiniPBCoder::getEncodeData(const string &str) {
     size_t index = prepareObjectForEncode(str);
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
     if (oItem && oItem->compiledSize > 0) {
-        m_outputData = new MMBuffer(oItem->compiledSize);
-        m_outputStream = new CodedOutputData(m_outputData->getPtr(), m_outputData->length());
+        m_outputBuffer = new MMBuffer(oItem->compiledSize);
+        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
 
         writeRootObject();
     }
 
-    return move(*m_outputData);
+    return move(*m_outputBuffer);
 }
 
 MMBuffer MiniPBCoder::getEncodeData(const MMBuffer &buffer) {
@@ -178,13 +178,13 @@ MMBuffer MiniPBCoder::getEncodeData(const MMBuffer &buffer) {
     size_t index = prepareObjectForEncode(buffer);
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
     if (oItem && oItem->compiledSize > 0) {
-        m_outputData = new MMBuffer(oItem->compiledSize);
-        m_outputStream = new CodedOutputData(m_outputData->getPtr(), m_outputData->length());
+        m_outputBuffer = new MMBuffer(oItem->compiledSize);
+        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
 
         writeRootObject();
     }
 
-    return move(*m_outputData);
+    return move(*m_outputBuffer);
 }
 
 MMBuffer MiniPBCoder::getEncodeData(const vector<string> &v) {
@@ -192,13 +192,13 @@ MMBuffer MiniPBCoder::getEncodeData(const vector<string> &v) {
     size_t index = prepareObjectForEncode(v);
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
     if (oItem && oItem->compiledSize > 0) {
-        m_outputData = new MMBuffer(oItem->compiledSize);
-        m_outputStream = new CodedOutputData(m_outputData->getPtr(), m_outputData->length());
+        m_outputBuffer = new MMBuffer(oItem->compiledSize);
+        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
 
         writeRootObject();
     }
 
-    return move(*m_outputData);
+    return move(*m_outputBuffer);
 }
 
 MMBuffer MiniPBCoder::getEncodeData(const unordered_map<string, MMBuffer> &map) {
@@ -206,32 +206,32 @@ MMBuffer MiniPBCoder::getEncodeData(const unordered_map<string, MMBuffer> &map) 
     size_t index = prepareObjectForEncode(map);
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
     if (oItem && oItem->compiledSize > 0) {
-        m_outputData = new MMBuffer(oItem->compiledSize);
-        m_outputStream = new CodedOutputData(m_outputData->getPtr(), m_outputData->length());
+        m_outputBuffer = new MMBuffer(oItem->compiledSize);
+        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
 
         writeRootObject();
     }
 
-    return move(*m_outputData);
+    return move(*m_outputBuffer);
 }
 
 #pragma mark - decode
 
 string MiniPBCoder::decodeOneString() {
-    return m_inputStream->readString();
+    return m_inputData->readString();
 }
 
 MMBuffer MiniPBCoder::decodeOneBytes() {
-    return m_inputStream->readData();
+    return m_inputData->readData();
 }
 
 vector<string> MiniPBCoder::decodeOneSet() {
     vector<string> v;
 
-    auto length = m_inputStream->readInt32();
+    auto length = m_inputData->readInt32();
 
-    while (!m_inputStream->isAtEnd()) {
-        const auto &value = m_inputStream->readString();
+    while (!m_inputData->isAtEnd()) {
+        const auto &value = m_inputData->readString();
         v.push_back(move(value));
     }
 
@@ -242,12 +242,12 @@ unordered_map<string, MMBuffer> MiniPBCoder::decodeOneMap(size_t size) {
     unordered_map<string, MMBuffer> dic;
 
     if (size == 0) {
-        auto length = m_inputStream->readInt32();
+        auto length = m_inputData->readInt32();
     }
-    while (!m_inputStream->isAtEnd()) {
-        const auto &key = m_inputStream->readString();
+    while (!m_inputData->isAtEnd()) {
+        const auto &key = m_inputData->readString();
         if (key.length() > 0) {
-            auto value = m_inputStream->readData();
+            auto value = m_inputData->readData();
             if (value.length() > 0) {
                 dic[key] = move(value);
             } else {
