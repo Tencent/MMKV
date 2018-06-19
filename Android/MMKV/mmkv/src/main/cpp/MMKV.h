@@ -5,15 +5,15 @@
 #ifndef MMKV_MMKV_H
 #define MMKV_MMKV_H
 
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <functional>
-#include "ThreadLock.h"
 #include "InterProcessLock.h"
-#include "MmapedFile.h"
 #include "MMKVMetaInfo.hpp"
+#include "MmapedFile.h"
+#include "ThreadLock.h"
+#include <cstdint>
+#include <functional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 class CodedOutputData;
 class MMBuffer;
@@ -29,10 +29,10 @@ class MMKV {
     std::string m_crcPath;
     std::string m_mmapID;
     int m_fd;
-    char* m_ptr;
+    char *m_ptr;
     size_t m_size;
     size_t m_actualSize;
-    CodedOutputData* m_output;
+    CodedOutputData *m_output;
 
     bool m_needLoadFromFile;
 
@@ -46,89 +46,101 @@ class MMKV {
     InterProcessLock m_exclusiveProcessLock;
 
     void loadFromFile();
+
     void partialLoadFromFile();
+
     void checkLoadData();
+
     bool isFileValid();
+
     bool checkFileCRCValid();
+
     void recaculateCRCDigest();
-    void updateCRCDigest(const uint8_t* ptr, size_t length, bool increaseSequence = false);
+
+    void updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence = false);
+
     void writeAcutalSize(size_t actualSize);
+
     bool ensureMemorySize(size_t newSize);
+
     bool fullWriteback();
 
-    const MMBuffer& getDataForKey(const std::string& key);
-    bool setDataForKey(MMBuffer&& data, const std::string& key);
-    bool removeDataForKey(const std::string& key);
-    bool appendDataWithKey(const MMBuffer& data, const std::string& key);
+    const MMBuffer &getDataForKey(const std::string &key);
+
+    bool setDataForKey(MMBuffer &&data, const std::string &key);
+
+    bool removeDataForKey(const std::string &key);
+
+    bool appendDataWithKey(const MMBuffer &data, const std::string &key);
 
     // just forbid it for possibly misuse
-    MMKV(const MMKV& other) = delete;
-    MMKV& operator =(const MMKV& other) = delete;
+    MMKV(const MMKV &other) = delete;
+
+    MMKV &operator=(const MMKV &other) = delete;
 
 public:
-    MMKV(const std::string& mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
+    MMKV(const std::string &mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
+
     ~MMKV();
 
-    static void initializeMMKV(const std::string& rootDir);
+    static void initializeMMKV(const std::string &rootDir);
 
     // a generic purpose instance
-    static MMKV* defaultMMKV(bool interProcess = MMKV_SINGLE_PROCESS);
+    static MMKV *defaultMMKV(bool interProcess = MMKV_SINGLE_PROCESS);
 
     /* mmapID: any unique ID (com.tencent.xin.pay, etc)
-     * if you want a per-user mmkv, you could merge user-id within mmapID */
-    static MMKV* mmkvWithID(const std::string& mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
+   * if you want a per-user mmkv, you could merge user-id within mmapID */
+    static MMKV *mmkvWithID(const std::string &mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
 
     static void onExit();
 
-    const std::string& mmapID();
+    const std::string &mmapID();
 
     const bool m_isInterProcess;
 
-    bool setStringForKey(const std::string& value, const std::string& key);
+    bool setStringForKey(const std::string &value, const std::string &key);
 
-    bool setBytesForKey(const MMBuffer& value, const std::string& key);
+    bool setBytesForKey(const MMBuffer &value, const std::string &key);
 
-    bool setBool(bool value , const std::string& key);
+    bool setBool(bool value, const std::string &key);
 
-    bool setInt32(int32_t value , const std::string& key);
+    bool setInt32(int32_t value, const std::string &key);
 
-    bool setInt64(int64_t value , const std::string& key);
+    bool setInt64(int64_t value, const std::string &key);
 
-    bool setFloat(float value , const std::string& key);
+    bool setFloat(float value, const std::string &key);
 
-    bool setDouble(double value , const std::string& key);
+    bool setDouble(double value, const std::string &key);
 
-    bool setVectorForKey(const std::vector<std::string>& vector, const std::string& key);
+    bool setVectorForKey(const std::vector<std::string> &vector, const std::string &key);
 
-    bool getStringForKey(const std::string& key, std::string& result);
+    bool getStringForKey(const std::string &key, std::string &result);
 
-    MMBuffer getBytesForKey(const std::string& key);
+    MMBuffer getBytesForKey(const std::string &key);
 
-    bool getBoolForKey(const std::string& key, bool defaultValue = false);
+    bool getBoolForKey(const std::string &key, bool defaultValue = false);
 
-    int32_t getInt32ForKey(const std::string& key, int32_t defaultValue = 0);
+    int32_t getInt32ForKey(const std::string &key, int32_t defaultValue = 0);
 
-    int64_t getInt64ForKey(const std::string& key, int64_t defaultValue = 0);
+    int64_t getInt64ForKey(const std::string &key, int64_t defaultValue = 0);
 
-    float getFloatForKey(const std::string& key, float defaultValue = 0);
+    float getFloatForKey(const std::string &key, float defaultValue = 0);
 
-    double getDoubleForKey(const std::string& key, double defaultValue = 0);
+    double getDoubleForKey(const std::string &key, double defaultValue = 0);
 
-    bool getVectorForKey(const std::string& key, std::vector<std::string>& result);
+    bool getVectorForKey(const std::string &key, std::vector<std::string> &result);
 
-    bool containsKey(const std::string& key);
+    bool containsKey(const std::string &key);
 
     size_t count();
 
     size_t totalSize();
 
-    // Java doesn't support passing boolean by reference,
-    // and using Java's lambda inside JNI is a pain in the ass
-    //void enumerateKeys(std::function<void (const std::string&key, bool& stop)> block);
     std::vector<std::string> allKeys();
 
-    void removeValueForKey(const std::string& key);
-    void removeValuesForKeys(const std::vector<std::string>& arrKeys);
+    void removeValueForKey(const std::string &key);
+
+    void removeValuesForKeys(const std::vector<std::string> &arrKeys);
 
     void clearAll();
 
@@ -139,9 +151,7 @@ public:
     // unless you care about out of battery
     void sync();
 
-    static bool isFileValid(const std::string& mmapID);
+    static bool isFileValid(const std::string &mmapID);
 };
 
-void testPBCoder();
-
-#endif //MMKV_MMKV_H
+#endif // MMKV_MMKV_H

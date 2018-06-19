@@ -18,6 +18,7 @@ class ScopedLock {
 
 public:
     ScopedLock(T *oLock) : m_lock(oLock) {
+        assert(m_lock);
         lock();
     }
 
@@ -46,12 +47,11 @@ public:
     }
 };
 
-
-#define SCOPEDLOCK(lock)            _SCOPEDLOCK(lock, __COUNTER__)
-#define _SCOPEDLOCK(lock, counter)  __SCOPEDLOCK(lock, counter)
+#define SCOPEDLOCK(lock) _SCOPEDLOCK(lock, __COUNTER__)
+#define _SCOPEDLOCK(lock, counter) __SCOPEDLOCK(lock, counter)
 #define __SCOPEDLOCK(lock, counter) ScopedLock<decltype(lock)> __scopedLock##counter(&lock)
+
 //#include <type_traits>
 //#define __SCOPEDLOCK(lock, counter) ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
-
 
 #endif //MMKV_SCOPEDLOCK_HPP

@@ -48,8 +48,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         long handle = getDefaultMMKV(threadMode);
         return new MMKV(handle);
     }
-//    public native void lock();
-//    public native void unlock();
 
     public native String mmapID();
 

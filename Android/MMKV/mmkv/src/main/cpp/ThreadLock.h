@@ -15,14 +15,9 @@ public:
     ThreadLock();
     ~ThreadLock();
 
-    pthread_mutex_t* getLock(){
-        return &m_lock;
-    }
-
     void lock();
     bool try_lock();
     void unlock();
 };
-
 
 #endif //MMKV_THREADLOCK_H
