@@ -5,7 +5,6 @@
 #include "CodedOutputData.h"
 #include "MMKVLog.h"
 #include "PBUtility.h"
-#include "WireFormat.h"
 
 using namespace std;
 

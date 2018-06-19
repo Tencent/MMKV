@@ -7,7 +7,7 @@
 #include "CodedOutputData.h"
 #include "MMBuffer.h"
 #include "PBEncodeItem.hpp"
-#include "WireFormat.h"
+#include "PBUtility.h"
 #include <string>
 #include <sys/stat.h>
 #include <vector>
