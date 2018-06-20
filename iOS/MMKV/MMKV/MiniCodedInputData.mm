@@ -19,11 +19,11 @@ MiniCodedInputData::~MiniCodedInputData() {
 }
 
 Float64 MiniCodedInputData::readDouble() {
-	return convertInt64ToFloat64(this->readRawLittleEndian64());
+	return Int64ToFloat64(this->readRawLittleEndian64());
 }
 
 Float32 MiniCodedInputData::readFloat() {
-	return convertInt32ToFloat32(this->readRawLittleEndian32());
+	return Int32ToFloat32(this->readRawLittleEndian32());
 }
 
 uint64_t MiniCodedInputData::readUInt64() {
@@ -67,7 +67,7 @@ NSString *MiniCodedInputData::readString() {
 
 NSData *MiniCodedInputData::readData() {
 	int32_t size = this->readRawVarint32();
-	if (size < m_size - m_position && size > 0) {
+	if (size <= m_size - m_position && size > 0) {
 		NSData *result = [NSData dataWithBytes:(m_ptr + m_position) length:size];
 		m_position += size;
 		return result;

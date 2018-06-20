@@ -128,7 +128,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	}
 
 	if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
-		munmap(m_crcPtr, computeFixed32Size(0));
+		munmap(m_crcPtr, pbFixed32Size(0));
 		m_crcPtr = nullptr;
 	}
 	if (m_crcFd > 0) {
@@ -191,7 +191,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		if (m_ptr == MAP_FAILED) {
 			MMKVError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
 		} else {
-			const int offset = computeFixed32Size(0);
+			const int offset = pbFixed32Size(0);
 			NSData *lenBuffer = [NSData dataWithBytesNoCopy:m_ptr length:offset freeWhenDone:NO];
 			@try {
 				m_actualSize = MiniCodedInputData(lenBuffer).readFixed32();
@@ -327,7 +327,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
 	@try {
 		if (m_isInBackground) {
-			static const int offset = computeFixed32Size(0);
+			static const int offset = pbFixed32Size(0);
 			static const int pagesize = getpagesize();
 			size_t realOffset = offset + m_actualSize - size;
 			size_t pageOffset = (realOffset / pagesize) * pagesize;
@@ -368,7 +368,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 	if (newSize >= m_output->spaceLeft()) {
 		// try a full rewrite to make space
-		static const int offset = computeFixed32Size(0);
+		static const int offset = pbFixed32Size(0);
 		NSData *data = [MiniPBCoder encodeDataWithObject:m_dic];
 		size_t lenNeeded = data.length + offset + newSize;
 		size_t futureUsage = newSize * std::max<size_t>(8, (m_dic.count + 1) / 2);
@@ -432,7 +432,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 	char *actualSizePtr = m_ptr;
 	char *tmpPtr = nullptr;
-	static const int offset = computeFixed32Size(0);
+	static const int offset = pbFixed32Size(0);
 
 	if (m_isInBackground) {
 		tmpPtr = m_ptr;
@@ -464,8 +464,8 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return NO;
 	}
 	size_t keyLength = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-	size_t size = keyLength + computeRawVarint32Size((int32_t) keyLength); // size needed to encode the key
-	size += data.length + computeRawVarint32Size((int32_t) data.length); // size needed to encode the value
+	size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
+	size += data.length + pbRawVarint32Size((int32_t) data.length); // size needed to encode the value
 
 	CScopedLock lock(m_lock);
 	BOOL hasEnoughSize = [self ensureMemorySize:size];
@@ -494,7 +494,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	} else {
 		BOOL ret = [self writeAcutalSize:m_actualSize + size];
 		if (ret) {
-			static const int offset = computeFixed32Size(0);
+			static const int offset = pbFixed32Size(0);
 			ret = [self protectFromBackgroundWritting:size
 			                               writeBlock:^(MiniCodedOutputData *output) {
 				                             output->writeString(key);
@@ -531,7 +531,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 	NSData *allData = [MiniPBCoder encodeDataWithObject:m_dic];
 	if (allData.length > 0 && [self isFileValid]) {
-		int offset = computeFixed32Size(0);
+		int offset = pbFixed32Size(0);
 		if (allData.length + offset <= m_size) {
 			BOOL ret = [self writeAcutalSize:allData.length];
 			if (ret) {
@@ -565,7 +565,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 // assuming m_ptr & m_size is set
 - (BOOL)checkFileCRCValid {
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
-		int offset = computeFixed32Size(0);
+		int offset = pbFixed32Size(0);
 		m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
 
 		// for backwark compatibility
@@ -592,7 +592,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 - (void)recaculateCRCDigest {
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
 		m_crcDigest = 0;
-		int offset = computeFixed32Size(0);
+		int offset = pbFixed32Size(0);
 		[self updateCRCDigest:(const uint8_t *) m_ptr + offset withSize:m_actualSize];
 	}
 }
@@ -610,7 +610,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return;
 	}
 
-	static const size_t bufferLength = computeFixed32Size(0);
+	static const size_t bufferLength = pbFixed32Size(0);
 	if (m_isInBackground) {
 		if (mlock(m_crcPtr, bufferLength) != 0) {
 			MMKVError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_crcPtr, errno, strerror(errno));
@@ -680,7 +680,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeBoolSize(value);
+	size_t size = pbBoolSize(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
 	MiniCodedOutputData output(data);
 	output.writeBool(value);
@@ -692,7 +692,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeInt32Size(value);
+	size_t size = pbInt32Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
 	MiniCodedOutputData output(data);
 	output.writeInt32(value);
@@ -704,7 +704,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeUInt32Size(value);
+	size_t size = pbUInt32Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
 	MiniCodedOutputData output(data);
 	output.writeUInt32(value);
@@ -716,7 +716,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeInt64Size(value);
+	size_t size = pbInt64Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
 	MiniCodedOutputData output(data);
 	output.writeInt64(value);
@@ -728,7 +728,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeUInt64Size(value);
+	size_t size = pbUInt64Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
 	MiniCodedOutputData output(data);
 	output.writeUInt64(value);
@@ -740,7 +740,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeFloatSize(value);
+	size_t size = pbFloatSize(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
 	MiniCodedOutputData output(data);
 	output.writeFloat(value);
@@ -752,7 +752,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (key.length <= 0) {
 		return FALSE;
 	}
-	size_t size = computeDoubleSize(value);
+	size_t size = pbDoubleSize(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
 	MiniCodedOutputData output(data);
 	output.writeDouble(value);
@@ -1012,7 +1012,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		return NO;
 	}
 
-	const int offset = computeFixed32Size(0);
+	const int offset = pbFixed32Size(0);
 	size_t actualSize = 0;
 	fileData = [NSData dataWithContentsOfFile:kvPath];
 	@try {

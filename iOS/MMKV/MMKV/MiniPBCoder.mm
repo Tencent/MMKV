@@ -138,7 +138,7 @@
 		NSDate *oDate = (NSDate *) obj;
 		encodeItem->type = PBEncodeItemType_NSDate;
 		encodeItem->value.objectValue = (__bridge void *) oDate;
-		encodeItem->valueSize = computeDoubleSize(oDate.timeIntervalSince1970);
+		encodeItem->valueSize = pbDoubleSize(oDate.timeIntervalSince1970);
 		encodeItem->compiledSize = encodeItem->valueSize;
 		return index; // double has fixed compilesize
 	} else if ([obj isKindOfClass:[NSData class]]) {
@@ -179,7 +179,7 @@
 		MMKVError(@"%@ not recognized as container", NSStringFromClass(obj.class));
 		return m_encodeItems->size();
 	}
-	encodeItem->compiledSize = computeRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+	encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
 	return index;
 }

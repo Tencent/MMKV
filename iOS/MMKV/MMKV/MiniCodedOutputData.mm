@@ -23,11 +23,11 @@ MiniCodedOutputData::~MiniCodedOutputData() {
 }
 
 void MiniCodedOutputData::writeDouble(Float64 value) {
-	this->writeRawLittleEndian64(convertFloat64ToInt64(value));
+	this->writeRawLittleEndian64(Float64ToInt64(value));
 }
 
 void MiniCodedOutputData::writeFloat(Float32 value) {
-	this->writeRawLittleEndian32(convertFloat32ToInt32(value));
+	this->writeRawLittleEndian32(Float32ToInt32(value));
 }
 
 void MiniCodedOutputData::writeUInt64(uint64_t value) {
