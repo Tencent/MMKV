@@ -166,6 +166,8 @@
 		encodeItem->type = PBEncodeItemType_NSContainer;
 		encodeItem->value.objectValue = NULL;
 		
+#pragma clang diagnostic push
+#pragma clang diagnostic ignore "-Wimplicit-retain-self"
 		[(NSDictionary*)obj enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
 			NSString* nsKey = (NSString*)key;	// assume key is NSString
 			if (nsKey.length <= 0 || value == nil) {
@@ -188,7 +190,8 @@
 				}
 			}
 		}];
-		
+#pragma clang diagnostic pop
+
 		encodeItem = &(*m_encodeItems)[index];
 	}
 	else
