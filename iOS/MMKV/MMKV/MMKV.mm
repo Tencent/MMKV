@@ -95,7 +95,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		[self loadFromFile];
 
 		auto appState = [UIApplication sharedApplication].applicationState;
-		if (appState != UIApplicationStateActive) {
+		if (appState == UIApplicationStateBackground) {
 			m_isInBackground = YES;
 		} else {
 			m_isInBackground = NO;

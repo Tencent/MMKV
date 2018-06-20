@@ -24,7 +24,7 @@
 		[m_arrStrings addObject:[NSString stringWithFormat:@"%s-%d", __FILE__, rand()]];
 	}
 	[self mmkvBaselineTest:loops];
-	[self userDefaultBaselineTest:loops];
+//	[self userDefaultBaselineTest:loops];
 }
 
 -(void)funcionalTest {
