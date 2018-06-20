@@ -23,7 +23,7 @@
 		CBC1A90420DA94A000AD5087 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
 		CBC1A90520DA94AD00AD5087 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CE2046ACC100931B5F /* UIKit.framework */; };
 		CBC1A90620DA94B900AD5087 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
-		CBC1A90B20DA95E200AD5087 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CBC1A90A20DA95E100AD5087 /* Info.plist */; };
+		CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -148,6 +148,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,7 +232,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CBC1A90B20DA95E200AD5087 /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
