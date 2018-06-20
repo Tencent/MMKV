@@ -7,7 +7,6 @@
 //
 
 #import "MiniPBUtility.h"
-#import "MiniWireFormat.h"
 
 
 static const int32_t LITTLE_ENDIAN_32_SIZE = 4;

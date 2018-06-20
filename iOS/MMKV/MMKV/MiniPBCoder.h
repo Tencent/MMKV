@@ -12,13 +12,13 @@
 
 @interface MiniPBCoder : NSObject
 
-+(NSData*) encodeDataWithObject:(id)obj;
++ (NSData *)encodeDataWithObject:(id)obj;
 
-+(id) decodeObjectOfClass:(Class)cls fromData:(NSData*)oData;
++ (id)decodeObjectOfClass:(Class)cls fromData:(NSData *)oData;
 
 // for NSDictionary
-// 注意：Dictionary 的 key 必须是 NSString 类型
-+(id) decodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(NSData*)oData;
+// note: NSDictionary's key must be NSString
++ (id)decodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(NSData *)oData;
 
 @end
 

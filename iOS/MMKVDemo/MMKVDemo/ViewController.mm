@@ -16,7 +16,7 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
-//	[self funcionalTest];
+	[self funcionalTest];
 
 	int loops = 10000;
 	m_arrStrings = [NSMutableArray arrayWithCapacity:loops];

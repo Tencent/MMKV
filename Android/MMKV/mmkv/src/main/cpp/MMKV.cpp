@@ -843,17 +843,14 @@ void MMKV::sync() {
 bool MMKV::isFileValid(const std::string &mmapID) {
     string kvPath = mappedKVPathWithID(mmapID);
     if (!isFileExist(kvPath)) {
-        // kv文件不存在，有效
         return true;
     }
 
     string crcPath = crcPathWithMappedKVPath(kvPath);
     if (!isFileExist(crcPath.c_str())) {
-        // crc文件不存在，有效
         return true;
     }
 
-    // 读取crc文件值
     uint32_t crcFile = 0;
     MMBuffer *data = readWholeFile(crcPath.c_str());
     if (data) {
@@ -865,14 +862,12 @@ bool MMKV::isFileValid(const std::string &mmapID) {
         return false;
     }
 
-    // 计算原kv crc值
     const int offset = pbFixed32Size(0);
     size_t actualSize = 0;
     MMBuffer *fileData = readWholeFile(kvPath.c_str());
     if (fileData) {
         actualSize = CodedInputData(fileData->getPtr(), fileData->length()).readFixed32();
         if (actualSize > fileData->length() - offset) {
-            // 长度异常，无效
             delete fileData;
             return false;
         }

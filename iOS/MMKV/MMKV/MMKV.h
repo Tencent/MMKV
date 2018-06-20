@@ -8,76 +8,75 @@
 
 #import <Foundation/Foundation.h>
 
-
 @interface MMKV : NSObject
 
 /// a generic purpose instance
-+(instancetype)defaultMMKV;
++ (instancetype)defaultMMKV;
 
 /// mmapID: any unique ID (com.tencent.xin.pay, etc)
 /// if you want a per-user mmkv, you could merge user-id within mmapID
-+(instancetype)mmkvWithID:(NSString*)mmapID;
++ (instancetype)mmkvWithID:(NSString *)mmapID;
 
 // object: NSString/NSData/NSDate
--(BOOL)setObject:(id)obj forKey:(NSString*)key;
+- (BOOL)setObject:(id)obj forKey:(NSString *)key;
 
--(BOOL)setBool:(BOOL)value forKey:(NSString*)key;
+- (BOOL)setBool:(BOOL)value forKey:(NSString *)key;
 
--(BOOL)setInt32:(int32_t)value forKey:(NSString*)key;
+- (BOOL)setInt32:(int32_t)value forKey:(NSString *)key;
 
--(BOOL)setUInt32:(uint32_t)value forKey:(NSString*)key;
+- (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key;
 
--(BOOL)setInt64:(int64_t)value forKey:(NSString*)key;
+- (BOOL)setInt64:(int64_t)value forKey:(NSString *)key;
 
--(BOOL)setUInt64:(uint64_t)value forKey:(NSString*)key;
+- (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key;
 
--(BOOL)setFloat:(float)value forKey:(NSString*)key;
+- (BOOL)setFloat:(float)value forKey:(NSString *)key;
 
--(BOOL)setDouble:(double)value forKey:(NSString*)key;
+- (BOOL)setDouble:(double)value forKey:(NSString *)key;
 
--(id)getObjectOfClass:(Class)cls forKey:(NSString*)key;
+- (id)getObjectOfClass:(Class)cls forKey:(NSString *)key;
 
--(bool)getBoolForKey:(NSString*)key;
--(bool)getBoolForKey:(NSString*)key defaultValue:(bool)defaultValue;
+- (bool)getBoolForKey:(NSString *)key;
+- (bool)getBoolForKey:(NSString *)key defaultValue:(bool)defaultValue;
 
--(int32_t)getInt32ForKey:(NSString*)key;
--(int32_t)getInt32ForKey:(NSString*)key defaultValue:(int32_t)defaultValue;
+- (int32_t)getInt32ForKey:(NSString *)key;
+- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue;
 
--(uint32_t)getUInt32ForKey:(NSString*)key;
--(uint32_t)getUInt32ForKey:(NSString*)key defaultValue:(uint32_t)defaultValue;
+- (uint32_t)getUInt32ForKey:(NSString *)key;
+- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue;
 
--(int64_t)getInt64ForKey:(NSString*)key;
--(int64_t)getInt64ForKey:(NSString*)key defaultValue:(int64_t)defaultValue;
+- (int64_t)getInt64ForKey:(NSString *)key;
+- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue;
 
--(uint64_t)getUInt64ForKey:(NSString*)key;
--(uint64_t)getUInt64ForKey:(NSString*)key defaultValue:(uint64_t)defaultValue;
+- (uint64_t)getUInt64ForKey:(NSString *)key;
+- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue;
 
--(float)getFloatForKey:(NSString*)key;
--(float)getFloatForKey:(NSString*)key defaultValue:(float)defaultValue;
+- (float)getFloatForKey:(NSString *)key;
+- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue;
 
--(double)getDoubleForKey:(NSString*)key;
--(double)getDoubleForKey:(NSString*)key defaultValue:(double)defaultValue;
+- (double)getDoubleForKey:(NSString *)key;
+- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue;
 
--(BOOL)containsKey:(NSString*)key;
+- (BOOL)containsKey:(NSString *)key;
 
--(size_t)count;
+- (size_t)count;
 
--(size_t)totalSize;
+- (size_t)totalSize;
 
--(void)enumerateKeys:(void (^)(NSString* key, BOOL *stop))block;
+- (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 
 // Expensive! use -[MMKV removeValuesForKeys:] for more than one key
--(void)removeValueForKey:(NSString*)key;
+- (void)removeValueForKey:(NSString *)key;
 
--(void)removeValuesForKeys:(NSArray*)arrKeys;
+- (void)removeValuesForKeys:(NSArray *)arrKeys;
 
--(void)clearAll;
+- (void)clearAll;
 
 // you don't need to call this, really, I mean it
 // unless you care about out of battery
--(void)sync;
+- (void)sync;
 
 // for CrashProtected Only!!
-+(BOOL)isFileValid:(NSString*)mmapID;
++ (BOOL)isFileValid:(NSString *)mmapID;
 
 @end
