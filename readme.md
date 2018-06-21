@@ -145,7 +145,7 @@ Tutorials can be found [here][iOS-tutorial].
 
      This will cause Gradle to download AAR package while building your application.
 
-* **Via prebuilt AAR package**
+* **Via Prebuilt AAR Package**
   1. Download AAR package from release page;
   2. Import the AAR as new module. In Android Studio, select `File -> New -> New Module...` menu and choose `"Import JAR/AAR Package"`;
   3. Add a dependency on the new module. This can be done using `File -> Project Structure...` in Android Studio, or by adding following code to application's `build.gradle`:
@@ -156,7 +156,7 @@ Tutorials can be found [here][iOS-tutorial].
      }
      ```
 
-* **Build from Sources**
+* **Build from Source**
   1. Getting source code from git repository:
   
      ```
