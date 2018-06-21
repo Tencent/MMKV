@@ -1,10 +1,6 @@
 # MMKV
 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/merge_requests)
-[![Release Version](https://img.shields.io/badge/release-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/tags)
-[![WeChat Approved iOS](https://img.shields.io/badge/Wechat_Approved_iOS-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/blob/master/iOS/readme.md)
-[![WeChat Approved Android](https://img.shields.io/badge/Wechat_Approved_Android-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/blob/master/Android/readme.md)
-[![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/wikis/home)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/merge_requests) [![Release Version](https://img.shields.io/badge/release-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/tags) [![WeChat Approved iOS](https://img.shields.io/badge/Wechat_Approved_iOS-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/blob/master/iOS/readme.md) [![WeChat Approved Android](https://img.shields.io/badge/Wechat_Approved_Android-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/blob/master/Android/readme.md) [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/wikis/home)
 
 中文版本请参看[这里][mmkv-wiki]
 
@@ -25,16 +21,16 @@ MMKV is an **efficient**, **samll**, **easy-to-use** mobile key-value storage fr
 * **Easy-to-use**. You can use MMKV as you go, no configurations needed. All changes are saved immediately, no `synchronize` calls needed.
 
     ```objective-c
-	MMKV* mmkv = [MMKV defaultMMKV];
-	
-	[mmkv setBool:YES forKey:@"bool"];
-	BOOL bValue = [mmkv getBoolForKey:@"bool"];
-	
-	[mmkv setInt32:-1024 forKey:@"int32"];
-	int32_t iValue = [mmkv getInt32ForKey:@"int32"];
-		
-	[mmkv setObject:@"hello, mmkv" forKey:@"string"];
-	NSString* str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
+    MMKV* mmkv = [MMKV defaultMMKV];
+    
+    [mmkv setBool:YES forKey:@"bool"];
+    BOOL bValue = [mmkv getBoolForKey:@"bool"];
+    
+    [mmkv setInt32:-1024 forKey:@"int32"];
+    int32_t iValue = [mmkv getInt32ForKey:@"int32"];
+    
+    [mmkv setObject:@"hello, mmkv" forKey:@"string"];
+    NSString* str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
     ```
 
 * **Small**.
@@ -193,26 +189,26 @@ with content:
 MMKV has interfaces very similar to Android SharedPreferences APIs. To migrate you application from SharedPreferences:
 
 ```java
-        //SharedPreferences preferences = getSharedPreferences("myData", MODE_PRIVATE);
-        // use mmkv just as SharedPreferences
-        MMKV preferences = MMKV.mmkvWithID("myData");
-        // migrate
-        {
-            SharedPreferences old_man = getSharedPreferences("myData", MODE_PRIVATE);
-            preferences.importFromSharedPreferences(old_man);
-            old_man.edit().clear().commit();
-        }
-        // use mmkv just as SharedPreferences
-        boolean bValue = preferences.getBoolean("bool", false);
-        int iValue = preferences.getInt("int", 0);
-        String str = preferences.getString("string", null);
-        
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("bool", true);
-        editor.putInt("int", Integer.MIN_VALUE);
-        editor.putString("string", "hello, imported");
-        // this is not needed
-        //editor.commit();
+    //SharedPreferences preferences = getSharedPreferences("myData", MODE_PRIVATE);
+    // use mmkv just as SharedPreferences
+    MMKV preferences = MMKV.mmkvWithID("myData");
+    // migrate
+    {
+        SharedPreferences old_man = getSharedPreferences("myData", MODE_PRIVATE);
+        preferences.importFromSharedPreferences(old_man);
+        old_man.edit().clear().commit();
+    }
+    // use mmkv just as SharedPreferences
+    boolean bValue = preferences.getBoolean("bool", false);
+    int iValue = preferences.getInt("int", 0);
+    String str = preferences.getString("string", null);
+    
+    SharedPreferences.Editor editor = preferences.edit();
+    editor.putBoolean("bool", true);
+    editor.putInt("int", Integer.MIN_VALUE);
+    editor.putString("string", "hello, imported");
+    // this is not needed
+    //editor.commit();
 ```
 
 ## Documentations
@@ -221,7 +217,7 @@ MMKV has interfaces very similar to Android SharedPreferences APIs. To migrate y
 * API references for Android can be found [here][mmkv-docs-android].
 
 [install-carthage]: https://github.com/Carthage/Carthage#installing-carthage
-[mmkv-wiki]: http://git.code.oa.com/wechat-team/mmkv/wikis/home
+[mmkv-wiki]: ./readme_cn.md
 [mmkv-docs-ios]: http://git.code.oa.com/wechat-team/mmkv/wikis/home
 [mmkv-docs-android]: http://git.code.oa.com/wechat-team/mmkv/wikis/home
 [iOS-tutorial]: http://git.code.oa.com/wechat-team/mmkv/wikis/home/iOS-macOS-Tutorial
