@@ -208,7 +208,7 @@ MMBuffer MiniPBCoder::getEncodeData(const unordered_map<string, MMBuffer> &map) 
         writeRootObject();
     }
 
-    return std::move(*m_outputData);
+    return std::move(*m_outputBuffer);
 }
 
 #pragma mark - decode
