@@ -3,29 +3,27 @@
 //
 
 #include "CodedOutputData.h"
-#include "WireFormat.h"
-#include "PBUtility.h"
 #include "MMKVLog.h"
+#include "PBUtility.h"
 
 using namespace std;
 
-CodedOutputData::CodedOutputData(void* ptr, size_t len) {
-    bufferPointer = (uint8_t*)ptr;
-    bufferLength = len;
-    position = 0;
+CodedOutputData::CodedOutputData(void *ptr, size_t len)
+    : m_ptr((uint8_t *) ptr), m_size(len), m_position(0) {
+    assert(m_ptr);
 }
 
 CodedOutputData::~CodedOutputData() {
-    bufferPointer = NULL;
-    position = 0;
+    m_ptr = nullptr;
+    m_position = 0;
 }
 
 void CodedOutputData::writeDouble(double value) {
-    this->writeRawLittleEndian64(convertFloat64ToInt64(value));
+    this->writeRawLittleEndian64(Float64ToInt64(value));
 }
 
 void CodedOutputData::writeFloat(float value) {
-    this->writeRawLittleEndian32(convertFloat32ToInt32(value));
+    this->writeRawLittleEndian32(Float32ToInt32(value));
 }
 
 void CodedOutputData::writeInt64(int64_t value) {
@@ -36,116 +34,91 @@ void CodedOutputData::writeInt32(int32_t value) {
     if (value >= 0) {
         this->writeRawVarint32(value);
     } else {
-        // Must sign-extend
         this->writeRawVarint64(value);
     }
 }
 
-void CodedOutputData::writeFixed32(int32_t value) {
-    this->writeRawLittleEndian32(value);
-}
-
 void CodedOutputData::writeBool(bool value) {
-    this->writeRawByte(value ? 1 : 0);
+    this->writeRawByte(static_cast<uint8_t>(value ? 1 : 0));
 }
 
-void CodedOutputData::writeString(const string& value) {
+void CodedOutputData::writeString(const string &value) {
     size_t numberOfBytes = value.size();
-    this->writeRawVarint32((int32_t)numberOfBytes);
-    memcpy(bufferPointer + position, ((uint8_t*)value.data()), numberOfBytes);
-    position += numberOfBytes;
+    this->writeRawVarint32((int32_t) numberOfBytes);
+    memcpy(m_ptr + m_position, ((uint8_t *) value.data()), numberOfBytes);
+    m_position += numberOfBytes;
 }
 
-
-void CodedOutputData::writeData(const MMBuffer& value) {
-    this->writeRawVarint32((int32_t)value.length());
+void CodedOutputData::writeData(const MMBuffer &value) {
+    this->writeRawVarint32((int32_t) value.length());
     this->writeRawData(value);
 }
 
-/**
- * If writing to a flat array, return the space left in the array.
- * Otherwise, throws {@code UnsupportedOperationException}.
- */
 int32_t CodedOutputData::spaceLeft() {
-    return int32_t(bufferLength - position);
+    return int32_t(m_size - m_position);
 }
 
 void CodedOutputData::seek(size_t addedSize) {
-    position += addedSize;
+    m_position += addedSize;
 
-    if (position > bufferLength) {
+    if (m_position > m_size) {
         MMKVError("OutOfSpace");
     }
 }
 
-
-/** Write a single byte. */
 void CodedOutputData::writeRawByte(uint8_t value) {
-    if (position == bufferLength) {
-        MMKVError("position: %d, bufferLength: %d", position, bufferLength);
+    if (m_position == m_size) {
+        MMKVError("m_position: %d, m_size: %zd", m_position, m_size);
         return;
     }
 
-    bufferPointer[position++] = value;
+    m_ptr[m_position++] = value;
 }
 
-
-/** Write an array of bytes. */
-void CodedOutputData::writeRawData(const MMBuffer& data) {
+void CodedOutputData::writeRawData(const MMBuffer &data) {
     size_t numberOfBytes = data.length();
-    memcpy(bufferPointer + position, data.getPtr(), numberOfBytes);
-    position += numberOfBytes;
+    memcpy(m_ptr + m_position, data.getPtr(), numberOfBytes);
+    m_position += numberOfBytes;
 }
 
-
-/**
- * Encode and write a varint.  {@code value} is treated as
- * unsigned, so it won't be sign-extended if negative.
- */
 void CodedOutputData::writeRawVarint32(int32_t value) {
     while (true) {
-        if ((value & ~0x7F) == 0) {
-            this->writeRawByte(value);
+        if ((value & ~0x7f) == 0) {
+            this->writeRawByte(static_cast<uint8_t>(value));
             return;
         } else {
-            this->writeRawByte((value & 0x7F) | 0x80);
+            this->writeRawByte(static_cast<uint8_t>((value & 0x7F) | 0x80));
             value = logicalRightShift32(value, 7);
         }
     }
 }
 
-
-/** Encode and write a varint. */
 void CodedOutputData::writeRawVarint64(int64_t value) {
     while (true) {
-        if ((value & ~0x7FL) == 0) {
-            this->writeRawByte((int32_t) value);
+        if ((value & ~0x7f) == 0) {
+            this->writeRawByte(static_cast<uint8_t>(value));
             return;
         } else {
-            this->writeRawByte(((int32_t) value & 0x7F) | 0x80);
+            this->writeRawByte(static_cast<uint8_t>((value & 0x7f) | 0x80));
             value = logicalRightShift64(value, 7);
         }
     }
 }
 
-
-/** Write a little-endian 32-bit integer. */
 void CodedOutputData::writeRawLittleEndian32(int32_t value) {
-    this->writeRawByte((value      ) & 0xFF);
-    this->writeRawByte((value >>  8) & 0xFF);
-    this->writeRawByte((value >> 16) & 0xFF);
-    this->writeRawByte((value >> 24) & 0xFF);
+    this->writeRawByte(static_cast<uint8_t>((value) &0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 8) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 16) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 24) & 0xff));
 }
 
-
-/** Write a little-endian 64-bit integer. */
 void CodedOutputData::writeRawLittleEndian64(int64_t value) {
-    this->writeRawByte((int32_t)(value      ) & 0xFF);
-    this->writeRawByte((int32_t)(value >>  8) & 0xFF);
-    this->writeRawByte((int32_t)(value >> 16) & 0xFF);
-    this->writeRawByte((int32_t)(value >> 24) & 0xFF);
-    this->writeRawByte((int32_t)(value >> 32) & 0xFF);
-    this->writeRawByte((int32_t)(value >> 40) & 0xFF);
-    this->writeRawByte((int32_t)(value >> 48) & 0xFF);
-    this->writeRawByte((int32_t)(value >> 56) & 0xFF);
+    this->writeRawByte(static_cast<uint8_t>((value) &0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 8) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 16) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 24) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 32) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 40) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 48) & 0xff));
+    this->writeRawByte(static_cast<uint8_t>((value >> 56) & 0xff));
 }

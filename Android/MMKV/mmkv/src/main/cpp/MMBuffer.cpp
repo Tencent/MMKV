@@ -3,37 +3,31 @@
 //
 
 #include "MMBuffer.h"
-#include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <utility>
 
-MMBuffer::MMBuffer(size_t length)
-        : ptr(nullptr), size(length), isNoCopy(false)
-{
+MMBuffer::MMBuffer(size_t length) : ptr(nullptr), size(length), isNoCopy(MMBufferCopy) {
     if (size > 0) {
         ptr = malloc(size);
     }
 }
 
-MMBuffer::MMBuffer(void *source, size_t length, bool noCopy)
-        : ptr(source), size(length), isNoCopy(noCopy)
-{
-    if (!isNoCopy) {
+MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy)
+    : ptr(source), size(length), isNoCopy(noCopy) {
+    if (isNoCopy == MMBufferCopy) {
         ptr = malloc(size);
         memcpy(ptr, source, size);
     }
 }
 
 MMBuffer::MMBuffer(MMBuffer &&other) noexcept
-        : ptr(other.ptr), size(other.size), isNoCopy(other.isNoCopy)
-{
+    : ptr(other.ptr), size(other.size), isNoCopy(other.isNoCopy) {
     other.ptr = nullptr;
     other.size = 0;
-    other.isNoCopy = false;
+    other.isNoCopy = MMBufferCopy;
 }
 
-MMBuffer& MMBuffer::operator=(MMBuffer &&other) noexcept
-{
+MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
     std::swap(ptr, other.ptr);
     std::swap(size, other.size);
     std::swap(isNoCopy, other.isNoCopy);
@@ -42,7 +36,7 @@ MMBuffer& MMBuffer::operator=(MMBuffer &&other) noexcept
 }
 
 MMBuffer::~MMBuffer() {
-    if (!isNoCopy && ptr) {
+    if (isNoCopy == MMBufferCopy && ptr) {
         free(ptr);
     }
     ptr = nullptr;

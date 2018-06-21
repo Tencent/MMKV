@@ -10,41 +10,32 @@
 class MmapedFile {
     std::string m_name;
     int m_fd;
-    void* m_segmentPtr;
+    void *m_segmentPtr;
     size_t m_segmentSize;
 
     // just forbid it for possibly misuse
-    MmapedFile(const MmapedFile& other) = delete;
-    MmapedFile& operator =(const MmapedFile& other) = delete;
+    MmapedFile(const MmapedFile &other) = delete;
+    MmapedFile &operator=(const MmapedFile &other) = delete;
 
 public:
-    MmapedFile(const std::string& path);
+    MmapedFile(const std::string &path);
     ~MmapedFile();
 
-    size_t getFileSize() {
-        return m_segmentSize;
-    }
+    size_t getFileSize() { return m_segmentSize; }
 
-    void* getMemory() {
-        return m_segmentPtr;
-    }
+    void *getMemory() { return m_segmentPtr; }
 
-    std::string& getName() {
-        return m_name;
-    }
+    std::string &getName() { return m_name; }
 
-    int getFd() {
-        return m_fd;
-    }
+    int getFd() { return m_fd; }
 };
 
 class MMBuffer;
 
-extern bool mkpath(char *path);
-extern bool isFileExist(const std::string& nsFilePath);
-extern int createFile(const std::string& nsFilePath);
+extern bool mkPath(char *path);
+extern bool isFileExist(const std::string &nsFilePath);
 extern bool removeFile(const std::string &nsFilePath);
-extern MMBuffer* readWholeFile(const char *path);
-extern bool zeroFillFile(int fd, int startPos, size_t size);
+extern MMBuffer *readWholeFile(const char *path);
+extern bool zeroFillFile(int fd, size_t startPos, size_t size);
 
 #endif //MMKV_MMAPEDFILE_H

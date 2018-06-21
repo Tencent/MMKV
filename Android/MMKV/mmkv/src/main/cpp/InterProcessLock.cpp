@@ -3,12 +3,12 @@
 //
 
 #include "InterProcessLock.h"
-#include <unistd.h>
 #include "MMKVLog.h"
+#include <unistd.h>
 
 static short LockType2FlockType(LockType lockType) {
     switch (lockType) {
-        case SharedLockType :
+        case SharedLockType:
             return F_RDLCK;
         case ExclusiveLockType:
             return F_WRLCK;
@@ -101,7 +101,7 @@ bool FileLock::unlock(LockType lockType) {
         }
     }
 
-    m_lockInfo.l_type = (short)(unlockToSharedLock ? F_RDLCK : F_UNLCK);
+    m_lockInfo.l_type = static_cast<short>(unlockToSharedLock ? F_RDLCK : F_UNLCK);
     auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
     if (ret != 0) {
         MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));

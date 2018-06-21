@@ -5,10 +5,10 @@
 #ifndef MMKV_PBENCODEITEM_HPP
 #define MMKV_PBENCODEITEM_HPP
 
+#include "MMBuffer.h"
 #include <cstdint>
 #include <memory.h>
 #include <string>
-#include "MMBuffer.h"
 
 enum PBEncodeItemType {
     PBEncodeItemType_None,
@@ -17,19 +17,16 @@ enum PBEncodeItemType {
     PBEncodeItemType_Container,
 };
 
-struct PBEncodeItem
-{
+struct PBEncodeItem {
     PBEncodeItemType type;
     uint32_t compiledSize;
     uint32_t valueSize;
     union {
-        const std::string* strValue;
-        const MMBuffer* bufferValue;
+        const std::string *strValue;
+        const MMBuffer *bufferValue;
     } value;
 
-    PBEncodeItem()
-            :type(PBEncodeItemType_None), compiledSize(0), valueSize(0)
-    {
+    PBEncodeItem() : type(PBEncodeItemType_None), compiledSize(0), valueSize(0) {
         memset(&value, 0, sizeof(value));
     }
 };

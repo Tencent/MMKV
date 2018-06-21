@@ -5,8 +5,8 @@
 #ifndef MMKV_INTERPROCESSLOCK_H
 #define MMKV_INTERPROCESSLOCK_H
 
-#include <fcntl.h>
 #include <assert.h>
+#include <fcntl.h>
 
 enum LockType {
     SharedLockType,
@@ -44,7 +44,7 @@ class InterProcessLock {
 
 public:
     InterProcessLock(FileLock *fileLock, LockType lockType)
-            : m_fileLock(fileLock), m_lockType(lockType), m_enable(true) {
+        : m_fileLock(fileLock), m_lockType(lockType), m_enable(true) {
         assert(m_fileLock);
     }
 
