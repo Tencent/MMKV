@@ -73,7 +73,7 @@ dependencies {
 MMKV 的使用非常简单，所有变更立马生效，无需调用 `sync`、`apply`。
 在 App 启动时初始化 MMKV，设定 MMKV 的根目录（files/mmkv/），例如在 MainActivity 里：
 
-```
+```Java
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
