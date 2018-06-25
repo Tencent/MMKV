@@ -49,7 +49,7 @@ NSString* str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 Full tutorials can be found [here](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_tutorial).
 
 ## Performence
-![](http://imgcache.oa.com/photos/31601/3b5a30acb12158f3a3de668452b4bac0.jpg)
+![](http://imgcache.oa.com/photos/31601/o_50039ad6ca11f1599c84ac529ff4530a.jpg)
 For more benchmark data, please refer to [our benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_benchmark).
 
 # MMKV for Android
