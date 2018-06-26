@@ -49,7 +49,7 @@ public final class Baseline {
             mmkv.encode(key, tmp);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("MMKV write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void mmkvBatchReadInt() {
@@ -61,7 +61,7 @@ public final class Baseline {
             int tmp = mmkv.decodeInt(key);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("MMKV read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void mmkvBatchWriteString() {
@@ -74,7 +74,7 @@ public final class Baseline {
             mmkv.encode(strKey, valueStr);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("MMKV write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void mmkvBatchReadString() {
@@ -86,7 +86,7 @@ public final class Baseline {
             String tmpStr = mmkv.decodeString(strKey);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("MMKV read String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("MMKV read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     public void sharedPreferencesBaselineTest() {
@@ -110,7 +110,7 @@ public final class Baseline {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("SharedPreferences write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadInt() {
@@ -122,7 +122,7 @@ public final class Baseline {
             int tmp = preferences.getInt(key, 0);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("SharedPreferences read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchWrieString() {
@@ -138,7 +138,7 @@ public final class Baseline {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("SharedPreferences write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadStrinfg() {
@@ -150,7 +150,7 @@ public final class Baseline {
             final String tmp = preferences.getString(key, null);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("SharedPreferences read String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("SharedPreferences read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     public void sqliteBaselineTest() {
@@ -165,57 +165,57 @@ public final class Baseline {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-//        sqlIteKV.beginTransaction();
+        sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
             sqlIteKV.putInt(key, tmp);
         }
-//        sqlIteKV.endTransaction();
+        sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println("sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteReadInt() {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-//        sqlIteKV.beginTransaction();
+        sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = sqlIteKV.getInt(key);
         }
-//        sqlIteKV.endTransaction();
+        sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println("sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteWriteString() {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-//        sqlIteKV.beginTransaction();
+        sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             final String value = m_arrStrings[index];
             final String key = m_arrKeys[index];
             sqlIteKV.putString(key, value);
         }
-//        sqlIteKV.endTransaction();
+        sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println("sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteReadString() {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-//        sqlIteKV.beginTransaction();
+        sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             final String key = m_arrKeys[index];
             final String tmp = sqlIteKV.getString(key);
         }
-//        sqlIteKV.endTransaction();
+        sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println("sqlite read String: loop[" + m_loops + "]: " + (endTime - startTime) + "ms");
+        System.out.println("sqlite read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 }

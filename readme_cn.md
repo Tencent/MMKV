@@ -103,7 +103,7 @@ String str = kv.decodeString("string");
 MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](http://git.code.oa.com/wechat-team/mmkv/wikis/android_tutorial)。
 
 ### 性能对比
-![](http://imgcache.oa.com/photos/31601/o_bb215f7fd392321793e6564128d4bd03.jpg)
+![](http://imgcache.oa.com/photos/31601/o_9f1679ab8cabd6aa68ec0f884d672ebf.jpg)
 
 更详细的性能对比参考 [Android Benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/android_benchmark)。
 
