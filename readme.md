@@ -49,7 +49,8 @@ NSString* str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 Full tutorials can be found [here](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_tutorial).
 
 ## Performence
-![](http://imgcache.oa.com/photos/31601/o_50039ad6ca11f1599c84ac529ff4530a.jpg)
+Writing random `int` for 10000 times, we get this chart:
+![](http://imgcache.oa.com/photos/31601/o_1fdef58a4194d4acd646cf998aabed4c.jpg)
 For more benchmark data, please refer to [our benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_benchmark).
 
 # MMKV for Android
@@ -118,7 +119,8 @@ String str = kv.decodeString("string");
 MMKV also supports **Multi-Process Access**. Full tutorials is here [Android Tutorial](http://git.code.oa.com/wechat-team/mmkv/wikis/android_tutorial).
 
 ## Performence
-![](http://imgcache.oa.com/photos/31601/o_9f1679ab8cabd6aa68ec0f884d672ebf.jpg)
+Writing random `int` for 1000 times, we get this chart:
+![](http://imgcache.oa.com/photos/31601/o_e87f87a38ffe0ed1149abdcd8eb483ae.jpg)
 For more benchmark data, please refer to [our benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/android_benchmark).
 
 
