@@ -34,7 +34,7 @@ For other installation options, see [iOS Setup](http://git.code.oa.com/wechat-te
 You can use MMKV as you go, no configurations needed. All changes are saved immediately, no `synchronize` calls needed.
 
 ```objective-c
-MMKV* mmkv = [MMKV defaultMMKV];
+MMKV *mmkv = [MMKV defaultMMKV];
     
 [mmkv setBool:YES forKey:@"bool"];
 BOOL bValue = [mmkv getBoolForKey:@"bool"];
@@ -43,7 +43,7 @@ BOOL bValue = [mmkv getBoolForKey:@"bool"];
 int32_t iValue = [mmkv getInt32ForKey:@"int32"];
     
 [mmkv setObject:@"hello, mmkv" forKey:@"string"];
-NSString* str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
+NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 ```
 
 Full tutorials can be found [here](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_tutorial).
