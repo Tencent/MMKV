@@ -49,7 +49,8 @@ NSString* str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 更详细的使用教程参考 [iOS Tutorial](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_tutorial)。
 
 ### 性能对比
-![](http://imgcache.oa.com/photos/31601/o_50039ad6ca11f1599c84ac529ff4530a.jpg)
+循环写入随机的`int` 1w 次，我们有如下性能对比：
+![](http://imgcache.oa.com/photos/31601/o_1fdef58a4194d4acd646cf998aabed4c.jpg)
 更详细的性能对比参考 [iOS Benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_benchmark)。
 
 ## Android 指南
@@ -103,7 +104,8 @@ String str = kv.decodeString("string");
 MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](http://git.code.oa.com/wechat-team/mmkv/wikis/android_tutorial)。
 
 ### 性能对比
-![](http://imgcache.oa.com/photos/31601/o_9f1679ab8cabd6aa68ec0f884d672ebf.jpg)
+循环写入随机的`int` 1k 次，我们有如下性能对比：
+![](http://imgcache.oa.com/photos/31601/o_e87f87a38ffe0ed1149abdcd8eb483ae.jpg)
 
 更详细的性能对比参考 [Android Benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/android_benchmark)。
 
