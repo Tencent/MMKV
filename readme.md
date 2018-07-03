@@ -20,8 +20,8 @@ MMKV is an **efficient**, **samll**, **easy-to-use** mobile key-value storage fr
 
 ## Getting Started
 
-### Installation Via Cocoapods:
-  1. Install [CocoaPods](https://guides.cocoapods.org/using/getting-started.html);
+### Installation Via CocoaPods:
+  1. Install [CocoaPods](https://guides.CocoaPods.org/using/getting-started.html);
   2. Open terminal, `cd` to your project directory, run `pod repo update` to make CocoaPods aware of the latest available MMKV versions;
   3. Edit your Podfile, add `pod 'MMKV', :git => 'http://git.code.oa.com/wechat-team/mmkv.git'` to your app target;
   4. Run `pod install`;

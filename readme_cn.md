@@ -21,7 +21,7 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 ### 安装引入
 推荐使用 CocoaPods：
 
-  1. 安装 [CocoaPods](https://guides.cocoapods.org/using/getting-started.html)；
+  1. 安装 [CocoaPods](https://guides.CocoaPods.org/using/getting-started.html)；
   2. 打开命令行, `cd` 到你的项目工程目录, 输入 `pod repo update` 让 CocoaPods 感知最新的 MMKV 版本；
   3. 打开 Podfile, 添加 `pod 'MMKV', :git => 'http://git.code.oa.com/wechat-team/mmkv.git'` 到你的 app target 里面；
   4. 在命令行输入 `pod install`；

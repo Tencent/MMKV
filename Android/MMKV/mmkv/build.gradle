@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-//apply plugin: 'com.android.application'
 apply plugin: 'maven'
 
 android {
@@ -13,7 +12,6 @@ android {
     }
     compileSdkVersion 27
     defaultConfig {
-//        applicationId "com.tencent.mmkv"
         minSdkVersion 16
         targetSdkVersion 27
         versionCode 1
@@ -66,10 +64,6 @@ uploadArchives {
     repositories.mavenDeployer {
         configuration = configurations.deployerJars
 
-//      repository(url: "file://localhost/tmp/localmvn/")
-//        repository(url: "http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots") {
-//            authentication(userName: RDM_USR, password: RDM_PWD)
-//        }
       repository(url: "http://maven.oa.com/nexus/content/repositories/thirdparty") {
           authentication(userName: RDM_USR, password: RDM_PWD)
       }
@@ -97,5 +91,4 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-//    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
 }
