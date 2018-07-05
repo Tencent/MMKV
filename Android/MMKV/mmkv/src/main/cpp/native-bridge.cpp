@@ -418,7 +418,7 @@ Java_com_tencent_mmkv_MMKV_unlock(JNIEnv *env, jobject instance) {
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_tencent_mmkv_MMKV_try_1lock(JNIEnv *env, jobject instance) {
+Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         return (jboolean)kv->try_lock();

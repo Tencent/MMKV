@@ -229,14 +229,14 @@ public class MMKVTest {
 
         SystemClock.sleep(1000 * 3);
         MMKV mmkv = MMKV.mmkvWithID(MMKVTestService.SharedMMKVID, MMKV.MULTI_PROCESS_MODE);
-        boolean ret = mmkv.try_lock();
+        boolean ret = mmkv.tryLock();
         assertEquals(ret, false);
 
         intent.putExtra(MMKVTestService.CMD_Key, MMKVTestService.CMD_Kill);
         appContext.startService(intent);
 
         SystemClock.sleep(1000 * 3);
-        ret = mmkv.try_lock();
+        ret = mmkv.tryLock();
         assertEquals(ret, true);
     }
 }

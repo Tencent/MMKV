@@ -53,7 +53,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public native void lock();
     public native void unlock();
-    public native boolean try_lock();
+    public native boolean tryLock();
 
     public boolean encode(String key, boolean value) {
         return encodeBool(nativeHandle, key, value);
