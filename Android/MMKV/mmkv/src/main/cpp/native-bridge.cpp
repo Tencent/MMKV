@@ -400,3 +400,28 @@ extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_clearMemoryCache(JN
         kv->clearMemoryState();
     }
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_tencent_mmkv_MMKV_lock(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->lock();
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_tencent_mmkv_MMKV_unlock(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->unlock();
+    }
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return (jboolean)kv->try_lock();
+    }
+    return jboolean (false);
+}

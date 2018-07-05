@@ -1,15 +1,14 @@
 package com.tencent.mmkv;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.security.Key;
 import java.util.HashSet;
 
 import static org.junit.Assert.*;
@@ -203,5 +202,41 @@ public class MMKVTest {
 
         byte[] byteValue = mmkv.decodeBytes("bytes_1");
         assertArrayEquals(bytes, byteValue);
+    }
+
+    @Test
+    public void testIPCUpdateInt() {
+        MMKV mmkv = MMKV.mmkvWithID(MMKVTestService.SharedMMKVID, MMKV.MULTI_PROCESS_MODE);
+        mmkv.encode(MMKVTestService.SharedMMKVKey, 1024);
+
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        Intent intent = new Intent(appContext, MMKVTestService.class);
+        intent.putExtra(MMKVTestService.CMD_Key, MMKVTestService.CMD_Update);
+        appContext.startService(intent);
+
+        SystemClock.sleep(1000 * 3);
+        int value = mmkv.decodeInt(MMKVTestService.SharedMMKVKey);
+        assertEquals(value, 1024 + 1);
+    }
+
+    @Test
+    public void testIPCLock() {
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        Intent intent = new Intent(appContext, MMKVTestService.class);
+        intent.putExtra(MMKVTestService.CMD_Key, MMKVTestService.CMD_Lock);
+        appContext.startService(intent);
+
+        SystemClock.sleep(1000 * 3);
+        MMKV mmkv = MMKV.mmkvWithID(MMKVTestService.SharedMMKVID, MMKV.MULTI_PROCESS_MODE);
+        boolean ret = mmkv.tryLock();
+        assertEquals(ret, false);
+
+        intent.putExtra(MMKVTestService.CMD_Key, MMKVTestService.CMD_Kill);
+        appContext.startService(intent);
+
+        SystemClock.sleep(1000 * 3);
+        ret = mmkv.tryLock();
+        assertEquals(ret, true);
     }
 }
