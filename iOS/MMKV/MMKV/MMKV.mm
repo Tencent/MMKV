@@ -463,15 +463,19 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (data.length <= 0 || key.length <= 0) {
 		return NO;
 	}
+	CScopedLock lock(m_lock);
+
+	[m_dic setObject:data forKey:key];
+
+	return [self appendData:data forKey:key];
+}
+
+- (BOOL)appendData:(NSData *)data forKey:(NSString *)key {
 	size_t keyLength = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
 	size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
 	size += data.length + pbRawVarint32Size((int32_t) data.length); // size needed to encode the value
 
-	CScopedLock lock(m_lock);
 	BOOL hasEnoughSize = [self ensureMemorySize:size];
-
-	[m_dic setObject:data forKey:key];
-
 	if (hasEnoughSize == NO || [self isFileValid] == NO) {
 		return NO;
 	}
@@ -937,7 +941,6 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	MMKVInfo(@"enumerate [%@] finish", m_mmapID);
 }
 
-// Expensive! use -[MMKV removeValuesForKeys:] for more than one key
 - (void)removeValueForKey:(NSString *)key {
 	if (key.length <= 0) {
 		return;
@@ -946,7 +949,8 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	[self checkLoadData];
 	[m_dic removeObjectForKey:key];
 
-	[self fullWriteback];
+	static NSData *data = [NSData data];
+	[self appendData:data forKey:key];
 }
 
 - (void)removeValuesForKeys:(NSArray *)arrKeys {

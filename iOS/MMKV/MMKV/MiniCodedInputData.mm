@@ -74,8 +74,6 @@ NSData *MiniCodedInputData::readData() {
 	} else if (size < 0) {
 		@throw [NSException exceptionWithName:@"InvalidProtocolBuffer" reason:@"negativeSize" userInfo:nil];
 		return nil;
-	} else {
-		@throw [NSException exceptionWithName:@"InvalidProtocolBuffer" reason:@"truncatedMessage" userInfo:nil];
 	}
 	return nil;
 }

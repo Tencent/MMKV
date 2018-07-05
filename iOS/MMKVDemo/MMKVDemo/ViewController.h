@@ -10,8 +10,7 @@
 
 @interface ViewController : UIViewController
 
-@property(weak, nonatomic) IBOutlet UIButton* m_btn;
-@property(weak, nonatomic) IBOutlet UIActivityIndicatorView* m_loading;
+@property(weak, nonatomic) IBOutlet UIButton *m_btn;
+@property(weak, nonatomic) IBOutlet UIActivityIndicatorView *m_loading;
 
 @end
-

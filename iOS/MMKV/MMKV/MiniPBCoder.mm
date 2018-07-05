@@ -240,7 +240,11 @@
 		NSString *nsKey = m_inputData->readString();
 		if (nsKey) {
 			id value = [self decodeOneObject:nil ofClass:cls];
-			[dic setObject:value forKey:nsKey];
+			if (value) {
+				[dic setObject:value forKey:nsKey];
+			} else {
+				[dic removeObjectForKey:nsKey];
+			}
 		}
 	}
 

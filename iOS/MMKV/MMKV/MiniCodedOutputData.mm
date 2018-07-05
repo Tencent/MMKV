@@ -102,6 +102,9 @@ void MiniCodedOutputData::writeRawData(NSData *data) {
 }
 
 void MiniCodedOutputData::writeRawData(NSData *value, int32_t offset, int32_t length) {
+	if (length <= 0) {
+		return;
+	}
 	if (m_size - m_position >= length) {
 		memcpy(m_ptr + m_position, ((uint8_t *) value.bytes) + offset, length);
 		m_position += length;
@@ -135,14 +138,14 @@ void MiniCodedOutputData::writeRawVarint64(int64_t value) {
 }
 
 void MiniCodedOutputData::writeRawLittleEndian32(int32_t value) {
-	this->writeRawByte((value) & 0xff);
+	this->writeRawByte((value) &0xff);
 	this->writeRawByte((value >> 8) & 0xff);
 	this->writeRawByte((value >> 16) & 0xff);
 	this->writeRawByte((value >> 24) & 0xff);
 }
 
 void MiniCodedOutputData::writeRawLittleEndian64(int64_t value) {
-	this->writeRawByte((int32_t)(value) & 0xff);
+	this->writeRawByte((int32_t)(value) &0xff);
 	this->writeRawByte((int32_t)(value >> 8) & 0xff);
 	this->writeRawByte((int32_t)(value >> 16) & 0xff);
 	this->writeRawByte((int32_t)(value >> 24) & 0xff);

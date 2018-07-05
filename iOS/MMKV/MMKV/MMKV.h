@@ -65,7 +65,6 @@
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 
-// Expensive! use -[MMKV removeValuesForKeys:] for more than one key
 - (void)removeValueForKey:(NSString *)key;
 
 - (void)removeValuesForKeys:(NSArray *)arrKeys;
