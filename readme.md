@@ -1,5 +1,3 @@
-# MMKV
-
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/merge_requests) [![Release Version](https://img.shields.io/badge/release-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/tags) [![WeChat Approved iOS](https://img.shields.io/badge/Wechat_Approved_iOS-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/blob/master/iOS/readme.md) [![WeChat Approved Android](https://img.shields.io/badge/Wechat_Approved_Android-1.0.8-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/blob/master/Android/readme.md) [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](http://git.code.oa.com/wechat-team/mmkv/wikis/home)
 
 中文版本请参看[这里][mmkv-wiki]

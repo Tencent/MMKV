@@ -1,3 +1,5 @@
+[TOC]
+
 # MMKV——基于 mmap 的高性能通用 key-value 组件
 MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今，在 iOS 微信上使用已有近 3 年，其性能和稳定性经过了时间的验证。近期也已移植到 Android 平台，一并开源。
 
