@@ -1,0 +1,76 @@
+// OSS_ANDROID_TEMPLATE_FILE_HEADER
+
+apply plugin: 'checkstyle'
+
+
+checkstyle {
+    configFile rootProject.file('checkstyle.xml')
+    toolVersion '6.19'
+    ignoreFailures false
+    showViolations true
+}
+
+task('checkstyle', type: Checkstyle) {
+    source 'src/main/java'
+    include '**/*.java'
+    classpath = files()
+}
+
+check.dependsOn('checkstyle')
+
+
+//apply plugin: 'pmd'
+//
+//pmd {
+//    toolVersion '5.4.0'
+//}
+//
+//task pmd(type: Pmd) {
+//    targetJdk = TargetJdk.VERSION_1_7
+//
+//    description 'Run pmd'
+//    group 'verification'
+//
+//    // If ruleSets is not empty, it seems to contain some
+//    // defaults which override rules in the ruleset file...
+//    ruleSets = []
+//    ruleSetFiles = rootProject.files('pmd-ruleset.xml')
+//    source = fileTree('src/main/java')
+//    ignoreFailures = false
+//
+//    reports {
+//        xml.enabled = false
+//        html.enabled = true
+//    }
+//}
+//
+//check.dependsOn('pmd')
+
+//apply plugin: 'findbugs'
+//
+//def classTree = 'build/intermediates/classes/debug'
+//
+//if (project.plugins.hasPlugin('java')) {
+//    classTree = 'build/classes'
+//}
+//task findbugs(type: FindBugs) {
+//
+//    description 'Run findbugs'
+//    group 'verification'
+//
+//    classes = fileTree(classTree)
+//    source = fileTree('src/main/java/')
+//    classpath = files()
+//
+//    effort = 'default'
+//
+//    excludeFilter = rootProject.file("findbugs-exclude.xml")
+//
+//    reports {
+//        xml.enabled = false
+//        html.enabled = true
+//    }
+//    ignoreFailures = true
+//}
+
+//check.dependsOn('findbugs')

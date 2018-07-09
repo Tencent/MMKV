@@ -1,0 +1,63 @@
+// OSS_ANDROID_TEMPLATE_FILE_HEADER
+/**
+ * Optional android libraries gradle file
+ *
+ * Simply apply from: rootProject.file('gradle/build_library.gradle') if needed
+ *
+ */
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+    }
+
+    signingConfigs {
+        configDebug {
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storeFile rootProject.file('debug.keystore')
+            storePassword 'android'
+        }
+
+        configRelease {
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storeFile rootProject.file('debug.keystore')
+            storePassword 'android'
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            signingConfig signingConfigs.configDebug
+            minifyEnabled false
+        }
+        release {
+            signingConfig signingConfigs.configRelease
+            minifyEnabled true
+            proguardFile getDefaultProguardFile('proguard-android.txt')
+            proguardFile project.file('proguard-rules-android-lib.pro') // NOTE: default rules for android library if this file exists
+        }
+    }
+}
+
+// Publication
+version = rootProject.ext.VERSION_NAME
+group = rootProject.ext.GROUP
+
+def check_private_only = project.hasProperty('PRIVATE_ONLY') ? PRIVATE_ONLY.toBoolean() : rootProject.ext.defaultsToPrivateOnly // Dangerous, turn on for default
+
+if (check_private_only) {
+    // Publish to private only repositories
+    apply from: rootProject.file('gradle/android-publish-private.gradle')
+
+} else {
+    // Publish to public repositories
+    apply from: rootProject.file('gradle/android-publish.gradle')
+}
