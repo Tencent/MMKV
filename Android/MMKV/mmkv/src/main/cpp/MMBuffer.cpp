@@ -5,6 +5,7 @@
 #include "MMBuffer.h"
 #include <cstdlib>
 #include <utility>
+#include <cstring>
 
 MMBuffer::MMBuffer(size_t length) : ptr(nullptr), size(length), isNoCopy(MMBufferCopy) {
     if (size > 0) {
