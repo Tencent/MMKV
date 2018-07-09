@@ -1,0 +1,181 @@
+// OSS_ANDROID_TEMPLATE_FILE_HEADER
+/**
+ * New java-publish gradle script
+ *
+ * 1. Provide RELEASE_REPOSITORY_URL and SNAPSHOT_REPOSITORY_URL with gradle.properties or local.properties.
+ * 2. Provide REPOSITORY_USERNAME and REPOSITORY_PASSWORD if needed.
+ */
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+apply plugin: 'com.jfrog.bintray'
+
+
+def isReleaseBuild() {
+    return version.contains("SNAPSHOT") == false
+}
+
+def getReleaseRepositoryUrl() {
+    return hasProperty('RELEASE_REPOSITORY_URL') ? RELEASE_REPOSITORY_URL : readPropertyFromLocalProperties('RELEASE_REPOSITORY_URL')
+}
+
+def getSnapshotRepositoryUrl() {
+    return hasProperty('SNAPSHOT_REPOSITORY_URL') ? SNAPSHOT_REPOSITORY_URL : readPropertyFromLocalProperties('SNAPSHOT_REPOSITORY_URL')
+}
+
+def readPropertyFromLocalProperties(String key) {
+    Properties properties = new Properties()
+    try {
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    } catch (Exception e) {
+        println("load local properties failed msg:${e.message}")
+    }
+    return properties.getProperty(key)
+}
+
+def getRepositoryUsername() {
+    return hasProperty('REPOSITORY_USERNAME') ? REPOSITORY_USERNAME : readPropertyFromLocalProperties('REPOSITORY_USERNAME')
+}
+
+def getRepositoryPassword() {
+    return hasProperty('REPOSITORY_PASSWORD') ? REPOSITORY_PASSWORD : readPropertyFromLocalProperties('REPOSITORY_PASSWORD')
+}
+
+def getBintrayUser() {
+    return hasProperty('BINTRAY_USER') ? BINTRAY_USER : readPropertyFromLocalProperties('BINTRAY_USER')
+}
+
+def getBintrayKey() {
+    return hasProperty('BINTRAY_APIKEY') ? BINTRAY_APIKEY : readPropertyFromLocalProperties('BINTRAY_APIKEY')
+}
+
+def pomConfig = {
+    scm {
+        url POM_SCM_URL
+    }
+
+    licenses {
+        license {
+            name POM_LICENCE_NAME
+            url POM_LICENCE_URL
+            distribution POM_LICENCE_DIST
+        }
+    }
+
+    developers {
+        developer {
+            id POM_DEVELOPER_ID
+            name POM_DEVELOPER_NAME
+        }
+    }
+}
+
+/**
+ * TODO: support multiple configurations
+ */
+def javadocJar = task("javadocJar", type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+def sourcesJar = task("sourcesJar", type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.java.srcDirs
+}
+
+publishing {
+    publications {
+        Component(MavenPublication) {
+            from components.java
+            groupId = group
+            artifactId = POM_ARTIFACT_ID
+            version = version
+
+            // artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+}
+
+/**
+ * Setup custom maven repo
+ */
+publishing.repositories {
+    maven {
+        url "${isReleaseBuild() ? getReleaseRepositoryUrl() : getSnapshotRepositoryUrl()}"
+        credentials {
+            username "${getRepositoryUsername()}"
+            password "${getRepositoryPassword()}"
+        }
+    }
+}
+
+/**
+ * Then update bintray configurations
+ */
+afterEvaluate {
+    bintray {
+        user = getBintrayUser()
+        key = getBintrayKey()
+        configurations = publications
+
+        pkg {
+            repo = 'maven'
+            userOrg = BINTRAY_ORGANIZATION
+            name = "${GROUP}:${POM_ARTIFACT_ID}"
+            licenses = BINTRAY_LICENCE
+            vcsUrl = POM_SCM_URL
+            websiteUrl = POM_URL
+            issueTrackerUrl = POM_ISSUE_URL
+            publicDownloadNumbers = true
+            publish = true
+            dryRun = false
+        }
+    }
+}
+
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
+
+task buildAndPublishToLocalMaven(type: Copy, dependsOn: ['build', 'publishToMavenLocal']) {
+    group = 'publishing'
+
+    // save artifacts files to artifacts folder
+    from configurations.archives.allArtifacts.files
+    into "${rootProject.buildDir}/outputs/artifacts/"
+    rename { String fileName ->
+        fileName.replace("release.aar", "${version}.aar")
+    }
+
+    doLast {
+        println "* published to maven local: ${project.group}:${project.name}:${project.version}"
+    }
+}
+
+task buildAndPublishRepo(type: Copy, dependsOn: ['build', 'publish']) {
+    group = "publishing"
+
+    // save artifacts files to artifacts folder
+    from configurations.archives.allArtifacts.files
+    into "${rootProject.buildDir}/outputs/artifacts/"
+    rename { String fileName ->
+        fileName.replace("release.aar", "${version}.aar")
+    }
+
+    doLast {
+        println "* published to repo: ${project.group}:${project.name}:${project.version}"
+    }
+}
+
+tasks.getByName("bintrayUpload") {
+    it.doFirst {
+        if (!isReleaseBuild()) {
+            throw new GradleException("bintrayUpload only support release version")
+        }
+    }
+}
+
+apply from: rootProject.file('gradle/check.gradle')
