@@ -56,7 +56,8 @@ bool FileLock::doLock(LockType lockType, int cmd) {
         m_lockInfo.l_type = F_UNLCK;
         ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
         if (ret != 0) {
-            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret,
+                      strerror(errno));
         }
         m_lockInfo.l_type = type;
     }
