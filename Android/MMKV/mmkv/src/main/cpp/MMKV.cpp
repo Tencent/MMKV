@@ -266,8 +266,10 @@ void MMKV::checkLoadData() {
         SCOPEDLOCK(m_sharedProcessLock);
 
         struct stat st = {0};
-        fstat(m_fd, &st);
-        size_t fileSize = (size_t) st.st_size;
+        size_t fileSize = 0;
+        if (fstat(m_fd, &st) != -1) {
+            fileSize = (size_t) st.st_size;
+        }
         if (m_size != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(), m_size,
                      fileSize);
