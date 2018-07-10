@@ -19,7 +19,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 MmapedFile::MmapedFile(const std::string &path) : m_name(path) {
     m_fd = open(m_name.c_str(), O_RDWR | O_CREAT, S_IRWXU);
-    if (m_fd <= 0) {
+    if (m_fd < 0) {
         MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
     } else {
         m_segmentSize = 0;
@@ -53,7 +53,7 @@ MmapedFile::~MmapedFile() {
         munmap(m_segmentPtr, m_segmentSize);
         m_segmentPtr = nullptr;
     }
-    if (m_fd > 0) {
+    if (m_fd >= 0) {
         close(m_fd);
         m_fd = -1;
     }
@@ -110,7 +110,7 @@ bool removeFile(const string &nsFilePath) {
 MMBuffer *readWholeFile(const char *path) {
     MMBuffer *buffer = nullptr;
     int fd = open(path, O_RDONLY);
-    if (fd > 0) {
+    if (fd >= 0) {
         auto fileLength = lseek(fd, 0, SEEK_END);
         if (fileLength > 0) {
             buffer = new MMBuffer(static_cast<size_t>(fileLength));
