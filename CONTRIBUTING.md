@@ -1,5 +1,5 @@
-# Contributing to {TEMPLATE_PROJECT}
-Welcome to [report Issues]({GITHUB_URL}/issues) or [pull requests]({GITHUB_URL}/pulls). It's recommended to read the following Contributing Guide first before contributing. 
+# Contributing to MMKV
+Welcome to [report Issues](http://git.code.oa.com/wechat-team/mmkv/issues) or [pull requests](http://git.code.oa.com/wechat-team/mmkv/merge_requests). It's recommended to read the following Contributing Guide first before contributing. 
 
 ## Issues
 We use issues to track public bugs and feature requests.
@@ -11,7 +11,7 @@ Please search the existing issues to see if any similar issue or feature request
 If you open an issue, the more information the better. Such as detailed description, screenshot or video of your problem, logcat or code blocks for your crash.
 
 ## Pull Requests
-We strongly welcome your pull request to make {TEMPLATE_PROJECT} better. 
+We strongly welcome your pull request to make MMKV better. 
 
 ### Branch Management
 There are three main branches here:
@@ -51,10 +51,10 @@ Before submitting a pull request, please make sure the followings are done:
 6. Now, you can submit your pull request on `dev` or `hotfix` branch.
 
 ## Code Style Guide
-Use [Code Style]({GITHUB_URL}/blob/master/checkstyle.xml) for Java and Android.
+Use [Code Style](http://git.code.oa.com/wechat-team/mmkv/blob/master/Android/MMKV/checkstyle.xml) for Java and Android.
 
 * 4 spaces for indentation rather than tabs
 
 ## License
-By contributing to {TEMPLATE_PROJECT}, you agree that your contributions will be licensed
-under its [BSD LICENSE]({GITHUB_URL}/blob/master/LICENSE)
+By contributing to MMKV, you agree that your contributions will be licensed
+under its [BSD LICENSE](http://git.code.oa.com/wechat-team/mmkv/blob/master/LICENSE)
