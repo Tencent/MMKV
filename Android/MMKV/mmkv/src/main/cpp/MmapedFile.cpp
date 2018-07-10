@@ -17,7 +17,7 @@ using namespace std;
 
 const int DEFAULT_MMAP_SIZE = getpagesize();
 
-MmapedFile::MmapedFile(const std::string &path) : m_name(path) {
+MmapedFile::MmapedFile(const std::string &path) : m_name(path), m_fd(-1), m_segmentPtr(nullptr) {
     m_fd = open(m_name.c_str(), O_RDWR | O_CREAT, S_IRWXU);
     if (m_fd < 0) {
         MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));

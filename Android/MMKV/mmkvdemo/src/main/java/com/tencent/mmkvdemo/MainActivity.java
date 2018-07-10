@@ -65,8 +65,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         testMMKV();
-//        testInterProcessLock();
-//        testImportSharedPreferences();
+        //        testInterProcessLock();
+        //        testImportSharedPreferences();
     }
 
     @Override
@@ -111,13 +111,12 @@ public class MainActivity extends AppCompatActivity {
 
         kv.removeValueForKey("bool");
         System.out.println("bool: " + kv.decodeBool("bool"));
-        kv.removeValuesForKeys(new String[]{"int", "long"});
-//        kv.clearAll();
+        kv.removeValuesForKeys(new String[] {"int", "long"});
+        //        kv.clearAll();
         kv.clearMemoryCache();
         System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
         System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
     }
-
 
     private void testImportSharedPreferences() {
         SharedPreferences preferences = getSharedPreferences("imported", MODE_PRIVATE);
@@ -128,7 +127,12 @@ public class MainActivity extends AppCompatActivity {
         editor.putFloat("float", -3.14f);
         editor.putString("string", "hello, imported");
         HashSet<String> set = new HashSet<String>();
-        set.add("W"); set.add("e"); set.add("C"); set.add("h"); set.add("a"); set.add("t");
+        set.add("W");
+        set.add("e");
+        set.add("C");
+        set.add("h");
+        set.add("a");
+        set.add("t");
         editor.putStringSet("string-set", set);
         editor.commit();
 

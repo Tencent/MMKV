@@ -11,9 +11,7 @@ import java.util.Set;
 
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
-    static {
-        System.loadLibrary("mmkv");
-    }
+    static { System.loadLibrary("mmkv"); }
 
     // call on program start
     public static String initialize(Context context) {
@@ -59,45 +57,31 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeBool(nativeHandle, key, value);
     }
 
-    public boolean decodeBool(String key) {
-        return decodeBool(nativeHandle, key, false);
-    }
+    public boolean decodeBool(String key) { return decodeBool(nativeHandle, key, false); }
 
     public boolean decodeBool(String key, boolean defaultValue) {
         return decodeBool(nativeHandle, key, defaultValue);
     }
 
-    public boolean encode(String key, int value) {
-        return encodeInt(nativeHandle, key, value);
-    }
+    public boolean encode(String key, int value) { return encodeInt(nativeHandle, key, value); }
 
-    public int decodeInt(String key) {
-        return decodeInt(nativeHandle, key, 0);
-    }
+    public int decodeInt(String key) { return decodeInt(nativeHandle, key, 0); }
 
     public int decodeInt(String key, int defaultValue) {
         return decodeInt(nativeHandle, key, defaultValue);
     }
 
-    public boolean encode(String key, long value) {
-        return encodeLong(nativeHandle, key, value);
-    }
+    public boolean encode(String key, long value) { return encodeLong(nativeHandle, key, value); }
 
-    public long decodeLong(String key) {
-        return decodeLong(nativeHandle, key, 0);
-    }
+    public long decodeLong(String key) { return decodeLong(nativeHandle, key, 0); }
 
     public long decodeLong(String key, long defaultValue) {
         return decodeLong(nativeHandle, key, defaultValue);
     }
 
-    public boolean encode(String key, float value) {
-        return encodeFloat(nativeHandle, key, value);
-    }
+    public boolean encode(String key, float value) { return encodeFloat(nativeHandle, key, value); }
 
-    public float decodeFloat(String key) {
-        return decodeFloat(nativeHandle, key, 0);
-    }
+    public float decodeFloat(String key) { return decodeFloat(nativeHandle, key, 0); }
 
     public float decodeFloat(String key, float defaultValue) {
         return decodeFloat(nativeHandle, key, defaultValue);
@@ -107,9 +91,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeDouble(nativeHandle, key, value);
     }
 
-    public double decodeDouble(String key) {
-        return decodeDouble(nativeHandle, key, 0);
-    }
+    public double decodeDouble(String key) { return decodeDouble(nativeHandle, key, 0); }
 
     public double decodeDouble(String key, double defaultValue) {
         return decodeDouble(nativeHandle, key, defaultValue);
@@ -119,9 +101,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeString(nativeHandle, key, value);
     }
 
-    public String decodeString(String key) {
-        return decodeString(nativeHandle, key, null);
-    }
+    public String decodeString(String key) { return decodeString(nativeHandle, key, null); }
 
     public String decodeString(String key, String defaultValue) {
         return decodeString(nativeHandle, key, defaultValue);
@@ -131,9 +111,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeSet(nativeHandle, key, value.toArray(new String[value.size()]));
     }
 
-    public Set<String> decodeStringSet(String key) {
-        return decodeStringSet(key, null);
-    }
+    public Set<String> decodeStringSet(String key) { return decodeStringSet(key, null); }
 
     public Set<String> decodeStringSet(String key, Set<String> defaultValue) {
         String[] result = decodeStringSet(nativeHandle, key);
@@ -147,28 +125,18 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeBytes(nativeHandle, key, value);
     }
 
-    public byte[] decodeBytes(String key) {
-        return decodeBytes(nativeHandle, key);
-    }
+    public byte[] decodeBytes(String key) { return decodeBytes(nativeHandle, key); }
 
-    public boolean containsKey(String key) {
-        return containsKey(nativeHandle, key);
-    }
+    public boolean containsKey(String key) { return containsKey(nativeHandle, key); }
 
     public native String[] allKeys();
 
-    public long count() {
-        return count(nativeHandle);
-    }
+    public long count() { return count(nativeHandle); }
 
     // used file size
-    public long totalSize() {
-        return totalSize(nativeHandle);
-    }
+    public long totalSize() { return totalSize(nativeHandle); }
 
-    public void removeValueForKey(String key) {
-        removeValueForKey(nativeHandle, key);
-    }
+    public void removeValueForKey(String key) { removeValueForKey(nativeHandle, key); }
 
     public native void removeValuesForKeys(String[] arrKeys);
 
@@ -187,7 +155,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @SuppressWarnings("unchecked")
     public int importFromSharedPreferences(SharedPreferences preferences) {
         Map<String, ?> kvs = preferences.getAll();
-        if (kvs.size() <= 0) {
+        if (kvs == null || kvs.size() <= 0) {
             return 0;
         }
 
@@ -217,7 +185,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @Override
     public Map<String, ?> getAll() {
-        throw new java.lang.UnsupportedOperationException("use allKeys() instead, getAll() not implement because type-erasure inside mmkv");
+        throw new java.lang.UnsupportedOperationException(
+            "use allKeys() instead, getAll() not implement because type-erasure inside mmkv");
     }
 
     @Nullable
@@ -323,21 +292,21 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     @Override
-    public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+    public void
+    registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
         throw new java.lang.UnsupportedOperationException("Not implement in MMKV");
     }
 
     @Override
-    public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+    public void
+    unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
         throw new java.lang.UnsupportedOperationException("Not implement in MMKV");
     }
 
     // jni
     private long nativeHandle;
 
-    private MMKV(long handle) {
-        nativeHandle = handle;
-    }
+    private MMKV(long handle) { nativeHandle = handle; }
 
     private static native void initialize(String rootDir);
 
