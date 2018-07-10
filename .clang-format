@@ -29,3 +29,4 @@ UseTab: ForIndentation
 ---
 Language: Java
 ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: None
