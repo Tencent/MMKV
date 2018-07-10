@@ -17,12 +17,12 @@ using namespace std;
 
 const int DEFAULT_MMAP_SIZE = getpagesize();
 
-MmapedFile::MmapedFile(const std::string &path) : m_name(path), m_fd(-1), m_segmentPtr(nullptr) {
+MmapedFile::MmapedFile(const std::string &path)
+    : m_name(path), m_fd(-1), m_segmentPtr(nullptr), m_segmentSize(0) {
     m_fd = open(m_name.c_str(), O_RDWR | O_CREAT, S_IRWXU);
     if (m_fd < 0) {
         MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
     } else {
-        m_segmentSize = 0;
         struct stat st = {};
         if (fstat(m_fd, &st) != -1) {
             m_segmentSize = static_cast<size_t>(st.st_size);

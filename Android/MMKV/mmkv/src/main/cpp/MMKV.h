@@ -153,15 +153,9 @@ public:
 
     static bool isFileValid(const std::string &mmapID);
 
-    void lock() {
-        m_exclusiveProcessLock.lock();
-    }
-    void unlock() {
-        m_exclusiveProcessLock.unlock();
-    }
-    bool try_lock() {
-        return m_exclusiveProcessLock.try_lock();
-    }
+    void lock() { m_exclusiveProcessLock.lock(); }
+    void unlock() { m_exclusiveProcessLock.unlock(); }
+    bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
 };
 
 #endif // MMKV_MMKV_H
