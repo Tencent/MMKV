@@ -7,21 +7,21 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public final class SQLIteKV {
-    private class SQLIteKVDBHelper extends SQLiteOpenHelper {
+    private static class SQLIteKVDBHelper extends SQLiteOpenHelper {
         private static final int DB_VERSION = 1;
         private static final String DB_NAME = "kv.db";
         public static final String TABLE_NAME_STR = "kv_str";
         public static final String TABLE_NAME_INT = "kv_int";
 
-        public SQLIteKVDBHelper(Context context) {
-            super(context, DB_NAME, null, DB_VERSION);
-        }
+        public SQLIteKVDBHelper(Context context) { super(context, DB_NAME, null, DB_VERSION); }
 
         @Override
         public void onCreate(SQLiteDatabase sqLiteDatabase) {
-            String sql = "create table if not exists " + TABLE_NAME_STR + " (k text UNIQUE on conflict replace, v text)";
+            String sql = "create table if not exists " + TABLE_NAME_STR +
+                         " (k text UNIQUE on conflict replace, v text)";
             sqLiteDatabase.execSQL(sql);
-            sql = "create table if not exists " + TABLE_NAME_INT + " (k text UNIQUE on conflict replace, v integer)";
+            sql = "create table if not exists " + TABLE_NAME_INT +
+                  " (k text UNIQUE on conflict replace, v integer)";
             sqLiteDatabase.execSQL(sql);
         }
 
@@ -43,9 +43,7 @@ public final class SQLIteKV {
         m_dbHelper.setWriteAheadLoggingEnabled(true);
     }
 
-    public void beginTransaction() {
-        getWritetableDB().beginTransaction();
-    }
+    public void beginTransaction() { getWritetableDB().beginTransaction(); }
 
     public void endTransaction() {
         if (m_writetableDB != null) {
@@ -92,8 +90,9 @@ public final class SQLIteKV {
 
     public int getInt(String key) {
         int value = 0;
-        Cursor cursor = getReadableDatabase().rawQuery("select v from " + SQLIteKVDBHelper.TABLE_NAME_INT + " where k=?", new String[]{ key });
-        if(cursor.moveToFirst()) {
+        Cursor cursor = getReadableDatabase().rawQuery(
+            "select v from " + SQLIteKVDBHelper.TABLE_NAME_INT + " where k=?", new String[] {key});
+        if (cursor.moveToFirst()) {
             value = cursor.getInt(cursor.getColumnIndex("v"));
         }
         cursor.close();
@@ -110,8 +109,9 @@ public final class SQLIteKV {
 
     public String getString(String key) {
         String value = null;
-        Cursor cursor = getReadableDatabase().rawQuery("select v from " + SQLIteKVDBHelper.TABLE_NAME_STR + " where k=?", new String[]{ key });
-        if(cursor.moveToFirst()) {
+        Cursor cursor = getReadableDatabase().rawQuery(
+            "select v from " + SQLIteKVDBHelper.TABLE_NAME_STR + " where k=?", new String[] {key});
+        if (cursor.moveToFirst()) {
             value = cursor.getString(cursor.getColumnIndex("v"));
         }
         cursor.close();

@@ -8,15 +8,19 @@ public class MyService_1 extends BenchMarkBaseService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         System.out.println("MyService_1 onStartCommand");
-        String cmd = intent.getStringExtra(CMD_ID);
-        if (cmd.equals(CMD_READ_INT)) {
-            super.batchReadInt(CALLER);
-        } else if (cmd.equals(CMD_READ_STRING)) {
-            super.batchReadString(CALLER);
-        } else if (cmd.equals(CMD_WRITE_INT)) {
-            super.batchWriteInt(CALLER);
-        } else if (cmd.equals(CMD_WRITE_STRING)) {
-            super.batchWriteString(CALLER);
+        if (intent != null) {
+            String cmd = intent.getStringExtra(CMD_ID);
+            if (cmd != null) {
+                if (cmd.equals(CMD_READ_INT)) {
+                    super.batchReadInt(CALLER);
+                } else if (cmd.equals(CMD_READ_STRING)) {
+                    super.batchReadString(CALLER);
+                } else if (cmd.equals(CMD_WRITE_INT)) {
+                    super.batchWriteInt(CALLER);
+                } else if (cmd.equals(CMD_WRITE_STRING)) {
+                    super.batchWriteString(CALLER);
+                }
+            }
         }
         return super.onStartCommand(intent, flags, startId);
     }

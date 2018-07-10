@@ -132,7 +132,7 @@ void MMKV::loadFromFile() {
     m_metaInfo.read(m_metaFile.getMemory());
 
     m_fd = open(m_path.c_str(), O_RDWR | O_CREAT, S_IRWXU);
-    if (m_fd <= 0) {
+    if (m_fd < 0) {
         MMKVError("fail to open:%s, %s", m_path.c_str(), strerror(errno));
     } else {
         m_size = 0;
@@ -266,8 +266,10 @@ void MMKV::checkLoadData() {
         SCOPEDLOCK(m_sharedProcessLock);
 
         struct stat st = {0};
-        fstat(m_fd, &st);
-        size_t fileSize = (size_t) st.st_size;
+        size_t fileSize = 0;
+        if (fstat(m_fd, &st) != -1) {
+            fileSize = (size_t) st.st_size;
+        }
         if (m_size != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(), m_size,
                      fileSize);
@@ -298,7 +300,7 @@ void MMKV::clearAll() {
             MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
         }
     }
-    if (m_fd > 0) {
+    if (m_fd >= 0) {
         if (m_size != DEFAULT_MMAP_SIZE) {
             MMKVInfo("truncating [%s] from %zu to %d", m_mmapID.c_str(), m_size, DEFAULT_MMAP_SIZE);
             if (ftruncate(m_fd, DEFAULT_MMAP_SIZE) != 0) {
@@ -334,12 +336,12 @@ void MMKV::clearMemoryState() {
     }
     m_ptr = nullptr;
 
-    if (m_fd > 0) {
+    if (m_fd >= 0) {
         if (close(m_fd) != 0) {
             MMKVError("fail to close [%s], %s", m_mmapID.c_str(), strerror(errno));
         }
     }
-    m_fd = 0;
+    m_fd = -1;
     m_size = 0;
     m_actualSize = 0;
 }
@@ -533,7 +535,7 @@ bool MMKV::fullWriteback() {
 }
 
 bool MMKV::isFileValid() {
-    if (m_fd > 0 && m_size > 0 && m_output && m_ptr && m_ptr != MAP_FAILED) {
+    if (m_fd >= 0 && m_size > 0 && m_output && m_ptr && m_ptr != MAP_FAILED) {
         return true;
     }
     return false;

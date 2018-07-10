@@ -1,0 +1,85 @@
+// OSS_ANDROID_TEMPLATE_FILE_HEADER
+/**
+ * Update script from oss-android-template project
+ *
+ * apply from: rootProject.file('gradle/oss-android-template.gradle')
+ */
+
+ext {
+    publishTypes = [
+            gradleFiles: [
+                    commit   : "master",
+                    filePaths: [
+                            //
+                            "gradle/check.gradle",
+                            "gradle/android-publish.gradle",
+                            "gradle/android-publish-private.gradle",
+                            "gradle/java-publish.gradle",
+                            "gradle/java-publish-private.gradle",
+
+                            //
+                            "gradle/build_library.gradle",
+                            "gradle/modularize-compat.gradle",
+
+                            //
+                            "proguard-rules/proguard-rules-android-lib.pro",
+                            "proguard-rules/proguard-rules-test.pro",
+                    ]
+            ]
+    ]
+}
+
+/**
+ * fetch from
+ */
+task updateTemplateGradleFiles() {
+    group = 'oss-android-template'
+    dependsOn(getDownloadTask('gradleFiles', rootDir))
+}
+
+def getDownloadTask(flavor, root) {
+    def taskName = "updateSelfTemplate${flavor.capitalize()}"
+    return task(taskName) {
+        doLast {
+            def flavorProps = project.ext.publishTypes[flavor]
+
+            flavorProps.filePaths.collect {
+                def line = getFileURL(flavorProps.commit, it)
+                def fullPath = getDownloadPath(it) as File
+                try {
+                    print "* fetching remote to ${fullPath}"
+                    fullPath.getParentFile().mkdirs()
+
+                    ant.get(src: line, dest: fullPath, ignoreerrors: false)
+
+                    if (fullPath.readLines()[0].contains('OSS_ANDROID_TEMPLATE_FILE_HEADER')) {
+                        def toFile = file("$root/$it")
+                        ant.copy(file: fullPath, tofile: toFile)
+                        // toFile.append('\n\n// COPIED FROM OSS_ANDROID_TEMPLATE\n')
+                        println " ...done"
+
+                    } else {
+                        println " ...invalid"
+                    }
+
+                } catch (Exception e) {
+                    println " ...failed"
+                    // e.printStackTrace()
+                }
+            }
+        }
+    }
+}
+
+def getToken() {
+    return hasProperty('TEMPLATE_UPDATE_TOKEN') ? TEMPLATE_UPDATE_TOKEN : ''
+}
+
+def getFileURL(commit, path) {
+    return "http://git.code.oa.com/api/v3/projects/40484/repository/blobs/${commit}?private_token=${getToken()}&filepath=${path}"
+}
+
+def getDownloadPath(path = '', root = "$buildDir/oss-android-template/") {
+    return "${root}/${path}"
+}
+

@@ -41,8 +41,8 @@ Java_com_tencent_mmkv_MMKV_initialize(JNIEnv *env, jobject obj, jstring rootDir)
         return;
     }
     const char *kstr = env->GetStringUTFChars(rootDir, nullptr);
-    MMKV::initializeMMKV(kstr);
     if (kstr) {
+        MMKV::initializeMMKV(kstr);
         env->ReleaseStringUTFChars(rootDir, kstr);
     }
 }
@@ -58,11 +58,12 @@ static MMKV *getMMKV(JNIEnv *env, jobject obj) {
 
 static string jstring2string(JNIEnv *env, jstring str) {
     const char *kstr = env->GetStringUTFChars(str, nullptr);
-    string result(kstr);
     if (kstr) {
+        string result(kstr);
         env->ReleaseStringUTFChars(str, kstr);
+        return result;
     }
-    return result;
+    return "";
 }
 
 static jstring string2jstring(JNIEnv *env, const string &str) {
@@ -401,27 +402,25 @@ extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_clearMemoryCache(JN
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_tencent_mmkv_MMKV_lock(JNIEnv *env, jobject instance) {
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_lock(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->lock();
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_tencent_mmkv_MMKV_unlock(JNIEnv *env, jobject instance) {
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_unlock(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->unlock();
     }
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv *env, jobject instance) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv *env,
+                                                                         jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
-        return (jboolean)kv->try_lock();
+        return (jboolean) kv->try_lock();
     }
-    return jboolean (false);
+    return jboolean(false);
 }

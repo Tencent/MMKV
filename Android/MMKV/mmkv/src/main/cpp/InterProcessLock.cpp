@@ -54,7 +54,10 @@ bool FileLock::doLock(LockType lockType, int cmd) {
         // lets be gentleman: unlock my shared-lock to prevent deadlock
         auto type = m_lockInfo.l_type;
         m_lockInfo.l_type = F_UNLCK;
-        fcntl(m_fd, F_SETLK, &m_lockInfo);
+        ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        if (ret != 0) {
+            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        }
         m_lockInfo.l_type = type;
     }
 
