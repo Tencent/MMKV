@@ -30,7 +30,7 @@
 		CB1FD48F2046984F00931B5F /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)";
+			dstPath = include/MMKV;
 			dstSubfolderSpec = 16;
 			files = (
 				CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */,
