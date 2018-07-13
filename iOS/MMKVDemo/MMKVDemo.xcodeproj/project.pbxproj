@@ -16,6 +16,7 @@
 		CB1FD4B82046995E00931B5F /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
 		CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
+		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -65,6 +66,7 @@
 		CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MMKVDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
 		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVPerformanceTest.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +146,7 @@
 			isa = PBXGroup;
 			children = (
 				CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */,
+				CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */,
 				CB36F24D20F8A20C009AF46F /* Info.plist */,
 			);
 			path = MMKVDemoTests;
@@ -286,6 +289,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */,
+				CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
