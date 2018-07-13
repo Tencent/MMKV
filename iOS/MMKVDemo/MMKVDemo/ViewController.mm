@@ -11,6 +11,9 @@
 
 @implementation ViewController {
 	NSMutableArray *m_arrStrings;
+	NSMutableArray *m_arrStrKeys;
+	NSMutableArray *m_arrIntKeys;
+
 	int m_loops;
 }
 
@@ -21,8 +24,17 @@
 
 	m_loops = 10000;
 	m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
+	m_arrStrKeys = [NSMutableArray arrayWithCapacity:m_loops];
+	m_arrIntKeys = [NSMutableArray arrayWithCapacity:m_loops];
 	for (size_t index = 0; index < m_loops; index++) {
-		[m_arrStrings addObject:[NSString stringWithFormat:@"%s-%d", __FILE__, rand()]];
+		NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
+		[m_arrStrings addObject:str];
+
+		NSString *strKey = [NSString stringWithFormat:@"str-%zu", index];
+		[m_arrStrKeys addObject:strKey];
+
+		NSString *intKey = [NSString stringWithFormat:@"int-%zu", index];
+		[m_arrIntKeys addObject:intKey];
 	}
 }
 
@@ -93,10 +105,12 @@
 		MMKV *mmkv = [MMKV defaultMMKV];
 		for (int index = 0; index < loops; index++) {
 			int32_t tmp = rand();
-			[mmkv setInt32:tmp forKey:@"testInt"];
+			NSString *intKey = m_arrIntKeys[index];
+			[mmkv setInt32:tmp forKey:intKey];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"mmkv write int %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"mmkv write int %d times, cost:%d ms", loops, cost);
 	}
 }
 
@@ -106,10 +120,12 @@
 
 		MMKV *mmkv = [MMKV defaultMMKV];
 		for (int index = 0; index < loops; index++) {
-			int32_t tmp = [mmkv getInt32ForKey:@"testInt"];
+			NSString *intKey = m_arrIntKeys[index];
+			int32_t tmp = [mmkv getInt32ForKey:intKey];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"mmkv read int %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"mmkv read int %d times, cost:%d ms", loops, cost);
 	}
 }
 
@@ -120,10 +136,12 @@
 		MMKV *mmkv = [MMKV defaultMMKV];
 		for (int index = 0; index < loops; index++) {
 			NSString *str = m_arrStrings[index];
-			[mmkv setObject:str forKey:@"testStr"];
+			NSString *strKey = m_arrStrKeys[index];
+			[mmkv setObject:str forKey:strKey];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"mmkv write string %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"mmkv write string %d times, cost:%d ms", loops, cost);
 	}
 }
 
@@ -133,10 +151,12 @@
 
 		MMKV *mmkv = [MMKV defaultMMKV];
 		for (int index = 0; index < loops; index++) {
-			NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"testStr"];
+			NSString *strKey = m_arrStrKeys[index];
+			NSString *str = [mmkv getObjectOfClass:NSString.class forKey:strKey];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"mmkv read string %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"mmkv read string %d times, cost:%d ms", loops, cost);
 	}
 }
 
@@ -156,11 +176,13 @@
 		NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
 		for (int index = 0; index < loops; index++) {
 			NSInteger tmp = rand();
-			[userdefault setInteger:tmp forKey:@"testInt"];
+			NSString *intKey = m_arrIntKeys[index];
+			[userdefault setInteger:tmp forKey:intKey];
 			[userdefault synchronize];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"NSUserDefaults write int %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"NSUserDefaults write int %d times, cost:%d ms", loops, cost);
 	}
 }
 
@@ -170,10 +192,12 @@
 
 		NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
 		for (int index = 0; index < loops; index++) {
-			NSInteger tmp = [userdefault integerForKey:@"testInt"];
+			NSString *intKey = m_arrIntKeys[index];
+			NSInteger tmp = [userdefault integerForKey:intKey];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"NSUserDefaults read int %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"NSUserDefaults read int %d times, cost:%d ms", loops, cost);
 	}
 }
 
@@ -184,11 +208,13 @@
 		NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
 		for (int index = 0; index < loops; index++) {
 			NSString *str = m_arrStrings[index];
-			[userdefault setObject:str forKey:@"testStr"];
+			NSString *strKey = m_arrStrKeys[index];
+			[userdefault setObject:str forKey:strKey];
 			[userdefault synchronize];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"NSUserDefaults write string %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"NSUserDefaults write string %d times, cost:%d ms", loops, cost);
 	}
 }
 
@@ -198,10 +224,12 @@
 
 		NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
 		for (int index = 0; index < loops; index++) {
-			NSString *str = [userdefault objectForKey:@"testStr"];
+			NSString *strKey = m_arrStrKeys[index];
+			NSString *str = [userdefault objectForKey:strKey];
 		}
 		NSDate *endDate = [NSDate date];
-		NSLog(@"NSUserDefaults read string %d times, cost:%f", loops, [endDate timeIntervalSinceDate:startDate] * 1000);
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"NSUserDefaults read string %d times, cost:%d ms", loops, cost);
 	}
 }
 
