@@ -20,6 +20,7 @@
 
 #import "ViewController.h"
 #import <MMKV/MMKV.h>
+#import "MMKVDemo-Swift.h"
 
 @implementation ViewController {
 	NSMutableArray *m_arrStrings;
@@ -33,6 +34,9 @@
 	[super viewDidLoad];
 
 	[self funcionalTest];
+	
+	DemoSwiftUsage* swiftUsageDemo = [[DemoSwiftUsage alloc] init];
+	[swiftUsageDemo testSwiftFunctionality];
 
 	m_loops = 10000;
 	m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
