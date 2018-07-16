@@ -111,3 +111,5 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](htt
 
 更详细的性能对比参考 [Android Benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/android_benchmark)。
 
+## FAQ
+具体参见 [FAQ](http://git.code.oa.com/wechat-team/mmkv/wikis/FAQ_cn)。

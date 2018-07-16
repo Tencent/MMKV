@@ -123,6 +123,8 @@ Writing random `int` for 1000 times, we get this chart:
 ![](http://imgcache.oa.com/photos/31601/o_e87f87a38ffe0ed1149abdcd8eb483ae.jpg)
 For more benchmark data, please refer to [our benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/android_benchmark).
 
+# FAQ
+Full [FAQ](http://git.code.oa.com/wechat-team/mmkv/wikis/FAQ).
 
 [install-carthage]: https://github.com/Carthage/Carthage#installing-carthage
 [mmkv-wiki]: ./readme_cn.md
