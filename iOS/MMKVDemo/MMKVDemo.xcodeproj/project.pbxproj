@@ -17,6 +17,7 @@
 		CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
+		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +68,8 @@
 		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
 		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVPerformanceTest.mm; sourceTree = "<group>"; };
+		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
+		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,13 +117,15 @@
 			children = (
 				CB1FD42320455E2D00931B5F /* AppDelegate.h */,
 				CB1FD42420455E2D00931B5F /* AppDelegate.m */,
+				CB1FD42C20455E2D00931B5F /* Assets.xcassets */,
+				CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */,
+				CB1FD43120455E2D00931B5F /* Info.plist */,
+				CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */,
+				CB1FD43220455E2D00931B5F /* main.m */,
+				CB1FD42920455E2D00931B5F /* Main.storyboard */,
+				CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */,
 				CB1FD42620455E2D00931B5F /* ViewController.h */,
 				CB1FD42720455E2D00931B5F /* ViewController.mm */,
-				CB1FD42920455E2D00931B5F /* Main.storyboard */,
-				CB1FD42C20455E2D00931B5F /* Assets.xcassets */,
-				CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */,
-				CB1FD43120455E2D00931B5F /* Info.plist */,
-				CB1FD43220455E2D00931B5F /* main.m */,
 			);
 			path = MMKVDemo;
 			sourceTree = "<group>";
@@ -202,6 +207,7 @@
 				TargetAttributes = {
 					CB1FD41F20455E2D00931B5F = {
 						CreatedOnToolsVersion = 9.2;
+						LastSwiftMigration = 0940;
 						ProvisioningStyle = Automatic;
 					};
 					CB36F24820F8A20C009AF46F = {
@@ -280,6 +286,7 @@
 			files = (
 				CB1FD42820455E2D00931B5F /* ViewController.mm in Sources */,
 				CB1FD43320455E2D00931B5F /* main.m in Sources */,
+				CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */,
 				CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -436,6 +443,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 52LMU3A345;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
@@ -443,6 +451,9 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
@@ -452,6 +463,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 52LMU3A345;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
@@ -460,6 +472,8 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
@@ -468,6 +482,7 @@
 		CB36F25020F8A20C009AF46F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
@@ -487,6 +502,7 @@
 		CB36F25120F8A20C009AF46F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
