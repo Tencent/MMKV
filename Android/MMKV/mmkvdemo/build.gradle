@@ -20,15 +20,6 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
-        /*
-        externalNativeBuild {
-            cmake {
-                cppFlags "-fexceptions"
-                arguments "-DANDROID_STL=c++_shared"
-                abiFilters 'armeabi'
-            }
-        }*/
     }
 
     buildTypes {
@@ -43,12 +34,6 @@ android {
             jniDebuggable true
         }
     }
-    /*
-    externalNativeBuild {
-        cmake {
-            path "CMakeLists.txt"
-        }
-    }*/
 }
 
 repositories {
