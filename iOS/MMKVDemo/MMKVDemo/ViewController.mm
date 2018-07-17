@@ -19,8 +19,8 @@
  */
 
 #import "ViewController.h"
-#import <MMKV/MMKV.h>
 #import "MMKVDemo-Swift.h"
+#import <MMKV/MMKV.h>
 
 @implementation ViewController {
 	NSMutableArray *m_arrStrings;
@@ -34,8 +34,8 @@
 	[super viewDidLoad];
 
 	[self funcionalTest];
-	
-	DemoSwiftUsage* swiftUsageDemo = [[DemoSwiftUsage alloc] init];
+
+	DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
 	[swiftUsageDemo testSwiftFunctionality];
 
 	m_loops = 10000;
@@ -99,6 +99,7 @@
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
 	  [self mmkvBaselineTest:m_loops];
 	  [self userDefaultBaselineTest:m_loops];
+	  //[self brutleTest];
 
 	  [self.m_loading stopAnimating];
 	  self.m_btn.enabled = YES;
@@ -246,6 +247,23 @@
 		NSDate *endDate = [NSDate date];
 		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
 		NSLog(@"NSUserDefaults read string %d times, cost:%d ms", loops, cost);
+	}
+}
+
+#pragma mark - brutle test
+
+- (void)brutleTest {
+	auto mmkv = [MMKV mmkvWithID:@"brutleTest"];
+	auto ptr = malloc(1024);
+	auto data = [NSData dataWithBytes:ptr length:1024];
+	free(ptr);
+	for (size_t index = 0; index < std::numeric_limits<size_t>::max(); index++) {
+		NSString *key = [NSString stringWithFormat:@"key-%zu", index];
+		[mmkv setObject:data forKey:key];
+
+		if (index % 1000 == 0) {
+			NSLog(@"brutleTest size=%zu", mmkv.totalSize);
+		}
 	}
 }
 
