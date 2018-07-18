@@ -31,6 +31,7 @@
 #import <sys/stat.h>
 #import <unistd.h>
 #import <zlib.h>
+#import "MemoryFile.h"
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
@@ -99,8 +100,8 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		m_mmapID = mmapID;
 
 		m_path = [MMKV mappedKVPathWithID:m_mmapID];
-		if (![MMKV FileExist:m_path]) {
-			[MMKV CreateFile:m_path];
+		if (!isFileExist(m_path)) {
+			createFile(m_path);
 		}
 		m_crcPath = [MMKV crcPathWithMappedKVPath:m_path];
 
@@ -243,8 +244,8 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		MMKVWarning(@"[%@] file not valid", m_mmapID);
 	}
 
-	[MMKV tryResetFileProtection:m_path];
-	[MMKV tryResetFileProtection:m_crcPath];
+	tryResetFileProtection(m_path);
+	tryResetFileProtection(m_crcPath);
 	m_needLoadFromFile = NO;
 }
 
@@ -585,7 +586,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
 
 		// for backwark compatibility
-		if ([MMKV FileExist:m_crcPath] == NO) {
+		if (!isFileExist(m_crcPath)) {
 			MMKVInfo(@"crc32 file not found:%@", m_crcPath);
 			return YES;
 		}
@@ -648,13 +649,13 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 - (void)prepareCRCFile {
 	if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
-		if ([MMKV FileExist:m_crcPath] == NO) {
-			[MMKV CreateFile:m_crcPath];
+		if (!isFileExist(m_crcPath)) {
+			createFile(m_crcPath);
 		}
 		m_crcFd = open(m_crcPath.UTF8String, O_RDWR, S_IRWXU);
 		if (m_crcFd <= 0) {
 			MMKVError(@"fail to open:%@, %s", m_crcPath, strerror(errno));
-			[MMKV RemoveFile:m_crcPath];
+			removeFile(m_crcPath);
 		} else {
 			size_t size = 0;
 			struct stat st = {};
@@ -668,7 +669,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 					MMKVError(@"fail to truncate [%@] to size %zu, %s", m_crcPath, size, strerror(errno));
 					close(m_crcFd);
 					m_crcFd = -1;
-					[MMKV RemoveFile:m_crcPath];
+					removeFile(m_crcPath);
 					return;
 				}
 			}
@@ -1044,69 +1045,6 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	uint32_t crcDigest = (uint32_t) crc32(0, (const uint8_t *) fileData.bytes + offset, (uint32_t) actualSize);
 
 	return crcFile == crcDigest;
-}
-
-#pragma mark - file
-
-+ (BOOL)FileExist:(NSString *)nsFilePath {
-	if ([nsFilePath length] == 0) {
-		return NO;
-	}
-
-	struct stat temp;
-	return lstat(nsFilePath.UTF8String, &temp) == 0;
-}
-
-+ (BOOL)CreateFile:(NSString *)nsFilePath {
-	NSFileManager *oFileMgr = [NSFileManager defaultManager];
-	// try create file at once
-	NSMutableDictionary *fileAttr = [NSMutableDictionary dictionary];
-	[fileAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
-	if ([oFileMgr createFileAtPath:nsFilePath contents:nil attributes:fileAttr]) {
-		return YES;
-	}
-
-	// create parent directories
-	NSString *nsPath = [nsFilePath stringByDeletingLastPathComponent];
-
-	//path is not nullptr && is not '/'
-	NSError *err;
-	if ([nsPath length] > 1 && ![oFileMgr createDirectoryAtPath:nsPath withIntermediateDirectories:YES attributes:nil error:&err]) {
-		MMKVError(@"create file path:%@ fail:%@", nsPath, [err localizedDescription]);
-		return NO;
-	}
-	// create file again
-	if (![oFileMgr createFileAtPath:nsFilePath contents:nil attributes:fileAttr]) {
-		MMKVError(@"create file path:%@ fail.", nsFilePath);
-		return NO;
-	}
-	return YES;
-}
-
-+ (BOOL)RemoveFile:(NSString *)nsFilePath {
-	int ret = remove(nsFilePath.UTF8String);
-	if (ret != 0) {
-		MMKVError(@"remove file failed. filePath=%@, err=%s", nsFilePath, strerror(errno));
-		return NO;
-	}
-	return YES;
-}
-
-+ (void)tryResetFileProtection:(NSString *)path {
-	@autoreleasepool {
-		NSDictionary *attr = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nullptr];
-		NSString *protection = [attr valueForKey:NSFileProtectionKey];
-		MMKVInfo(@"protection on [%@] is %@", path, protection);
-		if ([protection isEqualToString:NSFileProtectionCompleteUntilFirstUserAuthentication] == NO) {
-			NSMutableDictionary *newAttr = [NSMutableDictionary dictionaryWithDictionary:attr];
-			[newAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
-			NSError *err = nil;
-			[[NSFileManager defaultManager] setAttributes:newAttr ofItemAtPath:path error:&err];
-			if (err != nil) {
-				MMKVError(@"fail to set attribute %@ on [%@]: %@", NSFileProtectionCompleteUntilFirstUserAuthentication, path, err);
-			}
-		}
-	}
 }
 
 @end
