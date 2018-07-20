@@ -163,31 +163,28 @@
 		encodeItem->type = PBEncodeItemType_NSContainer;
 		encodeItem->value.objectValue = nullptr;
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignore "-Wimplicit-retain-self"
 		[(NSDictionary *) obj enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
-		  NSString *nsKey = (NSString *) key; // assume key is NSString
-		  if (nsKey.length <= 0 || value == nil) {
-			  return;
-		  }
+			NSString *nsKey = (NSString *) key; // assume key is NSString
+			if (nsKey.length <= 0 || value == nil) {
+				return;
+			}
 #ifdef DEBUG
-		  if (![nsKey isKindOfClass:NSString.class]) {
-			  MMKVError(@"NSDictionary has key[%@], only NSString is allowed!", NSStringFromClass(nsKey.class));
-		  }
+			if (![nsKey isKindOfClass:NSString.class]) {
+				MMKVError(@"NSDictionary has key[%@], only NSString is allowed!", NSStringFromClass(nsKey.class));
+			}
 #endif
 
-		  size_t keyIndex = [self prepareObjectForEncode:key];
-		  if (keyIndex < m_encodeItems->size()) {
-			  size_t valueIndex = [self prepareObjectForEncode:value];
-			  if (valueIndex < m_encodeItems->size()) {
-				  (*m_encodeItems)[index].valueSize += (*m_encodeItems)[keyIndex].compiledSize;
-				  (*m_encodeItems)[index].valueSize += (*m_encodeItems)[valueIndex].compiledSize;
-			  } else {
-				  m_encodeItems->pop_back(); // pop key
-			  }
-		  }
+			size_t keyIndex = [self prepareObjectForEncode:key];
+			if (keyIndex < self->m_encodeItems->size()) {
+				size_t valueIndex = [self prepareObjectForEncode:value];
+				if (valueIndex < self->m_encodeItems->size()) {
+					(*self->m_encodeItems)[index].valueSize += (*self->m_encodeItems)[keyIndex].compiledSize;
+					(*self->m_encodeItems)[index].valueSize += (*self->m_encodeItems)[valueIndex].compiledSize;
+				} else {
+					self->m_encodeItems->pop_back(); // pop key
+				}
+			}
 		}];
-#pragma clang diagnostic pop
 
 		encodeItem = &(*m_encodeItems)[index];
 	} else {

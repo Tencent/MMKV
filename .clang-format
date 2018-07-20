@@ -26,6 +26,7 @@ ColumnLimit: 100
 Language: ObjC
 ColumnLimit: 0
 UseTab: ForIndentation
+ObjCBlockIndentWidth: 4
 ---
 Language: Java
 ColumnLimit: 100
