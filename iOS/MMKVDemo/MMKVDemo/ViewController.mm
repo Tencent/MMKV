@@ -97,12 +97,12 @@
 	self.m_btn.enabled = NO;
 
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-	  [self mmkvBaselineTest:m_loops];
-	  [self userDefaultBaselineTest:m_loops];
-	  //[self brutleTest];
+		[self mmkvBaselineTest:self->m_loops];
+		[self userDefaultBaselineTest:self->m_loops];
+		//[self brutleTest];
 
-	  [self.m_loading stopAnimating];
-	  self.m_btn.enabled = YES;
+		[self.m_loading stopAnimating];
+		self.m_btn.enabled = YES;
 	});
 }
 
@@ -138,7 +138,7 @@
 		MMKV *mmkv = [MMKV defaultMMKV];
 		for (int index = 0; index < loops; index++) {
 			NSString *intKey = m_arrIntKeys[index];
-			int32_t tmp = [mmkv getInt32ForKey:intKey];
+			[mmkv getInt32ForKey:intKey];
 		}
 		NSDate *endDate = [NSDate date];
 		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
@@ -169,7 +169,7 @@
 		MMKV *mmkv = [MMKV defaultMMKV];
 		for (int index = 0; index < loops; index++) {
 			NSString *strKey = m_arrStrKeys[index];
-			NSString *str = [mmkv getObjectOfClass:NSString.class forKey:strKey];
+			[mmkv getObjectOfClass:NSString.class forKey:strKey];
 		}
 		NSDate *endDate = [NSDate date];
 		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
@@ -210,7 +210,7 @@
 		NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
 		for (int index = 0; index < loops; index++) {
 			NSString *intKey = m_arrIntKeys[index];
-			NSInteger tmp = [userdefault integerForKey:intKey];
+			[userdefault integerForKey:intKey];
 		}
 		NSDate *endDate = [NSDate date];
 		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
@@ -242,7 +242,7 @@
 		NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
 		for (int index = 0; index < loops; index++) {
 			NSString *strKey = m_arrStrKeys[index];
-			NSString *str = [userdefault objectForKey:strKey];
+			[userdefault objectForKey:strKey];
 		}
 		NSDate *endDate = [NSDate date];
 		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;

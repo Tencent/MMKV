@@ -20,6 +20,7 @@
 
 #import "MMKV.h"
 #import "MMKVLog.h"
+#import "MemoryFile.h"
 #import "MiniCodedInputData.h"
 #import "MiniCodedOutputData.h"
 #import "MiniPBCoder.h"
@@ -31,7 +32,6 @@
 #import <sys/stat.h>
 #import <unistd.h>
 #import <zlib.h>
-#import "MemoryFile.h"
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
@@ -65,10 +65,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (self == MMKV.class) {
 		static dispatch_once_t onceToken;
 		dispatch_once(&onceToken, ^{
-		  g_instanceDic = [NSMutableDictionary dictionary];
-		  g_instanceLock = [[NSRecursiveLock alloc] init];
+			g_instanceDic = [NSMutableDictionary dictionary];
+			g_instanceLock = [[NSRecursiveLock alloc] init];
 
-		  MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
+			MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 		});
 	}
 }
@@ -429,7 +429,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
 		BOOL ret = [self protectFromBackgroundWritting:m_actualSize
 		                                    writeBlock:^(MiniCodedOutputData *output) {
-			                                  output->writeRawData(data);
+			                                    output->writeRawData(data);
 		                                    }];
 		if (ret) {
 			[self recaculateCRCDigest];
@@ -499,7 +499,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			if (ret) {
 				ret = [self protectFromBackgroundWritting:m_actualSize
 				                               writeBlock:^(MiniCodedOutputData *output) {
-					                             output->writeRawData(allData); // note: don't write size of data
+					                               output->writeRawData(allData); // note: don't write size of data
 				                               }];
 				if (ret) {
 					[self recaculateCRCDigest];
@@ -514,8 +514,8 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			static const int offset = pbFixed32Size(0);
 			ret = [self protectFromBackgroundWritting:size
 			                               writeBlock:^(MiniCodedOutputData *output) {
-				                             output->writeString(key);
-				                             output->writeData(data); // note: write size of data
+				                               output->writeString(key);
+				                               output->writeData(data); // note: write size of data
 			                               }];
 			if (ret) {
 				[self updateCRCDigest:(const uint8_t *) m_ptr + offset + m_actualSize - size withSize:size];
@@ -556,7 +556,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
 				ret = [self protectFromBackgroundWritting:m_actualSize
 				                               writeBlock:^(MiniCodedOutputData *output) {
-					                             output->writeRawData(allData); // note: don't write size of data
+					                               output->writeRawData(allData); // note: don't write size of data
 				                               }];
 				if (ret) {
 					[self recaculateCRCDigest];
@@ -949,7 +949,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
 	[m_dic enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-	  block(key, stop);
+		block(key, stop);
 	}];
 	MMKVInfo(@"enumerate [%@] finish", m_mmapID);
 }

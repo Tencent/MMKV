@@ -31,44 +31,242 @@
 using namespace std;
 
 const int DEFAULT_MMAP_SIZE = getpagesize();
+// 1MB per segment
+constexpr uint32_t SegmentSize = 1024 * 1024;
+// count of segments in memory
+constexpr size_t SegmentCapacity = 10;
 
 MemoryFile::MemoryFile(NSString *path)
-    : m_name(path), m_fd(-1), m_segmentPtr(nullptr), m_segmentSize(0) {
+    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_segmentCache(SegmentCapacity) {
 	m_fd = open(m_name.UTF8String, O_RDWR | O_CREAT, S_IRWXU);
 	if (m_fd < 0) {
 		MMKVError(@"fail to open:%@, %s", m_name, strerror(errno));
 	} else {
 		struct stat st = {};
 		if (fstat(m_fd, &st) != -1) {
-			m_segmentSize = static_cast<size_t>(st.st_size);
+			m_size = static_cast<size_t>(st.st_size);
 		}
-		if (m_segmentSize < DEFAULT_MMAP_SIZE) {
-			m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);
-			if (ftruncate(m_fd, m_segmentSize) != 0 || !zeroFillFile(m_fd, 0, m_segmentSize)) {
-				MMKVError(@"fail to truncate [%@] to size %zu, %s", m_name, m_segmentSize, strerror(errno));
-				close(m_fd);
-				m_fd = -1;
-				removeFile(m_name);
-				return;
-			}
-		}
-		m_segmentPtr = (char *) mmap(nullptr, m_segmentSize, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
-		if (m_segmentPtr == MAP_FAILED) {
-			MMKVError(@"fail to mmap [%@], %s", m_name, strerror(errno));
-			close(m_fd);
-			m_fd = -1;
+		// round up to (n * pagesize)
+		if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+			size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+			ftruncate(roundSize);
+		} else {
+			// pre-load
+			prepareSegments();
 		}
 	}
 }
 
 MemoryFile::~MemoryFile() {
-	if (m_segmentPtr != MAP_FAILED && m_segmentPtr != nullptr) {
-		munmap(m_segmentPtr, m_segmentSize);
-		m_segmentPtr = nullptr;
-	}
 	if (m_fd >= 0) {
 		close(m_fd);
 		m_fd = -1;
+	}
+}
+
+bool MemoryFile::ftruncate(size_t size) {
+	if (size == m_size) {
+		return true;
+	}
+	size_t oldSize = m_size;
+	m_size = size;
+	// round up to (n * pagesize)
+	if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+		m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+	}
+	if (::ftruncate(m_fd, m_size) != 0) {
+		MMKVError(@"fail to truncate [%@] to size %zu, %s", m_name, m_size, strerror(errno));
+		m_size = oldSize;
+		return false;
+	}
+	if (m_size > oldSize) {
+		zeroFillFile(m_fd, oldSize, m_size - oldSize);
+	}
+	m_segmentCache.clear();
+	prepareSegments();
+	return true;
+}
+
+void MemoryFile::prepareSegments() {
+	auto end = (m_size + SegmentSize - 1) / SegmentSize;
+	end = min(end, m_segmentCache.capacity());
+	for (uint32_t index = 0; index < end; index++) {
+		tryGetSegment(index);
+	}
+	// I'm felling lucky
+	if (m_size <= SegmentSize && m_segmentCache.size() == 1) {
+		m_ptr = *m_segmentCache.get(0);
+	}
+}
+
+shared_ptr<MemoryFile::Segment> MemoryFile::tryGetSegment(uint32_t index) {
+	auto segmentPtr = m_segmentCache.get(index);
+	if (segmentPtr) {
+		return *segmentPtr;
+	} else {
+		// mmap segment from file
+		size_t offset = index * SegmentSize;
+		size_t size = min<size_t>(SegmentSize, m_size - offset);
+		void *ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, offset);
+		if (ptr != MAP_FAILED) {
+			auto segment = shared_ptr<Segment>(new Segment(ptr, size, offset));
+			m_segmentCache.insert(index, segment);
+			return segment;
+		} else {
+			MMKVError(@"fail to mmap %@ with size %zu at position %zu, %s", m_name, size, offset, strerror(errno));
+		}
+	}
+	return nullptr;
+}
+
+uint32_t MemoryFile::offset2index(size_t offset) const {
+	return static_cast<uint32_t>(offset / SegmentSize);
+}
+
+NSData *MemoryFile::read(size_t offset, size_t size) {
+	if (offset >= m_size || m_size - offset < size || size == 0) {
+		return nil;
+	}
+	// I'm felling lucky
+	if (m_ptr) {
+		return [NSData dataWithBytesNoCopy:m_ptr->ptr + offset length:size];
+	}
+	// most of the case, just return a shadow without copying any data
+	auto index = offset2index(offset);
+	auto segment = tryGetSegment(index);
+	if (!segment) {
+		return nil;
+	}
+	if (offset + size <= segment->offset + segment->size) {
+		auto ptr = segment->ptr + (offset - segment->offset);
+		return [NSData dataWithBytesNoCopy:ptr length:size];
+	}
+	// one segment is not enough, we have to copy data crossing segments
+	auto endIndex = offset2index(offset + size);
+	NSMutableData *data = [NSMutableData data];
+	for (auto inc = index; inc <= endIndex; inc++) {
+		auto segment = tryGetSegment(inc);
+		if (!segment) {
+			return nil;
+		}
+		auto ptr = segment->ptr;
+		size_t copySize = 0;
+		if (offset >= segment->offset) {
+			// it's the begin
+			ptr += offset - segment->offset;
+			copySize = segment->offset + segment->size - offset;
+		} else if (offset < segment->offset && (offset + size) > (segment->offset + segment->size)) {
+			// it's the middle(s)
+			copySize = segment->size;
+		} else {
+			// it's the end
+			copySize = offset + size - segment->offset;
+		}
+		[data appendBytes:ptr length:copySize];
+	}
+	return nil;
+}
+
+bool MemoryFile::write(size_t offset, const void *source, size_t size) {
+	if (offset >= m_size || m_size - offset < size || source == nullptr || size == 0) {
+		return false;
+	}
+	// I'm felling lucky
+	if (m_ptr) {
+		memcpy(m_ptr->ptr + offset, source, size);
+		return true;
+	}
+	// most of the case, just write to one segment
+	auto index = offset2index(offset);
+	auto segment = tryGetSegment(index);
+	if (!segment) {
+		return false;
+	} else if (offset + size <= segment->offset + segment->size) {
+		auto ptr = segment->ptr + (offset - segment->offset);
+		memcpy(ptr, source, size);
+		return true;
+	}
+	// one segment is not enough, we have to write data crossing segments
+	auto endIndex = offset2index(offset + size);
+	for (auto inc = index; inc <= endIndex; inc++) {
+		auto segment = tryGetSegment(inc);
+		if (!segment) {
+			return false;
+		}
+		auto ptr = segment->ptr;
+		size_t writeSize = 0;
+		if (offset >= segment->offset) {
+			// it's the begin
+			ptr += offset - segment->offset;
+			writeSize = segment->offset + segment->size - offset;
+		} else if (offset < segment->offset && (offset + size) > (segment->offset + segment->size)) {
+			// it's the middle(s)
+			writeSize = segment->size;
+		} else {
+			// it's the end
+			writeSize = offset + size - segment->offset;
+		}
+		memcpy(ptr, source, writeSize);
+		source = (uint8_t *) source + writeSize;
+	}
+	return true;
+}
+
+bool MemoryFile::innerMemcpy(size_t targetOffset, size_t sourceOffset, size_t size) {
+	if (targetOffset >= m_size || sourceOffset >= m_size || m_size - targetOffset < size || m_size - sourceOffset < size) {
+		return false;
+	}
+	if (size == 0) {
+		return true;
+	}
+	// I'm felling lucky
+	if (m_ptr) {
+		memcpy(m_ptr->ptr + targetOffset, m_ptr->ptr + sourceOffset, size);
+		return true;
+	}
+	do {
+		auto targetIndex = offset2index(targetOffset);
+		auto sourceIndex = offset2index(sourceOffset);
+		auto targetSegment = tryGetSegment(targetIndex);
+		auto sourceSegment = tryGetSegment(sourceIndex);
+		if (!targetSegment || !sourceSegment) {
+			return false;
+		}
+		auto targetPtr = targetSegment->ptr + (targetOffset - targetSegment->offset);
+		size_t targetSize = targetSegment->offset + targetSegment->size - targetOffset;
+
+		auto sourcePtr = sourceSegment->ptr + (sourceOffset - sourceSegment->offset);
+		size_t sourceSize = sourceSegment->offset + sourceSegment->size - sourceOffset;
+
+		size_t copySize = min({targetSize, sourceSize, size});
+		memcpy(targetPtr, sourcePtr, copySize);
+
+		size -= copySize;
+		targetOffset -= copySize;
+		sourceOffset -= copySize;
+	} while (size > 0);
+
+	return true;
+}
+
+#pragma mark - Segment
+
+MemoryFile::Segment::Segment(void *source, size_t _size, size_t _offset) noexcept
+    : ptr(static_cast<uint8_t *>(source)), size(_size), offset(_offset) {
+	assert(ptr);
+}
+
+MemoryFile::Segment::Segment(Segment &&other) noexcept
+    : ptr(other.ptr), size(other.size), offset(other.offset) {
+	other.ptr = nullptr;
+	other.size = 0;
+	other.offset = 0;
+}
+
+MemoryFile::Segment::~Segment() {
+	if (ptr) {
+		munmap(ptr, size);
+		ptr = nullptr;
 	}
 }
 
@@ -91,10 +289,10 @@ bool createFile(NSString *nsFilePath) {
 	if ([oFileMgr createFileAtPath:nsFilePath contents:nil attributes:fileAttr]) {
 		return true;
 	}
-	
+
 	// create parent directories
 	NSString *nsPath = [nsFilePath stringByDeletingLastPathComponent];
-	
+
 	//path is not nullptr && is not '/'
 	NSError *err;
 	if ([nsPath length] > 1 && ![oFileMgr createDirectoryAtPath:nsPath withIntermediateDirectories:YES attributes:nil error:&err]) {
@@ -108,7 +306,6 @@ bool createFile(NSString *nsFilePath) {
 	}
 	return true;
 }
-
 
 void tryResetFileProtection(NSString *path) {
 	@autoreleasepool {
