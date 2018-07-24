@@ -74,8 +74,12 @@ public class MyService_1 extends BenchMarkBaseService implements ServiceConnecti
         IAshmemMMKV ashmemMMKV = IAshmemMMKV.Stub.asInterface(service);
         try {
             ParcelableMMKV parcelableMMKV = ashmemMMKV.GetAshmemMMKV();
-            m_ashmemMMKV = parcelableMMKV.toMMKV();
-            System.out.println("ashmem bool: " + m_ashmemMMKV.decodeBool("bool"));
+            if (parcelableMMKV != null) {
+                m_ashmemMMKV = parcelableMMKV.toMMKV();
+                if (m_ashmemMMKV != null) {
+                    System.out.println("ashmem bool: " + m_ashmemMMKV.decodeBool("bool"));
+                }
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
