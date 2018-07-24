@@ -4,12 +4,11 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
 
 public final class ParcelableMMKV implements Parcelable {
-    int m_fd = -1;
-    int m_metaFD = -1;
+    private int m_fd = -1;
+    private int m_metaFD = -1;
 
     public ParcelableMMKV(MMKV mmkv) {
         m_fd = mmkv.ashmemFD();
@@ -38,7 +37,7 @@ public final class ParcelableMMKV implements Parcelable {
         try {
             ParcelFileDescriptor fd = ParcelFileDescriptor.fromFd(m_fd);
             ParcelFileDescriptor metaFD = ParcelFileDescriptor.fromFd(m_metaFD);
-//            flags = flags | Parcelable.PARCELABLE_WRITE_RETURN_VALUE;
+            flags = flags | Parcelable.PARCELABLE_WRITE_RETURN_VALUE;
             fd.writeToParcel(dest, flags);
             metaFD.writeToParcel(dest, flags);
         } catch (IOException e) {

@@ -99,7 +99,7 @@ class MMKV {
     MMKV &operator=(const MMKV &other) = delete;
 
 public:
-    MMKV(const std::string &mmapID, int mode = MMKV_SINGLE_PROCESS);
+    MMKV(const std::string &mmapID, int size = DEFAULT_MMAP_SIZE, int mode = MMKV_SINGLE_PROCESS);
 
     MMKV(int ashmemFD, int ashmemMetaFd);
 
@@ -112,7 +112,9 @@ public:
 
     /* mmapID: any unique ID (com.tencent.xin.pay, etc)
    * if you want a per-user mmkv, you could merge user-id within mmapID */
-    static MMKV *mmkvWithID(const std::string &mmapID, int mode = MMKV_SINGLE_PROCESS);
+    static MMKV *mmkvWithID(const std::string &mmapID,
+                            int size = DEFAULT_MMAP_SIZE,
+                            int mode = MMKV_SINGLE_PROCESS);
 
     static MMKV *mmkvWithAshmemFD(int fd, int metaFD);
 

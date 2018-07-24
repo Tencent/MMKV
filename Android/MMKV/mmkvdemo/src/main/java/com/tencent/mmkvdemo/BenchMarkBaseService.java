@@ -286,9 +286,10 @@ public abstract class BenchMarkBaseService extends Service {
     public class AshmemMMKVGetter extends IAshmemMMKV.Stub {
 
         private AshmemMMKVGetter() {
-            m_ashmemMMKV =
-                MMKV.mmkvWithAshmemID("testAshmemMMKV", MMKV.pageSize(), MMKV.MULTI_PROCESS_MODE);
-
+            // 1M, ashmem cannot change size after opened
+            int size = 1024 * 1024;
+            String id = "tetAshmemMMKV";
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(id, size, MMKV.MULTI_PROCESS_MODE);
             m_ashmemMMKV.encode("bool", true);
         }
 
