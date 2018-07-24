@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         testMMKV();
-        //testAshmem();
+        testAshmem();
         //testInterProcessLock();
         //estImportSharedPreferences();
     }
