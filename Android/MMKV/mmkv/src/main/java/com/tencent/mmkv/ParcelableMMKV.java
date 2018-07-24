@@ -7,22 +7,22 @@ import android.os.Parcelable;
 import java.io.IOException;
 
 public final class ParcelableMMKV implements Parcelable {
-    private int m_fd = -1;
-    private int m_metaFD = -1;
+    private int ashmemFD = -1;
+    private int ashmemMetaFD = -1;
 
     public ParcelableMMKV(MMKV mmkv) {
-        m_fd = mmkv.ashmemFD();
-        m_metaFD = mmkv.ashmemMetaFD();
+        ashmemFD = mmkv.ashmemFD();
+        ashmemMetaFD = mmkv.ashmemMetaFD();
     }
 
     private ParcelableMMKV(int fd, int metaFD) {
-        m_fd = fd;
-        m_metaFD = metaFD;
+        ashmemFD = fd;
+        ashmemMetaFD = metaFD;
     }
 
-    public MMKV ToMMKV() {
-        if (m_fd >=0 && m_metaFD >= 0) {
-            return MMKV.mmkvWithAshmemFD(m_fd, m_metaFD);
+    public MMKV toMMKV() {
+        if (ashmemFD >= 0 && ashmemMetaFD >= 0) {
+            return MMKV.mmkvWithAshmemFD(ashmemFD, ashmemMetaFD);
         }
         return null;
     }
@@ -35,8 +35,8 @@ public final class ParcelableMMKV implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         try {
-            ParcelFileDescriptor fd = ParcelFileDescriptor.fromFd(m_fd);
-            ParcelFileDescriptor metaFD = ParcelFileDescriptor.fromFd(m_metaFD);
+            ParcelFileDescriptor fd = ParcelFileDescriptor.fromFd(ashmemFD);
+            ParcelFileDescriptor metaFD = ParcelFileDescriptor.fromFd(ashmemMetaFD);
             flags = flags | Parcelable.PARCELABLE_WRITE_RETURN_VALUE;
             fd.writeToParcel(dest, flags);
             metaFD.writeToParcel(dest, flags);

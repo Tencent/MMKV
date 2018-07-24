@@ -22,13 +22,8 @@ package com.tencent.mmkv;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Parcel;
-import android.os.ParcelFileDescriptor;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
-import java.io.FileDescriptor;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
