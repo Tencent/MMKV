@@ -121,14 +121,14 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(JNIE
                                                                             jstring mmapID,
                                                                             jint mode) {
     string str = jstring2string(env, mmapID);
-    MMKV *kv = MMKV::mmkvWithID(str, mode);
+    MMKV *kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, mode);
     return (jlong) kv;
 }
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSize(
     JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode) {
     string str = jstring2string(env, mmapID);
-    MMKV *kv = MMKV::mmkvWithID(str, mode);
+    MMKV *kv = MMKV::mmkvWithID(str, size, mode);
     return (jlong) kv;
 }
 
@@ -482,5 +482,5 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv 
 }
 
 extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_pageSize(JNIEnv *env, jclass type) {
-    return 0;
+    return DEFAULT_MMAP_SIZE;
 }

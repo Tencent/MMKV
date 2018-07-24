@@ -48,7 +48,9 @@ class MmapedFile {
     MmapedFile &operator=(const MmapedFile &other) = delete;
 
 public:
-    MmapedFile(const std::string &path, size_t size = DEFAULT_MMAP_SIZE, bool fileType = MMAP_FILE);
+    MmapedFile(const std::string &path,
+               size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE),
+               bool fileType = MMAP_FILE);
     MmapedFile(int ashmemFD);
     ~MmapedFile();
 

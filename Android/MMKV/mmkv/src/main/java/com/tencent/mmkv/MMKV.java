@@ -377,9 +377,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // Parcelable
-
-    // first get ParcelFileDescriptor from server by calling ashmemFD() & ashmemMetaFD()
-    // then init here in client
     protected static MMKV mmkvWithAshmemFD(int fd, int metaFD) {
         long handle = getMMKVWithAshmemFD(fd, metaFD);
         return new MMKV(handle);

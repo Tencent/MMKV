@@ -48,9 +48,6 @@ static std::string g_rootDir;
 #define DEFAULT_MMAP_ID "mmkv.default"
 constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
-// ashmem's size cannot change once is opened
-constexpr int AshmenSize = 1024 * 1024;
-
 static string mappedKVPathWithID(const string &mmapID, int mode);
 static string crcPathWithID(const string &mmapID, int mode);
 
@@ -59,7 +56,7 @@ enum : bool {
     IncreaseSequence = true,
 };
 
-MMKV::MMKV(const std::string &mmapID, int mode)
+MMKV::MMKV(const std::string &mmapID, int size, int mode)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode))
     , m_crcPath(crcPathWithID(m_mmapID, mode))
@@ -76,7 +73,7 @@ MMKV::MMKV(const std::string &mmapID, int mode)
     m_output = nullptr;
 
     if (m_isAshmem) {
-        m_ashmemFile = new MmapedFile(m_mmapID, AshmenSize, MMAP_ASHMEM);
+        m_ashmemFile = new MmapedFile(m_mmapID, static_cast<size_t>(size), MMAP_ASHMEM);
         m_fd = m_ashmemFile->getFd();
     } else {
         m_ashmemFile = nullptr;
@@ -169,7 +166,7 @@ void MMKV::initializeMMKV(const std::string &rootDir) {
     MMKVInfo("root dir: %s", g_rootDir.c_str());
 }
 
-MMKV *MMKV::mmkvWithID(const std::string &mmapID, int mode) {
+MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, int mode) {
 
     if (mmapID.empty()) {
         return nullptr;
@@ -180,7 +177,7 @@ MMKV *MMKV::mmkvWithID(const std::string &mmapID, int mode) {
     if (itr != g_instanceDic->end()) {
         return itr->second;
     }
-    auto kv = new MMKV(mmapID, mode);
+    auto kv = new MMKV(mmapID, size, mode);
     (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
@@ -405,10 +402,14 @@ void MMKV::checkLoadData() {
                   metaInfo.m_crcDigest);
         SCOPEDLOCK(m_sharedProcessLock);
 
-        struct stat st = {0};
         size_t fileSize = 0;
-        if (fstat(m_fd, &st) != -1) {
-            fileSize = (size_t) st.st_size;
+        if (m_isAshmem) {
+            fileSize = m_size;
+        } else {
+            struct stat st = {0};
+            if (fstat(m_fd, &st) != -1) {
+                fileSize = (size_t) st.st_size;
+            }
         }
         if (m_size != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(), m_size,
