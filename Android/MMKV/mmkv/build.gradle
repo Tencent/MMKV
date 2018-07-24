@@ -31,7 +31,6 @@ android {
             path "CMakeLists.txt"
         }
     }
-//    defaultPublishConfig 'debug'
     publishNonDefault true
 }
 

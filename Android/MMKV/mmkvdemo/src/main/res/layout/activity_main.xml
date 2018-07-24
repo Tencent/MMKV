@@ -15,7 +15,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.502"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_write_int" />
+        app:layout_constraintTop_toBottomOf="@+id/button_write_string" />
 
     <Button
         android:id="@+id/button_write_string"
@@ -24,9 +24,8 @@
         android:layout_marginTop="16dp"
         android:text="Inter Write String"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.502"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_read_string" />
+        app:layout_constraintTop_toBottomOf="@+id/button_read_int" />
 
     <Button
         android:id="@+id/button_write_int"
@@ -35,9 +34,8 @@
         android:layout_marginTop="16dp"
         android:text="Inter Write Int"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_read_int"
+        app:layout_constraintTop_toBottomOf="@+id/button"
         tools:text="Inter Write Int" />
 
     <TextView
@@ -69,8 +67,9 @@
         android:layout_marginTop="16dp"
         android:text="Inter Read Int"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button"
+        app:layout_constraintTop_toBottomOf="@+id/button_write_int"
         tools:text="Inter Read Int" />
 
 </android.support.constraint.ConstraintLayout>

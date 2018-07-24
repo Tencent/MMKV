@@ -22,12 +22,18 @@
             android:enabled="true"
             android:exported="false"
             android:process=":mmkvdemo_svr">
+            <intent-filter>
+                <action android:name="com.tencent.mmkvdemo.MyService"/>
+            </intent-filter>
         </service>
         <service
             android:name=".MyService_1"
             android:enabled="true"
             android:exported="false"
             android:process=":mmkvdemo_svr_1">
+            <intent-filter>
+                <action android:name="com.tencent.mmkvdemo.MyService_1"/>
+            </intent-filter>
         </service>
 
         <provider android:name=".MultiProcessSharedPreferences"

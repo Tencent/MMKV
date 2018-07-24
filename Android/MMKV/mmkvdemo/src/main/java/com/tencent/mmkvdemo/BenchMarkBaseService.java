@@ -29,6 +29,7 @@ import android.support.annotation.Nullable;
 import java.util.Random;
 
 import com.tencent.mmkv.MMKV;
+import com.tencent.mmkv.ParcelableMMKV;
 
 public abstract class BenchMarkBaseService extends Service {
     public static final String CMD_ID = "cmd_id";
@@ -76,7 +77,6 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println("onDestroy BenchMarkBaseService");
 
         MMKV.onExit();
-        //        Process.killProcess(Process.myPid());
     }
 
     protected void batchWriteInt(String caller) {
@@ -88,7 +88,7 @@ public abstract class BenchMarkBaseService extends Service {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        MMKV mmkv = GetMMKV();
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
@@ -141,7 +141,7 @@ public abstract class BenchMarkBaseService extends Service {
     private void mmkvBatchReadInt(String caller) {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        MMKV mmkv = GetMMKV();
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = mmkv.decodeInt(key);
@@ -186,7 +186,7 @@ public abstract class BenchMarkBaseService extends Service {
     private void mmkvBatchWriteString(String caller) {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        MMKV mmkv = GetMMKV();
         for (int index = 0; index < m_loops; index++) {
             final String valueStr = m_arrStrings[index];
             final String strKey = m_arrKeys[index];
@@ -237,7 +237,7 @@ public abstract class BenchMarkBaseService extends Service {
     private void mmkvBatchReadString(String caller) {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        MMKV mmkv = GetMMKV();
         for (int index = 0; index < m_loops; index++) {
             final String strKey = m_arrKeys[index];
             final String tmpStr = mmkv.decodeString(strKey);
@@ -274,10 +274,33 @@ public abstract class BenchMarkBaseService extends Service {
                            "]: " + (endTime - startTime) + " ms");
     }
 
+    MMKV m_ashmemMMKV;
+    private MMKV GetMMKV() {
+        if (m_ashmemMMKV != null) {
+            return m_ashmemMMKV;
+        } else {
+            return MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        }
+    }
+
+    public class AshmemMMKVGetter extends IAshmemMMKV.Stub {
+
+        private AshmemMMKVGetter() {
+            m_ashmemMMKV =
+                MMKV.mmkvWithAshmemID("testAshmemMMKV", MMKV.pageSize(), MMKV.MULTI_PROCESS_MODE);
+
+            m_ashmemMMKV.encode("bool", true);
+        }
+
+        public ParcelableMMKV GetAshmemMMKV() {
+            return new ParcelableMMKV(m_ashmemMMKV);
+        }
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         System.out.println("onBind, intent=" + intent);
-        return null;
+        return new AshmemMMKVGetter();
     }
 }
