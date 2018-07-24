@@ -22,8 +22,13 @@ package com.tencent.mmkv;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Parcel;
+import android.os.ParcelFileDescriptor;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
+import java.io.FileDescriptor;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,17 +51,27 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // call on program exit
     public static native void onExit();
 
-    static public final boolean SINGLE_PROCESS_MODE = false;
+    static public final int SINGLE_PROCESS_MODE = 0x1;
 
-    static public final boolean MULTI_PROCESS_MODE = true;
+    static public final int MULTI_PROCESS_MODE = 0x2;
+
+    static private final int ASHMEM_MODE = 0x4;
 
     public static MMKV mmkvWithID(String mmapID) {
         long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE);
         return new MMKV(handle);
     }
 
-    public static MMKV mmkvWithID(String mmapID, boolean threadMode) {
-        long handle = getMMKVWithID(mmapID, threadMode);
+    public static MMKV mmkvWithID(String mmapID, int mode) {
+        long handle = getMMKVWithID(mmapID, mode);
+        return new MMKV(handle);
+    }
+
+    // a memory only MMKV, cleared on program exit
+    // size cannot change afterward (because ashmem won't allow it)
+    public static MMKV mmkvWithAshmemID(String mmapID, int size, int mode) {
+        mode = mode | ASHMEM_MODE;
+        long handle = getMMKVWithIDAndSize(mmapID, size, mode);
         return new MMKV(handle);
     }
 
@@ -65,10 +80,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return new MMKV(handle);
     }
 
-    public static MMKV defaultMMKV(boolean threadMode) {
-        long handle = getDefaultMMKV(threadMode);
+    public static MMKV defaultMMKV(int mode) {
+        long handle = getDefaultMMKV(mode);
         return new MMKV(handle);
     }
+
+    // get device's page size
+    public static native int pageSize();
 
     public native String mmapID();
 
@@ -358,6 +376,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         throw new java.lang.UnsupportedOperationException("Not implement in MMKV");
     }
 
+    // Parcelable
+
+    // first get ParcelFileDescriptor from server by calling ashmemFD() & ashmemMetaFD()
+    // then init here in client
+    protected static MMKV mmkvWithAshmemFD(int fd, int metaFD) {
+        long handle = getMMKVWithAshmemFD(fd, metaFD);
+        return new MMKV(handle);
+    }
+
+    protected native int ashmemFD();
+
+    protected native int ashmemMetaFD();
+
     // jni
     private long nativeHandle;
 
@@ -367,9 +398,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void initialize(String rootDir);
 
-    private native static long getMMKVWithID(String mmapID, boolean isMultiThread);
+    private native static long getMMKVWithID(String mmapID, int mode);
 
-    private native static long getDefaultMMKV(boolean isMultiThread);
+    private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode);
+
+    private native static long getDefaultMMKV(int mode);
+
+    private native static long getMMKVWithAshmemFD(int fd, int metaFD);
 
     private native boolean encodeBool(long handle, String key, boolean value);
 

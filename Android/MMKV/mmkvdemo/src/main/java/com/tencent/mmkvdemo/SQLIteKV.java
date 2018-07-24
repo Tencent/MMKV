@@ -33,7 +33,9 @@ public final class SQLIteKV {
         public static final String TABLE_NAME_STR = "kv_str";
         public static final String TABLE_NAME_INT = "kv_int";
 
-        public SQLIteKVDBHelper(Context context) { super(context, DB_NAME, null, DB_VERSION); }
+        public SQLIteKVDBHelper(Context context) {
+            super(context, DB_NAME, null, DB_VERSION);
+        }
 
         @Override
         public void onCreate(SQLiteDatabase sqLiteDatabase) {
@@ -63,7 +65,9 @@ public final class SQLIteKV {
         m_dbHelper.setWriteAheadLoggingEnabled(true);
     }
 
-    public void beginTransaction() { getWritetableDB().beginTransaction(); }
+    public void beginTransaction() {
+        getWritetableDB().beginTransaction();
+    }
 
     public void endTransaction() {
         if (m_writetableDB != null) {

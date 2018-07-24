@@ -116,16 +116,34 @@ static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
     return nullptr;
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
-    JNIEnv *env, jobject obj, jstring mmapID, jboolean isMultiThread) {
+extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(JNIEnv *env,
+                                                                            jobject obj,
+                                                                            jstring mmapID,
+                                                                            jint mode) {
     string str = jstring2string(env, mmapID);
-    MMKV *kv = MMKV::mmkvWithID(str, isMultiThread);
+    MMKV *kv = MMKV::mmkvWithID(str, mode);
     return (jlong) kv;
 }
 
-extern "C" JNIEXPORT JNICALL jlong
-Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNIEnv *env, jobject obj, jboolean isMultiThread) {
-    MMKV *kv = MMKV::defaultMMKV(isMultiThread);
+extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSize(
+    JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode) {
+    string str = jstring2string(env, mmapID);
+    MMKV *kv = MMKV::mmkvWithID(str, mode);
+    return (jlong) kv;
+}
+
+extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNIEnv *env,
+                                                                             jobject obj,
+                                                                             jint mode) {
+    MMKV *kv = MMKV::defaultMMKV(mode);
+    return (jlong) kv;
+}
+
+extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithAshmemFD(JNIEnv *env,
+                                                                                  jobject obj,
+                                                                                  jint fd,
+                                                                                  jint metaFD) {
+    MMKV *kv = MMKV::mmkvWithAshmemFD(fd, metaFD);
     return (jlong) kv;
 }
 
@@ -136,6 +154,24 @@ extern "C" JNIEXPORT JNICALL jstring Java_com_tencent_mmkv_MMKV_mmapID(JNIEnv *e
         return string2jstring(env, kv->mmapID());
     }
     return nullptr;
+}
+
+extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_ashmemFD(JNIEnv *env,
+                                                                      jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return kv->ashmemFD();
+    }
+    return -1;
+}
+
+extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_ashmemMetaFD(JNIEnv *env,
+                                                                          jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return kv->ashmemMetaFD();
+    }
+    return -1;
 }
 
 extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeBool(
@@ -443,4 +479,8 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv 
         return (jboolean) kv->try_lock();
     }
     return jboolean(false);
+}
+
+extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_pageSize(JNIEnv *env, jclass type) {
+    return 0;
 }

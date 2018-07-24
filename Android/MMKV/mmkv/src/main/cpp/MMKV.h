@@ -34,21 +34,23 @@
 class CodedOutputData;
 class MMBuffer;
 
-enum : bool {
-    MMKV_SINGLE_PROCESS = false,
-    MMKV_MULTI_PROCESS = true,
+enum : uint32_t {
+    MMKV_SINGLE_PROCESS = 0x1,
+    MMKV_MULTI_PROCESS = 0x2,
+    MMKV_ASHMEM = 0x4,
 };
 
 class MMKV {
     std::unordered_map<std::string, MMBuffer> m_dic;
+    std::string m_mmapID;
     std::string m_path;
     std::string m_crcPath;
-    std::string m_mmapID;
     int m_fd;
     char *m_ptr;
     size_t m_size;
     size_t m_actualSize;
     CodedOutputData *m_output;
+    MmapedFile *m_ashmemFile;
 
     bool m_needLoadFromFile;
 
@@ -64,6 +66,8 @@ class MMKV {
     void loadFromFile();
 
     void partialLoadFromFile();
+
+    void loadFromAshmem();
 
     void checkLoadData();
 
@@ -95,24 +99,34 @@ class MMKV {
     MMKV &operator=(const MMKV &other) = delete;
 
 public:
-    MMKV(const std::string &mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
+    MMKV(const std::string &mmapID, int mode = MMKV_SINGLE_PROCESS);
+
+    MMKV(int ashmemFD, int ashmemMetaFd);
 
     ~MMKV();
 
     static void initializeMMKV(const std::string &rootDir);
 
     // a generic purpose instance
-    static MMKV *defaultMMKV(bool interProcess = MMKV_SINGLE_PROCESS);
+    static MMKV *defaultMMKV(int mode = MMKV_SINGLE_PROCESS);
 
     /* mmapID: any unique ID (com.tencent.xin.pay, etc)
    * if you want a per-user mmkv, you could merge user-id within mmapID */
-    static MMKV *mmkvWithID(const std::string &mmapID, bool interProcess = MMKV_SINGLE_PROCESS);
+    static MMKV *mmkvWithID(const std::string &mmapID, int mode = MMKV_SINGLE_PROCESS);
+
+    static MMKV *mmkvWithAshmemFD(int fd, int metaFD);
 
     static void onExit();
 
     const std::string &mmapID();
 
     const bool m_isInterProcess;
+
+    const bool m_isAshmem;
+
+    int ashmemFD() { return m_isAshmem ? m_fd : -1; }
+
+    int ashmemMetaFD() { return m_isAshmem ? m_metaFile.getFd() : -1; }
 
     bool setStringForKey(const std::string &value, const std::string &key);
 

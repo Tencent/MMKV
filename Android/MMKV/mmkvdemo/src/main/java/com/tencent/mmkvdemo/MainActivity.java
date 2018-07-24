@@ -20,14 +20,20 @@
 
 package com.tencent.mmkvdemo;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -55,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
                 baseline.sqliteBaselineTest();
             }
         });
+
+        //        prepareInterProcessAshmem();
 
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {
@@ -85,8 +93,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         testMMKV();
-        //        testInterProcessLock();
-        //        testImportSharedPreferences();
+        //testAshmem();
+        //testInterProcessLock();
+        //estImportSharedPreferences();
     }
 
     @Override
@@ -132,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
         kv.removeValueForKey("bool");
         System.out.println("bool: " + kv.decodeBool("bool"));
         kv.removeValuesForKeys(new String[] {"int", "long"});
-        //        kv.clearAll();
+        //kv.clearAll();
         kv.clearMemoryCache();
         System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
         System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
@@ -178,6 +187,50 @@ public class MainActivity extends AppCompatActivity {
 
         intent = new Intent(this, MyService_1.class);
         intent.putExtra(BenchMarkBaseService.CMD_ID, cmd);
+        startService(intent);
+    }
+
+    private void testAshmem() {
+        MMKV kv = MMKV.mmkvWithAshmemID("testAshmem", MMKV.pageSize(), MMKV.SINGLE_PROCESS_MODE);
+
+        kv.encode("bool", true);
+        System.out.println("bool: " + kv.decodeBool("bool"));
+
+        kv.encode("int", Integer.MIN_VALUE);
+        System.out.println("int: " + kv.decodeInt("int"));
+
+        kv.encode("long", Long.MAX_VALUE);
+        System.out.println("long: " + kv.decodeLong("long"));
+
+        kv.encode("float", -3.14f);
+        System.out.println("float: " + kv.decodeFloat("float"));
+
+        kv.encode("double", Double.MIN_VALUE);
+        System.out.println("double: " + kv.decodeDouble("double"));
+
+        kv.encode("string", "Hello from mmkv");
+        System.out.println("string: " + kv.decodeString("string"));
+
+        byte[] bytes = {'m', 'm', 'k', 'v'};
+        kv.encode("bytes", bytes);
+        System.out.println("bytes: " + new String(kv.decodeBytes("bytes")));
+
+        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
+        System.out.println("count = " + kv.count() + ", totalSize = " + kv.totalSize());
+        System.out.println("containsKey[string]: " + kv.containsKey("string"));
+
+        kv.removeValueForKey("bool");
+        System.out.println("bool: " + kv.decodeBool("bool"));
+        kv.removeValuesForKeys(new String[] {"int", "long"});
+        //kv.clearAll();
+        kv.clearMemoryCache();
+        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
+        System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
+    }
+
+    private void prepareInterProcessAshmem() {
+        Intent intent = new Intent(this, MyService_1.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, MyService_1.CMD_PREPARE_ASHMEM);
         startService(intent);
     }
 }

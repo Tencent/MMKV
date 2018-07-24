@@ -210,7 +210,8 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
         return new MultiProcessSharedPreferences(context, name, mode);
     }
 
-    public MultiProcessSharedPreferences() {}
+    public MultiProcessSharedPreferences() {
+    }
 
     private MultiProcessSharedPreferences(Context context, String name, int mode) {
         mContext = context;

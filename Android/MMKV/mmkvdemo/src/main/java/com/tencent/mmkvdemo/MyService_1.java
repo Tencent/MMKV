@@ -20,16 +20,24 @@
 
 package com.tencent.mmkvdemo;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.os.RemoteException;
 
-public class MyService_1 extends BenchMarkBaseService {
+import com.tencent.mmkv.ParcelableMMKV;
+
+public class MyService_1 extends BenchMarkBaseService implements ServiceConnection {
+    public static final String CMD_PREPARE_ASHMEM = "cmd_prepare_ashmem";
     private static final String CALLER = "MyService_1";
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("MyService_1 onStartCommand");
+        System.out.println("MyService_1 onStartCommand:");
         if (intent != null) {
             String cmd = intent.getStringExtra(CMD_ID);
+            System.out.println("----MyService_1 onStartCommand:" + cmd);
             if (cmd != null) {
                 if (cmd.equals(CMD_READ_INT)) {
                     super.batchReadInt(CALLER);
@@ -39,6 +47,10 @@ public class MyService_1 extends BenchMarkBaseService {
                     super.batchWriteInt(CALLER);
                 } else if (cmd.equals(CMD_WRITE_STRING)) {
                     super.batchWriteString(CALLER);
+                } else if (cmd.equals(CMD_PREPARE_ASHMEM)) {
+                    Intent i = new Intent("com.tencent.mmkvdemo.MyService")
+                                   .setPackage("com.tencent.mmkvdemo");
+                    bindService(i, this, BIND_AUTO_CREATE);
                 }
             }
         }
@@ -55,5 +67,21 @@ public class MyService_1 extends BenchMarkBaseService {
     public void onDestroy() {
         super.onDestroy();
         System.out.println("onDestroy MyService_1");
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        IAshmemMMKV ashmemMMKV = IAshmemMMKV.Stub.asInterface(service);
+        try {
+            ParcelableMMKV parcelableMMKV = ashmemMMKV.GetAshmemMMKV();
+            m_ashmemMMKV = parcelableMMKV.ToMMKV();
+            System.out.println("ashmem bool: " + m_ashmemMMKV.decodeBool("bool"));
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
     }
 }
