@@ -19,6 +19,7 @@ android {
                     cppFlags "-fvisibility=hidden", "-fno-unwind-tables", "-fno-asynchronous-unwind-tables"
                 }
             }
+            consumerProguardFiles 'proguard-rules.pro'
 //            debuggable true
 //            jniDebuggable true
         }
