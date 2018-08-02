@@ -372,14 +372,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // Parcelable
-    protected static MMKV mmkvWithAshmemFD(int fd, int metaFD) {
+    public static MMKV mmkvWithAshmemFD(int fd, int metaFD) {
         long handle = getMMKVWithAshmemFD(fd, metaFD);
         return new MMKV(handle);
     }
 
-    protected native int ashmemFD();
+    public native int ashmemFD();
 
-    protected native int ashmemMetaFD();
+    public native int ashmemMetaFD();
 
     // jni
     private long nativeHandle;
