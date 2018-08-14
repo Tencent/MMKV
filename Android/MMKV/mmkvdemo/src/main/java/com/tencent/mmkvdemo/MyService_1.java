@@ -51,6 +51,8 @@ public class MyService_1 extends BenchMarkBaseService implements ServiceConnecti
                     Intent i = new Intent("com.tencent.mmkvdemo.MyService")
                                    .setPackage("com.tencent.mmkvdemo");
                     bindService(i, this, BIND_AUTO_CREATE);
+                } else if (cmd.equals(CMD_PREPARE_ASHMEM_BY_CP)) {
+                    super.prepareAshmemMMKVByCP();
                 }
             }
         }

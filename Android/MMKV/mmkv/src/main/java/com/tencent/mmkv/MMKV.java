@@ -20,8 +20,11 @@
 
 package com.tencent.mmkv;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Bundle;
 import android.support.annotation.Nullable;
 
 import java.util.Arrays;
@@ -64,10 +67,42 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // a memory only MMKV, cleared on program exit
     // size cannot change afterward (because ashmem won't allow it)
-    public static MMKV mmkvWithAshmemID(String mmapID, int size, int mode) {
-        mode = mode | ASHMEM_MODE;
-        long handle = getMMKVWithIDAndSize(mmapID, size, mode);
-        return new MMKV(handle);
+    @Nullable
+    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode) {
+        String processName =
+            MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
+        if (processName == null || processName.length() == 0) {
+            System.out.println("process name detect fail, try again later");
+            return null;
+        }
+        if (processName.contains(":")) {
+            Uri uri = MMKVContentProvider.contentUri(context);
+            if (uri == null) {
+                System.out.println("MMKVContentProvider has invalid authority");
+                return null;
+            }
+            System.out.println("getting parcelable mmkv in process, Uri = " + uri);
+
+            Bundle extras = new Bundle();
+            extras.putInt(MMKVContentProvider.KEY_SIZE, size);
+            extras.putInt(MMKVContentProvider.KEY_MODE, mode);
+            ContentResolver resolver = context.getContentResolver();
+            Bundle result = resolver.call(uri, MMKVContentProvider.FUNCTION_NAME, mmapID, extras);
+            if (result != null) {
+                result.setClassLoader(ParcelableMMKV.class.getClassLoader());
+                ParcelableMMKV parcelableMMKV = result.getParcelable(MMKVContentProvider.KEY);
+                if (parcelableMMKV != null) {
+                    return parcelableMMKV.toMMKV();
+                }
+            }
+        } else {
+            System.out.println("getting mmkv in main process");
+
+            mode = mode | ASHMEM_MODE;
+            long handle = getMMKVWithIDAndSize(mmapID, size, mode);
+            return new MMKV(handle);
+        }
+        return null;
     }
 
     public static MMKV defaultMMKV() {

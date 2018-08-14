@@ -45,20 +45,21 @@ public final class ParcelableMMKV implements Parcelable {
         }
     }
 
-    public static final Parcelable.Creator<ParcelableMMKV> CREATOR = new Parcelable.Creator<ParcelableMMKV>() {
-        @Override
-        public ParcelableMMKV createFromParcel(Parcel source) {
-            ParcelFileDescriptor fd = ParcelFileDescriptor.CREATOR.createFromParcel(source);
-            ParcelFileDescriptor metaFD = ParcelFileDescriptor.CREATOR.createFromParcel(source);
-            if (fd != null && metaFD != null) {
-                return new ParcelableMMKV(fd.detachFd(), metaFD.detachFd());
+    public static final Parcelable.Creator<ParcelableMMKV> CREATOR =
+        new Parcelable.Creator<ParcelableMMKV>() {
+            @Override
+            public ParcelableMMKV createFromParcel(Parcel source) {
+                ParcelFileDescriptor fd = ParcelFileDescriptor.CREATOR.createFromParcel(source);
+                ParcelFileDescriptor metaFD = ParcelFileDescriptor.CREATOR.createFromParcel(source);
+                if (fd != null && metaFD != null) {
+                    return new ParcelableMMKV(fd.detachFd(), metaFD.detachFd());
+                }
+                return null;
             }
-            return null;
-        }
 
-        @Override
-        public ParcelableMMKV[] newArray(int size) {
-            return new ParcelableMMKV[size];
-        }
-    };
+            @Override
+            public ParcelableMMKV[] newArray(int size) {
+                return new ParcelableMMKV[size];
+            }
+        };
 }

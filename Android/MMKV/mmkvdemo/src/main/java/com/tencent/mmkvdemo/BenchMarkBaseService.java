@@ -37,6 +37,7 @@ public abstract class BenchMarkBaseService extends Service {
     public static final String CMD_WRITE_INT = "cmd_write_int";
     public static final String CMD_READ_STRING = "cmd_read_string";
     public static final String CMD_WRITE_STRING = "cmd_write_string";
+    public static final String CMD_PREPARE_ASHMEM_BY_CP = "cmd_prepare_ashmem_by_ContentProvider";
 
     private String[] m_arrStrings;
     private String[] m_arrKeys;
@@ -84,6 +85,7 @@ public abstract class BenchMarkBaseService extends Service {
         sqliteWriteInt(caller);
         spBatchWriteInt(caller);
     }
+
     private void mmkvBatchWriteInt(String caller) {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
@@ -98,6 +100,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " mmkv write int: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void sqliteWriteInt(String caller) {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
@@ -114,6 +117,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " sqlite write int: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void spBatchWriteInt(String caller) {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
@@ -138,6 +142,7 @@ public abstract class BenchMarkBaseService extends Service {
         sqliteReadInt(caller);
         spBatchReadInt(caller);
     }
+
     private void mmkvBatchReadInt(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -150,6 +155,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " mmkv read int: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void sqliteReadInt(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -164,6 +170,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " sqlite read int: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void spBatchReadInt(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -183,6 +190,7 @@ public abstract class BenchMarkBaseService extends Service {
         sqliteWriteString(caller);
         spBatchWrieString(caller);
     }
+
     private void mmkvBatchWriteString(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -196,6 +204,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " mmkv write String: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void sqliteWriteString(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -211,6 +220,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " sqlite write String: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void spBatchWrieString(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -234,6 +244,7 @@ public abstract class BenchMarkBaseService extends Service {
         sqliteReadString(caller);
         spBatchReadStrinfg(caller);
     }
+
     private void mmkvBatchReadString(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -246,6 +257,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " mmkv read String: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void sqliteReadString(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -260,6 +272,7 @@ public abstract class BenchMarkBaseService extends Service {
         System.out.println(caller + " sqlite read String: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
     }
+
     private void spBatchReadStrinfg(String caller) {
         long startTime = System.currentTimeMillis();
 
@@ -275,6 +288,7 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     MMKV m_ashmemMMKV;
+
     private MMKV GetMMKV() {
         if (m_ashmemMMKV != null) {
             return m_ashmemMMKV;
@@ -289,7 +303,8 @@ public abstract class BenchMarkBaseService extends Service {
             // 1M, ashmem cannot change size after opened
             int size = 1024 * 1024;
             String id = "tetAshmemMMKV";
-            m_ashmemMMKV = MMKV.mmkvWithAshmemID(id, size, MMKV.MULTI_PROCESS_MODE);
+            m_ashmemMMKV =
+                MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, size, MMKV.MULTI_PROCESS_MODE);
             m_ashmemMMKV.encode("bool", true);
         }
 
@@ -303,5 +318,12 @@ public abstract class BenchMarkBaseService extends Service {
     public IBinder onBind(Intent intent) {
         System.out.println("onBind, intent=" + intent);
         return new AshmemMMKVGetter();
+    }
+
+    protected void prepareAshmemMMKVByCP() {
+        // 1M, ashmem cannot change size after opened
+        int size = 1024 * 1024;
+        final String id = "tetAshmemMMKVByCP";
+        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, id, size, MMKV.MULTI_PROCESS_MODE);
     }
 }

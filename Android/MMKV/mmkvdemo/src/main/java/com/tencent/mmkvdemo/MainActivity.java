@@ -20,20 +20,14 @@
 
 package com.tencent.mmkvdemo;
 
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -63,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //prepareInterProcessAshmem();
+        prepareInterProcessAshmemByContentProvider();
 
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {
@@ -191,7 +186,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testAshmem() {
-        MMKV kv = MMKV.mmkvWithAshmemID("testAshmem", MMKV.pageSize(), MMKV.SINGLE_PROCESS_MODE);
+        MMKV kv =
+            MMKV.mmkvWithAshmemID(this, "testAshmem", MMKV.pageSize(), MMKV.SINGLE_PROCESS_MODE);
 
         kv.encode("bool", true);
         System.out.println("bool: " + kv.decodeBool("bool"));
@@ -231,6 +227,16 @@ public class MainActivity extends AppCompatActivity {
     private void prepareInterProcessAshmem() {
         Intent intent = new Intent(this, MyService_1.class);
         intent.putExtra(BenchMarkBaseService.CMD_ID, MyService_1.CMD_PREPARE_ASHMEM);
+        startService(intent);
+    }
+
+    private void prepareInterProcessAshmemByContentProvider() {
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, BenchMarkBaseService.CMD_PREPARE_ASHMEM_BY_CP);
+        startService(intent);
+
+        intent = new Intent(this, MyService_1.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, BenchMarkBaseService.CMD_PREPARE_ASHMEM_BY_CP);
         startService(intent);
     }
 }
