@@ -20,11 +20,11 @@ public class MMKVContentProvider extends ContentProvider {
     static protected final String KEY_MODE = "KEY_MODE";
     static protected final String FUNCTION_NAME = "mmkvFromAshmemID";
 
-    static private Uri URI;
+    static private Uri gUri;
     @Nullable
     static protected Uri contentUri(Context context) {
-        if (MMKVContentProvider.URI != null) {
-            return MMKVContentProvider.URI;
+        if (MMKVContentProvider.gUri != null) {
+            return MMKVContentProvider.gUri;
         }
         if (context == null) {
             return null;
@@ -33,8 +33,8 @@ public class MMKVContentProvider extends ContentProvider {
         if (authority == null) {
             return null;
         }
-        MMKVContentProvider.URI = Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + authority);
-        return MMKVContentProvider.URI;
+        MMKVContentProvider.gUri = Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + authority);
+        return MMKVContentProvider.gUri;
     }
 
     private Bundle mmkvFromAshmemID(String ashmemID, int size, int mode) {
@@ -72,8 +72,8 @@ public class MMKVContentProvider extends ContentProvider {
             return false;
         }
 
-        if (MMKVContentProvider.URI == null) {
-            MMKVContentProvider.URI = Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + authority);
+        if (MMKVContentProvider.gUri == null) {
+            MMKVContentProvider.gUri = Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + authority);
         }
 
         return true;
@@ -83,8 +83,7 @@ public class MMKVContentProvider extends ContentProvider {
         ActivityManager manager =
             (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
-            for (ActivityManager.RunningAppProcessInfo processInfo :
-                 manager.getRunningAppProcesses()) {
+            for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
                 if (processInfo.pid == pid) {
                     return processInfo.processName;
                 }
