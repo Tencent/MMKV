@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <zlib.h>
+#include "aes/AESCrypt.h"
 
 using namespace std;
 
@@ -56,11 +57,12 @@ enum : bool {
     IncreaseSequence = true,
 };
 
-MMKV::MMKV(const std::string &mmapID, int size, int mode)
+MMKV::MMKV(const std::string &mmapID, int size, int mode, MMBuffer *aesKey)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode))
     , m_crcPath(crcPathWithID(m_mmapID, mode))
     , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, (mode & MMKV_ASHMEM) ? MMAP_ASHMEM : MMAP_FILE)
+    , m_aesKey(aesKey)
     , m_fileLock(m_metaFile.getFd())
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
@@ -93,11 +95,12 @@ MMKV::MMKV(const std::string &mmapID, int size, int mode)
     }
 }
 
-MMKV::MMKV(int ashmemFD, int ashmemMetaFD)
+MMKV::MMKV(int ashmemFD, int ashmemMetaFD, MMBuffer *aesKey)
     : m_mmapID("")
     , m_path("")
     , m_crcPath("")
     , m_metaFile(ashmemMetaFD)
+    , m_aesKey(aesKey)
     , m_fileLock(m_metaFile.getFd())
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
@@ -139,6 +142,10 @@ MMKV::~MMKV() {
     if (m_ashmemFile) {
         delete m_ashmemFile;
         m_ashmemFile = nullptr;
+    }
+    if (m_aesKey) {
+        delete m_aesKey;
+        m_aesKey = nullptr;
     }
 }
 

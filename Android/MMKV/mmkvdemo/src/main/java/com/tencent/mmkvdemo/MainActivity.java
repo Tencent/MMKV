@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //prepareInterProcessAshmem();
-        prepareInterProcessAshmemByContentProvider();
+        //prepareInterProcessAshmemByContentProvider();
 
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {

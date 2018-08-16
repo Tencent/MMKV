@@ -58,6 +58,8 @@ class MMKV {
     MmapedFile m_metaFile;
     MMKVMetaInfo m_metaInfo;
 
+    MMBuffer *m_aesKey;
+
     ThreadLock m_lock;
     FileLock m_fileLock;
     InterProcessLock m_sharedProcessLock;
@@ -99,9 +101,9 @@ class MMKV {
     MMKV &operator=(const MMKV &other) = delete;
 
 public:
-    MMKV(const std::string &mmapID, int size = DEFAULT_MMAP_SIZE, int mode = MMKV_SINGLE_PROCESS);
+    MMKV(const std::string &mmapID, int size = DEFAULT_MMAP_SIZE, int mode = MMKV_SINGLE_PROCESS, MMBuffer *aesKey = nullptr);
 
-    MMKV(int ashmemFD, int ashmemMetaFd);
+    MMKV(int ashmemFD, int ashmemMetaFd, MMBuffer *aesKey = nullptr);
 
     ~MMKV();
 
