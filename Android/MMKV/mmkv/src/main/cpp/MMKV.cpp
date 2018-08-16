@@ -240,6 +240,17 @@ const std::string& MMKV::cryptKey() {
 
 #pragma mark - really dirty work
 
+void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
+    size_t length = inputBuffer.length();
+    MMBuffer tmp(length);
+
+    auto input = (unsigned char *) inputBuffer.getPtr();
+    auto output = (unsigned char *) tmp.getPtr();
+    crypter.decrypt(input, output, length);
+
+    inputBuffer = std::move(tmp);
+}
+
 void MMKV::loadFromFile() {
     if (m_isAshmem) {
         loadFromAshmem();
@@ -283,10 +294,7 @@ void MMKV::loadFromFile() {
                                  m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
                         MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
                         if (m_crypter) {
-                            MMBuffer tmp(inputBuffer.getPtr(), inputBuffer.length());
-                            auto ptr = (unsigned char *) tmp.getPtr();
-                            m_crypter->decrypt(ptr, ptr, tmp.length());
-                            inputBuffer = std::move(tmp);
+                            decryptBuffer(*m_crypter, inputBuffer);
                         }
                         m_dic = MiniPBCoder::decodeMap(inputBuffer);
                         m_output = new CodedOutputData(m_ptr + Fixed32Size + m_actualSize,
@@ -335,10 +343,7 @@ void MMKV::loadFromAshmem() {
                                  m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
                         MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
                         if (m_crypter) {
-                            MMBuffer tmp(inputBuffer.getPtr(), inputBuffer.length());
-                            auto ptr = (unsigned char *) tmp.getPtr();
-                            m_crypter->decrypt(ptr, ptr, tmp.length());
-                            inputBuffer = std::move(tmp);
+                            decryptBuffer(*m_crypter, inputBuffer);
                         }
                         m_dic = MiniPBCoder::decodeMap(inputBuffer);
                         m_output = new CodedOutputData(m_ptr + Fixed32Size + m_actualSize,
@@ -387,10 +392,7 @@ void MMKV::partialLoadFromFile() {
                                                static_cast<uInt>(inputBuffer.length()));
                 if (m_crcDigest == m_metaInfo.m_crcDigest) {
                     if (m_crypter) {
-                        MMBuffer tmp(inputBuffer.getPtr(), inputBuffer.length());
-                        auto ptr = (unsigned char *) tmp.getPtr();
-                        m_crypter->decrypt(ptr, ptr, tmp.length());
-                        inputBuffer = std::move(tmp);
+                        decryptBuffer(*m_crypter, inputBuffer);
                     }
                     auto dic = MiniPBCoder::decodeMap(inputBuffer, bufferSize);
                     for (auto &itr : dic) {
