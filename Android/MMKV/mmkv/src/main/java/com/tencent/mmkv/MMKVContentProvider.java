@@ -18,6 +18,7 @@ public class MMKVContentProvider extends ContentProvider {
     static protected final String KEY = "KEY";
     static protected final String KEY_SIZE = "KEY_SIZE";
     static protected final String KEY_MODE = "KEY_MODE";
+    static protected final String KEY_CRYPT = "KEY_CRYPT";
     static protected final String FUNCTION_NAME = "mmkvFromAshmemID";
 
     static private Uri gUri;
@@ -37,8 +38,8 @@ public class MMKVContentProvider extends ContentProvider {
         return MMKVContentProvider.gUri;
     }
 
-    private Bundle mmkvFromAshmemID(String ashmemID, int size, int mode) {
-        MMKV mmkv = MMKV.mmkvWithAshmemID(getContext(), ashmemID, size, mode);
+    private Bundle mmkvFromAshmemID(String ashmemID, int size, int mode, String cryptKey) {
+        MMKV mmkv = MMKV.mmkvWithAshmemID(getContext(), ashmemID, size, mode, cryptKey);
         if (mmkv != null) {
             ParcelableMMKV parcelableMMKV = new ParcelableMMKV(mmkv);
             Bundle result = new Bundle();
@@ -99,7 +100,8 @@ public class MMKVContentProvider extends ContentProvider {
             if (extras != null) {
                 int size = extras.getInt(MMKVContentProvider.KEY_SIZE);
                 int mode = extras.getInt(MMKVContentProvider.KEY_MODE);
-                return mmkvFromAshmemID(mmapID, size, mode);
+                String cryptKey = extras.getString(MMKVContentProvider.KEY_CRYPT);
+                return mmkvFromAshmemID(mmapID, size, mode, cryptKey);
             }
         }
         return null;

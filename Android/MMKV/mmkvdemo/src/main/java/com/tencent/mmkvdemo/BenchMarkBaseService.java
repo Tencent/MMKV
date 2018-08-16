@@ -303,8 +303,8 @@ public abstract class BenchMarkBaseService extends Service {
             // 1M, ashmem cannot change size after opened
             int size = 1024 * 1024;
             String id = "tetAshmemMMKV";
-            m_ashmemMMKV =
-                MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, size, MMKV.MULTI_PROCESS_MODE);
+            String cryptKey = "Tencent MMKV";
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, size, MMKV.MULTI_PROCESS_MODE, cryptKey);
             m_ashmemMMKV.encode("bool", true);
         }
 
@@ -324,6 +324,7 @@ public abstract class BenchMarkBaseService extends Service {
         // 1M, ashmem cannot change size after opened
         int size = 1024 * 1024;
         final String id = "tetAshmemMMKVByCP";
-        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, id, size, MMKV.MULTI_PROCESS_MODE);
+        String cryptKey = "Tencent MMKV";
+        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, id, size, MMKV.MULTI_PROCESS_MODE, cryptKey);
     }
 }

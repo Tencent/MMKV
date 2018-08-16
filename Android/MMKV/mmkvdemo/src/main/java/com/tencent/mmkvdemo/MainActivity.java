@@ -105,7 +105,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testMMKV() {
-        MMKV kv = MMKV.defaultMMKV();
+//        MMKV kv = MMKV.defaultMMKV();
+        MMKV kv = MMKV.mmkvWithIDAndCryptKey("testAES", MMKV.SINGLE_PROCESS_MODE, "Tencent MMKV");
 
         kv.encode("bool", true);
         System.out.println("bool: " + kv.decodeBool("bool"));
@@ -186,8 +187,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testAshmem() {
-        MMKV kv =
-            MMKV.mmkvWithAshmemID(this, "testAshmem", MMKV.pageSize(), MMKV.SINGLE_PROCESS_MODE);
+        String cryptKey = "Tencent MMKV";
+        MMKV kv = MMKV.mmkvWithAshmemID(this, "testAshmem", MMKV.pageSize(), MMKV.SINGLE_PROCESS_MODE, cryptKey);
 
         kv.encode("bool", true);
         System.out.println("bool: " + kv.decodeBool("bool"));

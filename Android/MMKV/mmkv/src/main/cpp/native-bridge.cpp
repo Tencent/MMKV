@@ -119,31 +119,77 @@ static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(JNIEnv *env,
                                                                             jobject obj,
                                                                             jstring mmapID,
-                                                                            jint mode) {
+                                                                            jint mode,
+                                                                            jstring cryptKey) {
+    MMKV *kv = nullptr;
     string str = jstring2string(env, mmapID);
-    MMKV *kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, mode);
+
+    if (cryptKey != nullptr) {
+        string crypt = jstring2string(env, cryptKey);
+        if (crypt.length() > 0) {
+            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, mode, &crypt);
+        }
+    }
+    if (!kv) {
+        kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, mode, nullptr);
+    }
+
     return (jlong) kv;
 }
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSize(
-    JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode) {
+    JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode, jstring cryptKey) {
+    MMKV *kv = nullptr;
     string str = jstring2string(env, mmapID);
-    MMKV *kv = MMKV::mmkvWithID(str, size, mode);
+
+    if (cryptKey != nullptr) {
+        string crypt = jstring2string(env, cryptKey);
+        if (crypt.length() > 0) {
+            kv = MMKV::mmkvWithID(str, size, mode, &crypt);
+        }
+    }
+    if (!kv) {
+        kv = MMKV::mmkvWithID(str, size, mode, nullptr);
+    }
     return (jlong) kv;
 }
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNIEnv *env,
                                                                              jobject obj,
-                                                                             jint mode) {
-    MMKV *kv = MMKV::defaultMMKV(mode);
+                                                                             jint mode,
+                                                                             jstring cryptKey) {
+    MMKV *kv = nullptr;
+
+    if (cryptKey != nullptr) {
+        string crypt = jstring2string(env, cryptKey);
+        if (crypt.length() > 0) {
+            kv = MMKV::defaultMMKV(mode, &crypt);
+        }
+    }
+    if (!kv) {
+        kv = MMKV::defaultMMKV(mode, nullptr);
+    }
+
     return (jlong) kv;
 }
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithAshmemFD(JNIEnv *env,
                                                                                   jobject obj,
                                                                                   jint fd,
-                                                                                  jint metaFD) {
-    MMKV *kv = MMKV::mmkvWithAshmemFD(fd, metaFD);
+                                                                                  jint metaFD,
+                                                                                  jstring cryptKey) {
+    MMKV *kv = nullptr;
+
+    if (cryptKey != nullptr) {
+        string crypt = jstring2string(env, cryptKey);
+        if (crypt.length() > 0) {
+            kv = MMKV::mmkvWithAshmemFD(fd, metaFD, &crypt);
+        }
+    }
+    if (!kv) {
+        kv = MMKV::mmkvWithAshmemFD(fd, metaFD, nullptr);
+    }
+
     return (jlong) kv;
 }
 
@@ -483,4 +529,16 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv 
 
 extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_pageSize(JNIEnv *env, jclass type) {
     return DEFAULT_MMAP_SIZE;
+}
+
+extern "C" JNIEXPORT jstring JNICALL Java_com_tencent_mmkv_MMKV_cryptKey(JNIEnv *env,
+                                                                         jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        string cryptKey = kv->cryptKey();
+        if (cryptKey.length() > 0) {
+            return string2jstring(env, cryptKey);
+        }
+    }
+    return nullptr;
 }

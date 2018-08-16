@@ -25,13 +25,22 @@
 
 AESCrypt::AESCrypt(const unsigned char *key, size_t keyLength) {
     if (key && keyLength > 0) {
-        memcpy(m_vector, key, (keyLength > AES_KEY_LEN) ? AES_KEY_LEN : keyLength);
+        memcpy(m_key, key, (keyLength > AES_KEY_LEN) ? AES_KEY_LEN : keyLength);
+        memcpy(m_vector, m_key, AES_KEY_LEN);
 
-        unsigned char keyBuf[AES_KEY_LEN] = {0};
-        memcpy(keyBuf, key, (keyLength > AES_KEY_LEN) ? AES_KEY_LEN : keyLength);
-
-        int ret = AES_set_encrypt_key(keyBuf, AES_KEY_BITSET_LEN, &m_aesKey);
+        int ret = AES_set_encrypt_key(m_key, AES_KEY_BITSET_LEN, &m_aesKey);
         assert(ret == 0);
+    }
+}
+
+void AESCrypt::reset() {
+    m_number = 0;
+    memcpy(m_vector, m_key, AES_KEY_LEN);
+}
+
+void AESCrypt::getKey(void *output) const {
+    if (output) {
+        memcpy(output, m_key, AES_KEY_LEN);
     }
 }
 
@@ -68,6 +77,13 @@ void testAESCrypt() {
     auto decryptText = new unsigned char[DEFAULT_MMAP_SIZE];
     memset(encryptText, 0, DEFAULT_MMAP_SIZE);
     memset(decryptText, 0, DEFAULT_MMAP_SIZE);
+
+    /* in-place encryption & decryption, this is crazy
+    memcpy(encryptText, plainText, textLength);
+    crypt1.encrypt(encryptText, encryptText, textLength);
+    crypt2.decrypt(encryptText, encryptText, textLength);
+    return;
+    */
 
     size_t actualSize = 0;
     bool flip = false;

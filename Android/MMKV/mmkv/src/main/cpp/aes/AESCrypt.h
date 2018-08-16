@@ -30,6 +30,7 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
     unsigned char m_vector[AES_KEY_LEN] = {0};
+    unsigned char m_key[AES_KEY_LEN] = {0};
     AES_KEY m_aesKey = {0};
     int m_number = 0;
 
@@ -39,6 +40,11 @@ public:
     void encrypt(const unsigned char *input, unsigned char *output, size_t length);
 
     void decrypt(const unsigned char *input, unsigned char *output, size_t length);
+
+    void reset();
+
+    // output must have [AES_KEY_LEN] space
+    void getKey(void *output) const;
 };
 
 #ifndef NDEBUG

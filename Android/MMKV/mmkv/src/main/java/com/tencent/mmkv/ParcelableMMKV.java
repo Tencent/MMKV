@@ -9,20 +9,23 @@ import java.io.IOException;
 public final class ParcelableMMKV implements Parcelable {
     private int ashmemFD = -1;
     private int ashmemMetaFD = -1;
+    private String cryptKey = null;
 
     public ParcelableMMKV(MMKV mmkv) {
         ashmemFD = mmkv.ashmemFD();
         ashmemMetaFD = mmkv.ashmemMetaFD();
+        cryptKey = mmkv.cryptKey();
     }
 
-    private ParcelableMMKV(int fd, int metaFD) {
+    private ParcelableMMKV(int fd, int metaFD, String key) {
         ashmemFD = fd;
         ashmemMetaFD = metaFD;
+        cryptKey = key;
     }
 
     public MMKV toMMKV() {
         if (ashmemFD >= 0 && ashmemMetaFD >= 0) {
-            return MMKV.mmkvWithAshmemFD(ashmemFD, ashmemMetaFD);
+            return MMKV.mmkvWithAshmemFD(ashmemFD, ashmemMetaFD, cryptKey);
         }
         return null;
     }
@@ -40,6 +43,9 @@ public final class ParcelableMMKV implements Parcelable {
             flags = flags | Parcelable.PARCELABLE_WRITE_RETURN_VALUE;
             fd.writeToParcel(dest, flags);
             metaFD.writeToParcel(dest, flags);
+            if (cryptKey != null) {
+                dest.writeString(cryptKey);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -51,8 +57,9 @@ public final class ParcelableMMKV implements Parcelable {
             public ParcelableMMKV createFromParcel(Parcel source) {
                 ParcelFileDescriptor fd = ParcelFileDescriptor.CREATOR.createFromParcel(source);
                 ParcelFileDescriptor metaFD = ParcelFileDescriptor.CREATOR.createFromParcel(source);
+                String cryptKey = source.readString();
                 if (fd != null && metaFD != null) {
-                    return new ParcelableMMKV(fd.detachFd(), metaFD.detachFd());
+                    return new ParcelableMMKV(fd.detachFd(), metaFD.detachFd(), cryptKey);
                 }
                 return null;
             }

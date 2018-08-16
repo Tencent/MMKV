@@ -56,19 +56,25 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     static private final int ASHMEM_MODE = 0x4;
 
     public static MMKV mmkvWithID(String mmapID) {
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE);
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null);
         return new MMKV(handle);
     }
 
     public static MMKV mmkvWithID(String mmapID, int mode) {
-        long handle = getMMKVWithID(mmapID, mode);
+        long handle = getMMKVWithID(mmapID, mode, null);
+        return new MMKV(handle);
+    }
+
+    // cryptKey's length <= 16
+    public static MMKV mmkvWithIDAndCryptKey(String mmapID, int mode, String cryptKey) {
+        long handle = getMMKVWithID(mmapID, mode, cryptKey);
         return new MMKV(handle);
     }
 
     // a memory only MMKV, cleared on program exit
     // size cannot change afterward (because ashmem won't allow it)
     @Nullable
-    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode) {
+    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, String cryptKey) {
         String processName =
             MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
         if (processName == null || processName.length() == 0) {
@@ -99,19 +105,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             System.out.println("getting mmkv in main process");
 
             mode = mode | ASHMEM_MODE;
-            long handle = getMMKVWithIDAndSize(mmapID, size, mode);
+            long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
             return new MMKV(handle);
         }
         return null;
     }
 
     public static MMKV defaultMMKV() {
-        long handle = getDefaultMMKV(SINGLE_PROCESS_MODE);
+        long handle = getDefaultMMKV(SINGLE_PROCESS_MODE, null);
         return new MMKV(handle);
     }
 
-    public static MMKV defaultMMKV(int mode) {
-        long handle = getDefaultMMKV(mode);
+    public static MMKV defaultMMKV(int mode, String cryptKey) {
+        long handle = getDefaultMMKV(mode, cryptKey);
         return new MMKV(handle);
     }
 
@@ -407,14 +413,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // Parcelable
-    public static MMKV mmkvWithAshmemFD(int fd, int metaFD) {
-        long handle = getMMKVWithAshmemFD(fd, metaFD);
+    public static MMKV mmkvWithAshmemFD(int fd, int metaFD, String cryptKey) {
+        long handle = getMMKVWithAshmemFD(fd, metaFD, cryptKey);
         return new MMKV(handle);
     }
 
     public native int ashmemFD();
 
     public native int ashmemMetaFD();
+
+    public native String cryptKey();
 
     // jni
     private long nativeHandle;
@@ -425,13 +433,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void initialize(String rootDir);
 
-    private native static long getMMKVWithID(String mmapID, int mode);
+    private native static long getMMKVWithID(String mmapID, int mode, String cryptKey);
 
-    private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode);
+    private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, String cryptKey);
 
-    private native static long getDefaultMMKV(int mode);
+    private native static long getDefaultMMKV(int mode, String cryptKey);
 
-    private native static long getMMKVWithAshmemFD(int fd, int metaFD);
+    private native static long getMMKVWithAshmemFD(int fd, int metaFD, String cryptKey);
 
     private native boolean encodeBool(long handle, String key, boolean value);
 
