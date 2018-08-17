@@ -44,7 +44,7 @@ public class MMKVTest {
         Context appContext = InstrumentationRegistry.getTargetContext();
         MMKV.initialize(appContext);
 
-        mmkv = MMKV.mmkvWithID("unitTest");
+        mmkv = MMKV.mmkvWithID("unitTest", MMKV.SINGLE_PROCESS_MODE, "UnitTestCryptKey");
     }
 
     @AfterClass

@@ -35,6 +35,8 @@ public final class Baseline {
     private int m_loops = 1000;
     private Context m_context;
     private static final String MMKV_ID = "baseline3";
+    private static final String CryptKey = null;
+    //private static final String CryptKey = "baseline_key3";
 
     Baseline(Context context, int loops) {
         m_context = context;
@@ -62,7 +64,7 @@ public final class Baseline {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
@@ -76,7 +78,7 @@ public final class Baseline {
     private void mmkvBatchReadInt() {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = mmkv.decodeInt(key);
@@ -89,7 +91,7 @@ public final class Baseline {
     private void mmkvBatchWriteString() {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
         for (int index = 0; index < m_loops; index++) {
             final String valueStr = m_arrStrings[index];
             final String strKey = m_arrKeys[index];
@@ -103,7 +105,7 @@ public final class Baseline {
     private void mmkvBatchReadString() {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID);
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
         for (int index = 0; index < m_loops; index++) {
             String strKey = m_arrKeys[index];
             String tmpStr = mmkv.decodeString(strKey);

@@ -46,6 +46,8 @@ public abstract class BenchMarkBaseService extends Service {
     private static final int m_loops = 1000;
     private static final String MMKV_ID = "benchmark_interprocess";
     private static final String SP_ID = "benchmark_interprocess_sp";
+    private static final String CryptKey = null;
+    //private static final String CryptKey = "Tencent MMKV";
 
     @Override
     public void onCreate() {
@@ -106,13 +108,13 @@ public abstract class BenchMarkBaseService extends Service {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(this);
-        //        sqlIteKV.beginTransaction();
+        //sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
             sqlIteKV.putInt(key, tmp);
         }
-        //        sqlIteKV.endTransaction();
+        //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
         System.out.println(caller + " sqlite write int: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
@@ -129,7 +131,7 @@ public abstract class BenchMarkBaseService extends Service {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
             editor.putInt(key, tmp);
-            //            editor.commit();
+            //editor.commit();
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
@@ -160,12 +162,12 @@ public abstract class BenchMarkBaseService extends Service {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(this);
-        //        sqlIteKV.beginTransaction();
+        //sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = sqlIteKV.getInt(key);
         }
-        //        sqlIteKV.endTransaction();
+        //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
         System.out.println(caller + " sqlite read int: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
@@ -209,13 +211,13 @@ public abstract class BenchMarkBaseService extends Service {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(this);
-        //        sqlIteKV.beginTransaction();
+        //sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             final String value = m_arrStrings[index];
             final String key = m_arrKeys[index];
             sqlIteKV.putString(key, value);
         }
-        //        sqlIteKV.endTransaction();
+        //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
         System.out.println(caller + " sqlite write String: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
@@ -231,7 +233,7 @@ public abstract class BenchMarkBaseService extends Service {
             final String str = m_arrStrings[index];
             final String key = m_arrKeys[index];
             editor.putString(key, str);
-            //            editor.commit();
+            //editor.commit();
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
@@ -262,12 +264,12 @@ public abstract class BenchMarkBaseService extends Service {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(this);
-        //        sqlIteKV.beginTransaction();
+        //sqlIteKV.beginTransaction();
         for (int index = 0; index < m_loops; index++) {
             final String key = m_arrKeys[index];
             final String tmp = sqlIteKV.getString(key);
         }
-        //        sqlIteKV.endTransaction();
+        //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
         System.out.println(caller + " sqlite read String: loop[" + m_loops +
                            "]: " + (endTime - startTime) + " ms");
@@ -293,7 +295,7 @@ public abstract class BenchMarkBaseService extends Service {
         if (m_ashmemMMKV != null) {
             return m_ashmemMMKV;
         } else {
-            return MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+            return MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE, CryptKey);
         }
     }
 
@@ -303,8 +305,7 @@ public abstract class BenchMarkBaseService extends Service {
             // 1M, ashmem cannot change size after opened
             int size = 1024 * 1024;
             String id = "tetAshmemMMKV";
-            String cryptKey = "Tencent MMKV";
-            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, size, MMKV.MULTI_PROCESS_MODE, cryptKey);
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, size, MMKV.MULTI_PROCESS_MODE, CryptKey);
             m_ashmemMMKV.encode("bool", true);
         }
 
@@ -324,7 +325,6 @@ public abstract class BenchMarkBaseService extends Service {
         // 1M, ashmem cannot change size after opened
         int size = 1024 * 1024;
         final String id = "tetAshmemMMKVByCP";
-        String cryptKey = "Tencent MMKV";
-        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, id, size, MMKV.MULTI_PROCESS_MODE, cryptKey);
+        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, id, size, MMKV.MULTI_PROCESS_MODE, CryptKey);
     }
 }

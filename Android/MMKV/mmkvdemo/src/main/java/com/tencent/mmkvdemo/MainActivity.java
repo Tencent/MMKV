@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void testMMKV() {
 //        MMKV kv = MMKV.defaultMMKV();
-        MMKV kv = MMKV.mmkvWithIDAndCryptKey("testAES", MMKV.SINGLE_PROCESS_MODE, "Tencent MMKV");
+        MMKV kv = MMKV.mmkvWithID("testAES", MMKV.SINGLE_PROCESS_MODE, "Tencent MMKV");
 
         kv.encode("bool", true);
         System.out.println("bool: " + kv.decodeBool("bool"));

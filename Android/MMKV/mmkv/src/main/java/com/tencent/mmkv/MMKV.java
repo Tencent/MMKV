@@ -66,7 +66,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // cryptKey's length <= 16
-    public static MMKV mmkvWithIDAndCryptKey(String mmapID, int mode, String cryptKey) {
+    public static MMKV mmkvWithID(String mmapID, int mode, String cryptKey) {
         long handle = getMMKVWithID(mmapID, mode, cryptKey);
         return new MMKV(handle);
     }
