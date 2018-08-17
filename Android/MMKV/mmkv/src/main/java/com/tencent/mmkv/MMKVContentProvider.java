@@ -42,6 +42,7 @@ public class MMKVContentProvider extends ContentProvider {
         MMKV mmkv = MMKV.mmkvWithAshmemID(getContext(), ashmemID, size, mode, cryptKey);
         if (mmkv != null) {
             ParcelableMMKV parcelableMMKV = new ParcelableMMKV(mmkv);
+            System.out.println(ashmemID + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
             Bundle result = new Bundle();
             result.putParcelable(MMKVContentProvider.KEY, parcelableMMKV);
             return result;

@@ -52,7 +52,8 @@ public class MyService extends BenchMarkBaseService {
                 } else if (cmd.equals(CMD_WRITE_STRING)) {
                     super.batchWriteString(CALLER);
                 } else if (cmd.equals(CMD_PREPARE_ASHMEM_BY_CP)) {
-                    super.prepareAshmemMMKVByCP();
+                    String cryptKey = intent.getStringExtra(CMD_PREPARE_ASHMEM_KEY);
+                    super.prepareAshmemMMKVByCP(cryptKey);
                 }
             }
         }

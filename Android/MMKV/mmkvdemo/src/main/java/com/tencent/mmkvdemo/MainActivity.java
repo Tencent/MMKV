@@ -33,7 +33,12 @@ import java.util.HashSet;
 
 import com.tencent.mmkv.MMKV;
 
+import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_ID;
+import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_Size;
+
 public class MainActivity extends AppCompatActivity {
+    static private final String KEY_1 = "Ashmem_Key_1";
+    static private final String KEY_2 = "Ashmem_Key_2";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,14 +55,16 @@ public class MainActivity extends AppCompatActivity {
             final Baseline baseline = new Baseline(getApplicationContext(), 1000);
 
             public void onClick(View v) {
-                baseline.mmkvBaselineTest();
-                baseline.sharedPreferencesBaselineTest();
-                baseline.sqliteBaselineTest();
+                //baseline.mmkvBaselineTest();
+                //baseline.sharedPreferencesBaselineTest();
+                //baseline.sqliteBaselineTest();
+
+                testInterProcessReKey();
             }
         });
 
         //prepareInterProcessAshmem();
-        prepareInterProcessAshmemByContentProvider();
+        prepareInterProcessAshmemByContentProvider(KEY_1);
 
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {
@@ -264,13 +271,25 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
     }
 
-    private void prepareInterProcessAshmemByContentProvider() {
+    private void prepareInterProcessAshmemByContentProvider(String cryptKey) {
         Intent intent = new Intent(this, MyService.class);
         intent.putExtra(BenchMarkBaseService.CMD_ID, BenchMarkBaseService.CMD_PREPARE_ASHMEM_BY_CP);
+        if (cryptKey != null) {
+            intent.putExtra(BenchMarkBaseService.CMD_PREPARE_ASHMEM_KEY, cryptKey);
+        }
         startService(intent);
 
         intent = new Intent(this, MyService_1.class);
         intent.putExtra(BenchMarkBaseService.CMD_ID, BenchMarkBaseService.CMD_PREPARE_ASHMEM_BY_CP);
+        if (cryptKey != null) {
+            intent.putExtra(BenchMarkBaseService.CMD_PREPARE_ASHMEM_KEY, cryptKey);
+        }
         startService(intent);
+    }
+
+    private void testInterProcessReKey() {
+        MMKV mmkv = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, KEY_1);
+        mmkv.reKey(KEY_2);
+        prepareInterProcessAshmemByContentProvider(KEY_2);
     }
 }

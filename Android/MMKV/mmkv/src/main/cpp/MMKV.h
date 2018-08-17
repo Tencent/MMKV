@@ -96,22 +96,24 @@ class MMKV {
 
     bool appendDataWithKey(const MMBuffer &data, const std::string &key);
 
+    void checkReSetCryptKey(std::string *cryptKey);
+
     // just forbid it for possibly misuse
     MMKV(const MMKV &other) = delete;
 
     MMKV &operator=(const MMKV &other) = delete;
 
 public:
-    MMKV(const std::string &mmapID, int size = DEFAULT_MMAP_SIZE, int mode = MMKV_SINGLE_PROCESS, std::string *aesKey = nullptr);
+    MMKV(const std::string &mmapID, int size = DEFAULT_MMAP_SIZE, int mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
 
-    MMKV(int ashmemFD, int ashmemMetaFd, std::string *aesKey = nullptr);
+    MMKV(int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
 
     ~MMKV();
 
     static void initializeMMKV(const std::string &rootDir);
 
     // a generic purpose instance
-    static MMKV *defaultMMKV(int mode = MMKV_SINGLE_PROCESS, std::string *aesKey = nullptr);
+    static MMKV *defaultMMKV(int mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
 
     /* mmapID: any unique ID (com.tencent.xin.pay, etc)
    * if you want a per-user mmkv, you could merge user-id within mmapID */
@@ -120,7 +122,7 @@ public:
                             int mode = MMKV_SINGLE_PROCESS,
                             std::string *aesKey = nullptr);
 
-    static MMKV *mmkvWithAshmemFD(int fd, int metaFD, std::string *aesKey = nullptr);
+    static MMKV *mmkvWithAshmemFD(int fd, int metaFD, std::string *cryptKey = nullptr);
 
     static void onExit();
 

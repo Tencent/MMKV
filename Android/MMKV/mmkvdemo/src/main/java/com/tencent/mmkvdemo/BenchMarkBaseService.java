@@ -38,6 +38,11 @@ public abstract class BenchMarkBaseService extends Service {
     public static final String CMD_READ_STRING = "cmd_read_string";
     public static final String CMD_WRITE_STRING = "cmd_write_string";
     public static final String CMD_PREPARE_ASHMEM_BY_CP = "cmd_prepare_ashmem_by_ContentProvider";
+    public static final String CMD_PREPARE_ASHMEM_KEY = "cmd_prepare_ashmem_key";
+
+    // 1M, ashmem cannot change size after opened
+    public static final int AshmemMMKV_Size = 1024 * 1024;
+    public static final String AshmemMMKV_ID = "tetAshmemMMKVByCP";
 
     private String[] m_arrStrings;
     private String[] m_arrKeys;
@@ -303,9 +308,8 @@ public abstract class BenchMarkBaseService extends Service {
 
         private AshmemMMKVGetter() {
             // 1M, ashmem cannot change size after opened
-            int size = 1024 * 1024;
-            String id = "tetAshmemMMKV";
-            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, size, MMKV.MULTI_PROCESS_MODE, CryptKey);
+            final String id = "tetAshmemMMKV";
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, CryptKey);
             m_ashmemMMKV.encode("bool", true);
         }
 
@@ -321,10 +325,12 @@ public abstract class BenchMarkBaseService extends Service {
         return new AshmemMMKVGetter();
     }
 
-    protected void prepareAshmemMMKVByCP() {
-        // 1M, ashmem cannot change size after opened
-        int size = 1024 * 1024;
-        final String id = "tetAshmemMMKVByCP";
-        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, id, size, MMKV.MULTI_PROCESS_MODE, CryptKey);
+    protected void prepareAshmemMMKVByCP(String cryptKey) {
+        if (m_ashmemMMKV != null) {
+            // just update cryptKey
+            m_ashmemMMKV = MMKV.mmkvWithAshmemFD(m_ashmemMMKV.ashmemFD(), m_ashmemMMKV.ashmemMetaFD(), cryptKey);
+        } else {
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
+        }
     }
 }

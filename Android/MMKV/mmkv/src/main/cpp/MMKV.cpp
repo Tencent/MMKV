@@ -57,7 +57,7 @@ enum : bool {
     IncreaseSequence = true,
 };
 
-MMKV::MMKV(const std::string &mmapID, int size, int mode, string *aesKey)
+MMKV::MMKV(const std::string &mmapID, int size, int mode, string *cryptKey)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode))
     , m_crcPath(crcPathWithID(m_mmapID, mode))
@@ -81,8 +81,8 @@ MMKV::MMKV(const std::string &mmapID, int size, int mode, string *aesKey)
         m_ashmemFile = nullptr;
     }
 
-    if (aesKey && aesKey->length() > 0) {
-        m_crypter = new AESCrypt((const unsigned char*)aesKey->data(), aesKey->length());
+    if (cryptKey && cryptKey->length() > 0) {
+        m_crypter = new AESCrypt((const unsigned char*)cryptKey->data(), cryptKey->length());
     }
 
     m_needLoadFromFile = true;
@@ -99,7 +99,7 @@ MMKV::MMKV(const std::string &mmapID, int size, int mode, string *aesKey)
     }
 }
 
-MMKV::MMKV(int ashmemFD, int ashmemMetaFD, string *aesKey)
+MMKV::MMKV(int ashmemFD, int ashmemMetaFD, string *cryptKey)
     : m_mmapID("")
     , m_path("")
     , m_crcPath("")
@@ -126,8 +126,8 @@ MMKV::MMKV(int ashmemFD, int ashmemMetaFD, string *aesKey)
         m_ashmemFile = nullptr;
     }
 
-    if (aesKey && aesKey->length() > 0) {
-        m_crypter = new AESCrypt((const unsigned char*)aesKey->data(), aesKey->length());
+    if (cryptKey && cryptKey->length() > 0) {
+        m_crypter = new AESCrypt((const unsigned char*)cryptKey->data(), cryptKey->length());
     }
 
     m_needLoadFromFile = true;
@@ -157,8 +157,8 @@ MMKV::~MMKV() {
     }
 }
 
-MMKV *MMKV::defaultMMKV(int mode, string *aesKey) {
-    return mmkvWithID(DEFAULT_MMAP_ID, DEFAULT_MMAP_SIZE, mode, aesKey);
+MMKV *MMKV::defaultMMKV(int mode, string *cryptKey) {
+    return mmkvWithID(DEFAULT_MMAP_ID, DEFAULT_MMAP_SIZE, mode, cryptKey);
 }
 
 void initialize() {
@@ -192,14 +192,16 @@ MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, int mode, string *ae
 
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
-        return itr->second;
+        MMKV *kv = itr->second;
+        kv->checkReSetCryptKey(aesKey);
+        return kv;
     }
     auto kv = new MMKV(mmapID, size, mode, aesKey);
     (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
 
-MMKV *MMKV::mmkvWithAshmemFD(int fd, int metaFD, string *aesKey) {
+MMKV *MMKV::mmkvWithAshmemFD(int fd, int metaFD, string *cryptKey) {
 
     if (fd < 0) {
         return nullptr;
@@ -208,9 +210,11 @@ MMKV *MMKV::mmkvWithAshmemFD(int fd, int metaFD, string *aesKey) {
 
     auto itr = g_ashmemInstanceDic->find(fd);
     if (itr != g_ashmemInstanceDic->end()) {
-        return itr->second;
+        MMKV *kv = itr->second;
+        kv->checkReSetCryptKey(cryptKey);
+        return kv;
     }
-    auto kv = new MMKV(fd, metaFD, aesKey);
+    auto kv = new MMKV(fd, metaFD, cryptKey);
     (*g_ashmemInstanceDic)[fd] = kv;
     return kv;
 }
@@ -765,6 +769,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
                 return true;
             } else {
                 // change encryption key
+                MMKVInfo("reKey with new aes key");
                 delete m_crypter;
                 auto ptr = (const unsigned char*)cryptKey.data();
                 m_crypter = new AESCrypt(ptr, cryptKey.length());
@@ -772,6 +777,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
             }
         } else {
             // decryption to plain text
+            MMKVInfo("reKey with no aes key");
             delete m_crypter;
             m_crypter = nullptr;
             return fullWriteback();
@@ -779,6 +785,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
     } else {
         if (cryptKey.length() > 0) {
             // transform plain text to encrypted text
+            MMKVInfo("reKey with aes key");
             auto ptr = (const unsigned char*)cryptKey.data();
             m_crypter = new AESCrypt(ptr, cryptKey.length());
             return fullWriteback();
@@ -787,6 +794,42 @@ bool MMKV::reKey(const std::string &cryptKey) {
         }
     }
     return false;
+}
+
+void MMKV::checkReSetCryptKey(std::string *cryptKey) {
+    SCOPEDLOCK(m_lock);
+
+    if (m_crypter) {
+        if (cryptKey) {
+            string oldKey = this->cryptKey();
+            if (oldKey != *cryptKey) {
+                MMKVInfo("setting new aes key");
+                delete m_crypter;
+                auto ptr = (const unsigned char*)cryptKey->data();
+                m_crypter = new AESCrypt(ptr, cryptKey->length());
+
+                checkLoadData();
+            } else {
+                // nothing to do
+            }
+        } else {
+            MMKVInfo("reset aes key");
+            delete m_crypter;
+            m_crypter = nullptr;
+
+            checkLoadData();
+        }
+    } else {
+        if (cryptKey) {
+            MMKVInfo("setting new aes key");
+            auto ptr = (const unsigned char*)cryptKey->data();
+            m_crypter = new AESCrypt(ptr, cryptKey->length());
+
+            checkLoadData();
+        } else {
+            // nothing to do
+        }
+    }
 }
 
 bool MMKV::isFileValid() {
