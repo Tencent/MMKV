@@ -229,11 +229,13 @@ const std::string &MMKV::mmapID() {
     return m_mmapID;
 }
 
-const std::string& MMKV::cryptKey() {
+std::string MMKV::cryptKey() {
+    SCOPEDLOCK(m_lock);
+
     if (m_crypter) {
         char key[AES_KEY_LEN];
         m_crypter->getKey(key);
-        return string(key, AES_KEY_LEN);
+        return string(key, strnlen(key, AES_KEY_LEN));
     }
     return "";
 }
@@ -747,6 +749,41 @@ bool MMKV::fullWriteback() {
         } else {
             // ensureMemorySize will extend file & full rewrite, no need to write back again
             return ensureMemorySize(allData.length() + Fixed32Size - m_size);
+        }
+    }
+    return false;
+}
+
+bool MMKV::reKey(const std::string &cryptKey) {
+    SCOPEDLOCK(m_lock);
+    checkLoadData();
+
+    if (m_crypter) {
+        if (cryptKey.length() > 0) {
+            string oldKey = this->cryptKey();
+            if (cryptKey == oldKey) {
+                return true;
+            } else {
+                // change encryption key
+                delete m_crypter;
+                auto ptr = (const unsigned char*)cryptKey.data();
+                m_crypter = new AESCrypt(ptr, cryptKey.length());
+                return fullWriteback();
+            }
+        } else {
+            // decryption to plain text
+            delete m_crypter;
+            m_crypter = nullptr;
+            return fullWriteback();
+        }
+    } else {
+        if (cryptKey.length() > 0) {
+            // transform plain text to encrypted text
+            auto ptr = (const unsigned char*)cryptKey.data();
+            m_crypter = new AESCrypt(ptr, cryptKey.length());
+            return fullWriteback();
+        } else {
+            return true;
         }
     }
     return false;

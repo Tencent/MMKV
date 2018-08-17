@@ -542,3 +542,15 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_tencent_mmkv_MMKV_cryptKey(JNIEnv 
     }
     return nullptr;
 }
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_reKey(JNIEnv *env, jobject instance, jstring cryptKey) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        string newKey;
+        if (cryptKey) {
+            newKey = jstring2string(env, cryptKey);
+        }
+        return (jboolean) kv->reKey(newKey);
+    }
+    return (jboolean) false;
+}

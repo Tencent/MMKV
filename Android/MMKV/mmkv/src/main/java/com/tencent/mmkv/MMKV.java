@@ -121,6 +121,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return new MMKV(handle);
     }
 
+    // encryption & decryption key
+    public native String cryptKey();
+
+    // transform plain text into encrypted text
+    // or vice versa by passing cryptKey = null
+    // or change existing crypt key
+    public native boolean reKey(String cryptKey);
+
     // get device's page size
     public static native int pageSize();
 
@@ -421,8 +429,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native int ashmemFD();
 
     public native int ashmemMetaFD();
-
-    public native String cryptKey();
 
     // jni
     private long nativeHandle;

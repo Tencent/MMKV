@@ -134,7 +134,9 @@ public:
 
     int ashmemMetaFD() { return m_isAshmem ? m_metaFile.getFd() : -1; }
 
-    const std::string &cryptKey();
+    std::string cryptKey();
+
+    bool reKey(const std::string &cryptKey);
 
     bool setStringForKey(const std::string &value, const std::string &key);
 
