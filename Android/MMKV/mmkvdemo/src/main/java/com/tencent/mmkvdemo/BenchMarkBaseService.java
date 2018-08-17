@@ -329,6 +329,10 @@ public abstract class BenchMarkBaseService extends Service {
         if (m_ashmemMMKV != null) {
             // just update cryptKey
             m_ashmemMMKV = MMKV.mmkvWithAshmemFD(m_ashmemMMKV.ashmemFD(), m_ashmemMMKV.ashmemMetaFD(), cryptKey);
+            /* or clean old mmkv & get a new one
+            m_ashmemMMKV.clearMemoryCache();
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
+            */
         } else {
             m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
         }
