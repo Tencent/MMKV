@@ -6,6 +6,7 @@ import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.net.Uri;
@@ -55,9 +56,11 @@ public class MMKVContentProvider extends ContentProvider {
         try {
             ComponentName componentName =
                 new ComponentName(context, MMKVContentProvider.class.getName());
-            ProviderInfo providerInfo =
-                context.getPackageManager().getProviderInfo(componentName, 0);
-            return providerInfo.authority;
+            PackageManager mgr = context.getPackageManager();
+            if (mgr != null) {
+                ProviderInfo providerInfo = mgr.getProviderInfo(componentName, 0);
+                return providerInfo.authority;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

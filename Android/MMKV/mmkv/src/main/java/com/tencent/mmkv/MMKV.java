@@ -103,8 +103,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 ParcelableMMKV parcelableMMKV = result.getParcelable(MMKVContentProvider.KEY);
                 if (parcelableMMKV != null) {
                     MMKV mmkv = parcelableMMKV.toMMKV();
-                    System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
-                            + ", meta fd = " + mmkv.ashmemMetaFD());
+                    if (mmkv != null) {
+                        System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
+                                + ", meta fd = " + mmkv.ashmemMetaFD());
+                    }
                     return mmkv;
                 }
             }
