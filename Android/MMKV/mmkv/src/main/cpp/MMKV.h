@@ -35,7 +35,7 @@ class CodedOutputData;
 class MMBuffer;
 class AESCrypt;
 
-enum : uint32_t {
+enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 0x1,
     MMKV_MULTI_PROCESS = 0x2,
     MMKV_ASHMEM = 0x4,
@@ -96,7 +96,7 @@ class MMKV {
 
     bool appendDataWithKey(const MMBuffer &data, const std::string &key);
 
-    void checkReSetCryptKey(std::string *cryptKey);
+    void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 
     // just forbid it for possibly misuse
     MMKV(const MMKV &other) = delete;
@@ -104,25 +104,34 @@ class MMKV {
     MMKV &operator=(const MMKV &other) = delete;
 
 public:
-    MMKV(const std::string &mmapID, int size = DEFAULT_MMAP_SIZE, int mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
+    MMKV(const std::string &mmapID,
+         int size = DEFAULT_MMAP_SIZE,
+         MMKVMode mode = MMKV_SINGLE_PROCESS,
+         std::string *cryptKey = nullptr);
 
-    MMKV(int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
+    MMKV(const std::string &mmapID,
+         int ashmemFD,
+         int ashmemMetaFd,
+         std::string *cryptKey = nullptr);
 
     ~MMKV();
 
     static void initializeMMKV(const std::string &rootDir);
 
     // a generic purpose instance
-    static MMKV *defaultMMKV(int mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
+    static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
 
     /* mmapID: any unique ID (com.tencent.xin.pay, etc)
    * if you want a per-user mmkv, you could merge user-id within mmapID */
     static MMKV *mmkvWithID(const std::string &mmapID,
                             int size = DEFAULT_MMAP_SIZE,
-                            int mode = MMKV_SINGLE_PROCESS,
-                            std::string *aesKey = nullptr);
+                            MMKVMode mode = MMKV_SINGLE_PROCESS,
+                            std::string *cryptKey = nullptr);
 
-    static MMKV *mmkvWithAshmemFD(int fd, int metaFD, std::string *cryptKey = nullptr);
+    static MMKV *mmkvWithAshmemFD(const std::string &mmapID,
+                                  int fd,
+                                  int metaFD,
+                                  std::string *cryptKey = nullptr);
 
     static void onExit();
 
@@ -138,7 +147,14 @@ public:
 
     std::string cryptKey();
 
+    // transform plain text into encrypted text
+    // or vice versa by passing cryptKey = null
+    // or change existing crypt key
     bool reKey(const std::string &cryptKey);
+
+    // just reset cryptKey (will not encrypt or decrypt anything)
+    // usually you should call this method after other process reKey() the inter-process mmkv
+    void checkReSetCryptKey(const std::string *cryptKey);
 
     bool setStringForKey(const std::string &value, const std::string &key);
 

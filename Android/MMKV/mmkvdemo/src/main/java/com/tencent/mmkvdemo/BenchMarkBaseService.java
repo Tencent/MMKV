@@ -309,7 +309,8 @@ public abstract class BenchMarkBaseService extends Service {
         private AshmemMMKVGetter() {
             // 1M, ashmem cannot change size after opened
             final String id = "tetAshmemMMKV";
-            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, CryptKey);
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, AshmemMMKV_Size,
+                                                 MMKV.MULTI_PROCESS_MODE, CryptKey);
             m_ashmemMMKV.encode("bool", true);
         }
 
@@ -325,16 +326,10 @@ public abstract class BenchMarkBaseService extends Service {
         return new AshmemMMKVGetter();
     }
 
-    protected void prepareAshmemMMKVByCP(String cryptKey) {
-        if (m_ashmemMMKV != null) {
-            // just update cryptKey
-            m_ashmemMMKV = MMKV.mmkvWithAshmemFD(m_ashmemMMKV.ashmemFD(), m_ashmemMMKV.ashmemMetaFD(), cryptKey);
-            /* or clean old mmkv & get a new one
-            m_ashmemMMKV.clearMemoryCache();
-            m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
-            */
-        } else {
-            m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
-        }
+    protected void prepareAshmemMMKVByCP() {
+        // it's ok for other process not knowing cryptKey
+        final String cryptKey = null;
+        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size,
+                                             MMKV.MULTI_PROCESS_MODE, cryptKey);
     }
 }

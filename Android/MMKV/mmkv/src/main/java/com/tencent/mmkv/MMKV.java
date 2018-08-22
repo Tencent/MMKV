@@ -74,7 +74,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // a memory only MMKV, cleared on program exit
     // size cannot change afterward (because ashmem won't allow it)
     @Nullable
-    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, String cryptKey) {
+    public static MMKV
+    mmkvWithAshmemID(Context context, String mmapID, int size, int mode, String cryptKey) {
         String processName =
             MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
         if (processName == null || processName.length() == 0) {
@@ -92,7 +93,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             Bundle extras = new Bundle();
             extras.putInt(MMKVContentProvider.KEY_SIZE, size);
             extras.putInt(MMKVContentProvider.KEY_MODE, mode);
-            extras.putString(MMKVContentProvider.KEY_CRYPT, cryptKey);
+            if (cryptKey != null) {
+                extras.putString(MMKVContentProvider.KEY_CRYPT, cryptKey);
+            }
             ContentResolver resolver = context.getContentResolver();
             Bundle result = resolver.call(uri, MMKVContentProvider.FUNCTION_NAME, mmapID, extras);
             if (result != null) {
@@ -100,7 +103,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 ParcelableMMKV parcelableMMKV = result.getParcelable(MMKVContentProvider.KEY);
                 if (parcelableMMKV != null) {
                     MMKV mmkv = parcelableMMKV.toMMKV();
-                    System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
+                    System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD() +
+                                       ", meta fd = " + mmkv.ashmemMetaFD());
                     return mmkv;
                 }
             }
@@ -131,6 +135,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // or vice versa by passing cryptKey = null
     // or change existing crypt key
     public native boolean reKey(String cryptKey);
+
+    // just reset cryptKey (will not encrypt or decrypt anything)
+    // usually you should call this method after other process reKey() the inter-process mmkv
+    public native void checkReSetCryptKey(String cryptKey);
 
     // get device's page size
     public static native int pageSize();
@@ -424,8 +432,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // Parcelable
-    public static MMKV mmkvWithAshmemFD(int fd, int metaFD, String cryptKey) {
-        long handle = getMMKVWithAshmemFD(fd, metaFD, cryptKey);
+    public static MMKV mmkvWithAshmemFD(String mmapID, int fd, int metaFD, String cryptKey) {
+        long handle = getMMKVWithAshmemFD(mmapID, fd, metaFD, cryptKey);
         return new MMKV(handle);
     }
 
@@ -444,11 +452,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private native static long getMMKVWithID(String mmapID, int mode, String cryptKey);
 
-    private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, String cryptKey);
+    private native static long
+    getMMKVWithIDAndSize(String mmapID, int size, int mode, String cryptKey);
 
     private native static long getDefaultMMKV(int mode, String cryptKey);
 
-    private native static long getMMKVWithAshmemFD(int fd, int metaFD, String cryptKey);
+    private native static long
+    getMMKVWithAshmemFD(String mmapID, int fd, int metaFD, String cryptKey);
 
     private native boolean encodeBool(long handle, String key, boolean value);
 

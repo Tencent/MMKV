@@ -7,17 +7,20 @@ import android.os.Parcelable;
 import java.io.IOException;
 
 public final class ParcelableMMKV implements Parcelable {
+    private String mmapID;
     private int ashmemFD = -1;
     private int ashmemMetaFD = -1;
     private String cryptKey = null;
 
     public ParcelableMMKV(MMKV mmkv) {
+        mmapID = mmkv.mmapID();
         ashmemFD = mmkv.ashmemFD();
         ashmemMetaFD = mmkv.ashmemMetaFD();
         cryptKey = mmkv.cryptKey();
     }
 
-    private ParcelableMMKV(int fd, int metaFD, String key) {
+    private ParcelableMMKV(String id, int fd, int metaFD, String key) {
+        mmapID = id;
         ashmemFD = fd;
         ashmemMetaFD = metaFD;
         cryptKey = key;
@@ -25,7 +28,7 @@ public final class ParcelableMMKV implements Parcelable {
 
     public MMKV toMMKV() {
         if (ashmemFD >= 0 && ashmemMetaFD >= 0) {
-            return MMKV.mmkvWithAshmemFD(ashmemFD, ashmemMetaFD, cryptKey);
+            return MMKV.mmkvWithAshmemFD(mmapID, ashmemFD, ashmemMetaFD, cryptKey);
         }
         return null;
     }
@@ -38,6 +41,7 @@ public final class ParcelableMMKV implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         try {
+            dest.writeString(mmapID);
             ParcelFileDescriptor fd = ParcelFileDescriptor.fromFd(ashmemFD);
             ParcelFileDescriptor metaFD = ParcelFileDescriptor.fromFd(ashmemMetaFD);
             flags = flags | Parcelable.PARCELABLE_WRITE_RETURN_VALUE;
@@ -55,11 +59,12 @@ public final class ParcelableMMKV implements Parcelable {
         new Parcelable.Creator<ParcelableMMKV>() {
             @Override
             public ParcelableMMKV createFromParcel(Parcel source) {
+                String mmapID = source.readString();
                 ParcelFileDescriptor fd = ParcelFileDescriptor.CREATOR.createFromParcel(source);
                 ParcelFileDescriptor metaFD = ParcelFileDescriptor.CREATOR.createFromParcel(source);
                 String cryptKey = source.readString();
                 if (fd != null && metaFD != null) {
-                    return new ParcelableMMKV(fd.detachFd(), metaFD.detachFd(), cryptKey);
+                    return new ParcelableMMKV(mmapID, fd.detachFd(), metaFD.detachFd(), cryptKey);
                 }
                 return null;
             }

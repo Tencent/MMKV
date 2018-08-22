@@ -42,7 +42,8 @@ public class MMKVContentProvider extends ContentProvider {
         MMKV mmkv = MMKV.mmkvWithAshmemID(getContext(), ashmemID, size, mode, cryptKey);
         if (mmkv != null) {
             ParcelableMMKV parcelableMMKV = new ParcelableMMKV(mmkv);
-            System.out.println(ashmemID + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
+            System.out.println(ashmemID + " fd = " + mmkv.ashmemFD() +
+                               ", meta fd = " + mmkv.ashmemMetaFD());
             Bundle result = new Bundle();
             result.putParcelable(MMKVContentProvider.KEY, parcelableMMKV);
             return result;
@@ -75,7 +76,8 @@ public class MMKVContentProvider extends ContentProvider {
         }
 
         if (MMKVContentProvider.gUri == null) {
-            MMKVContentProvider.gUri = Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + authority);
+            MMKVContentProvider.gUri =
+                Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + authority);
         }
 
         return true;
@@ -85,7 +87,8 @@ public class MMKVContentProvider extends ContentProvider {
         ActivityManager manager =
             (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
-            for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
+            for (ActivityManager.RunningAppProcessInfo processInfo :
+                 manager.getRunningAppProcesses()) {
                 if (processInfo.pid == pid) {
                     return processInfo.processName;
                 }

@@ -55,16 +55,16 @@ public class MainActivity extends AppCompatActivity {
             final Baseline baseline = new Baseline(getApplicationContext(), 1000);
 
             public void onClick(View v) {
-                //baseline.mmkvBaselineTest();
-                //baseline.sharedPreferencesBaselineTest();
-                //baseline.sqliteBaselineTest();
+                baseline.mmkvBaselineTest();
+                baseline.sharedPreferencesBaselineTest();
+                baseline.sqliteBaselineTest();
 
-                testInterProcessReKey();
+                //testInterProcessReKey();
             }
         });
 
         //prepareInterProcessAshmem();
-        prepareInterProcessAshmemByContentProvider(KEY_1);
+        //prepareInterProcessAshmemByContentProvider(KEY_1);
 
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        testMMKV("testAES","Tencent MMKV", false);
+        testMMKV("testAES", "Tencent MMKV", false);
         testAshmem();
         testReKey();
         //testInterProcessLock();
@@ -228,7 +228,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void testAshmem() {
         String cryptKey = "Tencent MMKV";
-        MMKV kv = MMKV.mmkvWithAshmemID(this, "testAshmem", MMKV.pageSize(), MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        MMKV kv = MMKV.mmkvWithAshmemID(this, "testAshmem", MMKV.pageSize(),
+                                        MMKV.SINGLE_PROCESS_MODE, cryptKey);
 
         kv.encode("bool", true);
         System.out.println("bool: " + kv.decodeBool("bool"));
@@ -272,24 +273,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void prepareInterProcessAshmemByContentProvider(String cryptKey) {
+        // first of all, init ashmem mmkv in main process
+        MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE,
+                              cryptKey);
+
+        // then other process can get by ContentProvider
         Intent intent = new Intent(this, MyService.class);
         intent.putExtra(BenchMarkBaseService.CMD_ID, BenchMarkBaseService.CMD_PREPARE_ASHMEM_BY_CP);
-        if (cryptKey != null) {
-            intent.putExtra(BenchMarkBaseService.CMD_PREPARE_ASHMEM_KEY, cryptKey);
-        }
         startService(intent);
 
         intent = new Intent(this, MyService_1.class);
         intent.putExtra(BenchMarkBaseService.CMD_ID, BenchMarkBaseService.CMD_PREPARE_ASHMEM_BY_CP);
-        if (cryptKey != null) {
-            intent.putExtra(BenchMarkBaseService.CMD_PREPARE_ASHMEM_KEY, cryptKey);
-        }
         startService(intent);
     }
 
     private void testInterProcessReKey() {
-        MMKV mmkv = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, KEY_1);
+        MMKV mmkv = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size,
+                                          MMKV.MULTI_PROCESS_MODE, KEY_1);
         mmkv.reKey(KEY_2);
+
         prepareInterProcessAshmemByContentProvider(KEY_2);
     }
 }

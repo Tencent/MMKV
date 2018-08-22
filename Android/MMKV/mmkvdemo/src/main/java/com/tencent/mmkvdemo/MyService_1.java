@@ -52,8 +52,7 @@ public class MyService_1 extends BenchMarkBaseService implements ServiceConnecti
                                    .setPackage("com.tencent.mmkvdemo");
                     bindService(i, this, BIND_AUTO_CREATE);
                 } else if (cmd.equals(CMD_PREPARE_ASHMEM_BY_CP)) {
-                    String cryptKey = intent.getStringExtra(CMD_PREPARE_ASHMEM_KEY);
-                    super.prepareAshmemMMKVByCP(cryptKey);
+                    super.prepareAshmemMMKVByCP();
                 }
             }
         }

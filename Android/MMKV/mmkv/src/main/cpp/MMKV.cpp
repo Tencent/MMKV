@@ -28,6 +28,7 @@
 #include "MmapedFile.h"
 #include "PBUtility.h"
 #include "ScopedLock.hpp"
+#include "aes/AESCrypt.h"
 #include <algorithm>
 #include <errno.h>
 #include <fcntl.h>
@@ -37,27 +38,25 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <zlib.h>
-#include "aes/AESCrypt.h"
 
 using namespace std;
 
 static unordered_map<std::string, MMKV *> *g_instanceDic;
-static unordered_map<int, MMKV *> *g_ashmemInstanceDic;
 static ThreadLock g_instanceLock;
 static std::string g_rootDir;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
 constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
-static string mappedKVPathWithID(const string &mmapID, int mode);
-static string crcPathWithID(const string &mmapID, int mode);
+static string mappedKVPathWithID(const string &mmapID, MMKVMode mode);
+static string crcPathWithID(const string &mmapID, MMKVMode mode);
 
 enum : bool {
     KeepSequence = false,
     IncreaseSequence = true,
 };
 
-MMKV::MMKV(const std::string &mmapID, int size, int mode, string *cryptKey)
+MMKV::MMKV(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode))
     , m_crcPath(crcPathWithID(m_mmapID, mode))
@@ -82,7 +81,7 @@ MMKV::MMKV(const std::string &mmapID, int size, int mode, string *cryptKey)
     }
 
     if (cryptKey && cryptKey->length() > 0) {
-        m_crypter = new AESCrypt((const unsigned char*)cryptKey->data(), cryptKey->length());
+        m_crypter = new AESCrypt((const unsigned char *) cryptKey->data(), cryptKey->length());
     }
 
     m_needLoadFromFile = true;
@@ -99,8 +98,8 @@ MMKV::MMKV(const std::string &mmapID, int size, int mode, string *cryptKey)
     }
 }
 
-MMKV::MMKV(int ashmemFD, int ashmemMetaFD, string *cryptKey)
-    : m_mmapID("")
+MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
+    : m_mmapID(mmapID)
     , m_path("")
     , m_crcPath("")
     , m_metaFile(ashmemMetaFD)
@@ -110,8 +109,18 @@ MMKV::MMKV(int ashmemFD, int ashmemMetaFD, string *cryptKey)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
     , m_isInterProcess(true)
     , m_isAshmem(true) {
-    m_mmapID = m_metaFile.getName();
-    m_mmapID.erase(m_mmapID.find_last_of('.'), string::npos);
+
+    // check mmapID with ashmemID
+    {
+        auto ashmemID = m_metaFile.getName();
+        size_t pos = ashmemID.find_last_of('.');
+        if (pos != string::npos) {
+            ashmemID.erase(pos, string::npos);
+        }
+        if (mmapID != ashmemID) {
+            MMKVWarning("mmapID[%s] != ashmem[%s]", mmapID.c_str(), ashmemID.c_str());
+        }
+    }
     m_path = string(ASHMEM_NAME_DEF) + "/" + m_mmapID;
     m_crcPath = string(ASHMEM_NAME_DEF) + "/" + m_metaFile.getName();
     m_fd = ashmemFD;
@@ -127,7 +136,7 @@ MMKV::MMKV(int ashmemFD, int ashmemMetaFD, string *cryptKey)
     }
 
     if (cryptKey && cryptKey->length() > 0) {
-        m_crypter = new AESCrypt((const unsigned char*)cryptKey->data(), cryptKey->length());
+        m_crypter = new AESCrypt((const unsigned char *) cryptKey->data(), cryptKey->length());
     }
 
     m_needLoadFromFile = true;
@@ -157,13 +166,12 @@ MMKV::~MMKV() {
     }
 }
 
-MMKV *MMKV::defaultMMKV(int mode, string *cryptKey) {
+MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
     return mmkvWithID(DEFAULT_MMAP_ID, DEFAULT_MMAP_SIZE, mode, cryptKey);
 }
 
 void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV *>;
-    g_ashmemInstanceDic = new unordered_map<int, MMKV *>;
     g_instanceLock = ThreadLock();
 
     //testAESCrypt();
@@ -183,7 +191,7 @@ void MMKV::initializeMMKV(const std::string &rootDir) {
     MMKVInfo("root dir: %s", g_rootDir.c_str());
 }
 
-MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, int mode, string *aesKey) {
+MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey) {
 
     if (mmapID.empty()) {
         return nullptr;
@@ -193,29 +201,28 @@ MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, int mode, string *ae
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
-        kv->checkReSetCryptKey(aesKey);
         return kv;
     }
-    auto kv = new MMKV(mmapID, size, mode, aesKey);
+    auto kv = new MMKV(mmapID, size, mode, cryptKey);
     (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
 
-MMKV *MMKV::mmkvWithAshmemFD(int fd, int metaFD, string *cryptKey) {
+MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *cryptKey) {
 
     if (fd < 0) {
         return nullptr;
     }
     SCOPEDLOCK(g_instanceLock);
 
-    auto itr = g_ashmemInstanceDic->find(fd);
-    if (itr != g_ashmemInstanceDic->end()) {
+    auto itr = g_instanceDic->find(mmapID);
+    if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
-        kv->checkReSetCryptKey(cryptKey);
+        kv->checkReSetCryptKey(fd, metaFD, cryptKey);
         return kv;
     }
-    auto kv = new MMKV(fd, metaFD, cryptKey);
-    (*g_ashmemInstanceDic)[fd] = kv;
+    auto kv = new MMKV(mmapID, fd, metaFD, cryptKey);
+    (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
 
@@ -771,7 +778,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
                 // change encryption key
                 MMKVInfo("reKey with new aes key");
                 delete m_crypter;
-                auto ptr = (const unsigned char*)cryptKey.data();
+                auto ptr = (const unsigned char *) cryptKey.data();
                 m_crypter = new AESCrypt(ptr, cryptKey.length());
                 return fullWriteback();
             }
@@ -786,7 +793,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
         if (cryptKey.length() > 0) {
             // transform plain text to encrypted text
             MMKVInfo("reKey with aes key");
-            auto ptr = (const unsigned char*)cryptKey.data();
+            auto ptr = (const unsigned char *) cryptKey.data();
             m_crypter = new AESCrypt(ptr, cryptKey.length());
             return fullWriteback();
         } else {
@@ -796,7 +803,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
     return false;
 }
 
-void MMKV::checkReSetCryptKey(std::string *cryptKey) {
+void MMKV::checkReSetCryptKey(const std::string *cryptKey) {
     SCOPEDLOCK(m_lock);
 
     if (m_crypter) {
@@ -805,7 +812,7 @@ void MMKV::checkReSetCryptKey(std::string *cryptKey) {
             if (oldKey != *cryptKey) {
                 MMKVInfo("setting new aes key");
                 delete m_crypter;
-                auto ptr = (const unsigned char*)cryptKey->data();
+                auto ptr = (const unsigned char *) cryptKey->data();
                 m_crypter = new AESCrypt(ptr, cryptKey->length());
 
                 checkLoadData();
@@ -822,12 +829,27 @@ void MMKV::checkReSetCryptKey(std::string *cryptKey) {
     } else {
         if (cryptKey) {
             MMKVInfo("setting new aes key");
-            auto ptr = (const unsigned char*)cryptKey->data();
+            auto ptr = (const unsigned char *) cryptKey->data();
             m_crypter = new AESCrypt(ptr, cryptKey->length());
 
             checkLoadData();
         } else {
             // nothing to do
+        }
+    }
+}
+
+void MMKV::checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey) {
+    SCOPEDLOCK(m_lock);
+
+    checkReSetCryptKey(cryptKey);
+
+    if (m_isAshmem) {
+        if (m_fd != fd) {
+            close(fd);
+        }
+        if (m_metaFile.getFd() != metaFD) {
+            close(metaFD);
         }
     }
 }
@@ -1182,11 +1204,11 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     }
 }
 
-static string mappedKVPathWithID(const string &mmapID, int mode) {
+static string mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
     return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + mmapID
                                      : string(ASHMEM_NAME_DEF) + "/" + mmapID;
 }
 
-static string crcPathWithID(const string &mmapID, int mode) {
+static string crcPathWithID(const string &mmapID, MMKVMode mode) {
     return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + mmapID + ".crc" : mmapID + ".crc";
 }
