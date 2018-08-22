@@ -121,8 +121,8 @@ public:
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
 
-    /* mmapID: any unique ID (com.tencent.xin.pay, etc)
-   * if you want a per-user mmkv, you could merge user-id within mmapID */
+    // mmapID: any unique ID (com.tencent.xin.pay, etc)
+    // if you want a per-user mmkv, you could merge user-id within mmapID
     static MMKV *mmkvWithID(const std::string &mmapID,
                             int size = DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
