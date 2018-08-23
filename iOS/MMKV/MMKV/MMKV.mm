@@ -19,6 +19,7 @@
  */
 
 #import "MMKV.h"
+#import "AESCrypt.h"
 #import "MMKVLog.h"
 #import "MemoryFile.h"
 #import "MiniCodedInputData.h"
@@ -35,7 +36,6 @@
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
-const int DEFAULT_MMAP_SIZE = getpagesize();
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 
@@ -50,6 +50,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	size_t m_size;
 	size_t m_actualSize;
 	MiniCodedOutputData *m_output;
+	AESCrypt *m_cryptor;
 
 	BOOL m_isInBackground;
 	BOOL m_needLoadFromFile;
@@ -87,13 +88,27 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 	MMKV *kv = [g_instanceDic objectForKey:mmapID];
 	if (kv == nil) {
-		kv = [[MMKV alloc] initWithMMapID:mmapID];
+		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:nil];
 		[g_instanceDic setObject:kv forKey:mmapID];
 	}
 	return kv;
 }
 
-- (instancetype)initWithMMapID:(NSString *)mmapID {
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
+	if (mmapID.length <= 0) {
+		return nil;
+	}
+	CScopedLock lock(g_instanceLock);
+
+	MMKV *kv = [g_instanceDic objectForKey:mmapID];
+	if (kv == nil) {
+		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey];
+		[g_instanceDic setObject:kv forKey:mmapID];
+	}
+	return kv;
+}
+
+- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
 	if (self = [super init]) {
 		m_lock = [[NSRecursiveLock alloc] init];
 
@@ -104,6 +119,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			createFile(m_path);
 		}
 		m_crcPath = [MMKV crcPathWithMappedKVPath:m_path];
+
+		if (cryptKey.length > 0) {
+			m_cryptor = new AESCrypt((const unsigned char *) cryptKey.bytes, cryptKey.length);
+		}
 
 		[self loadFromFile];
 
@@ -139,6 +158,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 		delete m_output;
 		m_output = nullptr;
 	}
+	if (m_cryptor) {
+		delete m_cryptor;
+		m_cryptor = nullptr;
+	}
 
 	if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
 		munmap(m_crcPtr, pbFixed32Size(0));
@@ -157,13 +180,7 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 	MMKVInfo(@"cleaning on memory warning %@", m_mmapID);
 
-	if (m_needLoadFromFile) {
-		MMKVInfo(@"ignore %@", m_mmapID);
-		return;
-	}
-	m_needLoadFromFile = YES;
-
-	[self clearMemoryState];
+	[self clearMemoryCache];
 }
 
 - (void)didEnterBackground {
@@ -181,6 +198,17 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 }
 
 #pragma mark - really dirty work
+
+NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
+	size_t length = inputBuffer.length;
+	NSMutableData *tmp = [NSMutableData dataWithLength:length];
+
+	auto input = (const unsigned char *) inputBuffer.bytes;
+	auto output = (unsigned char *) tmp.mutableBytes;
+	crypter.decrypt(input, output, length);
+
+	return tmp;
+}
 
 - (void)loadFromFile {
 	m_fd = open(m_path.UTF8String, O_RDWR, S_IRWXU);
@@ -216,6 +244,9 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 				if (m_actualSize < m_size && m_actualSize + offset <= m_size) {
 					if ([self checkFileCRCValid] == YES) {
 						NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
+						if (m_cryptor) {
+							inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
+						}
 						m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
 						m_output = new MiniCodedOutputData(m_ptr + offset + m_actualSize, m_size - offset - m_actualSize);
 					} else {
@@ -309,10 +340,22 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	m_actualSize = 0;
 	m_crcDigest = 0;
 
+	if (m_cryptor) {
+		m_cryptor->reset();
+	}
+
 	[self loadFromFile];
 }
 
-- (void)clearMemoryState {
+- (void)clearMemoryCache {
+	CScopedLock lock(m_lock);
+
+	if (m_needLoadFromFile) {
+		MMKVInfo(@"ignore %@", m_mmapID);
+		return;
+	}
+	m_needLoadFromFile = YES;
+
 	[m_dic removeAllObjects];
 
 	if (m_output != nullptr) {
@@ -335,6 +378,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	m_fd = 0;
 	m_size = 0;
 	m_actualSize = 0;
+
+	if (m_cryptor) {
+		m_cryptor->reset();
+	}
 }
 
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
@@ -421,6 +468,12 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			m_output->seek(m_actualSize);
 		}
 
+		if (m_cryptor) {
+			m_cryptor->reset();
+			auto ptr = (unsigned char *) data.bytes;
+			m_cryptor->encrypt(ptr, ptr, data.length);
+		}
+
 		if ([self writeAcutalSize:data.length] == NO) {
 			return NO;
 		}
@@ -495,6 +548,11 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (m_actualSize == 0) {
 		NSData *allData = [MiniPBCoder encodeDataWithObject:m_dic];
 		if (allData.length > 0) {
+			if (m_cryptor) {
+				m_cryptor->reset();
+				auto ptr = (unsigned char *) allData.bytes;
+				m_cryptor->encrypt(ptr, ptr, allData.length);
+			}
 			BOOL ret = [self writeAcutalSize:allData.length];
 			if (ret) {
 				ret = [self protectFromBackgroundWritting:m_actualSize
@@ -518,7 +576,11 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 				                               output->writeData(data); // note: write size of data
 			                               }];
 			if (ret) {
-				[self updateCRCDigest:(const uint8_t *) m_ptr + offset + m_actualSize - size withSize:size];
+				auto ptr = (uint8_t *) m_ptr + offset + m_actualSize - size;
+				if (m_cryptor) {
+					m_cryptor->encrypt(ptr, ptr, size);
+				}
+				[self updateCRCDigest:ptr withSize:size];
 			}
 		}
 		return ret;
@@ -550,6 +612,11 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 	if (allData.length > 0 && [self isFileValid]) {
 		int offset = pbFixed32Size(0);
 		if (allData.length + offset <= m_size) {
+			if (m_cryptor) {
+				m_cryptor->reset();
+				auto ptr = (unsigned char *) allData.bytes;
+				m_cryptor->encrypt(ptr, ptr, allData.length);
+			}
 			BOOL ret = [self writeAcutalSize:allData.length];
 			if (ret) {
 				delete m_output;
@@ -681,6 +748,55 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 			}
 		}
 	}
+}
+
+#pragma mark - encryption & decryption
+
+- (NSData *)cryptKey {
+	if (m_cryptor) {
+		NSMutableData *data = [NSMutableData dataWithLength:AES_KEY_LEN];
+		m_cryptor->getKey(data.mutableBytes);
+		return data;
+	}
+	return NULL;
+}
+
+- (BOOL)reKey:(NSData *)newKey {
+	CScopedLock lock(m_lock);
+	[self checkLoadData];
+
+	if (m_cryptor) {
+		if (newKey.length > 0) {
+			NSData *oldKey = [self cryptKey];
+			if ([newKey isEqualToData:oldKey]) {
+				return YES;
+			} else {
+				// change encryption key
+				MMKVInfo(@"reKey with new aes key");
+				delete m_cryptor;
+				auto ptr = (const unsigned char *) newKey.bytes;
+				m_cryptor = new AESCrypt(ptr, newKey.length);
+				return [self fullWriteback];
+			}
+		} else {
+			// decryption to plain text
+			MMKVInfo(@"reKey with no aes key");
+			delete m_cryptor;
+			m_cryptor = nullptr;
+			return [self fullWriteback];
+		}
+	} else {
+		if (newKey.length > 0) {
+			// transform plain text to encrypted text
+			MMKVInfo(@"reKey with aes key");
+			auto ptr = (const unsigned char *) newKey.bytes;
+			m_cryptor = new AESCrypt(ptr, newKey.length);
+			return [self fullWriteback];
+		} else {
+			return YES;
+		}
+	}
+	return NO;
 }
 
 #pragma mark - set & get

@@ -24,6 +24,8 @@
 #import "LRUCache.hpp"
 #import <Foundation/Foundation.h>
 
+extern const int DEFAULT_MMAP_SIZE;
+
 class MemoryFile {
     NSString *m_name;
     int m_fd;
@@ -48,7 +50,7 @@ class MemoryFile {
     // index -> segment
     LRUCache<uint32_t, std::shared_ptr<Segment>> m_segmentCache;
     std::shared_ptr<Segment> tryGetSegment(uint32_t index);
-	void prepareSegments();
+    void prepareSegments();
 
     // just forbid it for possibly misuse
     MemoryFile(const MemoryFile &other) = delete;
@@ -69,8 +71,8 @@ public:
     bool write(size_t offset, const void *source, size_t size);
 
     bool innerMemcpy(size_t targetOffset, size_t sourceOffset, size_t size);
-	
-	bool ftruncate(size_t size);
+
+    bool ftruncate(size_t size);
 };
 
 extern bool isFileExist(NSString *nsFilePath);

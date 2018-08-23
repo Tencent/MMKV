@@ -35,15 +35,20 @@
 #ifndef NDEBUG
 #define MMKVDebug(format, ...) NSLog(format, ##__VA_ARGS__)
 #else
-#define MMKVDebug(format, ...) {}
+#define MMKVDebug(format, ...)                                                                     \
+    {}
 #endif // NDEBUG
 
 #else
 
-#define MMKVError(format, ...) {}
-#define MMKVWarning(format, ...) {}
-#define MMKVInfo(format, ...) {}
-#define MMKVDebug(format, ...) {}
+#define MMKVError(format, ...)                                                                     \
+    {}
+#define MMKVWarning(format, ...)                                                                   \
+    {}
+#define MMKVInfo(format, ...)                                                                      \
+    {}
+#define MMKVDebug(format, ...)                                                                     \
+    {}
 
 #endif // ENABLE_MMKV_LOG
 

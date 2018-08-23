@@ -22,12 +22,20 @@
 
 @interface MMKV : NSObject
 
-/// a generic purpose instance
+// a generic purpose instance
 + (instancetype)defaultMMKV;
 
-/// mmapID: any unique ID (com.tencent.xin.pay, etc)
-/// if you want a per-user mmkv, you could merge user-id within mmapID
+// mmapID: any unique ID (com.tencent.xin.pay, etc)
+// if you want a per-user mmkv, you could merge user-id within mmapID
 + (instancetype)mmkvWithID:(NSString *)mmapID;
+
+// mmapID: any unique ID (com.tencent.xin.pay, etc)
+// if you want a per-user mmkv, you could merge user-id within mmapID
+// cryptKey: 16 byte at most
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey;
+
+- (BOOL)reKey:(NSData *)newKey;
+- (NSData *)cryptKey;
 
 // object: NSString/NSData/NSDate
 - (BOOL)setObject:(id)obj forKey:(NSString *)key;
@@ -80,6 +88,8 @@
 - (void)removeValueForKey:(NSString *)key;
 
 - (void)removeValuesForKeys:(NSArray *)arrKeys;
+
+- (void)clearMemoryCache;
 
 - (void)clearAll;
 
