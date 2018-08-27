@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 27
@@ -35,6 +36,10 @@ android {
             jniDebuggable true
         }
     }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
 }
 
 repositories {
@@ -43,6 +48,7 @@ repositories {
         url "http://maven.oa.com/nexus/content/repositories/thirdparty"
 //        url "http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots"
     }
+    mavenCentral()
 }
 
 dependencies {
@@ -55,4 +61,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

@@ -97,6 +97,9 @@ public class MainActivity extends AppCompatActivity {
         testMMKV("testAES", "Tencent MMKV", false);
         testAshmem();
         testReKey();
+
+        KotlinUsecaseKt.kotlinFunctionalTest();
+
         //testInterProcessLock();
         //estImportSharedPreferences();
     }
