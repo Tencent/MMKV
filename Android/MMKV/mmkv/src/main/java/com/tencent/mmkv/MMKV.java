@@ -292,6 +292,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         for (Map.Entry<String, ?> entry : kvs.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
+            if (key == null || value == null) {
+                continue;
+            }
+
             if (value instanceof Boolean) {
                 encodeBool(nativeHandle, key, (boolean) value);
             } else if (value instanceof Integer) {
