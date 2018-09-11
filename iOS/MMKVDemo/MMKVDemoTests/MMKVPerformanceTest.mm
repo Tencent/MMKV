@@ -53,7 +53,7 @@
 		for (int index = 0; index < loops; index++) {
 			int32_t tmp = rand();
 			NSString *intKey = arrIntKeys[index];
-			[mmkv setInt32:tmp forKey:intKey];
+			[self->mmkv setInt32:tmp forKey:intKey];
 		}
 	}];
 }
@@ -69,7 +69,7 @@
 	[self measureBlock:^{
 		for (int index = 0; index < loops; index++) {
 			NSString *intKey = arrIntKeys[index];
-			int32_t tmp = [mmkv getInt32ForKey:intKey];
+			[self->mmkv getInt32ForKey:intKey];
 		}
 	}];
 }
@@ -90,7 +90,7 @@
 		for (int index = 0; index < loops; index++) {
 			NSString *str = arrStrings[index];
 			NSString *strKey = arrStrKeys[index];
-			[mmkv setObject:str forKey:strKey];
+			[self->mmkv setObject:str forKey:strKey];
 		}
 	}];
 }
@@ -110,7 +110,7 @@
 	[self measureBlock:^{
 		for (int index = 0; index < loops; index++) {
 			NSString *strKey = arrStrKeys[index];
-			NSString *str = [mmkv getObjectOfClass:NSString.class forKey:strKey];
+			[self->mmkv getObjectOfClass:NSString.class forKey:strKey];
 		}
 	}];
 }
