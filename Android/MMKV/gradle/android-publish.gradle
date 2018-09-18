@@ -186,7 +186,7 @@ afterEvaluate {
     bintray {
         user = getBintrayUser()
         key = getBintrayKey()
-        configurations = bintrayPublicationNames
+        publications = bintrayPublicationNames
 
         pkg {
             repo = 'maven'
