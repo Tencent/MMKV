@@ -1,11 +1,9 @@
-[TOC]
-
 # MMKV——基于 mmap 的高性能通用 key-value 组件
 MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今，在 iOS 微信上使用已有近 3 年，其性能和稳定性经过了时间的验证。近期也已移植到 Android 平台，一并开源。
 
 
 ## MMKV 源起
-在微信客户端的日常运营中，时不时就会爆发特殊文字引起系统的 crash，[参考文章](http://km.oa.com/articles/show/357120)，文章里面设计的技术方案是在关键代码前后进行计数器的加减，通过检查计数器的异常，来发现引起闪退的异常文字。在会话列表、会话界面等有大量 cell 的地方，希望新加的计时器不会影响滑动性能；另外这些计数器还要永久存储下来——因为闪退随时可能发生。这就需要一个性能非常高的通用 key-value 存储组件，我们考察了 SharedPreferences、NSUserDefaults、SQLite 等常见组件，发现都没能满足如此苛刻的性能要求。考虑到这个防 crash 方案最主要的诉求还是实时写入，而 mmap 内存映射文件刚好满足这种需求，我们尝试通过它来实现一套 key-value 组件。
+在微信客户端的日常运营中，时不时就会爆发特殊文字引起系统的 crash，[参考文章](https://mp.weixin.qq.com/s?__biz=MzAwNDY1ODY2OQ==&mid=2649286826&idx=1&sn=35601cb1156617aa235b7fd4b085bfc4)，文章里面设计的技术方案是在关键代码前后进行计数器的加减，通过检查计数器的异常，来发现引起闪退的异常文字。在会话列表、会话界面等有大量 cell 的地方，希望新加的计时器不会影响滑动性能；另外这些计数器还要永久存储下来——因为闪退随时可能发生。这就需要一个性能非常高的通用 key-value 存储组件，我们考察了 SharedPreferences、NSUserDefaults、SQLite 等常见组件，发现都没能满足如此苛刻的性能要求。考虑到这个防 crash 方案最主要的诉求还是实时写入，而 mmap 内存映射文件刚好满足这种需求，我们尝试通过它来实现一套 key-value 组件。
 
 ## MMKV 原理
 * **内存准备**  
@@ -17,7 +15,7 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 * **空间增长**  
 使用 append 实现增量更新带来了一个新的问题，就是不断 append 的话，文件大小会增长得不可控。我们需要在性能和空间上做个折中。
 
-更详细的设计原理参考 [MMKV 原理](http://git.code.oa.com/wechat-team/mmkv/wikis/design)。
+更详细的设计原理参考 [MMKV 原理](https://github.com/Tencent/MMKV/wiki/design)。
 
 ## iOS 指南
 ### 安装引入
@@ -25,12 +23,12 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 
   1. 安装 [CocoaPods](https://guides.CocoaPods.org/using/getting-started.html)；
   2. 打开命令行, `cd` 到你的项目工程目录, 输入 `pod repo update` 让 CocoaPods 感知最新的 MMKV 版本；
-  3. 打开 Podfile, 添加 `pod 'MMKV', :git => 'http://git.code.oa.com/wechat-team/mmkv.git'` 到你的 app target 里面；
+  3. 打开 Podfile, 添加 `pod 'MMKV'` 到你的 app target 里面；
   4. 在命令行输入 `pod install`；
   5. 用 Xcode 打开由 CocoaPods 自动生成的 `.xcworkspace` 文件；
   6. 添加头文件 `#import <MMKV/MMKV.h>`，就可以愉快地开始你的 MMKV 之旅了。
 
-更多安装指引参考 [iOS Setup](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_setup_cn)。
+更多安装指引参考 [iOS Setup](https://github.com/Tencent/MMKV/wiki/iOS_setup_cn)。
 
 ### 快速上手
 MMKV 的使用非常简单，无需任何配置，所有变更立马生效，无需调用 `synchronize`:
@@ -48,35 +46,31 @@ int32_t iValue = [mmkv getInt32ForKey:@"int32"];
 NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 ```
 
-更详细的使用教程参考 [iOS Tutorial](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_tutorial)。
+更详细的使用教程参考 [iOS Tutorial](https://github.com/Tencent/MMKV/wiki/iOS_tutorial_cn)。
 
 ### 性能对比
 循环写入随机的`int` 1w 次，我们有如下性能对比：
-![](http://imgcache.oa.com/photos/31601/o_1fdef58a4194d4acd646cf998aabed4c.jpg)
-更详细的性能对比参考 [iOS Benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/iOS_benchmark)。
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)
+更详细的性能对比参考 [iOS Benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark_cn)。
 
 ## Android 指南
 ### 安装引入
 推荐使用 Maven：
 
 ```gradle
-repositories {
-     maven {
-         url "http://maven.oa.com/nexus/content/repositories/thirdparty"
-     }
-}
 dependencies {
     implementation 'com.tencent:mmkv:1.0.10'
+    // replace "1.0.10" with any available version
 }
 ```
 
-更多安装指引参考 [Android Setup](http://git.code.oa.com/wechat-team/mmkv/wikis/android_setup)。
+更多安装指引参考 [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup_cn)。
 
 ### 快速上手
 MMKV 的使用非常简单，所有变更立马生效，无需调用 `sync`、`apply`。
 在 App 启动时初始化 MMKV，设定 MMKV 的根目录（files/mmkv/），例如在 MainActivity 里：
 
-```Java
+```
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
@@ -103,13 +97,13 @@ int iValue = kv.decodeInt("int");
 kv.encode("string", "Hello from mmkv");
 String str = kv.decodeString("string");
 ```
-MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](http://git.code.oa.com/wechat-team/mmkv/wikis/android_tutorial)。
+MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial_cn)。
 
 ### 性能对比
 循环写入随机的`int` 1k 次，我们有如下性能对比：
-![](http://imgcache.oa.com/photos/31601/o_e87f87a38ffe0ed1149abdcd8eb483ae.jpg)
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)
 
-更详细的性能对比参考 [Android Benchmark](http://git.code.oa.com/wechat-team/mmkv/wikis/android_benchmark)。
+更详细的性能对比参考 [Android Benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark_cn)。
 
 ## FAQ
-具体参见 [FAQ](http://git.code.oa.com/wechat-team/mmkv/wikis/FAQ_cn)。
+具体参见 [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ_cn)。
