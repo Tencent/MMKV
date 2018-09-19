@@ -32,7 +32,6 @@ android {
             path "CMakeLists.txt"
         }
     }
-    publishNonDefault true
 }
 
 dependencies {
