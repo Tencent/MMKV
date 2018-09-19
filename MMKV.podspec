@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKV"
-  s.version      = "1.0.8"
+  s.version      = "1.0.10"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC
@@ -10,14 +10,14 @@ Pod::Spec.new do |s|
                       It can be a replacement for NSUserDefaults & SQLite.
                    DESC
 
-  s.homepage     = "http://git.code.oa.com/wechat-team/mmkv"
-  s.license      = { :type => "BSD", :file => "LICENSE"}
+  s.homepage     = "https://github.com/Tencent/MMKV"
+  s.license      = { :type => "BSD 3-Clause", :file => "LICENSE.txt"}
   s.author       = { "guoling" => "guoling@tencent.com" }
 
   s.platform     = :ios, "8.0"
   s.ios.deployment_target = "8.0"
 
-  s.source       = { :git => "http://git.code.oa.com/wechat-team/mmkv/mmkv.git", :tag => "v#{s.version}" }
+  s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
   s.public_header_files = "iOS/MMKV/MMKV/MMKV.h"
 
