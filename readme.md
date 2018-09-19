@@ -1,6 +1,6 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls) [![Release Version](https://img.shields.io/badge/release-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/releases) [![WeChat Approved iOS](https://img.shields.io/badge/Wechat_Approved_iOS-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/blob/master/iOS/readme.md) [![WeChat Approved Android](https://img.shields.io/badge/Wechat_Approved_Android-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/blob/master/Android/readme.md) [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
-中文版本请参看[这里](./home_cn.md)
+中文版本请参看[这里](./readme_cn.md)
 
 MMKV is an **efficient**, **samll**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on both **iOS** and **Android**.
 
@@ -119,4 +119,4 @@ Writing random `int` for 1000 times, we get this chart:
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
 
 # FAQ
-Full [FAQ](FAQ).
+Full [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ).
