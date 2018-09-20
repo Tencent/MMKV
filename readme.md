@@ -1,4 +1,7 @@
-[![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.txt)[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls) [![Release Version](https://img.shields.io/badge/release-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/releases) [![WeChat Approved iOS](https://img.shields.io/badge/Wechat_Approved_iOS-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/blob/master/iOS/readme.md) [![WeChat Approved Android](https://img.shields.io/badge/Wechat_Approved_Android-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/blob/master/Android/readme.md) [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.txt)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
+[![Release Version](https://img.shields.io/badge/release-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./readme_cn.md)
 
