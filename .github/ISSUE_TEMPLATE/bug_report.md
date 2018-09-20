@@ -1,3 +1,8 @@
+---
+name: Bug report
+about: Create a report to help us improve
+---
+
 ### The language of MMKV
 
 > e.g. Objective-C, Swift, Java, or Kotlin
