@@ -18,11 +18,6 @@ buildscript {
     }
 }
 
-// TODO:
-// Self-update script and you can remove it.
-// See http://git.code.oa.com/wechat-mobile-dev/oss-android-template
-apply from: rootProject.file('gradle/oss-android-template.gradle')
-
 allprojects {
     repositories {
         google()
@@ -46,14 +41,12 @@ ext {
 
     defaultsToPrivateOnly = true
 
-    // TODO: Change this into your group, for WeChat OpenSource Project, it should be like 'com.tencent.xx'
     GROUP = 'com.tencent'
     VERSION_NAME = "${VERSION_NAME_PREFIX}${VERSION_NAME_SUFFIX}"
 
     POM_PACKAGING = "pom"
     POM_DESCRIPTION = "MMKV for Android"
 
-    // TODO: Change these into your published GitHub URL, ex. WECHAT_MOBILE_DEV_BASE
     POM_URL = "https://github.com/Tencent/MMKV"
     POM_SCM_URL = "https://github.com/Tencent/MMKV.git"
     POM_ISSUE_URL = 'https://github.com/Tencent/MMKV/issues'
