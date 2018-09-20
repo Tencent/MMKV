@@ -1,29 +1,29 @@
----
-name: Bug report
-about: Create a report to help us improve
+### The language of MMKV
 
----
+> e.g. Objective-C, Swift, Java, or Kotlin
 
-**Describe the bug**
-A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+### The version of MMKV
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+> e.g. v1.0.10
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Version [e.g. 22]
 
-**Additional context**
-Add any other context about the problem here.
+
+### The platform of MMKV
+
+> e.g. iOS or Android
+
+
+
+### The installation of MMKV
+
+> e.g. Cocoapods, Carthage, Maven, AAR Package or Git clone
+
+
+
+### What's the issue?
+
+> Post the outputs or screenshots for errors.
+> 
+> Explain what you want by example or code **in English**.
