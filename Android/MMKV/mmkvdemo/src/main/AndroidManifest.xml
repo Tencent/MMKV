@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.tencent.mmkvdemo">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".MyService"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":mmkvdemo_svr">
+            <intent-filter>
+                <action android:name="com.tencent.mmkvdemo.MyService"/>
+            </intent-filter>
+        </service>
+        <service
+            android:name=".MyService_1"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":mmkvdemo_svr_1">
+            <intent-filter>
+                <action android:name="com.tencent.mmkvdemo.MyService_1"/>
+            </intent-filter>
+        </service>
+
+        <provider android:name=".MultiProcessSharedPreferences"
+            android:authorities=".MultiProcessSharedPreferences"
+            android:process=".MultiProcessSharedPreferences"
+            android:exported="false">
+        </provider>
+
+        <provider
+            android:authorities="com.tencent.mmkvdemo.MMKVContentProvider"
+            android:name="com.tencent.mmkv.MMKVContentProvider"
+            android:exported="false">
+        </provider>
+    </application>
+
+</manifest>

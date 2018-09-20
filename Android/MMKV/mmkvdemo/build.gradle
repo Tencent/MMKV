@@ -1,0 +1,66 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion 27
+
+    signingConfigs {
+        config {
+            keyAlias 'key0'
+            keyPassword 'mmkv.wxg'
+            storeFile file('/Users/lingol/AndroidStudioProjects/key1')
+            storePassword 'mmkv.wxg'
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.tencent.mmkvdemo"
+        minSdkVersion 16
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
+//            debuggable true
+//            jniDebuggable true
+        }
+        debug {
+            signingConfig signingConfigs.config
+            jniDebuggable true
+        }
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+}
+
+repositories {
+    maven {
+//        url uri('/tmp/localmvn/')
+//        url "http://maven.oa.com/nexus/content/repositories/thirdparty"
+//        url "http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots"
+        url "https://dl.bintray.com/wemobiledev/maven"
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+//    implementation project(':mmkv')
+    implementation 'com.tencent:mmkv:1.0.10'
+//    implementation 'com.tencent:mmkv:1.0.10-SNAPSHOT'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}

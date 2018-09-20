@@ -1,0 +1,63 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    ext.kotlin_version = '1.2.61'
+
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.1'
+        classpath 'digital.wup:android-maven-publish:3.6.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+
+ext {
+    // TODO: Change these to satisfy your project
+    minSdkVersion = 16
+    compileSdkVersion = 27
+    targetSdkVersion = compileSdkVersion
+    buildToolsVersion = '27.0.3'
+    supportLibVersion = "25.4.0"
+    javaVersion = JavaVersion.VERSION_1_7
+
+    defaultsToPrivateOnly = true
+
+    GROUP = 'com.tencent'
+    VERSION_NAME = "${VERSION_NAME_PREFIX}${VERSION_NAME_SUFFIX}"
+
+    POM_PACKAGING = "pom"
+    POM_DESCRIPTION = "MMKV for Android"
+
+    POM_URL = "https://github.com/Tencent/MMKV"
+    POM_SCM_URL = "https://github.com/Tencent/MMKV.git"
+    POM_ISSUE_URL = 'https://github.com/Tencent/MMKV/issues'
+
+    POM_LICENCE_NAME = "BSD License"
+    POM_LICENCE_URL = "https://opensource.org/licenses/BSD-3-Clause"
+    POM_LICENCE_DIST = "repo"
+
+    POM_DEVELOPER_ID = "Tencent Wechat"
+    POM_DEVELOPER_NAME = "Tencent Wechat, Inc."
+
+    BINTRAY_LICENCE = ['BSD 3-Clause']
+    BINTRAY_ORGANIZATION = "wemobiledev"
+}

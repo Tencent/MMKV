@@ -1,0 +1,207 @@
+// OSS_ANDROID_TEMPLATE_FILE_HEADER
+/**
+ * New android-publish gradle script (for private use only, without bintray support)
+ *
+ * 1. Multiple flavors support.
+ * 2. Provide PRIVATE_RELEASE_REPOSITORY_URL and PRIVATE_SNAPSHOT_REPOSITORY_URL with gradle.properties or local.properties.
+ * 3. Provide PRIVATE_REPOSITORY_USERNAME and PRIVATE_REPOSITORY_PASSWORD if needed.
+ */
+apply plugin: 'digital.wup.android-maven-publish'
+apply plugin: 'signing'
+
+def isReleaseBuild() {
+    return version.contains("SNAPSHOT") == false
+}
+
+def getReleaseRepositoryUrl() {
+    return hasProperty('PRIVATE_RELEASE_REPOSITORY_URL') ? PRIVATE_RELEASE_REPOSITORY_URL : readPropertyFromLocalProperties('PRIVATE_RELEASE_REPOSITORY_URL')
+}
+
+def getSnapshotRepositoryUrl() {
+    return hasProperty('PRIVATE_SNAPSHOT_REPOSITORY_URL') ? PRIVATE_SNAPSHOT_REPOSITORY_URL : readPropertyFromLocalProperties('PRIVATE_SNAPSHOT_REPOSITORY_URL')
+}
+
+def readPropertyFromLocalProperties(String key) {
+    Properties properties = new Properties()
+    try {
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    } catch (Exception e) {
+        println("load local properties failed msg:${e.message}")
+    }
+    return properties.getProperty(key)
+}
+
+def getRepositoryUsername() {
+    return hasProperty('PRIVATE_REPOSITORY_USERNAME') ? PRIVATE_REPOSITORY_USERNAME : readPropertyFromLocalProperties('PRIVATE_REPOSITORY_USERNAME')
+}
+
+def getRepositoryPassword() {
+    return hasProperty('PRIVATE_REPOSITORY_PASSWORD') ? PRIVATE_REPOSITORY_PASSWORD : readPropertyFromLocalProperties('PRIVATE_REPOSITORY_PASSWORD')
+}
+
+def pomConfig = {
+    scm {
+        url POM_SCM_URL
+    }
+
+    licenses {
+        license {
+            name POM_LICENCE_NAME
+            url POM_LICENCE_URL
+            distribution POM_LICENCE_DIST
+        }
+    }
+
+    developers {
+        developer {
+            id POM_DEVELOPER_ID
+            name POM_DEVELOPER_NAME
+        }
+    }
+}
+
+android.libraryVariants.all { variant ->
+    // Skipped debug variants
+    if (variant.buildType.name == "debug") {
+        return
+    }
+
+    def hasFlavors = !variant.flavorName.isEmpty()
+
+    def artifactIdSuffix = hasFlavors ? variant.flavorName.replace('_', '-').capitalize() : ''
+    variant.productFlavors.each { flavor ->
+        def flavorArtifactIdSuffix = flavor.ext.has('artifactIdSuffix') ? flavor.ext.artifactIdSuffix : flavor.name
+        if (!flavorArtifactIdSuffix.isEmpty()) {
+            artifactIdSuffix = artifactIdSuffix.replace(flavor.name.capitalize(), "-${flavorArtifactIdSuffix}")
+        } else {
+            artifactIdSuffix = artifactIdSuffix.replace(flavor.name.capitalize(), "")
+        }
+    }
+    if (!artifactIdSuffix.isEmpty() && !artifactIdSuffix.startsWith('-')) {
+        artifactIdSuffix = '-' + artifactIdSuffix
+    }
+
+    def curArtifactId = "${POM_ARTIFACT_ID}${artifactIdSuffix}"
+
+    /**
+     * Includes
+     */
+    def sourceDirs = variant.sourceSets.collect {
+        it.javaDirectories // TODO: kotlin sources
+    }
+    def javadoc = task("${variant.name}Javadoc", type: Javadoc) {
+        source = variant.javaCompile.source // TODO: deprecated
+        options.encoding = 'utf-8'
+        destinationDir = file("${buildDir}/docs/javadoc${hasFlavors ? artifactIdSuffix : ""}")
+        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+        classpath += files(ext.androidJar)
+        classpath += files(configurations.compile)
+        exclude '**/BuildConfig.java'
+        exclude '**/R.java'
+        failOnError false
+    }
+    def javadocJar = task("${variant.name}JavadocJar", type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+    def sourcesJar = task("${variant.name}SourcesJar", type: Jar) {
+        classifier = 'sources'
+        from sourceDirs
+    }
+    def jniSymbolsJar = task("${variant.name}SymbolJar", type: Jar, dependsOn: 'build') {
+        classifier = "so-symbols"
+        boolean hasNativeBuildTask = false
+        tasks.each { task ->
+            if (task.getName().startsWith("externalNativeBuild")) {
+                hasNativeBuildTask = true
+            }
+        }
+
+        if (!hasNativeBuildTask) {
+            return
+        }
+
+        if (hasFlavors) {
+            variant.productFlavors.each { flavor ->
+                from file("build/intermediates/cmake/${flavor.name}/release/obj/")
+            }
+        } else {
+            from file("build/intermediates/cmake/release/obj/")
+        }
+
+    }
+
+    // require gradle 4.x +
+    if (GradleVersion.current() < GradleVersion.version('4.0')) {
+        throw new GradleException('android-publish.gradle need Gradle 4.0 or newer')
+    }
+
+    def publicationName = "component${variant.name.capitalize()}"
+
+    // Declare publications
+    publishing.publications {
+        "$publicationName"(MavenPublication) {
+            artifactId curArtifactId
+            groupId groupId
+            version version
+
+            from components.findByName("android${variant.name.capitalize()}")
+
+            artifact javadocJar
+            artifact jniSymbolsJar
+        }
+    }
+}
+
+/**
+ * Setup custom maven repo
+ */
+publishing.repositories {
+    maven {
+        url "${isReleaseBuild() ? getReleaseRepositoryUrl() : getSnapshotRepositoryUrl()}"
+        credentials {
+            username "${getRepositoryUsername()}"
+            password "${getRepositoryPassword()}"
+        }
+    }
+}
+
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
+
+task buildAndPublishToLocalMaven(type: Copy, dependsOn: ['build', 'publishToMavenLocal']) {
+    group = 'publishing'
+
+    // save artifacts files to artifacts folder
+    from configurations.archives.allArtifacts.files
+    into "${rootProject.buildDir}/outputs/artifacts/"
+    rename { String fileName ->
+        fileName.replace("release.aar", "${version}.aar")
+    }
+
+    doLast {
+        println "* published to maven local: ${project.group}:${project.name}:${project.version}"
+    }
+}
+
+task buildAndPublishRepo(type: Copy, dependsOn: ['build', 'publish']) {
+    group = "publishing"
+
+    // save artifacts files to artifacts folder
+    from configurations.archives.allArtifacts.files
+    into "${rootProject.buildDir}/outputs/artifacts/"
+    rename { String fileName ->
+        fileName.replace("release.aar", "${version}.aar")
+    }
+
+    doLast {
+        println "* published to repo: ${project.group}:${project.name}:${project.version}"
+    }
+}
+
+apply from: rootProject.file('gradle/check.gradle')

@@ -1,0 +1,560 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD42420455E2D00931B5F /* AppDelegate.m */; };
+		CB1FD42820455E2D00931B5F /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD42720455E2D00931B5F /* ViewController.mm */; };
+		CB1FD42B20455E2D00931B5F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42920455E2D00931B5F /* Main.storyboard */; };
+		CB1FD42D20455E2D00931B5F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42C20455E2D00931B5F /* Assets.xcassets */; };
+		CB1FD43020455E2D00931B5F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */; };
+		CB1FD43320455E2D00931B5F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD43220455E2D00931B5F /* main.m */; };
+		CB1FD4B82046995E00931B5F /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
+		CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
+		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
+		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
+		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CB1FD4B42046994D00931B5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CB1FD4912046984F00931B5F;
+			remoteInfo = MMKV;
+		};
+		CB1FD4B62046995B00931B5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1FD4902046984F00931B5F;
+			remoteInfo = MMKV;
+		};
+		CB36F24E20F8A20C009AF46F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD41820455E2D00931B5F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1FD41F20455E2D00931B5F;
+			remoteInfo = MMKVDemo;
+		};
+		CB36F25320F8A20C009AF46F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CBC1A8F620DA946200AD5087;
+			remoteInfo = MMKV;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		CB1FD42020455E2D00931B5F /* MMKVDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MMKVDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB1FD42320455E2D00931B5F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		CB1FD42420455E2D00931B5F /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		CB1FD42620455E2D00931B5F /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		CB1FD42720455E2D00931B5F /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		CB1FD42A20455E2D00931B5F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		CB1FD42C20455E2D00931B5F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CB1FD42F20455E2D00931B5F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		CB1FD43120455E2D00931B5F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CB1FD43220455E2D00931B5F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MMKV.xcodeproj; path = ../MMKV/MMKV.xcodeproj; sourceTree = "<group>"; };
+		CB1FD4D12046AF2300931B5F /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MMKVDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
+		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVPerformanceTest.mm; sourceTree = "<group>"; };
+		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
+		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CB1FD41D20455E2D00931B5F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */,
+				CB1FD4B82046995E00931B5F /* libMMKV Static.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB36F24620F8A20C009AF46F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CB1FD41720455E2D00931B5F = {
+			isa = PBXGroup;
+			children = (
+				CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */,
+				CB1FD42220455E2D00931B5F /* MMKVDemo */,
+				CB36F24A20F8A20C009AF46F /* MMKVDemoTests */,
+				CB1FD42120455E2D00931B5F /* Products */,
+				CB1FD45720455F3500931B5F /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		CB1FD42120455E2D00931B5F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CB1FD42020455E2D00931B5F /* MMKVDemo.app */,
+				CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CB1FD42220455E2D00931B5F /* MMKVDemo */ = {
+			isa = PBXGroup;
+			children = (
+				CB1FD42320455E2D00931B5F /* AppDelegate.h */,
+				CB1FD42420455E2D00931B5F /* AppDelegate.m */,
+				CB1FD42C20455E2D00931B5F /* Assets.xcassets */,
+				CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */,
+				CB1FD43120455E2D00931B5F /* Info.plist */,
+				CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */,
+				CB1FD43220455E2D00931B5F /* main.m */,
+				CB1FD42920455E2D00931B5F /* Main.storyboard */,
+				CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */,
+				CB1FD42620455E2D00931B5F /* ViewController.h */,
+				CB1FD42720455E2D00931B5F /* ViewController.mm */,
+			);
+			path = MMKVDemo;
+			sourceTree = "<group>";
+		};
+		CB1FD45720455F3500931B5F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CB1FD4D12046AF2300931B5F /* libz.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CB1FD4B12046994C00931B5F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CB1FD4B52046994D00931B5F /* libMMKV Static.a */,
+				CB36F25420F8A20C009AF46F /* MMKV.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CB36F24A20F8A20C009AF46F /* MMKVDemoTests */ = {
+			isa = PBXGroup;
+			children = (
+				CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */,
+				CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */,
+				CB36F24D20F8A20C009AF46F /* Info.plist */,
+			);
+			path = MMKVDemoTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CB1FD41F20455E2D00931B5F /* MMKVDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB1FD43620455E2D00931B5F /* Build configuration list for PBXNativeTarget "MMKVDemo" */;
+			buildPhases = (
+				CB1FD41C20455E2D00931B5F /* Sources */,
+				CB1FD41D20455E2D00931B5F /* Frameworks */,
+				CB1FD41E20455E2D00931B5F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CB1FD4B72046995B00931B5F /* PBXTargetDependency */,
+			);
+			name = MMKVDemo;
+			productName = MMKVDemo;
+			productReference = CB1FD42020455E2D00931B5F /* MMKVDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CB36F24820F8A20C009AF46F /* MMKVDemoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB36F25520F8A20C009AF46F /* Build configuration list for PBXNativeTarget "MMKVDemoTests" */;
+			buildPhases = (
+				CB36F24520F8A20C009AF46F /* Sources */,
+				CB36F24620F8A20C009AF46F /* Frameworks */,
+				CB36F24720F8A20C009AF46F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CB36F24F20F8A20C009AF46F /* PBXTargetDependency */,
+			);
+			name = MMKVDemoTests;
+			productName = MMKVDemoTests;
+			productReference = CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CB1FD41820455E2D00931B5F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0940;
+				ORGANIZATIONNAME = Lingol;
+				TargetAttributes = {
+					CB1FD41F20455E2D00931B5F = {
+						CreatedOnToolsVersion = 9.2;
+						LastSwiftMigration = 0940;
+						ProvisioningStyle = Automatic;
+					};
+					CB36F24820F8A20C009AF46F = {
+						CreatedOnToolsVersion = 9.4.1;
+						ProvisioningStyle = Automatic;
+						TestTargetID = CB1FD41F20455E2D00931B5F;
+					};
+				};
+			};
+			buildConfigurationList = CB1FD41B20455E2D00931B5F /* Build configuration list for PBXProject "MMKVDemo" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CB1FD41720455E2D00931B5F;
+			productRefGroup = CB1FD42120455E2D00931B5F /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = CB1FD4B12046994C00931B5F /* Products */;
+					ProjectRef = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				CB1FD41F20455E2D00931B5F /* MMKVDemo */,
+				CB36F24820F8A20C009AF46F /* MMKVDemoTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		CB1FD4B52046994D00931B5F /* libMMKV Static.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libMMKV Static.a";
+			remoteRef = CB1FD4B42046994D00931B5F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		CB36F25420F8A20C009AF46F /* MMKV.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = MMKV.framework;
+			remoteRef = CB36F25320F8A20C009AF46F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CB1FD41E20455E2D00931B5F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB1FD43020455E2D00931B5F /* LaunchScreen.storyboard in Resources */,
+				CB1FD42D20455E2D00931B5F /* Assets.xcassets in Resources */,
+				CB1FD42B20455E2D00931B5F /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB36F24720F8A20C009AF46F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CB1FD41C20455E2D00931B5F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB1FD42820455E2D00931B5F /* ViewController.mm in Sources */,
+				CB1FD43320455E2D00931B5F /* main.m in Sources */,
+				CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */,
+				CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB36F24520F8A20C009AF46F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */,
+				CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CB1FD4B72046995B00931B5F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MMKV;
+			targetProxy = CB1FD4B62046995B00931B5F /* PBXContainerItemProxy */;
+		};
+		CB36F24F20F8A20C009AF46F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CB1FD41F20455E2D00931B5F /* MMKVDemo */;
+			targetProxy = CB36F24E20F8A20C009AF46F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		CB1FD42920455E2D00931B5F /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CB1FD42A20455E2D00931B5F /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CB1FD42F20455E2D00931B5F /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		CB1FD43420455E2D00931B5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		CB1FD43520455E2D00931B5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CB1FD43720455E2D00931B5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 52LMU3A345;
+				INFOPLIST_FILE = MMKVDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = Debug;
+		};
+		CB1FD43820455E2D00931B5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 52LMU3A345;
+				INFOPLIST_FILE = MMKVDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = Release;
+		};
+		CB36F25020F8A20C009AF46F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 52LMU3A345;
+				INFOPLIST_FILE = MMKVDemoTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MMKVDemo.app/MMKVDemo";
+			};
+			name = Debug;
+		};
+		CB36F25120F8A20C009AF46F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 52LMU3A345;
+				INFOPLIST_FILE = MMKVDemoTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MMKVDemo.app/MMKVDemo";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CB1FD41B20455E2D00931B5F /* Build configuration list for PBXProject "MMKVDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB1FD43420455E2D00931B5F /* Debug */,
+				CB1FD43520455E2D00931B5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CB1FD43620455E2D00931B5F /* Build configuration list for PBXNativeTarget "MMKVDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB1FD43720455E2D00931B5F /* Debug */,
+				CB1FD43820455E2D00931B5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CB36F25520F8A20C009AF46F /* Build configuration list for PBXNativeTarget "MMKVDemoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB36F25020F8A20C009AF46F /* Debug */,
+				CB36F25120F8A20C009AF46F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CB1FD41820455E2D00931B5F /* Project object */;
+}

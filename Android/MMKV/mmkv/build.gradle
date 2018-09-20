@@ -1,0 +1,43 @@
+apply from: rootProject.file('gradle/build_library.gradle')
+
+android {
+    defaultConfig {
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-fno-exceptions"
+                arguments "-DANDROID_STL=c++_shared"
+                abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            externalNativeBuild {
+                cmake {
+                    cppFlags "-fvisibility=hidden", "-fno-unwind-tables", "-fno-asynchronous-unwind-tables"
+                }
+            }
+            consumerProguardFiles 'proguard-rules.pro'
+//            debuggable true
+//            jniDebuggable true
+        }
+        debug {
+            jniDebuggable true
+        }
+    }
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:support-annotations:27.1.1'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
