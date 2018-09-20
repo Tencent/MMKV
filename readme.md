@@ -48,8 +48,8 @@ NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 Full tutorials can be found [here](https://github.com/Tencent/MMKV/wiki/iOS_tutorial).
 
 ## Performence
-Writing random `int` for 10000 times, we get this chart:
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)
+Writing random `int` for 10000 times, we get this chart:  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
 
 # MMKV for Android
@@ -114,8 +114,8 @@ String str = kv.decodeString("string");
 MMKV also supports **Multi-Process Access**. Full tutorials is here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
 
 ## Performence
-Writing random `int` for 1000 times, we get this chart:
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)
+Writing random `int` for 1000 times, we get this chart:  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
 
 # FAQ
