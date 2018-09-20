@@ -49,8 +49,8 @@ NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 更详细的使用教程参考 [iOS Tutorial](https://github.com/Tencent/MMKV/wiki/iOS_tutorial_cn)。
 
 ### 性能对比
-循环写入随机的`int` 1w 次，我们有如下性能对比：
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)
+循环写入随机的`int` 1w 次，我们有如下性能对比：  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
 更详细的性能对比参考 [iOS Benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark_cn)。
 
 ## Android 指南
@@ -100,10 +100,13 @@ String str = kv.decodeString("string");
 MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial_cn)。
 
 ### 性能对比
-循环写入随机的`int` 1k 次，我们有如下性能对比：
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)
-
+循环写入随机的`int` 1k 次，我们有如下性能对比：  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
 更详细的性能对比参考 [Android Benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark_cn)。
 
-## FAQ
-具体参见 [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ_cn)。
+## License
+MMKV 以 BSD 3-Clause 证书开源，详情参见 [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)。
+
+## 参与贡献如果你有兴趣参与贡献，可以参考 [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md)。[腾讯开源激励计划](https://opensource.tencent.com/contribution) 鼓励开发者的参与和贡献，期待你的加入。
+## 问题 & 反馈
+常见问题参见 [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ_cn)，欢迎提 [issues](https://github.com/Tencent/MMKV/issues) 提问反馈。
