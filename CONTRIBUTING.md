@@ -1,5 +1,5 @@
 # Contributing to MMKV
-Welcome to [report Issues](http://git.code.oa.com/wechat-team/mmkv/issues) or [pull requests](http://git.code.oa.com/wechat-team/mmkv/merge_requests). It's recommended to read the following Contributing Guide first before contributing. 
+Welcome to [report Issues](https://github.com/Tencent/MMKV/issues) or [pull requests](https://github.com/Tencent/MMKV/pulls). It's recommended to read the following Contributing Guide first before contributing. 
 
 ## Issues
 We use issues to track public bugs and feature requests.
@@ -51,10 +51,10 @@ Before submitting a pull request, please make sure the followings are done:
 6. Now, you can submit your pull request on `dev` or `hotfix` branch.
 
 ## Code Style Guide
-Use [Code Style](http://git.code.oa.com/wechat-team/mmkv/blob/master/Android/MMKV/checkstyle.xml) for Java and Android.
+Use [Code Style](https://github.com/Tencent/MMKV/blob/master/Android/MMKV/checkstyle.xml) for Java and Android.
 
 * 4 spaces for indentation rather than tabs
 
 ## License
 By contributing to MMKV, you agree that your contributions will be licensed
-under its [BSD LICENSE](http://git.code.oa.com/wechat-team/mmkv/blob/master/LICENSE)
+under its [BSD LICENSE](https://github.com/Tencent/MMKV/blob/master/LICENSE.txt)
