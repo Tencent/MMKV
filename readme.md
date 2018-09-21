@@ -115,7 +115,7 @@ String str = kv.decodeString("string");
 
 MMKV also supports **Multi-Process Access**. Full tutorials is here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
 
-## Performence
+## Performance
 Writing random `int` for 1000 times, we get this chart:  
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
