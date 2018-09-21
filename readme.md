@@ -7,7 +7,6 @@
 
 MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on both **iOS** and **Android**.
 
-
 # MMKV for iOS
 
 ## Features
@@ -50,7 +49,7 @@ NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 
 Full tutorials can be found [here](https://github.com/Tencent/MMKV/wiki/iOS_tutorial).
 
-## Performence
+## Performance
 Writing random `int` for 10000 times, we get this chart:  
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
