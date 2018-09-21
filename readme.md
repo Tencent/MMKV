@@ -5,7 +5,7 @@
 
 中文版本请参看[这里](./readme_cn.md)
 
-MMKV is an **efficient**, **samll**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on both **iOS** and **Android**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on both **iOS** and **Android**.
 
 
 # MMKV for iOS
@@ -124,6 +124,9 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 ## License
 MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).
 
-## ContributingIf you are interested in contributing, check out the [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md), also join our [Tencent OpenSource Plan](https://opensource.tencent.com/contribution).
+## Contributing
+
+If you are interested in contributing, check out the [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md), also join our [Tencent OpenSource Plan](https://opensource.tencent.com/contribution).
+
 ## FAQ & Feedback
 Check out the [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ) first. Should there be any questions, don't hesitate to create [issuses](https://github.com/Tencent/MMKV/issues).
