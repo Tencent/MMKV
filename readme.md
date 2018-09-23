@@ -15,8 +15,8 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
  
 * **Easy-to-use**. You can use MMKV as you go, no configurations needed. All changes are saved immediately, no `synchronize` calls needed.
 
-* **Small**
-  * **A handful files**: MMKV contains encode/decode helpers and mmap logics and nothing more. It's really tidy.
+* **Small**.
+  * **A handful of files**: MMKV contains encode/decode helpers and mmap logics and nothing more. It's really tidy.
   * **Less than 30K in binary size**: MMKV adds less than 30K per architecture on App size, and much less when zipped (ipa).
 
 ## Getting Started
@@ -64,7 +64,7 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 * **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.
 
 * **Small**.
-  * **A handful files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
+  * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
   * **About 60K in binary size**: MMKV adds about 60K per architecture on App size, and much less when zipped (apk).
 
 
