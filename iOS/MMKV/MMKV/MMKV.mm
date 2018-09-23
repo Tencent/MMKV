@@ -385,33 +385,35 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
-	@try {
-		if (m_isInBackground) {
-			static const int offset = pbFixed32Size(0);
-			static const int pagesize = getpagesize();
-			size_t realOffset = offset + m_actualSize - size;
-			size_t pageOffset = (realOffset / pagesize) * pagesize;
-			size_t pointerOffset = realOffset - pageOffset;
-			size_t mmapSize = offset + m_actualSize - pageOffset;
-			char *ptr = m_ptr + pageOffset;
-			if (mlock(ptr, mmapSize) != 0) {
-				MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
-				// just fail on this condition, otherwise app will crash anyway
-				//block(m_output);
-				return NO;
-			} else {
-				MiniCodedOutputData output(ptr + pointerOffset, size);
-				block(&output);
-				m_output->seek(size);
-			}
-			munlock(ptr, mmapSize);
-		} else {
-			block(m_output);
-		}
-	} @catch (NSException *exception) {
-		MMKVError(@"%@", exception);
-		return NO;
-	}
+    m_isInBackground = YES;
+    if (m_isInBackground) {
+        static const int offset = pbFixed32Size(0);
+        static const int pagesize = getpagesize();
+        size_t realOffset = offset + m_actualSize - size;
+        size_t pageOffset = (realOffset / pagesize) * pagesize;
+        size_t pointerOffset = realOffset - pageOffset;
+        size_t mmapSize = offset + m_actualSize - pageOffset;
+        char *ptr = m_ptr + pageOffset;
+        if (mlock(ptr, mmapSize) != 0) {
+            MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
+            // just fail on this condition, otherwise app will crash anyway
+            //block(m_output);
+            return NO;
+        } else {
+            @try {
+                MiniCodedOutputData output(ptr + pointerOffset, size);
+                block(&output);
+                m_output->seek(size);
+            } @catch (NSException *exception) {
+                MMKVError(@"%@", exception);
+                return NO;
+            } @finally {
+                munlock(ptr, mmapSize);
+            }
+        }
+    } else {
+        block(m_output);
+    }
 
 	return YES;
 }
