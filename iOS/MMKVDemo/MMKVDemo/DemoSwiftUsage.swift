@@ -47,7 +47,7 @@ import Foundation
 		print("Swift: double = \(mmkv.getDoubleForKey("double"))");
 		
 		mmkv.setObject("Hello from Swift", forKey: "string");
-		print("Swift: string = \(mmkv.getObjectOf(NSString.self, forKey:"string"))");
+		print("Swift: string = \(String(describing: mmkv.getObjectOf(NSString.self, forKey:"string")))");
 		
 		mmkv.setObject(NSDate(), forKey: "date");
 		let date = mmkv.getObjectOf(NSDate.self, forKey:"date") as! Date;
