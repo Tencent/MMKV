@@ -385,33 +385,35 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
-	@try {
-		if (m_isInBackground) {
-			static const int offset = pbFixed32Size(0);
-			static const int pagesize = getpagesize();
-			size_t realOffset = offset + m_actualSize - size;
-			size_t pageOffset = (realOffset / pagesize) * pagesize;
-			size_t pointerOffset = realOffset - pageOffset;
-			size_t mmapSize = offset + m_actualSize - pageOffset;
-			char *ptr = m_ptr + pageOffset;
-			if (mlock(ptr, mmapSize) != 0) {
-				MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
-				// just fail on this condition, otherwise app will crash anyway
-				//block(m_output);
-				return NO;
-			} else {
-				MiniCodedOutputData output(ptr + pointerOffset, size);
-				block(&output);
-				m_output->seek(size);
-			}
-			munlock(ptr, mmapSize);
-		} else {
-			block(m_output);
-		}
-	} @catch (NSException *exception) {
-		MMKVError(@"%@", exception);
-		return NO;
-	}
+    m_isInBackground = YES;
+    if (m_isInBackground) {
+        static const int offset = pbFixed32Size(0);
+        static const int pagesize = getpagesize();
+        size_t realOffset = offset + m_actualSize - size;
+        size_t pageOffset = (realOffset / pagesize) * pagesize;
+        size_t pointerOffset = realOffset - pageOffset;
+        size_t mmapSize = offset + m_actualSize - pageOffset;
+        char *ptr = m_ptr + pageOffset;
+        if (mlock(ptr, mmapSize) != 0) {
+            MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
+            // just fail on this condition, otherwise app will crash anyway
+            //block(m_output);
+            return NO;
+        } else {
+            @try {
+                MiniCodedOutputData output(ptr + pointerOffset, size);
+                block(&output);
+                m_output->seek(size);
+            } @catch (NSException *exception) {
+                MMKVError(@"%@", exception);
+                return NO;
+            } @finally {
+                munlock(ptr, mmapSize);
+            }
+        }
+    } else {
+        block(m_output);
+    }
 
 	return YES;
 }
@@ -652,7 +654,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		int offset = pbFixed32Size(0);
 		m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
 
-		// for backwark compatibility
+		// for backward compatibility
 		if (!isFileExist(m_crcPath)) {
 			MMKVInfo(@"crc32 file not found:%@", m_crcPath);
 			return YES;
@@ -803,7 +805,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setObject:(id)obj forKey:(NSString *)key {
 	if (obj == nil || key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	NSData *data = [MiniPBCoder encodeDataWithObject:obj];
 	return [self setData:data forKey:key];
@@ -811,7 +813,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key {
 	if (key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	size_t size = pbBoolSize(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
@@ -823,7 +825,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setInt32:(int32_t)value forKey:(NSString *)key {
 	if (key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	size_t size = pbInt32Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
@@ -835,7 +837,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key {
 	if (key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	size_t size = pbUInt32Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
@@ -847,7 +849,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setInt64:(int64_t)value forKey:(NSString *)key {
 	if (key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	size_t size = pbInt64Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
@@ -859,7 +861,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key {
 	if (key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	size_t size = pbUInt64Size(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
@@ -871,7 +873,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setFloat:(float)value forKey:(NSString *)key {
 	if (key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	size_t size = pbFloatSize(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
@@ -883,7 +885,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)setDouble:(double)value forKey:(NSString *)key {
 	if (key.length <= 0) {
-		return FALSE;
+		return NO;
 	}
 	size_t size = pbDoubleSize(value);
 	NSMutableData *data = [NSMutableData dataWithLength:size];
