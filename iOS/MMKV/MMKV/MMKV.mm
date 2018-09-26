@@ -38,6 +38,7 @@ static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
+#define CRC_FILE_SIZE   4
 
 @implementation MMKV {
 	NSRecursiveLock *m_lock;
@@ -150,7 +151,7 @@ static NSRecursiveLock *g_instanceLock;
 		munmap(m_ptr, m_size);
 		m_ptr = nullptr;
 	}
-	if (m_fd > 0) {
+	if (m_fd >= 0) {
 		close(m_fd);
 		m_fd = -1;
 	}
@@ -167,7 +168,7 @@ static NSRecursiveLock *g_instanceLock;
 		munmap(m_crcPtr, pbFixed32Size(0));
 		m_crcPtr = nullptr;
 	}
-	if (m_crcFd > 0) {
+	if (m_crcFd >= 0) {
 		close(m_crcFd);
 		m_crcFd = -1;
 	}
@@ -212,7 +213,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (void)loadFromFile {
 	m_fd = open(m_path.UTF8String, O_RDWR, S_IRWXU);
-	if (m_fd <= 0) {
+	if (m_fd < 0) {
 		MMKVError(@"fail to open:%@, %s", m_path, strerror(errno));
 	} else {
 		m_size = 0;
@@ -220,14 +221,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		if (fstat(m_fd, &st) != -1) {
 			m_size = (size_t) st.st_size;
 		}
-		// round up to (n * pagesize)
-		if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
-			m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
-			if (ftruncate(m_fd, m_size) != 0) {
-				MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
-				m_size = (size_t) st.st_size;
-			}
-		}
+        if (m_size == 0) {
+            m_size = DEFAULT_FILE_SIZE;
+            // If ftruncate faild and m_size = 0, we should just return because len parameter of mmap must not be 0.
+            if (ftruncate(m_fd, DEFAULT_FILE_SIZE) != 0) {
+                MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
+                return;
+            }
+        }
 		m_ptr = (char *) mmap(nullptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
 		if (m_ptr == MAP_FAILED) {
 			MMKVError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
@@ -313,7 +314,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
 		// for truncate
-		size_t size = std::min<size_t>(DEFAULT_MMAP_SIZE, m_size);
+		size_t size = std::min<size_t>(DEFAULT_FILE_SIZE, m_size);
 		memset(m_ptr, 0, size);
 		if (msync(m_ptr, size, MS_SYNC) != 0) {
 			MMKVError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
@@ -324,18 +325,18 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	m_ptr = nullptr;
 
-	if (m_fd > 0) {
-		if (m_size != DEFAULT_MMAP_SIZE) {
-			MMKVInfo(@"truncating [%@] from %zu to %d", m_mmapID, m_size, DEFAULT_MMAP_SIZE);
-			if (ftruncate(m_fd, DEFAULT_MMAP_SIZE) != 0) {
-				MMKVError(@"fail to truncate [%@] to size %d, %s", m_mmapID, DEFAULT_MMAP_SIZE, strerror(errno));
+	if (m_fd >= 0) {
+		if (m_size != DEFAULT_FILE_SIZE) {
+			MMKVInfo(@"truncating [%@] from %zu to %d", m_mmapID, m_size, DEFAULT_FILE_SIZE);
+			if (ftruncate(m_fd, DEFAULT_FILE_SIZE) != 0) {
+				MMKVError(@"fail to truncate [%@] to size %d, %s", m_mmapID, DEFAULT_FILE_SIZE, strerror(errno));
 			}
 		}
 		if (close(m_fd) != 0) {
 			MMKVError(@"fail to close [%@], %s", m_mmapID, strerror(errno));
 		}
 	}
-	m_fd = 0;
+	m_fd = -1;
 	m_size = 0;
 	m_actualSize = 0;
 	m_crcDigest = 0;
@@ -370,12 +371,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	m_ptr = nullptr;
 
-	if (m_fd > 0) {
+	if (m_fd >= 0) {
 		if (close(m_fd) != 0) {
 			MMKVError(@"fail to close [%@], %s", m_mmapID, strerror(errno));
 		}
 	}
-	m_fd = 0;
+	m_fd = -1;
 	m_size = 0;
 	m_actualSize = 0;
 
@@ -641,7 +642,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (BOOL)isFileValid {
-	if (m_fd > 0 && m_size > 0 && m_output != nullptr && m_ptr != nullptr && m_ptr != MAP_FAILED) {
+	if (m_fd >= 0 && m_size > 0 && m_output != nullptr && m_ptr != nullptr && m_ptr != MAP_FAILED) {
 		return YES;
 	}
 	//	MMKVWarning(@"[%@] file not valid", m_mmapID);
@@ -722,7 +723,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			createFile(m_crcPath);
 		}
 		m_crcFd = open(m_crcPath.UTF8String, O_RDWR, S_IRWXU);
-		if (m_crcFd <= 0) {
+		if (m_crcFd < 0) {
 			MMKVError(@"fail to open:%@, %s", m_crcPath, strerror(errno));
 			removeFile(m_crcPath);
 		} else {
@@ -731,8 +732,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			if (fstat(m_crcFd, &st) != -1) {
 				size = (size_t) st.st_size;
 			}
-			int fileLegth = DEFAULT_MMAP_SIZE;
-			if (size < fileLegth) {
+			int fileLegth = CRC_FILE_SIZE;
+			if (size != fileLegth) {
 				size = fileLegth;
 				if (ftruncate(m_crcFd, size) != 0) {
 					MMKVError(@"fail to truncate [%@] to size %zu, %s", m_crcPath, size, strerror(errno));

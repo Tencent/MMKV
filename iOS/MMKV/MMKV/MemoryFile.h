@@ -25,6 +25,7 @@
 #import <Foundation/Foundation.h>
 
 extern const int DEFAULT_MMAP_SIZE;
+extern const int DEFAULT_FILE_SIZE;
 
 class MemoryFile {
     NSString *m_name;
