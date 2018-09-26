@@ -8,7 +8,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.android.tools.build:gradle:3.2.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.1'
         classpath 'digital.wup:android-maven-publish:3.6.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -33,9 +33,9 @@ task clean(type: Delete) {
 ext {
     // TODO: Change these to satisfy your project
     minSdkVersion = 16
-    compileSdkVersion = 27
+    compileSdkVersion = 28
     targetSdkVersion = compileSdkVersion
-    buildToolsVersion = '27.0.3'
+    buildToolsVersion = '28.0.2'
     supportLibVersion = "25.4.0"
     javaVersion = JavaVersion.VERSION_1_7
 
