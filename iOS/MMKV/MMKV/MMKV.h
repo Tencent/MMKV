@@ -34,9 +34,9 @@ NS_ASSUME_NONNULL_BEGIN
 // mmapID: any unique ID (com.tencent.xin.pay, etc)
 // if you want a per-user mmkv, you could merge user-id within mmapID
 // cryptKey: 16 byte at most
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
-- (BOOL)reKey:(NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
+- (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (NSData *)cryptKey;
 
 // object: NSString/NSData/NSDate
