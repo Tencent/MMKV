@@ -803,11 +803,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 #pragma mark - set & get
 
-- (BOOL)setObject:(id)obj forKey:(NSString *)key {
-	if (obj == nil || key.length <= 0) {
+- (BOOL)setObject:(id)object forKey:(NSString *)key {
+	if (object == nil || key.length <= 0) {
 		return NO;
 	}
-	NSData *data = [MiniPBCoder encodeDataWithObject:obj];
+	NSData *data = [MiniPBCoder encodeDataWithObject:object];
 	return [self setData:data forKey:key];
 }
 
