@@ -33,7 +33,7 @@ enum LockType {
 // handles lock upgrade & downgrade correctly
 class FileLock {
     int m_fd;
-    flock m_lockInfo;
+    struct flock m_lockInfo;
     size_t m_sharedLockCount;
     size_t m_exclusiveLockCount;
 
