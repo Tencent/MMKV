@@ -31,8 +31,6 @@
 using namespace std;
 
 const int DEFAULT_MMAP_SIZE = getpagesize();
-// Truncate file if size equal to 0
-const int DEFAULT_FILE_SIZE = DEFAULT_MMAP_SIZE;
 // 1MB per segment
 constexpr uint32_t SegmentSize = 1024 * 1024;
 // count of segments in memory

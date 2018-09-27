@@ -221,14 +221,15 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		if (fstat(m_fd, &st) != -1) {
 			m_size = (size_t) st.st_size;
 		}
-        if (m_size == 0) {
-            m_size = DEFAULT_FILE_SIZE;
-            // If ftruncate faild and m_size = 0, we should just return because len parameter of mmap must not be 0.
-            if (ftruncate(m_fd, DEFAULT_FILE_SIZE) != 0) {
-                MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
-                return;
-            }
-        }
+		// round up to (n * pagesize)
+		if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+			m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+			if (ftruncate(m_fd, m_size) != 0) {
+				MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
+				m_size = (size_t) st.st_size;
+				return;
+			}
+		}
 		m_ptr = (char *) mmap(nullptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
 		if (m_ptr == MAP_FAILED) {
 			MMKVError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
@@ -314,7 +315,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
 		// for truncate
-		size_t size = std::min<size_t>(DEFAULT_FILE_SIZE, m_size);
+		size_t size = std::min<size_t>(DEFAULT_MMAP_SIZE, m_size);
 		memset(m_ptr, 0, size);
 		if (msync(m_ptr, size, MS_SYNC) != 0) {
 			MMKVError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
@@ -326,10 +327,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_ptr = nullptr;
 
 	if (m_fd >= 0) {
-		if (m_size != DEFAULT_FILE_SIZE) {
-			MMKVInfo(@"truncating [%@] from %zu to %d", m_mmapID, m_size, DEFAULT_FILE_SIZE);
-			if (ftruncate(m_fd, DEFAULT_FILE_SIZE) != 0) {
-				MMKVError(@"fail to truncate [%@] to size %d, %s", m_mmapID, DEFAULT_FILE_SIZE, strerror(errno));
+		if (m_size != DEFAULT_MMAP_SIZE) {
+			MMKVInfo(@"truncating [%@] from %zu to %d", m_mmapID, m_size, DEFAULT_MMAP_SIZE);
+			if (ftruncate(m_fd, DEFAULT_MMAP_SIZE) != 0) {
+				MMKVError(@"fail to truncate [%@] to size %d, %s", m_mmapID, DEFAULT_MMAP_SIZE, strerror(errno));
 			}
 		}
 		if (close(m_fd) != 0) {
