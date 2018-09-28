@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
-- (NSData *)cryptKey;
+- (nullable NSData *)cryptKey;
 
 // object: NSString/NSData/NSDate
 - (BOOL)setObject:(id)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
@@ -89,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 
-- (void)removeValuesForKeys:(NSArray *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
+- (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
 
 - (void)clearMemoryCache;
 

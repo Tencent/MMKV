@@ -756,7 +756,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 #pragma mark - encryption & decryption
 
-- (NSData *)cryptKey {
+- (nullable NSData *)cryptKey {
 	if (m_cryptor) {
 		NSMutableData *data = [NSMutableData dataWithLength:AES_KEY_LEN];
 		m_cryptor->getKey(data.mutableBytes);
