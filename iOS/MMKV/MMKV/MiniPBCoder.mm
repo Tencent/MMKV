@@ -38,9 +38,6 @@
 	NSMutableData *m_outputBuffer;
 	MiniCodedOutputData *m_outputData;
 	std::vector<MiniPBEncodeItem> *m_encodeItems;
-
-	void *m_formatBuffer;
-	size_t m_formatBufferSize;
 }
 
 - (id)initForReadingWithData:(NSData *)data {
@@ -75,12 +72,6 @@
 	if (m_outputData) {
 		delete m_outputData;
 		m_outputData = nullptr;
-	}
-
-	if (m_formatBuffer) {
-		free(m_formatBuffer);
-		m_formatBuffer = nullptr;
-		m_formatBufferSize = 0;
 	}
 }
 
@@ -134,18 +125,8 @@
 	if ([obj isKindOfClass:[NSString class]]) {
 		NSString *str = (NSString *) obj;
 		encodeItem->type = PBEncodeItemType_NSString;
-		size_t maxSize = MAX(1, [str maximumLengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-		if (m_formatBufferSize < maxSize) {
-			m_formatBufferSize = maxSize;
-			if (m_formatBuffer) {
-				free(m_formatBuffer);
-			}
-			m_formatBuffer = malloc(m_formatBufferSize);
-		}
-		NSUInteger realSize = 0;
-		[str getBytes:m_formatBuffer maxLength:maxSize usedLength:&realSize encoding:NSUTF8StringEncoding options:0 range:NSMakeRange(0, str.length) remainingRange:nullptr];
-		NSData *buffer = [NSData dataWithBytes:m_formatBuffer length:realSize];
-		encodeItem->value.tmpObjectValue = (void *) CFBridgingRetain(buffer);
+        NSData *buffer = [str dataUsingEncoding:NSUTF8StringEncoding];
+        encodeItem->value.tmpObjectValue = (__bridge_retained void *) buffer;
 		encodeItem->valueSize = static_cast<int32_t>(buffer.length);
 	} else if ([obj isKindOfClass:[NSDate class]]) {
 		NSDate *oDate = (NSDate *) obj;
