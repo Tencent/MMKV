@@ -84,7 +84,7 @@ For other installation options, see [Android Setup](https://github.com/Tencent/M
 
 ### Quick Tutorial
 You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.  
-Setup MMKV on App startup, say your `MainActivity`, add these code:
+Setup MMKV on App startup, say your `MainActivity`, add these lines:
 
 ```Java
 protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +96,7 @@ protected void onCreate(Bundle savedInstanceState) {
 }
 ```
 
-MMKV has a global instance, you can use it directly:
+MMKV has a global instance, that can be used directly:
 
 ```Java
 import com.tencent.mmkv.MMKV;
@@ -113,7 +113,7 @@ kv.encode("string", "Hello from mmkv");
 String str = kv.decodeString("string");
 ```
 
-MMKV also supports **Multi-Process Access**. Full tutorials is here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
+MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
 
 ## Performance
 Writing random `int` for 1000 times, we get this chart:  
@@ -128,4 +128,4 @@ MMKV is published under the BSD 3-Clause license. For details check out the [LIC
 If you are interested in contributing, check out the [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md), also join our [Tencent OpenSource Plan](https://opensource.tencent.com/contribution).
 
 ## FAQ & Feedback
-Check out the [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ) first. Should there be any questions, don't hesitate to create [issuses](https://github.com/Tencent/MMKV/issues).
+Check out the [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ) first. Should there be any questions, don't hesitate to create [issues](https://github.com/Tencent/MMKV/issues).
