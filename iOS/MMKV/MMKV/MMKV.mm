@@ -27,7 +27,11 @@
 #import "MiniPBCoder.h"
 #import "MiniPBUtility.h"
 #import "ScopedLock.hpp"
+
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #import <UIKit/UIKit.h>
+#endif
+
 #import <algorithm>
 #import <sys/mman.h>
 #import <sys/stat.h>
@@ -127,6 +131,7 @@ static NSRecursiveLock *g_instanceLock;
 
 		[self loadFromFile];
 
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 		auto appState = [UIApplication sharedApplication].applicationState;
 		if (appState == UIApplicationStateBackground) {
 			m_isInBackground = YES;
@@ -138,6 +143,7 @@ static NSRecursiveLock *g_instanceLock;
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+#endif
 	}
 	return self;
 }
@@ -184,6 +190,7 @@ static NSRecursiveLock *g_instanceLock;
 	[self clearMemoryCache];
 }
 
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 - (void)didEnterBackground {
 	CScopedLock lock(m_lock);
 
@@ -197,6 +204,7 @@ static NSRecursiveLock *g_instanceLock;
 	m_isInBackground = NO;
 	MMKVInfo(@"m_isInBackground:%d", m_isInBackground);
 }
+#endif
 
 #pragma mark - really dirty work
 
