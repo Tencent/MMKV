@@ -125,8 +125,8 @@
 	if ([obj isKindOfClass:[NSString class]]) {
 		NSString *str = (NSString *) obj;
 		encodeItem->type = PBEncodeItemType_NSString;
-        NSData *buffer = [str dataUsingEncoding:NSUTF8StringEncoding];
-        encodeItem->value.tmpObjectValue = (__bridge_retained void *) buffer;
+		NSData *buffer = [str dataUsingEncoding:NSUTF8StringEncoding];
+		encodeItem->value.tmpObjectValue = (__bridge_retained void *) buffer;
 		encodeItem->valueSize = static_cast<int32_t>(buffer.length);
 	} else if ([obj isKindOfClass:[NSDate class]]) {
 		NSDate *oDate = (NSDate *) obj;
