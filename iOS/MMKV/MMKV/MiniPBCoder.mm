@@ -292,7 +292,7 @@
 	id obj = nil;
 	@try {
 		MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
-		if (cls == [NSDictionary class] || cls == [NSMutableDictionary class]) {
+		if (cls == [NSMutableDictionary class] || cls == [NSDictionary class]) {
 			obj = [oCoder decodeOneDictionaryOfValueClass:valueClass];
 		} else {
 			MMKVError(@"%@ not recognized as container", NSStringFromClass(cls));
