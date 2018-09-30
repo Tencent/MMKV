@@ -322,4 +322,40 @@
 	return obj;
 }
 
+#pragma mark -Helper
+
++ (BOOL)isMiniPBCoderCompatibleObject:(id)object {
+    if ([object isKindOfClass:[NSString class]]) {
+        return YES;
+    }
+    if ([object isKindOfClass:[NSData class]]) {
+        return YES;
+    }
+    if ([object isKindOfClass:[NSDate class]]) {
+        return YES;
+    }
+    
+    return NO;
+}
+
++ (BOOL)isMiniPBCoderCompatibleType:(Class)cls {
+    if (cls == [NSString class]) {
+        return YES;
+    }
+    if (cls == [NSMutableString class]) {
+        return YES;
+    }
+    if (cls == [NSData class]) {
+        return YES;
+    }
+    if (cls == [NSMutableData class]) {
+        return YES;
+    }
+    if (cls == [NSDate class]) {
+        return YES;
+    }
+    
+    return NO;
+}
+
 @end

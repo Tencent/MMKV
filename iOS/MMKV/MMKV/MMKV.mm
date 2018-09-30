@@ -809,7 +809,16 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (object == nil || key.length <= 0) {
 		return NO;
 	}
-	NSData *data = [MiniPBCoder encodeDataWithObject:object];
+	
+    NSData *data;
+    if([MiniPBCoder isMiniPBCoderCompatibleObject:object]) {
+        data = [MiniPBCoder encodeDataWithObject:object];
+    } else {
+        if ([[object class] conformsToProtocol:@protocol(NSCoding)]) {
+            data  = [NSKeyedArchiver archivedDataWithRootObject:object];
+        }
+    }
+    
 	return [self setData:data forKey:key];
 }
 
@@ -903,7 +912,15 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	NSData *data = [self getDataForKey:key];
 	if (data.length > 0) {
-		return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
+        
+        if ([MiniPBCoder isMiniPBCoderCompatibleType:cls]) {
+            return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
+        } else {
+            if([cls conformsToProtocol:@protocol(NSCoding)]) {
+                return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+            }
+        }
+        
 	}
 	return nil;
 }
