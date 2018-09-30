@@ -1107,14 +1107,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	[self fullWriteback];
 }
 
-#pragma mark - borning stuff
+#pragma mark - Boring stuff
 
 - (void)sync {
 	CScopedLock lock(m_lock);
-	if (m_needLoadFromFile || ![self isFileValid]) {
+	if (m_needLoadFromFile || ![self isFileValid] || m_crcPtr == nullptr) {
 		return;
 	}
-	if (msync(m_ptr, m_size, MS_SYNC) != 0) {
+	if (msync(m_ptr, m_actualSize, MS_SYNC) != 0 || msync(m_crcPtr, CRC_FILE_SIZE, MS_SYNC) != 0) {
 		MMKVError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
 	}
 }
