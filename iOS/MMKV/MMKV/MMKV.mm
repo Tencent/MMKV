@@ -69,13 +69,10 @@ static NSRecursiveLock *g_instanceLock;
 
 + (void)initialize {
 	if (self == MMKV.class) {
-		static dispatch_once_t onceToken;
-		dispatch_once(&onceToken, ^{
-			g_instanceDic = [NSMutableDictionary dictionary];
-			g_instanceLock = [[NSRecursiveLock alloc] init];
-
-			MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
-		});
+		g_instanceDic = [NSMutableDictionary dictionary];
+		g_instanceLock = [[NSRecursiveLock alloc] init];
+		
+		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 	}
 }
 
