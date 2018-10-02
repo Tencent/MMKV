@@ -544,7 +544,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
             if (fstat(m_crcFd, &st) != -1) {
                 size = (size_t) st.st_size;
             }
-            int fileLegth = DEFAULT_MMAP_SIZE;
+            int fileLegth = CRC_FILE_SIZE;
             if (size < fileLegth) {
                 size = fileLegth;
                 if (ftruncate(m_crcFd, size) != 0) {
