@@ -20,17 +20,21 @@
 
 #ifdef __cplusplus
 
+#import "KeyValueHolder.h"
+#import "MemoryFile.h"
 #import <Foundation/Foundation.h>
 
 @interface MiniPBCoder : NSObject
 
-+ (NSData *)encodeDataWithObject:(id)obj;
++ (MMBuffer)encodeDataWithObject:(id)obj;
 
-+ (id)decodeObjectOfClass:(Class)cls fromData:(NSData *)oData;
++ (id)decodeObjectOfClass:(Class)cls fromData:(MMBuffer &)oData;
 
 // for NSDictionary
 // note: NSDictionary's key must be NSString
-+ (id)decodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(NSData *)oData;
++ (id)decodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(MMBuffer &)oData;
+
++ (void)decodeContainer:(KVItemsWrap &)kvItemsWrap fromMemoryFile:(MemoryFile *)memoryFile fromOffset:(size_t)offset withSize:(size_t)size;
 
 @end
 

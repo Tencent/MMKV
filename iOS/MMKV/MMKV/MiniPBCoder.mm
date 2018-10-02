@@ -28,30 +28,31 @@
 #import <sys/stat.h>
 #import <vector>
 
+#if __has_feature(objc_arc)
+#error This file must be compiled with MRC. Use -fno-objc-arc flag.
+#endif
+
+using namespace std;
+
 @implementation MiniPBCoder {
 	NSObject *m_obj;
 
-	BOOL m_isTopObject;
-	NSData *m_inputBuffer;
 	MiniCodedInputData *m_inputData;
 
-	NSMutableData *m_outputBuffer;
 	MiniCodedOutputData *m_outputData;
-	std::vector<MiniPBEncodeItem> *m_encodeItems;
+	vector<MiniPBEncodeItem> *m_encodeItems;
 }
 
-- (id)initForReadingWithData:(NSData *)data {
+- (id)initForReading:(MiniCodedInputData *)input {
 	if (self = [super init]) {
-		m_isTopObject = YES;
-		m_inputBuffer = data;
-		m_inputData = new MiniCodedInputData(data);
+		m_inputData = input;
 	}
 	return self;
 }
 
 - (id)initForWritingWithTarget:(NSObject *)obj {
 	if (self = [super init]) {
-		m_obj = obj;
+		m_obj = [obj retain];
 	}
 	return self;
 }
@@ -61,8 +62,7 @@
 		delete m_encodeItems;
 		m_encodeItems = nullptr;
 	}
-	m_inputBuffer = nil;
-	m_outputBuffer = nil;
+	[m_obj release];
 	m_obj = nil;
 
 	if (m_inputData) {
@@ -73,6 +73,8 @@
 		delete m_outputData;
 		m_outputData = nullptr;
 	}
+
+	[super dealloc];
 }
 
 #pragma mark - encode
@@ -126,7 +128,7 @@
 		NSString *str = (NSString *) obj;
 		encodeItem->type = PBEncodeItemType_NSString;
 		NSData *buffer = [str dataUsingEncoding:NSUTF8StringEncoding];
-		encodeItem->value.tmpObjectValue = (__bridge_retained void *) buffer;
+		encodeItem->value.tmpObjectValue = (void *) CFBridgingRetain(buffer);
 		encodeItem->valueSize = static_cast<int32_t>(buffer.length);
 	} else if ([obj isKindOfClass:[NSDate class]]) {
 		NSDate *oDate = (NSDate *) obj;
@@ -178,47 +180,56 @@
 	return index;
 }
 
-- (NSData *)getEncodeData {
-	if (m_outputBuffer != nil) {
-		return m_outputBuffer;
-	}
-
+- (MMBuffer)getEncodeData {
 	m_encodeItems = new std::vector<MiniPBEncodeItem>();
 	size_t index = [self prepareObjectForEncode:m_obj];
 	MiniPBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
 	if (oItem && oItem->compiledSize > 0) {
 		// non-protobuf object(NSString/NSArray, etc) need to to write SIZE as well as DATA,
 		// so compiledSize is used,
-		m_outputBuffer = [NSMutableData dataWithLength:oItem->compiledSize];
-		m_outputData = new MiniCodedOutputData(m_outputBuffer);
+		MMBuffer outputBuffer(oItem->compiledSize);
+		m_outputData = new MiniCodedOutputData(outputBuffer.getPtr(), outputBuffer.length());
 
 		[self writeRootObject];
 
-		return m_outputBuffer;
+		return outputBuffer;
 	}
 
-	return nil;
+	return MMBuffer(0);
 }
 
-+ (NSData *)encodeDataWithObject:(NSObject *)obj {
++ (MMBuffer)encodeDataWithObject:(NSObject *)obj {
 	if (obj) {
+		if ([obj isKindOfClass:NSString.class]) {
+			NSString *str = (NSString *) obj;
+			const char *ch = str.UTF8String;
+			if (ch) {
+				size_t numberOfBytes = strlen(ch);
+				MMBuffer key((void *) ch, numberOfBytes, MMBufferNoCopy);
+
+				size_t size = pbInt32Size((int32_t) numberOfBytes) + numberOfBytes;
+				MMBuffer data(size);
+				MiniCodedOutputData output(data.getPtr(), data.length());
+				output.writeData(key);
+				return data;
+			}
+		}
 		@try {
 			MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForWritingWithTarget:obj];
-			NSData *oData = [oCoder getEncodeData];
+			auto oData = [oCoder getEncodeData];
+			[oCoder release];
 
 			return oData;
 		} @catch (NSException *exception) {
 			MMKVError(@"%@", exception);
-			return nil;
 		}
 	}
-	return nil;
+	return MMBuffer(0);
 }
 
 #pragma mark - decode
 
 - (NSMutableDictionary *)decodeOneDictionaryOfValueClass:(Class)cls {
-	m_isTopObject = NO;
 	if (cls == nullptr) {
 		return nil;
 	}
@@ -242,6 +253,23 @@
 	return dic;
 }
 
+- (void)decodeDictionary:(KVItemsWrap &)kvItemsWrap {
+	m_inputData->readInt32();
+	@autoreleasepool {
+		while (!m_inputData->isAtEnd()) {
+			KeyValueHolder kvHolder = {0};
+			auto key = m_inputData->readString(kvHolder);
+			if (key.length() > 0) {
+				if (m_inputData->readDataHolder(kvHolder)) {
+					kvItemsWrap.emplace(std::move(key), std::move(kvHolder));
+				} else {
+					kvItemsWrap.erase(key);
+				}
+			}
+		}
+	}
+}
+
 - (id)decodeOneObject:(id)obj ofClass:(Class)cls {
 	if (!cls && !obj) {
 		return nil;
@@ -249,8 +277,6 @@
 	if (!cls) {
 		cls = [(NSObject *) obj class];
 	}
-
-	m_isTopObject = NO;
 
 	if (cls == [NSString class]) {
 		return m_inputData->readString();
@@ -269,38 +295,66 @@
 	return nil;
 }
 
-+ (id)decodeObjectOfClass:(Class)cls fromData:(NSData *)oData {
-	if (!cls || oData.length <= 0) {
++ (id)decodeObjectOfClass:(Class)cls fromData:(MMBuffer &)oData {
+	if (!cls || oData.length() <= 0) {
 		return nil;
 	}
 
 	id obj = nil;
 	@try {
-		MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
-		obj = [oCoder decodeOneObject:nil ofClass:cls];
+		MiniCodedInputData input(oData);
+		if (cls == [NSString class]) {
+			obj = input.readString();
+		} else if (cls == [NSMutableString class]) {
+			obj = [NSMutableString stringWithString:input.readString()];
+		} else if (cls == [NSData class]) {
+			obj = input.readData();
+		} else if (cls == [NSMutableData class]) {
+			obj = [NSMutableData dataWithData:input.readData()];
+		} else if (cls == [NSDate class]) {
+			obj = [NSDate dateWithTimeIntervalSince1970:input.readDouble()];
+		} else {
+			MMKVError(@"%@ does not respond -[getValueTypeTable] and no basic type, can't handle", NSStringFromClass(cls));
+		}
 	} @catch (NSException *exception) {
 		MMKVError(@"%@", exception);
 	}
 	return obj;
 }
 
-+ (id)decodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(NSData *)oData {
-	if (!cls || !valueClass || oData.length <= 0) {
++ (id)decodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(MMBuffer &)oData {
+	if (!cls || !valueClass || oData.length() <= 0) {
 		return nil;
 	}
 
 	id obj = nil;
 	@try {
-		MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
-		if (cls == [NSMutableDictionary class] || cls == [NSDictionary class]) {
+		auto input = new MiniCodedInputData(oData);
+		MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForReading:input];
+		if (cls == [NSDictionary class] || cls == [NSMutableDictionary class]) {
 			obj = [oCoder decodeOneDictionaryOfValueClass:valueClass];
 		} else {
 			MMKVError(@"%@ not recognized as container", NSStringFromClass(cls));
 		}
+		[oCoder release];
 	} @catch (NSException *exception) {
 		MMKVError(@"%@", exception);
 	}
 	return obj;
+}
+
++ (void)decodeContainer:(KVItemsWrap &)kvItemsWrap fromMemoryFile:(MemoryFile *)memoryFile fromOffset:(size_t)offset withSize:(size_t)size {
+	if (!memoryFile) {
+		return;
+	}
+	@try {
+		auto input = new MiniCodedInputData(memoryFile, offset, size);
+		MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForReading:input];
+		[oCoder decodeDictionary:kvItemsWrap];
+		[oCoder release];
+	} @catch (NSException *exception) {
+		MMKVError(@"%@", exception);
+	}
 }
 
 @end

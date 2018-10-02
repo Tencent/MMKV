@@ -27,6 +27,8 @@
 #import <sys/stat.h>
 #import <sys/types.h>
 #import <unistd.h>
+#import <zlib.h>
+//#import "Crc32.h"
 
 using namespace std;
 
@@ -49,7 +51,7 @@ MemoryFile::MemoryFile(NSString *path)
 		// round up to (n * pagesize)
 		if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
 			size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
-			ftruncate(roundSize);
+			truncate(roundSize);
 		} else {
 			// pre-load
 			prepareSegments();
@@ -64,7 +66,7 @@ MemoryFile::~MemoryFile() {
 	}
 }
 
-bool MemoryFile::ftruncate(size_t size) {
+bool MemoryFile::truncate(size_t size) {
 	if (size == m_size) {
 		return true;
 	}
@@ -80,8 +82,14 @@ bool MemoryFile::ftruncate(size_t size) {
 		return false;
 	}
 	if (m_size > oldSize) {
-		zeroFillFile(m_fd, oldSize, m_size - oldSize);
+		for (auto index = (uint32_t)(oldSize + SegmentSize - 1) / SegmentSize; index < (m_size + SegmentSize - 1) / SegmentSize; index++) {
+			auto segment = internalTryGetSegment(index);
+			if (segment) {
+				segment->zeroFill();
+			}
+		}
 	}
+	m_ptr = nullptr;
 	m_segmentCache.clear();
 	prepareSegments();
 	return true;
@@ -91,7 +99,7 @@ void MemoryFile::prepareSegments() {
 	auto end = (m_size + SegmentSize - 1) / SegmentSize;
 	end = min(end, m_segmentCache.capacity());
 	for (uint32_t index = 0; index < end; index++) {
-		tryGetSegment(index);
+		internalTryGetSegment(index);
 	}
 	// I'm felling lucky
 	if (m_size <= SegmentSize && m_segmentCache.size() == 1) {
@@ -119,35 +127,56 @@ shared_ptr<MemoryFile::Segment> MemoryFile::tryGetSegment(uint32_t index) {
 	return nullptr;
 }
 
+MemoryFile::Segment *MemoryFile::internalTryGetSegment(uint32_t index) {
+	auto segmentPtr = m_segmentCache.get(index);
+	if (segmentPtr) {
+		return segmentPtr->get();
+	} else {
+		// mmap segment from file
+		size_t offset = index * SegmentSize;
+		size_t size = min<size_t>(SegmentSize, m_size - offset);
+		void *ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, offset);
+		if (ptr != MAP_FAILED) {
+			auto segment = shared_ptr<Segment>(new Segment(ptr, size, offset));
+			m_segmentCache.insert(index, segment);
+			return segment.get();
+		} else {
+			MMKVError(@"fail to mmap %@ with size %zu at position %zu, %s", m_name, size, offset, strerror(errno));
+		}
+	}
+	return nullptr;
+}
+
 uint32_t MemoryFile::offset2index(size_t offset) const {
 	return static_cast<uint32_t>(offset / SegmentSize);
 }
 
-NSData *MemoryFile::read(size_t offset, size_t size) {
+MMBuffer MemoryFile::read(size_t offset, size_t size) {
 	if (offset >= m_size || m_size - offset < size || size == 0) {
-		return nil;
+		return MMBuffer(0);
 	}
 	// I'm felling lucky
 	if (m_ptr) {
-		return [NSData dataWithBytesNoCopy:m_ptr->ptr + offset length:size];
+		return MMBuffer(m_ptr->ptr + offset, size, MMBufferNoCopy);
 	}
 	// most of the case, just return a shadow without copying any data
 	auto index = offset2index(offset);
-	auto segment = tryGetSegment(index);
+	auto segment = internalTryGetSegment(index);
 	if (!segment) {
-		return nil;
+		return MMBuffer(0);
 	}
 	if (offset + size <= segment->offset + segment->size) {
 		auto ptr = segment->ptr + (offset - segment->offset);
-		return [NSData dataWithBytesNoCopy:ptr length:size];
+		return MMBuffer(ptr, size, MMBufferNoCopy);
 	}
 	// one segment is not enough, we have to copy data crossing segments
 	auto endIndex = offset2index(offset + size);
-	NSMutableData *data = [NSMutableData data];
+	MMBuffer data(size);
+	size_t pos = 0;
 	for (auto inc = index; inc <= endIndex; inc++) {
-		auto segment = tryGetSegment(inc);
+		auto segment = internalTryGetSegment(inc);
 		if (!segment) {
-			return nil;
+			return MMBuffer(0);
 		}
 		auto ptr = segment->ptr;
 		size_t copySize = 0;
@@ -162,9 +191,10 @@ NSData *MemoryFile::read(size_t offset, size_t size) {
 			// it's the end
 			copySize = offset + size - segment->offset;
 		}
-		[data appendBytes:ptr length:copySize];
+		::memcpy(data.getPtr() + pos, ptr, copySize);
+		pos += copySize;
 	}
-	return nil;
+	return data;
 }
 
 bool MemoryFile::write(size_t offset, const void *source, size_t size) {
@@ -173,23 +203,23 @@ bool MemoryFile::write(size_t offset, const void *source, size_t size) {
 	}
 	// I'm felling lucky
 	if (m_ptr) {
-		memcpy(m_ptr->ptr + offset, source, size);
+		::memcpy(m_ptr->ptr + offset, source, size);
 		return true;
 	}
 	// most of the case, just write to one segment
 	auto index = offset2index(offset);
-	auto segment = tryGetSegment(index);
+	auto segment = internalTryGetSegment(index);
 	if (!segment) {
 		return false;
 	} else if (offset + size <= segment->offset + segment->size) {
 		auto ptr = segment->ptr + (offset - segment->offset);
-		memcpy(ptr, source, size);
+		::memcpy(ptr, source, size);
 		return true;
 	}
 	// one segment is not enough, we have to write data crossing segments
 	auto endIndex = offset2index(offset + size);
 	for (auto inc = index; inc <= endIndex; inc++) {
-		auto segment = tryGetSegment(inc);
+		auto segment = internalTryGetSegment(inc);
 		if (!segment) {
 			return false;
 		}
@@ -206,29 +236,75 @@ bool MemoryFile::write(size_t offset, const void *source, size_t size) {
 			// it's the end
 			writeSize = offset + size - segment->offset;
 		}
-		memcpy(ptr, source, writeSize);
+		::memcpy(ptr, source, writeSize);
 		source = (uint8_t *) source + writeSize;
 	}
 	return true;
 }
 
-bool MemoryFile::innerMemcpy(size_t targetOffset, size_t sourceOffset, size_t size) {
+uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
+	if (offset >= m_size || m_size - offset < size || size == 0) {
+		return digest;
+	}
+	// I'm felling lucky
+	if (m_ptr) {
+		return static_cast<uint32_t>(::crc32(digest, m_ptr->ptr + offset, static_cast<uInt>(size)));
+		//		return static_cast<uint32_t>(::crc32_fast(m_ptr->ptr + offset, static_cast<uInt>(size), digest));
+	}
+	// most of the case, just return a shadow without copying any data
+	auto index = offset2index(offset);
+	auto segment = internalTryGetSegment(index);
+	if (!segment) {
+		return digest;
+	}
+	if (offset + size <= segment->offset + segment->size) {
+		auto ptr = segment->ptr + (offset - segment->offset);
+		return static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(size)));
+		//		return static_cast<uint32_t>(crc32_fast(ptr, static_cast<uInt>(size), digest));
+	}
+	// one segment is not enough, we have to copy data crossing segments
+	auto endIndex = offset2index(offset + size);
+	for (auto inc = index; inc <= endIndex; inc++) {
+		auto segment = internalTryGetSegment(inc);
+		if (!segment) {
+			return digest;
+		}
+		auto ptr = segment->ptr;
+		size_t copySize = 0;
+		if (offset >= segment->offset) {
+			// it's the begin
+			ptr += offset - segment->offset;
+			copySize = segment->offset + segment->size - offset;
+		} else if (offset < segment->offset && (offset + size) > (segment->offset + segment->size)) {
+			// it's the middle(s)
+			copySize = segment->size;
+		} else {
+			// it's the end
+			copySize = offset + size - segment->offset;
+		}
+		digest = static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(copySize)));
+		//		digest = static_cast<uint32_t>(crc32_fast(ptr, static_cast<uInt>(copySize)), digest);
+	}
+	return digest;
+}
+
+bool MemoryFile::memcpy(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr) {
 	if (targetOffset >= m_size || sourceOffset >= m_size || m_size - targetOffset < size || m_size - sourceOffset < size) {
 		return false;
 	}
-	if (size == 0) {
+	if (size == 0 || targetOffset == sourceOffset) {
 		return true;
 	}
 	// I'm felling lucky
 	if (m_ptr) {
-		memcpy(m_ptr->ptr + targetOffset, m_ptr->ptr + sourceOffset, size);
+		::memcpy(m_ptr->ptr + targetOffset, m_ptr->ptr + sourceOffset, size);
 		return true;
 	}
 	do {
 		auto targetIndex = offset2index(targetOffset);
 		auto sourceIndex = offset2index(sourceOffset);
-		auto targetSegment = tryGetSegment(targetIndex);
-		auto sourceSegment = tryGetSegment(sourceIndex);
+		auto targetSegment = internalTryGetSegment(targetIndex);
+		auto sourceSegment = internalTryGetSegment(sourceIndex);
 		if (!targetSegment || !sourceSegment) {
 			return false;
 		}
@@ -239,14 +315,18 @@ bool MemoryFile::innerMemcpy(size_t targetOffset, size_t sourceOffset, size_t si
 		size_t sourceSize = sourceSegment->offset + sourceSegment->size - sourceOffset;
 
 		size_t copySize = min({targetSize, sourceSize, size});
-		memcpy(targetPtr, sourcePtr, copySize);
+		::memcpy(targetPtr, sourcePtr, copySize);
 
 		size -= copySize;
-		targetOffset -= copySize;
-		sourceOffset -= copySize;
+		targetOffset += copySize;
+		sourceOffset += copySize;
 	} while (size > 0);
 
 	return true;
+}
+
+void MemoryFile::sync(int syncFlag) {
+	// TODO: msync
 }
 
 #pragma mark - Segment
@@ -270,6 +350,13 @@ MemoryFile::Segment::~Segment() {
 	}
 }
 
+void MemoryFile::Segment::zeroFill() {
+	if (ptr) {
+		memset(ptr, 0, size);
+		msync(ptr, size, MS_ASYNC);
+	}
+}
+
 #pragma mark - file
 
 bool isFileExist(NSString *nsFilePath) {
@@ -285,9 +372,7 @@ bool createFile(NSString *nsFilePath) {
 	NSFileManager *oFileMgr = [NSFileManager defaultManager];
 	// try create file at once
 	NSMutableDictionary *fileAttr = [NSMutableDictionary dictionary];
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 	[fileAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
-#endif
 	if ([oFileMgr createFileAtPath:nsFilePath contents:nil attributes:fileAttr]) {
 		return true;
 	}
@@ -310,7 +395,6 @@ bool createFile(NSString *nsFilePath) {
 }
 
 void tryResetFileProtection(NSString *path) {
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 	@autoreleasepool {
 		NSDictionary *attr = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nullptr];
 		NSString *protection = [attr valueForKey:NSFileProtectionKey];
@@ -325,7 +409,6 @@ void tryResetFileProtection(NSString *path) {
 			}
 		}
 	}
-#endif
 }
 
 bool removeFile(NSString *nsFilePath) {
@@ -333,33 +416,6 @@ bool removeFile(NSString *nsFilePath) {
 	if (ret != 0) {
 		MMKVError(@"remove file failed. filePath=%@, err=%s", nsFilePath, strerror(errno));
 		return false;
-	}
-	return true;
-}
-
-bool zeroFillFile(int fd, size_t startPos, size_t size) {
-	if (fd < 0) {
-		return false;
-	}
-
-	if (lseek(fd, startPos, SEEK_SET) < 0) {
-		MMKVError(@"fail to lseek fd[%d], error:%s", fd, strerror(errno));
-		return false;
-	}
-
-	static const char zeros[4 * 1024] = {0};
-	while (size >= sizeof(zeros)) {
-		if (write(fd, zeros, sizeof(zeros)) < 0) {
-			MMKVError(@"fail to write fd[%d], error:%s", fd, strerror(errno));
-			return false;
-		}
-		size -= sizeof(zeros);
-	}
-	if (size > 0) {
-		if (write(fd, zeros, size) < 0) {
-			MMKVError(@"fail to write fd[%d], error:%s", fd, strerror(errno));
-			return false;
-		}
 	}
 	return true;
 }

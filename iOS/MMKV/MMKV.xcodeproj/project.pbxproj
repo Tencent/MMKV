@@ -9,11 +9,25 @@
 /* Begin PBXBuildFile section */
 		CB1FD4962046984F00931B5F /* MMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* MMKV.mm */; };
 		CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; };
-		CB1FD4C320469B8800931B5F /* MiniCodedOutputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */; };
-		CB1FD4C420469B8800931B5F /* MiniCodedInputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */; };
+		CB1FD4C320469B8800931B5F /* MiniCodedOutputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB1FD4C420469B8800931B5F /* MiniCodedInputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB1FD4C520469B8800931B5F /* MiniPBUtility.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */; };
-		CB1FD4C620469B8800931B5F /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; };
+		CB1FD4C620469B8800931B5F /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB1FD4CD2046ACBC00931B5F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
+		CB6BE04421630ED200E3A370 /* KeyValueHolder.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6BE03A21630ED100E3A370 /* KeyValueHolder.h */; };
+		CB6BE04521630ED200E3A370 /* DynamicBitset.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6BE03B21630ED100E3A370 /* DynamicBitset.h */; };
+		CB6BE04621630ED200E3A370 /* CityHash.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6BE03C21630ED100E3A370 /* CityHash.h */; };
+		CB6BE04721630ED200E3A370 /* CityHash.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE03D21630ED100E3A370 /* CityHash.mm */; };
+		CB6BE04821630ED200E3A370 /* KeyValueHolder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE03E21630ED100E3A370 /* KeyValueHolder.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB6BE04A21630ED200E3A370 /* MMKV+Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6BE04021630ED100E3A370 /* MMKV+Internal.h */; };
+		CB6BE04B21630ED200E3A370 /* MMBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6BE04121630ED200E3A370 /* MMBuffer.h */; };
+		CB6BE04C21630ED200E3A370 /* MMBuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE04221630ED200E3A370 /* MMBuffer.mm */; };
+		CB6BE04D21630ED200E3A370 /* MMKV+MRC.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE04321630ED200E3A370 /* MMKV+MRC.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB6BE04E2163119400E3A370 /* CityHash.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE03D21630ED100E3A370 /* CityHash.mm */; };
+		CB6BE04F2163119400E3A370 /* KeyValueHolder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE03E21630ED100E3A370 /* KeyValueHolder.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB6BE0502163119400E3A370 /* MMBuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE04221630ED200E3A370 /* MMBuffer.mm */; };
+		CB6BE0512163119400E3A370 /* MMKV+MRC.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6BE04321630ED200E3A370 /* MMKV+MRC.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB6BE05321631CD800E3A370 /* tsl in Resources */ = {isa = PBXBuildFile; fileRef = CB6BE05221631CD800E3A370 /* tsl */; };
 		CB6DEFA9212E6F010024F0E8 /* AESCrypt.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6DEF9F212E6F010024F0E8 /* AESCrypt.h */; };
 		CB6DEFAA212E6F010024F0E8 /* opensslconf.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6DEFA1212E6F010024F0E8 /* opensslconf.h */; };
 		CB6DEFAB212E6F010024F0E8 /* cfb128.c in Sources */ = {isa = PBXBuildFile; fileRef = CB6DEFA2212E6F010024F0E8 /* cfb128.c */; };
@@ -31,9 +45,9 @@
 		CB865F5720FF33F600427B9D /* MemoryFile.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB865F5420FF33F600427B9D /* MemoryFile.mm */; };
 		CB865F5820FF33F600427B9D /* MemoryFile.h in Headers */ = {isa = PBXBuildFile; fileRef = CB865F5520FF33F600427B9D /* MemoryFile.h */; };
 		CB8FB92E2100C52F00CC523D /* LRUCache.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB8FB92D2100C52F00CC523D /* LRUCache.hpp */; };
-		CBC1A8FE20DA948A00AD5087 /* MiniCodedInputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */; };
-		CBC1A8FF20DA948A00AD5087 /* MiniCodedOutputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */; };
-		CBC1A90020DA948A00AD5087 /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; };
+		CBC1A8FE20DA948A00AD5087 /* MiniCodedInputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CBC1A8FF20DA948A00AD5087 /* MiniCodedOutputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CBC1A90020DA948A00AD5087 /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CBC1A90120DA948A00AD5087 /* MiniPBUtility.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */; };
 		CBC1A90220DA948A00AD5087 /* MMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* MMKV.mm */; };
 		CBC1A90420DA94A000AD5087 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
@@ -70,6 +84,16 @@
 		CB1FD4CC2046ACBC00931B5F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		CB1FD4CE2046ACC100931B5F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		CB1FD5152049382F00931B5F /* ScopedLock.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ScopedLock.hpp; sourceTree = "<group>"; };
+		CB6BE03A21630ED100E3A370 /* KeyValueHolder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeyValueHolder.h; sourceTree = "<group>"; };
+		CB6BE03B21630ED100E3A370 /* DynamicBitset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicBitset.h; sourceTree = "<group>"; };
+		CB6BE03C21630ED100E3A370 /* CityHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CityHash.h; sourceTree = "<group>"; };
+		CB6BE03D21630ED100E3A370 /* CityHash.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CityHash.mm; sourceTree = "<group>"; };
+		CB6BE03E21630ED100E3A370 /* KeyValueHolder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = KeyValueHolder.mm; sourceTree = "<group>"; };
+		CB6BE04021630ED100E3A370 /* MMKV+Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "MMKV+Internal.h"; sourceTree = "<group>"; };
+		CB6BE04121630ED200E3A370 /* MMBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMBuffer.h; sourceTree = "<group>"; };
+		CB6BE04221630ED200E3A370 /* MMBuffer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MMBuffer.mm; sourceTree = "<group>"; };
+		CB6BE04321630ED200E3A370 /* MMKV+MRC.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "MMKV+MRC.mm"; sourceTree = "<group>"; };
+		CB6BE05221631CD800E3A370 /* tsl */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tsl; sourceTree = "<group>"; };
 		CB6DEF9F212E6F010024F0E8 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
 		CB6DEFA1212E6F010024F0E8 /* opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opensslconf.h; sourceTree = "<group>"; };
 		CB6DEFA2212E6F010024F0E8 /* cfb128.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cfb128.c; sourceTree = "<group>"; };
@@ -130,7 +154,13 @@
 		CB1FD4932046984F00931B5F /* MMKV */ = {
 			isa = PBXGroup;
 			children = (
+				CB6BE05221631CD800E3A370 /* tsl */,
 				CB6DEF9E212E6F010024F0E8 /* aes */,
+				CB6BE03C21630ED100E3A370 /* CityHash.h */,
+				CB6BE03D21630ED100E3A370 /* CityHash.mm */,
+				CB6BE03B21630ED100E3A370 /* DynamicBitset.h */,
+				CB6BE03A21630ED100E3A370 /* KeyValueHolder.h */,
+				CB6BE03E21630ED100E3A370 /* KeyValueHolder.mm */,
 				CB8FB92D2100C52F00CC523D /* LRUCache.hpp */,
 				CB865F5520FF33F600427B9D /* MemoryFile.h */,
 				CB865F5420FF33F600427B9D /* MemoryFile.mm */,
@@ -143,8 +173,12 @@
 				CB1FD4C82046AA0500931B5F /* MiniPBEncodeItem.h */,
 				CB1FD4BA20469B8800931B5F /* MiniPBUtility.h */,
 				CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */,
+				CB6BE04121630ED200E3A370 /* MMBuffer.h */,
+				CB6BE04221630ED200E3A370 /* MMBuffer.mm */,
 				CB1FD4942046984F00931B5F /* MMKV.h */,
 				CB1FD4952046984F00931B5F /* MMKV.mm */,
+				CB6BE04021630ED100E3A370 /* MMKV+Internal.h */,
+				CB6BE04321630ED200E3A370 /* MMKV+MRC.mm */,
 				CBC1A8A620DA080800AD5087 /* MMKVLog.h */,
 				CBC1A90720DA959400AD5087 /* Resources */,
 				CB1FD5152049382F00931B5F /* ScopedLock.hpp */,
@@ -203,12 +237,17 @@
 			files = (
 				CB6DEFB1212E6F010024F0E8 /* aes.h in Headers */,
 				CB6DEFB2212E6F010024F0E8 /* modes.h in Headers */,
+				CB6BE04621630ED200E3A370 /* CityHash.h in Headers */,
 				CB6DEFB3212E6F010024F0E8 /* aes_locl.h in Headers */,
+				CB6BE04B21630ED200E3A370 /* MMBuffer.h in Headers */,
+				CB6BE04A21630ED200E3A370 /* MMKV+Internal.h in Headers */,
+				CB6BE04521630ED200E3A370 /* DynamicBitset.h in Headers */,
 				CB8FB92E2100C52F00CC523D /* LRUCache.hpp in Headers */,
 				CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */,
 				CB6DEFAA212E6F010024F0E8 /* opensslconf.h in Headers */,
 				CB865F5820FF33F600427B9D /* MemoryFile.h in Headers */,
 				CB6DEFA9212E6F010024F0E8 /* AESCrypt.h in Headers */,
+				CB6BE04421630ED200E3A370 /* KeyValueHolder.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -292,6 +331,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB6BE05321631CD800E3A370 /* tsl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,6 +342,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB6BE04E2163119400E3A370 /* CityHash.mm in Sources */,
+				CB6BE04F2163119400E3A370 /* KeyValueHolder.mm in Sources */,
+				CB6BE0502163119400E3A370 /* MMBuffer.mm in Sources */,
+				CB6BE0512163119400E3A370 /* MMKV+MRC.mm in Sources */,
 				CB1FD4C320469B8800931B5F /* MiniCodedOutputData.mm in Sources */,
 				CB6DEFAB212E6F010024F0E8 /* cfb128.c in Sources */,
 				CB6DEFAF212E6F010024F0E8 /* aes_cfb.c in Sources */,
@@ -319,6 +363,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB6BE04721630ED200E3A370 /* CityHash.mm in Sources */,
+				CB6BE04C21630ED200E3A370 /* MMBuffer.mm in Sources */,
 				CBC1A8FE20DA948A00AD5087 /* MiniCodedInputData.mm in Sources */,
 				CB6DEFAC212E6F010024F0E8 /* cfb128.c in Sources */,
 				CB6DEFB0212E6F010024F0E8 /* aes_cfb.c in Sources */,
@@ -327,6 +373,8 @@
 				CB6DEFAE212E6F010024F0E8 /* aes_core.c in Sources */,
 				CBC1A90120DA948A00AD5087 /* MiniPBUtility.mm in Sources */,
 				CB865F5720FF33F600427B9D /* MemoryFile.mm in Sources */,
+				CB6BE04821630ED200E3A370 /* KeyValueHolder.mm in Sources */,
+				CB6BE04D21630ED200E3A370 /* MMKV+MRC.mm in Sources */,
 				CB6DEFB5212E6F010024F0E8 /* AESCrypt.mm in Sources */,
 				CBC1A90220DA948A00AD5087 /* MMKV.mm in Sources */,
 			);
@@ -341,7 +389,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -402,7 +450,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
