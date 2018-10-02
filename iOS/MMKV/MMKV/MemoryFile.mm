@@ -372,7 +372,9 @@ bool createFile(NSString *nsFilePath) {
 	NSFileManager *oFileMgr = [NSFileManager defaultManager];
 	// try create file at once
 	NSMutableDictionary *fileAttr = [NSMutableDictionary dictionary];
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 	[fileAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
+#endif
 	if ([oFileMgr createFileAtPath:nsFilePath contents:nil attributes:fileAttr]) {
 		return true;
 	}
@@ -395,6 +397,7 @@ bool createFile(NSString *nsFilePath) {
 }
 
 void tryResetFileProtection(NSString *path) {
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 	@autoreleasepool {
 		NSDictionary *attr = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nullptr];
 		NSString *protection = [attr valueForKey:NSFileProtectionKey];
@@ -409,6 +412,7 @@ void tryResetFileProtection(NSString *path) {
 			}
 		}
 	}
+#endif
 }
 
 bool removeFile(NSString *nsFilePath) {
