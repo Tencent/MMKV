@@ -19,7 +19,7 @@
  */
 
 #import "CityHash.h"
-#import "DynamicBitset.h"
+#import "DynamicBitset.hpp"
 #import "MMBuffer.h"
 #import "tsl/hopscotch_map.h"
 #import <Foundation/Foundation.h>

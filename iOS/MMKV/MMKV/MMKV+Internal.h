@@ -22,7 +22,7 @@
 #define MMKV_Internal_h
 
 #import "AESCrypt.h"
-#import "DynamicBitset.h"
+#import "DynamicBitset.hpp"
 #import "MMKV.h"
 #import "MMKVLog.h"
 #import "MiniCodedInputData.h"
