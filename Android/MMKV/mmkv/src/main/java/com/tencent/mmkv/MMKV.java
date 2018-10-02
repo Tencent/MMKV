@@ -40,8 +40,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // call on program start
+    static private String rootDir = null;
     public static String initialize(Context context) {
-        String rootDir = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        rootDir = context.getFilesDir().getAbsolutePath() + "/mmkv";
         initialize(rootDir);
         return rootDir;
     }
@@ -56,17 +57,29 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     static private final int ASHMEM_MODE = 0x4;
 
     public static MMKV mmkvWithID(String mmapID) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null);
         return new MMKV(handle);
     }
 
     public static MMKV mmkvWithID(String mmapID, int mode) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getMMKVWithID(mmapID, mode, null);
         return new MMKV(handle);
     }
 
     // cryptKey's length <= 16
     public static MMKV mmkvWithID(String mmapID, int mode, String cryptKey) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getMMKVWithID(mmapID, mode, cryptKey);
         return new MMKV(handle);
     }
@@ -76,6 +89,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Nullable
     public static MMKV
     mmkvWithAshmemID(Context context, String mmapID, int size, int mode, String cryptKey) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         String processName =
             MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
         if (processName == null || processName.length() == 0) {
@@ -104,8 +121,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 if (parcelableMMKV != null) {
                     MMKV mmkv = parcelableMMKV.toMMKV();
                     if (mmkv != null) {
-                        System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
-                                + ", meta fd = " + mmkv.ashmemMetaFD());
+                        System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD() +
+                                           ", meta fd = " + mmkv.ashmemMetaFD());
                     }
                     return mmkv;
                 }
@@ -121,11 +138,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public static MMKV defaultMMKV() {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getDefaultMMKV(SINGLE_PROCESS_MODE, null);
         return new MMKV(handle);
     }
 
     public static MMKV defaultMMKV(int mode, String cryptKey) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getDefaultMMKV(mode, cryptKey);
         return new MMKV(handle);
     }

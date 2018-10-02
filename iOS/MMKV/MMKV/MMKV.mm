@@ -27,7 +27,11 @@
 #import "MiniPBCoder.h"
 #import "MiniPBUtility.h"
 #import "ScopedLock.hpp"
+
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #import <UIKit/UIKit.h>
+#endif
+
 #import <algorithm>
 #import <sys/mman.h>
 #import <sys/stat.h>
@@ -65,13 +69,10 @@ static NSRecursiveLock *g_instanceLock;
 
 + (void)initialize {
 	if (self == MMKV.class) {
-		static dispatch_once_t onceToken;
-		dispatch_once(&onceToken, ^{
-			g_instanceDic = [NSMutableDictionary dictionary];
-			g_instanceLock = [[NSRecursiveLock alloc] init];
-
-			MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
-		});
+		g_instanceDic = [NSMutableDictionary dictionary];
+		g_instanceLock = [[NSRecursiveLock alloc] init];
+		
+		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 	}
 }
 
@@ -127,6 +128,7 @@ static NSRecursiveLock *g_instanceLock;
 
 		[self loadFromFile];
 
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 		auto appState = [UIApplication sharedApplication].applicationState;
 		if (appState == UIApplicationStateBackground) {
 			m_isInBackground = YES;
@@ -138,6 +140,7 @@ static NSRecursiveLock *g_instanceLock;
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+#endif
 	}
 	return self;
 }
@@ -184,6 +187,7 @@ static NSRecursiveLock *g_instanceLock;
 	[self clearMemoryCache];
 }
 
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 - (void)didEnterBackground {
 	CScopedLock lock(m_lock);
 
@@ -197,6 +201,7 @@ static NSRecursiveLock *g_instanceLock;
 	m_isInBackground = NO;
 	MMKVInfo(@"m_isInBackground:%d", m_isInBackground);
 }
+#endif
 
 #pragma mark - really dirty work
 
@@ -1099,15 +1104,18 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	[self fullWriteback];
 }
 
-#pragma mark - borning stuff
+#pragma mark - Boring stuff
 
 - (void)sync {
 	CScopedLock lock(m_lock);
-	if (m_needLoadFromFile || ![self isFileValid]) {
+	if (m_needLoadFromFile || ![self isFileValid] || m_crcPtr == nullptr) {
 		return;
 	}
-	if (msync(m_ptr, m_size, MS_SYNC) != 0) {
-		MMKVError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
+	if (msync(m_ptr, m_actualSize, MS_SYNC) != 0) {
+		MMKVError(@"fail to msync data file of [%@]:%s", m_mmapID, strerror(errno));
+	}
+	if (msync(m_crcPtr, CRC_FILE_SIZE, MS_SYNC) != 0) {
+		MMKVError(@"fail to msync crc-32 file of [%@]:%s", m_mmapID, strerror(errno));
 	}
 }
 
