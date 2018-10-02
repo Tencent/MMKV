@@ -22,6 +22,7 @@
 #define MemoryFile_h
 
 #import "LRUCache.hpp"
+#import "MMBuffer.h"
 #import <Foundation/Foundation.h>
 
 extern const int DEFAULT_MMAP_SIZE;
@@ -31,6 +32,7 @@ class MemoryFile {
     int m_fd;
     size_t m_size;
 
+public:
     struct Segment {
         uint8_t *ptr;
         size_t size;
@@ -40,21 +42,36 @@ class MemoryFile {
         Segment(Segment &&other) noexcept;
         ~Segment();
 
+        void zeroFill();
+
+        inline bool inside(size_t offset) const {
+            return offset >= this->offset && offset < this->offset + this->size;
+        }
+        inline bool inside(size_t offset, size_t size) const {
+            return offset >= this->offset && offset + size <= this->offset + this->size;
+        }
+
     private:
         // just forbid it for possibly misuse
         Segment(const Segment &other) = delete;
         Segment &operator=(const Segment &other) = delete;
     };
+
+private:
     std::shared_ptr<Segment> m_ptr;
     uint32_t offset2index(size_t offset) const;
     // index -> segment
     LRUCache<uint32_t, std::shared_ptr<Segment>> m_segmentCache;
-    std::shared_ptr<Segment> tryGetSegment(uint32_t index);
     void prepareSegments();
+
+    Segment *internalTryGetSegment(uint32_t index);
 
     // just forbid it for possibly misuse
     MemoryFile(const MemoryFile &other) = delete;
     MemoryFile &operator=(const MemoryFile &other) = delete;
+
+    friend class MiniCodedInputData;
+    friend class MiniCodedOutputData;
 
 public:
     MemoryFile(NSString *path);
@@ -66,19 +83,24 @@ public:
 
     int getFd() { return m_fd; }
 
-    NSData *read(size_t offset, size_t size);
+    std::shared_ptr<Segment> tryGetSegment(uint32_t index);
+
+    MMBuffer read(size_t offset, size_t size);
 
     bool write(size_t offset, const void *source, size_t size);
 
-    bool innerMemcpy(size_t targetOffset, size_t sourceOffset, size_t size);
+    bool memcpy(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr = nullptr);
 
-    bool ftruncate(size_t size);
+    bool truncate(size_t size);
+
+    uint32_t crc32(uint32_t digest, size_t offset, size_t size);
+
+    void sync(int syncFlag);
 };
 
 extern bool isFileExist(NSString *nsFilePath);
 extern bool createFile(NSString *nsFilePath);
 extern bool removeFile(NSString *nsFilePath);
-extern bool zeroFillFile(int fd, size_t startPos, size_t size);
 extern void tryResetFileProtection(NSString *path);
 
 #endif /* MemoryFile_h */

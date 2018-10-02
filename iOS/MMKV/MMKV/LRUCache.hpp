@@ -28,20 +28,26 @@ template <typename Key_t, typename Value_t>
 class LRUCache {
     size_t m_capacity;
     std::list<std::pair<Key_t, Value_t>> m_list;
-    std::unordered_map<Key_t, typename decltype(m_list)::iterator> m_map;
+    typedef typename decltype(m_list)::iterator ItrType;
+    std::unordered_map<Key_t, ItrType> m_map;
+    Key_t m_lastKey;
+    Value_t *m_lastValue;
 
 public:
-    LRUCache(size_t capacity) : m_capacity(capacity) {}
+    LRUCache(size_t capacity)
+        : m_capacity(capacity), m_lastKey(std::numeric_limits<Key_t>::max()), m_lastValue(nullptr) {
+        m_map.reserve(capacity * 2);
+    }
 
     size_t size() const { return m_map.size(); }
 
     size_t capacity() const { return m_capacity; }
 
-    bool contains(const Key_t &key) const { return m_map.find(key) != m_map.end(); }
-
     void clear() {
         m_list.clear();
         m_map.clear();
+        m_lastKey = std::numeric_limits<Key_t>::max();
+        m_lastValue = nullptr;
     }
 
     void insert(const Key_t &key, const Value_t &value) {
@@ -49,6 +55,8 @@ public:
         if (itr != m_map.end()) {
             m_list.splice(m_list.begin(), m_list, itr->second);
             itr->second->second = value;
+            m_lastKey = key;
+            m_lastValue = &itr->second->second;
         } else {
             if (m_map.size() == m_capacity) {
                 m_map.erase(m_list.back().first);
@@ -56,14 +64,21 @@ public:
             }
             m_list.push_front(std::make_pair(key, value));
             m_map.insert(std::make_pair(key, m_list.begin()));
+            m_lastKey = key;
+            m_lastValue = &m_list.front().second;
         }
     }
 
     Value_t *get(const Key_t &key) {
+        if (key == m_lastKey) {
+            return m_lastValue;
+        }
         auto itr = m_map.find(key);
         if (itr != m_map.end()) {
             m_list.splice(m_list.begin(), m_list, itr->second);
-            return &itr->second->second;
+            m_lastKey = key;
+            m_lastValue = &itr->second->second;
+            return m_lastValue;
         }
         return nullptr;
     }

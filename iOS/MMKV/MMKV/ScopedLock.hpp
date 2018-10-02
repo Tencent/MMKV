@@ -24,15 +24,12 @@
 #import <Foundation/Foundation.h>
 
 class CScopedLock {
-    NSRecursiveLock *m_oLock;
+    __unsafe_unretained NSRecursiveLock *m_oLock;
 
 public:
-    CScopedLock(NSRecursiveLock *oLock) : m_oLock(oLock) { [m_oLock lock]; }
+    CScopedLock(__unsafe_unretained NSRecursiveLock *oLock) : m_oLock(oLock) { [m_oLock lock]; }
 
-    ~CScopedLock() {
-        [m_oLock unlock];
-        m_oLock = nil;
-    }
+    ~CScopedLock() { [m_oLock unlock]; }
 };
 
 #endif /* ScopedLock_h */

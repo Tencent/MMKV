@@ -17,7 +17,14 @@
 		CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
+		CB9C2731215E5DF000448B6C /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
+		CB9C2733215E5ECC00448B6C /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB9C2732215E5ECC00448B6C /* libz.tbd */; };
 		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
+		CBB6C823215CDB9500487192 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C822215CDB9500487192 /* AppDelegate.m */; };
+		CBB6C826215CDB9500487192 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C825215CDB9500487192 /* ViewController.mm */; };
+		CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C827215CDB9600487192 /* Assets.xcassets */; };
+		CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C829215CDB9600487192 /* Main.storyboard */; };
+		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +56,13 @@
 			remoteGlobalIDString = CBC1A8F620DA946200AD5087;
 			remoteInfo = MMKV;
 		};
+		CB9C272F215E5D2400448B6C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1FD4902046984F00931B5F;
+			remoteInfo = "MMKV Static";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -68,8 +82,19 @@
 		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
 		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVPerformanceTest.mm; sourceTree = "<group>"; };
+		CB9C2732215E5ECC00448B6C /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
 		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
+		CBB6C81F215CDB9500487192 /* MMKVMacDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MMKVMacDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBB6C821215CDB9500487192 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		CBB6C822215CDB9500487192 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		CBB6C824215CDB9500487192 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		CBB6C825215CDB9500487192 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		CBB6C827215CDB9600487192 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CBB6C82A215CDB9600487192 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		CBB6C82C215CDB9600487192 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CBB6C82D215CDB9600487192 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		CBB6C82F215CDB9600487192 /* MMKVMacDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MMKVMacDemo.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +114,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CBB6C81C215CDB9500487192 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB9C2733215E5ECC00448B6C /* libz.tbd in Frameworks */,
+				CB9C2731215E5DF000448B6C /* libMMKV Static.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -98,6 +132,7 @@
 				CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */,
 				CB1FD42220455E2D00931B5F /* MMKVDemo */,
 				CB36F24A20F8A20C009AF46F /* MMKVDemoTests */,
+				CBB6C820215CDB9500487192 /* MMKVMacDemo */,
 				CB1FD42120455E2D00931B5F /* Products */,
 				CB1FD45720455F3500931B5F /* Frameworks */,
 			);
@@ -108,6 +143,7 @@
 			children = (
 				CB1FD42020455E2D00931B5F /* MMKVDemo.app */,
 				CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */,
+				CBB6C81F215CDB9500487192 /* MMKVMacDemo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -133,6 +169,7 @@
 		CB1FD45720455F3500931B5F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CB9C2732215E5ECC00448B6C /* libz.tbd */,
 				CB1FD4D12046AF2300931B5F /* libz.tbd */,
 			);
 			name = Frameworks;
@@ -155,6 +192,22 @@
 				CB36F24D20F8A20C009AF46F /* Info.plist */,
 			);
 			path = MMKVDemoTests;
+			sourceTree = "<group>";
+		};
+		CBB6C820215CDB9500487192 /* MMKVMacDemo */ = {
+			isa = PBXGroup;
+			children = (
+				CBB6C821215CDB9500487192 /* AppDelegate.h */,
+				CBB6C822215CDB9500487192 /* AppDelegate.m */,
+				CBB6C824215CDB9500487192 /* ViewController.h */,
+				CBB6C825215CDB9500487192 /* ViewController.mm */,
+				CBB6C827215CDB9600487192 /* Assets.xcassets */,
+				CBB6C829215CDB9600487192 /* Main.storyboard */,
+				CBB6C82C215CDB9600487192 /* Info.plist */,
+				CBB6C82D215CDB9600487192 /* main.m */,
+				CBB6C82F215CDB9600487192 /* MMKVMacDemo.entitlements */,
+			);
+			path = MMKVMacDemo;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -196,6 +249,24 @@
 			productReference = CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		CBB6C81E215CDB9500487192 /* MMKVMacDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CBB6C833215CDB9600487192 /* Build configuration list for PBXNativeTarget "MMKVMacDemo" */;
+			buildPhases = (
+				CBB6C81B215CDB9500487192 /* Sources */,
+				CBB6C81C215CDB9500487192 /* Frameworks */,
+				CBB6C81D215CDB9500487192 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CB9C2730215E5D2400448B6C /* PBXTargetDependency */,
+			);
+			name = MMKVMacDemo;
+			productName = MMKVMacDemo;
+			productReference = CBB6C81F215CDB9500487192 /* MMKVMacDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -214,6 +285,10 @@
 						CreatedOnToolsVersion = 9.4.1;
 						ProvisioningStyle = Automatic;
 						TestTargetID = CB1FD41F20455E2D00931B5F;
+					};
+					CBB6C81E215CDB9500487192 = {
+						CreatedOnToolsVersion = 10.0;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -238,6 +313,7 @@
 			targets = (
 				CB1FD41F20455E2D00931B5F /* MMKVDemo */,
 				CB36F24820F8A20C009AF46F /* MMKVDemoTests */,
+				CBB6C81E215CDB9500487192 /* MMKVMacDemo */,
 			);
 		};
 /* End PBXProject section */
@@ -277,6 +353,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CBB6C81D215CDB9500487192 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */,
+				CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -300,6 +385,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CBB6C81B215CDB9500487192 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBB6C826215CDB9500487192 /* ViewController.mm in Sources */,
+				CBB6C82E215CDB9600487192 /* main.m in Sources */,
+				CBB6C823215CDB9500487192 /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -312,6 +407,11 @@
 			isa = PBXTargetDependency;
 			target = CB1FD41F20455E2D00931B5F /* MMKVDemo */;
 			targetProxy = CB36F24E20F8A20C009AF46F /* PBXContainerItemProxy */;
+		};
+		CB9C2730215E5D2400448B6C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "MMKV Static";
+			targetProxy = CB9C272F215E5D2400448B6C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -330,6 +430,14 @@
 				CB1FD42F20455E2D00931B5F /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		CBB6C829215CDB9600487192 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CBB6C82A215CDB9600487192 /* Base */,
+			);
+			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -454,6 +562,10 @@
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				OTHER_LDFLAGS = (
+					"-all_load",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
@@ -475,6 +587,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-all_load",
+					"-ObjC",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
@@ -524,6 +640,47 @@
 			};
 			name = Release;
 		};
+		CBB6C830215CDB9600487192 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVMacDemo/MMKVMacDemo.entitlements;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 52LMU3A345;
+				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVMacDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		CBB6C831215CDB9600487192 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVMacDemo/MMKVMacDemo.entitlements;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 52LMU3A345;
+				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVMacDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -550,6 +707,15 @@
 			buildConfigurations = (
 				CB36F25020F8A20C009AF46F /* Debug */,
 				CB36F25120F8A20C009AF46F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CBB6C833215CDB9600487192 /* Build configuration list for PBXNativeTarget "MMKVMacDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CBB6C830215CDB9600487192 /* Debug */,
+				CBB6C831215CDB9600487192 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

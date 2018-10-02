@@ -20,12 +20,17 @@
 
 #ifdef __cplusplus
 
+#import "KeyValueHolder.h"
+#import "MemoryFile.h"
 #import <Foundation/Foundation.h>
+#import <memory>
 
 class MiniCodedInputData {
     uint8_t *m_ptr;
-    int32_t m_size;
-    int32_t m_position;
+    size_t m_size;
+    size_t m_position;
+    MemoryFile *m_memoryFile;
+    std::shared_ptr<MemoryFile::Segment> m_curSegment;
 
     int8_t readRawByte();
 
@@ -38,7 +43,9 @@ class MiniCodedInputData {
     int64_t readRawLittleEndian64();
 
 public:
-    MiniCodedInputData(NSData *oData);
+    MiniCodedInputData(MMBuffer &oData);
+
+    MiniCodedInputData(MemoryFile *memoryFile, size_t offset = 0, size_t size = 0);
 
     ~MiniCodedInputData();
 
@@ -62,7 +69,11 @@ public:
 
     NSString *readString();
 
+    MMBuffer readString(KeyValueHolder &kvHolder);
+
     NSData *readData();
+
+    bool readDataHolder(KeyValueHolder &kvHolder);
 };
 
 #endif

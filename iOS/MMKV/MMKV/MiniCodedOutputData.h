@@ -20,12 +20,18 @@
 
 #ifdef __cplusplus
 
+#import "KeyValueHolder.h"
+#import "MMBuffer.h"
+#import "MemoryFile.h"
 #import <Foundation/Foundation.h>
+#import <memory>
 
 class MiniCodedOutputData {
     uint8_t *m_ptr;
     size_t m_size;
-    int32_t m_position;
+    size_t m_position;
+    MemoryFile *m_memoryFile;
+    std::shared_ptr<MemoryFile::Segment> m_curSegment;
 
     void writeRawByte(uint8_t value);
 
@@ -35,16 +41,16 @@ class MiniCodedOutputData {
 
     void writeRawVarint64(int64_t value);
 
-    void writeRawData(NSData *data, int32_t offset, int32_t length);
-
 public:
     MiniCodedOutputData(void *ptr, size_t len);
 
-    MiniCodedOutputData(NSMutableData *odata);
+    MiniCodedOutputData(MMBuffer &oData);
+
+    MiniCodedOutputData(MemoryFile *memoryFile, size_t offset = 0);
 
     ~MiniCodedOutputData();
 
-    int32_t spaceLeft();
+    size_t spaceLeft() const { return m_size - m_position; }
 
     void seek(size_t addedSize);
 
@@ -66,11 +72,15 @@ public:
 
     void writeDouble(Float64 value);
 
-    void writeString(NSString *value);
+    void writeString(__unsafe_unretained NSString *value, size_t length);
 
-    void writeRawData(NSData *data);
+    MMBuffer writeString(__unsafe_unretained NSString *value, size_t length, uint32_t &crcDigest);
 
-    void writeData(NSData *value);
+    void writeRawData(__unsafe_unretained NSData *data);
+
+    void writeRawData(const MMBuffer &data);
+
+    void writeData(const MMBuffer &value, uint32_t *crcDigest = nullptr);
 };
 
 #endif

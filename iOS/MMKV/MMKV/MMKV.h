@@ -39,6 +39,33 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
 
+- (BOOL)containsKey:(NSString *)key NS_SWIFT_NAME(contains(key:));
+
+- (size_t)count;
+
+- (size_t)totalSize;
+
+- (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
+
+- (void)clearMemoryCache;
+
+- (void)clearAll;
+
+// you don't need to call this, really, I mean it
+// unless you care about out of battery
+- (void)sync;
+
+// for CrashProtected Only!!
++ (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
+
+NS_ASSUME_NONNULL_END
+
+@end
+
+@interface MMKV (MRC)
+
+NS_ASSUME_NONNULL_BEGIN
+
 // object: NSString/NSData/NSDate
 - (BOOL)setObject:(id)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
@@ -72,35 +99,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (uint64_t)getUInt64ForKey:(NSString *)key NS_SWIFT_NAME(uint64(forKey:));
 - (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue NS_SWIFT_NAME(uint64(forKey:defaultValue:));
-    
+
 - (float)getFloatForKey:(NSString *)key NS_SWIFT_NAME(float(forKey:));
 - (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue NS_SWIFT_NAME(float(forKey:defaultValue:));
 
 - (double)getDoubleForKey:(NSString *)key NS_SWIFT_NAME(double(forKey:));
 - (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue NS_SWIFT_NAME(double(forKey:defaultValue:));
 
-- (BOOL)containsKey:(NSString *)key NS_SWIFT_NAME(contains(key:));
-
-- (size_t)count;
-
-- (size_t)totalSize;
-
-- (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
-
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 
 - (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
-
-- (void)clearMemoryCache;
-
-- (void)clearAll;
-
-// you don't need to call this, really, I mean it
-// unless you care about out of battery
-- (void)sync;
-
-// for CrashProtected Only!!
-+ (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
 
 NS_ASSUME_NONNULL_END
 
