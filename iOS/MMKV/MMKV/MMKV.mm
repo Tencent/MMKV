@@ -23,7 +23,6 @@
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
-const int DEFAULT_MMAP_SIZE = getpagesize();
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE   4

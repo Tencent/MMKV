@@ -310,6 +310,8 @@ using namespace std;
 	return NO;
 }
 
+
+// TODO: encryption
 - (pair<KeyHolder, KeyValueHolder>)appendData:(MMBuffer &)data forKey:(NSString *__unsafe_unretained)key {
 	auto ptr = (char *) key.UTF8String;
 	KeyHolder keyHolder(ptr, strlen(ptr));
