@@ -20,9 +20,9 @@
 
 #import <Foundation/Foundation.h>
 
-@interface MMKV : NSObject
-
 NS_ASSUME_NONNULL_BEGIN
+
+@interface MMKV : NSObject
 
 // a generic purpose instance
 + (instancetype)defaultMMKV;
@@ -58,13 +58,9 @@ NS_ASSUME_NONNULL_BEGIN
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
 
-NS_ASSUME_NONNULL_END
-
 @end
 
 @interface MMKV (MRC)
-
-NS_ASSUME_NONNULL_BEGIN
 
 // object: NSString/NSData/NSDate
 - (BOOL)setObject:(id)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
@@ -110,6 +106,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
 
-NS_ASSUME_NONNULL_END
-
 @end
+
+NS_ASSUME_NONNULL_END

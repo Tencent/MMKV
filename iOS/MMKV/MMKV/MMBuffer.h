@@ -64,7 +64,7 @@ public:
     bool operator==(const MMBuffer &other) const;
 
 private:
-    // those are expensive, just forbid it for possibly misuse
+    // just forbid it for possibly misuse
     MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;
 };

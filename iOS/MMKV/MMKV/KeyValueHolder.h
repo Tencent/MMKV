@@ -89,7 +89,7 @@ public:
     std::vector<std::pair<size_t, size_t>> mergeNearbyItems();
 
 private:
-    // those are expensive, just forbid it for possibly misuse
+    // just forbid it for possibly misuse
     KVItemsWrap(const KVItemsWrap &other) = delete;
     KVItemsWrap &operator=(const KVItemsWrap &other) = delete;
 };

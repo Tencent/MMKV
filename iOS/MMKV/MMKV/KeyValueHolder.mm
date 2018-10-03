@@ -107,7 +107,7 @@ vector<pair<size_t, size_t>> KVItemsWrap::mergeNearbyItems() {
 		}
 
 		// delete [emptyPos, end)
-		//		assert(m_vector.size() == emptyPos + m_deleteMark.popCount(m_vector.size()));
+		//assert(m_vector.size() == emptyPos + m_deleteMark.popCount(m_vector.size()));
 		if (emptyPos < m_vector.size()) {
 			m_vector.erase(m_vector.begin() + emptyPos, m_vector.end());
 		}
