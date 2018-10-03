@@ -121,10 +121,10 @@ using namespace std;
 	return nil;
 }
 
-- (bool)getBoolForKey:(NSString *__unsafe_unretained)key {
+- (BOOL)getBoolForKey:(NSString *__unsafe_unretained)key {
 	return [self getBoolForKey:key defaultValue:FALSE];
 }
-- (bool)getBoolForKey:(NSString *__unsafe_unretained)key defaultValue:(bool)defaultValue {
+- (BOOL)getBoolForKey:(NSString *__unsafe_unretained)key defaultValue:(BOOL)defaultValue {
 	if (key.length <= 0) {
 		return defaultValue;
 	}

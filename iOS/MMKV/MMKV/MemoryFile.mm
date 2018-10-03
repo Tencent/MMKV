@@ -28,7 +28,6 @@
 #import <sys/types.h>
 #import <unistd.h>
 #import <zlib.h>
-//#import "Crc32.h"
 
 using namespace std;
 
@@ -249,7 +248,6 @@ uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
 	// I'm felling lucky
 	if (m_ptr) {
 		return static_cast<uint32_t>(::crc32(digest, m_ptr->ptr + offset, static_cast<uInt>(size)));
-		//		return static_cast<uint32_t>(::crc32_fast(m_ptr->ptr + offset, static_cast<uInt>(size), digest));
 	}
 	// most of the case, just return a shadow without copying any data
 	auto index = offset2index(offset);
@@ -260,7 +258,6 @@ uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
 	if (offset + size <= segment->offset + segment->size) {
 		auto ptr = segment->ptr + (offset - segment->offset);
 		return static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(size)));
-		//		return static_cast<uint32_t>(crc32_fast(ptr, static_cast<uInt>(size), digest));
 	}
 	// one segment is not enough, we have to copy data crossing segments
 	auto endIndex = offset2index(offset + size);
@@ -270,20 +267,19 @@ uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
 			return digest;
 		}
 		auto ptr = segment->ptr;
-		size_t copySize = 0;
+		size_t calcSize = 0;
 		if (offset >= segment->offset) {
 			// it's the begin
 			ptr += offset - segment->offset;
-			copySize = segment->offset + segment->size - offset;
+			calcSize = segment->offset + segment->size - offset;
 		} else if (offset < segment->offset && (offset + size) > (segment->offset + segment->size)) {
 			// it's the middle(s)
-			copySize = segment->size;
+			calcSize = segment->size;
 		} else {
 			// it's the end
-			copySize = offset + size - segment->offset;
+			calcSize = offset + size - segment->offset;
 		}
-		digest = static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(copySize)));
-		//		digest = static_cast<uint32_t>(crc32_fast(ptr, static_cast<uInt>(copySize)), digest);
+		digest = static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(calcSize)));
 	}
 	return digest;
 }
