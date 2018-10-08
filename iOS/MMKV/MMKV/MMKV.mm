@@ -38,7 +38,7 @@ static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
-#define CRC_FILE_SIZE   4
+#define CRC_FILE_SIZE 4
 
 @implementation MMKV {
 	NSRecursiveLock *m_lock;
@@ -387,35 +387,35 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
-    m_isInBackground = YES;
-    if (m_isInBackground) {
-        static const int offset = pbFixed32Size(0);
-        static const int pagesize = getpagesize();
-        size_t realOffset = offset + m_actualSize - size;
-        size_t pageOffset = (realOffset / pagesize) * pagesize;
-        size_t pointerOffset = realOffset - pageOffset;
-        size_t mmapSize = offset + m_actualSize - pageOffset;
-        char *ptr = m_ptr + pageOffset;
-        if (mlock(ptr, mmapSize) != 0) {
-            MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
-            // just fail on this condition, otherwise app will crash anyway
-            //block(m_output);
-            return NO;
-        } else {
-            @try {
-                MiniCodedOutputData output(ptr + pointerOffset, size);
-                block(&output);
-                m_output->seek(size);
-            } @catch (NSException *exception) {
-                MMKVError(@"%@", exception);
-                return NO;
-            } @finally {
-                munlock(ptr, mmapSize);
-            }
-        }
-    } else {
-        block(m_output);
-    }
+	m_isInBackground = YES;
+	if (m_isInBackground) {
+		static const int offset = pbFixed32Size(0);
+		static const int pagesize = getpagesize();
+		size_t realOffset = offset + m_actualSize - size;
+		size_t pageOffset = (realOffset / pagesize) * pagesize;
+		size_t pointerOffset = realOffset - pageOffset;
+		size_t mmapSize = offset + m_actualSize - pageOffset;
+		char *ptr = m_ptr + pageOffset;
+		if (mlock(ptr, mmapSize) != 0) {
+			MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
+			// just fail on this condition, otherwise app will crash anyway
+			//block(m_output);
+			return NO;
+		} else {
+			@try {
+				MiniCodedOutputData output(ptr + pointerOffset, size);
+				block(&output);
+				m_output->seek(size);
+			} @catch (NSException *exception) {
+				MMKVError(@"%@", exception);
+				return NO;
+			} @finally {
+				munlock(ptr, mmapSize);
+			}
+		}
+	} else {
+		block(m_output);
+	}
 
 	return YES;
 }
@@ -543,7 +543,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 - (BOOL)appendData:(NSData *)data forKey:(NSString *)key {
 	size_t keyLength = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
 	size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
-	size += data.length + pbRawVarint32Size((int32_t) data.length); // size needed to encode the value
+	size += data.length + pbRawVarint32Size((int32_t) data.length);   // size needed to encode the value
 
 	BOOL hasEnoughSize = [self ensureMemorySize:size];
 	if (hasEnoughSize == NO || [self isFileValid] == NO) {
@@ -809,7 +809,16 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (object == nil || key.length <= 0) {
 		return NO;
 	}
-	NSData *data = [MiniPBCoder encodeDataWithObject:object];
+
+	NSData *data;
+	if ([MiniPBCoder isMiniPBCoderCompatibleObject:object]) {
+		data = [MiniPBCoder encodeDataWithObject:object];
+	} else {
+		if ([[object class] conformsToProtocol:@protocol(NSCoding)]) {
+			data = [NSKeyedArchiver archivedDataWithRootObject:object];
+		}
+	}
+
 	return [self setData:data forKey:key];
 }
 
@@ -903,7 +912,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	NSData *data = [self getDataForKey:key];
 	if (data.length > 0) {
-		return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
+
+		if ([MiniPBCoder isMiniPBCoderCompatibleType:cls]) {
+			return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
+		} else {
+			if ([cls conformsToProtocol:@protocol(NSCoding)]) {
+				return [NSKeyedUnarchiver unarchiveObjectWithData:data];
+			}
+		}
 	}
 	return nil;
 }
