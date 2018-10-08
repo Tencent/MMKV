@@ -72,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (uint64_t)getUInt64ForKey:(NSString *)key NS_SWIFT_NAME(uint64(forKey:));
 - (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue NS_SWIFT_NAME(uint64(forKey:defaultValue:));
-    
+
 - (float)getFloatForKey:(NSString *)key NS_SWIFT_NAME(float(forKey:));
 - (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue NS_SWIFT_NAME(float(forKey:defaultValue:));
 
