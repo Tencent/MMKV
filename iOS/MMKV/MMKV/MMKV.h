@@ -62,7 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface MMKV (MRC)
 
-// object: NSString/NSData/NSDate
+// object: NSString/NSData/NSDate/id<NSCoding>
 - (BOOL)setObject:(id)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));

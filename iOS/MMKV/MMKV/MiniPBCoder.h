@@ -36,6 +36,10 @@
 
 + (void)decodeContainer:(KVItemsWrap &)kvItemsWrap fromMemoryFile:(MemoryFile *)memoryFile fromOffset:(size_t)offset withSize:(size_t)size;
 
++ (BOOL)isMiniPBCoderCompatibleObject:(id)object;
+
++ (BOOL)isMiniPBCoderCompatibleType:(Class)cls;
+
 @end
 
 #endif

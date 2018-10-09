@@ -30,11 +30,22 @@ using namespace std;
 
 #pragma mark - set & get
 
-- (BOOL)setObject:(id __unsafe_unretained)obj forKey:(NSString *__unsafe_unretained)key {
-	if (obj == nil || key.length <= 0) {
+- (BOOL)setObject:(id __unsafe_unretained)object forKey:(NSString *__unsafe_unretained)key {
+	if (object == nil || key.length <= 0) {
 		return FALSE;
 	}
-	auto data = [MiniPBCoder encodeDataWithObject:obj];
+
+	MMBuffer data;
+	if([MiniPBCoder isMiniPBCoderCompatibleObject:object]) {
+		data.swap([MiniPBCoder encodeDataWithObject:object]);
+	} else {
+		if ([[object class] conformsToProtocol:@protocol(NSCoding)]) {
+			NSData *tmp = [NSKeyedArchiver archivedDataWithRootObject:object];
+			// Is there any better way to get memory from NSData by moving, without copying?
+			MMBuffer buf((void*)tmp.bytes, tmp.length);
+			data.swap(std::move(buf));
+		}
+	}
 	return [self setData:data forKey:key];
 }
 
@@ -116,7 +127,14 @@ using namespace std;
 	}
 	auto data = [self getDataForKey:key];
 	if (data.length() > 0) {
-		return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
+		if ([MiniPBCoder isMiniPBCoderCompatibleType:cls]) {
+			return [MiniPBCoder decodeObjectOfClass:cls fromData:data];
+		} else {
+			if([cls conformsToProtocol:@protocol(NSCoding)]) {
+				NSData *tmp = [NSData dataWithBytesNoCopy:data.getPtr() length:data.length() freeWhenDone:NO];
+				return [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
+			}
+		}
 	}
 	return nil;
 }
