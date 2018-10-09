@@ -24,6 +24,8 @@
 #import <list>
 #import <unordered_map>
 
+// a generic LRU-Cache
+// if the amount of items is huge, replace std::unordered_map with tsl::hopscotch_map (currently not necessary inside MMKV)
 template <typename Key_t, typename Value_t>
 class LRUCache {
     size_t m_capacity;

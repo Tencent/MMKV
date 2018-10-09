@@ -55,15 +55,13 @@ struct KeyHolderEqualFunctor {
     }
 };
 
+// an ordered kv container
 class KVItemsWrap {
+	// randomly deleting items from an array is unacceptable, here comes the lazy deleting
     DynamicBitset m_deleteMark;
     std::vector<KeyValueHolder> m_vector;
-    tsl::hopscotch_map<KeyHolder,
-                       size_t,
-                       KeyHolderHashFunctor,
-                       std::equal_to<>,
-                       std::allocator<std::pair<KeyHolder, size_t>> /*, 30, true*/>
-        m_dictionary;
+	// a faster unordered_map
+    tsl::hopscotch_map<KeyHolder, size_t, KeyHolderHashFunctor /*, std::equal_to<>, std::allocator<std::pair<KeyHolder, size_t>>, 30, true*/> m_dictionary;
 
 public:
     KVItemsWrap() {}
@@ -86,6 +84,8 @@ public:
 
     inline size_t size() const { return m_dictionary.size(); }
 
+	// compact internal containers by removing deleted items
+	// return [startIndex, endIndex) of nearby items that can be handled together by memmove
     std::vector<std::pair<size_t, size_t>> mergeNearbyItems();
 
 private:

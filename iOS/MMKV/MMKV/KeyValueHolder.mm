@@ -35,7 +35,6 @@ void KVItemsWrap::emplace(KeyHolder &&key, KeyValueHolder &&value) {
 		m_deleteMark.set(oldValue);
 		ret.first.value() = index;
 	}
-	//assert(m_vector.size() != m_dictionary.size() + m_deleteMark.popCount(m_vector.size()));
 }
 
 void KVItemsWrap::erase(const KeyHolder &key) {
@@ -45,7 +44,6 @@ void KVItemsWrap::erase(const KeyHolder &key) {
 		m_deleteMark.set(oldValue);
 		m_dictionary.erase(itr);
 	}
-	//assert(m_vector.size() == m_dictionary.size() + m_deleteMark.popCount(m_vector.size()));
 }
 
 void KVItemsWrap::erase(NSString *__unsafe_unretained nsKey) {
@@ -79,6 +77,7 @@ KeyValueHolder *KVItemsWrap::find(NSString *__unsafe_unretained nsKey) {
 	return this->find(key);
 }
 
+// TODO: encryption handling
 vector<pair<size_t, size_t>> KVItemsWrap::mergeNearbyItems() {
 	if (m_deleteMark.any()) {
 		vector<int32_t> moveDiff(m_vector.size(), 0);
@@ -107,7 +106,6 @@ vector<pair<size_t, size_t>> KVItemsWrap::mergeNearbyItems() {
 		}
 
 		// delete [emptyPos, end)
-		//assert(m_vector.size() == emptyPos + m_deleteMark.popCount(m_vector.size()));
 		if (emptyPos < m_vector.size()) {
 			m_vector.erase(m_vector.begin() + emptyPos, m_vector.end());
 		}

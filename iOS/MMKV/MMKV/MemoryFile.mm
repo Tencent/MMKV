@@ -284,7 +284,7 @@ uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
 	return digest;
 }
 
-bool MemoryFile::memcpy(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr) {
+bool MemoryFile::memmove(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr) {
 	if (targetOffset >= m_size || sourceOffset >= m_size || m_size - targetOffset < size || m_size - sourceOffset < size) {
 		return false;
 	}
@@ -311,7 +311,7 @@ bool MemoryFile::memcpy(size_t targetOffset, size_t sourceOffset, size_t size, u
 		size_t sourceSize = sourceSegment->offset + sourceSegment->size - sourceOffset;
 
 		size_t copySize = min({targetSize, sourceSize, size});
-		::memcpy(targetPtr, sourcePtr, copySize);
+		::memmove(targetPtr, sourcePtr, copySize);
 
 		size -= copySize;
 		targetOffset += copySize;

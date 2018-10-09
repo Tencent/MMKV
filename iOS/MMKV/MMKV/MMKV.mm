@@ -422,7 +422,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
     for (auto segment : arrMergedItems) {
         auto &first = m_kvItemsWrap[segment.first], &last = m_kvItemsWrap[segment.second];
         auto size = last.end() - first.offset;
-        if (!m_memoryFile->memcpy(position, first.offset, size)) {
+        if (!m_memoryFile->memmove(position, first.offset, size)) {
             MMKVError(@"fail to move to position %zu from %u with size %zu", position, first.offset, size);
             return NO;
         }

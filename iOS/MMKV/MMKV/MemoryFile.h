@@ -89,7 +89,7 @@ public:
 
     bool write(size_t offset, const void *source, size_t size);
 
-    bool memcpy(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr = nullptr);
+    bool memmove(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr = nullptr);
 
     bool truncate(size_t size);
 
