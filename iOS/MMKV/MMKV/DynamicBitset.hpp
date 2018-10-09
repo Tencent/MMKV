@@ -36,7 +36,7 @@ class DynamicBitset {
     }
 
 public:
-    DynamicBitset() { resize(1024); }
+    DynamicBitset(size_t size = 1024) { resize(size); }
 
     size_t size() const { return m_size; }
 
@@ -74,9 +74,9 @@ public:
 
     size_t popCount(size_t index) const {
         size_t count = 0;
-        for (size_t i = 0, end = (std::min(m_size, index) + CellBitSize - 1) / CellBitSize; i < end;
-             i++) {
-            count += __builtin_popcountll(m_vector[i]);
+        for (size_t index = 0, end = (std::min(m_size, index) + CellBitSize - 1) / CellBitSize; index < end;
+             index++) {
+            count += __builtin_popcountll(m_vector[index]);
         }
         return count;
     }
