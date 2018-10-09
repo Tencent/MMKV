@@ -60,6 +60,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
+        verifyMMID(mmapID);
 
         long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null);
         return new MMKV(handle);
@@ -69,6 +70,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
+        verifyMMID(mmapID);
 
         long handle = getMMKVWithID(mmapID, mode, null);
         return new MMKV(handle);
@@ -79,6 +81,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
+        verifyMMID(mmapID);
 
         long handle = getMMKVWithID(mmapID, mode, cryptKey);
         return new MMKV(handle);
@@ -92,6 +95,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
+        verifyMMID(mmapID);
 
         String processName =
             MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
@@ -135,6 +139,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             return new MMKV(handle);
         }
         return null;
+    }
+
+    private static void verifyMMID(String mmapID) {
+        if (mmapID.indexOf('/') >= 0) {
+            throw new IllegalArgumentException("\"/\" is not allowed inside mmapID");
+        }
     }
 
     public static MMKV defaultMMKV() {
