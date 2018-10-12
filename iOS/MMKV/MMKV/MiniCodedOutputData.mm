@@ -123,7 +123,6 @@ MMBuffer MiniCodedOutputData::writeString(__unsafe_unretained NSString *value, s
 			if (m_curSegment && m_curSegment->inside(oldPosition, m_position - oldPosition)) {
 				auto ptr = m_curSegment->ptr + (oldPosition - m_curSegment->offset);
 				crcDigest = (uint32_t) crc32(crcDigest, ptr, (uInt)(m_position - oldPosition));
-				//				crcDigest = (uint32_t) crc32_fast(ptr, m_position - oldPosition, crcDigest);
 			} else {
 				crcDigest = m_memoryFile->crc32(crcDigest, oldPosition, m_position - oldPosition);
 			}
@@ -146,7 +145,6 @@ void MiniCodedOutputData::writeData(const MMBuffer &value, uint32_t *crcDigest) 
 			if (m_curSegment && m_curSegment->inside(oldPosition, m_position - oldPosition)) {
 				auto ptr = m_curSegment->ptr + (oldPosition - m_curSegment->offset);
 				*crcDigest = (uint32_t) crc32(*crcDigest, ptr, (uInt)(m_position - oldPosition));
-				//				*crcDigest = (uint32_t) crc32_fast(ptr, (m_position - oldPosition), *crcDigest);
 			} else {
 				*crcDigest = m_memoryFile->crc32(*crcDigest, oldPosition, m_position - oldPosition);
 			}
