@@ -59,8 +59,8 @@ NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.10'
-    // replace "1.0.10" with any available version
+    implementation 'com.tencent:mmkv:1.0.11'
+    // replace "1.0.11" with any available version
 }
 ```
 
@@ -106,6 +106,9 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](htt
 
 ## License
 MMKV 以 BSD 3-Clause 证书开源，详情参见 [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)。
+
+## 版本历史
+具体版本历史请参看 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## 参与贡献如果你有兴趣参与贡献，可以参考 [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md)。[腾讯开源激励计划](https://opensource.tencent.com/contribution) 鼓励开发者的参与和贡献，期待你的加入。
 ## 问题 & 反馈
