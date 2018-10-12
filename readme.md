@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.txt)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.0.10-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-1.0.11-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./readme_cn.md)
@@ -75,8 +75,8 @@ Add the following lines to `build.gradle` on your app module:
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.10'
-    // replace "1.0.10" with any available version
+    implementation 'com.tencent:mmkv:1.0.11'
+    // replace "1.0.11" with any available version
 }
 ```
 
@@ -122,6 +122,9 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 
 ## License
 MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).
+
+## Change Log
+Check out the [CHANGELOG.md](./CHANGELOG.md) for details of change history.
 
 ## Contributing
 
