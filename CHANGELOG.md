@@ -1,6 +1,6 @@
-#MMKV Change Log
+# MMKV Change Log
 
-##v1.0.11 / 2018-10-12
+## v1.0.11 / 2018-10-12
 ### iOS / macOS
 What's new  
 
@@ -29,6 +29,6 @@ MMKV does type erasure while storing values. That means it's hard for MMKV to do
 * `registerOnSharedPreferenceChangeListener` not supported.  
 This is intended. We believe doing data-change-listener inside a storage framework smells really bad to us. We suggest using something like event-bus to notify any interesting clients.
 
-##v1.0.10 / 2018-09-21  
+## v1.0.10 / 2018-09-21  
 
  * Initial Release
