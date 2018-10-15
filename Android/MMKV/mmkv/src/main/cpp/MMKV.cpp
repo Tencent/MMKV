@@ -29,7 +29,10 @@
 #include "PBUtility.h"
 #include "ScopedLock.hpp"
 #include "aes/AESCrypt.h"
+#include "aes/openssl/md5.h"
 #include <algorithm>
+#include <cstring>
+#include <cstdio>
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -52,6 +55,7 @@ constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode);
 static string crcPathWithID(const string &mmapID, MMKVMode mode);
 static void mkSpecialCharacterFileDirectory();
+static void md5(string &value);
 static string encodeFilePath(const string &mmapID);
 
 enum : bool {
@@ -1213,14 +1217,27 @@ static void mkSpecialCharacterFileDirectory() {
     free(path);
 }
 
+static void md5(string &value) {
+    unsigned char md[MD5_DIGEST_LENGTH];
+    char tmp[3] = {'\0'}, buf[33] = {'\0'};
+    MD5((const unsigned char *)value.c_str(), value.size(), md);
+    for(int i = 0;i < MD5_DIGEST_LENGTH;i++)
+    {
+        sprintf(tmp, "%2.2x", md[i]);
+        strcat(buf, tmp);
+    }
+    value = buf;
+}
+
 static string encodeFilePath(const string &mmapID) {
 	const char *specialCharacters = "\\/:*?\"<>|";
 	string filePath(mmapID);
 	bool hasSpecialCharacter = false;
 	for (int i = 0; i < filePath.size(); i++) {
 		if (strchr(specialCharacters, filePath[i]) != NULL) {
-			filePath[i] = '_';
+            md5(filePath);
 			hasSpecialCharacter = true;
+			break;
 		}
 	}
 	if (hasSpecialCharacter) {
