@@ -1230,22 +1230,22 @@ static void md5(string &value) {
 }
 
 static string encodeFilePath(const string &mmapID) {
-	const char *specialCharacters = "\\/:*?\"<>|";
-	string filePath(mmapID);
-	bool hasSpecialCharacter = false;
-	for (int i = 0; i < filePath.size(); i++) {
-		if (strchr(specialCharacters, filePath[i]) != NULL) {
+    const char *specialCharacters = "\\/:*?\"<>|";
+    string filePath(mmapID);
+    bool hasSpecialCharacter = false;
+    for (int i = 0; i < filePath.size(); i++) {
+        if (strchr(specialCharacters, filePath[i]) != NULL) {
             md5(filePath);
-			hasSpecialCharacter = true;
-			break;
-		}
-	}
-	if (hasSpecialCharacter) {
-		static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-		pthread_once(&once_control, mkSpecialCharacterFileDirectory);
-		return SPECIAL_CHARACTER_DIRECTORY_NAME + "/" + filePath;
-	}
-	return filePath;
+            hasSpecialCharacter = true;
+            break;
+        }
+    }
+    if (hasSpecialCharacter) {
+        static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+        pthread_once(&once_control, mkSpecialCharacterFileDirectory);
+        return SPECIAL_CHARACTER_DIRECTORY_NAME + "/" + filePath;
+    }
+    return filePath;
 }
 
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
