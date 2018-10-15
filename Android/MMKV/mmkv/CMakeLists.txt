@@ -47,6 +47,11 @@ add_library( # Sets the name of the library.
              src/main/cpp/aes/openssl/cfb128.c
              src/main/cpp/aes/openssl/modes.h
              src/main/cpp/aes/openssl/opensslconf.h
+             src/main/cpp/aes/openssl/md5_dgst.c
+             src/main/cpp/aes/openssl/md5_locl.h
+             src/main/cpp/aes/openssl/md5_one.c
+             src/main/cpp/aes/openssl/md5.h
+             src/main/cpp/aes/openssl/md32_common.h
              )
 
 # Searches for a specified prebuilt library and stores the path as a
