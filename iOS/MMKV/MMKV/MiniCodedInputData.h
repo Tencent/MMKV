@@ -26,54 +26,54 @@
 #import <memory>
 
 class MiniCodedInputData {
-    uint8_t *m_ptr;
-    size_t m_size;
-    size_t m_position;
-    MemoryFile *m_memoryFile;
-    std::shared_ptr<MemoryFile::Segment> m_curSegment;
+	uint8_t *m_ptr;
+	size_t m_size;
+	size_t m_position;
+	MemoryFile *m_memoryFile;
+	std::shared_ptr<MemoryFile::Segment> m_curSegment;
 
-    int8_t readRawByte();
+	int8_t readRawByte();
 
-    int32_t readRawVarint32();
+	int32_t readRawVarint32();
 
-    int64_t readRawVarint64();
+	int64_t readRawVarint64();
 
-    int32_t readRawLittleEndian32();
+	int32_t readRawLittleEndian32();
 
-    int64_t readRawLittleEndian64();
+	int64_t readRawLittleEndian64();
 
 public:
-    MiniCodedInputData(MMBuffer &oData);
+	MiniCodedInputData(MMBuffer &oData);
 
-    MiniCodedInputData(MemoryFile *memoryFile, size_t offset = 0, size_t size = 0);
+	MiniCodedInputData(MemoryFile *memoryFile, size_t offset = 0, size_t size = 0);
 
-    ~MiniCodedInputData();
+	~MiniCodedInputData();
 
-    bool isAtEnd() { return m_position == m_size; };
+	bool isAtEnd() { return m_position == m_size; };
 
-    BOOL readBool();
+	BOOL readBool();
 
-    Float64 readDouble();
+	Float64 readDouble();
 
-    Float32 readFloat();
+	Float32 readFloat();
 
-    uint64_t readUInt64();
+	uint64_t readUInt64();
 
-    uint32_t readUInt32();
+	uint32_t readUInt32();
 
-    int64_t readInt64();
+	int64_t readInt64();
 
-    int32_t readInt32();
+	int32_t readInt32();
 
-    int32_t readFixed32();
+	int32_t readFixed32();
 
-    NSString *readString();
+	NSString *readString();
 
-    MMBuffer readString(KeyValueHolder &kvHolder);
+	MMBuffer readString(KeyValueHolder &kvHolder);
 
-    NSData *readData();
+	NSData *readData();
 
-    bool readDataHolder(KeyValueHolder &kvHolder);
+	bool readDataHolder(KeyValueHolder &kvHolder);
 };
 
 #endif

@@ -1663,13 +1663,13 @@ private:
                 }
                 neighborhood_infos &= ~1;
             }
-			uint32_t index = 0;
-			if constexpr (sizeof(uint64_t) == sizeof(neighborhood_infos)) {
-				index = __builtin_ctzll(neighborhood_infos);
-			} else {
-				index = __builtin_ctz(neighborhood_infos);
-			}
-			neighborhood_infos = neighborhood_bitmap(neighborhood_infos >> index);
+            uint32_t index = 0;
+            if constexpr (sizeof(uint64_t) == sizeof(neighborhood_infos)) {
+                index = __builtin_ctzll(neighborhood_infos);
+            } else {
+                index = __builtin_ctz(neighborhood_infos);
+            }
+            neighborhood_infos = neighborhood_bitmap(neighborhood_infos >> index);
             bucket_for_hash += index;
         }
 

@@ -74,8 +74,8 @@ public:
 
     size_t popCount(size_t index) const {
         size_t count = 0;
-        for (size_t index = 0, end = (std::min(m_size, index) + CellBitSize - 1) / CellBitSize; index < end;
-             index++) {
+        for (size_t index = 0, end = (std::min(m_size, index) + CellBitSize - 1) / CellBitSize;
+             index < end; index++) {
             count += __builtin_popcountll(m_vector[index]);
         }
         return count;

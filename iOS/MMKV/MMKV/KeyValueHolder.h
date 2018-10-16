@@ -28,68 +28,68 @@
 
 #pragma pack(push, 1)
 struct KeyValueHolder {
-    uint32_t offset;
-    uint32_t keySize : 10;
-    uint32_t valueSize : 22;
+	uint32_t offset;
+	uint32_t keySize : 10;
+	uint32_t valueSize : 22;
 
-    inline size_t end() const { return offset + keySize + valueSize; }
+	inline size_t end() const { return offset + keySize + valueSize; }
 
-    inline bool operator<(const KeyValueHolder &other) const { return (offset < other.offset); }
+	inline bool operator<(const KeyValueHolder &other) const { return (offset < other.offset); }
 };
 #pragma pack(pop)
 
 typedef MMBuffer KeyHolder;
 struct KeyHolderHashFunctor {
-    size_t operator()(const KeyHolder &key) const {
-        return static_cast<size_t>(CityHash64((const char *) key.getPtr(), key.length()));
-    }
+	size_t operator()(const KeyHolder &key) const {
+		return static_cast<size_t>(CityHash64((const char *) key.getPtr(), key.length()));
+	}
 };
 
 struct KeyHolderEqualFunctor {
-    bool operator()(const KeyHolder &left, const KeyHolder &right) const {
-        auto leftLength = left.length(), rightLength = right.length();
-        if (leftLength != rightLength) {
-            return false;
-        }
-        return (memcmp(left.getPtr(), right.getPtr(), leftLength) == 0);
-    }
+	bool operator()(const KeyHolder &left, const KeyHolder &right) const {
+		auto leftLength = left.length(), rightLength = right.length();
+		if (leftLength != rightLength) {
+			return false;
+		}
+		return (memcmp(left.getPtr(), right.getPtr(), leftLength) == 0);
+	}
 };
 
 // an ordered kv container
 class KVItemsWrap {
 	// randomly deleting items from an array is unacceptable, here comes the lazy deleting
-    DynamicBitset m_deleteMark;
-    std::vector<KeyValueHolder> m_vector;
+	DynamicBitset m_deleteMark;
+	std::vector<KeyValueHolder> m_vector;
 	// a faster unordered_map
-    tsl::hopscotch_map<KeyHolder, size_t, KeyHolderHashFunctor /*, std::equal_to<>, std::allocator<std::pair<KeyHolder, size_t>>, 30, true*/> m_dictionary;
+	tsl::hopscotch_map<KeyHolder, size_t, KeyHolderHashFunctor /*, std::equal_to<>, std::allocator<std::pair<KeyHolder, size_t>>, 30, true*/> m_dictionary;
 
 public:
-    KVItemsWrap() {}
+	KVItemsWrap() {}
 
-    void emplace(KeyHolder &&key, KeyValueHolder &&value);
+	void emplace(KeyHolder &&key, KeyValueHolder &&value);
 
-    void erase(const KeyHolder &key);
-    void erase(NSString *__unsafe_unretained nsKey);
+	void erase(const KeyHolder &key);
+	void erase(NSString *__unsafe_unretained nsKey);
 
-    KeyValueHolder *find(const KeyHolder &key);
-    KeyValueHolder *find(NSString *__unsafe_unretained nsKey);
+	KeyValueHolder *find(const KeyHolder &key);
+	KeyValueHolder *find(NSString *__unsafe_unretained nsKey);
 
-    inline void clear() {
-        m_vector.clear();
-        m_dictionary.clear();
-        m_deleteMark.reset();
-    }
+	inline void clear() {
+		m_vector.clear();
+		m_dictionary.clear();
+		m_deleteMark.reset();
+	}
 
-    inline KeyValueHolder &operator[](size_t index) { return m_vector[index]; }
+	inline KeyValueHolder &operator[](size_t index) { return m_vector[index]; }
 
-    inline size_t size() const { return m_dictionary.size(); }
+	inline size_t size() const { return m_dictionary.size(); }
 
 	// compact internal containers by removing deleted items
 	// return [startIndex, endIndex) of nearby items that can be handled together by memmove
-    std::vector<std::pair<size_t, size_t>> mergeNearbyItems();
+	std::vector<std::pair<size_t, size_t>> mergeNearbyItems();
 
 private:
-    // just forbid it for possibly misuse
-    KVItemsWrap(const KVItemsWrap &other) = delete;
-    KVItemsWrap &operator=(const KVItemsWrap &other) = delete;
+	// just forbid it for possibly misuse
+	KVItemsWrap(const KVItemsWrap &other) = delete;
+	KVItemsWrap &operator=(const KVItemsWrap &other) = delete;
 };

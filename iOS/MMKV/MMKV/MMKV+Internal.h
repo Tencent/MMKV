@@ -53,8 +53,8 @@ constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
 	size_t m_size;
 	size_t m_actualSize;
 	MiniCodedOutputData *m_output;
-    // TODO: encryption
-    AESCrypt *m_cryptor;
+	// TODO: encryption
+	AESCrypt *m_cryptor;
 
 	MemoryFile *m_memoryFile;
 	std::shared_ptr<MemoryFile::Segment> m_headSegmemt;

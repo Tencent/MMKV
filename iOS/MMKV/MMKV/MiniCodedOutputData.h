@@ -27,60 +27,60 @@
 #import <memory>
 
 class MiniCodedOutputData {
-    uint8_t *m_ptr;
-    size_t m_size;
-    size_t m_position;
-    MemoryFile *m_memoryFile;
-    std::shared_ptr<MemoryFile::Segment> m_curSegment;
+	uint8_t *m_ptr;
+	size_t m_size;
+	size_t m_position;
+	MemoryFile *m_memoryFile;
+	std::shared_ptr<MemoryFile::Segment> m_curSegment;
 
-    void writeRawByte(uint8_t value);
+	void writeRawByte(uint8_t value);
 
-    void writeRawLittleEndian32(int32_t value);
+	void writeRawLittleEndian32(int32_t value);
 
-    void writeRawLittleEndian64(int64_t value);
+	void writeRawLittleEndian64(int64_t value);
 
-    void writeRawVarint64(int64_t value);
+	void writeRawVarint64(int64_t value);
 
 public:
-    MiniCodedOutputData(void *ptr, size_t len);
+	MiniCodedOutputData(void *ptr, size_t len);
 
-    MiniCodedOutputData(MMBuffer &oData);
+	MiniCodedOutputData(MMBuffer &oData);
 
-    MiniCodedOutputData(MemoryFile *memoryFile, size_t offset = 0);
+	MiniCodedOutputData(MemoryFile *memoryFile, size_t offset = 0);
 
-    ~MiniCodedOutputData();
+	~MiniCodedOutputData();
 
-    size_t spaceLeft() const { return m_size - m_position; }
+	size_t spaceLeft() const { return m_size - m_position; }
 
-    void seek(size_t addedSize);
+	void seek(size_t addedSize);
 
-    void writeBool(BOOL value);
+	void writeBool(BOOL value);
 
-    void writeRawVarint32(int32_t value);
+	void writeRawVarint32(int32_t value);
 
-    void writeInt32(int32_t value);
+	void writeInt32(int32_t value);
 
-    void writeInt64(int64_t value);
+	void writeInt64(int64_t value);
 
-    void writeFloat(Float32 value);
+	void writeFloat(Float32 value);
 
-    void writeUInt32(uint32_t value);
+	void writeUInt32(uint32_t value);
 
-    void writeUInt64(uint64_t value);
+	void writeUInt64(uint64_t value);
 
-    void writeFixed32(int32_t value);
+	void writeFixed32(int32_t value);
 
-    void writeDouble(Float64 value);
+	void writeDouble(Float64 value);
 
-    void writeString(__unsafe_unretained NSString *value, size_t length);
+	void writeString(__unsafe_unretained NSString *value, size_t length);
 
-    MMBuffer writeString(__unsafe_unretained NSString *value, size_t length, uint32_t &crcDigest);
+	MMBuffer writeString(__unsafe_unretained NSString *value, size_t length, uint32_t &crcDigest);
 
-    void writeRawData(__unsafe_unretained NSData *data);
+	void writeRawData(__unsafe_unretained NSData *data);
 
-    void writeRawData(const MMBuffer &data);
+	void writeRawData(const MMBuffer &data);
 
-    void writeData(const MMBuffer &value, uint32_t *crcDigest = nullptr);
+	void writeData(const MMBuffer &value, uint32_t *crcDigest = nullptr);
 };
 
 #endif

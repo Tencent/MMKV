@@ -28,74 +28,74 @@
 extern const int DEFAULT_MMAP_SIZE;
 
 class MemoryFile {
-    NSString *m_name;
-    int m_fd;
-    size_t m_size;
+	NSString *m_name;
+	int m_fd;
+	size_t m_size;
 
 public:
-    struct Segment {
-        uint8_t *ptr;
-        size_t size;
-        size_t offset;
+	struct Segment {
+		uint8_t *ptr;
+		size_t size;
+		size_t offset;
 
-        Segment(void *source, size_t size, size_t offset) noexcept;
-        Segment(Segment &&other) noexcept;
-        ~Segment();
+		Segment(void *source, size_t size, size_t offset) noexcept;
+		Segment(Segment &&other) noexcept;
+		~Segment();
 
-        void zeroFill();
+		void zeroFill();
 
-        inline bool inside(size_t offset) const {
-            return offset >= this->offset && offset < this->offset + this->size;
-        }
-        inline bool inside(size_t offset, size_t size) const {
-            return offset >= this->offset && offset + size <= this->offset + this->size;
-        }
+		inline bool inside(size_t offset) const {
+			return offset >= this->offset && offset < this->offset + this->size;
+		}
+		inline bool inside(size_t offset, size_t size) const {
+			return offset >= this->offset && offset + size <= this->offset + this->size;
+		}
 
-    private:
-        // just forbid it for possibly misuse
-        Segment(const Segment &other) = delete;
-        Segment &operator=(const Segment &other) = delete;
-    };
+	private:
+		// just forbid it for possibly misuse
+		Segment(const Segment &other) = delete;
+		Segment &operator=(const Segment &other) = delete;
+	};
 
 private:
-    std::shared_ptr<Segment> m_ptr;
-    uint32_t offset2index(size_t offset) const;
-    // index -> segment
-    LRUCache<uint32_t, std::shared_ptr<Segment>> m_segmentCache;
-    void prepareSegments();
+	std::shared_ptr<Segment> m_ptr;
+	uint32_t offset2index(size_t offset) const;
+	// index -> segment
+	LRUCache<uint32_t, std::shared_ptr<Segment>> m_segmentCache;
+	void prepareSegments();
 
-    Segment *internalTryGetSegment(uint32_t index);
+	Segment *internalTryGetSegment(uint32_t index);
 
-    // just forbid it for possibly misuse
-    MemoryFile(const MemoryFile &other) = delete;
-    MemoryFile &operator=(const MemoryFile &other) = delete;
+	// just forbid it for possibly misuse
+	MemoryFile(const MemoryFile &other) = delete;
+	MemoryFile &operator=(const MemoryFile &other) = delete;
 
-    friend class MiniCodedInputData;
-    friend class MiniCodedOutputData;
+	friend class MiniCodedInputData;
+	friend class MiniCodedOutputData;
 
 public:
-    MemoryFile(NSString *path);
-    ~MemoryFile();
+	MemoryFile(NSString *path);
+	~MemoryFile();
 
-    size_t getFileSize() { return m_size; }
+	size_t getFileSize() { return m_size; }
 
-    NSString *getName() { return m_name; }
+	NSString *getName() { return m_name; }
 
-    int getFd() { return m_fd; }
+	int getFd() { return m_fd; }
 
-    std::shared_ptr<Segment> tryGetSegment(uint32_t index);
+	std::shared_ptr<Segment> tryGetSegment(uint32_t index);
 
-    MMBuffer read(size_t offset, size_t size);
+	MMBuffer read(size_t offset, size_t size);
 
-    bool write(size_t offset, const void *source, size_t size);
+	bool write(size_t offset, const void *source, size_t size);
 
-    bool memmove(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr = nullptr);
+	bool memmove(size_t targetOffset, size_t sourceOffset, size_t size, uint32_t *crcPtr = nullptr);
 
-    bool truncate(size_t size);
+	bool truncate(size_t size);
 
-    uint32_t crc32(uint32_t digest, size_t offset, size_t size);
+	uint32_t crc32(uint32_t digest, size_t offset, size_t size);
 
-    void sync(int syncFlag);
+	void sync(int syncFlag);
 };
 
 extern bool isFileExist(NSString *nsFilePath);
