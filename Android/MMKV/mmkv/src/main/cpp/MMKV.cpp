@@ -29,7 +29,10 @@
 #include "PBUtility.h"
 #include "ScopedLock.hpp"
 #include "aes/AESCrypt.h"
+#include "aes/openssl/md5.h"
 #include <algorithm>
+#include <cstring>
+#include <cstdio>
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -46,10 +49,14 @@ static ThreadLock g_instanceLock;
 static std::string g_rootDir;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
+#define SPECIAL_CHARACTER_DIRECTORY_NAME "specialCharacter"
 constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode);
 static string crcPathWithID(const string &mmapID, MMKVMode mode);
+static void mkSpecialCharacterFileDirectory();
+static string md5(const string &value);
+static string encodeFilePath(const string &mmapID);
 
 enum : bool {
     KeepSequence = false,
@@ -1204,11 +1211,51 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     }
 }
 
+static void mkSpecialCharacterFileDirectory() {
+    char *path = strdup((g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());
+    mkPath(path);
+    free(path);
+}
+
+static string md5(const string &value) {
+    unsigned char md[MD5_DIGEST_LENGTH];
+    char tmp[3] = {'\0'}, buf[33] = {'\0'};
+    MD5((const unsigned char *)value.c_str(), value.size(), md);
+    for(int i = 0;i < MD5_DIGEST_LENGTH;i++)
+    {
+        sprintf(tmp, "%2.2x", md[i]);
+        strcat(buf, tmp);
+    }
+    return buf;
+}
+
+static string encodeFilePath(const string &mmapID) {
+    const char *specialCharacters = "\\/:*?\"<>|";
+    string filePath;
+    bool hasSpecialCharacter = false;
+    for (int i = 0; i < filePath.size(); i++) {
+        if (strchr(specialCharacters, filePath[i]) != NULL) {
+            filePath = md5(mmapID);
+            hasSpecialCharacter = true;
+            break;
+        }
+    }
+    if (hasSpecialCharacter) {
+        static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+        pthread_once(&once_control, mkSpecialCharacterFileDirectory);
+        return SPECIAL_CHARACTER_DIRECTORY_NAME + "/" + filePath;
+    }
+    else {
+        return mmapID;
+    }
+    return filePath;
+}
+
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
-    return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + mmapID
-                                     : string(ASHMEM_NAME_DEF) + "/" + mmapID;
+    return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + encodeFilePath(mmapID)
+                                     : string(ASHMEM_NAME_DEF) + "/" + encodeFilePath(mmapID);
 }
 
 static string crcPathWithID(const string &mmapID, MMKVMode mode) {
-    return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + mmapID + ".crc" : mmapID + ".crc";
+    return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + encodeFilePath(mmapID) + ".crc" : encodeFilePath(mmapID) + ".crc";
 }
