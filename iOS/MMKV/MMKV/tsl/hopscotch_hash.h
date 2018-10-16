@@ -1664,6 +1664,7 @@ private:
                 neighborhood_infos &= ~1;
             }
             uint32_t index = 0;
+			// TODO: macOS
             if constexpr (sizeof(uint64_t) == sizeof(neighborhood_infos)) {
                 index = __builtin_ctzll(neighborhood_infos);
             } else {
