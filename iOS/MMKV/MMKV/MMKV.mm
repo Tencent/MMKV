@@ -392,7 +392,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
-	m_isInBackground = YES;
 	if (m_isInBackground) {
 		static const int offset = pbFixed32Size(0);
 		static const int pagesize = getpagesize();
