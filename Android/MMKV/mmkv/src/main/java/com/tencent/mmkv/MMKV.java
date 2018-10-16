@@ -122,7 +122,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                     MMKV mmkv = parcelableMMKV.toMMKV();
                     if (mmkv != null) {
                         System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
-                                + ", meta fd = " + mmkv.ashmemMetaFD());
+                                           + ", meta fd = " + mmkv.ashmemMetaFD());
                     }
                     return mmkv;
                 }

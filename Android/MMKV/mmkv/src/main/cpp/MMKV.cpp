@@ -31,8 +31,8 @@
 #include "aes/AESCrypt.h"
 #include "aes/openssl/md5.h"
 #include <algorithm>
-#include <cstring>
 #include <cstdio>
+#include <cstring>
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -1220,9 +1220,8 @@ static void mkSpecialCharacterFileDirectory() {
 static string md5(const string &value) {
     unsigned char md[MD5_DIGEST_LENGTH];
     char tmp[3] = {'\0'}, buf[33] = {'\0'};
-    MD5((const unsigned char *)value.c_str(), value.size(), md);
-    for(int i = 0;i < MD5_DIGEST_LENGTH;i++)
-    {
+    MD5((const unsigned char *) value.c_str(), value.size(), md);
+    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
         sprintf(tmp, "%2.2x", md[i]);
         strcat(buf, tmp);
     }
@@ -1244,8 +1243,7 @@ static string encodeFilePath(const string &mmapID) {
         static pthread_once_t once_control = PTHREAD_ONCE_INIT;
         pthread_once(&once_control, mkSpecialCharacterFileDirectory);
         return SPECIAL_CHARACTER_DIRECTORY_NAME + "/" + filePath;
-    }
-    else {
+    } else {
         return mmapID;
     }
     return filePath;
@@ -1257,5 +1255,6 @@ static string mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
 }
 
 static string crcPathWithID(const string &mmapID, MMKVMode mode) {
-    return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + encodeFilePath(mmapID) + ".crc" : encodeFilePath(mmapID) + ".crc";
+    return (mode & MMKV_ASHMEM) == 0 ? g_rootDir + "/" + encodeFilePath(mmapID) + ".crc"
+                                     : encodeFilePath(mmapID) + ".crc";
 }

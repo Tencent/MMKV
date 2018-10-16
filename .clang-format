@@ -31,3 +31,4 @@ ObjCBlockIndentWidth: 4
 Language: Java
 ColumnLimit: 100
 AllowShortFunctionsOnASingleLine: None
+BreakBeforeBinaryOperators: NonAssignment
