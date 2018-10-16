@@ -55,7 +55,7 @@ constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode);
 static string crcPathWithID(const string &mmapID, MMKVMode mode);
 static void mkSpecialCharacterFileDirectory();
-static void md5(string &value);
+static string md5(const string &value);
 static string encodeFilePath(const string &mmapID);
 
 enum : bool {
@@ -1217,7 +1217,7 @@ static void mkSpecialCharacterFileDirectory() {
     free(path);
 }
 
-static void md5(string &value) {
+static string md5(const string &value) {
     unsigned char md[MD5_DIGEST_LENGTH];
     char tmp[3] = {'\0'}, buf[33] = {'\0'};
     MD5((const unsigned char *)value.c_str(), value.size(), md);
@@ -1226,16 +1226,16 @@ static void md5(string &value) {
         sprintf(tmp, "%2.2x", md[i]);
         strcat(buf, tmp);
     }
-    value = buf;
+    return buf;
 }
 
 static string encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
-    string filePath(mmapID);
+    string filePath;
     bool hasSpecialCharacter = false;
     for (int i = 0; i < filePath.size(); i++) {
         if (strchr(specialCharacters, filePath[i]) != NULL) {
-            md5(filePath);
+            filePath = md5(mmapID);
             hasSpecialCharacter = true;
             break;
         }
@@ -1244,6 +1244,9 @@ static string encodeFilePath(const string &mmapID) {
         static pthread_once_t once_control = PTHREAD_ONCE_INIT;
         pthread_once(&once_control, mkSpecialCharacterFileDirectory);
         return SPECIAL_CHARACTER_DIRECTORY_NAME + "/" + filePath;
+    }
+    else {
+        return mmapID;
     }
     return filePath;
 }
