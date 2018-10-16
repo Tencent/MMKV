@@ -1242,11 +1242,10 @@ static string encodeFilePath(const string &mmapID) {
     if (hasSpecialCharacter) {
         static pthread_once_t once_control = PTHREAD_ONCE_INIT;
         pthread_once(&once_control, mkSpecialCharacterFileDirectory);
-        return SPECIAL_CHARACTER_DIRECTORY_NAME + "/" + filePath;
+        return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + "/" + filePath;
     } else {
         return mmapID;
     }
-    return filePath;
 }
 
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
