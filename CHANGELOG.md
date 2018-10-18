@@ -1,5 +1,17 @@
 # MMKV Change Log
 
+## v1.0.12 / 2018-10-18
+### iOS / macOS
+What's new  
+
+* Fix `mlock` fail on some devices
+* Fix a performance issue caused by mistakenly merge of test code
+* Fix CocoaPods integration error of **macOS**
+
+### Android 
+MMKV for Android is the same as v1.0.11.
+
+
 ## v1.0.11 / 2018-10-12
 ### iOS / macOS
 What's new  
