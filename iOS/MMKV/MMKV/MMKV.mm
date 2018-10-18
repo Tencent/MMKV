@@ -42,7 +42,7 @@ static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
-#define CRC_FILE_SIZE 4
+#define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
 
 @implementation MMKV {
 	NSRecursiveLock *m_lock;
@@ -168,7 +168,7 @@ static NSRecursiveLock *g_instanceLock;
 	}
 
 	if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
-		munmap(m_crcPtr, pbFixed32Size(0));
+		munmap(m_crcPtr, CRC_FILE_SIZE);
 		m_crcPtr = nullptr;
 	}
 	if (m_crcFd >= 0) {
