@@ -348,7 +348,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return YES;
 	}
 	// avoid frequently full rewrite
-	auto futureUsage = newSize * std::max<size_t>(8, (m_kvItemsWrap.size() + 1) / 2);
+	auto avgItemSize = (m_actualSize + newSize) / (m_kvItemsWrap.size() + 1);
+	auto futureUsage = avgItemSize * std::max<size_t>(8, (m_kvItemsWrap.size() + 1) / 2);
 	if (![self fullWriteback]) {
 		MMKVError(@"fail to fullWriteback [%@] before truncate", m_mmapID);
 		return NO;
