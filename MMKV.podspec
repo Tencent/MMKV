@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKV"
-  s.version      = "1.0.10"
+  s.version      = "1.0.12"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC
@@ -14,8 +14,8 @@ Pod::Spec.new do |s|
   s.license      = { :type => "BSD 3-Clause", :file => "LICENSE.txt"}
   s.author       = { "guoling" => "guoling@tencent.com" }
 
-  s.platform     = :ios, "8.0"
   s.ios.deployment_target = "8.0"
+  s.osx.deployment_target = "10.9"
 
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}", "iOS/MMKV/MMKV/aes/*", "iOS/MMKV/MMKV/aes/openssl/*"

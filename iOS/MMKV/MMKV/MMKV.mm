@@ -24,7 +24,7 @@ static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
-#define CRC_FILE_SIZE 4
+#define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
 
 @implementation MMKV
 
@@ -129,7 +129,7 @@ static NSRecursiveLock *g_instanceLock;
 	}
 
 	if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
-		munmap(m_crcPtr, Fixed32Size);
+		munmap(m_crcPtr, CRC_FILE_SIZE);
 		m_crcPtr = nullptr;
 	}
 	if (m_crcFd >= 0) {
@@ -331,7 +331,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
     } else {
         block(m_output);
     }
-
 	return YES;
 }*/
 
@@ -404,7 +403,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		auto &first = m_kvItemsWrap[segment.first], &last = m_kvItemsWrap[segment.second];
 		itemSize += last.end() - first.offset;
 	}
-
 	auto sizeNeeded = Fixed32Size + itemSize + ItemSizeHolderSize;
 	if (sizeNeeded > m_size) {
 		MMKVError(@"this should never happen, sizeNeeded %zu > m_size %zu", sizeNeeded, m_size);
