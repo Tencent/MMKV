@@ -239,7 +239,8 @@ using namespace std;
 }
 
 - (void)testNSDictionary {
-	NSDictionary *dic = @{@"key1" : @"value1", @"key2" : @(2)};
+	NSDictionary *dic = @{@"key1" : @"value1",
+		                  @"key2" : @(2)};
 	BOOL ret = [mmkv setObject:dic forKey:@"dictionary"];
 	XCTAssertTrue(ret);
 
@@ -249,7 +250,8 @@ using namespace std;
 }
 
 - (void)testNSMutableDictionary {
-	NSMutableDictionary *dic = [@{@"key1" : @"value1", @"key2" : @(2)} mutableCopy];
+	NSMutableDictionary *dic = [@{@"key1" : @"value1",
+		                          @"key2" : @(2)} mutableCopy];
 	BOOL ret = [mmkv setObject:dic forKey:@"dictionary"];
 	XCTAssertTrue(ret);
 

@@ -32,6 +32,7 @@
 #import <UIKit/UIKit.h>
 #endif
 
+#include "aes/openssl/md5.h"
 #import <algorithm>
 #import <sys/mman.h>
 #import <sys/stat.h>
@@ -43,6 +44,9 @@ static NSRecursiveLock *g_instanceLock;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
+#define SPECIAL_CHARACTER_DIRECTORY_NAME @"specialCharacter"
+
+static NSString *encodeMmapID(NSString *mmapID);
 
 @implementation MMKV {
 	NSRecursiveLock *m_lock;
@@ -71,7 +75,7 @@ static NSRecursiveLock *g_instanceLock;
 	if (self == MMKV.class) {
 		g_instanceDic = [NSMutableDictionary dictionary];
 		g_instanceLock = [[NSRecursiveLock alloc] init];
-		
+
 		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 	}
 }
@@ -1139,7 +1143,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *nsLibraryPath = (NSString *) [paths firstObject];
 	if ([nsLibraryPath length] > 0) {
-		return [nsLibraryPath stringByAppendingFormat:@"/mmkv/%@", mmapID];
+		return [nsLibraryPath stringByAppendingFormat:@"/mmkv/%@", encodeMmapID(mmapID)];
 	} else {
 		return @"";
 	}
@@ -1192,3 +1196,25 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 @end
+
+static NSString *md5(NSString *value) {
+	unsigned char md[MD5_DIGEST_LENGTH] = {0};
+	char tmp[3] = {0}, buf[33] = {0};
+	MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
+	for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+		sprintf(tmp, "%2.2x", md[i]);
+		strcat(buf, tmp);
+	}
+	return [NSString stringWithCString:buf encoding:NSASCIIStringEncoding];
+}
+
+static NSString *encodeMmapID(NSString *mmapID) {
+	static NSCharacterSet *specialCharacters = [NSCharacterSet characterSetWithCharactersInString:@"\\/:*?\"<>|"];
+	auto range = [mmapID rangeOfCharacterFromSet:specialCharacters];
+	if (range.location != NSNotFound) {
+		NSString *encodedID = md5(mmapID);
+		return [SPECIAL_CHARACTER_DIRECTORY_NAME stringByAppendingFormat:@"/%@", encodedID];
+	} else {
+		return mmapID;
+	}
+}

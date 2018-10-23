@@ -1218,8 +1218,8 @@ static void mkSpecialCharacterFileDirectory() {
 }
 
 static string md5(const string &value) {
-    unsigned char md[MD5_DIGEST_LENGTH];
-    char tmp[3] = {'\0'}, buf[33] = {'\0'};
+    unsigned char md[MD5_DIGEST_LENGTH] = {0};
+    char tmp[3] = {0}, buf[33] = {0};
     MD5((const unsigned char *) value.c_str(), value.size(), md);
     for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
         sprintf(tmp, "%2.2x", md[i]);
@@ -1230,11 +1230,11 @@ static string md5(const string &value) {
 
 static string encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
-    string filePath;
+    string encodedID;
     bool hasSpecialCharacter = false;
-    for (int i = 0; i < filePath.size(); i++) {
-        if (strchr(specialCharacters, filePath[i]) != NULL) {
-            filePath = md5(mmapID);
+    for (int i = 0; i < mmapID.size(); i++) {
+        if (strchr(specialCharacters, mmapID[i]) != NULL) {
+            encodedID = md5(mmapID);
             hasSpecialCharacter = true;
             break;
         }
@@ -1242,7 +1242,7 @@ static string encodeFilePath(const string &mmapID) {
     if (hasSpecialCharacter) {
         static pthread_once_t once_control = PTHREAD_ONCE_INIT;
         pthread_once(&once_control, mkSpecialCharacterFileDirectory);
-        return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + "/" + filePath;
+        return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + "/" + encodedID;
     } else {
         return mmapID;
     }

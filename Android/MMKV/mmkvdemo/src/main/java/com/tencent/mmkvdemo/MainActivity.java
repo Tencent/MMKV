@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        testMMKV("testAES", "Tencent MMKV", false);
+        testMMKV("test/AES", "Tencent MMKV", false);
         testAshmem();
         testReKey();
 

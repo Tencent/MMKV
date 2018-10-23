@@ -56,7 +56,7 @@
 }
 
 - (void)funcionalTest {
-	MMKV *mmkv = [MMKV defaultMMKV];
+	MMKV *mmkv = [MMKV mmkvWithID:@"test/case1"];
 
 	[mmkv setBool:YES forKey:@"bool"];
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
