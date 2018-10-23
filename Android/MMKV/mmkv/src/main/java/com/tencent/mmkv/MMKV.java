@@ -297,7 +297,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public native void clearAll();
 
+    // MMKV's size won't reduce after deleting key-values
+    // call this method after lots of deleting f you care about disk usage
+    // note that `clearAll` has the similar effect of `trim`
+    public native void trim();
+
+    // call this method if the instance is no longer needed in the near future
+    // any subsequent call to the instance is undefined behavior
+    public native void close();
+
     // call on memory warning
+    // any subsequent call to the instance will load all key-values from file again
     public native void clearMemoryCache();
 
     // you don't need to call this, really, I mean it

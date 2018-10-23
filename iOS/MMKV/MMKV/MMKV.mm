@@ -399,12 +399,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (void)close {
+	CScopedLock g_lock(g_instanceLock);
 	CScopedLock lock(m_lock);
 	MMKVInfo(@"closing %@", m_mmapID);
 
 	[self clearMemoryCache];
 
-	CScopedLock g_lock(g_instanceLock);
 	[g_instanceDic removeObjectForKey:m_mmapID];
 }
 
@@ -431,7 +431,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return;
 	}
 
-	MMKVInfo(@"triming %@ from %zu to %zu", m_mmapID, oldSize, m_size);
+	MMKVInfo(@"trimming %@ from %zu to %zu", m_mmapID, oldSize, m_size);
 
 	if (ftruncate(m_fd, m_size) != 0) {
 		MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));

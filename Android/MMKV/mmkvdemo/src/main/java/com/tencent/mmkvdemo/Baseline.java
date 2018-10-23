@@ -58,6 +58,10 @@ public final class Baseline {
         mmkvBatchReadInt();
         mmkvBatchWriteString();
         mmkvBatchReadString();
+
+        //mmkvBatchDeleteString();
+        //MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        //mmkv.trim();
     }
 
     private void mmkvBatchWriteInt() {
@@ -113,6 +117,19 @@ public final class Baseline {
         long endTime = System.currentTimeMillis();
         System.out.println("MMKV read String: loop[" + m_loops + "]: " + (endTime - startTime) +
                            " ms");
+    }
+
+    private void mmkvBatchDeleteString() {
+        long startTime = System.currentTimeMillis();
+
+        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        for (int index = 0; index < m_loops; index++) {
+            String strKey = m_arrKeys[index];
+            mmkv.removeValueForKey(strKey);
+        }
+        long endTime = System.currentTimeMillis();
+        System.out.println("MMKV delete String: loop[" + m_loops + "]: " + (endTime - startTime) +
+                " ms");
     }
 
     public void sharedPreferencesBaselineTest() {

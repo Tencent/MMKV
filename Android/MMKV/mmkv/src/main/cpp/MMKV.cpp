@@ -92,6 +92,7 @@ MMKV::MMKV(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey)
     }
 
     m_needLoadFromFile = true;
+    m_hasFullWriteback = false;
 
     m_crcDigest = 0;
 
@@ -147,6 +148,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     }
 
     m_needLoadFromFile = true;
+    m_hasFullWriteback = false;
 
     m_crcDigest = 0;
 
@@ -425,6 +427,7 @@ void MMKV::partialLoadFromFile() {
                         }
                     }
                     m_output->seek(bufferSize);
+                    m_hasFullWriteback = false;
 
                     MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(),
                               m_dic.size());
@@ -533,6 +536,7 @@ void MMKV::clearMemoryState() {
     m_needLoadFromFile = true;
 
     m_dic.clear();
+    m_hasFullWriteback = false;
 
     if (m_crypter) {
         m_crypter->reset();
@@ -552,7 +556,7 @@ void MMKV::clearMemoryState() {
         m_ptr = nullptr;
 
         if (m_fd >= 0) {
-            if (close(m_fd) != 0) {
+            if (::close(m_fd) != 0) {
                 MMKVError("fail to close [%s], %s", m_mmapID.c_str(), strerror(errno));
             }
         }
@@ -560,6 +564,70 @@ void MMKV::clearMemoryState() {
     }
     m_size = 0;
     m_actualSize = 0;
+}
+
+void MMKV::close() {
+    MMKVInfo("close [%s]", m_mmapID.c_str());
+    SCOPEDLOCK(g_instanceLock);
+    SCOPEDLOCK(m_lock);
+
+    auto itr = g_instanceDic->find(m_mmapID);
+    if (itr != g_instanceDic->end()) {
+        g_instanceDic->erase(itr);
+    }
+    delete this;
+}
+
+void MMKV::trim() {
+    if (m_isAshmem) {
+        MMKVInfo("there's no way to trim ashmem MMKV:%s", m_mmapID.c_str());
+        return;
+    }
+    SCOPEDLOCK(m_lock);
+    MMKVInfo("prepare to trim %s", m_mmapID.c_str());
+
+    checkLoadData();
+
+    if (m_actualSize == 0) {
+        clearAll();
+        return;
+    } else if (m_size <= DEFAULT_MMAP_SIZE) {
+        return;
+    }
+    SCOPEDLOCK(m_exclusiveProcessLock);
+
+    fullWriteback();
+    auto oldSize = m_size;
+    while (m_size > (m_actualSize * 2)) {
+        m_size /= 2;
+    }
+    if (oldSize == m_size) {
+        MMKVInfo("there's no need to trim %s with size %zu, actualSize %zu", m_mmapID.c_str(),
+                 m_size, m_actualSize);
+        return;
+    }
+
+    MMKVInfo("trimming %s from %zu to %zu", m_mmapID.c_str(), oldSize, m_size);
+
+    if (ftruncate(m_fd, m_size) != 0) {
+        MMKVError("fail to truncate [%s] to size %zu, %s", m_mmapID.c_str(), m_size,
+                  strerror(errno));
+        m_size = oldSize;
+        return;
+    }
+    if (munmap(m_ptr, oldSize) != 0) {
+        MMKVError("fail to munmap [%s], %s", m_mmapID.c_str(), strerror(errno));
+    }
+    m_ptr = (char *) mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
+    if (m_ptr == MAP_FAILED) {
+        MMKVError("fail to mmap [%s], %s", m_mmapID.c_str(), strerror(errno));
+    }
+
+    delete m_output;
+    m_output = new CodedOutputData(m_ptr + pbFixed32Size(0), m_size - pbFixed32Size(0));
+    m_output->seek(m_actualSize);
+
+    MMKVInfo("finish trim %s from to %zu", m_mmapID.c_str(), m_size);
 }
 
 // since we use append mode, when -[setData: forKey:] many times, space may not be enough
@@ -636,6 +704,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         m_output = new CodedOutputData(m_ptr + offset, m_size - offset);
         m_output->writeRawData(data);
         recaculateCRCDigest();
+        m_hasFullWriteback = true;
     }
     return true;
 }
@@ -674,6 +743,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, const std::string &key) {
     } else {
         itr->second = std::move(data);
     }
+    m_hasFullWriteback = false;
 
     return appendDataWithKey(itr->second, key);
 }
@@ -685,6 +755,7 @@ bool MMKV::removeDataForKey(const std::string &key) {
 
     auto deleteCount = m_dic.erase(key);
     if (deleteCount > 0) {
+        m_hasFullWriteback = false;
         static MMBuffer nan(0);
         return appendDataWithKey(nan, key);
     }
@@ -736,6 +807,9 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
 }
 
 bool MMKV::fullWriteback() {
+    if (m_hasFullWriteback) {
+        return true;
+    }
     if (m_needLoadFromFile) {
         return true;
     }
@@ -763,6 +837,7 @@ bool MMKV::fullWriteback() {
             m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
             m_output->writeRawData(allData); // note: don't write size of data
             recaculateCRCDigest();
+            m_hasFullWriteback = true;
             return true;
         } else {
             // ensureMemorySize will extend file & full rewrite, no need to write back again
@@ -853,10 +928,10 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey) {
 
     if (m_isAshmem) {
         if (m_fd != fd) {
-            close(fd);
+            ::close(fd);
         }
         if (m_metaFile.getFd() != metaFD) {
-            close(metaFD);
+            ::close(metaFD);
         }
     }
 }
@@ -1152,6 +1227,7 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
     for (const auto &key : arrKeys) {
         m_dic.erase(key);
     }
+    m_hasFullWriteback = false;
 
     fullWriteback();
 }
