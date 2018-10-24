@@ -55,7 +55,7 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 //    implementation project(':mmkv')
-    implementation 'com.tencent:mmkv:1.0.11'
+    implementation 'com.tencent:mmkv:1.0.12'
 //    implementation 'com.tencent:mmkv:1.0.10-SNAPSHOT'
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'

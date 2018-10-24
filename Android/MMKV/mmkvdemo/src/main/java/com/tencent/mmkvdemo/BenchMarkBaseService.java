@@ -49,7 +49,7 @@ public abstract class BenchMarkBaseService extends Service {
     private String[] m_arrIntKeys;
 
     private static final int m_loops = 1000;
-    private static final String MMKV_ID = "benchmark_interprocess";
+    public static final String MMKV_ID = "benchmark_interprocess";
     private static final String SP_ID = "benchmark_interprocess_sp";
     private static final String CryptKey = null;
     //private static final String CryptKey = "Tencent MMKV";
@@ -296,7 +296,7 @@ public abstract class BenchMarkBaseService extends Service {
 
     MMKV m_ashmemMMKV;
 
-    private MMKV GetMMKV() {
+    protected MMKV GetMMKV() {
         if (m_ashmemMMKV != null) {
             return m_ashmemMMKV;
         } else {

@@ -309,7 +309,8 @@ void MMKV::loadFromFile() {
                         if (m_crypter) {
                             decryptBuffer(*m_crypter, inputBuffer);
                         }
-                        m_dic = MiniPBCoder::decodeMap(inputBuffer);
+                        m_dic.clear();
+                        MiniPBCoder::decodeMap(m_dic, inputBuffer);
                         m_output = new CodedOutputData(m_ptr + Fixed32Size + m_actualSize,
                                                        m_size - Fixed32Size - m_actualSize);
                         loaded = true;
@@ -358,7 +359,8 @@ void MMKV::loadFromAshmem() {
                         if (m_crypter) {
                             decryptBuffer(*m_crypter, inputBuffer);
                         }
-                        m_dic = MiniPBCoder::decodeMap(inputBuffer);
+                        m_dic.clear();
+                        MiniPBCoder::decodeMap(m_dic, inputBuffer);
                         m_output = new CodedOutputData(m_ptr + Fixed32Size + m_actualSize,
                                                        m_size - Fixed32Size - m_actualSize);
                         loaded = true;
@@ -407,16 +409,7 @@ void MMKV::partialLoadFromFile() {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
                     }
-                    auto dic = MiniPBCoder::decodeMap(inputBuffer, bufferSize);
-                    for (auto &itr : dic) {
-                        //m_dic[itr.first] = std::move(itr.second);
-                        auto target = m_dic.find(itr.first);
-                        if (target == m_dic.end()) {
-                            m_dic.emplace(itr.first, std::move(itr.second));
-                        } else {
-                            target->second = std::move(itr.second);
-                        }
-                    }
+                    MiniPBCoder::decodeMap(m_dic, inputBuffer, bufferSize);
                     m_output->seek(bufferSize);
 
                     MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(),

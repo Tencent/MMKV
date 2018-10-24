@@ -59,8 +59,8 @@ NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.11'
-    // replace "1.0.11" with any available version
+    implementation 'com.tencent:mmkv:1.0.12'
+    // replace "1.0.12" with any available version
 }
 ```
 
