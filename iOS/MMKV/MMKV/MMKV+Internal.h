@@ -61,6 +61,7 @@ constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
 
 	BOOL m_isInBackground;
 	BOOL m_needLoadFromFile;
+	BOOL m_hasFullWriteBack;
 
 	uint32_t m_crcDigest;
 	int m_crcFd;

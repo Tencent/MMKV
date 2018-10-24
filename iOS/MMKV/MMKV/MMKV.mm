@@ -19,12 +19,16 @@
  */
 
 #import "MMKV+Internal.h"
+#include "aes/openssl/md5.h"
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
+#define SPECIAL_CHARACTER_DIRECTORY_NAME @"specialCharacter"
+
+static NSString *encodeMmapID(NSString *mmapID);
 
 @implementation MMKV
 
@@ -253,6 +257,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 
 	m_kvItemsWrap.clear();
+	m_hasFullWriteBack = NO;
 
 	if (m_output != nullptr) {
 		delete m_output;
@@ -288,6 +293,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (void)clearMemoryCache {
 	m_kvItemsWrap.clear();
+	m_hasFullWriteBack = NO;
 
 	if (m_output != nullptr) {
 		delete m_output;
@@ -300,6 +306,52 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_memoryFile = nullptr;
 	m_size = 0;
 	m_actualSize = 0;
+}
+
+- (void)close {
+	CScopedLock g_lock(g_instanceLock);
+	CScopedLock lock(m_lock);
+	MMKVInfo(@"closing %@", m_mmapID);
+
+	[self clearMemoryCache];
+
+	[g_instanceDic removeObjectForKey:m_mmapID];
+}
+
+- (void)trim {
+	CScopedLock lock(m_lock);
+	MMKVInfo(@"prepare to trim %@", m_mmapID);
+
+	[self checkLoadData];
+
+	if (m_actualSize == 0) {
+		[self clearAll];
+		return;
+	} else if (m_size <= DEFAULT_MMAP_SIZE) {
+		return;
+	}
+
+	[self fullWriteback];
+	auto oldSize = m_size;
+	while (m_size > (m_actualSize * 2)) {
+		m_size /= 2;
+	}
+	if (oldSize == m_size) {
+		MMKVInfo(@"there's no need to trim %@ with size %zu, actualSize %zu", m_mmapID, m_size, m_actualSize);
+		return;
+	}
+
+	MMKVInfo(@"trimming %@ from %zu to %zu", m_mmapID, oldSize, m_size);
+
+	if (!m_memoryFile->truncate(m_size)) {
+		MMKVError(@"fail to truncate [%@] to size %zu", m_mmapID, m_size);
+		m_size = oldSize;
+		return;
+	}
+	delete m_output;
+	m_output = new MiniCodedOutputData(m_memoryFile, Fixed32Size + m_actualSize);
+
+	MMKVInfo(@"finish trim %@ to size %zu", m_mmapID, m_size);
 }
 /*
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
@@ -671,7 +723,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *nsLibraryPath = (NSString *) [paths firstObject];
 	if ([nsLibraryPath length] > 0) {
-		return [nsLibraryPath stringByAppendingFormat:@"/mmkv/%@", mmapID];
+		return [nsLibraryPath stringByAppendingFormat:@"/mmkv/%@", encodeMmapID(mmapID)];
 	} else {
 		return @"";
 	}
@@ -722,3 +774,25 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 @end
+
+static NSString *md5(NSString *value) {
+	unsigned char md[MD5_DIGEST_LENGTH] = {0};
+	char tmp[3] = {0}, buf[33] = {0};
+	MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
+	for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
+		sprintf(tmp, "%2.2x", md[i]);
+		strcat(buf, tmp);
+	}
+	return [NSString stringWithCString:buf encoding:NSASCIIStringEncoding];
+}
+
+static NSString *encodeMmapID(NSString *mmapID) {
+	static NSCharacterSet *specialCharacters = [NSCharacterSet characterSetWithCharactersInString:@"\\/:*?\"<>|"];
+	auto range = [mmapID rangeOfCharacterFromSet:specialCharacters];
+	if (range.location != NSNotFound) {
+		NSString *encodedID = md5(mmapID);
+		return [SPECIAL_CHARACTER_DIRECTORY_NAME stringByAppendingFormat:@"/%@", encodedID];
+	} else {
+		return mmapID;
+	}
+}

@@ -94,7 +94,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        testMMKV("testAES", "Tencent MMKV", false);
+        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false);
+        kv.close();
+
         testAshmem();
         testReKey();
 
@@ -115,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
     }
 
-    private void testMMKV(String mmapID, String cryptKey, boolean decodeOnly) {
+    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly) {
         //MMKV kv = MMKV.defaultMMKV();
         MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey);
 
@@ -166,6 +168,8 @@ public class MainActivity extends AppCompatActivity {
         kv.clearMemoryCache();
         System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
         System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
+
+        return kv;
     }
 
     private void testImportSharedPreferences() {
@@ -203,9 +207,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void testReKey() {
         final String mmapID = "testAES_reKey";
-        testMMKV(mmapID, null, false);
+        MMKV kv = testMMKV(mmapID, null, false);
 
-        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, null);
         kv.reKey("Key_seq_1");
         kv.clearMemoryCache();
         testMMKV(mmapID, "Key_seq_1", true);

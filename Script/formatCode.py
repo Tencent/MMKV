@@ -6,7 +6,7 @@ import os.path
 path = os.getcwd()
 
 for root, dirs, files in os.walk(path):
-    if root.endswith("/aes") or root.endswith("/openssl"):
+    if root.endswith("/aes") or root.endswith("/openssl") or root.endswith("/tsl"):
         continue
     for name in files:
         if (name.endswith(".h") or name.endswith(".m") or name.endswith(".mm") or name.endswith(".hpp") or name.endswith(".cpp")):

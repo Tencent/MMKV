@@ -589,3 +589,18 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_checkReSetCryptKey(
         }
     }
 }
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_trim(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->trim();
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_close(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->close();
+        env->SetLongField(instance, g_fileID, 0);
+    }
+}
