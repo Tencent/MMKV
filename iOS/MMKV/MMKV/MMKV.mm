@@ -450,7 +450,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_output = new MiniCodedOutputData(m_ptr + pbFixed32Size(0), m_size - pbFixed32Size(0));
 	m_output->seek(m_actualSize);
 
-	MMKVInfo(@"finish trim %@ from to %zu", m_mmapID, m_size);
+	MMKVInfo(@"finish trim %@ to size %zu", m_mmapID, m_size);
 }
 
 - (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
