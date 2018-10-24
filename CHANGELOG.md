@@ -8,8 +8,10 @@ What's new
 * Fix a performance issue caused by mistakenly merge of test code
 * Fix CocoaPods integration error of **macOS**
 
-### Android 
-MMKV for Android is the same as v1.0.11.
+### Android / 2018-10-24
+What's new  
+
+* Fix `remove()` causing data inconsistency on `MULTI_PROCESS_MODE`
 
 
 ## v1.0.11 / 2018-10-12
