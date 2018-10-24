@@ -250,9 +250,7 @@ vector<string> MiniPBCoder::decodeOneSet() {
     return v;
 }
 
-unordered_map<string, MMBuffer> MiniPBCoder::decodeOneMap(size_t size) {
-    unordered_map<string, MMBuffer> dic;
-
+void MiniPBCoder::decodeOneMap(unordered_map<string, MMBuffer> &dic, size_t size) {
     if (size == 0) {
         auto length = m_inputData->readInt32();
     }
@@ -267,7 +265,6 @@ unordered_map<string, MMBuffer> MiniPBCoder::decodeOneMap(size_t size) {
             }
         }
     }
-    return dic;
 }
 
 string MiniPBCoder::decodeString(const MMBuffer &oData) {
@@ -280,9 +277,11 @@ MMBuffer MiniPBCoder::decodeBytes(const MMBuffer &oData) {
     return oCoder.decodeOneBytes();
 }
 
-unordered_map<string, MMBuffer> MiniPBCoder::decodeMap(const MMBuffer &oData, size_t size) {
+void MiniPBCoder::decodeMap(unordered_map<string, MMBuffer> &dic,
+                            const MMBuffer &oData,
+                            size_t size) {
     MiniPBCoder oCoder(&oData);
-    return oCoder.decodeOneMap(size);
+    oCoder.decodeOneMap(dic, size);
 }
 
 vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
