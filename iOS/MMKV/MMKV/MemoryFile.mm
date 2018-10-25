@@ -342,7 +342,13 @@ bool MemoryFile::memmove(size_t targetOffset, size_t sourceOffset, size_t size, 
 }
 
 void MemoryFile::sync(int syncFlag) {
-	// TODO: msync
+	if (m_ptr) {
+		m_ptr->msync(syncFlag);
+	} else {
+		m_segmentCache.forEach([=](shared_ptr<Segment> &segment) {
+			segment->msync(syncFlag);
+		});
+	}
 }
 
 bool MemoryFile::mlock(size_t offset, size_t size) {
@@ -447,7 +453,7 @@ MemoryFile::Segment::~Segment() {
 void MemoryFile::Segment::zeroFill() {
 	if (ptr) {
 		memset(ptr, 0, size);
-		msync(ptr, size, MS_ASYNC);
+		::msync(ptr, size, MS_ASYNC);
 	}
 }
 
@@ -471,6 +477,16 @@ bool MemoryFile::Segment::munlock(size_t offset, size_t size) {
 		return false;
 	}
 	return true;
+}
+
+bool MemoryFile::Segment::msync(int syncFlat) {
+	if (ptr) {
+		if (::msync(ptr, size, syncFlat) == 0) {
+			return true;
+		}
+		MMKVError(@"failt to msync at %p with size %zu, errno=%s", ptr, size, strerror(errno));
+	}
+	return false;
 }
 
 #pragma mark - file

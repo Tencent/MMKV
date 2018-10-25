@@ -46,6 +46,7 @@ public:
 
 		bool mlock(size_t offset, size_t size);
 		bool munlock(size_t offset, size_t size);
+		bool msync(int syncFlat);
 
 		inline bool inside(size_t offset) const {
 			return offset >= this->offset && offset < this->offset + this->size;

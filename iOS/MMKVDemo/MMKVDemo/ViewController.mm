@@ -92,7 +92,8 @@
 	[mmkv removeValueForKey:@"bool"];
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
 
-	[mmkv close];
+	//[mmkv sync];
+	//[mmkv close];
 }
 
 - (void)testMMKV:(NSString *)mmapID withCryptKey:(NSData *)cryptKey decodeOnly:(BOOL)decodeOnly {

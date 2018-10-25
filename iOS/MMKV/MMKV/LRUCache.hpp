@@ -21,6 +21,7 @@
 #ifndef LRUCache_h
 #define LRUCache_h
 
+#import <functional>
 #import <list>
 #import <unordered_map>
 
@@ -83,6 +84,12 @@ public:
             return m_lastValue;
         }
         return nullptr;
+    }
+
+    void forEach(std::function<void(Value_t &)> function) {
+        for (auto itr = m_list.begin(), end = m_list.end(); itr != end; itr++) {
+            function(itr->second);
+        }
     }
 };
 
