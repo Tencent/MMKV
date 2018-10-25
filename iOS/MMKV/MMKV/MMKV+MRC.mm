@@ -347,17 +347,38 @@ using namespace std;
 	if (m_actualSize == 0) {
 		isFirstWrite = true;
 		size += ItemSizeHolderSize;
+
+		if (m_isInBackground) {
+			if (!m_memoryFile->mlock(0, DEFAULT_MMAP_SIZE)) {
+				// just fail on this condition, otherwise app will crash anyway
+				return make_pair(KeyHolder(), kvHolder);
+			}
+		}
+
 		m_output->writeInt32(ItemSizeHolder);
+
+		if (m_isInBackground) {
+			m_memoryFile->munlock(0, DEFAULT_MMAP_SIZE);
+		}
 	}
 	if ([self writeAcutalSize:m_actualSize + size]) {
-		// TODO: background mlock
+		auto offset = m_output->position();
+		if (m_isInBackground) {
+			if (!m_memoryFile->mlock(offset, size)) {
+				// just fail on this condition, otherwise app will crash anyway
+				return make_pair(KeyHolder(), kvHolder);
+			}
+		}
 		m_output->writeData(keyHolder, &m_crcDigest);
 		m_output->writeData(data, &m_crcDigest);
 
+		if (m_isInBackground) {
+			m_memoryFile->munlock(offset, size);
+		}
+
 		[self writeBackCRCDigest];
 
-		auto offset = Fixed32Size + (m_actualSize - size);
-		kvHolder.offset = static_cast<uint32_t>(isFirstWrite ? offset + ItemSizeHolderSize : offset);
+		kvHolder.offset = static_cast<uint32_t>(offset);
 		return make_pair(std::move(keyHolder), kvHolder);
 	}
 	return make_pair(KeyHolder(), kvHolder);
@@ -370,7 +391,22 @@ using namespace std;
 	if (!kvHolder) {
 		return MMBuffer(0);
 	}
-	return m_memoryFile->read(kvHolder->offset + kvHolder->keySize, kvHolder->valueSize);
+
+	auto offset = kvHolder->offset + kvHolder->keySize, size = kvHolder->valueSize;
+	if (m_isInBackground) {
+		if (!m_memoryFile->mlock(offset, size)) {
+			// just fail on this condition, otherwise app will crash anyway
+			return MMBuffer(0);
+		}
+	}
+
+	auto result = m_memoryFile->read(offset, size);
+
+	if (m_isInBackground) {
+		m_memoryFile->munlock(offset, size);
+	}
+
+	return result;
 }
 
 @end

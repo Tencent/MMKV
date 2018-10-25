@@ -52,6 +52,8 @@ public:
 
 	size_t spaceLeft() const { return m_size - m_position; }
 
+	size_t position() const { return m_position; }
+
 	void seek(size_t addedSize);
 
 	void writeBool(BOOL value);

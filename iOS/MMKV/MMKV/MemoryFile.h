@@ -44,6 +44,9 @@ public:
 
 		void zeroFill();
 
+		bool mlock(size_t offset, size_t size);
+		bool munlock(size_t offset, size_t size);
+
 		inline bool inside(size_t offset) const {
 			return offset >= this->offset && offset < this->offset + this->size;
 		}
@@ -93,9 +96,12 @@ public:
 
 	bool truncate(size_t size);
 
-	uint32_t crc32(uint32_t digest, size_t offset, size_t size);
+	uint32_t crc32(uint32_t digest, size_t offset, size_t size, bool needMLock = false);
 
 	void sync(int syncFlag);
+
+	bool mlock(size_t offset, size_t size);
+	bool munlock(size_t offset, size_t size);
 };
 
 extern bool isFileExist(NSString *nsFilePath);

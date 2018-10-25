@@ -241,13 +241,20 @@ bool MemoryFile::write(size_t offset, const void *source, size_t size) {
 	return true;
 }
 
-uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
+uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size, bool needMLock) {
 	if (offset >= m_size || m_size - offset < size || size == 0) {
 		return digest;
 	}
 	// I'm felling lucky
 	if (m_ptr) {
-		return static_cast<uint32_t>(::crc32(digest, m_ptr->ptr + offset, static_cast<uInt>(size)));
+		if (needMLock) {
+			m_ptr->mlock(offset, size);
+		}
+		digest = static_cast<uint32_t>(::crc32(digest, m_ptr->ptr + offset, static_cast<uInt>(size)));
+		if (needMLock) {
+			m_ptr->munlock(offset, size);
+		}
+		return digest;
 	}
 	// most of the case, just return a shadow without copying any data
 	auto index = offset2index(offset);
@@ -257,7 +264,14 @@ uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
 	}
 	if (offset + size <= segment->offset + segment->size) {
 		auto ptr = segment->ptr + (offset - segment->offset);
-		return static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(size)));
+		if (needMLock) {
+			segment->mlock(offset, size);
+		}
+		digest = static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(size)));
+		if (needMLock) {
+			segment->munlock(offset, size);
+		}
+		return digest;
 	}
 	// one segment is not enough, we have to copy data crossing segments
 	auto endIndex = offset2index(offset + size);
@@ -279,7 +293,13 @@ uint32_t MemoryFile::crc32(uint32_t digest, size_t offset, size_t size) {
 			// it's the end
 			calcSize = offset + size - segment->offset;
 		}
+		if (needMLock) {
+			segment->mlock(segment->offset + (ptr - segment->ptr), calcSize);
+		}
 		digest = static_cast<uint32_t>(::crc32(digest, ptr, static_cast<uInt>(calcSize)));
+		if (needMLock) {
+			segment->munlock(segment->offset + (ptr - segment->ptr), calcSize);
+		}
 	}
 	return digest;
 }
@@ -325,6 +345,84 @@ void MemoryFile::sync(int syncFlag) {
 	// TODO: msync
 }
 
+bool MemoryFile::mlock(size_t offset, size_t size) {
+	if (offset >= m_size || m_size - offset < size) {
+		return false;
+	}
+	// I'm felling lucky
+	if (m_ptr) {
+		return m_ptr->mlock(offset, size);
+	}
+	auto index = offset2index(offset);
+	auto segment = internalTryGetSegment(index);
+	if (!segment) {
+		return false;
+	}
+	if (offset + size <= segment->offset + segment->size) {
+		return segment->mlock(offset, size);
+	}
+
+	bool ret = true;
+	auto endIndex = offset2index(offset + size);
+	for (auto inc = index; inc <= endIndex; inc++) {
+		auto segment = internalTryGetSegment(inc);
+		size_t calcOffset = segment->offset;
+		size_t calcSize = 0;
+		if (offset >= segment->offset) {
+			// it's the begin
+			calcOffset += offset - segment->offset;
+			calcSize = segment->offset + segment->size - offset;
+		} else if (offset < segment->offset && (offset + size) > (segment->offset + segment->size)) {
+			// it's the middle(s)
+			calcSize = segment->size;
+		} else {
+			// it's the end
+			calcSize = offset + size - segment->offset;
+		}
+		ret &= segment->mlock(calcOffset, calcSize);
+	}
+	return ret;
+}
+
+bool MemoryFile::munlock(size_t offset, size_t size) {
+	if (offset >= m_size || m_size - offset < size) {
+		return false;
+	}
+	// I'm felling lucky
+	if (m_ptr) {
+		return m_ptr->mlock(offset, size);
+	}
+	auto index = offset2index(offset);
+	auto segment = internalTryGetSegment(index);
+	if (!segment) {
+		return false;
+	}
+	if (offset + size <= segment->offset + segment->size) {
+		return segment->munlock(offset, size);
+	}
+
+	bool ret = true;
+	auto endIndex = offset2index(offset + size);
+	for (auto inc = index; inc <= endIndex; inc++) {
+		auto segment = internalTryGetSegment(inc);
+		size_t calcOffset = segment->offset;
+		size_t calcSize = 0;
+		if (offset >= segment->offset) {
+			// it's the begin
+			calcOffset += offset - segment->offset;
+			calcSize = segment->offset + segment->size - offset;
+		} else if (offset < segment->offset && (offset + size) > (segment->offset + segment->size)) {
+			// it's the middle(s)
+			calcSize = segment->size;
+		} else {
+			// it's the end
+			calcSize = offset + size - segment->offset;
+		}
+		ret &= segment->munlock(calcOffset, calcSize);
+	}
+	return ret;
+}
+
 #pragma mark - Segment
 
 MemoryFile::Segment::Segment(void *source, size_t _size, size_t _offset) noexcept
@@ -351,6 +449,28 @@ void MemoryFile::Segment::zeroFill() {
 		memset(ptr, 0, size);
 		msync(ptr, size, MS_ASYNC);
 	}
+}
+
+bool MemoryFile::Segment::mlock(size_t offset, size_t size) {
+	auto realOffset = offset - this->offset;
+	auto pageOffset = (realOffset / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
+	auto realPtr = this->ptr + pageOffset;
+	if (::mlock(realPtr, size) != 0) {
+		MMKVError(@"fail to mlock at %p with size %zu, errno=%s", realPtr, size, strerror(errno));
+		return false;
+	}
+	return true;
+}
+
+bool MemoryFile::Segment::munlock(size_t offset, size_t size) {
+	auto realOffset = offset - this->offset;
+	auto pageOffset = (realOffset / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
+	auto realPtr = this->ptr + pageOffset;
+	if (::munlock(realPtr, size) != 0) {
+		MMKVError(@"fail to munlock at %p with size %zu, errno=%s", realPtr, size, strerror(errno));
+		return false;
+	}
+	return true;
 }
 
 #pragma mark - file

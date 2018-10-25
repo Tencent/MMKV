@@ -19,6 +19,7 @@
  */
 
 #import "AppDelegate.h"
+#import <MMKV/MMKV.h>
 
 @interface AppDelegate ()
 
@@ -37,8 +38,19 @@
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-	// Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-	// If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+	__block UIBackgroundTaskIdentifier bg_task;
+	bg_task = [application beginBackgroundTaskWithName:@"BackgroundTaskName"
+	                                 expirationHandler:^{
+		                                 NSLog(@"before end background task, %u", (unsigned int) bg_task);
+		                                 [application endBackgroundTask:bg_task];
+		                                 bg_task = UIBackgroundTaskInvalid;
+		                                 NSLog(@"after end background task, %u", (unsigned int) bg_task);
+	                                 }];
+
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		MMKV *mmkv = [MMKV defaultMMKV];
+		[mmkv setInt32:1024 forKey:@"backgroundInt"];
+	});
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {

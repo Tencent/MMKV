@@ -353,38 +353,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	MMKVInfo(@"finish trim %@ to size %zu", m_mmapID, m_size);
 }
-/*
-- (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
-    if (m_isInBackground) {
-        static const int offset = pbFixed32Size(0);
-        static const int pagesize = getpagesize();
-        size_t realOffset = offset + m_actualSize - size;
-        size_t pageOffset = (realOffset / pagesize) * pagesize;
-        size_t pointerOffset = realOffset - pageOffset;
-        size_t mmapSize = offset + m_actualSize - pageOffset;
-        char *ptr = m_ptr + pageOffset;
-        if (mlock(ptr, mmapSize) != 0) {
-            MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
-            // just fail on this condition, otherwise app will crash anyway
-            //block(m_output);
-            return NO;
-        } else {
-            @try {
-                MiniCodedOutputData output(ptr + pointerOffset, size);
-                block(&output);
-                m_output->seek(size);
-            } @catch (NSException *exception) {
-                MMKVError(@"%@", exception);
-                return NO;
-            } @finally {
-                munlock(ptr, mmapSize);
-            }
-        }
-    } else {
-        block(m_output);
-    }
-	return YES;
-}*/
 
 // since we use append mode, when -[setData: forKey:] many times, space may not be enough
 // try a full rewrite to make space
@@ -465,16 +433,25 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (![self writeAcutalSize:itemSize + ItemSizeHolderSize]) {
 		return NO;
 	}
-	// TODO: background mlock
 	MiniCodedOutputData(m_headSegmemt->ptr + Fixed32Size, Fixed32Size).writeInt32(ItemSizeHolder);
 	size_t position = Fixed32Size + ItemSizeHolderSize;
 	for (auto segment : arrMergedItems) {
 		auto &first = m_kvItemsWrap[segment.first], &last = m_kvItemsWrap[segment.second];
 		auto size = last.end() - first.offset;
-		if (!m_memoryFile->memmove(position, first.offset, size)) {
+		if (m_isInBackground) {
+			m_memoryFile->mlock(position, size);
+			m_memoryFile->mlock(first.offset, size);
+		}
+		auto ret = m_memoryFile->memmove(position, first.offset, size);
+		if (m_isInBackground) {
+			m_memoryFile->munlock(position, size);
+			m_memoryFile->munlock(first.offset, size);
+		}
+		if (!ret) {
 			MMKVError(@"fail to move to position %zu from %u with size %zu", position, first.offset, size);
 			return NO;
 		}
+
 		auto diff = first.offset - position;
 		for (size_t index = segment.first; index <= segment.second; index++) {
 			auto &kvHolder = m_kvItemsWrap[index];
@@ -502,7 +479,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	auto actualSizePtr = m_headSegmemt->ptr;
 
 	if (m_isInBackground) {
-		if (mlock(actualSizePtr, DEFAULT_MMAP_SIZE) != 0) {
+		if (::mlock(actualSizePtr, DEFAULT_MMAP_SIZE) != 0) {
 			MMKVError(@"fail to mmap [%@], %d:%s", m_mmapID, errno, strerror(errno));
 			// just fail on this condition, otherwise app will crash anyway
 			return NO;
@@ -515,7 +492,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_actualSize = actualSize;
 
 	if (m_isInBackground) {
-		munlock(actualSizePtr, DEFAULT_MMAP_SIZE);
+		::munlock(actualSizePtr, DEFAULT_MMAP_SIZE);
 	}
 	return YES;
 }
@@ -530,7 +507,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)checkFileCRCValid {
 	if (m_memoryFile) {
-		m_crcDigest = m_memoryFile->crc32(0, Fixed32Size, m_actualSize);
+		m_crcDigest = m_memoryFile->crc32(0, Fixed32Size, m_actualSize, m_isInBackground);
 
 		if (!isFileExist(m_crcPath)) {
 			MMKVInfo(@"crc32 file not found:%@", m_crcPath);
@@ -549,7 +526,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (void)recaculateCRCDigest {
 	m_crcDigest = 0;
-	m_crcDigest = m_memoryFile->crc32(m_crcDigest, Fixed32Size, m_actualSize);
+	m_crcDigest = m_memoryFile->crc32(m_crcDigest, Fixed32Size, m_actualSize, m_isInBackground);
 
 	[self writeBackCRCDigest];
 }
@@ -563,7 +540,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 
 	if (m_isInBackground) {
-		if (mlock(m_crcPtr, Fixed32Size) != 0) {
+		if (::mlock(m_crcPtr, Fixed32Size) != 0) {
 			MMKVError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_crcPtr, errno, strerror(errno));
 			// just fail on this condition, otherwise app will crash anyway
 			return;
@@ -573,7 +550,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	memcpy(m_crcPtr, &m_crcDigest, Fixed32Size);
 
 	if (m_isInBackground) {
-		munlock(m_crcPtr, Fixed32Size);
+		::munlock(m_crcPtr, Fixed32Size);
 	}
 }
 
@@ -768,7 +745,16 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return NO;
 	}
 
-	uint32_t crcDigest = file.crc32(0, Fixed32Size, actualSize);
+	BOOL isInBackground = NO;
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+	auto appState = [UIApplication sharedApplication].applicationState;
+	if (appState == UIApplicationStateBackground) {
+		isInBackground = YES;
+	} else {
+		isInBackground = NO;
+	}
+#endif
+	uint32_t crcDigest = file.crc32(0, Fixed32Size, actualSize, isInBackground);
 
 	return crcFile == crcDigest;
 }
