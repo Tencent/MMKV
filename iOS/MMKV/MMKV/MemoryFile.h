@@ -27,52 +27,52 @@
 extern const int DEFAULT_MMAP_SIZE;
 
 class MemoryFile {
-    NSString *m_name;
-    int m_fd;
-    size_t m_size;
+	NSString *m_name;
+	int m_fd;
+	size_t m_size;
 
-    struct Segment {
-        uint8_t *ptr;
-        size_t size;
-        size_t offset;
+	struct Segment {
+		uint8_t *ptr;
+		size_t size;
+		size_t offset;
 
-        Segment(void *source, size_t size, size_t offset) noexcept;
-        Segment(Segment &&other) noexcept;
-        ~Segment();
+		Segment(void *source, size_t size, size_t offset) noexcept;
+		Segment(Segment &&other) noexcept;
+		~Segment();
 
-    private:
-        // just forbid it for possibly misuse
-        Segment(const Segment &other) = delete;
-        Segment &operator=(const Segment &other) = delete;
-    };
-    std::shared_ptr<Segment> m_ptr;
-    uint32_t offset2index(size_t offset) const;
-    // index -> segment
-    LRUCache<uint32_t, std::shared_ptr<Segment>> m_segmentCache;
-    std::shared_ptr<Segment> tryGetSegment(uint32_t index);
-    void prepareSegments();
+	private:
+		// just forbid it for possibly misuse
+		Segment(const Segment &other) = delete;
+		Segment &operator=(const Segment &other) = delete;
+	};
+	std::shared_ptr<Segment> m_ptr;
+	uint32_t offset2index(size_t offset) const;
+	// index -> segment
+	LRUCache<uint32_t, std::shared_ptr<Segment>> m_segmentCache;
+	std::shared_ptr<Segment> tryGetSegment(uint32_t index);
+	void prepareSegments();
 
-    // just forbid it for possibly misuse
-    MemoryFile(const MemoryFile &other) = delete;
-    MemoryFile &operator=(const MemoryFile &other) = delete;
+	// just forbid it for possibly misuse
+	MemoryFile(const MemoryFile &other) = delete;
+	MemoryFile &operator=(const MemoryFile &other) = delete;
 
 public:
-    MemoryFile(NSString *path);
-    ~MemoryFile();
+	MemoryFile(NSString *path);
+	~MemoryFile();
 
-    size_t getFileSize() { return m_size; }
+	size_t getFileSize() { return m_size; }
 
-    NSString *getName() { return m_name; }
+	NSString *getName() { return m_name; }
 
-    int getFd() { return m_fd; }
+	int getFd() { return m_fd; }
 
-    NSData *read(size_t offset, size_t size);
+	NSData *read(size_t offset, size_t size);
 
-    bool write(size_t offset, const void *source, size_t size);
+	bool write(size_t offset, const void *source, size_t size);
 
-    bool innerMemcpy(size_t targetOffset, size_t sourceOffset, size_t size);
+	bool innerMemcpy(size_t targetOffset, size_t sourceOffset, size_t size);
 
-    bool ftruncate(size_t size);
+	bool ftruncate(size_t size);
 };
 
 extern bool isFileExist(NSString *nsFilePath);

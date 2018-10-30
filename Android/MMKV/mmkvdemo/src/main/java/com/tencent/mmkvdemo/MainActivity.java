@@ -22,8 +22,10 @@ package com.tencent.mmkvdemo;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -100,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
         KotlinUsecaseKt.kotlinFunctionalTest();
 
-        //testInterProcessLock();
+        //testInterProcessLogic();
         //estImportSharedPreferences();
     }
 
@@ -110,9 +112,18 @@ public class MainActivity extends AppCompatActivity {
         MMKV.onExit();
     }
 
-    private void testInterProcessLock() {
+    private void testInterProcessLogic() {
+        MMKV mmkv = MMKV.mmkvWithID(MyService.MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        mmkv.putInt(MyService.CMD_ID, 1024);
+        Log.d("mmkv in main", "" + mmkv.decodeInt(MyService.CMD_ID));
+
         Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, MyService.CMD_REMOVE);
         startService(intent);
+
+        SystemClock.sleep(1000 * 3);
+        int value = mmkv.decodeInt(MyService.CMD_ID);
+        Log.d("mmkv", "" + value);
     }
 
     private void testMMKV(String mmapID, String cryptKey, boolean decodeOnly) {
