@@ -40,6 +40,12 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
+
+    flavorDimensions "stl_mode"
+    productFlavors {
+        StaticCpp.dimension = "stl_mode"
+        SharedCpp.dimension = "stl_mode"
+    }
 }
 
 repositories {
@@ -47,6 +53,7 @@ repositories {
 //        url uri('/tmp/localmvn/')
 //        url "http://maven.oa.com/nexus/content/repositories/thirdparty"
 //        url "http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots"
+//        url "https://dl.bintray.com/wemobiledev/maven"
 //    }
     jcenter()
     mavenCentral()
@@ -56,6 +63,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(':mmkv')
     //implementation 'com.tencent:mmkv:1.0.12'
+//    implementation 'com.tencent:mmkv-static:1.0.12'
 //    implementation 'com.tencent:mmkv:1.0.10-SNAPSHOT'
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'

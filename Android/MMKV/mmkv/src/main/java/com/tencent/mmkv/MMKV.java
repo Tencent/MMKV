@@ -35,7 +35,9 @@ import java.util.Set;
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static {
-        System.loadLibrary("c++_shared");
+        if (BuildConfig.FLAVOR.equals("SharedCpp")) {
+            System.loadLibrary("c++_shared");
+        }
         System.loadLibrary("mmkv");
     }
 
