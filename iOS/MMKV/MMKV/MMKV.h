@@ -19,7 +19,6 @@
  */
 
 #import "MMKVHandler.h"
-#import <Foundation/Foundation.h>
 
 @interface MMKV : NSObject
 

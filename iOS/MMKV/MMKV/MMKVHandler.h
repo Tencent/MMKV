@@ -20,6 +20,7 @@
 
 #ifndef MMKVHandler_h
 #define MMKVHandler_h
+#import <Foundation/Foundation.h>
 
 typedef enum : NSUInteger {
 	MMKVOnErrorDisacrd = 0,
