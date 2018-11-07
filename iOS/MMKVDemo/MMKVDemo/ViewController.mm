@@ -22,6 +22,9 @@
 #import "MMKVDemo-Swift.h"
 #import <MMKV/MMKV.h>
 
+@interface ViewController () <MMKVHandler>
+@end
+
 @implementation ViewController {
 	NSMutableArray *m_arrStrings;
 	NSMutableArray *m_arrStrKeys;
@@ -32,6 +35,8 @@
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
+
+	[MMKV registerHandler:self];
 
 	[self funcionalTest];
 	//[self testReKey];
@@ -367,6 +372,16 @@
 			NSLog(@"brutleTest size=%zu", mmkv.totalSize);
 		}
 	}
+}
+
+#pragma mark - MMKVHandler
+
+- (MMKVRecoverStrategic)onMMKVCRCCheckFail:(NSString *)mmapID {
+	return MMKVOnErrorRecover;
+}
+
+- (MMKVRecoverStrategic)onMMKVFileLengthError:(NSString *)mmapID {
+	return MMKVOnErrorRecover;
 }
 
 @end

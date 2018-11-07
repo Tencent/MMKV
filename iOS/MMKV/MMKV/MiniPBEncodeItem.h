@@ -61,14 +61,14 @@ struct MiniPBEncodeItem {
             compiledSize = other.compiledSize;
             valueSize = other.valueSize;
             value = other.value;
-            
+
             if (type == PBEncodeItemType_NSString) {
                 if (value.tmpObjectValue != nullptr) {
                     CFRetain(value.tmpObjectValue);
                 }
             }
         }
-       
+
         return *this;
     }
 

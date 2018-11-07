@@ -41,6 +41,7 @@
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
+static id<MMKVHandler> g_callbackHandler;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
@@ -253,21 +254,43 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			}
 			MMKVInfo(@"loading [%@] with %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
 			if (m_actualSize > 0) {
+				bool loadFromFile, needFullWriteback = false;
 				if (m_actualSize < m_size && m_actualSize + offset <= m_size) {
 					if ([self checkFileCRCValid] == YES) {
-						NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
-						if (m_cryptor) {
-							inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
-						}
-						m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
-						m_output = new MiniCodedOutputData(m_ptr + offset + m_actualSize, m_size - offset - m_actualSize);
+						loadFromFile = true;
 					} else {
-						[self writeAcutalSize:0];
-						m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-						[self recaculateCRCDigest];
+						loadFromFile = false;
+						if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(onMMKVCRCCheckFail:)]) {
+							auto strategic = [g_callbackHandler onMMKVCRCCheckFail:m_mmapID];
+							if (strategic == MMKVOnErrorRecover) {
+								loadFromFile = true;
+								needFullWriteback = true;
+							}
+						}
 					}
 				} else {
 					MMKVError(@"load [%@] error: %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
+					loadFromFile = false;
+					if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(onMMKVFileLengthError:)]) {
+						auto strategic = [g_callbackHandler onMMKVFileLengthError:m_mmapID];
+						if (strategic == MMKVOnErrorRecover) {
+							loadFromFile = true;
+							needFullWriteback = true;
+							[self writeAcutalSize:m_size - offset];
+						}
+					}
+				}
+				if (loadFromFile) {
+					NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
+					if (m_cryptor) {
+						inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
+					}
+					m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+					m_output = new MiniCodedOutputData(m_ptr + offset + m_actualSize, m_size - offset - m_actualSize);
+					if (needFullWriteback) {
+						[self fullWriteback];
+					}
+				} else {
 					[self writeAcutalSize:0];
 					m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
 					[self recaculateCRCDigest];
@@ -684,7 +707,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 
 	NSData *allData = [MiniPBCoder encodeDataWithObject:m_dic];
-	if (allData.length > 0 && [self isFileValid]) {
+	if (allData.length > 0) {
 		int offset = pbFixed32Size(0);
 		if (allData.length + offset <= m_size) {
 			if (m_cryptor) {
@@ -1260,6 +1283,16 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	uint32_t crcDigest = (uint32_t) crc32(0, (const uint8_t *) fileData.bytes + offset, (uint32_t) actualSize);
 
 	return crcFile == crcDigest;
+}
+
++ (void)registerHandler:(id<MMKVHandler>)handler {
+	CScopedLock lock(g_instanceLock);
+	g_callbackHandler = handler;
+}
+
++ (void)unregiserHandler {
+	CScopedLock lock(g_instanceLock);
+	g_callbackHandler = nil;
 }
 
 @end
