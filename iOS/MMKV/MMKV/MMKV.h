@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#import <Foundation/Foundation.h>
+#import "MMKVHandler.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -68,6 +68,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
+
++ (void)registerHandler:(id<MMKVHandler>)handler;
++ (void)unregiserHandler;
 
 @end
 

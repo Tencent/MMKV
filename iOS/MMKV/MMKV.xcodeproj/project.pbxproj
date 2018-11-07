@@ -53,6 +53,8 @@
 		CBC1A90420DA94A000AD5087 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
 		CBC1A90620DA94B900AD5087 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		CBDF32972192E9B50028DB4D /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF32962192E9B50028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		CBDF32982192E9F90028DB4D /* MMKVHandler.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBDF32962192E9B50028DB4D /* MMKVHandler.h */; };
 		CBF00476217DD7D0001BB3ED /* md5.h in Headers */ = {isa = PBXBuildFile; fileRef = CBF00471217DD7D0001BB3ED /* md5.h */; };
 		CBF00477217DD7D0001BB3ED /* md32_common.h in Headers */ = {isa = PBXBuildFile; fileRef = CBF00472217DD7D0001BB3ED /* md32_common.h */; };
 		CBF00478217DD7D0001BB3ED /* md5_dgst.c in Sources */ = {isa = PBXBuildFile; fileRef = CBF00473217DD7D0001BB3ED /* md5_dgst.c */; };
@@ -69,6 +71,7 @@
 			dstPath = include/MMKV;
 			dstSubfolderSpec = 16;
 			files = (
+				CBDF32982192E9F90028DB4D /* MMKVHandler.h in CopyFiles */,
 				CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -117,6 +120,7 @@
 		CBC1A8F620DA946200AD5087 /* MMKV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBC1A90320DA94A000AD5087 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		CBC1A90A20DA95E100AD5087 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CBDF32962192E9B50028DB4D /* MMKVHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVHandler.h; sourceTree = "<group>"; };
 		CBF00471217DD7D0001BB3ED /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
 		CBF00472217DD7D0001BB3ED /* md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md32_common.h; sourceTree = "<group>"; };
 		CBF00473217DD7D0001BB3ED /* md5_dgst.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_dgst.c; sourceTree = "<group>"; };
@@ -166,7 +170,6 @@
 		CB1FD4932046984F00931B5F /* MMKV */ = {
 			isa = PBXGroup;
 			children = (
-				CB6BE05221631CD800E3A370 /* tsl */,
 				CB6DEF9E212E6F010024F0E8 /* aes */,
 				CB6BE03C21630ED100E3A370 /* CityHash.h */,
 				CB6BE03D21630ED100E3A370 /* CityHash.mm */,
@@ -191,9 +194,11 @@
 				CB1FD4952046984F00931B5F /* MMKV.mm */,
 				CB6BE04021630ED100E3A370 /* MMKV+Internal.h */,
 				CB6BE04321630ED200E3A370 /* MMKV+MRC.mm */,
+				CBDF32962192E9B50028DB4D /* MMKVHandler.h */,
 				CBC1A8A620DA080800AD5087 /* MMKVLog.h */,
 				CBC1A90720DA959400AD5087 /* Resources */,
 				CB1FD5152049382F00931B5F /* ScopedLock.hpp */,
+				CB6BE05221631CD800E3A370 /* tsl */,
 			);
 			path = MMKV;
 			sourceTree = "<group>";
@@ -259,6 +264,7 @@
 				CB6BE04621630ED200E3A370 /* CityHash.h in Headers */,
 				CB6DEFB3212E6F010024F0E8 /* aes_locl.h in Headers */,
 				CB6BE04B21630ED200E3A370 /* MMBuffer.h in Headers */,
+				CBDF32972192E9B50028DB4D /* MMKVHandler.h in Headers */,
 				CB6BE04A21630ED200E3A370 /* MMKV+Internal.h in Headers */,
 				CB6BE04521630ED200E3A370 /* DynamicBitset.hpp in Headers */,
 				CB8FB92E2100C52F00CC523D /* LRUCache.hpp in Headers */,
