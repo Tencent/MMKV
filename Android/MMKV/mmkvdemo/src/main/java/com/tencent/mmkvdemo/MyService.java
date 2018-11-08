@@ -32,18 +32,18 @@ public class MyService extends BenchMarkBaseService {
     @Override
     public void onCreate() {
         super.onCreate();
-        System.out.println("onCreate MyService");
+        Log.i("MMKV", "onCreate MyService");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        System.out.println("onDestroy MyService");
+        Log.i("MMKV", "onDestroy MyService");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("MyService onStartCommand");
+        Log.i("MMKV", "MyService onStartCommand");
         if (intent != null) {
             String cmd = intent.getStringExtra(CMD_ID);
             if (cmd != null) {

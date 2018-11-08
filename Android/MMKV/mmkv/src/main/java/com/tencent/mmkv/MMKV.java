@@ -26,15 +26,22 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
+    private static EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
     static {
+        recoverIndex = new EnumMap<>(MMKVRecoverStrategic.class);
+        recoverIndex.put(MMKVRecoverStrategic.OnErrorDiscard, 0);
+        recoverIndex.put(MMKVRecoverStrategic.OnErrorRecover, 1);
+
         if (BuildConfig.FLAVOR.equals("SharedCpp")) {
             System.loadLibrary("c++_shared");
         }
@@ -98,16 +105,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         String processName =
             MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
         if (processName == null || processName.length() == 0) {
-            System.out.println("process name detect fail, try again later");
+            Log.e("MMKV", "process name detect fail, try again later");
             return null;
         }
         if (processName.contains(":")) {
             Uri uri = MMKVContentProvider.contentUri(context);
             if (uri == null) {
-                System.out.println("MMKVContentProvider has invalid authority");
+                Log.e("MMKV", "MMKVContentProvider has invalid authority");
                 return null;
             }
-            System.out.println("getting parcelable mmkv in process, Uri = " + uri);
+            Log.i("MMKV", "getting parcelable mmkv in process, Uri = " + uri);
 
             Bundle extras = new Bundle();
             extras.putInt(MMKVContentProvider.KEY_SIZE, size);
@@ -123,14 +130,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 if (parcelableMMKV != null) {
                     MMKV mmkv = parcelableMMKV.toMMKV();
                     if (mmkv != null) {
-                        System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
-                                           + ", meta fd = " + mmkv.ashmemMetaFD());
+                        Log.i("MMKV", mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
+                                          + ", meta fd = " + mmkv.ashmemMetaFD());
                     }
                     return mmkv;
                 }
             }
         } else {
-            System.out.println("getting mmkv in main process");
+            Log.i("MMKV", "getting mmkv in main process");
 
             mode = mode | ASHMEM_MODE;
             long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
@@ -348,7 +355,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             } else if (value instanceof Set) {
                 encode(key, (Set<String>) value);
             } else {
-                System.out.println("unknown type: " + value.getClass());
+                Log.e("MMKV", "unknown type: " + value.getClass());
             }
         }
         return kvs.size();
@@ -483,6 +490,34 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native int ashmemFD();
 
     public native int ashmemMetaFD();
+
+    // callback handler
+    private static MMKVHandler g_callbackHandler;
+    public static void registerHandler(MMKVHandler handler) {
+        g_callbackHandler = handler;
+    }
+
+    public static void unregisterHandler() {
+        g_callbackHandler = null;
+    }
+
+    private static int onMMKVCRCCheckFail(String mmapID) {
+        MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
+        if (g_callbackHandler != null) {
+            strategic = g_callbackHandler.onMMKVCRCCheckFail(mmapID);
+        }
+        Log.i("MMKV", "Recover strategic for " + mmapID + " is " + strategic);
+        return recoverIndex.get(strategic);
+    }
+
+    private static int onMMKVFileLengthError(String mmapID) {
+        MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
+        if (g_callbackHandler != null) {
+            strategic = g_callbackHandler.onMMKVFileLengthError(mmapID);
+        }
+        Log.i("MMKV", "Recover strategic for " + mmapID + " is " + strategic);
+        return recoverIndex.get(strategic);
+    }
 
     // jni
     private long nativeHandle;

@@ -445,7 +445,8 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
                         ContentValues values = ReflectionUtil.contentValuesNewInstance(
                             (HashMap<String, Object>) mModified);
                         return mContext.getContentResolver().update(uri, values, null,
-                                                                    selectionArgs) > 0;
+                                                                    selectionArgs)
+                            > 0;
                     }
                 }
             }
@@ -598,9 +599,8 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
         switch (match) {
             case APPLY:
             case COMMIT:
-                boolean hasListeners = mListenersCount != null &&
-                                       mListenersCount.get(name) != null &&
-                                       mListenersCount.get(name) > 0;
+                boolean hasListeners = mListenersCount != null && mListenersCount.get(name) != null
+                                       && mListenersCount.get(name) > 0;
                 ArrayList<String> keysModified = null;
                 Map<String, Object> map = new HashMap();
                 if (hasListeners) {
@@ -629,9 +629,9 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
                             keysModified.add(k);
                         }
                     } else {
-                        if (hasListeners && map != null &&
-                            (!map.containsKey(k) ||
-                             (map.containsKey(k) && !v.equals(map.get(k))))) {
+                        if (hasListeners && map != null
+                            && (!map.containsKey(k)
+                                || (map.containsKey(k) && !v.equals(map.get(k))))) {
                             keysModified.add(k);
                         }
                     }
