@@ -2,5 +2,6 @@
 -keepclasseswithmembers,includedescriptorclasses class com.tencent.mmkv.** {
     native <methods>;
     long nativeHandle;
-    MMKVRecoverStrategic <methods>;
+    private static *** onMMKVCRCCheckFail(***);
+    private static *** onMMKVFileLengthError(***);
 }
