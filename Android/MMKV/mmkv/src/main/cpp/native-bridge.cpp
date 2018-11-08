@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include "native-bridge.h"
 #include "MMBuffer.h"
 #include "MMKV.h"
 #include "MMKVLog.h"
@@ -29,6 +30,9 @@ using namespace std;
 
 static jclass g_cls = nullptr;
 static jfieldID g_fileID = nullptr;
+static jmethodID g_callbackOnCRCFailID = nullptr;
+static jmethodID g_callbackOnFileLengthErrorID = nullptr;
+static JNIEnv *g_currentEnv = nullptr;
 
 extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv *env;
@@ -48,8 +52,18 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     g_cls = reinterpret_cast<jclass>(env->NewGlobalRef(instance));
     g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
-    if (!g_cls) {
+    if (!g_cls || !g_fileID) {
         MMKVError("fail to locate fileID");
+    }
+    g_callbackOnCRCFailID =
+        env->GetStaticMethodID(g_cls, "onMMKVCRCCheckFail", "(Ljava/lang/String;)I");
+    if (!g_callbackOnCRCFailID) {
+        MMKVError("fail to get method id for onMMKVCRCCheckFail");
+    }
+    g_callbackOnFileLengthErrorID =
+        env->GetStaticMethodID(g_cls, "onMMKVFileLengthError", "(Ljava/lang/String;)I");
+    if (!g_callbackOnFileLengthErrorID) {
+        MMKVError("fail to get method id for onMMKVFileLengthError");
     }
 
     return JNI_VERSION_1_6;
@@ -124,8 +138,28 @@ static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
     return nullptr;
 }
 
+MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
+    if (g_currentEnv && g_callbackOnCRCFailID) {
+        jstring str = string2jstring(g_currentEnv, mmapID);
+        auto strategic = g_currentEnv->CallStaticIntMethod(g_cls, g_callbackOnCRCFailID, str);
+        return static_cast<MMKVRecoverStrategic>(strategic);
+    }
+    return OnErrorDiscard;
+}
+
+MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
+    if (g_currentEnv && g_callbackOnFileLengthErrorID) {
+        jstring str = string2jstring(g_currentEnv, mmapID);
+        auto strategic =
+            g_currentEnv->CallStaticIntMethod(g_cls, g_callbackOnFileLengthErrorID, str);
+        return static_cast<MMKVRecoverStrategic>(strategic);
+    }
+    return OnErrorDiscard;
+}
+
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
     JNIEnv *env, jobject obj, jstring mmapID, jint mode, jstring cryptKey) {
+    g_currentEnv = env;
     MMKV *kv = nullptr;
     if (!mmapID) {
         return (jlong) kv;
@@ -147,6 +181,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSize(
     JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode, jstring cryptKey) {
+    g_currentEnv = env;
     MMKV *kv = nullptr;
     if (!mmapID || size < 0) {
         return (jlong) kv;
@@ -169,6 +204,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNI
                                                                              jobject obj,
                                                                              jint mode,
                                                                              jstring cryptKey) {
+    g_currentEnv = env;
     MMKV *kv = nullptr;
 
     if (cryptKey != nullptr) {
@@ -186,6 +222,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNI
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithAshmemFD(
     JNIEnv *env, jobject obj, jstring mmapID, jint fd, jint metaFD, jstring cryptKey) {
+    g_currentEnv = env;
     MMKV *kv = nullptr;
     if (!mmapID || fd < 0 || metaFD < 0) {
         return (jlong) kv;

@@ -18,27 +18,18 @@
  * limitations under the License.
  */
 
-#ifndef MMKVHandler_h
-#define MMKVHandler_h
-#import <Foundation/Foundation.h>
+#ifndef MMKV_NATIVE_BRIDGE_H
+#define MMKV_NATIVE_BRIDGE_H
 
-typedef enum : NSUInteger {
-	MMKVOnErrorDiscard = 0,
-	MMKVOnErrorRecover,
-} MMKVRecoverStrategic;
+#include <string>
 
-// callback is called on the operating thread of the MMKV instance
-@protocol MMKVHandler <NSObject>
-@optional
+enum MMKVRecoverStrategic : int {
+    OnErrorDiscard = 0,
+    OnErrorRecover,
+};
 
-// by default MMKV will discard all datas on crc32-check failure
-// return `MMKVOnErrorRecover` to recover any data on the file
-- (MMKVRecoverStrategic)onMMKVCRCCheckFail:(NSString *)mmapID;
+MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
 
-// by default MMKV will discard all datas on file length mismatch
-// return `MMKVOnErrorRecover` to recover any data on the file
-- (MMKVRecoverStrategic)onMMKVFileLengthError:(NSString *)mmapID;
+MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
 
-@end
-
-#endif /* MMKVHandler_h */
+#endif //MMKV_NATIVE_BRIDGE_H
