@@ -33,6 +33,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 public class MMKVContentProvider extends ContentProvider {
 
@@ -63,8 +64,8 @@ public class MMKVContentProvider extends ContentProvider {
         MMKV mmkv = MMKV.mmkvWithAshmemID(getContext(), ashmemID, size, mode, cryptKey);
         if (mmkv != null) {
             ParcelableMMKV parcelableMMKV = new ParcelableMMKV(mmkv);
-            System.out.println(ashmemID + " fd = " + mmkv.ashmemFD()
-                    + ", meta fd = " + mmkv.ashmemMetaFD());
+            Log.i("MMKV",
+                  ashmemID + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
             Bundle result = new Bundle();
             result.putParcelable(MMKVContentProvider.KEY, parcelableMMKV);
             return result;
@@ -110,7 +111,8 @@ public class MMKVContentProvider extends ContentProvider {
         ActivityManager manager =
             (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
-            for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
+            for (ActivityManager.RunningAppProcessInfo processInfo
+                    : manager.getRunningAppProcesses()) {
                 if (processInfo.pid == pid) {
                     return processInfo.processName;
                 }

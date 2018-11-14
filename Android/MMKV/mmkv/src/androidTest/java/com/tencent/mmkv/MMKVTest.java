@@ -146,7 +146,12 @@ public class MMKVTest {
     @Test
     public void testStringSet() {
         HashSet<String> set = new HashSet<String>();
-        set.add("W"); set.add("e"); set.add("C"); set.add("h"); set.add("a"); set.add("t");
+        set.add("W");
+        set.add("e");
+        set.add("C");
+        set.add("h");
+        set.add("a");
+        set.add("t");
         boolean ret = mmkv.encode("string_set", set);
         assertEquals(ret, true);
 
@@ -182,7 +187,12 @@ public class MMKVTest {
         ret &= mmkv.encode("string_1", "hello");
 
         HashSet<String> set = new HashSet<String>();
-        set.add("W"); set.add("e"); set.add("C"); set.add("h"); set.add("a"); set.add("t");
+        set.add("W");
+        set.add("e");
+        set.add("C");
+        set.add("h");
+        set.add("a");
+        set.add("t");
         ret &= mmkv.encode("string_set_1", set);
 
         byte[] bytes = {'m', 'm', 'k', 'v'};
@@ -193,7 +203,7 @@ public class MMKVTest {
             long count = mmkv.count();
 
             mmkv.removeValueForKey("bool_1");
-            mmkv.removeValuesForKeys(new String[]{"int_1", "long_1"});
+            mmkv.removeValuesForKeys(new String[] {"int_1", "long_1"});
 
             long newCount = mmkv.count();
             assertEquals(count, newCount + 3);

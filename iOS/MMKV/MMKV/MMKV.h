@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#import <Foundation/Foundation.h>
+#import "MMKVHandler.h"
 
 @interface MMKV : NSObject
 
@@ -91,9 +91,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
 
-- (void)clearMemoryCache;
-
 - (void)clearAll;
+
+// MMKV's size won't reduce after deleting key-values
+// call this method after lots of deleting f you care about disk usage
+// note that `clearAll` has the similar effect of `trim`
+- (void)trim;
+
+// call this method if the instance is no longer needed in the near future
+// any subsequent call to the instance is undefined behavior
+- (void)close;
+
+// call this method if you are facing memory-warning
+// any subsequent call to the instance will load all key-values from file again
+- (void)clearMemoryCache;
 
 // you don't need to call this, really, I mean it
 // unless you care about out of battery
@@ -101,6 +112,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
+
++ (void)registerHandler:(id<MMKVHandler>)handler;
++ (void)unregiserHandler;
 
 NS_ASSUME_NONNULL_END
 

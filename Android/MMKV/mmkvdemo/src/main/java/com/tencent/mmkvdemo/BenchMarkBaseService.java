@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.Random;
 
@@ -57,7 +58,7 @@ public abstract class BenchMarkBaseService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        System.out.println("onCreate BenchMarkBaseService");
+        Log.i("MMKV", "onCreate BenchMarkBaseService");
 
         MMKV.initialize(this);
         {
@@ -66,7 +67,7 @@ public abstract class BenchMarkBaseService extends Service {
             MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
 
             long endTime = System.currentTimeMillis();
-            System.out.println("load [" + MMKV_ID + "]: " + (endTime - startTime) + " ms");
+            Log.i("MMKV", "load [" + MMKV_ID + "]: " + (endTime - startTime) + " ms");
         }
         m_arrStrings = new String[m_loops];
         m_arrKeys = new String[m_loops];
@@ -82,7 +83,7 @@ public abstract class BenchMarkBaseService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        System.out.println("onDestroy BenchMarkBaseService");
+        Log.i("MMKV", "onDestroy BenchMarkBaseService");
 
         MMKV.onExit();
     }
@@ -104,8 +105,8 @@ public abstract class BenchMarkBaseService extends Service {
             mmkv.encode(key, tmp);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " mmkv write int: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV",
+              caller + " mmkv write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteWriteInt(String caller) {
@@ -121,8 +122,8 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " sqlite write int: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime)
+                          + " ms");
     }
 
     private void spBatchWriteInt(String caller) {
@@ -140,8 +141,8 @@ public abstract class BenchMarkBaseService extends Service {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " MultiProcessSharedPreferences write int: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " MultiProcessSharedPreferences write int: loop[" + m_loops
+                          + "]: " + (endTime - startTime) + " ms");
     }
 
     protected void batchReadInt(String caller) {
@@ -159,8 +160,8 @@ public abstract class BenchMarkBaseService extends Service {
             int tmp = mmkv.decodeInt(key);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " mmkv read int: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV",
+              caller + " mmkv read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteReadInt(String caller) {
@@ -174,8 +175,8 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " sqlite read int: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV",
+              caller + " sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadInt(String caller) {
@@ -188,8 +189,8 @@ public abstract class BenchMarkBaseService extends Service {
             int tmp = preferences.getInt(key, 0);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " MultiProcessSharedPreferences read int: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " MultiProcessSharedPreferences read int: loop[" + m_loops
+                          + "]: " + (endTime - startTime) + " ms");
     }
 
     protected void batchWriteString(String caller) {
@@ -208,8 +209,8 @@ public abstract class BenchMarkBaseService extends Service {
             mmkv.encode(strKey, valueStr);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " mmkv write String: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " mmkv write String: loop[" + m_loops + "]: " + (endTime - startTime)
+                          + " ms");
     }
 
     private void sqliteWriteString(String caller) {
@@ -224,8 +225,8 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " sqlite write String: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " sqlite write String: loop[" + m_loops
+                          + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchWrieString(String caller) {
@@ -242,8 +243,8 @@ public abstract class BenchMarkBaseService extends Service {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " MultiProcessSharedPreferences write String: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " MultiProcessSharedPreferences write String: loop[" + m_loops
+                          + "]: " + (endTime - startTime) + " ms");
     }
 
     protected void batchReadString(String caller) {
@@ -261,8 +262,8 @@ public abstract class BenchMarkBaseService extends Service {
             final String tmpStr = mmkv.decodeString(strKey);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " mmkv read String: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " mmkv read String: loop[" + m_loops + "]: " + (endTime - startTime)
+                          + " ms");
     }
 
     private void sqliteReadString(String caller) {
@@ -276,8 +277,8 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " sqlite read String: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " sqlite read String: loop[" + m_loops
+                          + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadStrinfg(String caller) {
@@ -290,8 +291,8 @@ public abstract class BenchMarkBaseService extends Service {
             final String tmp = preferences.getString(key, null);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(caller + " MultiProcessSharedPreferences read String: loop[" + m_loops +
-                           "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " MultiProcessSharedPreferences read String: loop[" + m_loops
+                          + "]: " + (endTime - startTime) + " ms");
     }
 
     MMKV m_ashmemMMKV;
@@ -322,7 +323,7 @@ public abstract class BenchMarkBaseService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        System.out.println("onBind, intent=" + intent);
+        Log.i("MMKV", "onBind, intent=" + intent);
         return new AshmemMMKVGetter();
     }
 

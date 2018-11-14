@@ -286,7 +286,8 @@ bool createFile(NSString *nsFilePath) {
 	// try create file at once
 	NSMutableDictionary *fileAttr = [NSMutableDictionary dictionary];
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-	[fileAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
+	[fileAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication
+	             forKey:NSFileProtectionKey];
 #endif
 	if ([oFileMgr createFileAtPath:nsFilePath contents:nil attributes:fileAttr]) {
 		return true;

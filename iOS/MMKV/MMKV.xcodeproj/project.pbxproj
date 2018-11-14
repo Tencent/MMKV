@@ -39,6 +39,15 @@
 		CBC1A90420DA94A000AD5087 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
 		CBC1A90620DA94B900AD5087 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		CBDF32902192C0000028DB4D /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		CBDF32912192C0340028DB4D /* MMKVHandler.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; };
+		CBF00476217DD7D0001BB3ED /* md5.h in Headers */ = {isa = PBXBuildFile; fileRef = CBF00471217DD7D0001BB3ED /* md5.h */; };
+		CBF00477217DD7D0001BB3ED /* md32_common.h in Headers */ = {isa = PBXBuildFile; fileRef = CBF00472217DD7D0001BB3ED /* md32_common.h */; };
+		CBF00478217DD7D0001BB3ED /* md5_dgst.c in Sources */ = {isa = PBXBuildFile; fileRef = CBF00473217DD7D0001BB3ED /* md5_dgst.c */; };
+		CBF00479217DD7D0001BB3ED /* md5_dgst.c in Sources */ = {isa = PBXBuildFile; fileRef = CBF00473217DD7D0001BB3ED /* md5_dgst.c */; };
+		CBF0047A217DD7D0001BB3ED /* md5_one.c in Sources */ = {isa = PBXBuildFile; fileRef = CBF00474217DD7D0001BB3ED /* md5_one.c */; };
+		CBF0047B217DD7D0001BB3ED /* md5_one.c in Sources */ = {isa = PBXBuildFile; fileRef = CBF00474217DD7D0001BB3ED /* md5_one.c */; };
+		CBF0047C217DD7D0001BB3ED /* md5_locl.h in Headers */ = {isa = PBXBuildFile; fileRef = CBF00475217DD7D0001BB3ED /* md5_locl.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -48,6 +57,7 @@
 			dstPath = include/MMKV;
 			dstSubfolderSpec = 16;
 			files = (
+				CBDF32912192C0340028DB4D /* MMKVHandler.h in CopyFiles */,
 				CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -86,6 +96,12 @@
 		CBC1A8F620DA946200AD5087 /* MMKV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBC1A90320DA94A000AD5087 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		CBC1A90A20DA95E100AD5087 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CBDF328F2192C0000028DB4D /* MMKVHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKVHandler.h; sourceTree = "<group>"; };
+		CBF00471217DD7D0001BB3ED /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
+		CBF00472217DD7D0001BB3ED /* md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md32_common.h; sourceTree = "<group>"; };
+		CBF00473217DD7D0001BB3ED /* md5_dgst.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_dgst.c; sourceTree = "<group>"; };
+		CBF00474217DD7D0001BB3ED /* md5_one.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_one.c; sourceTree = "<group>"; };
+		CBF00475217DD7D0001BB3ED /* md5_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5_locl.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -145,6 +161,7 @@
 				CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */,
 				CB1FD4942046984F00931B5F /* MMKV.h */,
 				CB1FD4952046984F00931B5F /* MMKV.mm */,
+				CBDF328F2192C0000028DB4D /* MMKVHandler.h */,
 				CBC1A8A620DA080800AD5087 /* MMKVLog.h */,
 				CBC1A90720DA959400AD5087 /* Resources */,
 				CB1FD5152049382F00931B5F /* ScopedLock.hpp */,
@@ -175,13 +192,18 @@
 		CB6DEFA0212E6F010024F0E8 /* openssl */ = {
 			isa = PBXGroup;
 			children = (
-				CB6DEFA1212E6F010024F0E8 /* opensslconf.h */,
-				CB6DEFA2212E6F010024F0E8 /* cfb128.c */,
-				CB6DEFA3212E6F010024F0E8 /* aes_core.c */,
 				CB6DEFA4212E6F010024F0E8 /* aes_cfb.c */,
-				CB6DEFA5212E6F010024F0E8 /* aes.h */,
-				CB6DEFA6212E6F010024F0E8 /* modes.h */,
+				CB6DEFA3212E6F010024F0E8 /* aes_core.c */,
 				CB6DEFA7212E6F010024F0E8 /* aes_locl.h */,
+				CB6DEFA5212E6F010024F0E8 /* aes.h */,
+				CB6DEFA2212E6F010024F0E8 /* cfb128.c */,
+				CBF00473217DD7D0001BB3ED /* md5_dgst.c */,
+				CBF00475217DD7D0001BB3ED /* md5_locl.h */,
+				CBF00474217DD7D0001BB3ED /* md5_one.c */,
+				CBF00471217DD7D0001BB3ED /* md5.h */,
+				CBF00472217DD7D0001BB3ED /* md32_common.h */,
+				CB6DEFA6212E6F010024F0E8 /* modes.h */,
+				CB6DEFA1212E6F010024F0E8 /* opensslconf.h */,
 			);
 			path = openssl;
 			sourceTree = "<group>";
@@ -201,12 +223,16 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CBDF32902192C0000028DB4D /* MMKVHandler.h in Headers */,
+				CBF0047C217DD7D0001BB3ED /* md5_locl.h in Headers */,
+				CBF00476217DD7D0001BB3ED /* md5.h in Headers */,
 				CB6DEFB1212E6F010024F0E8 /* aes.h in Headers */,
 				CB6DEFB2212E6F010024F0E8 /* modes.h in Headers */,
 				CB6DEFB3212E6F010024F0E8 /* aes_locl.h in Headers */,
 				CB8FB92E2100C52F00CC523D /* LRUCache.hpp in Headers */,
 				CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */,
 				CB6DEFAA212E6F010024F0E8 /* opensslconf.h in Headers */,
+				CBF00477217DD7D0001BB3ED /* md32_common.h in Headers */,
 				CB865F5820FF33F600427B9D /* MemoryFile.h in Headers */,
 				CB6DEFA9212E6F010024F0E8 /* AESCrypt.h in Headers */,
 			);
@@ -310,6 +336,8 @@
 				CB6DEFAD212E6F010024F0E8 /* aes_core.c in Sources */,
 				CB1FD4C420469B8800931B5F /* MiniCodedInputData.mm in Sources */,
 				CB865F5620FF33F600427B9D /* MemoryFile.mm in Sources */,
+				CBF00478217DD7D0001BB3ED /* md5_dgst.c in Sources */,
+				CBF0047A217DD7D0001BB3ED /* md5_one.c in Sources */,
 				CB6DEFB4212E6F010024F0E8 /* AESCrypt.mm in Sources */,
 				CB1FD4C620469B8800931B5F /* MiniPBCoder.mm in Sources */,
 			);
@@ -327,6 +355,8 @@
 				CB6DEFAE212E6F010024F0E8 /* aes_core.c in Sources */,
 				CBC1A90120DA948A00AD5087 /* MiniPBUtility.mm in Sources */,
 				CB865F5720FF33F600427B9D /* MemoryFile.mm in Sources */,
+				CBF00479217DD7D0001BB3ED /* md5_dgst.c in Sources */,
+				CBF0047B217DD7D0001BB3ED /* md5_one.c in Sources */,
 				CB6DEFB5212E6F010024F0E8 /* AESCrypt.mm in Sources */,
 				CBC1A90220DA948A00AD5087 /* MMKV.mm in Sources */,
 			);

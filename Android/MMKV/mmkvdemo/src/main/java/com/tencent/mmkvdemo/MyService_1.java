@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 
 import com.tencent.mmkv.ParcelableMMKV;
 
@@ -34,10 +35,10 @@ public class MyService_1 extends BenchMarkBaseService implements ServiceConnecti
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("MyService_1 onStartCommand:");
+        Log.i("MMKV", "MyService_1 onStartCommand:");
         if (intent != null) {
             String cmd = intent.getStringExtra(CMD_ID);
-            System.out.println("----MyService_1 onStartCommand:" + cmd);
+            Log.i("MMKV", "----MyService_1 onStartCommand:" + cmd);
             if (cmd != null) {
                 if (cmd.equals(CMD_READ_INT)) {
                     super.batchReadInt(CALLER);
@@ -62,13 +63,13 @@ public class MyService_1 extends BenchMarkBaseService implements ServiceConnecti
     @Override
     public void onCreate() {
         super.onCreate();
-        System.out.println("onCreate MyService_1");
+        Log.i("MMKV", "onCreate MyService_1");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        System.out.println("onDestroy MyService_1");
+        Log.i("MMKV", "onDestroy MyService_1");
     }
 
     @Override
@@ -79,7 +80,7 @@ public class MyService_1 extends BenchMarkBaseService implements ServiceConnecti
             if (parcelableMMKV != null) {
                 m_ashmemMMKV = parcelableMMKV.toMMKV();
                 if (m_ashmemMMKV != null) {
-                    System.out.println("ashmem bool: " + m_ashmemMMKV.decodeBool("bool"));
+                    Log.i("MMKV", "ashmem bool: " + m_ashmemMMKV.decodeBool("bool"));
                 }
             }
         } catch (RemoteException e) {

@@ -278,7 +278,7 @@
 				TargetAttributes = {
 					CB1FD41F20455E2D00931B5F = {
 						CreatedOnToolsVersion = 9.2;
-						LastSwiftMigration = 0940;
+						LastSwiftMigration = "";
 						ProvisioningStyle = Automatic;
 					};
 					CB36F24820F8A20C009AF46F = {
@@ -566,7 +566,8 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
@@ -586,7 +587,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
