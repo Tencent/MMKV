@@ -492,19 +492,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native int ashmemMetaFD();
 
     // callback handler
-    private static MMKVHandler g_callbackHandler;
+    private static MMKVHandler gCallbackHandler;
     public static void registerHandler(MMKVHandler handler) {
-        g_callbackHandler = handler;
+        gCallbackHandler = handler;
     }
 
     public static void unregisterHandler() {
-        g_callbackHandler = null;
+        gCallbackHandler = null;
     }
 
     private static int onMMKVCRCCheckFail(String mmapID) {
         MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
-        if (g_callbackHandler != null) {
-            strategic = g_callbackHandler.onMMKVCRCCheckFail(mmapID);
+        if (gCallbackHandler != null) {
+            strategic = gCallbackHandler.onMMKVCRCCheckFail(mmapID);
         }
         Log.i("MMKV", "Recover strategic for " + mmapID + " is " + strategic);
         return recoverIndex.get(strategic);
@@ -512,8 +512,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static int onMMKVFileLengthError(String mmapID) {
         MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
-        if (g_callbackHandler != null) {
-            strategic = g_callbackHandler.onMMKVFileLengthError(mmapID);
+        if (gCallbackHandler != null) {
+            strategic = gCallbackHandler.onMMKVFileLengthError(mmapID);
         }
         Log.i("MMKV", "Recover strategic for " + mmapID + " is " + strategic);
         return recoverIndex.get(strategic);

@@ -1,8 +1,8 @@
 apply from: rootProject.file('gradle/build_library.gradle')
 
 android {
-    // Not working...Don't know why
 //    defaultPublishConfig "StaticCppRelease"
+    defaultPublishConfig "SharedCppRelease"
     defaultConfig {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
