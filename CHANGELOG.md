@@ -16,7 +16,7 @@ Known Issues
 ### Android
 What's new  
 
-* Add static linked of libc++ to trim AAR size. Use it when there's no other lib in your App embeds libc++.so. Or if you already have an older version of libc++.so that doesn't agree with MMKV.  
+* Add static linked of libc++ to trim AAR size. Use it when there's no other lib in your App embeds `libc++_shared.so`. Or if you already have an older version of `libc++_shared.so` that doesn't agree with MMKV.  
 Add `implementation 'com.tencent:mmkv-static:1.0.13'` to your App's gradle setting to integrate.
 * Special chars like `/` are supported in MMKV now. The file name of MMKV with special mmapID will be encoded with md5 and stored in seperate folder.
 * Add **callback** for MMKV error handling. You can make MMKV to recover instead of discard when crc32 check fail happens.
