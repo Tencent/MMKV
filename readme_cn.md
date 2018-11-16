@@ -1,5 +1,5 @@
 # MMKV——基于 mmap 的高性能通用 key-value 组件
-MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今，在 iOS 微信上使用已有近 3 年，其性能和稳定性经过了时间的验证。近期也已移植到 Android 平台，一并开源。
+MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今，在 iOS 微信上使用已有近 3 年，其性能和稳定性经过了时间的验证。近期也已移植到 Android / macOS 平台，一并开源。
 
 
 ## MMKV 源起
@@ -17,7 +17,7 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 
 更详细的设计原理参考 [MMKV 原理](https://github.com/Tencent/MMKV/wiki/design)。
 
-## iOS 指南
+## iOS/macOS 指南
 ### 安装引入
 推荐使用 CocoaPods：
 
@@ -28,7 +28,7 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
   5. 用 Xcode 打开由 CocoaPods 自动生成的 `.xcworkspace` 文件；
   6. 添加头文件 `#import <MMKV/MMKV.h>`，就可以愉快地开始你的 MMKV 之旅了。
 
-更多安装指引参考 [iOS Setup](https://github.com/Tencent/MMKV/wiki/iOS_setup_cn)。
+更多安装指引参考 [iOS/macOS Setup](https://github.com/Tencent/MMKV/wiki/iOS_setup_cn)。
 
 ### 快速上手
 MMKV 的使用非常简单，无需任何配置，所有变更立马生效，无需调用 `synchronize`:
@@ -46,12 +46,12 @@ int32_t iValue = [mmkv getInt32ForKey:@"int32"];
 NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 ```
 
-更详细的使用教程参考 [iOS Tutorial](https://github.com/Tencent/MMKV/wiki/iOS_tutorial_cn)。
+更详细的使用教程参考 [iOS/macOS Tutorial](https://github.com/Tencent/MMKV/wiki/iOS_tutorial_cn)。
 
 ### 性能对比
 循环写入随机的`int` 1w 次，我们有如下性能对比：  
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
-更详细的性能对比参考 [iOS Benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark_cn)。
+更详细的性能对比参考 [iOS/macOS Benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark_cn)。
 
 ## Android 指南
 ### 安装引入
