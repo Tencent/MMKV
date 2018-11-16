@@ -5,7 +5,7 @@
 
 中文版本请参看[这里](./readme_cn.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on both **iOS**, **macOS** and **Android**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **iOS**, **macOS** and **Android**.
 
 # MMKV for iOS/macOS
 
