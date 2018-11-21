@@ -39,6 +39,10 @@
 #import <unistd.h>
 #import <zlib.h>
 
+static inline dispatch_queue_t MMKVMemoryCacheGetReleaseQueue() {
+    return dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0);
+}
+
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
 static id<MMKVHandler> g_callbackHandler;
@@ -49,9 +53,93 @@ static id<MMKVHandler> g_callbackHandler;
 
 static NSString *encodeMmapID(NSString *mmapID);
 
+@interface _MMKVLinkedMapNode : NSObject {
+    @package
+    __unsafe_unretained _MMKVLinkedMapNode *_prev;
+    __unsafe_unretained _MMKVLinkedMapNode *_next;
+    id _key;
+    id _value;
+}
+@end
+
+@implementation _MMKVLinkedMapNode
+@end
+
+@interface _MMKVLinkedMap : NSObject {
+    @package
+    NSMutableDictionary *_dic;
+    NSUInteger _totalCount;
+    _MMKVLinkedMapNode *_head;
+    _MMKVLinkedMapNode *_tail;
+}
+
+- (void)insertNodeAtHead:(_MMKVLinkedMapNode *)node;
+- (void)bringNodeToHead:(_MMKVLinkedMapNode *)node;
+- (void)removeNode:(_MMKVLinkedMapNode *)node;
+- (void)removeAll;
+@end
+
+@implementation _MMKVLinkedMap
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _dic = [NSMutableDictionary dictionary];
+    }
+    return self;
+}
+
+
+- (void)insertNodeAtHead:(_MMKVLinkedMapNode *)node {
+    [_dic setObject:node forKey:node->_key];
+    _totalCount++;
+    if (_head) {
+        node->_next = _head;
+        _head->_prev = node;
+        _head = node;
+    } else {
+        _head = _tail = node;
+    }
+}
+
+- (void)bringNodeToHead:(_MMKVLinkedMapNode *)node {
+    if (_head == node) return;
+    
+    if (_tail == node) {
+        _tail = node->_prev;
+        _tail->_next = nil;
+    } else {
+        node->_next->_prev = node->_prev;
+        node->_prev->_next = node->_next;
+    }
+    
+    node->_next = _head;
+    node->_prev = nil;
+    _head->_prev = node;
+    _head = node;
+}
+
+- (void)removeNode:(_MMKVLinkedMapNode *)node {
+    [_dic removeObjectForKey:node->_key];
+    _totalCount--;
+    if (node->_next) node->_next->_prev = node->_prev;
+    if (node->_prev) node->_prev->_next = node->_next;
+    if (_head == node) _head = node->_next;
+    if (_tail == node) _tail = node->_prev;
+}
+
+- (void)removeAll {
+    _totalCount = 0;
+    _head = nil;
+    _tail = nil;
+    [_dic removeAllObjects];
+}
+
+@end
+
 @implementation MMKV {
 	NSRecursiveLock *m_lock;
-	NSMutableDictionary *m_dic;
+    _MMKVLinkedMap *_lru;
 	NSString *m_path;
 	NSString *m_crcPath;
 	NSString *m_mmapID;
@@ -285,7 +373,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 					if (m_cryptor) {
 						inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
 					}
-					m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+					NSMutableDictionary *dict = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+                    [self configLRUWithDict:dict];
 					m_output = new MiniCodedOutputData(m_ptr + offset + m_actualSize, m_size - offset - m_actualSize);
 					if (needFullWriteback) {
 						[self fullWriteback];
@@ -299,12 +388,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
 				[self recaculateCRCDigest];
 			}
-			MMKVInfo(@"loaded [%@] with %zu values", m_mmapID, (unsigned long) m_dic.count);
+            NSUInteger currentKeyValueCount = _lru ? _lru->_totalCount : 0;
+            MMKVInfo(@"loaded [%@] with %zu values", m_mmapID, (unsigned long) currentKeyValueCount);
 		}
 	}
-	if (m_dic == nil) {
-		m_dic = [NSMutableDictionary dictionary];
-	}
+    if (_lru == nil) {
+        _lru = [_MMKVLinkedMap new];
+    }
 
 	if (![self isFileValid]) {
 		MMKVWarning(@"[%@] file not valid", m_mmapID);
@@ -339,7 +429,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return;
 	}
 
-	[m_dic removeAllObjects];
+    [_lru removeAll];
 	m_hasFullWriteBack = NO;
 
 	if (m_output != nullptr) {
@@ -392,7 +482,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	m_needLoadFromFile = YES;
 
-	[m_dic removeAllObjects];
+    [_lru removeAll];
 	m_hasFullWriteBack = NO;
 
 	if (m_output != nullptr) {
@@ -522,10 +612,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (newSize >= m_output->spaceLeft()) {
 		// try a full rewrite to make space
 		static const int offset = pbFixed32Size(0);
-		NSData *data = [MiniPBCoder encodeDataWithObject:m_dic];
+		NSData *data = [MiniPBCoder encodeDataWithObject:[self getKeyValueListFromLRU]];
 		size_t lenNeeded = data.length + offset + newSize;
-		size_t avgItemSize = lenNeeded / m_dic.count;
-		size_t futureUsage = avgItemSize * std::max<size_t>(8, m_dic.count / 2);
+        size_t avgItemSize = lenNeeded / _lru->_totalCount;
+		size_t futureUsage = avgItemSize * std::max<size_t>(8, _lru->_totalCount / 2);
 		// 1. no space for a full rewrite, double it
 		// 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
 		if (lenNeeded >= m_size || (lenNeeded + futureUsage) >= m_size) {
@@ -624,8 +714,17 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return NO;
 	}
 	CScopedLock lock(m_lock);
-
-	[m_dic setObject:data forKey:key];
+    
+    _MMKVLinkedMapNode *node = [_lru->_dic objectForKey:key];
+    if (node) {
+        node->_value = data;
+        [_lru bringNodeToHead:node];
+    } else {
+        node = [_MMKVLinkedMapNode new];
+        node->_key = key;
+        node->_value = data;
+        [_lru insertNodeAtHead:node];
+    }
 	m_hasFullWriteBack = NO;
 
 	return [self appendData:data forKey:key];
@@ -641,7 +740,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return NO;
 	}
 	if (m_actualSize == 0) {
-		NSData *allData = [MiniPBCoder encodeDataWithObject:m_dic];
+		NSData *allData = [MiniPBCoder encodeDataWithObject:[self getKeyValueListFromLRU]];
 		if (allData.length > 0) {
 			if (m_cryptor) {
 				m_cryptor->reset();
@@ -685,7 +784,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 - (NSData *)getDataForKey:(NSString *)key {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
-	return [m_dic objectForKey:key];
+    _MMKVLinkedMapNode *node = [_lru->_dic objectForKey:key];
+    if (node) {
+        [_lru bringNodeToHead:node];
+    }
+    return node ? node->_value : nil;
 }
 
 - (BOOL)fullWriteback {
@@ -701,12 +804,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return NO;
 	}
 
-	if (m_dic.count == 0) {
+	if (_lru->_totalCount == 0) {
 		[self clearAll];
 		return YES;
 	}
 
-	NSData *allData = [MiniPBCoder encodeDataWithObject:m_dic];
+	NSData *allData = [MiniPBCoder encodeDataWithObject:[self getKeyValueListFromLRU]];
 	if (allData.length > 0) {
 		int offset = pbFixed32Size(0);
 		if (allData.length + offset <= m_size) {
@@ -1152,18 +1255,49 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return defaultValue;
 }
 
+#pragma mark - LRU
+- (void)removeNodeFromLRUForKey:(NSString *)key {
+    _MMKVLinkedMapNode *node = [_lru->_dic objectForKey:key];
+    if (node) {
+        [_lru removeNode:node];
+        dispatch_async(MMKVMemoryCacheGetReleaseQueue(), ^{
+            [node class];
+        });
+    }
+}
+
+- (void)configLRUWithDict:(NSMutableDictionary *)dict {
+    if (_lru == nil) {
+        _lru = [_MMKVLinkedMap new];
+    }
+    [dict enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        _MMKVLinkedMapNode *node = [_MMKVLinkedMapNode new];
+        node->_key = key;
+        node->_value = obj;
+        [self->_lru insertNodeAtHead:node];
+    }];
+}
+
+- (NSMutableDictionary *)getKeyValueListFromLRU {
+    NSMutableDictionary *res = [NSMutableDictionary dictionary];
+    [_lru->_dic enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull key, _MMKVLinkedMapNode *  _Nonnull obj, BOOL * _Nonnull stop) {
+        [res setObject:obj->_value forKey:key];
+    }];
+    return res;
+}
+
 #pragma mark - enumerate
 
 - (BOOL)containsKey:(NSString *)key {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
-	return ([m_dic objectForKey:key] != nil);
+	return ([_lru->_dic objectForKey:key] != nil);
 }
 
 - (size_t)count {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
-	return m_dic.count;
+    return _lru->_totalCount;
 }
 
 - (size_t)totalSize {
@@ -1179,7 +1313,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MMKVInfo(@"enumerate [%@] begin", m_mmapID);
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
-	[m_dic enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+	[[self getKeyValueListFromLRU] enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
 		block(key, stop);
 	}];
 	MMKVInfo(@"enumerate [%@] finish", m_mmapID);
@@ -1191,8 +1325,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
-
-	[m_dic removeObjectForKey:key];
+    
+    [self removeNodeFromLRUForKey:key];
 	m_hasFullWriteBack = NO;
 
 	static NSData *data = [NSData data];
@@ -1206,10 +1340,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
 
-	[m_dic removeObjectsForKeys:arrKeys];
+    for (NSString *key in arrKeys) {
+        [self removeNodeFromLRUForKey:key];
+    }
 	m_hasFullWriteBack = NO;
 
-	MMKVInfo(@"remove [%@] %lu keys, %lu remain", m_mmapID, (unsigned long) arrKeys.count, (unsigned long) m_dic.count);
+	MMKVInfo(@"remove [%@] %lu keys, %lu remain", m_mmapID, (unsigned long) arrKeys.count, (unsigned long) _lru->_totalCount);
 
 	[self fullWriteback];
 }
