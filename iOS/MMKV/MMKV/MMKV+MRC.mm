@@ -30,9 +30,13 @@ using namespace std;
 
 #pragma mark - set & get
 
-- (BOOL)setObject:(id __unsafe_unretained)object forKey:(NSString *__unsafe_unretained)key {
-	if (object == nil || key.length <= 0) {
+- (BOOL)setObject:(nullable id __unsafe_unretained)object forKey:(NSString *__unsafe_unretained)key {
+	if (key.length <= 0) {
 		return FALSE;
+	}
+	if (object == nil) {
+		[self removeValueForKey:key];
+		return YES;
 	}
 
 	MMBuffer data;

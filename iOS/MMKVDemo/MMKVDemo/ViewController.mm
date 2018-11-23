@@ -87,6 +87,12 @@
 	[mmkv setObject:@"hello, mmkv" forKey:@"string"];
 	NSLog(@"string:%@", [mmkv getObjectOfClass:NSString.class forKey:@"string"]);
 
+	[mmkv setObject:nil forKey:@"string"];
+	NSLog(@"string after set nil:%@, containsKey:%d",
+	      [mmkv getObjectOfClass:NSString.class
+	                      forKey:@"string"],
+	      [mmkv containsKey:@"string"]);
+
 	[mmkv setObject:[NSDate date] forKey:@"date"];
 	NSLog(@"date:%@", [mmkv getObjectOfClass:NSDate.class forKey:@"date"]);
 
