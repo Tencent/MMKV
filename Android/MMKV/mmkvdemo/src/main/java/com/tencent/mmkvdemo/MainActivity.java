@@ -179,6 +179,13 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         kv.removeValueForKey("bool");
         Log.i("MMKV", "bool: " + kv.decodeBool("bool"));
         kv.removeValuesForKeys(new String[] {"int", "long"});
+
+        kv.encode("null string", "some string");
+        Log.i("MMKV", "string before set null: " + kv.decodeString("null string"));
+        kv.encode("null string", (String) null);
+        Log.i("MMKV", "string after set null: " + kv.decodeString("null string")
+                          + ", containsKey:" + kv.contains("null string"));
+
         //kv.clearAll();
         kv.clearMemoryCache();
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));

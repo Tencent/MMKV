@@ -372,10 +372,15 @@ extern "C" JNIEXPORT JNICALL jdouble Java_com_tencent_mmkv_MMKV_decodeDouble(
 extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeString(
     JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
-    if (kv && oKey && oValue) {
+    if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        string value = jstring2string(env, oValue);
-        return (jboolean) kv->setStringForKey(value, key);
+        if (oValue) {
+            string value = jstring2string(env, oValue);
+            return (jboolean) kv->setStringForKey(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
+        }
     }
     return (jboolean) false;
 }
@@ -397,20 +402,25 @@ extern "C" JNIEXPORT JNICALL jstring Java_com_tencent_mmkv_MMKV_decodeString(
 extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeBytes(
     JNIEnv *env, jobject obj, jlong handle, jstring oKey, jbyteArray oValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
-    if (kv && oKey && oValue) {
+    if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        MMBuffer value(0);
-        {
-            jsize len = env->GetArrayLength(oValue);
-            void *bufferPtr = env->GetPrimitiveArrayCritical(oValue, nullptr);
-            if (bufferPtr) {
-                value = MMBuffer(bufferPtr, len);
-                env->ReleasePrimitiveArrayCritical(oValue, bufferPtr, JNI_ABORT);
-            } else {
-                MMKVError("fail to get array: %s=%p", key.c_str(), oValue);
+        if (oValue) {
+            MMBuffer value(0);
+            {
+                jsize len = env->GetArrayLength(oValue);
+                void *bufferPtr = env->GetPrimitiveArrayCritical(oValue, nullptr);
+                if (bufferPtr) {
+                    value = MMBuffer(bufferPtr, len);
+                    env->ReleasePrimitiveArrayCritical(oValue, bufferPtr, JNI_ABORT);
+                } else {
+                    MMKVError("fail to get array: %s=%p", key.c_str(), oValue);
+                }
             }
+            return (jboolean) kv->setBytesForKey(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
         }
-        return (jboolean) kv->setBytesForKey(value, key);
     }
     return (jboolean) false;
 }
@@ -526,10 +536,15 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_isFileValid(JNI
 extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeSet(
     JNIEnv *env, jobject instance, jlong handle, jstring oKey, jobjectArray arrStr) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
-    if (kv && oKey && arrStr) {
+    if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        vector<string> value = jarray2vector(env, arrStr);
-        return (jboolean) kv->setVectorForKey(value, key);
+        if (arrStr) {
+            vector<string> value = jarray2vector(env, arrStr);
+            return (jboolean) kv->setVectorForKey(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
+        }
     }
     return (jboolean) false;
 }
