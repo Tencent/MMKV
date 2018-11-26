@@ -172,6 +172,13 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         }
         Log.i("MMKV", "bytes: " + new String(kv.decodeBytes("bytes")));
 
+        if (!decodeOnly) {
+            TestParcelable testParcelable = new TestParcelable(1024, "Hi Parcelable");
+            kv.encode("parcel", testParcelable);
+        }
+        TestParcelable result = kv.decodeParcelObject("parcel", TestParcelable.class);
+        Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
         Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
         Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
