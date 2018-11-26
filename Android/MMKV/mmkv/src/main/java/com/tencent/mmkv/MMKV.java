@@ -299,13 +299,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Parcelable> T decodeParcelObject(String key, Class<T> tClass) {
-        return decodeParcelObject(key, tClass, null);
+    public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass) {
+        return decodeParcelable(key, tClass, null);
     }
 
     @SuppressWarnings("unchecked")
     public <T extends Parcelable>
-        T decodeParcelObject(String key, Class<T> tClass, T defaultValue) {
+        T decodeParcelable(String key, Class<T> tClass, T defaultValue) {
         if (tClass == null) {
             return defaultValue;
         }
