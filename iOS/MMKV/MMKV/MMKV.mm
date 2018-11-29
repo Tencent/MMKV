@@ -1023,10 +1023,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return nil;
 }
 
-- (bool)getBoolForKey:(NSString *)key {
+- (BOOL)getBoolForKey:(NSString *)key {
 	return [self getBoolForKey:key defaultValue:FALSE];
 }
-- (bool)getBoolForKey:(NSString *)key defaultValue:(bool)defaultValue {
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
