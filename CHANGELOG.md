@@ -1,5 +1,21 @@
 # MMKV Change Log
 
+## v1.0.14 / 2018-11-30
+### iOS / macOS
+What's new  
+
+* Setting `nil` value to reset a key is supported now.
+* Rename `boolValue(forKey:)` to `bool(forKey:)` for Swift.
+
+
+### Android
+What's new  
+
+* `Parcelable` objects can be stored directly into MMKV now.
+* Setting `null` value to reset a key is supported now.
+* Fix an issue that MMKV's file size might expand unexpectly large in some case.
+
+
 ## v1.0.13 / 2018-11-09
 ### iOS / macOS
 What's new  
