@@ -29,7 +29,7 @@ class DemoSwiftUsage : NSObject {
         }
 
         mmkv.set(true, forKey: "bool")
-        print("Swift: bool = \(mmkv.boolValue(forKey: "bool"))")
+        print("Swift: bool = \(mmkv.bool(forKey: "bool"))")
 
         mmkv.set(Int32(-1024), forKey: "int32")
         print("Swift: int32 = \(mmkv.int32(forKey: "int32"))")
@@ -62,6 +62,6 @@ class DemoSwiftUsage : NSObject {
         print("Swift: data = \(str)")
 
         mmkv.removeValue(forKey: "bool")
-        print("Swift: after delete bool = \(mmkv.boolValue(forKey: "bool"))")
+        print("Swift: after delete bool = \(mmkv.bool(forKey: "bool"))")
 	}
 }
