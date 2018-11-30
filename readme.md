@@ -76,7 +76,7 @@ Add the following lines to `build.gradle` on your app module:
 ```gradle
 dependencies {
     implementation 'com.tencent:mmkv:1.0.14'
-    // replace "1.0.13" with any available version
+    // replace "1.0.14" with any available version
 }
 ```
 
