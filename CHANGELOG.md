@@ -14,6 +14,7 @@ What's new
 * `Parcelable` objects can be stored directly into MMKV now.
 * Setting `null` value to reset a key is supported now.
 * Fix an issue that MMKV's file size might expand unexpectly large in some case.
+* Fix an issue that MMKV might crash on multi-thread removing and getting on the same key.
 
 
 ## v1.0.13 / 2018-11-09
