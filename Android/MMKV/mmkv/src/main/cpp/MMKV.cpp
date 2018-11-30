@@ -660,7 +660,8 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 return false;
             }
         } else {
-            size_t futureUsage = newSize * std::max<size_t>(8, (m_dic.size() + 1) / 2);
+            size_t avgItemSize = lenNeeded / m_dic.size();
+            size_t futureUsage = avgItemSize * std::max<size_t>(8, (m_dic.size() + 1) / 2);
             // 1. no space for a full rewrite, double it
             // 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
             if (lenNeeded >= m_size || (lenNeeded + futureUsage) >= m_size) {

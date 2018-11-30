@@ -40,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)cryptKey;
 
 // object: NSString/NSData/NSDate/id<NSCoding>
-- (BOOL)setObject:(id)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
+- (BOOL)setObject:(nullable id)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
@@ -58,8 +58,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (nullable id)getObjectOfClass:(Class)cls forKey:(NSString *)key NS_SWIFT_NAME(object(of:forKey:));
 
-- (bool)getBoolForKey:(NSString *)key NS_SWIFT_NAME(boolValue(forKey:));
-- (bool)getBoolForKey:(NSString *)key defaultValue:(bool)defaultValue NS_SWIFT_NAME(boolValue(forKey:defaultValue:));
+- (BOOL)getBoolForKey:(NSString *)key __attribute__((swift_name("bool(forKey:)")));
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue __attribute__((swift_name("bool(forKey:defaultValue:)")));
 
 - (int32_t)getInt32ForKey:(NSString *)key NS_SWIFT_NAME(int32(forKey:));
 - (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue NS_SWIFT_NAME(int32(forKey:defaultValue:));

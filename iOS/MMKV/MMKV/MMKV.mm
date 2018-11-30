@@ -900,9 +900,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 #pragma mark - set & get
 
-- (BOOL)setObject:(id)object forKey:(NSString *)key {
-	if (object == nil || key.length <= 0) {
+- (BOOL)setObject:(nullable id)object forKey:(NSString *)key {
+	if (key.length <= 0) {
 		return NO;
+	}
+	if (object == nil) {
+		[self removeValueForKey:key];
+		return YES;
 	}
 
 	NSData *data;
@@ -1019,10 +1023,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return nil;
 }
 
-- (bool)getBoolForKey:(NSString *)key {
+- (BOOL)getBoolForKey:(NSString *)key {
 	return [self getBoolForKey:key defaultValue:FALSE];
 }
-- (bool)getBoolForKey:(NSString *)key defaultValue:(bool)defaultValue {
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
 	if (key.length <= 0) {
 		return defaultValue;
 	}

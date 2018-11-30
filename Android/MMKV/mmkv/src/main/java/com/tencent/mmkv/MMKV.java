@@ -25,11 +25,15 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -281,6 +285,66 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public byte[] decodeBytes(String key) {
         return decodeBytes(nativeHandle, key);
+    }
+
+    private static final HashMap<String, Parcelable.Creator<?>> mCreators = new HashMap<>();
+
+    public boolean encode(String key, Parcelable value) {
+        Parcel source = Parcel.obtain();
+        value.writeToParcel(source, value.describeContents());
+        byte[] bytes = source.marshall();
+        source.recycle();
+
+        return encodeBytes(nativeHandle, key, bytes);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass) {
+        return decodeParcelable(key, tClass, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Parcelable>
+        T decodeParcelable(String key, Class<T> tClass, T defaultValue) {
+        if (tClass == null) {
+            return defaultValue;
+        }
+
+        byte[] bytes = decodeBytes(nativeHandle, key);
+        if (bytes == null) {
+            return defaultValue;
+        }
+
+        Parcel source = Parcel.obtain();
+        source.unmarshall(bytes, 0, bytes.length);
+        source.setDataPosition(0);
+
+        try {
+            String name = tClass.toString();
+            Parcelable.Creator<T> creator;
+            synchronized (mCreators) {
+                creator = (Parcelable.Creator<T>) mCreators.get(name);
+                if (creator == null) {
+                    Field f = tClass.getField("CREATOR");
+                    creator = (Parcelable.Creator<T>) f.get(null);
+                    if (creator != null) {
+                        mCreators.put(name, creator);
+                    }
+                }
+            }
+            if (creator != null) {
+                return creator.createFromParcel(source);
+            } else {
+                throw new Exception("Parcelable protocol requires a "
+                                    + "non-null static Parcelable.Creator object called "
+                                    + "CREATOR on class " + name);
+            }
+        } catch (Exception e) {
+            Log.e("MMKV", e.toString());
+        } finally {
+            source.recycle();
+        }
+        return defaultValue;
     }
 
     public boolean containsKey(String key) {
