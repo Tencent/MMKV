@@ -59,7 +59,7 @@ NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.13'
+    implementation 'com.tencent:mmkv:1.0.14'
     // replace "1.0.13" with any available version
 }
 ```
