@@ -729,7 +729,6 @@ void MMKV::writeAcutalSize(size_t actualSize) {
 }
 
 const MMBuffer &MMKV::getDataForKey(const std::string &key) {
-    SCOPEDLOCK(m_lock);
     checkLoadData();
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
@@ -1091,6 +1090,7 @@ bool MMKV::getStringForKey(const std::string &key, std::string &result) {
     if (key.empty()) {
         return false;
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         result = MiniPBCoder::decodeString(data);
@@ -1103,6 +1103,7 @@ MMBuffer MMKV::getBytesForKey(const std::string &key) {
     if (key.empty()) {
         return MMBuffer(0);
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         return MiniPBCoder::decodeBytes(data);
@@ -1114,6 +1115,7 @@ bool MMKV::getBoolForKey(const std::string &key, bool defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
@@ -1126,6 +1128,7 @@ int32_t MMKV::getInt32ForKey(const std::string &key, int32_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
@@ -1138,6 +1141,7 @@ int64_t MMKV::getInt64ForKey(const std::string &key, int64_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
@@ -1150,6 +1154,7 @@ float MMKV::getFloatForKey(const std::string &key, float defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
@@ -1162,6 +1167,7 @@ double MMKV::getDoubleForKey(const std::string &key, double defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
@@ -1174,6 +1180,7 @@ bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &res
     if (key.empty()) {
         return false;
     }
+    SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         result = MiniPBCoder::decodeSet(data);
