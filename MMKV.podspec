@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
                    DESC
 
   s.homepage     = "https://github.com/Tencent/MMKV"
-  s.license      = { :type => "BSD 3-Clause", :file => "LICENSE.txt"}
+  s.license      = { :type => "BSD 3-Clause", :file => "LICENSE.TXT"}
   s.author       = { "guoling" => "guoling@tencent.com" }
 
   s.ios.deployment_target = "8.0"
