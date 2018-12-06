@@ -110,6 +110,7 @@ MMKV 以 BSD 3-Clause 证书开源，详情参见 [LICENSE.TXT](https://github.c
 ## 版本历史
 具体版本历史请参看 [CHANGELOG.md](./CHANGELOG.md)。
 
-## 参与贡献如果你有兴趣参与贡献，可以参考 [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md)。[腾讯开源激励计划](https://opensource.tencent.com/contribution) 鼓励开发者的参与和贡献，期待你的加入。
+## 参与贡献如果你有兴趣参与贡献，可以参考 [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md)。[腾讯开源激励计划](https://opensource.tencent.com/contribution) 鼓励开发者的参与和贡献，期待你的加入。为了明确我们对参与者的期望，MMKV 采用了被广泛使用的、由 Contributor Covenant 所定义的行为准则。我们认为它很好地阐明了我们的价值观。有关更多信息请查看 [Code of Conduct](https://github.com/Tencent/MMKV/blob/master/CODE_OF_CONDUCT.md)。
+
 ## 问题 & 反馈
 常见问题参见 [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ_cn)，欢迎提 [issues](https://github.com/Tencent/MMKV/issues) 提问反馈。
