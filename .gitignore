@@ -18,3 +18,10 @@ xcuserdata
 
 ## Xcode
 DerivedData
+
+## Visual Studio
+.vs
+[Dd]ebug/
+[Rr]elease/
+*.user
+

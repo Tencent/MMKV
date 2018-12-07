@@ -1,0 +1,34 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+AlwaysBreakTemplateDeclarations: true
+AllowShortFunctionsOnASingleLine: Inline
+BreakAfterJavaFieldAnnotations: true
+BreakBeforeBraces: Linux
+SpaceAfterCStyleCast: true
+IndentCaseLabels: true
+AccessModifierOffset: -4
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterNamespace: false
+    AfterClass: false
+    AfterFunction: false
+
+BreakConstructorInitializersBeforeComma: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BinPackParameters: false
+ReflowComments: false
+---
+Language: Cpp
+ColumnLimit: 100
+---
+Language: ObjC
+ColumnLimit: 0
+UseTab: ForIndentation
+ObjCBlockIndentWidth: 4
+---
+Language: Java
+ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: None
+BreakBeforeBinaryOperators: NonAssignment
