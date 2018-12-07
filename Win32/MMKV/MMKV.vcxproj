@@ -88,7 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;MMKV_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_DEBUG;MMKV_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -118,7 +118,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;MMKV_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;MMKV_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -147,13 +147,47 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aes\AESCrypt.h" />
+    <ClInclude Include="aes\openssl\aes.h" />
+    <ClInclude Include="aes\openssl\aes_locl.h" />
+    <ClInclude Include="aes\openssl\md32_common.h" />
+    <ClInclude Include="aes\openssl\md5.h" />
+    <ClInclude Include="aes\openssl\md5_locl.h" />
+    <ClInclude Include="aes\openssl\modes.h" />
+    <ClInclude Include="aes\openssl\opensslconf.h" />
+    <ClInclude Include="CodedInputData.h" />
+    <ClInclude Include="CodedOutputData.h" />
+    <ClInclude Include="InterProcessLock.h" />
+    <ClInclude Include="MiniPBCoder.h" />
+    <ClInclude Include="MmapedFile.h" />
+    <ClInclude Include="MMBuffer.h" />
     <ClInclude Include="MMKV.h" />
     <ClInclude Include="MMKVDef.h" />
+    <ClInclude Include="MMKVLog.h" />
+    <ClInclude Include="MMKVMetaInfo.hpp" />
+    <ClInclude Include="PBEncodeItem.hpp" />
+    <ClInclude Include="PBUtility.h" />
+    <ClInclude Include="ScopedLock.hpp" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThreadLock.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="aes\AESCrypt.cpp" />
+    <ClCompile Include="aes\openssl\aes_cfb.c" />
+    <ClCompile Include="aes\openssl\aes_core.c" />
+    <ClCompile Include="aes\openssl\cfb128.c" />
+    <ClCompile Include="aes\openssl\md5_dgst.c" />
+    <ClCompile Include="aes\openssl\md5_one.c" />
+    <ClCompile Include="CodedInputData.cpp" />
+    <ClCompile Include="CodedOutputData.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="InterProcessLock.cpp" />
+    <ClCompile Include="MiniPBCoder.cpp" />
+    <ClCompile Include="MmapedFile.cpp" />
+    <ClCompile Include="MMBuffer.cpp" />
     <ClCompile Include="MMKV.cpp" />
+    <ClCompile Include="PBUtility.cpp" />
+    <ClCompile Include="ThreadLock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

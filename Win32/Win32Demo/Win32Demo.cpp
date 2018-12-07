@@ -8,7 +8,7 @@
 using namespace std;
 
 int main() {
-    cout << MMKV().foo() << endl;
+    MMKV::initializeMMKV("");
     cout << "Hello World!\n";
 }
 
