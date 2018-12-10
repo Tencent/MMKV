@@ -32,7 +32,7 @@ static jclass g_cls = nullptr;
 static jfieldID g_fileID = nullptr;
 static jmethodID g_callbackOnCRCFailID = nullptr;
 static jmethodID g_callbackOnFileLengthErrorID = nullptr;
-static JNIEnv *g_currentEnv = nullptr;
+thread_local static JNIEnv *g_currentEnv = nullptr;
 
 extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv *env;
