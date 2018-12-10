@@ -213,6 +213,18 @@ using namespace std;
 	XCTAssertEqualObjects(value, nil);
 }
 
+- (void)testNSStringForNewGetSet {
+    NSString *str = @"Hello 2018 world cup 世界杯";
+    BOOL ret = [mmkv setString:str forKey:@"string"];
+    XCTAssertEqual(ret, YES);
+    
+    NSString *value = [mmkv getStringForKey:@"string"];
+    XCTAssertEqualObjects(value, str);
+    
+    value = [mmkv getStringForKey:KeyNotExist];
+    XCTAssertEqualObjects(value, nil);
+}
+
 - (void)testNSData {
 	NSString *str = @"Hello 2018 world cup 世界杯";
 	NSData *data = [str dataUsingEncoding:NSUTF8StringEncoding];
