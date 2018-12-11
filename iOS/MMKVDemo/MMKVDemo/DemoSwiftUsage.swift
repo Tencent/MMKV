@@ -51,20 +51,13 @@ class DemoSwiftUsage : NSObject {
         
         mmkv.set("Hello from Swift", forKey: "string")
         print("Swift: string = \(mmkv.string(forKey: "string") ?? "")")
-        
-//        mmkv.set("Hello from Swift", forKey: "string")
-//        print("Swift: string = \(mmkv.object(of: NSString.self, forKey: "string") ?? "")")
-
+		
         mmkv.set(NSDate(), forKey: "date")
         let date = mmkv.date(forKey: "date")
         print("Swift: date = \(date?.description(with: .current) ?? "null")")
         
-//        mmkv.set(NSDate(), forKey: "date")
-//        let date = mmkv.object(of: NSDate.self, forKey: "date") as? Date
-//        print("Swift: date = \(date?.description(with: .current) ?? "null")")
-
         mmkv.set("Hello from Swift".data(using: .utf8) ?? Data(), forKey: "data")
-        let data = mmkv.object(of: NSData.self, forKey: "data") as? Data
+        let data = mmkv.data(forKey: "data")
         let str = String(data: data ?? Data(), encoding: .utf8) ?? ""
         print("Swift: data = \(str)")
 
