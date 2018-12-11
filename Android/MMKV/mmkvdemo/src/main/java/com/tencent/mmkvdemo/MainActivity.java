@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             }
         });
 
+        //testHolderForMultiThread();
+
         //prepareInterProcessAshmem();
         //prepareInterProcessAshmemByContentProvider(KEY_1);
 
