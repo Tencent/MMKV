@@ -22,22 +22,22 @@
 #define MMKV_INTERPROCESSLOCK_H
 
 #include <assert.h>
-#include <fcntl.h>
+#include "MMKVDef.h"
 
 enum LockType {
     SharedLockType,
     ExclusiveLockType,
 };
 
-// a recursive POSIX file-lock wrapper
+// a recursive Win32 file-lock wrapper
 // handles lock upgrade & downgrade correctly
 class FileLock {
-    int m_fd;
-    //struct flock m_lockInfo;
+    HANDLE m_fd;
+    OVERLAPPED m_overLapped;
     size_t m_sharedLockCount;
     size_t m_exclusiveLockCount;
 
-    bool doLock(LockType lockType, int cmd);
+    bool doLock(LockType lockType, bool tryLock);
 
     // just forbid it for possibly misuse
     FileLock(const FileLock &other) = delete;
@@ -45,7 +45,7 @@ class FileLock {
     FileLock &operator=(const FileLock &other) = delete;
 
 public:
-    FileLock(int fd);
+    FileLock(HANDLE fd);
 
     bool lock(LockType lockType);
 
@@ -71,7 +71,7 @@ public:
             m_fileLock->lock(m_lockType);
         }
     }
-
+    // TODO: remove try_lock()
     bool try_lock() {
         if (m_enable) {
             return m_fileLock->try_lock(m_lockType);

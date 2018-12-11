@@ -21,11 +21,11 @@
 #ifndef MMKV_THREADLOCK_H
 #define MMKV_THREADLOCK_H
 
-//#include <pthread.h>
+#include "MMKVDef.h"
 
 class ThreadLock {
 private:
-    //pthread_mutex_t m_lock;
+    CRITICAL_SECTION m_lock;
 
 public:
     ThreadLock();

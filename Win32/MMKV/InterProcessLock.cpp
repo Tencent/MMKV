@@ -20,27 +20,29 @@
 
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
-/*#include <unistd.h>
 
-static short LockType2FlockType(LockType lockType) {
+static DWORD LockType2Flag(LockType lockType, bool tryLock) {
+    DWORD flag = 0;
     switch (lockType) {
         case SharedLockType:
-            return F_RDLCK;
+            flag = 0;
+            break;
         case ExclusiveLockType:
-            return F_WRLCK;
+            flag = LOCKFILE_EXCLUSIVE_LOCK;
+            break;
     }
-}
-*/
-FileLock::FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {
-/*    m_lockInfo.l_type = F_WRLCK;
-    m_lockInfo.l_start = 0;
-    m_lockInfo.l_whence = SEEK_SET;
-    m_lockInfo.l_len = 0;
-    m_lockInfo.l_pid = 0;*/
+    if (tryLock) {
+        flag |= LOCKFILE_FAIL_IMMEDIATELY;
+    }
+    return flag;
 }
 
-bool FileLock::doLock(LockType lockType, int cmd) {
-/*    bool unLockFirstIfNeeded = false;
+FileLock::FileLock(HANDLE fd)
+    : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {
+}
+
+bool FileLock::doLock(LockType lockType, bool tryLock) {
+    bool unLockFirstIfNeeded = false;
 
     if (lockType == SharedLockType) {
         m_sharedLockCount++;
@@ -60,46 +62,50 @@ bool FileLock::doLock(LockType lockType, int cmd) {
         }
     }
 
-    m_lockInfo.l_type = LockType2FlockType(lockType);
+    auto flag = LockType2Flag(lockType, tryLock);
     if (unLockFirstIfNeeded) {
-        // try lock
-        auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
-        if (ret == 0) {
+        /* try exclusive-lock above shared-lock will always fail in Win32
+        auto ret = LockFileEx(m_fd, flag | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &m_overLapped);
+        if (ret) {
             return true;
-        }
+        }*/
         // lets be gentleman: unlock my shared-lock to prevent deadlock
-        auto type = m_lockInfo.l_type;
-        m_lockInfo.l_type = F_UNLCK;
-        ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
-        if (ret != 0) {
-            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret,
-                      strerror(errno));
+        auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
+        if (!ret) {
+            MMKVError("fail to try unlock first fd=%d, error:%d", m_fd, GetLastError());
         }
-        m_lockInfo.l_type = type;
     }
 
-    auto ret = fcntl(m_fd, cmd, &m_lockInfo);
-    if (ret != 0) {
-        MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+    auto ret = LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped);
+    if (!ret) {
+        MMKVError("fail to lock fd=%d, error:%d", m_fd, ret, GetLastError());
+        if (lockType == SharedLockType) {
+            m_sharedLockCount--;
+        } else {
+            m_exclusiveLockCount--;
+            if (unLockFirstIfNeeded) {
+                flag = LockType2Flag(SharedLockType, false);
+                if (!LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped)) {
+                    MMKVError("fail to roll back, error:%d", GetLastError());
+                }
+            }
+        }
         return false;
     } else {
         return true;
-    }*/
-    return false;
+    }
 }
 
 bool FileLock::lock(LockType lockType) {
-    //return doLock(lockType, F_SETLKW);
-    return false;
+    return doLock(lockType, false);
 }
 
 bool FileLock::try_lock(LockType lockType) {
-    //return doLock(lockType, F_SETLK);
-    return false;
+    return doLock(lockType, true);
 }
 
 bool FileLock::unlock(LockType lockType) {
-/*    bool unlockToSharedLock = false;
+    bool unlockToSharedLock = false;
 
     if (lockType == SharedLockType) {
         if (m_sharedLockCount == 0) {
@@ -124,13 +130,24 @@ bool FileLock::unlock(LockType lockType) {
         }
     }
 
-    m_lockInfo.l_type = static_cast<short>(unlockToSharedLock ? F_RDLCK : F_UNLCK);
-    auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
-    if (ret != 0) {
-        MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+    /* quote from MSDN:
+     * If the same range is locked with an exclusive and a shared lock,
+     * two unlock operations are necessary to unlock the region;
+     * the first unlock operation unlocks the exclusive lock,
+     * the second unlock operation unlocks the shared lock.
+    */
+    if (unlockToSharedLock) {
+        auto flag = LockType2Flag(SharedLockType, false);
+        if (!LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped)) {
+            MMKVError("fail to roll back to shared-lock, error:%d", GetLastError());
+        }
+    }
+    auto flag = LockType2Flag(lockType, false);
+    auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
+    if (!ret) {
+        MMKVError("fail to unlock fd=%d, error:%d", m_fd, GetLastError());
         return false;
     } else {
         return true;
-    }*/
-    return false;
+    }
 }
