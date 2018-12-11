@@ -48,7 +48,10 @@ class DemoSwiftUsage : NSObject {
 
         mmkv.set(Double.infinity, forKey: "double")
         print("Swift: double = \(mmkv.double(forKey: "double"))")
-
+        
+        mmkv.set("Hello from Swift", forKey: "string")
+        print("Swift: string = \(mmkv.string(forKey: "string") ?? "")")
+        
         mmkv.set("Hello from Swift", forKey: "string")
         print("Swift: string = \(mmkv.object(of: NSString.self, forKey: "string") ?? "")")
 

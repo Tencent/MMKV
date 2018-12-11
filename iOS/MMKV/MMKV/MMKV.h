@@ -56,6 +56,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)setDouble:(double)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
+- (BOOL)setString:(NSString *)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
+
 - (nullable id)getObjectOfClass:(Class)cls forKey:(NSString *)key NS_SWIFT_NAME(object(of:forKey:));
 
 - (BOOL)getBoolForKey:(NSString *)key __attribute__((swift_name("bool(forKey:)")));
@@ -78,6 +80,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (double)getDoubleForKey:(NSString *)key NS_SWIFT_NAME(double(forKey:));
 - (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue NS_SWIFT_NAME(double(forKey:defaultValue:));
+
+- (nullable NSString *)getStringForKey:(NSString *)key NS_SWIFT_NAME(string(forKey:));
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable id)defaultValue NS_SWIFT_NAME(string(forKey:defaultValue:));
 
 - (BOOL)containsKey:(NSString *)key NS_SWIFT_NAME(contains(key:));
 

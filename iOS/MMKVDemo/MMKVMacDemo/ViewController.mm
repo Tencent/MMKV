@@ -63,6 +63,9 @@
 	NSLog(@"double:%f", [mmkv getDoubleForKey:@"double"]);
 
 	[mmkv setObject:@"hello, mmkv" forKey:@"string"];
+	NSLog(@"string:%@", [mmkv getStringForKey:@"string"]);
+
+	[mmkv setObject:@"hello, mmkv" forKey:@"string"];
 	NSLog(@"string:%@", [mmkv getObjectOfClass:NSString.class forKey:@"string"]);
 
 	[mmkv setObject:[NSDate date] forKey:@"date"];
