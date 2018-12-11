@@ -1009,6 +1009,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
     return [self setObject:value forKey:key];
 }
 
+- (BOOL)setDate:(NSDate *)value forKey:(NSString *)key {
+    return [self setObject:value forKey:key];
+}
+
 - (id)getObjectOfClass:(Class)cls forKey:(NSString *)key {
 	if (key.length <= 0) {
 		return nil;
@@ -1168,6 +1172,16 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
         return defaultValue;
     }
     return [self getObjectOfClass:NSString.class forKey:key];
+}
+
+- (nullable NSDate *)getDateForKey:(NSString *)key {
+    return [self getDateForKey:key defaultValue:nil];
+}
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable id)defaultValue {
+    if (key.length <= 0) {
+        return defaultValue;
+    }
+    return [self getObjectOfClass:NSDate.class forKey:key];
 }
 
 #pragma mark - enumerate
