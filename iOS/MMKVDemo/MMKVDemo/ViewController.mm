@@ -83,10 +83,10 @@
 
 	[mmkv setDouble:std::numeric_limits<double>::max() forKey:@"double"];
 	NSLog(@"double:%f", [mmkv getDoubleForKey:@"double"]);
-    
-    [mmkv setString:@"hello, mmkv" forKey:@"string"];
-    NSLog(@"string:%@", [mmkv getStringForKey:@"string"]);
-    
+
+	[mmkv setString:@"hello, mmkv" forKey:@"string"];
+	NSLog(@"string:%@", [mmkv getStringForKey:@"string"]);
+
 	[mmkv setObject:@"hello, mmkv" forKey:@"string"];
 	NSLog(@"string:%@", [mmkv getObjectOfClass:NSString.class forKey:@"string"]);
 
