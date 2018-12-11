@@ -250,6 +250,18 @@ using namespace std;
 	XCTAssertEqualObjects(value, nil);
 }
 
+- (void)testNSDateForNewGetSet {
+    NSDate *date = [NSDate date];
+    BOOL ret = [mmkv setDate:date forKey:@"date"];
+    XCTAssertEqual(ret, YES);
+    
+    NSDate *value = [mmkv getDateForKey:@"date"];
+    XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, value.timeIntervalSince1970, 0.001);
+    
+    value = [mmkv getObjectOfClass:NSDate.class forKey:KeyNotExist];
+    XCTAssertEqualObjects(value, nil);
+}
+
 - (void)testNSDictionary {
 	NSDictionary *dic = @{@"key1" : @"value1",
 		                  @"key2" : @(2)};
