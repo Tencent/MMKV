@@ -142,7 +142,7 @@ static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
 static JNIEnv *getCurrentEnv() {
     if (g_currentJVM) {
         JNIEnv *currentEnv = nullptr;
-        auto  ret = g_currentJVM->GetEnv(reinterpret_cast<void **>(&currentEnv), JNI_VERSION_1_6);
+        auto ret = g_currentJVM->GetEnv(reinterpret_cast<void **>(&currentEnv), JNI_VERSION_1_6);
         if (ret == JNI_OK) {
             return currentEnv;
         } else {
@@ -166,8 +166,7 @@ MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
     auto currentEnv = getCurrentEnv();
     if (currentEnv && g_callbackOnFileLengthErrorID) {
         jstring str = string2jstring(currentEnv, mmapID);
-        auto strategic =
-            currentEnv->CallStaticIntMethod(g_cls, g_callbackOnFileLengthErrorID, str);
+        auto strategic = currentEnv->CallStaticIntMethod(g_cls, g_callbackOnFileLengthErrorID, str);
         return static_cast<MMKVRecoverStrategic>(strategic);
     }
     return OnErrorDiscard;
