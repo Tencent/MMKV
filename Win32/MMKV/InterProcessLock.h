@@ -21,8 +21,8 @@
 #ifndef MMKV_INTERPROCESSLOCK_H
 #define MMKV_INTERPROCESSLOCK_H
 
-#include <assert.h>
 #include "MMKVDef.h"
+#include <assert.h>
 
 enum LockType {
     SharedLockType,

@@ -21,8 +21,8 @@
 #include "CodedInputData.h"
 #include "MMKVLog.h"
 #include "PBUtility.h"
-#include <limits.h>
 #include <cassert>
+#include <limits.h>
 
 using namespace std;
 

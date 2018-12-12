@@ -21,116 +21,86 @@
 #include "MmapedFile.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
-#include <errno.h>
-#include <fcntl.h>
-//#include <libgen.h>
-//#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-//#include <unistd.h>
 
 using namespace std;
 
-const int DEFAULT_MMAP_SIZE = 4096;
-//getpagesize();
+const int DEFAULT_MMAP_SIZE = getpagesize();
 
-MmapedFile::MmapedFile(const std::string &path, size_t size, bool fileType)
-    : m_name(path), m_fd(-1), m_segmentPtr(nullptr), m_segmentSize(0), m_fileType(fileType) {
-/*    if (m_fileType == MMAP_FILE) {
-        m_fd = open(m_name.c_str(), O_RDWR | O_CREAT, S_IRWXU);
-        if (m_fd < 0) {
-            MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
-        } else {
-            struct stat st = {};
-            if (fstat(m_fd, &st) != -1) {
-                m_segmentSize = static_cast<size_t>(st.st_size);
-            }
-            if (m_segmentSize < DEFAULT_MMAP_SIZE) {
-                m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);
-                if (ftruncate(m_fd, m_segmentSize) != 0 || !zeroFillFile(m_fd, 0, m_segmentSize)) {
-                    MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(),
-                              m_segmentSize, strerror(errno));
-                    close(m_fd);
-                    m_fd = -1;
-                    removeFile(m_name);
-                    return;
-                }
-            }
-            m_segmentPtr =
-                (char *) mmap(nullptr, m_segmentSize, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
-            if (m_segmentPtr == MAP_FAILED) {
-                MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
-                close(m_fd);
-                m_fd = -1;
-                m_segmentPtr = nullptr;
-            }
-        }
-    } else {
-        m_fd = open(ASHMEM_NAME_DEF, O_RDWR);
-        if (m_fd < 0) {
-            MMKVError("fail to open ashmem:%s, %s", m_name.c_str(), strerror(errno));
-        } else {
-            if (ioctl(m_fd, ASHMEM_SET_NAME, m_name.c_str()) != 0) {
-                MMKVError("fail to set ashmem name:%s, %s", m_name.c_str(), strerror(errno));
-            } else if (ioctl(m_fd, ASHMEM_SET_SIZE, size) != 0) {
-                MMKVError("fail to set ashmem:%s, size %d, %s", m_name.c_str(), size,
-                          strerror(errno));
-            } else {
-                m_segmentSize = static_cast<size_t>(size);
-                m_segmentPtr = (char *) mmap(nullptr, m_segmentSize, PROT_READ | PROT_WRITE,
-                                             MAP_SHARED, m_fd, 0);
-                if (m_segmentPtr == MAP_FAILED) {
-                    MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
-                    m_segmentPtr = nullptr;
-                } else {
-                    return;
-                }
-            }
-            close(m_fd);
-            m_fd = -1;
-        }
-    }*/
+std::wstring string2wstring(const std::string &str) {
+    auto length = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
+    wstring result;
+    result.resize(length);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &result[0], length);
+    return result;
 }
 
-MmapedFile::MmapedFile(int ashmemFD)
-    : m_name(""), m_fd(ashmemFD), m_segmentPtr(nullptr), m_segmentSize(0), m_fileType(MMAP_ASHMEM) {
-/*    if (m_fd < 0) {
-        MMKVError("fd %d invalid", m_fd);
+MmapedFile::MmapedFile(const std::string &path, size_t size)
+    : m_name(path), m_file(INVALID_HANDLE_VALUE), m_segmentPtr(nullptr), m_segmentSize(0) {
+    auto filename = string2wstring(m_name);
+    m_file = (HANDLE) CreateFile(filename.c_str(), GENERIC_READ | GENERIC_WRITE,
+                                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                                 OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (m_file == INVALID_HANDLE_VALUE) {
+        MMKVError("fail to open:%s, %d", m_name.c_str(), GetLastError());
     } else {
-        char name[ASHMEM_NAME_LEN] = {0};
-        if (ioctl(m_fd, ASHMEM_GET_NAME, name) != 0) {
-            MMKVError("fail to get ashmem name:%d, %s", m_fd, strerror(errno));
-        } else {
-            m_name = string(name);
-            int size = ioctl(m_fd, ASHMEM_GET_SIZE, nullptr);
-            if (size < 0) {
-                MMKVError("fail to get ashmem size:%s, %s", m_name.c_str(), strerror(errno));
-            } else {
-                m_segmentSize = static_cast<size_t>(size);
-                MMKVInfo("ashmem verified, name:%s, size:%zu", m_name.c_str(), m_segmentSize);
-                m_segmentPtr = (char *) mmap(nullptr, m_segmentSize, PROT_READ | PROT_WRITE,
-                                             MAP_SHARED, m_fd, 0);
-                if (m_segmentPtr == MAP_FAILED) {
-                    MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
-                    m_segmentPtr = nullptr;
-                }
+        LARGE_INTEGER filesize = {0};
+        if (GetFileSizeEx(m_file, &filesize)) {
+            m_segmentSize = static_cast<size_t>(filesize.QuadPart);
+        }
+        if (m_segmentSize < DEFAULT_MMAP_SIZE) {
+            m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);
+            if (ftruncate(m_file, m_segmentSize) != 0 || !zeroFillFile(m_file, 0, m_segmentSize)) {
+                MMKVError("fail to truncate [%s] to size %zu, %d", m_name.c_str(), m_segmentSize,
+                          GetLastError());
+                CloseHandle(m_file);
+                m_file = INVALID_HANDLE_VALUE;
+                removeFile(m_name);
+                return;
             }
         }
-    }*/
+        m_fileMapping = CreateFileMapping(m_file, nullptr, PAGE_READWRITE, 0, 0, nullptr);
+        if (!m_fileMapping) {
+            MMKVError("fail to CreateFileMapping [%s], %d", m_name.c_str(), GetLastError());
+            CloseHandle(m_file);
+            m_file = INVALID_HANDLE_VALUE;
+            removeFile(m_name);
+            return;
+        }
+        m_segmentPtr = MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+        if (!m_segmentPtr) {
+            MMKVError("fail to MapViewOfFile [%s], %d", m_name.c_str(), GetLastError());
+            CloseHandle(m_fileMapping);
+            m_fileMapping = NULL;
+            CloseHandle(m_file);
+            m_file = INVALID_HANDLE_VALUE;
+            removeFile(m_name);
+            return;
+        }
+    }
 }
 
 MmapedFile::~MmapedFile() {
-/*    if (m_segmentPtr != MAP_FAILED && m_segmentPtr != nullptr) {
-        munmap(m_segmentPtr, m_segmentSize);
+    if (m_segmentPtr) {
+        UnmapViewOfFile(m_segmentPtr);
         m_segmentPtr = nullptr;
     }
-    if (m_fd >= 0) {
-        close(m_fd);
-        m_fd = -1;
-    }*/
+    if (m_fileMapping) {
+        CloseHandle(m_fileMapping);
+        m_fileMapping = NULL;
+    }
+    if (m_file != INVALID_HANDLE_VALUE) {
+        CloseHandle(m_file);
+        m_file = INVALID_HANDLE_VALUE;
+    }
 }
 
 #pragma mark - file
+
+int getpagesize(void) {
+    SYSTEM_INFO system_info;
+    GetSystemInfo(&system_info);
+    return system_info.dwPageSize;
+}
 
 bool isFileExist(const string &nsFilePath) {
     if (nsFilePath.empty()) {
@@ -156,10 +126,10 @@ bool mkPath(char *path) {
 
         if (stat(path, &sb) != 0) {
             //if (errno != ENOENT || mkdir(path, 0777) != 0) {
-                MMKVWarning("%s", path);
-                return false;
+            MMKVWarning("%s", path);
+            return false;
             //}
-        //} else if (!S_ISDIR(sb.st_mode)) {
+            //} else if (!S_ISDIR(sb.st_mode)) {
             MMKVWarning("%s: %s", path, strerror(ENOTDIR));
             return false;
         }
@@ -181,7 +151,7 @@ bool removeFile(const string &nsFilePath) {
 
 MMBuffer *readWholeFile(const char *path) {
     MMBuffer *buffer = nullptr;
-/*    int fd = open(path, O_RDONLY);
+    /*    int fd = open(path, O_RDONLY);
     if (fd >= 0) {
         auto fileLength = lseek(fd, 0, SEEK_END);
         if (fileLength > 0) {
@@ -204,29 +174,48 @@ MMBuffer *readWholeFile(const char *path) {
     return buffer;
 }
 
-bool zeroFillFile(int fd, size_t startPos, size_t size) {
-    if (fd < 0) {
+bool zeroFillFile(HANDLE file, size_t startPos, size_t size) {
+    if (file == INVALID_HANDLE_VALUE) {
         return false;
     }
-    /*
-    if (lseek(fd, startPos, SEEK_SET) < 0) {
-        MMKVError("fail to lseek fd[%d], error:%s", fd, strerror(errno));
+
+    LARGE_INTEGER position;
+    position.QuadPart = startPos;
+    if (!SetFilePointerEx(file, position, nullptr, FILE_BEGIN) < 0) {
+        MMKVError("fail to lseek fd[%p], error:%d", file, GetLastError());
         return false;
     }
 
     static const char zeros[4096] = {0};
     while (size >= sizeof(zeros)) {
-        if (write(fd, zeros, sizeof(zeros)) < 0) {
-            MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
+        DWORD bytesWritten = 0;
+        if (!WriteFile(file, zeros, sizeof(zeros), &bytesWritten, nullptr)) {
+            MMKVError("fail to write fd[%p], error:%d", file, GetLastError());
             return false;
         }
-        size -= sizeof(zeros);
+        size -= bytesWritten;
     }
     if (size > 0) {
-        if (write(fd, zeros, size) < 0) {
-            MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
+        DWORD bytesWritten = 0;
+        if (!WriteFile(file, zeros, size, &bytesWritten, nullptr)) {
+            MMKVError("fail to write fd[%p], error:%d", file, GetLastError());
             return false;
         }
-    }*/
+    }
     return true;
+}
+
+bool ftruncate(HANDLE file, size_t size) {
+    LARGE_INTEGER large;
+    large.QuadPart = size;
+    if (SetFilePointerEx(file, large, 0, FILE_BEGIN)) {
+        if (SetEndOfFile(file)) {
+            return true;
+        }
+        MMKVError("fail to SetEndOfFile:%d", GetLastError());
+        return false;
+    } else {
+        MMKVError("fail to SetFilePointer:%d", GetLastError());
+        return false;
+    }
 }

@@ -21,25 +21,15 @@
 #ifndef MMKV_MMAPEDFILE_H
 #define MMKV_MMAPEDFILE_H
 
+#include "MMKVDef.h"
 #include <string>
-//#include <sys/ioctl.h>
-
-#define ASHMEM_NAME_LEN 256
-#define ASHMEM_NAME_DEF "/dev/ashmem"
-
-#define __ASHMEMIOC 0x77
-#define ASHMEM_SET_NAME _IOW(__ASHMEMIOC, 1, char[ASHMEM_NAME_LEN])
-#define ASHMEM_GET_NAME _IOR(__ASHMEMIOC, 2, char[ASHMEM_NAME_LEN])
-#define ASHMEM_SET_SIZE _IOW(__ASHMEMIOC, 3, size_t)
-#define ASHMEM_GET_SIZE _IO(__ASHMEMIOC, 4)
-
-enum : bool { MMAP_FILE = false, MMAP_ASHMEM = true };
 
 extern const int DEFAULT_MMAP_SIZE;
 
 class MmapedFile {
     std::string m_name;
-    int m_fd;
+    HANDLE m_file;
+    HANDLE m_fileMapping;
     void *m_segmentPtr;
     size_t m_segmentSize;
 
@@ -48,13 +38,8 @@ class MmapedFile {
     MmapedFile &operator=(const MmapedFile &other) = delete;
 
 public:
-    MmapedFile(const std::string &path,
-               size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE),
-               bool fileType = MMAP_FILE);
-    MmapedFile(int ashmemFD);
+    MmapedFile(const std::string &path, size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE));
     ~MmapedFile();
-
-    const bool m_fileType;
 
     size_t getFileSize() { return m_segmentSize; }
 
@@ -62,15 +47,18 @@ public:
 
     std::string &getName() { return m_name; }
 
-    int getFd() { return m_fd; }
+    HANDLE getFd() { return m_file; }
 };
 
 class MMBuffer;
 
+extern int getpagesize();
+extern std::wstring string2wstring(const std::string &str);
 extern bool mkPath(char *path);
 extern bool isFileExist(const std::string &nsFilePath);
 extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const char *path);
-extern bool zeroFillFile(int fd, size_t startPos, size_t size);
+extern bool zeroFillFile(HANDLE file, size_t startPos, size_t size);
+extern bool ftruncate(HANDLE file, size_t size);
 
 #endif //MMKV_MMAPEDFILE_H

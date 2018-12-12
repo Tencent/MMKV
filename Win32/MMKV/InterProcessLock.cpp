@@ -38,8 +38,7 @@ static DWORD LockType2Flag(LockType lockType, bool tryLock) {
 }
 
 FileLock::FileLock(HANDLE fd)
-    : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {
-}
+    : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 
 bool FileLock::doLock(LockType lockType, bool tryLock) {
     bool unLockFirstIfNeeded = false;

@@ -21,9 +21,9 @@
 #ifndef MMKV_MMKVLOG_H
 #define MMKV_MMKVLOG_H
 
+#include <cstdio>
 #include <cstring>
 #include <errno.h>
-#include <cstdio>
 
 // enable logging
 #define ENABLE_MMKV_LOG
@@ -32,15 +32,12 @@
 
 #define APPNAME "MMKV"
 
-#define MMKVError(format, ...)                                                                     \
-    ::printf(format, ##__VA_ARGS__)
-#define MMKVWarning(format, ...)                                                                   \
-     ::printf(format, ##__VA_ARGS__)
+#define MMKVError(format, ...) ::printf(format, ##__VA_ARGS__)
+#define MMKVWarning(format, ...) ::printf(format, ##__VA_ARGS__)
 #define MMKVInfo(format, ...) ::printf(format, ##__VA_ARGS__)
 
 #ifndef NDEBUG
-#define MMKVDebug(format, ...)                                                                     \
-     ::printf(format, ##__VA_ARGS__)
+#define MMKVDebug(format, ...) ::printf(format, ##__VA_ARGS__)
 #else
 #define MMKVDebug(format, ...)                                                                     \
     {}

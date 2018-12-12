@@ -21,7 +21,7 @@
 #include "ThreadLock.h"
 #include "MMKVLog.h"
 
-ThreadLock::ThreadLock() : m_lock {0} {
+ThreadLock::ThreadLock() : m_lock{0} {
     // TODO: a better spin count?
     if (!InitializeCriticalSectionAndSpinCount(&m_lock, 1024)) {
         MMKVError("fail to init critical section:%d", GetLastError());
