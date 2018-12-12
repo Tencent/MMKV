@@ -238,6 +238,19 @@ using namespace std;
 	XCTAssertEqualObjects(value, nil);
 }
 
+- (void)testNSDataForNewGetSet {
+	NSString *str = @"Hello 2018 world cup 世界杯";
+	NSData *data = [str dataUsingEncoding:NSUTF8StringEncoding];
+	BOOL ret = [mmkv setData:data forKey:@"data"];
+	XCTAssertEqual(ret, YES);
+
+	NSData *value = [mmkv getDataForKey:@"data"];
+	XCTAssertEqualObjects(value, data);
+
+	value = [mmkv getDataForKey:KeyNotExist];
+	XCTAssertEqualObjects(value, nil);
+}
+
 - (void)testNSDate {
 	NSDate *date = [NSDate date];
 	BOOL ret = [mmkv setObject:date forKey:@"date"];
