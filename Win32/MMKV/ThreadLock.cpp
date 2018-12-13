@@ -47,3 +47,28 @@ bool ThreadLock::try_lock() {
 void ThreadLock::unlock() {
     LeaveCriticalSection(&m_lock);
 }
+
+void ThreadLock::ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback)(void)) {
+    if (!callback) {
+        return;
+    }
+    while (true) {
+        auto pre = (ThreadOnceToken) InterlockedCompareExchange(
+            (volatile LONG *) &onceToken, ThreadOnceInitializing, ThreadOnceUninitialized);
+        switch (pre) {
+            case ThreadOnceUninitialized:
+                callback();
+                InterlockedExchange((volatile LONG *) &onceToken, ThreadOnceInitialized);
+                return;
+            case ThreadOnceInitializing:
+                // another thread is initializing, must wait.
+                Sleep(1);
+                break;
+            case ThreadOnceInitialized:
+                return;
+            default:
+                MMKVError("never happen:%ld", pre);
+                return;
+        }
+    }
+}

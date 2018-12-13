@@ -37,8 +37,6 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
-#include <errno.h>
-#include <fcntl.h>
 
 using namespace std;
 
@@ -67,7 +65,7 @@ MMKV::MMKV(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey)
     , m_crcPath(crcPathWithID(m_mmapID, mode))
     , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE)
     , m_crypter(nullptr)
-    , m_fileLock(nullptr) // TODO:, m_fileLock(m_metaFile.getFd())
+    , m_fileLock(m_metaFile.getFd())
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
     , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0) {
@@ -113,15 +111,12 @@ void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV *>;
     g_instanceLock = ThreadLock();
 
-    //testAESCrypt();
-
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
 void MMKV::initializeMMKV(const std::string &rootDir) {
-    // TODO: do_once
-    //static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-    //pthread_once(&once_control, initialize);
+    static volatile ThreadOnceToken onceToken = ThreadOnceUninitialized;
+    ThreadLock::ThreadOnce(onceToken, initialize);
 
     g_rootDir = rootDir;
     char *path = _strdup(g_rootDir.c_str());
@@ -1166,9 +1161,8 @@ static string encodeFilePath(const string &mmapID) {
         }
     }
     if (hasSpecialCharacter) {
-        // TODO: do_once
-        /*static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-        pthread_once(&once_control, mkSpecialCharacterFileDirectory);*/
+        static volatile ThreadOnceToken onceToken = ThreadOnceUninitialized;
+        ThreadLock::ThreadOnce(onceToken, mkSpecialCharacterFileDirectory);
         return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + "/" + encodedID;
     } else {
         return mmapID;

@@ -23,6 +23,12 @@
 
 #include "MMKVDef.h"
 
+enum ThreadOnceToken : LONG {
+    ThreadOnceUninitialized = 0,
+    ThreadOnceInitializing,
+    ThreadOnceInitialized
+};
+
 class ThreadLock {
 private:
     CRITICAL_SECTION m_lock;
@@ -34,6 +40,8 @@ public:
     void lock();
     bool try_lock();
     void unlock();
+
+    static void ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback)(void));
 };
 
 #endif //MMKV_THREADLOCK_H
