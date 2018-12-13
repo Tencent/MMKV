@@ -54,10 +54,10 @@ class MMBuffer;
 
 extern int getpagesize();
 extern std::wstring string2wstring(const std::string &str);
-extern bool mkPath(char *path);
+extern bool mkPath(const std::string &str);
 extern bool isFileExist(const std::string &nsFilePath);
 extern bool removeFile(const std::string &nsFilePath);
-extern MMBuffer *readWholeFile(const char *path);
+extern MMBuffer *readWholeFile(const std::string &nsFilePath);
 extern bool zeroFillFile(HANDLE file, size_t startPos, size_t size);
 extern bool ftruncate(HANDLE file, size_t size);
 

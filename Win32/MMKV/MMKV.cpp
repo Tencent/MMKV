@@ -1107,7 +1107,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     }
 
     uint32_t crcFile = 0;
-    MMBuffer *data = readWholeFile(crcPath.c_str());
+    MMBuffer *data = readWholeFile(crcPath);
     if (data) {
         MMKVMetaInfo metaInfo;
         metaInfo.read(data->getPtr());
@@ -1119,7 +1119,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
 
     const int offset = pbFixed32Size(0);
     size_t actualSize = 0;
-    MMBuffer *fileData = readWholeFile(kvPath.c_str());
+    MMBuffer *fileData = readWholeFile(kvPath);
     if (fileData) {
         actualSize = CodedInputData(fileData->getPtr(), fileData->length()).readFixed32();
         if (actualSize > fileData->length() - offset) {

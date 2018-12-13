@@ -106,71 +106,82 @@ bool isFileExist(const string &nsFilePath) {
     if (nsFilePath.empty()) {
         return false;
     }
-
-    struct stat temp;
-    //return lstat(nsFilePath.c_str(), &temp) == 0;
-    return false;
+    auto path = string2wstring(nsFilePath);
+    auto attribute = GetFileAttributes(path.c_str());
+    return (attribute != INVALID_FILE_ATTRIBUTES);
 }
 
-bool mkPath(char *path) {
-    struct stat sb = {};
+bool mkPath(const std::string &str) {
+    auto length = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
+    wchar_t *path = new wchar_t[length];
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, path, length);
+
     bool done = false;
-    char *slash = path;
+    wchar_t *slash = path;
 
     while (!done) {
-        slash += strspn(slash, "/");
-        slash += strcspn(slash, "/");
+        slash += wcsspn(slash, L"\\");
+        slash += wcscspn(slash, L"\\");
 
-        done = (*slash == '\0');
-        *slash = '\0';
+        done = (*slash == L'\0');
+        *slash = L'\0';
 
-        if (stat(path, &sb) != 0) {
-            //if (errno != ENOENT || mkdir(path, 0777) != 0) {
-            MMKVWarning("%s", path);
-            return false;
-            //}
-            //} else if (!S_ISDIR(sb.st_mode)) {
-            MMKVWarning("%s: %s", path, strerror(ENOTDIR));
+        auto attribute = GetFileAttributes(path);
+        if (attribute == INVALID_FILE_ATTRIBUTES) {
+            if (!CreateDirectory(path, nullptr)) {
+                MMKVError("fail to create dir:%s, %d", path, GetLastError());
+                delete[] path;
+                return false;
+            }
+        } else if (!(attribute & FILE_ATTRIBUTE_DIRECTORY)) {
+            MMKVError("%s attribute:%d not a directry", path, attribute);
+            delete[] path;
             return false;
         }
 
-        *slash = '/';
+        *slash = L'\\';
     }
-
+    delete[] path;
     return true;
 }
 
 bool removeFile(const string &nsFilePath) {
-    int ret = _unlink(nsFilePath.c_str());
-    if (ret != 0) {
-        MMKVError("remove file failed. filePath=%s, err=%s", nsFilePath.c_str(), strerror(errno));
+    auto path = string2wstring(nsFilePath);
+    if (!DeleteFile(path.c_str())) {
+        MMKVError("remove file failed. filePath=%s, %d", nsFilePath.c_str(), GetLastError());
         return false;
     }
     return true;
 }
 
-MMBuffer *readWholeFile(const char *path) {
+MMBuffer *readWholeFile(const std::string &nsFilePath) {
     MMBuffer *buffer = nullptr;
-    /*    int fd = open(path, O_RDONLY);
-    if (fd >= 0) {
-        auto fileLength = lseek(fd, 0, SEEK_END);
+    auto path = string2wstring(nsFilePath);
+    auto fd = CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (fd != INVALID_HANDLE_VALUE) {
+        size_t fileLength = 0;
+        LARGE_INTEGER filesize = {0};
+        if (!GetFileSizeEx(fd, &filesize)) {
+            fileLength = static_cast<size_t>(filesize.QuadPart);
+        }
         if (fileLength > 0) {
             buffer = new MMBuffer(static_cast<size_t>(fileLength));
-            lseek(fd, 0, SEEK_SET);
-            auto readSize = read(fd, buffer->getPtr(), static_cast<size_t>(fileLength));
-            if (readSize != -1) {
+            SetFilePointer(fd, 0, 0, FILE_BEGIN);
+            DWORD readSize = 0;
+            if (ReadFile(fd, buffer->getPtr(), fileLength, &readSize, nullptr)) {
                 //fileSize = readSize;
             } else {
-                MMKVWarning("fail to read %s: %s", path, strerror(errno));
-
+                MMKVWarning("fail to read %s: %d", path.c_str(), GetLastError());
                 delete buffer;
                 buffer = nullptr;
             }
         }
-        close(fd);
+        CloseHandle(fd);
     } else {
-        MMKVWarning("fail to open %s: %s", path, strerror(errno));
-    }*/
+        MMKVWarning("fail to open %s: %d", path, GetLastError());
+    }
     return buffer;
 }
 
