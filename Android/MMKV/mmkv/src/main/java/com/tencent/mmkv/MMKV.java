@@ -304,8 +304,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Parcelable>
-        T decodeParcelable(String key, Class<T> tClass, T defaultValue) {
+    public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass, T defaultValue) {
         if (tClass == null) {
             return defaultValue;
         }

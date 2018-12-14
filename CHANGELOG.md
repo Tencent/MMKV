@@ -1,5 +1,22 @@
 # MMKV Change Log
 
+## v1.0.15 / 2018-12-13
+### iOS / macOS
+What's new  
+
+* Storing **NSString/NSData/NSDate** directly by calling `setString`/`getSring`, `setData`/`getData`, `setDate`/`getDate`.
+* Fix a potential crash due to divided by zero.
+
+
+### Android
+What's new  
+
+* Fix a stack overflow crash due to the **callback** feature introduced by v1.0.13.
+* Fix a potential crash due to divided by zero.
+
+### Win32
+MMKV for Win32 in under construction. Hopefully will come out in next release. For those who are interested, check out branch `dev_win32` for the latest development.
+
 ## v1.0.14 / 2018-11-30
 ### iOS / macOS
 What's new  
@@ -38,11 +55,11 @@ Add `implementation 'com.tencent:mmkv-static:1.0.13'` to your App's gradle setti
 * Special chars like `/` are supported in MMKV now. The file name of MMKV with special mmapID will be encoded with md5 and stored in seperate folder.
 * Add **callback** for MMKV error handling. You can make MMKV to recover instead of discard when crc32 check fail happens.
 * Add `trim` and `close` operation. Generally speaking they are not necessary in daily usage. Use them if you worry about disk / memory / fd usage.
-* Fix an issue that MMKV's file size might expand unexpectly large in some case.
 
 Known Issues
 
 * Setting `null` value to reset a key will be ignored. Use `remove` instead.
+* MMKV's file size might expand unexpectly large in some case.
 
 ## v1.0.12 / 2018-10-18
 ### iOS / macOS
