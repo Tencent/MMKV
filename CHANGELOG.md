@@ -4,15 +4,15 @@
 ### iOS / macOS
 What's new  
 
-* Storing **NSString/NSData/NSDate** directly by calling `setString`/`getSring`, `setData`/`getData`, `setDate`/getDate`.
-* Fix a potencial crash due to divided by zero.
+* Storing **NSString/NSData/NSDate** directly by calling `setString`/`getSring`, `setData`/`getData`, `setDate`/`getDate`.
+* Fix a potential crash due to divided by zero.
 
 
 ### Android
 What's new  
 
 * Fix a stack overflow crash due to the **callback** feature introduced by v1.0.13.
-* Fix a potencial crash due to divided by zero.
+* Fix a potential crash due to divided by zero.
 
 ### Win32
 MMKV for Win32 in under construction. Hopefully will come out in next release. For those who are interested, check out branch `dev_win32` for the latest development.
