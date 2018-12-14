@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             }
         });
 
+        //testHolderForMultiThread();
+
         //prepareInterProcessAshmem();
         //prepareInterProcessAshmemByContentProvider(KEY_1);
 
@@ -328,6 +330,29 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         mmkv.reKey(KEY_2);
 
         prepareInterProcessAshmemByContentProvider(KEY_2);
+    }
+
+    private void testHolderForMultiThread() {
+        final int COUNT = 1;
+        final int THREAD_COUNT = 1;
+        final String ID = "Hotel";
+        final String KEY = "California";
+        final String VALUE = "You can checkout any time you like, but you can never leave.";
+
+        final MMKV mmkv = MMKV.mmkvWithID(ID);
+        Runnable task = new Runnable() {
+            public void run() {
+                for (int i = 0; i < COUNT; ++i) {
+                    mmkv.putString(KEY, VALUE);
+                    mmkv.getString(KEY, null);
+                    mmkv.remove(KEY);
+                }
+            }
+        };
+
+        for (int i = 0; i < THREAD_COUNT; ++i) {
+            new Thread(task, "MMKV-" + i).start();
+        }
     }
 
     @Override

@@ -524,7 +524,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		static const int offset = pbFixed32Size(0);
 		NSData *data = [MiniPBCoder encodeDataWithObject:m_dic];
 		size_t lenNeeded = data.length + offset + newSize;
-		size_t avgItemSize = lenNeeded / m_dic.count;
+		size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.count);
 		size_t futureUsage = avgItemSize * std::max<size_t>(8, m_dic.count / 2);
 		// 1. no space for a full rewrite, double it
 		// 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
@@ -619,7 +619,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return YES;
 }
 
-- (BOOL)setData:(NSData *)data forKey:(NSString *)key {
+- (BOOL)setRawData:(NSData *)data forKey:(NSString *)key {
 	if (data.length <= 0 || key.length <= 0) {
 		return NO;
 	}
@@ -682,7 +682,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
-- (NSData *)getDataForKey:(NSString *)key {
+- (NSData *)getRawDataForKey:(NSString *)key {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
 	return [m_dic objectForKey:key];
@@ -900,7 +900,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 #pragma mark - set & get
 
-- (BOOL)setObject:(nullable id)object forKey:(NSString *)key {
+- (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key {
 	if (key.length <= 0) {
 		return NO;
 	}
@@ -913,12 +913,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if ([MiniPBCoder isMiniPBCoderCompatibleObject:object]) {
 		data = [MiniPBCoder encodeDataWithObject:object];
 	} else {
-		if ([[object class] conformsToProtocol:@protocol(NSCoding)]) {
+		/*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
 			data = [NSKeyedArchiver archivedDataWithRootObject:object];
 		}
 	}
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key {
@@ -930,7 +930,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeBool(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setInt32:(int32_t)value forKey:(NSString *)key {
@@ -942,7 +942,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeInt32(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key {
@@ -954,7 +954,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeUInt32(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setInt64:(int64_t)value forKey:(NSString *)key {
@@ -966,7 +966,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeInt64(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key {
@@ -978,7 +978,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeUInt64(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setFloat:(float)value forKey:(NSString *)key {
@@ -990,7 +990,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeFloat(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setDouble:(double)value forKey:(NSString *)key {
@@ -1002,14 +1002,26 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeDouble(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
+}
+
+- (BOOL)setString:(NSString *)value forKey:(NSString *)key {
+	return [self setObject:value forKey:key];
+}
+
+- (BOOL)setDate:(NSDate *)value forKey:(NSString *)key {
+	return [self setObject:value forKey:key];
+}
+
+- (BOOL)setData:(NSData *)value forKey:(NSString *)key {
+	return [self setObject:value forKey:key];
 }
 
 - (id)getObjectOfClass:(Class)cls forKey:(NSString *)key {
 	if (key.length <= 0) {
 		return nil;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 
 		if ([MiniPBCoder isMiniPBCoderCompatibleType:cls]) {
@@ -1030,7 +1042,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1049,7 +1061,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1068,7 +1080,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1087,7 +1099,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1106,7 +1118,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1125,7 +1137,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1144,7 +1156,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1154,6 +1166,36 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		}
 	}
 	return defaultValue;
+}
+
+- (nullable NSString *)getStringForKey:(NSString *)key {
+	return [self getStringForKey:key defaultValue:nil];
+}
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	return [self getObjectOfClass:NSString.class forKey:key];
+}
+
+- (nullable NSDate *)getDateForKey:(NSString *)key {
+	return [self getDateForKey:key defaultValue:nil];
+}
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	return [self getObjectOfClass:NSDate.class forKey:key];
+}
+
+- (nullable NSData *)getDataForKey:(NSString *)key {
+	return [self getDataForKey:key defaultValue:nil];
+}
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	return [self getObjectOfClass:NSData.class forKey:key];
 }
 
 #pragma mark - enumerate
