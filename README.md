@@ -43,8 +43,8 @@ BOOL bValue = [mmkv getBoolForKey:@"bool"];
 [mmkv setInt32:-1024 forKey:@"int32"];
 int32_t iValue = [mmkv getInt32ForKey:@"int32"];
     
-[mmkv setObject:@"hello, mmkv" forKey:@"string"];
-NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
+[mmkv setString:@"hello, mmkv" forKey:@"string"];
+NSString *str = [mmkv getStringForKey:@"string"];
 ```
 
 Full tutorials can be found [here](https://github.com/Tencent/MMKV/wiki/iOS_tutorial).
