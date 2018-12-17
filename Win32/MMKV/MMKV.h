@@ -47,7 +47,8 @@ class MMKV_API MMKV {
     std::string m_mmapID;
     std::string m_path;
     std::string m_crcPath;
-    int m_fd;
+    HANDLE m_fd;
+    HANDLE m_fileMapping;
     char *m_ptr;
     size_t m_size;
     size_t m_actualSize;

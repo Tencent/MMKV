@@ -37,16 +37,13 @@ std::wstring string2wstring(const std::string &str) {
 MmapedFile::MmapedFile(const std::string &path, size_t size)
     : m_name(path), m_file(INVALID_HANDLE_VALUE), m_segmentPtr(nullptr), m_segmentSize(0) {
     auto filename = string2wstring(m_name);
-    m_file = (HANDLE) CreateFile(filename.c_str(), GENERIC_READ | GENERIC_WRITE,
-                                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
-                                 OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    m_file = CreateFile(filename.c_str(), GENERIC_READ | GENERIC_WRITE,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                        OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (m_file == INVALID_HANDLE_VALUE) {
         MMKVError("fail to open:%s, %d", m_name.c_str(), GetLastError());
     } else {
-        LARGE_INTEGER filesize = {0};
-        if (GetFileSizeEx(m_file, &filesize)) {
-            m_segmentSize = static_cast<size_t>(filesize.QuadPart);
-        }
+        getfilesize(m_file, m_segmentSize);
         if (m_segmentSize < DEFAULT_MMAP_SIZE) {
             m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);
             if (ftruncate(m_file, m_segmentSize) != 0 || !zeroFillFile(m_file, 0, m_segmentSize)) {
@@ -86,7 +83,7 @@ MmapedFile::~MmapedFile() {
     }
     if (m_fileMapping) {
         CloseHandle(m_fileMapping);
-        m_fileMapping = NULL;
+        m_fileMapping = nullptr;
     }
     if (m_file != INVALID_HANDLE_VALUE) {
         CloseHandle(m_file);
@@ -162,10 +159,7 @@ MMBuffer *readWholeFile(const std::string &nsFilePath) {
                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (fd != INVALID_HANDLE_VALUE) {
         size_t fileLength = 0;
-        LARGE_INTEGER filesize = {0};
-        if (!GetFileSizeEx(fd, &filesize)) {
-            fileLength = static_cast<size_t>(filesize.QuadPart);
-        }
+        getfilesize(fd, fileLength);
         if (fileLength > 0) {
             buffer = new MMBuffer(static_cast<size_t>(fileLength));
             SetFilePointer(fd, 0, 0, FILE_BEGIN);
@@ -188,6 +182,9 @@ MMBuffer *readWholeFile(const std::string &nsFilePath) {
 bool zeroFillFile(HANDLE file, size_t startPos, size_t size) {
     if (file == INVALID_HANDLE_VALUE) {
         return false;
+    }
+    if (size == 0) {
+        return true;
     }
 
     LARGE_INTEGER position;
@@ -229,4 +226,13 @@ bool ftruncate(HANDLE file, size_t size) {
         MMKVError("fail to SetFilePointer:%d", GetLastError());
         return false;
     }
+}
+
+bool getfilesize(HANDLE file, size_t &size) {
+    LARGE_INTEGER filesize = {0};
+    if (GetFileSizeEx(file, &filesize)) {
+        size = static_cast<size_t>(filesize.QuadPart);
+        return true;
+    }
+    return false;
 }

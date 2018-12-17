@@ -60,5 +60,6 @@ extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const std::string &nsFilePath);
 extern bool zeroFillFile(HANDLE file, size_t startPos, size_t size);
 extern bool ftruncate(HANDLE file, size_t size);
+extern bool getfilesize(HANDLE file, size_t &size);
 
 #endif //MMKV_MMAPEDFILE_H

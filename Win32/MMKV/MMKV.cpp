@@ -69,7 +69,7 @@ MMKV::MMKV(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey)
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
     , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0) {
-    m_fd = -1;
+    m_fd = INVALID_HANDLE_VALUE;
     m_ptr = nullptr;
     m_size = 0;
     m_actualSize = 0;
@@ -119,9 +119,7 @@ void MMKV::initializeMMKV(const std::string &rootDir) {
     ThreadLock::ThreadOnce(onceToken, initialize);
 
     g_rootDir = rootDir;
-    char *path = _strdup(g_rootDir.c_str());
-    mkPath(path);
-    free(path);
+    mkPath(g_rootDir);
 
     MMKVInfo("root dir: %s", g_rootDir.c_str());
 }
@@ -184,78 +182,83 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
 void MMKV::loadFromFile() {
     m_metaInfo.read(m_metaFile.getMemory());
 
-    //m_fd = open(m_path.c_str(), O_RDWR | O_CREAT, S_IRWXU);
-    if (m_fd < 0) {
-        MMKVError("fail to open:%s, %s", m_path.c_str(), strerror(errno));
+    auto filename = string2wstring(m_path);
+    m_fd = CreateFile(filename.c_str(), GENERIC_READ | GENERIC_WRITE,
+                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_ALWAYS,
+                      FILE_ATTRIBUTE_NORMAL, nullptr);
+
+    if (m_fd == INVALID_HANDLE_VALUE) {
+        MMKVError("fail to open:%s, %d", m_path.c_str(), GetLastError());
     } else {
         m_size = 0;
-        struct stat st = {0};
-        if (fstat(m_fd, &st) != -1) {
-            m_size = static_cast<size_t>(st.st_size);
-        }
+        getfilesize(m_fd, m_size);
         // round up to (n * pagesize)
         if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
             size_t oldSize = m_size;
             m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
-            /*if (ftruncate(m_fd, m_size) != 0) {
-                MMKVError("fail to truncate [%s] to size %zu, %s", m_mmapID.c_str(), m_size,
-                          strerror(errno));
-                m_size = static_cast<size_t>(st.st_size);
+            if (!ftruncate(m_fd, m_size)) {
+                MMKVError("fail to truncate [%s] to size %zu, %d", m_mmapID.c_str(), m_size,
+                          GetLastError());
+                m_size = oldSize;
             }
-            zeroFillFile(m_fd, oldSize, m_size - oldSize);*/
+            zeroFillFile(m_fd, oldSize, m_size - oldSize);
         }
-        /*m_ptr = (char *) mmap(nullptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
-        if (m_ptr == MAP_FAILED) {
-            MMKVError("fail to mmap [%s], %s", m_mmapID.c_str(), strerror(errno));
-        } else*/
-        {
-            memcpy(&m_actualSize, m_ptr, Fixed32Size);
-            MMKVInfo("loading [%s] with %zu size in total, file size is %zu", m_mmapID.c_str(),
-                     m_actualSize, m_size);
-            bool loadFromFile = false, needFullWriteback = false;
-            if (m_actualSize > 0) {
-                if (m_actualSize < m_size && m_actualSize + Fixed32Size <= m_size) {
-                    if (checkFileCRCValid()) {
-                        loadFromFile = true;
+        m_fileMapping = CreateFileMapping(m_fd, nullptr, PAGE_READWRITE, 0, 0, nullptr);
+        if (!m_fileMapping) {
+            MMKVError("fail to CreateFileMapping [%s], %d", m_mmapID.c_str(), GetLastError());
+        } else {
+            m_ptr = static_cast<char *>(MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0));
+            if (!m_ptr) {
+                MMKVError("fail to MapViewOfFile [%s], %d", m_mmapID.c_str(), GetLastError());
+            } else {
+                memcpy(&m_actualSize, m_ptr, Fixed32Size);
+                MMKVInfo("loading [%s] with %zu size in total, file size is %zu", m_mmapID.c_str(),
+                         m_actualSize, m_size);
+                bool loadFromFile = false, needFullWriteback = false;
+                if (m_actualSize > 0) {
+                    if (m_actualSize < m_size && m_actualSize + Fixed32Size <= m_size) {
+                        if (checkFileCRCValid()) {
+                            loadFromFile = true;
+                        } else {
+                            auto strategic = onMMKVCRCCheckFail(m_mmapID);
+                            if (strategic == OnErrorRecover) {
+                                loadFromFile = true;
+                                needFullWriteback = true;
+                            }
+                        }
                     } else {
-                        auto strategic = onMMKVCRCCheckFail(m_mmapID);
+                        auto strategic = onMMKVFileLengthError(m_mmapID);
                         if (strategic == OnErrorRecover) {
                             loadFromFile = true;
                             needFullWriteback = true;
                         }
                     }
-                } else {
-                    auto strategic = onMMKVFileLengthError(m_mmapID);
-                    if (strategic == OnErrorRecover) {
-                        loadFromFile = true;
-                        needFullWriteback = true;
+                }
+                if (loadFromFile) {
+                    MMKVInfo("loading [%s] with crc %u sequence %u", m_mmapID.c_str(),
+                             m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
+                    MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
+                    if (m_crypter) {
+                        decryptBuffer(*m_crypter, inputBuffer);
                     }
-                }
-            }
-            if (loadFromFile) {
-                MMKVInfo("loading [%s] with crc %u sequence %u", m_mmapID.c_str(),
-                         m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
-                MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
-                if (m_crypter) {
-                    decryptBuffer(*m_crypter, inputBuffer);
-                }
-                m_dic.clear();
-                MiniPBCoder::decodeMap(m_dic, inputBuffer);
-                m_output = new CodedOutputData(m_ptr + Fixed32Size + m_actualSize,
-                                               m_size - Fixed32Size - m_actualSize);
-                if (needFullWriteback) {
-                    fullWriteback();
-                }
-            } else {
-                SCOPEDLOCK(m_exclusiveProcessLock);
+                    m_dic.clear();
+                    MiniPBCoder::decodeMap(m_dic, inputBuffer);
+                    m_output = new CodedOutputData(m_ptr + Fixed32Size + m_actualSize,
+                                                   m_size - Fixed32Size - m_actualSize);
+                    if (needFullWriteback) {
+                        fullWriteback();
+                    }
+                } else {
+                    SCOPEDLOCK(m_exclusiveProcessLock);
 
-                if (m_actualSize > 0) {
-                    writeAcutalSize(0);
+                    if (m_actualSize > 0) {
+                        writeAcutalSize(0);
+                    }
+                    m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
+                    recaculateCRCDigest();
                 }
-                m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
-                recaculateCRCDigest();
+                MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
             }
-            MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
         }
     }
 
@@ -336,10 +339,7 @@ void MMKV::checkLoadData() {
         SCOPEDLOCK(m_sharedProcessLock);
 
         size_t fileSize = 0;
-        struct stat st = {0};
-        if (fstat(m_fd, &st) != -1) {
-            fileSize = (size_t) st.st_size;
-        }
+        getfilesize(m_fd, fileSize);
         if (m_size != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(), m_size,
                      fileSize);
@@ -362,26 +362,22 @@ void MMKV::clearAll() {
         return;
     }
 
-    /*if (m_ptr && m_ptr != MAP_FAILED) {
+    if (m_ptr) {
         // for truncate
         size_t size = std::min<size_t>(static_cast<size_t>(DEFAULT_MMAP_SIZE), m_size);
         memset(m_ptr, 0, size);
-        if (msync(m_ptr, size, MS_SYNC) != 0) {
-            MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
+        if (!FlushViewOfFile(m_ptr, size)) {
+            MMKVError("fail to FlushViewOfFile [%s]:%d", m_mmapID.c_str(), GetLastError());
         }
     }
-    if (!m_isAshmem) {
-        if (m_fd >= 0) {
-            if (m_size != DEFAULT_MMAP_SIZE) {
-                MMKVInfo("truncating [%s] from %zu to %d", m_mmapID.c_str(), m_size,
-                         DEFAULT_MMAP_SIZE);
-                if (ftruncate(m_fd, DEFAULT_MMAP_SIZE) != 0) {
-                    MMKVError("fail to truncate [%s] to size %d, %s", m_mmapID.c_str(),
-                              DEFAULT_MMAP_SIZE, strerror(errno));
-                }
+    if (m_fd >= 0) {
+        if (m_size != DEFAULT_MMAP_SIZE) {
+            MMKVInfo("truncating [%s] from %zu to %d", m_mmapID.c_str(), m_size, DEFAULT_MMAP_SIZE);
+            if (!ftruncate(m_fd, DEFAULT_MMAP_SIZE)) {
+                MMKVError("fail to truncate [%s] to size %d", m_mmapID.c_str(), DEFAULT_MMAP_SIZE);
             }
         }
-    }*/
+    }
 
     clearMemoryState();
     loadFromFile();
@@ -407,19 +403,26 @@ void MMKV::clearMemoryState() {
     }
     m_output = nullptr;
 
-    /*if (m_ptr && m_ptr != MAP_FAILED) {
-            if (munmap(m_ptr, m_size) != 0) {
-                MMKVError("fail to munmap [%s], %s", m_mmapID.c_str(), strerror(errno));
-            }
+    if (m_ptr) {
+        if (!UnmapViewOfFile(m_ptr)) {
+            MMKVError("fail to munmap [%s], %d", m_mmapID.c_str(), GetLastError());
         }
         m_ptr = nullptr;
+    }
 
-        if (m_fd >= 0) {
-            if (::close(m_fd) != 0) {
-                MMKVError("fail to close [%s], %s", m_mmapID.c_str(), strerror(errno));
-            }
-        }*/
-    m_fd = -1;
+    if (m_fileMapping) {
+        if (!CloseHandle(m_fileMapping)) {
+            MMKVError("fail to CloseHandle [%s], %d", m_mmapID.c_str(), GetLastError());
+        }
+        m_fileMapping = nullptr;
+    }
+
+    if (m_fd != INVALID_HANDLE_VALUE) {
+        if (!CloseHandle(m_fd)) {
+            MMKVError("fail to close [%s], %d", m_mmapID.c_str(), GetLastError());
+        }
+        m_fd = INVALID_HANDLE_VALUE;
+    }
     m_size = 0;
     m_actualSize = 0;
 }
@@ -463,19 +466,18 @@ void MMKV::trim() {
 
     MMKVInfo("trimming %s from %zu to %zu", m_mmapID.c_str(), oldSize, m_size);
 
-    /*if (ftruncate(m_fd, m_size) != 0) {
-        MMKVError("fail to truncate [%s] to size %zu, %s", m_mmapID.c_str(), m_size,
-                  strerror(errno));
+    if (!ftruncate(m_fd, m_size)) {
+        MMKVError("fail to truncate [%s] to size %zu", m_mmapID.c_str(), m_size);
         m_size = oldSize;
         return;
     }
-    if (munmap(m_ptr, oldSize) != 0) {
-        MMKVError("fail to munmap [%s], %s", m_mmapID.c_str(), strerror(errno));
+    if (!UnmapViewOfFile(m_ptr)) {
+        MMKVError("fail to munmap [%s], %d", m_mmapID.c_str(), GetLastError());
     }
-    m_ptr = (char *) mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
-    if (m_ptr == MAP_FAILED) {
-        MMKVError("fail to mmap [%s], %s", m_mmapID.c_str(), strerror(errno));
-    }*/
+    m_ptr = (char *) MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+    if (!m_ptr) {
+        MMKVError("fail to mmap [%s], %d", m_mmapID.c_str(), GetLastError());
+    }
 
     delete m_output;
     m_output = new CodedOutputData(m_ptr + pbFixed32Size(0), m_size - pbFixed32Size(0));
@@ -511,26 +513,24 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 m_mmapID.c_str(), oldSize, m_size, newSize, futureUsage);
 
             // if we can't extend size, rollback to old state
-            /*if (ftruncate(m_fd, m_size) != 0) {
-                    MMKVError("fail to truncate [%s] to size %zu, %s", m_mmapID.c_str(), m_size,
-                              strerror(errno));
-                    m_size = oldSize;
-                    return false;
-                }
-                if (!zeroFillFile(m_fd, oldSize, m_size - oldSize)) {
-                    MMKVError("fail to zeroFile [%s] to size %zu, %s", m_mmapID.c_str(), m_size,
-                              strerror(errno));
-                    m_size = oldSize;
-                    return false;
-                }
+            if (!ftruncate(m_fd, m_size)) {
+                MMKVError("fail to truncate [%s] to size %zu", m_mmapID.c_str(), m_size);
+                m_size = oldSize;
+                return false;
+            }
+            if (!zeroFillFile(m_fd, oldSize, m_size - oldSize)) {
+                MMKVError("fail to zeroFile [%s] to size %zu", m_mmapID.c_str(), m_size);
+                m_size = oldSize;
+                return false;
+            }
 
-                if (munmap(m_ptr, oldSize) != 0) {
-                    MMKVError("fail to munmap [%s], %s", m_mmapID.c_str(), strerror(errno));
-                }
-                m_ptr = (char *) mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
-                if (m_ptr == MAP_FAILED) {
-                    MMKVError("fail to mmap [%s], %s", m_mmapID.c_str(), strerror(errno));
-                }*/
+            if (!UnmapViewOfFile(m_ptr)) {
+                MMKVError("fail to munmap [%s], %d", m_mmapID.c_str(), GetLastError());
+            }
+            m_ptr = (char *) MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+            if (!m_ptr) {
+                MMKVError("fail to mmap [%s], %d", m_mmapID.c_str(), GetLastError());
+            }
 
             // check if we fail to make more space
             if (!isFileValid()) {
@@ -538,7 +538,6 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 return false;
             }
         }
-
         if (m_crypter) {
             m_crypter->reset();
             auto ptr = (unsigned char *) data.getPtr();
@@ -557,8 +556,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
 }
 
 void MMKV::writeAcutalSize(size_t actualSize) {
-    assert(m_ptr != 0);
-    //assert(m_ptr != MAP_FAILED);
+    assert(m_ptr != nullptr);
 
     memcpy(m_ptr, &actualSize, Fixed32Size);
     m_actualSize = actualSize;
@@ -774,9 +772,9 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey) {
 }
 
 bool MMKV::isFileValid() {
-    /*    if (m_fd >= 0 && m_size > 0 && m_output && m_ptr && m_ptr != MAP_FAILED) {
+    if (m_fd != INVALID_HANDLE_VALUE && m_fileMapping && m_size > 0 && m_output && m_ptr) {
         return true;
-    }*/
+    }
     return false;
 }
 
@@ -1085,9 +1083,9 @@ void MMKV::sync() {
         return;
     }
     SCOPEDLOCK(m_exclusiveProcessLock);
-    /*if (msync(m_ptr, m_size, MS_SYNC) != 0) {
-        MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
-    }*/
+    if (!FlushViewOfFile(m_ptr, m_size)) {
+        MMKVError("fail to FlushViewOfFile [%s]:%d", m_mmapID.c_str(), GetLastError());
+    }
 }
 
 bool MMKV::isFileValid(const std::string &mmapID) {
@@ -1133,9 +1131,8 @@ bool MMKV::isFileValid(const std::string &mmapID) {
 }
 
 static void mkSpecialCharacterFileDirectory() {
-    char *path = _strdup((g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());
+    string path = g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME;
     mkPath(path);
-    free(path);
 }
 
 static string md5(const string &value) {

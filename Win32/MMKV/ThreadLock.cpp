@@ -61,7 +61,7 @@ void ThreadLock::ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback
                 InterlockedExchange((volatile LONG *) &onceToken, ThreadOnceInitialized);
                 return;
             case ThreadOnceInitializing:
-                // another thread is initializing, must wait.
+                // another thread is initializing, let's wait for 1ms.
                 Sleep(1);
                 break;
             case ThreadOnceInitialized:
