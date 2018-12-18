@@ -27,7 +27,7 @@
 extern const int DEFAULT_MMAP_SIZE;
 
 class MmapedFile {
-    std::string m_name;
+    std::wstring m_name;
     HANDLE m_file;
     HANDLE m_fileMapping;
     void *m_segmentPtr;
@@ -38,14 +38,14 @@ class MmapedFile {
     MmapedFile &operator=(const MmapedFile &other) = delete;
 
 public:
-    MmapedFile(const std::string &path, size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE));
+    MmapedFile(const std::wstring &path, size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE));
     ~MmapedFile();
 
     size_t getFileSize() { return m_segmentSize; }
 
     void *getMemory() { return m_segmentPtr; }
 
-    std::string &getName() { return m_name; }
+    std::wstring &getName() { return m_name; }
 
     HANDLE getFd() { return m_file; }
 };
@@ -54,10 +54,10 @@ class MMBuffer;
 
 extern int getpagesize();
 extern std::wstring string2wstring(const std::string &str);
-extern bool mkPath(const std::string &str);
-extern bool isFileExist(const std::string &nsFilePath);
-extern bool removeFile(const std::string &nsFilePath);
-extern MMBuffer *readWholeFile(const std::string &nsFilePath);
+extern bool mkPath(const std::wstring &str);
+extern bool isFileExist(const std::wstring &nsFilePath);
+extern bool removeFile(const std::wstring &nsFilePath);
+extern MMBuffer *readWholeFile(const std::wstring &nsFilePath);
 extern bool zeroFillFile(HANDLE file, size_t startPos, size_t size);
 extern bool ftruncate(HANDLE file, size_t size);
 extern bool getfilesize(HANDLE file, size_t &size);

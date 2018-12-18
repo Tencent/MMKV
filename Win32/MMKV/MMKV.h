@@ -45,8 +45,8 @@ class MMKV_API MMKV {
     // TODO: avoid warning "needs to have dll-interface to be used by clients of class"
     std::unordered_map<std::string, MMBuffer> m_dic;
     std::string m_mmapID;
-    std::string m_path;
-    std::string m_crcPath;
+    std::wstring m_path;
+    std::wstring m_crcPath;
     HANDLE m_fd;
     HANDLE m_fileMapping;
     char *m_ptr;
@@ -111,7 +111,7 @@ public:
 
     ~MMKV();
 
-    static void initializeMMKV(const std::string &rootDir);
+    static void initializeMMKV(const std::wstring &rootDir);
 
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);

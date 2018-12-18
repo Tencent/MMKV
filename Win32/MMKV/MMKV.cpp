@@ -43,17 +43,17 @@ using namespace std;
 
 static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
-static std::string g_rootDir;
+static std::wstring g_rootDir;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
-#define SPECIAL_CHARACTER_DIRECTORY_NAME "specialCharacter"
+#define SPECIAL_CHARACTER_DIRECTORY_NAME L"specialCharacter"
 constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
-static string mappedKVPathWithID(const string &mmapID, MMKVMode mode);
-static string crcPathWithID(const string &mmapID, MMKVMode mode);
+static wstring mappedKVPathWithID(const string &mmapID, MMKVMode mode);
+static wstring crcPathWithID(const string &mmapID, MMKVMode mode);
 static void mkSpecialCharacterFileDirectory();
 static string md5(const string &value);
-static string encodeFilePath(const string &mmapID);
+static wstring encodeFilePath(const string &mmapID);
 
 enum : bool {
     KeepSequence = false,
@@ -115,14 +115,14 @@ void initialize() {
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
-void MMKV::initializeMMKV(const std::string &rootDir) {
+void MMKV::initializeMMKV(const std::wstring &rootDir) {
     static volatile ThreadOnceToken onceToken = ThreadOnceUninitialized;
     ThreadLock::ThreadOnce(onceToken, initialize);
 
     g_rootDir = rootDir;
     mkPath(g_rootDir);
 
-    MMKVInfo("root dir: %s", g_rootDir.c_str());
+    MMKVInfo("root dir: %ws", g_rootDir.c_str());
 }
 
 MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey) {
@@ -183,13 +183,12 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
 void MMKV::loadFromFile() {
     m_metaInfo.read(m_metaFile.getMemory());
 
-    auto filename = string2wstring(m_path);
-    m_fd = CreateFile(filename.c_str(), GENERIC_READ | GENERIC_WRITE,
+    m_fd = CreateFile(m_path.c_str(), GENERIC_READ | GENERIC_WRITE,
                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_ALWAYS,
                       FILE_ATTRIBUTE_NORMAL, nullptr);
 
     if (m_fd == INVALID_HANDLE_VALUE) {
-        MMKVError("fail to open:%s, %d", m_path.c_str(), GetLastError());
+        MMKVError("fail to open:%ws, %d", m_path.c_str(), GetLastError());
     } else {
         m_size = 0;
         getfilesize(m_fd, m_size);
@@ -357,7 +356,7 @@ void MMKV::clearAll() {
     SCOPEDLOCK(m_exclusiveProcessLock);
 
     if (m_needLoadFromFile) {
-        removeFile(m_path.c_str());
+        removeFile(m_path);
         loadFromFile();
         return;
     }
@@ -1088,13 +1087,13 @@ void MMKV::sync() {
 }
 
 bool MMKV::isFileValid(const std::string &mmapID) {
-    string kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS);
+    auto kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS);
     if (!isFileExist(kvPath)) {
         return true;
     }
 
-    string crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS);
-    if (!isFileExist(crcPath.c_str())) {
+    auto crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS);
+    if (!isFileExist(crcPath)) {
         return false;
     }
 
@@ -1129,7 +1128,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
 }
 
 static void mkSpecialCharacterFileDirectory() {
-    string path = g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME;
+    wstring path = g_rootDir + L"/" + SPECIAL_CHARACTER_DIRECTORY_NAME;
     mkPath(path);
 }
 
@@ -1144,7 +1143,7 @@ static string md5(const string &value) {
     return buf;
 }
 
-static string encodeFilePath(const string &mmapID) {
+static wstring encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
     string encodedID;
     bool hasSpecialCharacter = false;
@@ -1158,18 +1157,18 @@ static string encodeFilePath(const string &mmapID) {
     if (hasSpecialCharacter) {
         static volatile ThreadOnceToken onceToken = ThreadOnceUninitialized;
         ThreadLock::ThreadOnce(onceToken, mkSpecialCharacterFileDirectory);
-        return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + "/" + encodedID;
+        return wstring(SPECIAL_CHARACTER_DIRECTORY_NAME) + L"/" + string2wstring(encodedID);
     } else {
-        return mmapID;
+        return string2wstring(mmapID);
     }
 }
 
-static string mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
-    return g_rootDir + "/" + encodeFilePath(mmapID);
+static wstring mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
+    return g_rootDir + L"/" + encodeFilePath(mmapID);
 }
 
-static string crcPathWithID(const string &mmapID, MMKVMode mode) {
-    return g_rootDir + "/" + encodeFilePath(mmapID) + ".crc";
+static wstring crcPathWithID(const string &mmapID, MMKVMode mode) {
+    return g_rootDir + L"/" + encodeFilePath(mmapID) + L".crc";
 }
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {

@@ -31,12 +31,14 @@
 
 #define APPNAME "MMKV"
 
-#define MMKVError(format, ...) ::printf(format, ##__VA_ARGS__)
-#define MMKVWarning(format, ...) ::printf(format, ##__VA_ARGS__)
-#define MMKVInfo(format, ...) ::printf(format, ##__VA_ARGS__)
+#define __NEW_LINE "\n"
+
+#define MMKVError(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
+#define MMKVWarning(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
+#define MMKVInfo(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
 
 #ifndef NDEBUG
-#define MMKVDebug(format, ...) ::printf(format, ##__VA_ARGS__)
+#define MMKVDebug(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
 #else
 #define MMKVDebug(format, ...)                                                                     \
     {}

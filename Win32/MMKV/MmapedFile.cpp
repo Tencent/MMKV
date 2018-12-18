@@ -34,20 +34,19 @@ std::wstring string2wstring(const std::string &str) {
     return result;
 }
 
-MmapedFile::MmapedFile(const std::string &path, size_t size)
+MmapedFile::MmapedFile(const std::wstring &path, size_t size)
     : m_name(path), m_file(INVALID_HANDLE_VALUE), m_segmentPtr(nullptr), m_segmentSize(0) {
-    auto filename = string2wstring(m_name);
-    m_file = CreateFile(filename.c_str(), GENERIC_READ | GENERIC_WRITE,
+    m_file = CreateFile(m_name.c_str(), GENERIC_READ | GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                         OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (m_file == INVALID_HANDLE_VALUE) {
-        MMKVError("fail to open:%s, %d", m_name.c_str(), GetLastError());
+        MMKVError("fail to open:%ws, %d", m_name.c_str(), GetLastError());
     } else {
         getfilesize(m_file, m_segmentSize);
         if (m_segmentSize < DEFAULT_MMAP_SIZE) {
             m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);
             if (!ftruncate(m_file, m_segmentSize) || !zeroFillFile(m_file, 0, m_segmentSize)) {
-                MMKVError("fail to truncate [%s] to size %zu, %d", m_name.c_str(), m_segmentSize,
+                MMKVError("fail to truncate [%ws] to size %zu, %d", m_name.c_str(), m_segmentSize,
                           GetLastError());
                 CloseHandle(m_file);
                 m_file = INVALID_HANDLE_VALUE;
@@ -57,7 +56,7 @@ MmapedFile::MmapedFile(const std::string &path, size_t size)
         }
         m_fileMapping = CreateFileMapping(m_file, nullptr, PAGE_READWRITE, 0, 0, nullptr);
         if (!m_fileMapping) {
-            MMKVError("fail to CreateFileMapping [%s], %d", m_name.c_str(), GetLastError());
+            MMKVError("fail to CreateFileMapping [%ws], %d", m_name.c_str(), GetLastError());
             CloseHandle(m_file);
             m_file = INVALID_HANDLE_VALUE;
             removeFile(m_name);
@@ -65,7 +64,7 @@ MmapedFile::MmapedFile(const std::string &path, size_t size)
         }
         m_segmentPtr = MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
         if (!m_segmentPtr) {
-            MMKVError("fail to MapViewOfFile [%s], %d", m_name.c_str(), GetLastError());
+            MMKVError("fail to MapViewOfFile [%ws], %d", m_name.c_str(), GetLastError());
             CloseHandle(m_fileMapping);
             m_fileMapping = NULL;
             CloseHandle(m_file);
@@ -99,19 +98,16 @@ int getpagesize(void) {
     return system_info.dwPageSize;
 }
 
-bool isFileExist(const string &nsFilePath) {
+bool isFileExist(const wstring &nsFilePath) {
     if (nsFilePath.empty()) {
         return false;
     }
-    auto path = string2wstring(nsFilePath);
-    auto attribute = GetFileAttributes(path.c_str());
+    auto attribute = GetFileAttributes(nsFilePath.c_str());
     return (attribute != INVALID_FILE_ATTRIBUTES);
 }
 
-bool mkPath(const std::string &str) {
-    auto length = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
-    wchar_t *path = new wchar_t[length];
-    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, path, length);
+bool mkPath(const std::wstring &str) {
+    wchar_t *path = _wcsdup(str.c_str());
 
     bool done = false;
     wchar_t *slash = path;
@@ -126,35 +122,33 @@ bool mkPath(const std::string &str) {
         auto attribute = GetFileAttributes(path);
         if (attribute == INVALID_FILE_ATTRIBUTES) {
             if (!CreateDirectory(path, nullptr)) {
-                MMKVError("fail to create dir:%s, %d", str.c_str(), GetLastError());
+                MMKVError("fail to create dir:%ws, %d", str.c_str(), GetLastError());
                 delete[] path;
                 return false;
             }
         } else if (!(attribute & FILE_ATTRIBUTE_DIRECTORY)) {
-            MMKVError("%s attribute:%d not a directry", str.c_str(), attribute);
+            MMKVError("%ws attribute:%d not a directry", str.c_str(), attribute);
             delete[] path;
             return false;
         }
 
         *slash = L'\\';
     }
-    delete[] path;
+    free(path);
     return true;
 }
 
-bool removeFile(const string &nsFilePath) {
-    auto path = string2wstring(nsFilePath);
-    if (!DeleteFile(path.c_str())) {
-        MMKVError("remove file failed. filePath=%s, %d", nsFilePath.c_str(), GetLastError());
+bool removeFile(const wstring &nsFilePath) {
+    if (!DeleteFile(nsFilePath.c_str())) {
+        MMKVError("remove file failed. filePath=%ws, %d", nsFilePath.c_str(), GetLastError());
         return false;
     }
     return true;
 }
 
-MMBuffer *readWholeFile(const std::string &nsFilePath) {
+MMBuffer *readWholeFile(const std::wstring &nsFilePath) {
     MMBuffer *buffer = nullptr;
-    auto path = string2wstring(nsFilePath);
-    auto fd = CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
+    auto fd = CreateFile(nsFilePath.c_str(), GENERIC_READ | GENERIC_WRITE,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (fd != INVALID_HANDLE_VALUE) {
@@ -167,14 +161,14 @@ MMBuffer *readWholeFile(const std::string &nsFilePath) {
             if (ReadFile(fd, buffer->getPtr(), fileLength, &readSize, nullptr)) {
                 //fileSize = readSize;
             } else {
-                MMKVWarning("fail to read %s: %d", nsFilePath.c_str(), GetLastError());
+                MMKVWarning("fail to read %ws: %d", nsFilePath.c_str(), GetLastError());
                 delete buffer;
                 buffer = nullptr;
             }
         }
         CloseHandle(fd);
     } else {
-        MMKVWarning("fail to open %s: %d", nsFilePath.c_str(), GetLastError());
+        MMKVWarning("fail to open %ws: %d", nsFilePath.c_str(), GetLastError());
     }
     return buffer;
 }
