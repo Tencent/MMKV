@@ -71,13 +71,13 @@ bool FileLock::doLock(LockType lockType, bool tryLock) {
         // lets be gentleman: unlock my shared-lock to prevent deadlock
         auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
         if (!ret) {
-            MMKVError("fail to try unlock first fd=%d, error:%d", m_fd, GetLastError());
+            MMKVError("fail to try unlock first fd=%p, error:%d", m_fd, GetLastError());
         }
     }
 
     auto ret = LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped);
     if (!ret) {
-        MMKVError("fail to lock fd=%d, error:%d", m_fd, ret, GetLastError());
+        MMKVError("fail to lock fd=%p, error:%d", m_fd, GetLastError());
         if (lockType == SharedLockType) {
             m_sharedLockCount--;
         } else {
@@ -144,7 +144,7 @@ bool FileLock::unlock(LockType lockType) {
     auto flag = LockType2Flag(lockType, false);
     auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
     if (!ret) {
-        MMKVError("fail to unlock fd=%d, error:%d", m_fd, GetLastError());
+        MMKVError("fail to unlock fd=%p, error:%d", m_fd, GetLastError());
         return false;
     } else {
         return true;

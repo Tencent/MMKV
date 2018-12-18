@@ -33,6 +33,7 @@
 #include "ScopedLock.hpp"
 #include "aes/AESCrypt.h"
 #include "aes/openssl/md5.h"
+#include "crc32/Checksum.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -166,7 +167,7 @@ std::string MMKV::cryptKey() {
     return "";
 }
 
-#pragma mark - really dirty work
+// really dirty work
 
 void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
     size_t length = inputBuffer.length();
@@ -285,9 +286,8 @@ void MMKV::partialLoadFromFile() {
                 MMBuffer inputBuffer(m_ptr + Fixed32Size + oldActualSize, bufferSize,
                                      MMBufferNoCopy);
                 // incremental update crc digest
-                // TODO: crc32
-                /*m_crcDigest = (uint32_t) crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
-                                               static_cast<uInt>(inputBuffer.length()));*/
+                m_crcDigest = (uint32_t) crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
+                                               inputBuffer.length());
                 if (m_crcDigest == m_metaInfo.m_crcDigest) {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
@@ -778,42 +778,41 @@ bool MMKV::isFileValid() {
     return false;
 }
 
-#pragma mark - crc
+// crc
 
 // assuming m_ptr & m_size is set
 bool MMKV::checkFileCRCValid() {
-    /*if (m_ptr && m_ptr != MAP_FAILED) {
+    if (m_ptr) {
         constexpr int offset = pbFixed32Size(0);
-        m_crcDigest =
-            (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
+        m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, m_actualSize);
         m_metaInfo.read(m_metaFile.getMemory());
         if (m_crcDigest == m_metaInfo.m_crcDigest) {
             return true;
         }
         MMKVError("check crc [%s] fail, crc32:%u, m_crcDigest:%u", m_mmapID.c_str(),
                   m_metaInfo.m_crcDigest, m_crcDigest);
-    }*/
+    }
     return false;
 }
 
 void MMKV::recaculateCRCDigest() {
-    /*if (m_ptr && m_ptr != MAP_FAILED) {
+    if (m_ptr) {
         m_crcDigest = 0;
         constexpr int offset = pbFixed32Size(0);
         updateCRCDigest((const uint8_t *) m_ptr + offset, m_actualSize, IncreaseSequence);
-    }*/
+    }
 }
 
 void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence) {
     if (!ptr) {
         return;
     }
-    //m_crcDigest = (uint32_t) crc32(m_crcDigest, ptr, (uint32_t) length);
+    m_crcDigest = (uint32_t) crc32(m_crcDigest, ptr, length);
 
     void *crcPtr = m_metaFile.getMemory();
-    /*if (crcPtr == nullptr || crcPtr == MAP_FAILED) {
+    if (!crcPtr) {
         return;
-    }*/
+    }
 
     m_metaInfo.m_crcDigest = m_crcDigest;
     if (increaseSequence) {
@@ -825,7 +824,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
     m_metaInfo.write(crcPtr);
 }
 
-#pragma mark - set & get
+// set & get
 
 bool MMKV::setStringForKey(const std::string &value, const std::string &key) {
     if (key.empty()) {
@@ -1014,7 +1013,7 @@ bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &res
     return false;
 }
 
-#pragma mark - enumerate
+// enumerate
 
 bool MMKV::containsKey(const std::string &key) {
     SCOPEDLOCK(m_lock);
@@ -1075,7 +1074,7 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
     fullWriteback();
 }
 
-#pragma mark - file
+// file
 
 void MMKV::sync() {
     SCOPEDLOCK(m_lock);
@@ -1120,14 +1119,13 @@ bool MMKV::isFileValid(const std::string &mmapID) {
             return false;
         }
 
-        /*uint32_t crcDigest = (uint32_t) crc32(0, (const uint8_t *) fileData->getPtr() + offset,
-                                              (uint32_t) actualSize);
+        auto ptr = (const uint8_t *) fileData->getPtr() + offset;
+        auto crcDigest = (uint32_t) crc32(0, ptr, actualSize);
 
         delete fileData;
-        return crcFile == crcDigest;*/
-    } else {
-        return false;
+        return crcFile == crcDigest;
     }
+    return false;
 }
 
 static void mkSpecialCharacterFileDirectory() {

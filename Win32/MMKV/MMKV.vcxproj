@@ -157,6 +157,10 @@
     <ClInclude Include="aes\openssl\opensslconf.h" />
     <ClInclude Include="CodedInputData.h" />
     <ClInclude Include="CodedOutputData.h" />
+    <ClInclude Include="crc32\Checksum.h" />
+    <ClInclude Include="crc32\zlib\crc32.h" />
+    <ClInclude Include="crc32\zlib\zconf.h" />
+    <ClInclude Include="crc32\zlib\zutil.h" />
     <ClInclude Include="InterProcessLock.h" />
     <ClInclude Include="MiniPBCoder.h" />
     <ClInclude Include="MmapedFile.h" />
@@ -180,6 +184,7 @@
     <ClCompile Include="aes\openssl\md5_one.c" />
     <ClCompile Include="CodedInputData.cpp" />
     <ClCompile Include="CodedOutputData.cpp" />
+    <ClCompile Include="crc32\zlib\crc32.c" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="InterProcessLock.cpp" />
     <ClCompile Include="MiniPBCoder.cpp" />

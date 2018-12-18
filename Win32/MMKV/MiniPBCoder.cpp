@@ -60,7 +60,7 @@ MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
         new CodedInputData(m_inputBuffer->getPtr(), static_cast<int32_t>(m_inputBuffer->length()));
 }
 
-#pragma mark - encode
+// encode
 
 // write object using prepared m_encodeItems[]
 void MiniPBCoder::writeRootObject() {
@@ -227,7 +227,7 @@ MMBuffer MiniPBCoder::getEncodeData(const unordered_map<string, MMBuffer> &map) 
     return std::move(*m_outputBuffer);
 }
 
-#pragma mark - decode
+// decode
 
 string MiniPBCoder::decodeOneString() {
     return m_inputData->readString();

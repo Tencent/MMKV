@@ -23,7 +23,6 @@
 
 #include <cstdio>
 #include <cstring>
-#include <errno.h>
 
 // enable logging
 #define ENABLE_MMKV_LOG

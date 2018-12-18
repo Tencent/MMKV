@@ -46,7 +46,7 @@ MmapedFile::MmapedFile(const std::string &path, size_t size)
         getfilesize(m_file, m_segmentSize);
         if (m_segmentSize < DEFAULT_MMAP_SIZE) {
             m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);
-            if (ftruncate(m_file, m_segmentSize) != 0 || !zeroFillFile(m_file, 0, m_segmentSize)) {
+            if (!ftruncate(m_file, m_segmentSize) || !zeroFillFile(m_file, 0, m_segmentSize)) {
                 MMKVError("fail to truncate [%s] to size %zu, %d", m_name.c_str(), m_segmentSize,
                           GetLastError());
                 CloseHandle(m_file);
@@ -91,7 +91,7 @@ MmapedFile::~MmapedFile() {
     }
 }
 
-#pragma mark - file
+// file
 
 int getpagesize(void) {
     SYSTEM_INFO system_info;
@@ -126,12 +126,12 @@ bool mkPath(const std::string &str) {
         auto attribute = GetFileAttributes(path);
         if (attribute == INVALID_FILE_ATTRIBUTES) {
             if (!CreateDirectory(path, nullptr)) {
-                MMKVError("fail to create dir:%s, %d", path, GetLastError());
+                MMKVError("fail to create dir:%s, %d", str.c_str(), GetLastError());
                 delete[] path;
                 return false;
             }
         } else if (!(attribute & FILE_ATTRIBUTE_DIRECTORY)) {
-            MMKVError("%s attribute:%d not a directry", path, attribute);
+            MMKVError("%s attribute:%d not a directry", str.c_str(), attribute);
             delete[] path;
             return false;
         }
@@ -167,14 +167,14 @@ MMBuffer *readWholeFile(const std::string &nsFilePath) {
             if (ReadFile(fd, buffer->getPtr(), fileLength, &readSize, nullptr)) {
                 //fileSize = readSize;
             } else {
-                MMKVWarning("fail to read %s: %d", path.c_str(), GetLastError());
+                MMKVWarning("fail to read %s: %d", nsFilePath.c_str(), GetLastError());
                 delete buffer;
                 buffer = nullptr;
             }
         }
         CloseHandle(fd);
     } else {
-        MMKVWarning("fail to open %s: %d", path, GetLastError());
+        MMKVWarning("fail to open %s: %d", nsFilePath.c_str(), GetLastError());
     }
     return buffer;
 }
@@ -189,7 +189,7 @@ bool zeroFillFile(HANDLE file, size_t startPos, size_t size) {
 
     LARGE_INTEGER position;
     position.QuadPart = startPos;
-    if (!SetFilePointerEx(file, position, nullptr, FILE_BEGIN) < 0) {
+    if (!SetFilePointerEx(file, position, nullptr, FILE_BEGIN)) {
         MMKVError("fail to lseek fd[%p], error:%d", file, GetLastError());
         return false;
     }

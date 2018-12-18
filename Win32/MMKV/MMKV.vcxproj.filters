@@ -84,6 +84,18 @@
     <ClInclude Include="aes\openssl\opensslconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="crc32\Checksum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc32\zlib\crc32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc32\zlib\zutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc32\zlib\zconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MMKV.cpp">
@@ -132,6 +144,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="aes\openssl\md5_one.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="crc32\zlib\crc32.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
