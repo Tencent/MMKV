@@ -28,6 +28,10 @@ int main() {
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-MMKV");
     MMKV::initializeMMKV(rootDir);
+
+    auto mmkv = MMKV::defaultMMKV();
+    //mmkv->setBool(true, "bool");
+    cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

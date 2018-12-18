@@ -1164,11 +1164,11 @@ static wstring encodeFilePath(const string &mmapID) {
 }
 
 static wstring mappedKVPathWithID(const string &mmapID, MMKVMode mode) {
-    return g_rootDir + L"/" + encodeFilePath(mmapID);
+    return g_rootDir + L"\\" + encodeFilePath(mmapID);
 }
 
 static wstring crcPathWithID(const string &mmapID, MMKVMode mode) {
-    return g_rootDir + L"/" + encodeFilePath(mmapID) + L".crc";
+    return g_rootDir + L"\\" + encodeFilePath(mmapID) + L".crc";
 }
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {

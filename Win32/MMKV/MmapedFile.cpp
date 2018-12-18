@@ -28,9 +28,10 @@ const int DEFAULT_MMAP_SIZE = getpagesize();
 
 std::wstring string2wstring(const std::string &str) {
     auto length = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
-    wstring result;
-    result.resize(length);
-    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &result[0], length);
+    auto buffer = new wchar_t[length];
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, buffer, length);
+    wstring result(buffer);
+    delete[] buffer;
     return result;
 }
 
