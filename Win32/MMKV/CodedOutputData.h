@@ -57,7 +57,11 @@ public:
 
     void writeInt64(int64_t value);
 
+    void writeUInt64(uint64_t value);
+
     void writeInt32(int32_t value);
+
+    void writeUInt32(uint32_t value);
 
     void writeBool(bool value);
 

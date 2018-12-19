@@ -148,7 +148,11 @@ public:
 
     bool setInt32(int32_t value, const std::string &key);
 
+    bool setUInt32(uint32_t value, const std::string &key);
+
     bool setInt64(int64_t value, const std::string &key);
+
+    bool setUInt64(uint64_t value, const std::string &key);
 
     bool setFloat(float value, const std::string &key);
 
@@ -164,7 +168,11 @@ public:
 
     int32_t getInt32ForKey(const std::string &key, int32_t defaultValue = 0);
 
+    uint32_t getUInt32ForKey(const std::string &key, uint32_t defaultValue = 0);
+
     int64_t getInt64ForKey(const std::string &key, int64_t defaultValue = 0);
+
+    uint64_t getUInt64ForKey(const std::string &key, uint64_t defaultValue = 0);
 
     float getFloatForKey(const std::string &key, float defaultValue = 0);
 

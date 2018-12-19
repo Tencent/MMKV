@@ -59,7 +59,15 @@ int64_t CodedInputData::readInt64() {
     return 0;
 }
 
+uint64_t CodedInputData::readUInt64() {
+    return readInt64();
+}
+
 int32_t CodedInputData::readInt32() {
+    return this->readRawVarint32();
+}
+
+uint32_t CodedInputData::readUInt32() {
     return this->readRawVarint32();
 }
 

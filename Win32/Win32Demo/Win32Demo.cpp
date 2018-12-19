@@ -1,6 +1,8 @@
 // Win32Demo.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+#define NOMINMAX // undefine max/min
+
 #include "MMKV.h"
 #include "pch.h"
 #include <iostream>
@@ -22,6 +24,43 @@ wstring getAppDataRoaming(const wstring &company, const wstring &appName) {
     }
 }
 
+void functionalTest(MMKV *mmkv, bool decodeOnly) {
+    if (!decodeOnly) {
+        mmkv->setBool(true, "bool");
+    }
+    cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
+
+    if (!decodeOnly) {
+        mmkv->setInt32(1024, "int32");
+    }
+    cout << "int32 = " << mmkv->getInt32ForKey("int32") << endl;
+
+    if (!decodeOnly) {
+        mmkv->setUInt32(numeric_limits<uint32_t>::max(), "uint32");
+    }
+    cout << "uint32 = " << mmkv->getUInt32ForKey("uint32") << endl;
+
+    if (!decodeOnly) {
+        mmkv->setInt64(numeric_limits<int64_t>::min(), "int64");
+    }
+    cout << "int64 = " << mmkv->getInt64ForKey("int64") << endl;
+
+    if (!decodeOnly) {
+        mmkv->setUInt64(numeric_limits<uint64_t>::max(), "uint64");
+    }
+    cout << "uint64 = " << mmkv->getUInt64ForKey("uint64") << endl;
+
+    if (!decodeOnly) {
+        mmkv->setFloat(3.14f, "float");
+    }
+    cout << "float = " << mmkv->getFloatForKey("float") << endl;
+
+    if (!decodeOnly) {
+        mmkv->setDouble(numeric_limits<double>::max(), "double");
+    }
+    cout << "double = " << mmkv->getDoubleForKey("double") << endl;
+}
+
 int main() {
     locale::global(locale(""));
     wcout.imbue(locale(""));
@@ -30,8 +69,7 @@ int main() {
     MMKV::initializeMMKV(rootDir);
 
     auto mmkv = MMKV::defaultMMKV();
-    //mmkv->setBool(true, "bool");
-    cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
+    functionalTest(mmkv, false);
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

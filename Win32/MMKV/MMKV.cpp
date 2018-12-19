@@ -865,6 +865,18 @@ bool MMKV::setInt32(int32_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
+bool MMKV::setUInt32(uint32_t value, const std::string &key) {
+    if (key.empty()) {
+        return false;
+    }
+    size_t size = pbUInt32Size(value);
+    MMBuffer data(size);
+    CodedOutputData output(data.getPtr(), size);
+    output.writeUInt32(value);
+
+    return setDataForKey(std::move(data), key);
+}
+
 bool MMKV::setInt64(int64_t value, const std::string &key) {
     if (key.empty()) {
         return false;
@@ -873,6 +885,18 @@ bool MMKV::setInt64(int64_t value, const std::string &key) {
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeInt64(value);
+
+    return setDataForKey(std::move(data), key);
+}
+
+bool MMKV::setUInt64(uint64_t value, const std::string &key) {
+    if (key.empty()) {
+        return false;
+    }
+    size_t size = pbUInt64Size(value);
+    MMBuffer data(size);
+    CodedOutputData output(data.getPtr(), size);
+    output.writeUInt64(value);
 
     return setDataForKey(std::move(data), key);
 }
@@ -960,6 +984,19 @@ int32_t MMKV::getInt32ForKey(const std::string &key, int32_t defaultValue) {
     return defaultValue;
 }
 
+uint32_t MMKV::getUInt32ForKey(const std::string &key, uint32_t defaultValue) {
+    if (key.empty()) {
+        return defaultValue;
+    }
+    SCOPEDLOCK(m_lock);
+    auto &data = getDataForKey(key);
+    if (data.length() > 0) {
+        CodedInputData input(data.getPtr(), data.length());
+        return input.readUInt32();
+    }
+    return defaultValue;
+}
+
 int64_t MMKV::getInt64ForKey(const std::string &key, int64_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
@@ -969,6 +1006,19 @@ int64_t MMKV::getInt64ForKey(const std::string &key, int64_t defaultValue) {
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
         return input.readInt64();
+    }
+    return defaultValue;
+}
+
+uint64_t MMKV::getUInt64ForKey(const std::string &key, uint64_t defaultValue) {
+    if (key.empty()) {
+        return defaultValue;
+    }
+    SCOPEDLOCK(m_lock);
+    auto &data = getDataForKey(key);
+    if (data.length() > 0) {
+        CodedInputData input(data.getPtr(), data.length());
+        return input.readUInt64();
     }
     return defaultValue;
 }
