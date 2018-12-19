@@ -22,6 +22,7 @@
  */
 
 #include "MMKV.h"
+#include "MMKVDef.h"
 #include "CodedInputData.h"
 #include "CodedOutputData.h"
 #include "InterProcessLock.h"
@@ -1214,8 +1215,8 @@ static wstring encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
     string encodedID;
     bool hasSpecialCharacter = false;
-    for (int i = 0; i < mmapID.size(); i++) {
-        if (strchr(specialCharacters, mmapID[i]) != NULL) {
+    for (size_t index = 0; index < mmapID.size(); index++) {
+        if (strchr(specialCharacters, mmapID[index]) != NULL) {
             encodedID = md5(mmapID);
             hasSpecialCharacter = true;
             break;

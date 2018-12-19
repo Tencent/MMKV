@@ -101,9 +101,6 @@
     <ClCompile Include="MMKV.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CodedInputData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

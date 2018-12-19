@@ -23,7 +23,6 @@
 
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
-#include "MMKVDef.h"
 #include "MMKVMetaInfo.hpp"
 #include "MmapedFile.h"
 #include "ThreadLock.h"

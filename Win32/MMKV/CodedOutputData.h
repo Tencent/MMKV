@@ -28,14 +28,14 @@
 class CodedOutputData {
     uint8_t *m_ptr;
     size_t m_size;
-    int32_t m_position;
+    size_t m_position;
 
 public:
     CodedOutputData(void *ptr, size_t len);
 
     ~CodedOutputData();
 
-    int32_t spaceLeft();
+    size_t spaceLeft();
 
     void seek(size_t addedSize);
 

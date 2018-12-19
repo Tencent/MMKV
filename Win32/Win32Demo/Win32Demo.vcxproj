@@ -100,7 +100,7 @@
       <AdditionalDependencies>MMKV.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d "..\$(IntDir)MMKV.dll" "$(OutDir)"</Command>
+      <Command>xcopy /y /d "..\$(IntDir)MMKV.lib" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -140,7 +140,7 @@
       <AdditionalDependencies>MMKV.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y /d "..\$(IntDir)MMKV.dll" "$(OutDir)"</Command>
+      <Command>xcopy /y /d "..\$(IntDir)MMKV.lib" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

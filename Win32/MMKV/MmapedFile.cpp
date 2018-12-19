@@ -24,7 +24,7 @@
 
 using namespace std;
 
-const int DEFAULT_MMAP_SIZE = getpagesize();
+const size_t DEFAULT_MMAP_SIZE = getpagesize();
 
 std::wstring string2wstring(const std::string &str) {
     auto length = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
@@ -93,7 +93,7 @@ MmapedFile::~MmapedFile() {
 
 // file
 
-int getpagesize(void) {
+size_t getpagesize(void) {
     SYSTEM_INFO system_info;
     GetSystemInfo(&system_info);
     return system_info.dwPageSize;

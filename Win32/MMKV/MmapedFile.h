@@ -24,7 +24,7 @@
 #include "MMKVDef.h"
 #include <string>
 
-extern MMKV_API const int DEFAULT_MMAP_SIZE;
+extern MMKV_API const size_t DEFAULT_MMAP_SIZE;
 
 class MmapedFile {
     std::wstring m_name;
@@ -52,7 +52,7 @@ public:
 
 class MMBuffer;
 
-extern int getpagesize();
+extern size_t getpagesize();
 extern std::wstring string2wstring(const std::string &str);
 extern bool mkPath(const std::wstring &str);
 extern bool isFileExist(const std::wstring &nsFilePath);

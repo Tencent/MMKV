@@ -21,7 +21,6 @@
 #ifndef MMKV_MMBUFFER_H
 #define MMKV_MMBUFFER_H
 
-#include "MMKVDef.h"
 #include <cstdint>
 
 enum MMBufferCopyFlag : bool {
@@ -29,7 +28,7 @@ enum MMBufferCopyFlag : bool {
     MMBufferNoCopy = true,
 };
 
-class MMKV_API MMBuffer {
+class MMBuffer {
 private:
     void *ptr;
     size_t size;
