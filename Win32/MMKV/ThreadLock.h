@@ -38,7 +38,6 @@ public:
     ~ThreadLock();
 
     void lock();
-    bool try_lock();
     void unlock();
 
     static void ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback)(void));

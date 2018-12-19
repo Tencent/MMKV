@@ -21,7 +21,7 @@
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
 
-static DWORD LockType2Flag(LockType lockType, bool tryLock) {
+static DWORD LockType2Flag(LockType lockType) {
     DWORD flag = 0;
     switch (lockType) {
         case SharedLockType:
@@ -31,16 +31,13 @@ static DWORD LockType2Flag(LockType lockType, bool tryLock) {
             flag = LOCKFILE_EXCLUSIVE_LOCK;
             break;
     }
-    if (tryLock) {
-        flag |= LOCKFILE_FAIL_IMMEDIATELY;
-    }
     return flag;
 }
 
 FileLock::FileLock(HANDLE fd)
     : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 
-bool FileLock::doLock(LockType lockType, bool tryLock) {
+bool FileLock::lock(LockType lockType) {
     bool unLockFirstIfNeeded = false;
 
     if (lockType == SharedLockType) {
@@ -61,7 +58,7 @@ bool FileLock::doLock(LockType lockType, bool tryLock) {
         }
     }
 
-    auto flag = LockType2Flag(lockType, tryLock);
+    auto flag = LockType2Flag(lockType);
     if (unLockFirstIfNeeded) {
         /* try exclusive-lock above shared-lock will always fail in Win32
         auto ret = LockFileEx(m_fd, flag | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &m_overLapped);
@@ -78,29 +75,10 @@ bool FileLock::doLock(LockType lockType, bool tryLock) {
     auto ret = LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped);
     if (!ret) {
         MMKVError("fail to lock fd=%p, error:%d", m_fd, GetLastError());
-        if (lockType == SharedLockType) {
-            m_sharedLockCount--;
-        } else {
-            m_exclusiveLockCount--;
-            if (unLockFirstIfNeeded) {
-                flag = LockType2Flag(SharedLockType, false);
-                if (!LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped)) {
-                    MMKVError("fail to roll back, error:%d", GetLastError());
-                }
-            }
-        }
         return false;
     } else {
         return true;
     }
-}
-
-bool FileLock::lock(LockType lockType) {
-    return doLock(lockType, false);
-}
-
-bool FileLock::try_lock(LockType lockType) {
-    return doLock(lockType, true);
 }
 
 bool FileLock::unlock(LockType lockType) {
@@ -136,12 +114,11 @@ bool FileLock::unlock(LockType lockType) {
      * the second unlock operation unlocks the shared lock.
     */
     if (unlockToSharedLock) {
-        auto flag = LockType2Flag(SharedLockType, false);
+        auto flag = LockType2Flag(SharedLockType);
         if (!LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped)) {
             MMKVError("fail to roll back to shared-lock, error:%d", GetLastError());
         }
     }
-    auto flag = LockType2Flag(lockType, false);
     auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
     if (!ret) {
         MMKVError("fail to unlock fd=%p, error:%d", m_fd, GetLastError());

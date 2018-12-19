@@ -49,13 +49,6 @@ public:
         }
     }
 
-    bool try_lock() {
-        if (m_lock) {
-            return m_lock->try_lock();
-        }
-        return false;
-    }
-
     void unlock() {
         if (m_lock) {
             m_lock->unlock();

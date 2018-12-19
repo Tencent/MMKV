@@ -214,7 +214,6 @@ public:
 
     void lock() { m_exclusiveProcessLock.lock(); }
     void unlock() { m_exclusiveProcessLock.unlock(); }
-    bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
 };
 
 enum MMKVRecoverStrategic : int {

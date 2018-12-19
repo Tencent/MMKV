@@ -37,8 +37,6 @@ class FileLock {
     size_t m_sharedLockCount;
     size_t m_exclusiveLockCount;
 
-    bool doLock(LockType lockType, bool tryLock);
-
     // just forbid it for possibly misuse
     FileLock(const FileLock &other) = delete;
 
@@ -48,8 +46,6 @@ public:
     FileLock(HANDLE fd);
 
     bool lock(LockType lockType);
-
-    bool try_lock(LockType lockType);
 
     bool unlock(LockType lockType);
 };
@@ -70,13 +66,6 @@ public:
         if (m_enable) {
             m_fileLock->lock(m_lockType);
         }
-    }
-    // TODO: remove try_lock()
-    bool try_lock() {
-        if (m_enable) {
-            return m_fileLock->try_lock(m_lockType);
-        }
-        return false;
     }
 
     void unlock() {

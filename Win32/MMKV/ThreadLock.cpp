@@ -36,14 +36,6 @@ void ThreadLock::lock() {
     EnterCriticalSection(&m_lock);
 }
 
-bool ThreadLock::try_lock() {
-    auto ret = TryEnterCriticalSection(&m_lock);
-    if (!ret) {
-        MMKVError("fail to try lock %p, ret=%d", &m_lock, ret);
-    }
-    return ret;
-}
-
 void ThreadLock::unlock() {
     LeaveCriticalSection(&m_lock);
 }
