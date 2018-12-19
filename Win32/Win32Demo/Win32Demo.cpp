@@ -147,19 +147,9 @@ void processTest() {
 
     HANDLE processHandles[processCount] = {0};
     for (auto index = 0; index < processCount; index++) {
-        // Start the child process.
-        if (!CreateProcess(path,       // No module name (use command line)
-                           nullptr,    // Command line
-                           NULL,       // Process handle not inheritable
-                           NULL,       // Thread handle not inheritable
-                           FALSE,      // Set handle inheritance to FALSE
-                           0,          // No creation flags
-                           NULL,       // Use parent's environment block
-                           NULL,       // Use parent's starting directory
-                           &si[index], // Pointer to STARTUPINFO structure
-                           &pi[index]) // Pointer to PROCESS_INFORMATION structure
-        ) {
-            printf("CreateProcess failed (%d).\n", GetLastError());
+        if (!CreateProcess(path, nullptr, nullptr, nullptr, false, 0, nullptr, nullptr, &si[index],
+                           &pi[index])) {
+            cout << "CreateProcess failed: " << GetLastError() << endl;
             continue;
         }
         processHandles[index] = pi[index].hProcess;
