@@ -87,22 +87,22 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
 
 constexpr auto keyCount = 10000;
 constexpr auto threadCount = 10;
-static const string threadMMKVID = "thread_test";
+static const string MMKV_ID = "thread_test";
 vector<string> arrIntKeys;
 vector<string> arrStringKeys;
 
 DWORD WINAPI threadFunction(LPVOID lpParam) {
     auto threadIndex = (size_t) lpParam;
-    auto mmkv = MMKV::mmkvWithID(threadMMKVID, 0, MMKV_MULTI_PROCESS);
+    auto mmkv = MMKV::mmkvWithID(MMKV_ID);
     mmkv->lock();
     cout << "thread " << threadIndex << " starts" << endl;
     mmkv->unlock();
 
     auto segmentCount = keyCount / threadCount;
     auto startIndex = segmentCount * threadIndex;
-    for (auto i = startIndex; i < startIndex + segmentCount; i++) {
-        mmkv->setInt32(i, arrIntKeys[i]);
-        mmkv->setStringForKey("str-" + i, arrStringKeys[i]);
+    for (auto index = startIndex; index < startIndex + segmentCount; index++) {
+        mmkv->setInt32(index, arrIntKeys[index]);
+        mmkv->setStringForKey("str-" + index, arrStringKeys[index]);
     }
 
     mmkv->lock();
@@ -114,21 +114,66 @@ DWORD WINAPI threadFunction(LPVOID lpParam) {
 void threadTest() {
 
     HANDLE threadHandles[threadCount] = {0};
-    for (size_t i = 0; i < threadCount; i++) {
-        threadHandles[i] = CreateThread(nullptr, 0, threadFunction, (LPVOID) i, 0, nullptr);
+    for (size_t index = 0; index < threadCount; index++) {
+        threadHandles[index] = CreateThread(nullptr, 0, threadFunction, (LPVOID) index, 0, nullptr);
     }
     WaitForMultipleObjects(threadCount, threadHandles, true, INFINITE);
 
-    auto mmkv = MMKV::mmkvWithID(threadMMKVID, 0, MMKV_MULTI_PROCESS);
+    auto mmkv = MMKV::mmkvWithID(MMKV_ID);
     cout << "total count " << mmkv->count() << endl;
 }
 
 void brutleTest() {
-    auto mmkv = MMKV::mmkvWithID(threadMMKVID);
+    auto mmkv = MMKV::mmkvWithID(MMKV_ID);
     for (size_t i = 0; i < keyCount; i++) {
         mmkv->setInt32(i, arrIntKeys[i]);
         mmkv->setStringForKey("str-" + i, arrStringKeys[i]);
     }
+}
+
+void processTest() {
+    constexpr auto processCount = 2;
+    STARTUPINFO si[processCount] = {0};
+    PROCESS_INFORMATION pi[processCount] = {0};
+
+    for (auto index = 0; index < processCount; index++) {
+        si[index].cb = sizeof(si[0]);
+    }
+
+    wchar_t path[MAX_PATH] = {0};
+    GetModuleFileName(nullptr, path, MAX_PATH);
+    PathRemoveFileSpec(path);
+    PathAppend(path, L"Win32DemoProcess.exe");
+
+    HANDLE processHandles[processCount] = {0};
+    for (auto index = 0; index < processCount; index++) {
+        // Start the child process.
+        if (!CreateProcess(path,       // No module name (use command line)
+                           nullptr,    // Command line
+                           NULL,       // Process handle not inheritable
+                           NULL,       // Thread handle not inheritable
+                           FALSE,      // Set handle inheritance to FALSE
+                           0,          // No creation flags
+                           NULL,       // Use parent's environment block
+                           NULL,       // Use parent's starting directory
+                           &si[index], // Pointer to STARTUPINFO structure
+                           &pi[index]) // Pointer to PROCESS_INFORMATION structure
+        ) {
+            printf("CreateProcess failed (%d).\n", GetLastError());
+            continue;
+        }
+        processHandles[index] = pi[index].hProcess;
+    }
+
+    WaitForMultipleObjects(processCount, processHandles, true, INFINITE);
+
+    for (auto index = 0; index < processCount; index++) {
+        CloseHandle(pi[index].hProcess);
+        CloseHandle(pi[index].hThread);
+    }
+
+    auto mmkv = MMKV::mmkvWithID("process_test", 0, MMKV_MULTI_PROCESS);
+    cout << "total count of process_test: " << mmkv->count() << endl;
 }
 
 int main() {
@@ -142,11 +187,12 @@ int main() {
     auto mmkv = MMKV::defaultMMKV();
     functionalTest(mmkv, false);
 
-    for (size_t i = 0; i < keyCount; i++) {
-        arrIntKeys.push_back("int-" + to_string(i));
-        arrStringKeys.push_back("string-" + to_string(i));
+    for (size_t index = 0; index < keyCount; index++) {
+        arrIntKeys.push_back("int-" + to_string(index));
+        arrStringKeys.push_back("string-" + to_string(index));
     }
 
-    threadTest();
     //brutleTest();
+    //threadTest();
+    processTest();
 }

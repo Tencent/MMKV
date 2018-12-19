@@ -18,9 +18,4 @@
  * limitations under the License.
  */
 
-#ifndef PCH_H
-#define PCH_H
-
-#include <Shlwapi.h>
-
-#endif //PCH_H
+#include "pch.h"

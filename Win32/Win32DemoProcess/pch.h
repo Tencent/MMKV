@@ -21,6 +21,6 @@
 #ifndef PCH_H
 #define PCH_H
 
-#include <Shlwapi.h>
+#include <Windows.h>
 
 #endif //PCH_H
