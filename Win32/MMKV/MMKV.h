@@ -143,21 +143,21 @@ public:
 
     bool setBytesForKey(const MMBuffer &value, const std::string &key);
 
-    bool setBool(bool value, const std::string &key);
+    bool set(bool value, const std::string &key);
 
-    bool setInt32(int32_t value, const std::string &key);
+    bool set(int32_t value, const std::string &key);
 
-    bool setUInt32(uint32_t value, const std::string &key);
+    bool set(uint32_t value, const std::string &key);
 
-    bool setInt64(int64_t value, const std::string &key);
+    bool set(int64_t value, const std::string &key);
 
-    bool setUInt64(uint64_t value, const std::string &key);
+    bool set(uint64_t value, const std::string &key);
 
-    bool setFloat(float value, const std::string &key);
+    bool set(float value, const std::string &key);
 
-    bool setDouble(double value, const std::string &key);
+    bool set(double value, const std::string &key);
 
-    bool setVectorForKey(const std::vector<std::string> &vector, const std::string &key);
+    bool set(const std::vector<std::string> &vector, const std::string &key);
 
     bool getStringForKey(const std::string &key, std::string &result);
 

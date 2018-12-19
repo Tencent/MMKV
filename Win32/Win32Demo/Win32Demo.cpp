@@ -43,37 +43,37 @@ wstring getAppDataRoaming(const wstring &company, const wstring &appName) {
 
 void functionalTest(MMKV *mmkv, bool decodeOnly) {
     if (!decodeOnly) {
-        mmkv->setBool(true, "bool");
+        mmkv->set(true, "bool");
     }
     cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
 
     if (!decodeOnly) {
-        mmkv->setInt32(1024, "int32");
+        mmkv->set(1024, "int32");
     }
     cout << "int32 = " << mmkv->getInt32ForKey("int32") << endl;
 
     if (!decodeOnly) {
-        mmkv->setUInt32(numeric_limits<uint32_t>::max(), "uint32");
+        mmkv->set(numeric_limits<uint32_t>::max(), "uint32");
     }
     cout << "uint32 = " << mmkv->getUInt32ForKey("uint32") << endl;
 
     if (!decodeOnly) {
-        mmkv->setInt64(numeric_limits<int64_t>::min(), "int64");
+        mmkv->set(numeric_limits<int64_t>::min(), "int64");
     }
     cout << "int64 = " << mmkv->getInt64ForKey("int64") << endl;
 
     if (!decodeOnly) {
-        mmkv->setUInt64(numeric_limits<uint64_t>::max(), "uint64");
+        mmkv->set(numeric_limits<uint64_t>::max(), "uint64");
     }
     cout << "uint64 = " << mmkv->getUInt64ForKey("uint64") << endl;
 
     if (!decodeOnly) {
-        mmkv->setFloat(3.14f, "float");
+        mmkv->set(3.14f, "float");
     }
     cout << "float = " << mmkv->getFloatForKey("float") << endl;
 
     if (!decodeOnly) {
-        mmkv->setDouble(numeric_limits<double>::max(), "double");
+        mmkv->set(numeric_limits<double>::max(), "double");
     }
     cout << "double = " << mmkv->getDoubleForKey("double") << endl;
 
@@ -101,7 +101,7 @@ DWORD WINAPI threadFunction(LPVOID lpParam) {
     auto segmentCount = keyCount / threadCount;
     auto startIndex = segmentCount * threadIndex;
     for (auto index = startIndex; index < startIndex + segmentCount; index++) {
-        mmkv->setInt32(index, arrIntKeys[index]);
+        mmkv->set(index, arrIntKeys[index]);
         mmkv->setStringForKey("str-" + index, arrStringKeys[index]);
     }
 
@@ -126,7 +126,7 @@ void threadTest() {
 void brutleTest() {
     auto mmkv = MMKV::mmkvWithID(MMKV_ID);
     for (size_t i = 0; i < keyCount; i++) {
-        mmkv->setInt32(i, arrIntKeys[i]);
+        mmkv->set(i, arrIntKeys[i]);
         mmkv->setStringForKey("str-" + i, arrStringKeys[i]);
     }
 }

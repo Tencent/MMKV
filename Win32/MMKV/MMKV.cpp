@@ -858,7 +858,7 @@ bool MMKV::setBytesForKey(const MMBuffer &value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setBool(bool value, const std::string &key) {
+bool MMKV::set(bool value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -870,7 +870,7 @@ bool MMKV::setBool(bool value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setInt32(int32_t value, const std::string &key) {
+bool MMKV::set(int32_t value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -882,7 +882,7 @@ bool MMKV::setInt32(int32_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setUInt32(uint32_t value, const std::string &key) {
+bool MMKV::set(uint32_t value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -894,7 +894,7 @@ bool MMKV::setUInt32(uint32_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setInt64(int64_t value, const std::string &key) {
+bool MMKV::set(int64_t value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -906,7 +906,7 @@ bool MMKV::setInt64(int64_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setUInt64(uint64_t value, const std::string &key) {
+bool MMKV::set(uint64_t value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -918,7 +918,7 @@ bool MMKV::setUInt64(uint64_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setFloat(float value, const std::string &key) {
+bool MMKV::set(float value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -930,7 +930,7 @@ bool MMKV::setFloat(float value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setDouble(double value, const std::string &key) {
+bool MMKV::set(double value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -942,7 +942,7 @@ bool MMKV::setDouble(double value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setVectorForKey(const std::vector<std::string> &v, const std::string &key) {
+bool MMKV::set(const std::vector<std::string> &v, const std::string &key) {
     if (key.empty()) {
         return false;
     }
