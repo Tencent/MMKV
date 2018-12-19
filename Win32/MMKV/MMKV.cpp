@@ -257,7 +257,8 @@ void MMKV::loadFromFile() {
                     m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
                     recaculateCRCDigest();
                 }
-                MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
+                MMKVInfo("loaded [%s] with %zu values InterProcess:%d", m_mmapID.c_str(),
+                         m_dic.size(), m_isInterProcess);
             }
         }
     }
@@ -473,9 +474,17 @@ void MMKV::trim() {
     if (!UnmapViewOfFile(m_ptr)) {
         MMKVError("fail to munmap [%s], %d", m_mmapID.c_str(), GetLastError());
     }
-    m_ptr = (char *) MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-    if (!m_ptr) {
-        MMKVError("fail to mmap [%s], %d", m_mmapID.c_str(), GetLastError());
+    m_ptr = nullptr;
+
+    CloseHandle(m_fileMapping);
+    m_fileMapping = CreateFileMapping(m_fd, nullptr, PAGE_READWRITE, 0, 0, nullptr);
+    if (!m_fileMapping) {
+        MMKVError("fail to CreateFileMapping [%s], %d", m_mmapID.c_str(), GetLastError());
+    } else {
+        m_ptr = (char *) MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+        if (!m_ptr) {
+            MMKVError("fail to mmap [%s], %d", m_mmapID.c_str(), GetLastError());
+        }
     }
 
     delete m_output;
@@ -526,9 +535,17 @@ bool MMKV::ensureMemorySize(size_t newSize) {
             if (!UnmapViewOfFile(m_ptr)) {
                 MMKVError("fail to munmap [%s], %d", m_mmapID.c_str(), GetLastError());
             }
-            m_ptr = (char *) MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-            if (!m_ptr) {
-                MMKVError("fail to mmap [%s], %d", m_mmapID.c_str(), GetLastError());
+            m_ptr = nullptr;
+
+            CloseHandle(m_fileMapping);
+            m_fileMapping = CreateFileMapping(m_fd, nullptr, PAGE_READWRITE, 0, 0, nullptr);
+            if (!m_fileMapping) {
+                MMKVError("fail to CreateFileMapping [%s], %d", m_mmapID.c_str(), GetLastError());
+            } else {
+                m_ptr = (char *) MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+                if (!m_ptr) {
+                    MMKVError("fail to mmap [%s], %d", m_mmapID.c_str(), GetLastError());
+                }
             }
 
             // check if we fail to make more space

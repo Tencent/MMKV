@@ -100,7 +100,6 @@ class MMKV_API MMKV {
 
     // just forbid it for possibly misuse
     MMKV(const MMKV &other) = delete;
-
     MMKV &operator=(const MMKV &other) = delete;
 
 public:
@@ -213,8 +212,8 @@ public:
 
     static bool isFileValid(const std::string &mmapID);
 
-    void lock() { m_exclusiveProcessLock.lock(); }
-    void unlock() { m_exclusiveProcessLock.unlock(); }
+    void lock() { m_lock.lock(); }
+    void unlock() { m_lock.unlock(); }
     bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
 };
 

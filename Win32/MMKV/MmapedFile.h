@@ -24,7 +24,7 @@
 #include "MMKVDef.h"
 #include <string>
 
-extern const int DEFAULT_MMAP_SIZE;
+extern MMKV_API const int DEFAULT_MMAP_SIZE;
 
 class MmapedFile {
     std::wstring m_name;
