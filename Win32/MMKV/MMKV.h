@@ -41,7 +41,6 @@ enum MMKVMode : uint32_t {
 };
 
 class MMKV_API MMKV {
-    // TODO: avoid warning "needs to have dll-interface to be used by clients of class"
     std::unordered_map<std::string, MMBuffer> m_dic;
     std::string m_mmapID;
     std::wstring m_path;
