@@ -24,4 +24,6 @@ DerivedData
 [Dd]ebug/
 [Rr]elease/
 *.user
-
+*.VC.opendb
+*.VC.db
+ipch/

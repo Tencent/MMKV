@@ -18,10 +18,8 @@
  * limitations under the License.
  */
 
-#define NOMINMAX // undefine max/min
-
-#include "MMKV.h"
 #include "pch.h"
+#include "MMKV.h"
 #include <iostream>
 #include <string>
 

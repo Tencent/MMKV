@@ -21,6 +21,8 @@
 #ifndef PCH_H
 #define PCH_H
 
+#define NOMINMAX // undefine max/min
+
 #include <Shlwapi.h>
 
 #endif //PCH_H

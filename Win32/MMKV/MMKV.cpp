@@ -113,7 +113,7 @@ void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV *>;
     g_instanceLock = ThreadLock();
 
-    MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
+    MMKVInfo("page size:%zd", DEFAULT_MMAP_SIZE);
 }
 
 void MMKV::initializeMMKV(const std::wstring &rootDir) {
@@ -373,9 +373,9 @@ void MMKV::clearAll() {
     }
     if (m_fd >= 0) {
         if (m_size != DEFAULT_MMAP_SIZE) {
-            MMKVInfo("truncating [%s] from %zu to %d", m_mmapID.c_str(), m_size, DEFAULT_MMAP_SIZE);
+            MMKVInfo("truncating [%s] from %zu to %zd", m_mmapID.c_str(), m_size, DEFAULT_MMAP_SIZE);
             if (!ftruncate(m_fd, DEFAULT_MMAP_SIZE)) {
-                MMKVError("fail to truncate [%s] to size %d", m_mmapID.c_str(), DEFAULT_MMAP_SIZE);
+                MMKVError("fail to truncate [%s] to size %zd", m_mmapID.c_str(), DEFAULT_MMAP_SIZE);
             }
         }
     }
@@ -1205,8 +1205,8 @@ static string md5(const string &value) {
     char tmp[3] = {0}, buf[33] = {0};
     MD5((const unsigned char *) value.c_str(), value.size(), md);
     for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-        sprintf(tmp, "%2.2x", md[i]);
-        strcat(buf, tmp);
+        sprintf_s(tmp, sizeof(tmp), "%2.2x", md[i]);
+        strcat_s(buf, sizeof(tmp), tmp);
     }
     return buf;
 }

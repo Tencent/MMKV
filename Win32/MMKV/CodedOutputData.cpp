@@ -93,7 +93,7 @@ void CodedOutputData::seek(size_t addedSize) {
 
 void CodedOutputData::writeRawByte(uint8_t value) {
     if (m_position == m_size) {
-        MMKVError("m_position: %d, m_size: %zd", m_position, m_size);
+        MMKVError("m_position: %zd, m_size: %zd", m_position, m_size);
         return;
     }
 
