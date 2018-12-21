@@ -42,6 +42,16 @@ enum MMKVMode : uint32_t {
     MMKV_MULTI_PROCESS = 0x2,
 };
 
+enum MMKVRecoverStrategic : int {
+    OnErrorDiscard = 0,
+    OnErrorRecover,
+};
+
+enum MMKVErrorType : int {
+    MMKVCRCCheckFail = 0,
+    MMKVFileLength,
+};
+
 class MMKV {
     std::unordered_map<std::string, mmkv::MMBuffer> m_dic;
     std::string m_mmapID;
@@ -67,6 +77,13 @@ class MMKV {
     mmkv::FileLock m_fileLock;
     mmkv::InterProcessLock m_sharedProcessLock;
     mmkv::InterProcessLock m_exclusiveProcessLock;
+
+    MMKV(const std::string &mmapID,
+         MMKVMode mode = MMKV_SINGLE_PROCESS,
+         int size = mmkv::DEFAULT_MMAP_SIZE,
+         std::string *cryptKey = nullptr);
+
+    ~MMKV();
 
     void loadFromFile();
 
@@ -103,13 +120,7 @@ class MMKV {
     MMKV &operator=(const MMKV &other) = delete;
 
 public:
-    MMKV(const std::string &mmapID,
-         MMKVMode mode = MMKV_SINGLE_PROCESS,
-         int size = mmkv::DEFAULT_MMAP_SIZE,
-         std::string *cryptKey = nullptr);
-
-    ~MMKV();
-
+    // call this before getting any MMKV instance
     static void initializeMMKV(const std::wstring &rootDir);
 
     // a generic purpose instance
@@ -139,10 +150,6 @@ public:
     // usually you should call this method after other process reKey() the inter-process mmkv
     void checkReSetCryptKey(const std::string *cryptKey);
 
-    bool setStringForKey(const std::string &value, const std::string &key);
-
-    bool setBytesForKey(const mmkv::MMBuffer &value, const std::string &key);
-
     bool set(bool value, const std::string &key);
 
     bool set(int32_t value, const std::string &key);
@@ -158,6 +165,10 @@ public:
     bool set(double value, const std::string &key);
 
     bool set(const std::vector<std::string> &vector, const std::string &key);
+
+    bool setStringForKey(const std::string &value, const std::string &key);
+
+    bool setBytesForKey(const mmkv::MMBuffer &value, const std::string &key);
 
     bool getStringForKey(const std::string &key, std::string &result);
 
@@ -212,17 +223,13 @@ public:
 
     static bool isFileValid(const std::string &mmapID);
 
-    void lock() { m_exclusiveProcessLock.lock(); }
-    void unlock() { m_exclusiveProcessLock.unlock(); }
+    void lock() { m_isInterProcess ? m_exclusiveProcessLock.lock() : m_lock.lock(); }
+    void unlock() { m_isInterProcess ? m_exclusiveProcessLock.unlock() : m_lock.unlock(); }
+
+    typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID,
+                                                     MMKVErrorType errorType);
+    static void regiserErrorHandler(ErrorHandler handler);
+    static void unRegisetErrorHandler();
 };
-
-enum MMKVRecoverStrategic : int {
-    OnErrorDiscard = 0,
-    OnErrorRecover,
-};
-
-MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
-
-MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
 
 #endif // MMKV_MMKV_H

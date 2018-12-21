@@ -181,6 +181,6 @@ int main() {
     }
 
     //brutleTest();
-    //threadTest();
+    threadTest();
     processTest();
 }

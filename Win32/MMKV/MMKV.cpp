@@ -46,6 +46,7 @@ using namespace mmkv;
 static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
 static std::wstring g_rootDir;
+static MMKV::ErrorHandler g_errorHandler;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
 #define SPECIAL_CHARACTER_DIRECTORY_NAME L"specialCharacter"
@@ -56,6 +57,9 @@ static wstring crcPathWithID(const string &mmapID, MMKVMode mode);
 static void mkSpecialCharacterFileDirectory();
 static string md5(const string &value);
 static wstring encodeFilePath(const string &mmapID);
+
+static MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
+static MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
 
 enum : bool {
     KeepSequence = false,
@@ -1196,6 +1200,16 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     return false;
 }
 
+void MMKV::regiserErrorHandler(ErrorHandler handler) {
+    SCOPEDLOCK(g_instanceLock);
+    g_errorHandler = handler;
+}
+
+void MMKV::unRegisetErrorHandler() {
+    SCOPEDLOCK(g_instanceLock);
+    g_errorHandler = nullptr;
+}
+
 static void mkSpecialCharacterFileDirectory() {
     wstring path = g_rootDir + L"/" + SPECIAL_CHARACTER_DIRECTORY_NAME;
     mkPath(path);
@@ -1240,10 +1254,16 @@ static wstring crcPathWithID(const string &mmapID, MMKVMode mode) {
     return g_rootDir + L"\\" + encodeFilePath(mmapID) + L".crc";
 }
 
-MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
+static MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
+    if (g_errorHandler) {
+        return g_errorHandler(mmapID, MMKVErrorType::MMKVCRCCheckFail);
+    }
     return OnErrorDiscard;
 }
 
-MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
+static MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
+    if (g_errorHandler) {
+        return g_errorHandler(mmapID, MMKVErrorType::MMKVFileLength);
+    }
     return OnErrorDiscard;
 }
