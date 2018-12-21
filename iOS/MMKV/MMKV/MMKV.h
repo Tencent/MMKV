@@ -98,6 +98,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (size_t)count;
 
 - (size_t)totalSize;
+- (size_t)actualSize;
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 

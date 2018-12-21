@@ -1218,6 +1218,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return m_size;
 }
 
+- (size_t)actualSize {
+    CScopedLock lock(m_lock);
+    [self checkLoadData];
+    return m_actualSize;
+}
+
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block {
 	if (block == nil) {
 		return;
