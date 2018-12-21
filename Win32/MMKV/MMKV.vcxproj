@@ -181,14 +181,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aes\AESCrypt.cpp" />
-    <ClCompile Include="aes\openssl\aes_cfb.c" />
-    <ClCompile Include="aes\openssl\aes_core.c" />
-    <ClCompile Include="aes\openssl\cfb128.c" />
-    <ClCompile Include="aes\openssl\md5_dgst.c" />
-    <ClCompile Include="aes\openssl\md5_one.c" />
+    <ClCompile Include="aes\openssl\aes_cfb.cpp" />
+    <ClCompile Include="aes\openssl\aes_core.cpp" />
+    <ClCompile Include="aes\openssl\cfb128.cpp" />
+    <ClCompile Include="aes\openssl\md5_dgst.cpp" />
+    <ClCompile Include="aes\openssl\md5_one.cpp" />
     <ClCompile Include="CodedInputData.cpp" />
     <ClCompile Include="CodedOutputData.cpp" />
-    <ClCompile Include="crc32\zlib\crc32.c" />
+    <ClCompile Include="crc32\zlib\crc32.cpp" />
     <ClCompile Include="InterProcessLock.cpp" />
     <ClCompile Include="MiniPBCoder.cpp" />
     <ClCompile Include="MmapedFile.cpp" />

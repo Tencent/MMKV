@@ -21,6 +21,8 @@
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
 
+namespace mmkv {
+
 static DWORD LockType2Flag(LockType lockType) {
     DWORD flag = 0;
     switch (lockType) {
@@ -127,3 +129,5 @@ bool FileLock::unlock(LockType lockType) {
         return true;
     }
 }
+
+} // namespace mmkv

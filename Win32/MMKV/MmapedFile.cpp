@@ -24,6 +24,8 @@
 
 using namespace std;
 
+namespace mmkv {
+
 const size_t DEFAULT_MMAP_SIZE = getpagesize();
 
 std::wstring string2wstring(const std::string &str) {
@@ -231,3 +233,5 @@ bool getfilesize(HANDLE file, size_t &size) {
     }
     return false;
 }
+
+} // namespace mmkv

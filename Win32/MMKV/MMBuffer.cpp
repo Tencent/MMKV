@@ -23,6 +23,8 @@
 #include <cstring>
 #include <utility>
 
+namespace mmkv {
+
 MMBuffer::MMBuffer(size_t length) : ptr(nullptr), size(length), isNoCopy(MMBufferCopy) {
     if (size > 0) {
         ptr = malloc(size);
@@ -58,3 +60,5 @@ MMBuffer::~MMBuffer() {
     }
     ptr = nullptr;
 }
+
+} // namespace mmkv

@@ -21,12 +21,8 @@
 #pragma once
 #include "zlib/zconf.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace zlib {
 
-ZEXTERN uLong ZEXPORT crc32 OF((uLong crc, const Bytef *buf, z_size_t len));
+uLong crc32(uLong crc, const Bytef *buf, z_size_t len);
 
-#ifdef __cplusplus
 }
-#endif

@@ -23,6 +23,8 @@
 
 #include <cstdint>
 
+namespace mmkv {
+
 template <typename T, typename P>
 union Converter {
     static_assert(sizeof(T) == sizeof(P), "size not match");
@@ -125,5 +127,7 @@ static inline int32_t pbUInt32Size(uint32_t value) {
 static inline int32_t pbUInt64Size(uint64_t value) {
     return pbInt64Size(value);
 }
+
+} // namespace mmkv
 
 #endif //MMKV_PBUTILITY_H

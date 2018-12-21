@@ -81,9 +81,9 @@
 #ifndef HASH_UPDATE
 # error "HASH_UPDATE must be defined!"
 #endif
-#ifndef HASH_TRANSFORM
-# error "HASH_TRANSFORM must be defined!"
-#endif
+//#ifndef HASH_TRANSFORM
+//# error "HASH_TRANSFORM must be defined!"
+//#endif
 #ifndef HASH_FINAL
 # error "HASH_FINAL must be defined!"
 #endif
@@ -126,7 +126,7 @@
 
 int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
 {
-    const unsigned char *data = data_;
+    auto data = (const unsigned char *) data_;
     unsigned char *p;
     HASH_LONG l;
     size_t n;
@@ -182,10 +182,10 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
     return 1;
 }
 
-void HASH_TRANSFORM(HASH_CTX *c, const unsigned char *data)
-{
-    HASH_BLOCK_DATA_ORDER(c, data, 1);
-}
+//void HASH_TRANSFORM(HASH_CTX *c, const unsigned char *data)
+//{
+//    HASH_BLOCK_DATA_ORDER(c, data, 1);
+//}
 
 int HASH_FINAL(unsigned char *md, HASH_CTX *c)
 {

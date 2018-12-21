@@ -160,7 +160,7 @@ void processTest() {
         CloseHandle(pi[index].hThread);
     }
 
-    auto mmkv = MMKV::mmkvWithID("process_test", 0, MMKV_MULTI_PROCESS);
+    auto mmkv = MMKV::mmkvWithID("process_test", MMKV_MULTI_PROCESS);
     cout << "total count of process_test: " << mmkv->count() << endl;
 }
 

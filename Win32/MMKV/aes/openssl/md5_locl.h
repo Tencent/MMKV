@@ -11,6 +11,8 @@
 #include <string.h>
 #include "md5.h"
 
+namespace openssl {
+
 void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
@@ -19,7 +21,7 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 #define HASH_CTX                MD5_CTX
 #define HASH_CBLOCK             MD5_CBLOCK
 #define HASH_UPDATE             MD5_Update
-#define HASH_TRANSFORM          MD5_Transform
+//#define HASH_TRANSFORM          MD5_Transform
 #define HASH_FINAL              MD5_Final
 #define HASH_MAKE_STRING(c,s)   do {    \
         unsigned long ll;               \
@@ -66,3 +68,5 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
         a+=((k)+(t)+I((b),(c),(d))); \
         a=ROTATE(a,s); \
         a+=b; };
+
+} // namespace openssl

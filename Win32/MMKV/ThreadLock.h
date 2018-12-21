@@ -23,6 +23,8 @@
 
 #include "MMKVDef.h"
 
+namespace mmkv {
+
 enum ThreadOnceToken : LONG {
     ThreadOnceUninitialized = 0,
     ThreadOnceInitializing,
@@ -42,5 +44,7 @@ public:
 
     static void ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback)(void));
 };
+
+} // namespace mmkv
 
 #endif //MMKV_THREADLOCK_H

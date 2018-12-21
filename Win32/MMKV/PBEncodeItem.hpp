@@ -26,6 +26,8 @@
 #include <memory.h>
 #include <string>
 
+namespace mmkv {
+
 enum PBEncodeItemType {
     PBEncodeItemType_None,
     PBEncodeItemType_String,
@@ -46,5 +48,7 @@ struct PBEncodeItem {
         memset(&value, 0, sizeof(value));
     }
 };
+
+} // namespace mmkv
 
 #endif //MMKV_PBENCODEITEM_HPP

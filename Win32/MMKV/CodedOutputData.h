@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <string>
 
+namespace mmkv {
+
 class CodedOutputData {
     uint8_t *m_ptr;
     size_t m_size;
@@ -69,5 +71,7 @@ public:
 
     void writeData(const MMBuffer &value);
 };
+
+} // namespace mmkv
 
 #endif //MMKV_CODEDOUTPUTDATA_H

@@ -22,11 +22,11 @@
  */
 
 #include "MMKV.h"
-#include "MMKVDef.h"
 #include "CodedInputData.h"
 #include "CodedOutputData.h"
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
+#include "MMKVDef.h"
 #include "MMKVLog.h"
 #include "MiniPBCoder.h"
 #include "MmapedFile.h"
@@ -41,6 +41,7 @@
 #include <cstring>
 
 using namespace std;
+using namespace mmkv;
 
 static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
@@ -61,7 +62,7 @@ enum : bool {
     IncreaseSequence = true,
 };
 
-MMKV::MMKV(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey)
+MMKV::MMKV(const std::string &mmapID, MMKVMode mode, int size, string *cryptKey)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode))
     , m_crcPath(crcPathWithID(m_mmapID, mode))
@@ -106,7 +107,7 @@ MMKV::~MMKV() {
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
-    return mmkvWithID(DEFAULT_MMAP_ID, DEFAULT_MMAP_SIZE, mode, cryptKey);
+    return mmkvWithID(DEFAULT_MMAP_ID, mode, DEFAULT_MMAP_SIZE, cryptKey);
 }
 
 void initialize() {
@@ -126,8 +127,7 @@ void MMKV::initializeMMKV(const std::wstring &rootDir) {
     MMKVInfo("root dir: %ws", g_rootDir.c_str());
 }
 
-MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, MMKVMode mode, string *cryptKey) {
-
+MMKV *MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, int size, string *cryptKey) {
     if (mmapID.empty()) {
         return nullptr;
     }
@@ -138,7 +138,7 @@ MMKV *MMKV::mmkvWithID(const std::string &mmapID, int size, MMKVMode mode, strin
         MMKV *kv = itr->second;
         return kv;
     }
-    auto kv = new MMKV(mmapID, size, mode, cryptKey);
+    auto kv = new MMKV(mmapID, mode, size, cryptKey);
     (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
@@ -287,8 +287,8 @@ void MMKV::partialLoadFromFile() {
                 MMBuffer inputBuffer(m_ptr + Fixed32Size + oldActualSize, bufferSize,
                                      MMBufferNoCopy);
                 // incremental update crc digest
-                m_crcDigest = (uint32_t) crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
-                                               inputBuffer.length());
+                m_crcDigest = (uint32_t) zlib::crc32(
+                    m_crcDigest, (const uint8_t *) inputBuffer.getPtr(), inputBuffer.length());
                 if (m_crcDigest == m_metaInfo.m_crcDigest) {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
@@ -325,7 +325,7 @@ void MMKV::checkLoadData() {
     }
 
     // TODO: atomic lock m_metaFile?
-    MMKVMetaInfo metaInfo;
+    MetaInfo metaInfo;
     metaInfo.read(m_metaFile.getMemory());
     if (m_metaInfo.m_sequence != metaInfo.m_sequence) {
         MMKVInfo("[%s] oldSeq %u, newSeq %u", m_mmapID.c_str(), m_metaInfo.m_sequence,
@@ -373,7 +373,8 @@ void MMKV::clearAll() {
     }
     if (m_fd >= 0) {
         if (m_size != DEFAULT_MMAP_SIZE) {
-            MMKVInfo("truncating [%s] from %zu to %zd", m_mmapID.c_str(), m_size, DEFAULT_MMAP_SIZE);
+            MMKVInfo("truncating [%s] from %zu to %zd", m_mmapID.c_str(), m_size,
+                     DEFAULT_MMAP_SIZE);
             if (!ftruncate(m_fd, DEFAULT_MMAP_SIZE)) {
                 MMKVError("fail to truncate [%s] to size %zd", m_mmapID.c_str(), DEFAULT_MMAP_SIZE);
             }
@@ -801,7 +802,7 @@ bool MMKV::isFileValid() {
 bool MMKV::checkFileCRCValid() {
     if (m_ptr) {
         constexpr int offset = pbFixed32Size(0);
-        m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, m_actualSize);
+        m_crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) m_ptr + offset, m_actualSize);
         m_metaInfo.read(m_metaFile.getMemory());
         if (m_crcDigest == m_metaInfo.m_crcDigest) {
             return true;
@@ -824,7 +825,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
     if (!ptr) {
         return;
     }
-    m_crcDigest = (uint32_t) crc32(m_crcDigest, ptr, length);
+    m_crcDigest = (uint32_t) zlib::crc32(m_crcDigest, ptr, length);
 
     void *crcPtr = m_metaFile.getMemory();
     if (!crcPtr) {
@@ -1168,7 +1169,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     uint32_t crcFile = 0;
     MMBuffer *data = readWholeFile(crcPath);
     if (data) {
-        MMKVMetaInfo metaInfo;
+        MetaInfo metaInfo;
         metaInfo.read(data->getPtr());
         crcFile = metaInfo.m_crcDigest;
         delete data;
@@ -1187,7 +1188,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
         }
 
         auto ptr = (const uint8_t *) fileData->getPtr() + offset;
-        auto crcDigest = (uint32_t) crc32(0, ptr, actualSize);
+        auto crcDigest = (uint32_t) zlib::crc32(0, ptr, actualSize);
 
         delete fileData;
         return crcFile == crcDigest;
@@ -1203,7 +1204,7 @@ static void mkSpecialCharacterFileDirectory() {
 static string md5(const string &value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {0};
     char tmp[3] = {0}, buf[33] = {0};
-    MD5((const unsigned char *) value.c_str(), value.size(), md);
+    openssl::MD5((const unsigned char *) value.c_str(), value.size(), md);
     for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
         sprintf_s(tmp, sizeof(tmp), "%2.2x", md[i]);
         strcat_s(buf, sizeof(tmp), tmp);

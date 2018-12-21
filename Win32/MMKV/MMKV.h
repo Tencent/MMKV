@@ -32,16 +32,18 @@
 #include <unordered_map>
 #include <vector>
 
-class CodedOutputData;
+namespace mmkv {
 class AESCrypt;
+class CodedOutputData;
+} // namespace mmkv
 
 enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 0x1,
     MMKV_MULTI_PROCESS = 0x2,
 };
 
-class MMKV_API MMKV {
-    std::unordered_map<std::string, MMBuffer> m_dic;
+class MMKV {
+    std::unordered_map<std::string, mmkv::MMBuffer> m_dic;
     std::string m_mmapID;
     std::wstring m_path;
     std::wstring m_crcPath;
@@ -50,21 +52,21 @@ class MMKV_API MMKV {
     char *m_ptr;
     size_t m_size;
     size_t m_actualSize;
-    CodedOutputData *m_output;
+    mmkv::CodedOutputData *m_output;
 
     bool m_needLoadFromFile;
     bool m_hasFullWriteback;
 
     uint32_t m_crcDigest;
-    MmapedFile m_metaFile;
-    MMKVMetaInfo m_metaInfo;
+    mmkv::MmapedFile m_metaFile;
+    mmkv::MetaInfo m_metaInfo;
 
-    AESCrypt *m_crypter;
+    mmkv::AESCrypt *m_crypter;
 
-    ThreadLock m_lock;
-    FileLock m_fileLock;
-    InterProcessLock m_sharedProcessLock;
-    InterProcessLock m_exclusiveProcessLock;
+    mmkv::ThreadLock m_lock;
+    mmkv::FileLock m_fileLock;
+    mmkv::InterProcessLock m_sharedProcessLock;
+    mmkv::InterProcessLock m_exclusiveProcessLock;
 
     void loadFromFile();
 
@@ -86,13 +88,13 @@ class MMKV_API MMKV {
 
     bool fullWriteback();
 
-    const MMBuffer &getDataForKey(const std::string &key);
+    const mmkv::MMBuffer &getDataForKey(const std::string &key);
 
-    bool setDataForKey(MMBuffer &&data, const std::string &key);
+    bool setDataForKey(mmkv::MMBuffer &&data, const std::string &key);
 
     bool removeDataForKey(const std::string &key);
 
-    bool appendDataWithKey(const MMBuffer &data, const std::string &key);
+    bool appendDataWithKey(const mmkv::MMBuffer &data, const std::string &key);
 
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 
@@ -102,8 +104,8 @@ class MMKV_API MMKV {
 
 public:
     MMKV(const std::string &mmapID,
-         int size = DEFAULT_MMAP_SIZE,
          MMKVMode mode = MMKV_SINGLE_PROCESS,
+         int size = mmkv::DEFAULT_MMAP_SIZE,
          std::string *cryptKey = nullptr);
 
     ~MMKV();
@@ -116,8 +118,8 @@ public:
     // mmapID: any unique ID (com.tencent.xin.pay, etc)
     // if you want a per-user mmkv, you could merge user-id within mmapID
     static MMKV *mmkvWithID(const std::string &mmapID,
-                            int size = DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
+                            int size = mmkv::DEFAULT_MMAP_SIZE,
                             std::string *cryptKey = nullptr);
 
     static void onExit();
@@ -139,7 +141,7 @@ public:
 
     bool setStringForKey(const std::string &value, const std::string &key);
 
-    bool setBytesForKey(const MMBuffer &value, const std::string &key);
+    bool setBytesForKey(const mmkv::MMBuffer &value, const std::string &key);
 
     bool set(bool value, const std::string &key);
 
@@ -159,7 +161,7 @@ public:
 
     bool getStringForKey(const std::string &key, std::string &result);
 
-    MMBuffer getBytesForKey(const std::string &key);
+    mmkv::MMBuffer getBytesForKey(const std::string &key);
 
     bool getBoolForKey(const std::string &key, bool defaultValue = false);
 

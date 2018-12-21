@@ -11,6 +11,8 @@
 #include <string.h>
 #include "md5.h"
 
+namespace openssl {
+
 unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
 {
     MD5_CTX c;
@@ -23,4 +25,6 @@ unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
     MD5_Update(&c, d, n);
     MD5_Final(md, &c);
     return md;
+}
+
 }

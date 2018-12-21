@@ -49,7 +49,7 @@ void brutleTest(DWORD processID) {
     using hclock = chrono::high_resolution_clock;
     auto start = hclock::now();
 
-    auto mmkv = MMKV::mmkvWithID(MMKV_ID, 0, MMKV_MULTI_PROCESS);
+    auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
     for (size_t i = 0; i < keyCount; i++) {
         mmkv->set(i, arrIntKeys[i]);
         //mmkv->setStringForKey("str-" + i, arrStringKeys[i]);

@@ -29,15 +29,16 @@
 #include <unordered_map>
 #include <vector>
 
+namespace mmkv {
 class CodedInputData;
 class CodedOutputData;
 
 class MiniPBCoder {
     const MMBuffer *m_inputBuffer;
-    CodedInputData *m_inputData;
+    mmkv::CodedInputData *m_inputData;
 
     MMBuffer *m_outputBuffer;
-    CodedOutputData *m_outputData;
+    mmkv::CodedOutputData *m_outputData;
     std::vector<PBEncodeItem> *m_encodeItems;
 
 private:
@@ -75,5 +76,7 @@ public:
                           const MMBuffer &oData,
                           size_t size = 0);
 };
+
+} // namespace mmkv
 
 #endif //MMKV_MINIPBCODER_H

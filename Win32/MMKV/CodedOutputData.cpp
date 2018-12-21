@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace mmkv {
+
 CodedOutputData::CodedOutputData(void *ptr, size_t len)
     : m_ptr((uint8_t *) ptr), m_size(len), m_position(0) {
     assert(m_ptr);
@@ -147,3 +149,5 @@ void CodedOutputData::writeRawLittleEndian64(int64_t value) {
     this->writeRawByte(static_cast<uint8_t>((value >> 48) & 0xff));
     this->writeRawByte(static_cast<uint8_t>((value >> 56) & 0xff));
 }
+
+} // namespace mmkv

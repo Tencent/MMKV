@@ -21,6 +21,8 @@
 #include "ThreadLock.h"
 #include "MMKVLog.h"
 
+namespace mmkv {
+
 ThreadLock::ThreadLock() : m_lock{0} {
     // TODO: a better spin count?
     if (!InitializeCriticalSectionAndSpinCount(&m_lock, 1024)) {
@@ -64,3 +66,5 @@ void ThreadLock::ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback
         }
     }
 }
+
+} // namespace mmkv

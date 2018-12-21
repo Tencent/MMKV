@@ -42,6 +42,8 @@
 #include "aes.h"
 #include "aes_locl.h"
 
+namespace openssl {
+
 /*-
 Te0[x] = S [x].[02, 01, 01, 03];
 Te1[x] = S [x].[03, 02, 01, 01];
@@ -916,3 +918,5 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
         rk[3];
     PUTU32(out + 12, s3);
 }
+
+} // namespace openssl

@@ -24,7 +24,9 @@
 #include "MMKVDef.h"
 #include <string>
 
-extern MMKV_API const size_t DEFAULT_MMAP_SIZE;
+namespace mmkv {
+
+extern const size_t DEFAULT_MMAP_SIZE;
 
 class MmapedFile {
     std::wstring m_name;
@@ -61,5 +63,7 @@ extern MMBuffer *readWholeFile(const std::wstring &nsFilePath);
 extern bool zeroFillFile(HANDLE file, size_t startPos, size_t size);
 extern bool ftruncate(HANDLE file, size_t size);
 extern bool getfilesize(HANDLE file, size_t &size);
+
+} // namespace mmkv
 
 #endif //MMKV_MMAPEDFILE_H

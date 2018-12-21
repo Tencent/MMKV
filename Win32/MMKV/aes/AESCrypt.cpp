@@ -19,9 +19,12 @@
  */
 
 #include "AESCrypt.h"
-#include "openssl/aes.h"
 #include <cassert>
 #include <cstring>
+
+using namespace openssl;
+
+namespace mmkv {
 
 AESCrypt::AESCrypt(const unsigned char *key, size_t keyLength) {
     if (key && keyLength > 0) {
@@ -58,10 +61,14 @@ void AESCrypt::decrypt(const unsigned char *input, unsigned char *output, size_t
     AES_cfb128_encrypt(input, output, length, &m_aesKey, m_vector, &m_number, AES_DECRYPT);
 }
 
+} // namespace mmkv
+
 #ifndef NDEBUG
 
 #include "../MMKVLog.h"
 #include "../MmapedFile.h"
+
+namespace mmkv {
 
 // check if AESCrypt is encrypt-decrypt full-duplex
 void testAESCrypt() {
@@ -114,4 +121,6 @@ void testAESCrypt() {
     delete[] decryptText;
 }
 
-#endif
+} // namespace mmkv
+
+#endif // NDEBUG

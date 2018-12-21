@@ -24,6 +24,8 @@
 #include "MMKVDef.h"
 #include <assert.h>
 
+namespace mmkv {
+
 enum LockType {
     SharedLockType,
     ExclusiveLockType,
@@ -74,5 +76,7 @@ public:
         }
     }
 };
+
+} // namespace mmkv
 
 #endif //MMKV_INTERPROCESSLOCK_H

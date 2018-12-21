@@ -30,6 +30,8 @@
 
 using namespace std;
 
+namespace mmkv {
+
 MiniPBCoder::MiniPBCoder() {
     m_inputBuffer = nullptr;
     m_inputData = nullptr;
@@ -288,3 +290,5 @@ vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
     MiniPBCoder oCoder(&oData);
     return oCoder.decodeOneSet();
 }
+
+} // namespace mmkv

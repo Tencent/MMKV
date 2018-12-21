@@ -25,20 +25,24 @@
 #include <cstdint>
 #include <cstring>
 
-struct MMKVMetaInfo {
+namespace mmkv {
+
+struct MetaInfo {
     uint32_t m_crcDigest = 0;
     uint32_t m_version = 1;
     uint32_t m_sequence = 0; // full write-back count
 
     void write(void *ptr) {
         assert(ptr);
-        memcpy(ptr, this, sizeof(MMKVMetaInfo));
+        memcpy(ptr, this, sizeof(MetaInfo));
     }
 
     void read(const void *ptr) {
         assert(ptr);
-        memcpy(this, ptr, sizeof(MMKVMetaInfo));
+        memcpy(this, ptr, sizeof(MetaInfo));
     }
 };
+
+} // namespace mmkv
 
 #endif //MMKV_MMKVMETAINFO_H
