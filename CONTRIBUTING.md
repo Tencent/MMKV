@@ -51,10 +51,10 @@ Before submitting a pull request, please make sure the followings are done:
 6. Now, you can submit your pull request on `dev` or `hotfix` branch.
 
 ## Code Style Guide
-Use [Code Style](https://github.com/Tencent/MMKV/blob/master/Android/MMKV/checkstyle.xml) for Java and Android.
+Use [Code Style](./Android/MMKV/checkstyle.xml) for Java and Android.
 
 * 4 spaces for indentation rather than tabs
 
 ## License
 By contributing to MMKV, you agree that your contributions will be licensed
-under its [BSD LICENSE](https://github.com/Tencent/MMKV/blob/master/LICENSE.txt)
+under its [BSD LICENSE](./LICENSE.txt)
