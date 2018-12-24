@@ -16,5 +16,8 @@ xcuserdata
 *.xcscmblueprint
 *.xcscheme
 
+## OS X
+.DS_Store
+
 ## Xcode
 DerivedData
