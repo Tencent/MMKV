@@ -47,6 +47,7 @@ static id<MMKVHandler> g_callbackHandler;
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
 #define SPECIAL_CHARACTER_DIRECTORY_NAME @"specialCharacter"
 
+static NSString *md5(NSString *value);
 static NSString *encodeMmapID(NSString *mmapID);
 
 @implementation MMKV {
@@ -106,21 +107,33 @@ static NSString *encodeMmapID(NSString *mmapID);
     }
     CScopedLock lock(g_instanceLock);
     
-    MMKV *kv = [g_instanceDic objectForKey:mmapID];
+    NSString *kvKey = [self mmapKeyWithMMapID:mmapID relativePath:path];
+    MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
         kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:path];
-        [g_instanceDic setObject:kv forKey:mmapID];
+        [g_instanceDic setObject:kv forKey:kvKey];
     }
     return kv;
+}
+
++ (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
+    NSString *string = nil;
+    if (relativePath) {
+        string = md5([relativePath stringByAppendingPathComponent:mmapID]);
+    } else {
+        string = mmapID;
+    }
+    MMKVInfo(@"%s mmapKey: %@", __PRETTY_FUNCTION__, string);
+    return string;
 }
 
 - (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
     if (self = [super init]) {
         m_lock = [[NSRecursiveLock alloc] init];
         
-        m_mmapID = mmapID;
+        m_mmapID = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
         
-        m_path = [MMKV mappedKVPathWithID:m_mmapID relativePath:relativePath];
+        m_path = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
         if (!isFileExist(m_path)) {
             createFile(m_path);
         }
