@@ -36,6 +36,17 @@ NS_ASSUME_NONNULL_BEGIN
 // cryptKey: 16 byte at most
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
+// mmapID: any unique ID (com.tencent.xin.pay, etc)
+// if you want a per-user mmkv, you could merge user-id within mmapID
+// path: custom mmkv location path
++ (instancetype)mmkvWithID:(NSString *)mmapID path:(NSString *)path NS_SWIFT_NAME(init(mmapID:path:));
+
+// mmapID: any unique ID (com.tencent.xin.pay, etc)
+// if you want a per-user mmkv, you could merge user-id within mmapID
+// cryptKey: 16 byte at most
+// path: custom mmkv location path
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey path:(NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:path:));
+
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
 
@@ -126,6 +137,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
++ (BOOL)isFileValid:(NSString *)mmapID atPath:(nullable NSString *)path NS_SWIFT_NAME(isFileValid(for:at:));
 
 + (void)registerHandler:(id<MMKVHandler>)handler;
 + (void)unregiserHandler;
