@@ -105,6 +105,10 @@ static NSString *encodeMmapID(NSString *mmapID);
     if (mmapID.length <= 0) {
         return nil;
     }
+    if (![self canCreateMMKVPath:mmapID relativePath:path]) {
+        return nil;
+    }
+    
     CScopedLock lock(g_instanceLock);
     
     NSString *kvKey = [self mmapKeyWithMMapID:mmapID relativePath:path];
@@ -116,9 +120,23 @@ static NSString *encodeMmapID(NSString *mmapID);
     return kv;
 }
 
++ (BOOL)canCreateMMKVPath:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
+    if (relativePath) {
+        NSString *path = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
+        if (isFileExist(path)) {
+            return true;
+        } else {
+            BOOL ret = createFile(path);
+            return ret;
+        }
+    } else {
+        return true;
+    }
+}
+
 + (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
     NSString *string = nil;
-    if (relativePath) {
+    if ([relativePath length] > 0) {
         string = md5([relativePath stringByAppendingPathComponent:mmapID]);
     } else {
         string = mmapID;
@@ -1307,7 +1325,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 + (NSString *)mappedKVPathWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
-    // TODO: 检查path.
     if ([path length] > 0) {
         NSString *mmapIDstring = encodeMmapID(mmapID);
         return [path stringByAppendingPathComponent:mmapIDstring];
