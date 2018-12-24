@@ -36,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
 // cryptKey: 16 byte at most
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
++ (instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)path;
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path;
+
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
 
@@ -98,6 +101,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (size_t)count;
 
 - (size_t)totalSize;
+
 - (size_t)actualSize;
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
@@ -127,6 +131,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
++ (BOOL)isFileValid:(NSString *)mmapID relativePath:(nullable NSString *)path;
 
 + (void)registerHandler:(id<MMKVHandler>)handler;
 + (void)unregiserHandler;

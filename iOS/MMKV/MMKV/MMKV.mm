@@ -89,66 +89,64 @@ static NSString *encodeMmapID(NSString *mmapID);
 
 // any unique ID (com.tencent.xin.pay, etc)
 + (instancetype)mmkvWithID:(NSString *)mmapID {
-	if (mmapID.length <= 0) {
-		return nil;
-	}
-	CScopedLock lock(g_instanceLock);
-
-	MMKV *kv = [g_instanceDic objectForKey:mmapID];
-	if (kv == nil) {
-		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:nil];
-		[g_instanceDic setObject:kv forKey:mmapID];
-	}
-	return kv;
+    return [self mmkvWithID:mmapID cryptKey:nil];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
-	if (mmapID.length <= 0) {
-		return nil;
-	}
-	CScopedLock lock(g_instanceLock);
-
-	MMKV *kv = [g_instanceDic objectForKey:mmapID];
-	if (kv == nil) {
-		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey];
-		[g_instanceDic setObject:kv forKey:mmapID];
-	}
-	return kv;
+    return [self mmkvWithID:mmapID cryptKey:cryptKey relativePath:nil];
 }
 
-- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
-	if (self = [super init]) {
-		m_lock = [[NSRecursiveLock alloc] init];
++ (instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
+    return [self mmkvWithID:mmapID cryptKey:nil relativePath:path];
+}
 
-		m_mmapID = mmapID;
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)path {
+    if (mmapID.length <= 0) {
+        return nil;
+    }
+    CScopedLock lock(g_instanceLock);
+    
+    MMKV *kv = [g_instanceDic objectForKey:mmapID];
+    if (kv == nil) {
+        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:path];
+        [g_instanceDic setObject:kv forKey:mmapID];
+    }
+    return kv;
+}
 
-		m_path = [MMKV mappedKVPathWithID:m_mmapID];
-		if (!isFileExist(m_path)) {
-			createFile(m_path);
-		}
-		m_crcPath = [MMKV crcPathWithMappedKVPath:m_path];
-
-		if (cryptKey.length > 0) {
-			m_cryptor = new AESCrypt((const unsigned char *) cryptKey.bytes, cryptKey.length);
-		}
-
-		[self loadFromFile];
-
+- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
+    if (self = [super init]) {
+        m_lock = [[NSRecursiveLock alloc] init];
+        
+        m_mmapID = mmapID;
+        
+        m_path = [MMKV mappedKVPathWithID:m_mmapID relativePath:relativePath];
+        if (!isFileExist(m_path)) {
+            createFile(m_path);
+        }
+        m_crcPath = [MMKV crcPathWithMappedKVPath:m_path];
+        
+        if (cryptKey.length > 0) {
+            m_cryptor = new AESCrypt((const unsigned char *) cryptKey.bytes, cryptKey.length);
+        }
+        
+        [self loadFromFile];
+        
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-		auto appState = [UIApplication sharedApplication].applicationState;
-		if (appState == UIApplicationStateBackground) {
-			m_isInBackground = YES;
-		} else {
-			m_isInBackground = NO;
-		}
-		MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long) appState);
-
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+        auto appState = [UIApplication sharedApplication].applicationState;
+        if (appState == UIApplicationStateBackground) {
+            m_isInBackground = YES;
+        } else {
+            m_isInBackground = NO;
+        }
+        MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long) appState);
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
 #endif
-	}
-	return self;
+    }
+    return self;
 }
 
 - (void)dealloc {
@@ -1281,14 +1279,34 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
++ (NSString *)mappedKVBasePath {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *nsLibraryPath = (NSString *)[paths firstObject];
+    if ([nsLibraryPath length] > 0) {
+        return [nsLibraryPath stringByAppendingPathComponent:@"mmkv"];
+    } else {
+        return @"";
+    }
+}
+
 + (NSString *)mappedKVPathWithID:(NSString *)mmapID {
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-	NSString *nsLibraryPath = (NSString *) [paths firstObject];
-	if ([nsLibraryPath length] > 0) {
-		return [nsLibraryPath stringByAppendingFormat:@"/mmkv/%@", encodeMmapID(mmapID)];
-	} else {
-		return @"";
-	}
+    return [self mappedKVPathWithID:mmapID relativePath:nil];
+}
+
++ (NSString *)mappedKVPathWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
+    // TODO: 检查path.
+    if ([path length] > 0) {
+        NSString *mmapIDstring = encodeMmapID(mmapID);
+        return [path stringByAppendingPathComponent:mmapIDstring];
+    } else {
+        NSString *basePath = [self mappedKVBasePath];
+        if ([basePath length] > 0) {
+            NSString *mmapIDstring = encodeMmapID(mmapID);
+            return [basePath stringByAppendingPathComponent:mmapIDstring];
+        } else {
+            return @"";
+        }
+    }
 }
 
 + (NSString *)crcPathWithMappedKVPath:(NSString *)kvPath {
@@ -1296,9 +1314,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 + (BOOL)isFileValid:(NSString *)mmapID {
+    return [self isFileValid:mmapID relativePath:nil];
+}
+
++ (BOOL)isFileValid:(NSString *)mmapID relativePath:(nullable NSString *)path {
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 
-	NSString *kvPath = [self mappedKVPathWithID:mmapID];
+	NSString *kvPath = [self mappedKVPathWithID:mmapID relativePath:path];
 	if ([fileManager fileExistsAtPath:kvPath] == NO) {
 		// kv file not exist
 		return YES;
