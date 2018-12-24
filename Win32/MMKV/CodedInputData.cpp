@@ -22,7 +22,6 @@
 #include "MMKVLog.h"
 #include "PBUtility.h"
 #include <cassert>
-#include <limits.h>
 
 using namespace std;
 

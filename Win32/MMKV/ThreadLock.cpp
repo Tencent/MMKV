@@ -18,8 +18,10 @@
  * limitations under the License.
  */
 
-#include "ThreadLock.h"
+#include "pch.h"
+
 #include "MMKVLog.h"
+#include "ThreadLock.h"
 
 namespace mmkv {
 

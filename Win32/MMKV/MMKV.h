@@ -227,7 +227,7 @@ public:
     void unlock() { m_isInterProcess ? m_exclusiveProcessLock.unlock() : m_lock.unlock(); }
 
     typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID,
-                                                     MMKVErrorType errorType);
+                                                 MMKVErrorType errorType);
     static void regiserErrorHandler(ErrorHandler handler);
     static void unRegisetErrorHandler();
 };

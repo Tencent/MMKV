@@ -18,31 +18,4 @@
  * limitations under the License.
  */
 
-#ifndef MMKV_THREADLOCK_H
-#define MMKV_THREADLOCK_H
-
-namespace mmkv {
-
-enum ThreadOnceToken : LONG {
-    ThreadOnceUninitialized = 0,
-    ThreadOnceInitializing,
-    ThreadOnceInitialized
-};
-
-class ThreadLock {
-private:
-    CRITICAL_SECTION m_lock;
-
-public:
-    ThreadLock();
-    ~ThreadLock();
-
-    void lock();
-    void unlock();
-
-    static void ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback)(void));
-};
-
-} // namespace mmkv
-
-#endif //MMKV_THREADLOCK_H
+#include "pch.h"

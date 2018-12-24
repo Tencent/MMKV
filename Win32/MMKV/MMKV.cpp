@@ -21,12 +21,13 @@
  * limitations under the License.
  */
 
-#include "MMKV.h"
+#include "pch.h"
+
 #include "CodedInputData.h"
 #include "CodedOutputData.h"
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
-#include "MMKVDef.h"
+#include "MMKV.h"
 #include "MMKVLog.h"
 #include "MiniPBCoder.h"
 #include "MmapedFile.h"

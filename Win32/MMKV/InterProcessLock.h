@@ -21,8 +21,7 @@
 #ifndef MMKV_INTERPROCESSLOCK_H
 #define MMKV_INTERPROCESSLOCK_H
 
-#include "MMKVDef.h"
-#include <assert.h>
+#include <cassert>
 
 namespace mmkv {
 

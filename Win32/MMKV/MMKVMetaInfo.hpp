@@ -29,7 +29,7 @@ namespace mmkv {
 
 struct MetaInfo {
     uint32_t m_crcDigest = 0;
-    uint32_t m_version = 1;
+    uint32_t m_version = 1;  // not in use
     uint32_t m_sequence = 0; // full write-back count
 
     void write(void *ptr) {

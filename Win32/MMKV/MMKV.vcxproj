@@ -114,7 +114,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -123,6 +123,7 @@
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;MMKV_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,19 +166,29 @@
     <ClInclude Include="crc32\zlib\crc32.h" />
     <ClInclude Include="crc32\zlib\zconf.h" />
     <ClInclude Include="crc32\zlib\zutil.h" />
-    <ClInclude Include="InterProcessLock.h" />
+    <CopyFileToFolders Include="InterProcessLock.h" />
     <ClInclude Include="MiniPBCoder.h" />
-    <ClInclude Include="MmapedFile.h" />
-    <ClInclude Include="MMBuffer.h" />
-    <ClInclude Include="MMKV.h" />
-    <ClInclude Include="MMKVDef.h" />
+    <CopyFileToFolders Include="MmapedFile.h" />
+    <CopyFileToFolders Include="MMBuffer.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="MMKV.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </CopyFileToFolders>
+    <ClInclude Include="pch.h" />
     <ClInclude Include="MMKVLog.h" />
-    <ClInclude Include="MMKVMetaInfo.hpp" />
+    <CopyFileToFolders Include="MMKVMetaInfo.hpp" />
     <ClInclude Include="PBEncodeItem.hpp" />
     <ClInclude Include="PBUtility.h" />
     <ClInclude Include="ScopedLock.hpp" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="ThreadLock.h" />
+    <CopyFileToFolders Include="ThreadLock.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aes\AESCrypt.cpp" />
@@ -195,6 +206,7 @@
     <ClCompile Include="MMBuffer.cpp" />
     <ClCompile Include="MMKV.cpp" />
     <ClCompile Include="PBUtility.cpp" />
+    <ClCompile Include="pch.cpp" />
     <ClCompile Include="ThreadLock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

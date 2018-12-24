@@ -21,7 +21,6 @@
 #ifndef MMKV_MMAPEDFILE_H
 #define MMKV_MMAPEDFILE_H
 
-#include "MMKVDef.h"
 #include <string>
 
 namespace mmkv {

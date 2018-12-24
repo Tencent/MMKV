@@ -18,10 +18,12 @@
  * limitations under the License.
  */
 
-#include "MiniPBCoder.h"
+#include "pch.h"
+
 #include "CodedInputData.h"
 #include "CodedOutputData.h"
 #include "MMBuffer.h"
+#include "MiniPBCoder.h"
 #include "PBEncodeItem.hpp"
 #include "PBUtility.h"
 #include <string>

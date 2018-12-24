@@ -18,34 +18,16 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MMKVDef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MMKV.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CodedInputData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CodedOutputData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="InterProcessLock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MiniPBCoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MmapedFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MMBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MMKVLog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MMKVMetaInfo.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PBEncodeItem.hpp">
@@ -55,9 +37,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ScopedLock.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ThreadLock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="aes\AESCrypt.h">
@@ -94,6 +73,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="crc32\zlib\zconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -146,5 +128,28 @@
     <ClCompile Include="aes\openssl\cfb128.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="MMKV.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="MMBuffer.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="MmapedFile.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="MMKVMetaInfo.hpp">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="ThreadLock.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="InterProcessLock.h">
+      <Filter>Header Files</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

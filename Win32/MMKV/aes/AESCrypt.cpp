@@ -65,6 +65,8 @@ void AESCrypt::decrypt(const unsigned char *input, unsigned char *output, size_t
 
 #ifndef NDEBUG
 
+#include "../pch.h"
+
 #include "../MMKVLog.h"
 #include "../MmapedFile.h"
 

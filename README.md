@@ -54,7 +54,7 @@ Writing random `int` for 10000 times, we get this chart:
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
 
-# MMKV for Android
+# MMKV for Windows
 
 ## Features
 
@@ -70,47 +70,46 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 
 ## Getting Started
 
-### Installation Via Maven
-Add the following lines to `build.gradle` on your app module:
-
-```gradle
-dependencies {
-    implementation 'com.tencent:mmkv:1.0.14'
-    // replace "1.0.14" with any available version
-}
-```
+### Installation Via Source
+* Clone or Download source from GitHub;
+* Add `Win32/MMKV/MMKV.vcxproj` to your solution;
+* Add `$(OutDir)` to your project's `C/C++` -> `General` -> `Additional Include Directories`;
+* Add `$(OutDir)` to your project's `Linker` -> `General` -> `Additional Library Directories`;
+* Add `MMKV.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
+* MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or wise versa.
 
 For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
 
 ### Quick Tutorial
-You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.  
-Setup MMKV on App startup, say your `MainActivity`, add these lines:
+You can use MMKV as you go. All changes are saved immediately, no `sync`, no `save` calls needed.  
+Setup MMKV on App startup, say in your `main()`, add these lines:
 
-```Java
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+```C++
+#include "MMKV.h"
+using namespace std;
 
-    String rootDir = MMKV.initialize(this);
-    System.out.println("mmkv root: " + rootDir);
-    //……
+int main() {
+    wstring rootDir = getYourAppDocumentDir();
+    MMKV::initializeMMKV(rootDir);
+    //...
 }
 ```
 
 MMKV has a global instance, that can be used directly:
 
-```Java
-import com.tencent.mmkv.MMKV;
-    
-MMKV kv = MMKV.defaultMMKV();
+```C++
+auto mmkv = MMKV::defaultMMKV();
 
-kv.encode("bool", true);
-boolean bValue = kv.decodeBool("bool");
+mmkv->set(true, "bool");
+cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
 
-kv.encode("int", Integer.MIN_VALUE);
-int iValue = kv.decodeInt("int");
+mmkv->set(1024, "int32");
+cout << "int32 = " << mmkv->getInt32ForKey("int32") << endl;
 
-kv.encode("string", "Hello from mmkv");
-String str = kv.decodeString("string");
+mmkv->setStringForKey("Hello, MMKV for Win32 ", "string");
+string result;
+mmkv->getStringForKey("string", result);
+cout << "string = " << result << endl;
 ```
 
 MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
@@ -119,6 +118,7 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found here [A
 Writing random `int` for 1000 times, we get this chart:  
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
+
 
 ## License
 MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).

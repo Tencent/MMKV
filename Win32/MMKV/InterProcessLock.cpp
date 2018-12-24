@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include "pch.h"
+
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
 
