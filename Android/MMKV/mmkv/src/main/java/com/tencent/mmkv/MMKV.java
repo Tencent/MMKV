@@ -25,23 +25,37 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
+    private static EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
     static {
-        System.loadLibrary("c++_shared");
+        recoverIndex = new EnumMap<>(MMKVRecoverStrategic.class);
+        recoverIndex.put(MMKVRecoverStrategic.OnErrorDiscard, 0);
+        recoverIndex.put(MMKVRecoverStrategic.OnErrorRecover, 1);
+
+        if (BuildConfig.FLAVOR.equals("SharedCpp")) {
+            System.loadLibrary("c++_shared");
+        }
         System.loadLibrary("mmkv");
     }
 
     // call on program start
+    static private String rootDir = null;
     public static String initialize(Context context) {
-        String rootDir = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        rootDir = context.getFilesDir().getAbsolutePath() + "/mmkv";
         initialize(rootDir);
         return rootDir;
     }
@@ -56,17 +70,29 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     static private final int ASHMEM_MODE = 0x4;
 
     public static MMKV mmkvWithID(String mmapID) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null);
         return new MMKV(handle);
     }
 
     public static MMKV mmkvWithID(String mmapID, int mode) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getMMKVWithID(mmapID, mode, null);
         return new MMKV(handle);
     }
 
     // cryptKey's length <= 16
     public static MMKV mmkvWithID(String mmapID, int mode, String cryptKey) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getMMKVWithID(mmapID, mode, cryptKey);
         return new MMKV(handle);
     }
@@ -76,19 +102,23 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Nullable
     public static MMKV
     mmkvWithAshmemID(Context context, String mmapID, int size, int mode, String cryptKey) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         String processName =
             MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
         if (processName == null || processName.length() == 0) {
-            System.out.println("process name detect fail, try again later");
+            Log.e("MMKV", "process name detect fail, try again later");
             return null;
         }
         if (processName.contains(":")) {
             Uri uri = MMKVContentProvider.contentUri(context);
             if (uri == null) {
-                System.out.println("MMKVContentProvider has invalid authority");
+                Log.e("MMKV", "MMKVContentProvider has invalid authority");
                 return null;
             }
-            System.out.println("getting parcelable mmkv in process, Uri = " + uri);
+            Log.i("MMKV", "getting parcelable mmkv in process, Uri = " + uri);
 
             Bundle extras = new Bundle();
             extras.putInt(MMKVContentProvider.KEY_SIZE, size);
@@ -104,14 +134,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 if (parcelableMMKV != null) {
                     MMKV mmkv = parcelableMMKV.toMMKV();
                     if (mmkv != null) {
-                        System.out.println(mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
-                                + ", meta fd = " + mmkv.ashmemMetaFD());
+                        Log.i("MMKV", mmkv.mmapID() + " fd = " + mmkv.ashmemFD()
+                                          + ", meta fd = " + mmkv.ashmemMetaFD());
                     }
                     return mmkv;
                 }
             }
         } else {
-            System.out.println("getting mmkv in main process");
+            Log.i("MMKV", "getting mmkv in main process");
 
             mode = mode | ASHMEM_MODE;
             long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
@@ -121,11 +151,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public static MMKV defaultMMKV() {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getDefaultMMKV(SINGLE_PROCESS_MODE, null);
         return new MMKV(handle);
     }
 
     public static MMKV defaultMMKV(int mode, String cryptKey) {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
         long handle = getDefaultMMKV(mode, cryptKey);
         return new MMKV(handle);
     }
@@ -249,6 +287,65 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return decodeBytes(nativeHandle, key);
     }
 
+    private static final HashMap<String, Parcelable.Creator<?>> mCreators = new HashMap<>();
+
+    public boolean encode(String key, Parcelable value) {
+        Parcel source = Parcel.obtain();
+        value.writeToParcel(source, value.describeContents());
+        byte[] bytes = source.marshall();
+        source.recycle();
+
+        return encodeBytes(nativeHandle, key, bytes);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass) {
+        return decodeParcelable(key, tClass, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass, T defaultValue) {
+        if (tClass == null) {
+            return defaultValue;
+        }
+
+        byte[] bytes = decodeBytes(nativeHandle, key);
+        if (bytes == null) {
+            return defaultValue;
+        }
+
+        Parcel source = Parcel.obtain();
+        source.unmarshall(bytes, 0, bytes.length);
+        source.setDataPosition(0);
+
+        try {
+            String name = tClass.toString();
+            Parcelable.Creator<T> creator;
+            synchronized (mCreators) {
+                creator = (Parcelable.Creator<T>) mCreators.get(name);
+                if (creator == null) {
+                    Field f = tClass.getField("CREATOR");
+                    creator = (Parcelable.Creator<T>) f.get(null);
+                    if (creator != null) {
+                        mCreators.put(name, creator);
+                    }
+                }
+            }
+            if (creator != null) {
+                return creator.createFromParcel(source);
+            } else {
+                throw new Exception("Parcelable protocol requires a "
+                                    + "non-null static Parcelable.Creator object called "
+                                    + "CREATOR on class " + name);
+            }
+        } catch (Exception e) {
+            Log.e("MMKV", e.toString());
+        } finally {
+            source.recycle();
+        }
+        return defaultValue;
+    }
+
     public boolean containsKey(String key) {
         return containsKey(nativeHandle, key);
     }
@@ -272,7 +369,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public native void clearAll();
 
+    // MMKV's size won't reduce after deleting key-values
+    // call this method after lots of deleting f you care about disk usage
+    // note that `clearAll` has the similar effect of `trim`
+    public native void trim();
+
+    // call this method if the instance is no longer needed in the near future
+    // any subsequent call to the instance is undefined behavior
+    public native void close();
+
     // call on memory warning
+    // any subsequent call to the instance will load all key-values from file again
     public native void clearMemoryCache();
 
     // you don't need to call this, really, I mean it
@@ -311,7 +418,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             } else if (value instanceof Set) {
                 encode(key, (Set<String>) value);
             } else {
-                System.out.println("unknown type: " + value.getClass());
+                Log.e("MMKV", "unknown type: " + value.getClass());
             }
         }
         return kvs.size();
@@ -446,6 +553,34 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native int ashmemFD();
 
     public native int ashmemMetaFD();
+
+    // callback handler
+    private static MMKVHandler gCallbackHandler;
+    public static void registerHandler(MMKVHandler handler) {
+        gCallbackHandler = handler;
+    }
+
+    public static void unregisterHandler() {
+        gCallbackHandler = null;
+    }
+
+    private static int onMMKVCRCCheckFail(String mmapID) {
+        MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
+        if (gCallbackHandler != null) {
+            strategic = gCallbackHandler.onMMKVCRCCheckFail(mmapID);
+        }
+        Log.i("MMKV", "Recover strategic for " + mmapID + " is " + strategic);
+        return recoverIndex.get(strategic);
+    }
+
+    private static int onMMKVFileLengthError(String mmapID) {
+        MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
+        if (gCallbackHandler != null) {
+            strategic = gCallbackHandler.onMMKVFileLengthError(mmapID);
+        }
+        Log.i("MMKV", "Recover strategic for " + mmapID + " is " + strategic);
+        return recoverIndex.get(strategic);
+    }
 
     // jni
     private long nativeHandle;

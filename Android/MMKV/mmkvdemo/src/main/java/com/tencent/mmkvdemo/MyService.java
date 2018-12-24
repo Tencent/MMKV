@@ -21,25 +21,29 @@
 package com.tencent.mmkvdemo;
 
 import android.content.Intent;
+import android.util.Log;
+
+import com.tencent.mmkv.MMKV;
 
 public class MyService extends BenchMarkBaseService {
     private static final String CALLER = "MyService";
+    public static final String CMD_REMOVE = "cmd_remove";
 
     @Override
     public void onCreate() {
         super.onCreate();
-        System.out.println("onCreate MyService");
+        Log.i("MMKV", "onCreate MyService");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        System.out.println("onDestroy MyService");
+        Log.i("MMKV", "onDestroy MyService");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        System.out.println("MyService onStartCommand");
+        Log.i("MMKV", "MyService onStartCommand");
         if (intent != null) {
             String cmd = intent.getStringExtra(CMD_ID);
             if (cmd != null) {
@@ -53,9 +57,17 @@ public class MyService extends BenchMarkBaseService {
                     super.batchWriteString(CALLER);
                 } else if (cmd.equals(CMD_PREPARE_ASHMEM_BY_CP)) {
                     super.prepareAshmemMMKVByCP();
+                } else if (cmd.equals(CMD_REMOVE)) {
+                    testRemove();
                 }
             }
         }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void testRemove() {
+        MMKV mmkv = GetMMKV();
+        Log.d("mmkv in child", "" + mmkv.decodeInt(CMD_ID));
+        mmkv.remove(CMD_ID);
     }
 }

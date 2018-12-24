@@ -21,44 +21,47 @@
 import Foundation
 
 
-@objc class DemoSwiftUsage : NSObject {
-	func testSwiftFunctionality() {
-		let mmkv = MMKV(id: "testSwift")!;
+class DemoSwiftUsage : NSObject {
+	@objc func testSwiftFunctionality() {
+
+        guard let mmkv = MMKV(mmapID: "testSwift") else {
+            return
+        }
+
+        mmkv.set(true, forKey: "bool")
+        print("Swift: bool = \(mmkv.bool(forKey: "bool"))")
+
+        mmkv.set(Int32(-1024), forKey: "int32")
+        print("Swift: int32 = \(mmkv.int32(forKey: "int32"))")
+
+        mmkv.set(UInt32.max, forKey: "uint32")
+        print("Swift: uint32 = \(mmkv.uint32(forKey: "uint32"))")
+
+        mmkv.set(Int64.min, forKey: "int64")
+        print("Swift: int64 = \(mmkv.int64(forKey: "int64"))")
+
+        mmkv.set(UInt64.max, forKey: "uint64")
+        print("Swift: uint64 = \(mmkv.uint64(forKey: "uint64"))")
+
+        mmkv.set(Float(-3.1415926), forKey: "float")
+        print("Swift: float = \(mmkv.float(forKey: "float"))")
+
+        mmkv.set(Double.infinity, forKey: "double")
+        print("Swift: double = \(mmkv.double(forKey: "double"))")
+        
+        mmkv.set("Hello from Swift", forKey: "string")
+        print("Swift: string = \(mmkv.string(forKey: "string") ?? "")")
 		
-		mmkv.setBool(true, forKey: "bool");
-		print("Swift: bool = \(mmkv.getBoolForKey("bool"))");
-		
-		mmkv.setInt32(-1024, forKey: "int32");
-		print("Swift: int32 = \(mmkv.getInt32ForKey("int32"))");
-		
-		mmkv.setUInt32(UInt32.max, forKey: "uint32");
-		print("Swift: uint32 = \(mmkv.getUInt32(forKey: "uint32"))");
-		
-		mmkv.setInt64(Int64.min, forKey: "int64");
-		print("Swift: int64 = \(mmkv.getInt64ForKey("int64"))");
-		
-		mmkv.setUInt64(UInt64.max, forKey: "uint64");
-		print("Swift: uint64 = \(mmkv.getUInt64(forKey:"uint64"))");
-		
-		mmkv.setFloat(-3.1415926, forKey: "float");
-		print("Swift: float = \(mmkv.getFloatForKey("float"))");
-		
-		mmkv.setDouble(Double.infinity, forKey: "double");
-		print("Swift: double = \(mmkv.getDoubleForKey("double"))");
-		
-		mmkv.setObject("Hello from Swift", forKey: "string");
-		print("Swift: string = \(mmkv.getObjectOf(NSString.self, forKey:"string"))");
-		
-		mmkv.setObject(NSDate(), forKey: "date");
-		let date = mmkv.getObjectOf(NSDate.self, forKey:"date") as! Date;
-		print("Swift: date = \(date.description(with: .current))");
-		
-		mmkv.setObject("Hello from Swift".data(using: .utf8), forKey: "data");
-		let data = mmkv.getObjectOf(NSData.self, forKey:"data");
-		let str = String(data: data as! Data, encoding: .utf8);
-		print("Swift: data = \(String(describing: str))");
-		
-		mmkv.removeValue(forKey: "bool");
-		print("Swift: after delete bool = \(mmkv.getBoolForKey("bool"))");
+        mmkv.set(NSDate(), forKey: "date")
+        let date = mmkv.date(forKey: "date")
+        print("Swift: date = \(date?.description(with: .current) ?? "null")")
+        
+        mmkv.set("Hello from Swift".data(using: .utf8) ?? Data(), forKey: "data")
+        let data = mmkv.data(forKey: "data")
+        let str = String(data: data ?? Data(), encoding: .utf8) ?? ""
+        print("Swift: data = \(str)")
+
+        mmkv.removeValue(forKey: "bool")
+        print("Swift: after delete bool = \(mmkv.bool(forKey: "bool"))")
 	}
 }

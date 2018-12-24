@@ -56,14 +56,16 @@ struct MiniPBEncodeItem {
     }
 
     MiniPBEncodeItem &operator=(const MiniPBEncodeItem &other) {
-        type = other.type;
-        compiledSize = other.compiledSize;
-        valueSize = other.valueSize;
-        value = other.value;
+        if (this != &other) {
+            type = other.type;
+            compiledSize = other.compiledSize;
+            valueSize = other.valueSize;
+            value = other.value;
 
-        if (type == PBEncodeItemType_NSString) {
-            if (value.tmpObjectValue != nullptr) {
-                CFRetain(value.tmpObjectValue);
+            if (type == PBEncodeItemType_NSString) {
+                if (value.tmpObjectValue != nullptr) {
+                    CFRetain(value.tmpObjectValue);
+                }
             }
         }
 

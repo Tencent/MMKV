@@ -22,84 +22,84 @@
 
 template <typename T, typename P>
 union Converter {
-    static_assert(sizeof(T) == sizeof(P), "size not match");
-    T first;
-    P second;
+	static_assert(sizeof(T) == sizeof(P), "size not match");
+	T first;
+	P second;
 };
 
 static inline int64_t Float64ToInt64(double v) {
-    Converter<double, int64_t> converter;
-    converter.first = v;
-    return converter.second;
+	Converter<double, int64_t> converter;
+	converter.first = v;
+	return converter.second;
 }
 
 static inline int32_t Float32ToInt32(float v) {
-    Converter<float, int32_t> converter;
-    converter.first = v;
-    return converter.second;
+	Converter<float, int32_t> converter;
+	converter.first = v;
+	return converter.second;
 }
 
 static inline double Int64ToFloat64(int64_t v) {
-    Converter<double, int64_t> converter;
-    converter.second = v;
-    return converter.first;
+	Converter<double, int64_t> converter;
+	converter.second = v;
+	return converter.first;
 }
 
 static inline float Int32ToFloat32(int32_t v) {
-    Converter<float, int32_t> converter;
-    converter.second = v;
-    return converter.first;
+	Converter<float, int32_t> converter;
+	converter.second = v;
+	return converter.first;
 }
 
 static inline uint64_t Int64ToUInt64(int64_t v) {
-    Converter<int64_t, uint64_t> converter;
-    converter.first = v;
-    return converter.second;
+	Converter<int64_t, uint64_t> converter;
+	converter.first = v;
+	return converter.second;
 }
 
 static inline int64_t UInt64ToInt64(uint64_t v) {
-    Converter<int64_t, uint64_t> converter;
-    converter.second = v;
-    return converter.first;
+	Converter<int64_t, uint64_t> converter;
+	converter.second = v;
+	return converter.first;
 }
 
 static inline uint32_t Int32ToUInt32(int32_t v) {
-    Converter<int32_t, uint32_t> converter;
-    converter.first = v;
-    return converter.second;
+	Converter<int32_t, uint32_t> converter;
+	converter.first = v;
+	return converter.second;
 }
 
 static inline int32_t UInt32ToInt32(uint32_t v) {
-    Converter<int32_t, uint32_t> converter;
-    converter.second = v;
-    return converter.first;
+	Converter<int32_t, uint32_t> converter;
+	converter.second = v;
+	return converter.first;
 }
 
 static inline int32_t logicalRightShift32(int32_t value, int32_t spaces) {
-    return UInt32ToInt32((Int32ToUInt32(value) >> spaces));
+	return UInt32ToInt32((Int32ToUInt32(value) >> spaces));
 }
 
 static inline int64_t logicalRightShift64(int64_t value, int32_t spaces) {
-    return UInt64ToInt64((Int64ToUInt64(value) >> spaces));
+	return UInt64ToInt64((Int64ToUInt64(value) >> spaces));
 }
 
 constexpr uint32_t littleEdian32Size = 4;
 constexpr uint32_t littleEdian64Size = 8;
 
 constexpr int32_t pbDoubleSize(Float64 value) {
-    return littleEdian64Size;
+	return littleEdian64Size;
 }
 
 constexpr int32_t pbFloatSize(Float32 value) {
-    return littleEdian32Size;
+	return littleEdian32Size;
 }
 
 constexpr int32_t pbFixed32Size(int32_t value) {
-    return littleEdian32Size;
+	return littleEdian32Size;
 }
 
 constexpr int32_t pbBoolSize(BOOL value) {
-    return 1;
+	return 1;
 }
 
 extern int32_t pbUInt32Size(int32_t value);

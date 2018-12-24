@@ -22,8 +22,10 @@ package com.tencent.mmkvdemo;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -32,11 +34,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import com.tencent.mmkv.MMKV;
+import com.tencent.mmkv.MMKVHandler;
+import com.tencent.mmkv.MMKVRecoverStrategic;
 
 import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_ID;
 import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_Size;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MMKVHandler {
     static private final String KEY_1 = "Ashmem_Key_1";
     static private final String KEY_2 = "Ashmem_Key_2";
     @Override
@@ -45,7 +49,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         String rootDir = "mmkv root: " + MMKV.initialize(this);
-        System.out.println(rootDir);
+        Log.i("MMKV", rootDir);
+
+        MMKV.registerHandler(this);
 
         TextView tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(rootDir);
@@ -62,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
                 //testInterProcessReKey();
             }
         });
+
+        //testHolderForMultiThread();
 
         //prepareInterProcessAshmem();
         //prepareInterProcessAshmemByContentProvider(KEY_1);
@@ -94,13 +102,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        testMMKV("testAES", "Tencent MMKV", false);
+        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false);
+        kv.close();
+
         testAshmem();
         testReKey();
 
         KotlinUsecaseKt.kotlinFunctionalTest();
 
-        //testInterProcessLock();
+        //testInterProcessLogic();
         //estImportSharedPreferences();
     }
 
@@ -110,62 +120,87 @@ public class MainActivity extends AppCompatActivity {
         MMKV.onExit();
     }
 
-    private void testInterProcessLock() {
+    private void testInterProcessLogic() {
+        MMKV mmkv = MMKV.mmkvWithID(MyService.MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        mmkv.putInt(MyService.CMD_ID, 1024);
+        Log.d("mmkv in main", "" + mmkv.decodeInt(MyService.CMD_ID));
+
         Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, MyService.CMD_REMOVE);
         startService(intent);
+
+        SystemClock.sleep(1000 * 3);
+        int value = mmkv.decodeInt(MyService.CMD_ID);
+        Log.d("mmkv", "" + value);
     }
 
-    private void testMMKV(String mmapID, String cryptKey, boolean decodeOnly) {
+    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly) {
         //MMKV kv = MMKV.defaultMMKV();
         MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey);
 
         if (!decodeOnly) {
             kv.encode("bool", true);
         }
-        System.out.println("bool: " + kv.decodeBool("bool"));
+        Log.i("MMKV", "bool: " + kv.decodeBool("bool"));
 
         if (!decodeOnly) {
             kv.encode("int", Integer.MIN_VALUE);
         }
-        System.out.println("int: " + kv.decodeInt("int"));
+        Log.i("MMKV", "int: " + kv.decodeInt("int"));
 
         if (!decodeOnly) {
             kv.encode("long", Long.MAX_VALUE);
         }
-        System.out.println("long: " + kv.decodeLong("long"));
+        Log.i("MMKV", "long: " + kv.decodeLong("long"));
 
         if (!decodeOnly) {
             kv.encode("float", -3.14f);
         }
-        System.out.println("float: " + kv.decodeFloat("float"));
+        Log.i("MMKV", "float: " + kv.decodeFloat("float"));
 
         if (!decodeOnly) {
             kv.encode("double", Double.MIN_VALUE);
         }
-        System.out.println("double: " + kv.decodeDouble("double"));
+        Log.i("MMKV", "double: " + kv.decodeDouble("double"));
 
         if (!decodeOnly) {
             kv.encode("string", "Hello from mmkv");
         }
-        System.out.println("string: " + kv.decodeString("string"));
+        Log.i("MMKV", "string: " + kv.decodeString("string"));
 
         if (!decodeOnly) {
             byte[] bytes = {'m', 'm', 'k', 'v'};
             kv.encode("bytes", bytes);
         }
-        System.out.println("bytes: " + new String(kv.decodeBytes("bytes")));
+        Log.i("MMKV", "bytes: " + new String(kv.decodeBytes("bytes")));
 
-        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
-        System.out.println("count = " + kv.count() + ", totalSize = " + kv.totalSize());
-        System.out.println("containsKey[string]: " + kv.containsKey("string"));
+        if (!decodeOnly) {
+            TestParcelable testParcelable = new TestParcelable(1024, "Hi Parcelable");
+            kv.encode("parcel", testParcelable);
+        }
+        TestParcelable result = kv.decodeParcelable("parcel", TestParcelable.class);
+        Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+
+        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
+        Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
+        Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
 
         kv.removeValueForKey("bool");
-        System.out.println("bool: " + kv.decodeBool("bool"));
+        Log.i("MMKV", "bool: " + kv.decodeBool("bool"));
         kv.removeValuesForKeys(new String[] {"int", "long"});
+
+        kv.encode("null string", "some string");
+        Log.i("MMKV", "string before set null: " + kv.decodeString("null string"));
+        kv.encode("null string", (String) null);
+        Log.i("MMKV", "string after set null: " + kv.decodeString("null string")
+                          + ", containsKey:" + kv.contains("null string"));
+
         //kv.clearAll();
         kv.clearMemoryCache();
-        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
-        System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
+        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
+        Log.i("MMKV", "isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
+
+        return kv;
     }
 
     private void testImportSharedPreferences() {
@@ -190,22 +225,21 @@ public class MainActivity extends AppCompatActivity {
         kv.importFromSharedPreferences(preferences);
         editor.clear().commit();
 
-        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
+        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
 
-        System.out.println("bool: " + kv.getBoolean("bool", false));
-        System.out.println("int: " + kv.getInt("int", 0));
-        System.out.println("long: " + kv.getLong("long", 0));
-        System.out.println("float: " + kv.getFloat("float", 0));
-        System.out.println("double: " + kv.decodeDouble("double"));
-        System.out.println("string: " + kv.getString("string", null));
-        System.out.println("string-set: " + kv.getStringSet("string-set", null));
+        Log.i("MMKV", "bool: " + kv.getBoolean("bool", false));
+        Log.i("MMKV", "int: " + kv.getInt("int", 0));
+        Log.i("MMKV", "long: " + kv.getLong("long", 0));
+        Log.i("MMKV", "float: " + kv.getFloat("float", 0));
+        Log.i("MMKV", "double: " + kv.decodeDouble("double"));
+        Log.i("MMKV", "string: " + kv.getString("string", null));
+        Log.i("MMKV", "string-set: " + kv.getStringSet("string-set", null));
     }
 
     private void testReKey() {
         final String mmapID = "testAES_reKey";
-        testMMKV(mmapID, null, false);
+        MMKV kv = testMMKV(mmapID, null, false);
 
-        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, null);
         kv.reKey("Key_seq_1");
         kv.clearMemoryCache();
         testMMKV(mmapID, "Key_seq_1", true);
@@ -235,38 +269,38 @@ public class MainActivity extends AppCompatActivity {
                                         MMKV.SINGLE_PROCESS_MODE, cryptKey);
 
         kv.encode("bool", true);
-        System.out.println("bool: " + kv.decodeBool("bool"));
+        Log.i("MMKV", "bool: " + kv.decodeBool("bool"));
 
         kv.encode("int", Integer.MIN_VALUE);
-        System.out.println("int: " + kv.decodeInt("int"));
+        Log.i("MMKV", "int: " + kv.decodeInt("int"));
 
         kv.encode("long", Long.MAX_VALUE);
-        System.out.println("long: " + kv.decodeLong("long"));
+        Log.i("MMKV", "long: " + kv.decodeLong("long"));
 
         kv.encode("float", -3.14f);
-        System.out.println("float: " + kv.decodeFloat("float"));
+        Log.i("MMKV", "float: " + kv.decodeFloat("float"));
 
         kv.encode("double", Double.MIN_VALUE);
-        System.out.println("double: " + kv.decodeDouble("double"));
+        Log.i("MMKV", "double: " + kv.decodeDouble("double"));
 
         kv.encode("string", "Hello from mmkv");
-        System.out.println("string: " + kv.decodeString("string"));
+        Log.i("MMKV", "string: " + kv.decodeString("string"));
 
         byte[] bytes = {'m', 'm', 'k', 'v'};
         kv.encode("bytes", bytes);
-        System.out.println("bytes: " + new String(kv.decodeBytes("bytes")));
+        Log.i("MMKV", "bytes: " + new String(kv.decodeBytes("bytes")));
 
-        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
-        System.out.println("count = " + kv.count() + ", totalSize = " + kv.totalSize());
-        System.out.println("containsKey[string]: " + kv.containsKey("string"));
+        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
+        Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
+        Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
 
         kv.removeValueForKey("bool");
-        System.out.println("bool: " + kv.decodeBool("bool"));
+        Log.i("MMKV", "bool: " + kv.decodeBool("bool"));
         kv.removeValuesForKeys(new String[] {"int", "long"});
         //kv.clearAll();
         kv.clearMemoryCache();
-        System.out.println("allKeys: " + Arrays.toString(kv.allKeys()));
-        System.out.println("isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
+        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
+        Log.i("MMKV", "isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
     }
 
     private void prepareInterProcessAshmem() {
@@ -296,5 +330,38 @@ public class MainActivity extends AppCompatActivity {
         mmkv.reKey(KEY_2);
 
         prepareInterProcessAshmemByContentProvider(KEY_2);
+    }
+
+    private void testHolderForMultiThread() {
+        final int COUNT = 1;
+        final int THREAD_COUNT = 1;
+        final String ID = "Hotel";
+        final String KEY = "California";
+        final String VALUE = "You can checkout any time you like, but you can never leave.";
+
+        final MMKV mmkv = MMKV.mmkvWithID(ID);
+        Runnable task = new Runnable() {
+            public void run() {
+                for (int i = 0; i < COUNT; ++i) {
+                    mmkv.putString(KEY, VALUE);
+                    mmkv.getString(KEY, null);
+                    mmkv.remove(KEY);
+                }
+            }
+        };
+
+        for (int i = 0; i < THREAD_COUNT; ++i) {
+            new Thread(task, "MMKV-" + i).start();
+        }
+    }
+
+    @Override
+    public MMKVRecoverStrategic onMMKVCRCCheckFail(String mmapID) {
+        return MMKVRecoverStrategic.OnErrorRecover;
+    }
+
+    @Override
+    public MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
+        return MMKVRecoverStrategic.OnErrorRecover;
     }
 }

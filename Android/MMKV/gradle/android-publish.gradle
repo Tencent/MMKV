@@ -1,3 +1,6 @@
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 // OSS_ANDROID_TEMPLATE_FILE_HEADER
 /**
  * New android-publish gradle script
@@ -70,10 +73,16 @@ def pomConfig = {
     }
 }
 
+def curArtifactId
+
 def bintrayPublicationNames = []
 android.libraryVariants.all { variant ->
     // Skipped debug variants
     if (variant.buildType.name == "debug") {
+        return
+    }
+    // Skipped non publishing variants
+    if(!android.defaultPublishConfig.startsWith(variant.flavorName)) {
         return
     }
 
@@ -92,7 +101,7 @@ android.libraryVariants.all { variant ->
         artifactIdSuffix = '-' + artifactIdSuffix
     }
 
-    def curArtifactId = "${POM_ARTIFACT_ID}${artifactIdSuffix}"
+    curArtifactId = "${POM_ARTIFACT_ID}${artifactIdSuffix}"
 
     /**
      * Includes
@@ -191,7 +200,8 @@ afterEvaluate {
         pkg {
             repo = 'maven'
             userOrg = BINTRAY_ORGANIZATION
-            name = "${GROUP}:${POM_ARTIFACT_ID}"
+//            name = "${GROUP}:${POM_ARTIFACT_ID}"
+            name = "${GROUP}:" + curArtifactId
             licenses = BINTRAY_LICENCE
             vcsUrl = POM_SCM_URL
             websiteUrl = POM_URL

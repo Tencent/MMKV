@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include "native-bridge.h"
 #include "MMBuffer.h"
 #include "MMKV.h"
 #include "MMKVLog.h"
@@ -29,8 +30,12 @@ using namespace std;
 
 static jclass g_cls = nullptr;
 static jfieldID g_fileID = nullptr;
+static jmethodID g_callbackOnCRCFailID = nullptr;
+static jmethodID g_callbackOnFileLengthErrorID = nullptr;
+static JavaVM *g_currentJVM = nullptr;
 
 extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+    g_currentJVM = vm;
     JNIEnv *env;
     if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
@@ -48,8 +53,18 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     g_cls = reinterpret_cast<jclass>(env->NewGlobalRef(instance));
     g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
-    if (!g_cls) {
+    if (!g_cls || !g_fileID) {
         MMKVError("fail to locate fileID");
+    }
+    g_callbackOnCRCFailID =
+        env->GetStaticMethodID(g_cls, "onMMKVCRCCheckFail", "(Ljava/lang/String;)I");
+    if (!g_callbackOnCRCFailID) {
+        MMKVError("fail to get method id for onMMKVCRCCheckFail");
+    }
+    g_callbackOnFileLengthErrorID =
+        env->GetStaticMethodID(g_cls, "onMMKVFileLengthError", "(Ljava/lang/String;)I");
+    if (!g_callbackOnFileLengthErrorID) {
+        MMKVError("fail to get method id for onMMKVFileLengthError");
     }
 
     return JNI_VERSION_1_6;
@@ -122,6 +137,39 @@ static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
         return result;
     }
     return nullptr;
+}
+
+static JNIEnv *getCurrentEnv() {
+    if (g_currentJVM) {
+        JNIEnv *currentEnv = nullptr;
+        auto ret = g_currentJVM->GetEnv(reinterpret_cast<void **>(&currentEnv), JNI_VERSION_1_6);
+        if (ret == JNI_OK) {
+            return currentEnv;
+        } else {
+            MMKVError("fail to get current JNIEnv: %d", ret);
+        }
+    }
+    return nullptr;
+}
+
+MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
+    auto currentEnv = getCurrentEnv();
+    if (g_currentJVM && g_callbackOnCRCFailID) {
+        jstring str = string2jstring(currentEnv, mmapID);
+        auto strategic = currentEnv->CallStaticIntMethod(g_cls, g_callbackOnCRCFailID, str);
+        return static_cast<MMKVRecoverStrategic>(strategic);
+    }
+    return OnErrorDiscard;
+}
+
+MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
+    auto currentEnv = getCurrentEnv();
+    if (currentEnv && g_callbackOnFileLengthErrorID) {
+        jstring str = string2jstring(currentEnv, mmapID);
+        auto strategic = currentEnv->CallStaticIntMethod(g_cls, g_callbackOnFileLengthErrorID, str);
+        return static_cast<MMKVRecoverStrategic>(strategic);
+    }
+    return OnErrorDiscard;
 }
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
@@ -335,10 +383,15 @@ extern "C" JNIEXPORT JNICALL jdouble Java_com_tencent_mmkv_MMKV_decodeDouble(
 extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeString(
     JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
-    if (kv && oKey && oValue) {
+    if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        string value = jstring2string(env, oValue);
-        return (jboolean) kv->setStringForKey(value, key);
+        if (oValue) {
+            string value = jstring2string(env, oValue);
+            return (jboolean) kv->setStringForKey(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
+        }
     }
     return (jboolean) false;
 }
@@ -360,20 +413,25 @@ extern "C" JNIEXPORT JNICALL jstring Java_com_tencent_mmkv_MMKV_decodeString(
 extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeBytes(
     JNIEnv *env, jobject obj, jlong handle, jstring oKey, jbyteArray oValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
-    if (kv && oKey && oValue) {
+    if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        MMBuffer value(0);
-        {
-            jsize len = env->GetArrayLength(oValue);
-            void *bufferPtr = env->GetPrimitiveArrayCritical(oValue, nullptr);
-            if (bufferPtr) {
-                value = MMBuffer(bufferPtr, len);
-                env->ReleasePrimitiveArrayCritical(oValue, bufferPtr, JNI_ABORT);
-            } else {
-                MMKVError("fail to get array: %s=%p", key.c_str(), oValue);
+        if (oValue) {
+            MMBuffer value(0);
+            {
+                jsize len = env->GetArrayLength(oValue);
+                void *bufferPtr = env->GetPrimitiveArrayCritical(oValue, nullptr);
+                if (bufferPtr) {
+                    value = MMBuffer(bufferPtr, len);
+                    env->ReleasePrimitiveArrayCritical(oValue, bufferPtr, JNI_ABORT);
+                } else {
+                    MMKVError("fail to get array: %s=%p", key.c_str(), oValue);
+                }
             }
+            return (jboolean) kv->setBytesForKey(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
         }
-        return (jboolean) kv->setBytesForKey(value, key);
     }
     return (jboolean) false;
 }
@@ -489,10 +547,15 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_isFileValid(JNI
 extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeSet(
     JNIEnv *env, jobject instance, jlong handle, jstring oKey, jobjectArray arrStr) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
-    if (kv && oKey && arrStr) {
+    if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        vector<string> value = jarray2vector(env, arrStr);
-        return (jboolean) kv->setVectorForKey(value, key);
+        if (arrStr) {
+            vector<string> value = jarray2vector(env, arrStr);
+            return (jboolean) kv->setVectorForKey(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
+        }
     }
     return (jboolean) false;
 }
@@ -587,5 +650,20 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_checkReSetCryptKey(
         } else {
             kv->checkReSetCryptKey(&newKey);
         }
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_trim(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->trim();
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_close(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->close();
+        env->SetLongField(instance, g_fileID, 0);
     }
 }

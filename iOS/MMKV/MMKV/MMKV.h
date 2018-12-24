@@ -18,66 +18,82 @@
  * limitations under the License.
  */
 
-#import <Foundation/Foundation.h>
+#import "MMKVHandler.h"
 
 @interface MMKV : NSObject
+
+NS_ASSUME_NONNULL_BEGIN
 
 // a generic purpose instance
 + (instancetype)defaultMMKV;
 
 // mmapID: any unique ID (com.tencent.xin.pay, etc)
 // if you want a per-user mmkv, you could merge user-id within mmapID
-+ (instancetype)mmkvWithID:(NSString *)mmapID;
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(init(mmapID:));
 
 // mmapID: any unique ID (com.tencent.xin.pay, etc)
 // if you want a per-user mmkv, you could merge user-id within mmapID
 // cryptKey: 16 byte at most
-+ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey;
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
-- (BOOL)reKey:(NSData *)newKey;
-- (NSData *)cryptKey;
+- (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
+- (nullable NSData *)cryptKey;
 
-// object: NSString/NSData/NSDate
-- (BOOL)setObject:(id)obj forKey:(NSString *)key;
+- (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (BOOL)setBool:(BOOL)value forKey:(NSString *)key;
+- (BOOL)setBool:(BOOL)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (BOOL)setInt32:(int32_t)value forKey:(NSString *)key;
+- (BOOL)setInt32:(int32_t)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key;
+- (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (BOOL)setInt64:(int64_t)value forKey:(NSString *)key;
+- (BOOL)setInt64:(int64_t)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key;
+- (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (BOOL)setFloat:(float)value forKey:(NSString *)key;
+- (BOOL)setFloat:(float)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (BOOL)setDouble:(double)value forKey:(NSString *)key;
+- (BOOL)setDouble:(double)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (id)getObjectOfClass:(Class)cls forKey:(NSString *)key;
+- (BOOL)setString:(NSString *)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (bool)getBoolForKey:(NSString *)key;
-- (bool)getBoolForKey:(NSString *)key defaultValue:(bool)defaultValue;
+- (BOOL)setDate:(NSDate *)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (int32_t)getInt32ForKey:(NSString *)key;
-- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue;
+- (BOOL)setData:(NSData *)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
-- (uint32_t)getUInt32ForKey:(NSString *)key;
-- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue;
+- (nullable id)getObjectOfClass:(Class)cls forKey:(NSString *)key NS_SWIFT_NAME(object(of:forKey:));
 
-- (int64_t)getInt64ForKey:(NSString *)key;
-- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue;
+- (BOOL)getBoolForKey:(NSString *)key __attribute__((swift_name("bool(forKey:)")));
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue __attribute__((swift_name("bool(forKey:defaultValue:)")));
 
-- (uint64_t)getUInt64ForKey:(NSString *)key;
-- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue;
+- (int32_t)getInt32ForKey:(NSString *)key NS_SWIFT_NAME(int32(forKey:));
+- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue NS_SWIFT_NAME(int32(forKey:defaultValue:));
 
-- (float)getFloatForKey:(NSString *)key;
-- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue;
+- (uint32_t)getUInt32ForKey:(NSString *)key NS_SWIFT_NAME(uint32(forKey:));
+- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue NS_SWIFT_NAME(uint32(forKey:defaultValue:));
 
-- (double)getDoubleForKey:(NSString *)key;
-- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue;
+- (int64_t)getInt64ForKey:(NSString *)key NS_SWIFT_NAME(int64(forKey:));
+- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue NS_SWIFT_NAME(int64(forKey:defaultValue:));
 
-- (BOOL)containsKey:(NSString *)key;
+- (uint64_t)getUInt64ForKey:(NSString *)key NS_SWIFT_NAME(uint64(forKey:));
+- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue NS_SWIFT_NAME(uint64(forKey:defaultValue:));
+
+- (float)getFloatForKey:(NSString *)key NS_SWIFT_NAME(float(forKey:));
+- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue NS_SWIFT_NAME(float(forKey:defaultValue:));
+
+- (double)getDoubleForKey:(NSString *)key NS_SWIFT_NAME(double(forKey:));
+- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue NS_SWIFT_NAME(double(forKey:defaultValue:));
+
+- (nullable NSString *)getStringForKey:(NSString *)key NS_SWIFT_NAME(string(forKey:));
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue NS_SWIFT_NAME(string(forKey:defaultValue:));
+
+- (nullable NSDate *)getDateForKey:(NSString *)key NS_SWIFT_NAME(date(forKey:));
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue NS_SWIFT_NAME(date(forKey:defaultValue:));
+
+- (nullable NSData *)getDataForKey:(NSString *)key NS_SWIFT_NAME(data(forKey:));
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue NS_SWIFT_NAME(data(forKey:defaultValue:));
+
+- (BOOL)containsKey:(NSString *)key NS_SWIFT_NAME(contains(key:));
 
 - (size_t)count;
 
@@ -85,19 +101,35 @@
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 
-- (void)removeValueForKey:(NSString *)key;
+- (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 
-- (void)removeValuesForKeys:(NSArray *)arrKeys;
-
-- (void)clearMemoryCache;
+- (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
 
 - (void)clearAll;
+
+// MMKV's size won't reduce after deleting key-values
+// call this method after lots of deleting f you care about disk usage
+// note that `clearAll` has the similar effect of `trim`
+- (void)trim;
+
+// call this method if the instance is no longer needed in the near future
+// any subsequent call to the instance is undefined behavior
+- (void)close;
+
+// call this method if you are facing memory-warning
+// any subsequent call to the instance will load all key-values from file again
+- (void)clearMemoryCache;
 
 // you don't need to call this, really, I mean it
 // unless you care about out of battery
 - (void)sync;
 
 // for CrashProtected Only!!
-+ (BOOL)isFileValid:(NSString *)mmapID;
++ (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
+
++ (void)registerHandler:(id<MMKVHandler>)handler;
++ (void)unregiserHandler;
+
+NS_ASSUME_NONNULL_END
 
 @end
