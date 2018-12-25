@@ -36,8 +36,8 @@ NS_ASSUME_NONNULL_BEGIN
 // cryptKey: 16 byte at most
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
-+ (instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:relativePath:));
-+ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:relativePath:));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
 
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
