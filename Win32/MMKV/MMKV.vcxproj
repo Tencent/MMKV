@@ -96,6 +96,12 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MmapedFile.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h") do xcopy /y %%f "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying Header Files</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -131,6 +137,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MmapedFile.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h") do xcopy /y %%f "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying Header Files</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -166,29 +178,19 @@
     <ClInclude Include="crc32\zlib\crc32.h" />
     <ClInclude Include="crc32\zlib\zconf.h" />
     <ClInclude Include="crc32\zlib\zutil.h" />
-    <CopyFileToFolders Include="InterProcessLock.h" />
+    <ClInclude Include="InterProcessLock.h" />
     <ClInclude Include="MiniPBCoder.h" />
-    <CopyFileToFolders Include="MmapedFile.h" />
-    <CopyFileToFolders Include="MMBuffer.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="MMKV.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
-    </CopyFileToFolders>
+    <ClInclude Include="MmapedFile.h" />
+    <ClInclude Include="MMBuffer.h" />
+    <ClInclude Include="MMKV.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="MMKVLog.h" />
-    <CopyFileToFolders Include="MMKVMetaInfo.hpp" />
+    <ClInclude Include="MMKVMetaInfo.hpp" />
     <ClInclude Include="PBEncodeItem.hpp" />
     <ClInclude Include="PBUtility.h" />
     <ClInclude Include="ScopedLock.hpp" />
     <ClInclude Include="targetver.h" />
-    <CopyFileToFolders Include="ThreadLock.h" />
+    <ClInclude Include="ThreadLock.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aes\AESCrypt.cpp" />

@@ -73,10 +73,12 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 ### Installation Via Source
 * Clone or Download source from GitHub;
 * Add `Win32/MMKV/MMKV.vcxproj` to your solution;
+* Add MMKV to your project's dependencies;
 * Add `$(OutDir)` to your project's `C/C++` -> `General` -> `Additional Include Directories`;
 * Add `$(OutDir)` to your project's `Linker` -> `General` -> `Additional Library Directories`;
 * Add `MMKV.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
 * MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or wise versa.
+* MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
 
 For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
 
