@@ -104,6 +104,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)getDataForKey:(NSString *)key NS_SWIFT_NAME(data(forKey:));
 - (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue NS_SWIFT_NAME(data(forKey:defaultValue:));
 
+// return the actual size consumption of the key's value
+// Note: might be a little bigger than value's length
+- (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:));
+
 - (BOOL)containsKey:(NSString *)key NS_SWIFT_NAME(contains(key:));
 
 - (size_t)count;

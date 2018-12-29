@@ -1214,6 +1214,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return [self getObjectOfClass:NSData.class forKey:key];
 }
 
+- (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:)) {
+	if (key.length <= 0) {
+		return 0;
+	}
+	NSData *data = [self getRawDataForKey:key];
+	return data.length;
+}
+
 #pragma mark - enumerate
 
 - (BOOL)containsKey:(NSString *)key {
