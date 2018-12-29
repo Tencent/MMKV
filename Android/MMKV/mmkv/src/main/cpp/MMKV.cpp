@@ -1204,6 +1204,15 @@ bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &res
     return false;
 }
 
+size_t MMKV::getValueSizeForKey(const std::string &key) {
+    if (key.empty()) {
+        return 0;
+    }
+    SCOPEDLOCK(m_lock);
+    auto &data = getDataForKey(key);
+    return data.length();
+}
+
 #pragma mark - enumerate
 
 bool MMKV::containsKey(const std::string &key) {

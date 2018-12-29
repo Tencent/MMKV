@@ -679,3 +679,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_close(JNIEnv *env, 
         env->SetLongField(instance, g_fileID, 0);
     }
 }
+
+extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(JNIEnv *env,
+                                                                       jobject instance,
+                                                                       jlong handle,
+                                                                       jstring oKey) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return kv->getValueSizeForKey(key);
+    }
+    return 0;
+}

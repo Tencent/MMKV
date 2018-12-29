@@ -382,6 +382,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return defaultValue;
     }
 
+    // return the actual size consumption of the key's value
+    // Note: might be a little bigger than value's length
+    public int getValueSize(String key) {
+        return valueSize(nativeHandle, key);
+    }
+
     public boolean containsKey(String key) {
         return containsKey(nativeHandle, key);
     }
@@ -677,4 +683,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native long totalSize(long handle);
 
     private native void removeValueForKey(long handle, String key);
+
+    private native int valueSize(long handle, String key);
 }
