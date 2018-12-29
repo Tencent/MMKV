@@ -36,12 +36,15 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
+	// not necessary: set MMKV's root dir
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 	NSString *libraryPath = (NSString *) [paths firstObject];
 	if ([libraryPath length] > 0) {
 		NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
 		[MMKV setMMKVBasePath:rootDir];
 	}
+
+	// register error handler
 	[MMKV registerHandler:self];
 
 	[self funcionalTest];
