@@ -101,37 +101,26 @@ static NSString *encodeMmapID(NSString *mmapID);
 	return [self mmkvWithID:mmapID cryptKey:nil relativePath:path];
 }
 
-+ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)path {
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
 	if (mmapID.length <= 0) {
 		return nil;
 	}
-	if (![self canCreateMMKVPath:mmapID relativePath:path]) {
+
+	NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
+	if (!isFileExist(kvPath)) {
+		if (!createFile(kvPath))
 		return nil;
 	}
+	NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
 
 	CScopedLock lock(g_instanceLock);
 
-	NSString *kvKey = [self mmapKeyWithMMapID:mmapID relativePath:path];
 	MMKV *kv = [g_instanceDic objectForKey:kvKey];
 	if (kv == nil) {
-		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:path];
+		kv = [[MMKV alloc] initWithMMapID:kvKey cryptKey:cryptKey path:kvPath];
 		[g_instanceDic setObject:kv forKey:kvKey];
 	}
 	return kv;
-}
-
-+ (BOOL)canCreateMMKVPath:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
-	if (relativePath) {
-		NSString *path = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
-		if (isFileExist(path)) {
-			return true;
-		} else {
-			BOOL ret = createFile(path);
-			return ret;
-		}
-	} else {
-		return true;
-	}
 }
 
 + (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
@@ -141,20 +130,16 @@ static NSString *encodeMmapID(NSString *mmapID);
 	} else {
 		string = mmapID;
 	}
-	MMKVInfo(@"%s mmapKey: %@", __PRETTY_FUNCTION__, string);
+	MMKVInfo(@"mmapKey: %@", string);
 	return string;
 }
 
-- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
+- (instancetype)initWithMMapID:(NSString *)kvKey cryptKey:(NSData *)cryptKey path:(NSString *)path {
 	if (self = [super init]) {
 		m_lock = [[NSRecursiveLock alloc] init];
 
-		m_mmapID = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
-
-		m_path = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
-		if (!isFileExist(m_path)) {
-			createFile(m_path);
-		}
+		m_mmapID = kvKey;
+		m_path = path;
 		m_crcPath = [MMKV crcPathWithMappedKVPath:m_path];
 
 		if (cryptKey.length > 0) {
@@ -1320,22 +1305,19 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
-+ (NSString *)mappedKVPathWithID:(NSString *)mmapID {
-	return [self mappedKVPathWithID:mmapID relativePath:nil];
-}
-
 + (NSString *)mappedKVPathWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
+	NSString *basePath = nil;
 	if ([path length] > 0) {
-		NSString *mmapIDstring = encodeMmapID(mmapID);
-		return [path stringByAppendingPathComponent:mmapIDstring];
+		basePath = path;
 	} else {
-		NSString *basePath = [self mappedKVBasePath];
-		if ([basePath length] > 0) {
-			NSString *mmapIDstring = encodeMmapID(mmapID);
-			return [basePath stringByAppendingPathComponent:mmapIDstring];
-		} else {
-			return @"";
-		}
+		basePath = [self mappedKVBasePath];
+	}
+
+	if ([basePath length] > 0) {
+		NSString *mmapIDstring = encodeMmapID(mmapID);
+		return [basePath stringByAppendingPathComponent:mmapIDstring];
+	} else {
+		return @"";
 	}
 }
 

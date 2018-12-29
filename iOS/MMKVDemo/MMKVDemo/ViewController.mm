@@ -61,7 +61,10 @@
 }
 
 - (void)funcionalTest {
-	MMKV *mmkv = [MMKV mmkvWithID:@"test/case1"];
+	auto path = [MMKV mappedKVBasePath];
+	path = [path stringByDeletingLastPathComponent];
+	path = [path stringByAppendingPathComponent:@"mmkv_2"];
+	auto mmkv = [MMKV mmkvWithID:@"test/case1" relativePath:path];
 
 	[mmkv setBool:YES forKey:@"bool"];
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);

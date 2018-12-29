@@ -144,6 +144,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)registerHandler:(id<MMKVHandler>)handler;
 + (void)unregiserHandler;
 
++ (NSString *)mappedKVBasePath;
+
 NS_ASSUME_NONNULL_END
 
 @end
