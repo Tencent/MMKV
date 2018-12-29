@@ -1305,13 +1305,26 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
-+ (NSString *)mappedKVBasePath {
+static NSString *g_basePath = nil;
++ (NSString *)mmkvBasePath {
+	if (g_basePath.length > 0) {
+		return g_basePath;
+	}
+
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-	NSString *nsLibraryPath = (NSString *) [paths firstObject];
-	if ([nsLibraryPath length] > 0) {
-		return [nsLibraryPath stringByAppendingPathComponent:@"mmkv"];
+	NSString *documentPath = (NSString *) [paths firstObject];
+	if ([documentPath length] > 0) {
+		g_basePath = [documentPath stringByAppendingPathComponent:@"mmkv"];
+		return g_basePath;
 	} else {
 		return @"";
+	}
+}
+
++ (void)setMMKVBasePath:(NSString *)basePath {
+	if (basePath.length > 0) {
+		g_basePath = basePath;
+		MMKVInfo(@"set MMKV base path to: %@", g_basePath);
 	}
 }
 
@@ -1320,7 +1333,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if ([path length] > 0) {
 		basePath = path;
 	} else {
-		basePath = [self mappedKVBasePath];
+		basePath = [self mmkvBasePath];
 	}
 
 	if ([basePath length] > 0) {

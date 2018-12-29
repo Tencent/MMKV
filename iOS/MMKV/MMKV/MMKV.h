@@ -47,6 +47,9 @@ NS_ASSUME_NONNULL_BEGIN
 // relativePath: custom path of the file, `NSDocumentDirectory/mmkv` by default
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
 
++ (NSString *)mmkvBasePath;
++ (void)setMMKVBasePath:(NSString *)basePath;
+
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
 
@@ -147,8 +150,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)registerHandler:(id<MMKVHandler>)handler;
 + (void)unregiserHandler;
-
-+ (NSString *)mappedKVBasePath;
 
 NS_ASSUME_NONNULL_END
 

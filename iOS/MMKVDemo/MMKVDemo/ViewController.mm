@@ -36,6 +36,12 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+	NSString *libraryPath = (NSString *) [paths firstObject];
+	if ([libraryPath length] > 0) {
+		NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
+		[MMKV setMMKVBasePath:rootDir];
+	}
 	[MMKV registerHandler:self];
 
 	[self funcionalTest];
@@ -61,7 +67,7 @@
 }
 
 - (void)funcionalTest {
-	auto path = [MMKV mappedKVBasePath];
+	auto path = [MMKV mmkvBasePath];
 	path = [path stringByDeletingLastPathComponent];
 	path = [path stringByAppendingPathComponent:@"mmkv_2"];
 	auto mmkv = [MMKV mmkvWithID:@"test/case1" relativePath:path];
