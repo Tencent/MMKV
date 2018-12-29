@@ -45,7 +45,8 @@ NS_ASSUME_NONNULL_BEGIN
 // if you want a per-user mmkv, you could merge user-id within mmapID
 // cryptKey: 16 byte at most
 // relativePath: custom path of the file, `NSDocumentDirectory/mmkv` by default
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath
+:));
 
 // default to `NSDocumentDirectory/mmkv`
 + (NSString *)mmkvBasePath;

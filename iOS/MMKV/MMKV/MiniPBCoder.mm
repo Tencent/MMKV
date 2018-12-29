@@ -246,7 +246,7 @@
 	if (!cls) {
 		cls = [(NSObject *) obj class];
 	}
-    
+
 	if (cls == [NSString class]) {
 		return m_inputData->readString();
 	} else if (cls == [NSMutableString class]) {

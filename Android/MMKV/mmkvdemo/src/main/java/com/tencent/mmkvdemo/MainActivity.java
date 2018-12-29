@@ -37,6 +37,8 @@ import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVRecoverStrategic;
 
+import org.jetbrains.annotations.Nullable;
+
 import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_ID;
 import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_Size;
 
@@ -48,7 +50,10 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String rootDir = "mmkv root: " + MMKV.initialize(this);
+        // set root dir
+        // String rootDir = "mmkv root: " + MMKV.initialize(this);
+        String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
+        String rootDir = "mmkv root: " + MMKV.initialize(dir);
         Log.i("MMKV", rootDir);
 
         MMKV.registerHandler(this);
@@ -102,8 +107,11 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             }
         });
 
-        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false);
-        kv.close();
+        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
+        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false, otherDir);
+        if (kv != null) {
+            kv.close();
+        }
 
         testAshmem();
         testReKey();
@@ -134,9 +142,13 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         Log.d("mmkv", "" + value);
     }
 
-    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly) {
+    @Nullable
+    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String relativePath) {
         //MMKV kv = MMKV.defaultMMKV();
-        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, relativePath);
+        if (kv == null) {
+            return null;
+        }
 
         if (!decodeOnly) {
             kv.encode("bool", true);
@@ -238,19 +250,19 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
 
     private void testReKey() {
         final String mmapID = "testAES_reKey";
-        MMKV kv = testMMKV(mmapID, null, false);
+        MMKV kv = testMMKV(mmapID, null, false, null);
 
         kv.reKey("Key_seq_1");
         kv.clearMemoryCache();
-        testMMKV(mmapID, "Key_seq_1", true);
+        testMMKV(mmapID, "Key_seq_1", true, null);
 
         kv.reKey("Key_seq_2");
         kv.clearMemoryCache();
-        testMMKV(mmapID, "Key_seq_2", true);
+        testMMKV(mmapID, "Key_seq_2", true, null);
 
         kv.reKey(null);
         kv.clearMemoryCache();
-        testMMKV(mmapID, null, true);
+        testMMKV(mmapID, null, true, null);
     }
 
     private void interProcessBaselineTest(String cmd) {

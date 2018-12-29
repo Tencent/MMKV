@@ -71,7 +71,7 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 extern "C" JNIEXPORT JNICALL void
-Java_com_tencent_mmkv_MMKV_initialize(JNIEnv *env, jobject obj, jstring rootDir) {
+Java_com_tencent_mmkv_MMKV_jniInitialize(JNIEnv *env, jobject obj, jstring rootDir) {
     if (!rootDir) {
         return;
     }
@@ -173,21 +173,33 @@ MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
 }
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
-    JNIEnv *env, jobject obj, jstring mmapID, jint mode, jstring cryptKey) {
+    JNIEnv *env, jobject obj, jstring mmapID, jint mode, jstring cryptKey, jstring relativePath) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return (jlong) kv;
     }
     string str = jstring2string(env, mmapID);
 
-    if (cryptKey != nullptr) {
+    bool done = false;
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
-            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt);
+            if (relativePath) {
+                string path = jstring2string(env, relativePath);
+                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, &path);
+            } else {
+                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, nullptr);
+            }
+            done = true;
         }
     }
-    if (!kv) {
-        kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr);
+    if (!done) {
+        if (relativePath) {
+            string path = jstring2string(env, relativePath);
+            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, &path);
+        } else {
+            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, nullptr);
+        }
     }
 
     return (jlong) kv;
@@ -201,7 +213,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSi
     }
     string str = jstring2string(env, mmapID);
 
-    if (cryptKey != nullptr) {
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
             kv = MMKV::mmkvWithID(str, size, (MMKVMode) mode, &crypt);
@@ -219,7 +231,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNI
                                                                              jstring cryptKey) {
     MMKV *kv = nullptr;
 
-    if (cryptKey != nullptr) {
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
             kv = MMKV::defaultMMKV((MMKVMode) mode, &crypt);
@@ -240,7 +252,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithAshmemF
     }
     string id = jstring2string(env, mmapID);
 
-    if (cryptKey != nullptr) {
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
             kv = MMKV::mmkvWithAshmemFD(id, fd, metaFD, &crypt);

@@ -72,5 +72,6 @@ extern bool isFileExist(const std::string &nsFilePath);
 extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const char *path);
 extern bool zeroFillFile(int fd, size_t startPos, size_t size);
+extern bool createFile(const std::string &filePath);
 
 #endif //MMKV_MMAPEDFILE_H
