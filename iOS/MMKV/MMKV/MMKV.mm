@@ -125,17 +125,6 @@ static NSString *encodeMmapID(NSString *mmapID);
 	return kv;
 }
 
-+ (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
-	NSString *string = nil;
-	if ([relativePath length] > 0) {
-		string = md5([relativePath stringByAppendingPathComponent:mmapID]);
-	} else {
-		string = mmapID;
-	}
-	MMKVInfo(@"mmapKey: %@", string);
-	return string;
-}
-
 - (instancetype)initWithMMapID:(NSString *)kvKey cryptKey:(NSData *)cryptKey path:(NSString *)path {
 	if (self = [super init]) {
 		m_lock = [[NSRecursiveLock alloc] init];
@@ -1326,6 +1315,17 @@ static NSString *g_basePath = nil;
 		g_basePath = basePath;
 		MMKVInfo(@"set MMKV base path to: %@", g_basePath);
 	}
+}
+
++ (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
+	NSString *string = nil;
+	if ([relativePath length] > 0 && [relativePath isEqualToString:[MMKV mmkvBasePath]] == NO) {
+		string = md5([relativePath stringByAppendingPathComponent:mmapID]);
+	} else {
+		string = mmapID;
+	}
+	MMKVInfo(@"mmapKey: %@", string);
+	return string;
 }
 
 + (NSString *)mappedKVPathWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
