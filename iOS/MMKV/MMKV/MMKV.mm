@@ -108,8 +108,10 @@ static NSString *encodeMmapID(NSString *mmapID);
 
 	NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
 	if (!isFileExist(kvPath)) {
-		if (!createFile(kvPath))
-		return nil;
+		if (!createFile(kvPath)) {
+			MMKVError(@"fail to create file at %@", kvPath);
+			return nil;
+		}
 	}
 	NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
 
