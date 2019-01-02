@@ -78,6 +78,24 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="InterProcessLock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MmapedFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMKV.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMKVMetaInfo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadLock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MMKV.cpp">
@@ -131,25 +149,5 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="MMKV.h">
-      <Filter>Header Files</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="MMBuffer.h">
-      <Filter>Header Files</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="MmapedFile.h">
-      <Filter>Header Files</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="MMKVMetaInfo.hpp">
-      <Filter>Header Files</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="ThreadLock.h">
-      <Filter>Header Files</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="InterProcessLock.h">
-      <Filter>Header Files</Filter>
-    </CopyFileToFolders>
   </ItemGroup>
 </Project>

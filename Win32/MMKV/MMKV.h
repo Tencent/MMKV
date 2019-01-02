@@ -21,6 +21,10 @@
 #ifndef MMKV_MMKV_H
 #define MMKV_MMKV_H
 
+#ifndef _WINDOWS_
+#include <Windows.h>
+#endif // !_WINDOWS_
+
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVMetaInfo.hpp"

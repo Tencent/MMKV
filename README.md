@@ -131,7 +131,7 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 
 * **Small**.
   * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
-  * **About 60K in binary size**: MMKV adds about 60K per architecture on App size, and much less when zipped.
+  * **About 10K in binary size**: MMKV adds about 10K on application size, and much less when zipped.
 
 
 ## Getting Started
