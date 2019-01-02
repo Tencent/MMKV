@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.0.14-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-1.0.15-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./readme_cn.md)
@@ -43,8 +43,8 @@ BOOL bValue = [mmkv getBoolForKey:@"bool"];
 [mmkv setInt32:-1024 forKey:@"int32"];
 int32_t iValue = [mmkv getInt32ForKey:@"int32"];
     
-[mmkv setObject:@"hello, mmkv" forKey:@"string"];
-NSString *str = [mmkv getObjectOfClass:NSString.class forKey:@"string"];
+[mmkv setString:@"hello, mmkv" forKey:@"string"];
+NSString *str = [mmkv getStringForKey:@"string"];
 ```
 
 Full tutorials can be found [here](https://github.com/Tencent/MMKV/wiki/iOS_tutorial).
@@ -54,7 +54,7 @@ Writing random `int` for 10000 times, we get this chart:
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
 
-# MMKV for Windows
+# MMKV for Android
 
 ## Features
 
@@ -66,6 +66,72 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 * **Small**.
   * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
   * **About 60K in binary size**: MMKV adds about 60K per architecture on App size, and much less when zipped (apk).
+
+
+## Getting Started
+
+### Installation Via Maven
+Add the following lines to `build.gradle` on your app module:
+
+```gradle
+dependencies {
+    implementation 'com.tencent:mmkv:1.0.15'
+    // replace "1.0.15" with any available version
+}
+```
+
+For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
+
+### Quick Tutorial
+You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.  
+Setup MMKV on App startup, say your `MainActivity`, add these lines:
+
+```Java
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    String rootDir = MMKV.initialize(this);
+    System.out.println("mmkv root: " + rootDir);
+    //……
+}
+```
+
+MMKV has a global instance, that can be used directly:
+
+```Java
+import com.tencent.mmkv.MMKV;
+    
+MMKV kv = MMKV.defaultMMKV();
+
+kv.encode("bool", true);
+boolean bValue = kv.decodeBool("bool");
+
+kv.encode("int", Integer.MIN_VALUE);
+int iValue = kv.decodeInt("int");
+
+kv.encode("string", "Hello from mmkv");
+String str = kv.decodeString("string");
+```
+
+MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
+
+## Performance
+Writing random `int` for 1000 times, we get this chart:  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
+For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
+
+# MMKV for Windows
+
+## Features
+
+* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of Windows to achieve best performance.
+  * **Multi-Process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
+
+* **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `save`, no `sync` calls needed.
+
+* **Small**.
+  * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
+  * **About 60K in binary size**: MMKV adds about 60K per architecture on App size, and much less when zipped.
 
 
 ## Getting Started
@@ -121,18 +187,17 @@ Writing random `int` for 1000 times, we get this chart:
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
 
-
 ## License
-MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).
+MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](./LICENSE.TXT).
 
 ## Change Log
 Check out the [CHANGELOG.md](./CHANGELOG.md) for details of change history.
 
 ## Contributing
 
-If you are interested in contributing, check out the [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md), also join our [Tencent OpenSource Plan](https://opensource.tencent.com/contribution).
+If you are interested in contributing, check out the [CONTRIBUTING.md](./CONTRIBUTING.md), also join our [Tencent OpenSource Plan](https://opensource.tencent.com/contribution).
 
-To give clarity of what is expected of our members, MMKV has adopted the code of conduct defined by the Contributor Covenant, which is widely used. And we think it articulates our values well. For more, check out the [Code of Conduct](https://github.com/Tencent/MMKV/blob/master/CODE_OF_CONDUCT.md).
+To give clarity of what is expected of our members, MMKV has adopted the code of conduct defined by the Contributor Covenant, which is widely used. And we think it articulates our values well. For more, check out the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## FAQ & Feedback
 Check out the [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ) first. Should there be any questions, don't hesitate to create [issues](https://github.com/Tencent/MMKV/issues).
