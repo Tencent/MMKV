@@ -36,11 +36,29 @@ NS_ASSUME_NONNULL_BEGIN
 // cryptKey: 16 byte at most
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
+// mmapID: any unique ID (com.tencent.xin.pay, etc)
+// if you want a per-user mmkv, you could merge user-id within mmapID
+// relativePath: custom path of the file, `NSDocumentDirectory/mmkv` by default
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:relativePath:));
+
+// mmapID: any unique ID (com.tencent.xin.pay, etc)
+// if you want a per-user mmkv, you could merge user-id within mmapID
+// cryptKey: 16 byte at most
+// relativePath: custom path of the file, `NSDocumentDirectory/mmkv` by default
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath
+:));
+
+// default to `NSDocumentDirectory/mmkv`
++ (NSString *)mmkvBasePath;
+
+// if you want to change the base path, do it BEFORE getting any MMKV instance
+// otherwise the behavior is undefined
++ (void)setMMKVBasePath:(NSString *)basePath;
+
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
 
-// object: NSString/NSData/NSDate/id<NSCoding>
-- (BOOL)setObject:(nullable id)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
+- (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
@@ -55,6 +73,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)setFloat:(float)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
 - (BOOL)setDouble:(double)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
+
+- (BOOL)setString:(NSString *)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
+
+- (BOOL)setDate:(NSDate *)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
+
+- (BOOL)setData:(NSData *)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
 - (nullable id)getObjectOfClass:(Class)cls forKey:(NSString *)key NS_SWIFT_NAME(object(of:forKey:));
 
@@ -79,11 +103,26 @@ NS_ASSUME_NONNULL_BEGIN
 - (double)getDoubleForKey:(NSString *)key NS_SWIFT_NAME(double(forKey:));
 - (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue NS_SWIFT_NAME(double(forKey:defaultValue:));
 
+- (nullable NSString *)getStringForKey:(NSString *)key NS_SWIFT_NAME(string(forKey:));
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue NS_SWIFT_NAME(string(forKey:defaultValue:));
+
+- (nullable NSDate *)getDateForKey:(NSString *)key NS_SWIFT_NAME(date(forKey:));
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue NS_SWIFT_NAME(date(forKey:defaultValue:));
+
+- (nullable NSData *)getDataForKey:(NSString *)key NS_SWIFT_NAME(data(forKey:));
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue NS_SWIFT_NAME(data(forKey:defaultValue:));
+
+// return the actual size consumption of the key's value
+// Note: might be a little bigger than value's length
+- (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:));
+
 - (BOOL)containsKey:(NSString *)key NS_SWIFT_NAME(contains(key:));
 
 - (size_t)count;
 
 - (size_t)totalSize;
+
+- (size_t)actualSize;
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 
@@ -112,6 +151,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
++ (BOOL)isFileValid:(NSString *)mmapID relativePath:(nullable NSString *)path NS_SWIFT_NAME(isFileValid(for:relativePath:));
 
 + (void)registerHandler:(id<MMKVHandler>)handler;
 + (void)unregiserHandler;

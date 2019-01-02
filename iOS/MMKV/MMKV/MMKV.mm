@@ -47,6 +47,7 @@ static id<MMKVHandler> g_callbackHandler;
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
 #define SPECIAL_CHARACTER_DIRECTORY_NAME @"specialCharacter"
 
+static NSString *md5(NSString *value);
 static NSString *encodeMmapID(NSString *mmapID);
 
 @implementation MMKV {
@@ -89,43 +90,47 @@ static NSString *encodeMmapID(NSString *mmapID);
 
 // any unique ID (com.tencent.xin.pay, etc)
 + (instancetype)mmkvWithID:(NSString *)mmapID {
-	if (mmapID.length <= 0) {
-		return nil;
-	}
-	CScopedLock lock(g_instanceLock);
-
-	MMKV *kv = [g_instanceDic objectForKey:mmapID];
-	if (kv == nil) {
-		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:nil];
-		[g_instanceDic setObject:kv forKey:mmapID];
-	}
-	return kv;
+	return [self mmkvWithID:mmapID cryptKey:nil];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
+	return [self mmkvWithID:mmapID cryptKey:cryptKey relativePath:nil];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
+	return [self mmkvWithID:mmapID cryptKey:nil relativePath:path];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
 	if (mmapID.length <= 0) {
 		return nil;
 	}
+
+	NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
+	if (!isFileExist(kvPath)) {
+		if (!createFile(kvPath)) {
+			MMKVError(@"fail to create file at %@", kvPath);
+			return nil;
+		}
+	}
+	NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
+
 	CScopedLock lock(g_instanceLock);
 
-	MMKV *kv = [g_instanceDic objectForKey:mmapID];
+	MMKV *kv = [g_instanceDic objectForKey:kvKey];
 	if (kv == nil) {
-		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey];
-		[g_instanceDic setObject:kv forKey:mmapID];
+		kv = [[MMKV alloc] initWithMMapID:kvKey cryptKey:cryptKey path:kvPath];
+		[g_instanceDic setObject:kv forKey:kvKey];
 	}
 	return kv;
 }
 
-- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
+- (instancetype)initWithMMapID:(NSString *)kvKey cryptKey:(NSData *)cryptKey path:(NSString *)path {
 	if (self = [super init]) {
 		m_lock = [[NSRecursiveLock alloc] init];
 
-		m_mmapID = mmapID;
-
-		m_path = [MMKV mappedKVPathWithID:m_mmapID];
-		if (!isFileExist(m_path)) {
-			createFile(m_path);
-		}
+		m_mmapID = kvKey;
+		m_path = path;
 		m_crcPath = [MMKV crcPathWithMappedKVPath:m_path];
 
 		if (cryptKey.length > 0) {
@@ -619,7 +624,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return YES;
 }
 
-- (BOOL)setData:(NSData *)data forKey:(NSString *)key {
+- (BOOL)setRawData:(NSData *)data forKey:(NSString *)key {
 	if (data.length <= 0 || key.length <= 0) {
 		return NO;
 	}
@@ -682,7 +687,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
-- (NSData *)getDataForKey:(NSString *)key {
+- (NSData *)getRawDataForKey:(NSString *)key {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
 	return [m_dic objectForKey:key];
@@ -900,7 +905,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 #pragma mark - set & get
 
-- (BOOL)setObject:(nullable id)object forKey:(NSString *)key {
+- (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key {
 	if (key.length <= 0) {
 		return NO;
 	}
@@ -913,12 +918,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if ([MiniPBCoder isMiniPBCoderCompatibleObject:object]) {
 		data = [MiniPBCoder encodeDataWithObject:object];
 	} else {
-		if ([[object class] conformsToProtocol:@protocol(NSCoding)]) {
+		/*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
 			data = [NSKeyedArchiver archivedDataWithRootObject:object];
 		}
 	}
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key {
@@ -930,7 +935,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeBool(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setInt32:(int32_t)value forKey:(NSString *)key {
@@ -942,7 +947,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeInt32(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key {
@@ -954,7 +959,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeUInt32(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setInt64:(int64_t)value forKey:(NSString *)key {
@@ -966,7 +971,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeInt64(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key {
@@ -978,7 +983,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeUInt64(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setFloat:(float)value forKey:(NSString *)key {
@@ -990,7 +995,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeFloat(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
 }
 
 - (BOOL)setDouble:(double)value forKey:(NSString *)key {
@@ -1002,14 +1007,26 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MiniCodedOutputData output(data);
 	output.writeDouble(value);
 
-	return [self setData:data forKey:key];
+	return [self setRawData:data forKey:key];
+}
+
+- (BOOL)setString:(NSString *)value forKey:(NSString *)key {
+	return [self setObject:value forKey:key];
+}
+
+- (BOOL)setDate:(NSDate *)value forKey:(NSString *)key {
+	return [self setObject:value forKey:key];
+}
+
+- (BOOL)setData:(NSData *)value forKey:(NSString *)key {
+	return [self setObject:value forKey:key];
 }
 
 - (id)getObjectOfClass:(Class)cls forKey:(NSString *)key {
 	if (key.length <= 0) {
 		return nil;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 
 		if ([MiniPBCoder isMiniPBCoderCompatibleType:cls]) {
@@ -1030,7 +1047,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1049,7 +1066,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1068,7 +1085,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1087,7 +1104,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1106,7 +1123,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1125,7 +1142,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1144,7 +1161,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	NSData *data = [self getDataForKey:key];
+	NSData *data = [self getRawDataForKey:key];
 	if (data.length > 0) {
 		@try {
 			MiniCodedInputData input(data);
@@ -1154,6 +1171,44 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		}
 	}
 	return defaultValue;
+}
+
+- (nullable NSString *)getStringForKey:(NSString *)key {
+	return [self getStringForKey:key defaultValue:nil];
+}
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	return [self getObjectOfClass:NSString.class forKey:key];
+}
+
+- (nullable NSDate *)getDateForKey:(NSString *)key {
+	return [self getDateForKey:key defaultValue:nil];
+}
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	return [self getObjectOfClass:NSDate.class forKey:key];
+}
+
+- (nullable NSData *)getDataForKey:(NSString *)key {
+	return [self getDataForKey:key defaultValue:nil];
+}
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue {
+	if (key.length <= 0) {
+		return defaultValue;
+	}
+	return [self getObjectOfClass:NSData.class forKey:key];
+}
+
+- (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:)) {
+	if (key.length <= 0) {
+		return 0;
+	}
+	NSData *data = [self getRawDataForKey:key];
+	return data.length;
 }
 
 #pragma mark - enumerate
@@ -1174,6 +1229,12 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
 	return m_size;
+}
+
+- (size_t)actualSize {
+	CScopedLock lock(m_lock);
+	[self checkLoadData];
+	return m_actualSize;
 }
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block {
@@ -1233,11 +1294,51 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
-+ (NSString *)mappedKVPathWithID:(NSString *)mmapID {
+static NSString *g_basePath = nil;
++ (NSString *)mmkvBasePath {
+	if (g_basePath.length > 0) {
+		return g_basePath;
+	}
+
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-	NSString *nsLibraryPath = (NSString *) [paths firstObject];
-	if ([nsLibraryPath length] > 0) {
-		return [nsLibraryPath stringByAppendingFormat:@"/mmkv/%@", encodeMmapID(mmapID)];
+	NSString *documentPath = (NSString *) [paths firstObject];
+	if ([documentPath length] > 0) {
+		g_basePath = [documentPath stringByAppendingPathComponent:@"mmkv"];
+		return g_basePath;
+	} else {
+		return @"";
+	}
+}
+
++ (void)setMMKVBasePath:(NSString *)basePath {
+	if (basePath.length > 0) {
+		g_basePath = basePath;
+		MMKVInfo(@"set MMKV base path to: %@", g_basePath);
+	}
+}
+
++ (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
+	NSString *string = nil;
+	if ([relativePath length] > 0 && [relativePath isEqualToString:[MMKV mmkvBasePath]] == NO) {
+		string = md5([relativePath stringByAppendingPathComponent:mmapID]);
+	} else {
+		string = mmapID;
+	}
+	MMKVInfo(@"mmapKey: %@", string);
+	return string;
+}
+
++ (NSString *)mappedKVPathWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
+	NSString *basePath = nil;
+	if ([path length] > 0) {
+		basePath = path;
+	} else {
+		basePath = [self mmkvBasePath];
+	}
+
+	if ([basePath length] > 0) {
+		NSString *mmapIDstring = encodeMmapID(mmapID);
+		return [basePath stringByAppendingPathComponent:mmapIDstring];
 	} else {
 		return @"";
 	}
@@ -1248,9 +1349,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 + (BOOL)isFileValid:(NSString *)mmapID {
+	return [self isFileValid:mmapID relativePath:nil];
+}
+
++ (BOOL)isFileValid:(NSString *)mmapID relativePath:(nullable NSString *)path {
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 
-	NSString *kvPath = [self mappedKVPathWithID:mmapID];
+	NSString *kvPath = [self mappedKVPathWithID:mmapID relativePath:path];
 	if ([fileManager fileExistsAtPath:kvPath] == NO) {
 		// kv file not exist
 		return YES;

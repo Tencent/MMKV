@@ -213,6 +213,18 @@ using namespace std;
 	XCTAssertEqualObjects(value, nil);
 }
 
+- (void)testNSStringForNewGetSet {
+	NSString *str = @"Hello 2018 world cup 世界杯";
+	BOOL ret = [mmkv setString:str forKey:@"string"];
+	XCTAssertEqual(ret, YES);
+
+	NSString *value = [mmkv getStringForKey:@"string"];
+	XCTAssertEqualObjects(value, str);
+
+	value = [mmkv getStringForKey:KeyNotExist];
+	XCTAssertEqualObjects(value, nil);
+}
+
 - (void)testNSData {
 	NSString *str = @"Hello 2018 world cup 世界杯";
 	NSData *data = [str dataUsingEncoding:NSUTF8StringEncoding];
@@ -226,12 +238,37 @@ using namespace std;
 	XCTAssertEqualObjects(value, nil);
 }
 
+- (void)testNSDataForNewGetSet {
+	NSString *str = @"Hello 2018 world cup 世界杯";
+	NSData *data = [str dataUsingEncoding:NSUTF8StringEncoding];
+	BOOL ret = [mmkv setData:data forKey:@"data"];
+	XCTAssertEqual(ret, YES);
+
+	NSData *value = [mmkv getDataForKey:@"data"];
+	XCTAssertEqualObjects(value, data);
+
+	value = [mmkv getDataForKey:KeyNotExist];
+	XCTAssertEqualObjects(value, nil);
+}
+
 - (void)testNSDate {
 	NSDate *date = [NSDate date];
 	BOOL ret = [mmkv setObject:date forKey:@"date"];
 	XCTAssertEqual(ret, YES);
 
 	NSDate *value = [mmkv getObjectOfClass:NSDate.class forKey:@"date"];
+	XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, value.timeIntervalSince1970, 0.001);
+
+	value = [mmkv getObjectOfClass:NSDate.class forKey:KeyNotExist];
+	XCTAssertEqualObjects(value, nil);
+}
+
+- (void)testNSDateForNewGetSet {
+	NSDate *date = [NSDate date];
+	BOOL ret = [mmkv setDate:date forKey:@"date"];
+	XCTAssertEqual(ret, YES);
+
+	NSDate *value = [mmkv getDateForKey:@"date"];
 	XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, value.timeIntervalSince1970, 0.001);
 
 	value = [mmkv getObjectOfClass:NSDate.class forKey:KeyNotExist];
