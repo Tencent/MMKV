@@ -134,7 +134,6 @@ public:
     // if you want a per-user mmkv, you could merge user-id within mmapID
     static MMKV *mmkvWithID(const std::string &mmapID,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
-                            int size = mmkv::DEFAULT_MMAP_SIZE,
                             std::string *cryptKey = nullptr);
 
     static void onExit();

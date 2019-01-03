@@ -112,7 +112,7 @@ MMKV::~MMKV() {
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
-    return mmkvWithID(DEFAULT_MMAP_ID, mode, DEFAULT_MMAP_SIZE, cryptKey);
+    return mmkvWithID(DEFAULT_MMAP_ID, mode, cryptKey);
 }
 
 void initialize() {
@@ -132,7 +132,7 @@ void MMKV::initializeMMKV(const std::wstring &rootDir) {
     MMKVInfo("root dir: %ws", g_rootDir.c_str());
 }
 
-MMKV *MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, int size, string *cryptKey) {
+MMKV *MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, string *cryptKey) {
     if (mmapID.empty()) {
         return nullptr;
     }
@@ -143,7 +143,7 @@ MMKV *MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, int size, strin
         MMKV *kv = itr->second;
         return kv;
     }
-    auto kv = new MMKV(mmapID, mode, size, cryptKey);
+    auto kv = new MMKV(mmapID, mode, DEFAULT_MMAP_SIZE, cryptKey);
     (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
