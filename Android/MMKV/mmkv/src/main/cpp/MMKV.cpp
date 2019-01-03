@@ -295,7 +295,9 @@ void MMKV::loadFromFile() {
         return;
     }
 
-    m_metaInfo.read(m_metaFile.getMemory());
+    if (m_metaFile.isFileValid()) {
+        m_metaInfo.read(m_metaFile.getMemory());
+    }
 
     m_fd = open(m_path.c_str(), O_RDWR | O_CREAT, S_IRWXU);
     if (m_fd < 0) {
@@ -379,7 +381,9 @@ void MMKV::loadFromFile() {
 }
 
 void MMKV::loadFromAshmem() {
-    m_metaInfo.read(m_metaFile.getMemory());
+    if (m_metaFile.isFileValid()) {
+        m_metaInfo.read(m_metaFile.getMemory());
+    }
 
     if (m_fd < 0 || !m_ashmemFile) {
         MMKVError("ashmem file invalid %s, fd:%d", m_path.c_str(), m_fd);
@@ -973,6 +977,10 @@ bool MMKV::isFileValid() {
 // assuming m_ptr & m_size is set
 bool MMKV::checkFileCRCValid() {
     if (m_ptr && m_ptr != MAP_FAILED) {
+        if (!m_metaFile.isFileValid()) {
+            MMKVError("Meta file not valid %s", m_mmapID.c_str());
+            return false;
+        }
         constexpr int offset = pbFixed32Size(0);
         m_crcDigest =
             (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
@@ -995,15 +1003,10 @@ void MMKV::recaculateCRCDigest() {
 }
 
 void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence) {
-    if (!ptr) {
+    if (!ptr || !m_metaFile.isFileValid()) {
         return;
     }
     m_crcDigest = (uint32_t) crc32(m_crcDigest, ptr, (uint32_t) length);
-
-    void *crcPtr = m_metaFile.getMemory();
-    if (crcPtr == nullptr || crcPtr == MAP_FAILED) {
-        return;
-    }
 
     m_metaInfo.m_crcDigest = m_crcDigest;
     if (increaseSequence) {
@@ -1012,6 +1015,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
     if (m_metaInfo.m_version == 0) {
         m_metaInfo.m_version = 1;
     }
+    auto crcPtr = m_metaFile.getMemory();
     m_metaInfo.write(crcPtr);
 }
 
