@@ -119,10 +119,13 @@ class MMKV {
 
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 
+    // avoid unexpected type conversion (pointer to bool, etc)
+    template <typename T>
+    bool set(T value, const std::string &key) = delete;
+
     // just forbid it for possibly misuse
     MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
-
 public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const std::wstring &rootDir);
@@ -168,6 +171,8 @@ public:
     bool set(double value, const std::string &key);
 
     bool set(const std::vector<std::string> &vector, const std::string &key);
+
+    bool set(const char *value, const std::string &key);
 
     bool set(const std::string &value, const std::string &key);
 

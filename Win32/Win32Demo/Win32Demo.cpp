@@ -77,7 +77,7 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     cout << "double = " << mmkv->getDouble("double") << endl;
 
     if (!decodeOnly) {
-        mmkv->set("Hello, MMKV-н╒пе for Win32 ", "string");
+        mmkv->set("Hello, MMKV-н╒пе for Win32", "string");
     }
     string result;
     mmkv->getString("string", result);
@@ -101,7 +101,7 @@ DWORD WINAPI threadFunction(LPVOID lpParam) {
     auto startIndex = segmentCount * threadIndex;
     for (auto index = startIndex; index < startIndex + segmentCount; index++) {
         mmkv->set(index, arrIntKeys[index]);
-        mmkv->set("str-" + index, arrStringKeys[index]);
+        mmkv->set("str-" + to_string(index), arrStringKeys[index]);
     }
 
     mmkv->lock();
@@ -126,7 +126,7 @@ void brutleTest() {
     auto mmkv = MMKV::mmkvWithID(MMKV_ID);
     for (size_t i = 0; i < keyCount; i++) {
         mmkv->set(i, arrIntKeys[i]);
-        mmkv->set("str-" + i, arrStringKeys[i]);
+        mmkv->set("str-" + to_string(i), arrStringKeys[i]);
     }
 }
 

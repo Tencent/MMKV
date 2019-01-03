@@ -849,6 +849,13 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
 
 // set & get
 
+bool MMKV::set(const char *value, const std::string &key) {
+    if (!value) {
+        return false;
+    }
+    return set(string(value), key);
+}
+
 bool MMKV::set(const std::string &value, const std::string &key) {
     if (key.empty()) {
         return false;
