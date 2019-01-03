@@ -849,7 +849,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
 
 // set & get
 
-bool MMKV::setStringForKey(const std::string &value, const std::string &key) {
+bool MMKV::set(const std::string &value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -857,7 +857,7 @@ bool MMKV::setStringForKey(const std::string &value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setBytesForKey(const MMBuffer &value, const std::string &key) {
+bool MMKV::set(const MMBuffer &value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
@@ -957,7 +957,7 @@ bool MMKV::set(const std::vector<std::string> &v, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::getStringForKey(const std::string &key, std::string &result) {
+bool MMKV::getString(const std::string &key, std::string &result) {
     if (key.empty()) {
         return false;
     }
@@ -970,7 +970,7 @@ bool MMKV::getStringForKey(const std::string &key, std::string &result) {
     return false;
 }
 
-MMBuffer MMKV::getBytesForKey(const std::string &key) {
+MMBuffer MMKV::getBytes(const std::string &key) {
     if (key.empty()) {
         return MMBuffer(0);
     }
@@ -982,7 +982,7 @@ MMBuffer MMKV::getBytesForKey(const std::string &key) {
     return MMBuffer(0);
 }
 
-bool MMKV::getBoolForKey(const std::string &key, bool defaultValue) {
+bool MMKV::getBool(const std::string &key, bool defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -995,7 +995,7 @@ bool MMKV::getBoolForKey(const std::string &key, bool defaultValue) {
     return defaultValue;
 }
 
-int32_t MMKV::getInt32ForKey(const std::string &key, int32_t defaultValue) {
+int32_t MMKV::getInt32(const std::string &key, int32_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1008,7 +1008,7 @@ int32_t MMKV::getInt32ForKey(const std::string &key, int32_t defaultValue) {
     return defaultValue;
 }
 
-uint32_t MMKV::getUInt32ForKey(const std::string &key, uint32_t defaultValue) {
+uint32_t MMKV::getUInt32(const std::string &key, uint32_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1021,7 +1021,7 @@ uint32_t MMKV::getUInt32ForKey(const std::string &key, uint32_t defaultValue) {
     return defaultValue;
 }
 
-int64_t MMKV::getInt64ForKey(const std::string &key, int64_t defaultValue) {
+int64_t MMKV::getInt64(const std::string &key, int64_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1034,7 +1034,7 @@ int64_t MMKV::getInt64ForKey(const std::string &key, int64_t defaultValue) {
     return defaultValue;
 }
 
-uint64_t MMKV::getUInt64ForKey(const std::string &key, uint64_t defaultValue) {
+uint64_t MMKV::getUInt64(const std::string &key, uint64_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1047,7 +1047,7 @@ uint64_t MMKV::getUInt64ForKey(const std::string &key, uint64_t defaultValue) {
     return defaultValue;
 }
 
-float MMKV::getFloatForKey(const std::string &key, float defaultValue) {
+float MMKV::getFloat(const std::string &key, float defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1060,7 +1060,7 @@ float MMKV::getFloatForKey(const std::string &key, float defaultValue) {
     return defaultValue;
 }
 
-double MMKV::getDoubleForKey(const std::string &key, double defaultValue) {
+double MMKV::getDouble(const std::string &key, double defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1073,7 +1073,7 @@ double MMKV::getDoubleForKey(const std::string &key, double defaultValue) {
     return defaultValue;
 }
 
-bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &result) {
+bool MMKV::getVector(const std::string &key, std::vector<std::string> &result) {
     if (key.empty()) {
         return false;
     }

@@ -170,29 +170,29 @@ public:
 
     bool set(const std::vector<std::string> &vector, const std::string &key);
 
-    bool setStringForKey(const std::string &value, const std::string &key);
+    bool set(const std::string &value, const std::string &key);
 
-    bool setBytesForKey(const mmkv::MMBuffer &value, const std::string &key);
+    bool set(const mmkv::MMBuffer &value, const std::string &key);
 
-    bool getStringForKey(const std::string &key, std::string &result);
+    bool getString(const std::string &key, std::string &result);
 
-    mmkv::MMBuffer getBytesForKey(const std::string &key);
+    mmkv::MMBuffer getBytes(const std::string &key);
 
-    bool getBoolForKey(const std::string &key, bool defaultValue = false);
+    bool getBool(const std::string &key, bool defaultValue = false);
 
-    int32_t getInt32ForKey(const std::string &key, int32_t defaultValue = 0);
+    int32_t getInt32(const std::string &key, int32_t defaultValue = 0);
 
-    uint32_t getUInt32ForKey(const std::string &key, uint32_t defaultValue = 0);
+    uint32_t getUInt32(const std::string &key, uint32_t defaultValue = 0);
 
-    int64_t getInt64ForKey(const std::string &key, int64_t defaultValue = 0);
+    int64_t getInt64(const std::string &key, int64_t defaultValue = 0);
 
-    uint64_t getUInt64ForKey(const std::string &key, uint64_t defaultValue = 0);
+    uint64_t getUInt64(const std::string &key, uint64_t defaultValue = 0);
 
-    float getFloatForKey(const std::string &key, float defaultValue = 0);
+    float getFloat(const std::string &key, float defaultValue = 0);
 
-    double getDoubleForKey(const std::string &key, double defaultValue = 0);
+    double getDouble(const std::string &key, double defaultValue = 0);
 
-    bool getVectorForKey(const std::string &key, std::vector<std::string> &result);
+    bool getVector(const std::string &key, std::vector<std::string> &result);
 
     bool containsKey(const std::string &key);
 

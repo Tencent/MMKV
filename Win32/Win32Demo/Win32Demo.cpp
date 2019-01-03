@@ -44,43 +44,43 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     if (!decodeOnly) {
         mmkv->set(true, "bool");
     }
-    cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
+    cout << "bool = " << mmkv->getBool("bool") << endl;
 
     if (!decodeOnly) {
         mmkv->set(1024, "int32");
     }
-    cout << "int32 = " << mmkv->getInt32ForKey("int32") << endl;
+    cout << "int32 = " << mmkv->getInt32("int32") << endl;
 
     if (!decodeOnly) {
         mmkv->set(numeric_limits<uint32_t>::max(), "uint32");
     }
-    cout << "uint32 = " << mmkv->getUInt32ForKey("uint32") << endl;
+    cout << "uint32 = " << mmkv->getUInt32("uint32") << endl;
 
     if (!decodeOnly) {
         mmkv->set(numeric_limits<int64_t>::min(), "int64");
     }
-    cout << "int64 = " << mmkv->getInt64ForKey("int64") << endl;
+    cout << "int64 = " << mmkv->getInt64("int64") << endl;
 
     if (!decodeOnly) {
         mmkv->set(numeric_limits<uint64_t>::max(), "uint64");
     }
-    cout << "uint64 = " << mmkv->getUInt64ForKey("uint64") << endl;
+    cout << "uint64 = " << mmkv->getUInt64("uint64") << endl;
 
     if (!decodeOnly) {
         mmkv->set(3.14f, "float");
     }
-    cout << "float = " << mmkv->getFloatForKey("float") << endl;
+    cout << "float = " << mmkv->getFloat("float") << endl;
 
     if (!decodeOnly) {
         mmkv->set(numeric_limits<double>::max(), "double");
     }
-    cout << "double = " << mmkv->getDoubleForKey("double") << endl;
+    cout << "double = " << mmkv->getDouble("double") << endl;
 
     if (!decodeOnly) {
-        mmkv->setStringForKey("Hello, MMKV-н╒пе for Win32 ", "string");
+        mmkv->set("Hello, MMKV-н╒пе for Win32 ", "string");
     }
     string result;
-    mmkv->getStringForKey("string", result);
+    mmkv->getString("string", result);
     cout << "string = " << result << endl;
 }
 
@@ -101,7 +101,7 @@ DWORD WINAPI threadFunction(LPVOID lpParam) {
     auto startIndex = segmentCount * threadIndex;
     for (auto index = startIndex; index < startIndex + segmentCount; index++) {
         mmkv->set(index, arrIntKeys[index]);
-        mmkv->setStringForKey("str-" + index, arrStringKeys[index]);
+        mmkv->set("str-" + index, arrStringKeys[index]);
     }
 
     mmkv->lock();
@@ -126,7 +126,7 @@ void brutleTest() {
     auto mmkv = MMKV::mmkvWithID(MMKV_ID);
     for (size_t i = 0; i < keyCount; i++) {
         mmkv->set(i, arrIntKeys[i]);
-        mmkv->setStringForKey("str-" + i, arrStringKeys[i]);
+        mmkv->set("str-" + i, arrStringKeys[i]);
     }
 }
 
