@@ -97,7 +97,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MmapedFile.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h") do xcopy /y %%f "$(OutDir)"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MmapedFile.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Header Files</Message>
@@ -138,7 +138,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MmapedFile.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h") do xcopy /y %%f "$(OutDir)"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MmapedFile.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Header Files</Message>
