@@ -120,8 +120,75 @@ Writing random `int` for 1000 times, we get this chart:
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
 
+# MMKV for Windows
+
+## Features
+
+* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of Windows to achieve best performance.
+  * **Multi-Process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
+
+* **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `save`, no `sync` calls needed.
+
+* **Small**.
+  * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
+  * **About 10K in binary size**: MMKV adds about 10K on application size, and much less when zipped.
+
+
+## Getting Started
+
+### Installation Via Source
+* Clone or Download source from GitHub;
+* Add `Win32/MMKV/MMKV.vcxproj` to your solution;
+* Add MMKV to your project's dependencies;
+* Add `$(OutDir)` to your project's `C/C++` -> `General` -> `Additional Include Directories`;
+* Add `$(OutDir)` to your project's `Linker` -> `General` -> `Additional Library Directories`;
+* Add `MMKV.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
+* MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or wise versa.
+* MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
+
+For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
+
+### Quick Tutorial
+You can use MMKV as you go. All changes are saved immediately, no `sync`, no `save` calls needed.  
+Setup MMKV on App startup, say in your `main()`, add these lines:
+
+```C++
+#include "MMKV.h"
+using namespace std;
+
+int main() {
+    wstring rootDir = getYourAppDocumentDir();
+    MMKV::initializeMMKV(rootDir);
+    //...
+}
+```
+
+MMKV has a global instance, that can be used directly:
+
+```C++
+auto mmkv = MMKV::defaultMMKV();
+
+mmkv->set(true, "bool");
+cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
+
+mmkv->set(1024, "int32");
+cout << "int32 = " << mmkv->getInt32ForKey("int32") << endl;
+
+mmkv->setStringForKey("Hello, MMKV for Win32 ", "string");
+string result;
+mmkv->getStringForKey("string", result);
+cout << "string = " << result << endl;
+```
+
+MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
+
+## Performance
+Writing random `int` for 1000 times, we get this chart:  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
+For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
+
 ## License
-MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).
+MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](./LICENSE.TXT).
 
 ## Change Log
 Check out the [CHANGELOG.md](./CHANGELOG.md) for details of change history.
