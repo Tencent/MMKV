@@ -50,7 +50,7 @@ public:
             m_list.splice(m_list.begin(), m_list, itr->second);
             itr->second->second = value;
         } else {
-            if (m_map.size() == m_capacity) {
+            if (m_map.size() >= m_capacity) {
                 m_map.erase(m_list.back().first);
                 m_list.pop_back();
             }

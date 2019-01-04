@@ -36,6 +36,15 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
+	// not necessary: set MMKV's root dir
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+	NSString *libraryPath = (NSString *) [paths firstObject];
+	if ([libraryPath length] > 0) {
+		NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
+		[MMKV setMMKVBasePath:rootDir];
+	}
+
+	// register error handler
 	[MMKV registerHandler:self];
 
 	[self funcionalTest];
@@ -61,7 +70,10 @@
 }
 
 - (void)funcionalTest {
-	MMKV *mmkv = [MMKV mmkvWithID:@"test/case1"];
+	auto path = [MMKV mmkvBasePath];
+	path = [path stringByDeletingLastPathComponent];
+	path = [path stringByAppendingPathComponent:@"mmkv_2"];
+	auto mmkv = [MMKV mmkvWithID:@"test/case1" relativePath:path];
 
 	[mmkv setBool:YES forKey:@"bool"];
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
@@ -99,6 +111,7 @@
 	[mmkv setData:[@"hello, mmkv again and again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
 	NSData *data = [mmkv getDataForKey:@"data"];
 	NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+	NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data"]);
 
 	[mmkv removeValueForKey:@"bool"];
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);

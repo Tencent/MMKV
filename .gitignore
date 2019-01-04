@@ -16,5 +16,17 @@ xcuserdata
 *.xcscmblueprint
 *.xcscheme
 
+## OS X
+.DS_Store
+
 ## Xcode
 DerivedData
+
+## Visual Studio
+.vs
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.VC.opendb
+*.VC.db
+ipch/

@@ -28,27 +28,27 @@
 
 #ifdef ENABLE_MMKV_LOG
 
-#define MMKVError(format, ...) NSLog(format, ##__VA_ARGS__)
-#define MMKVWarning(format, ...) NSLog(format, ##__VA_ARGS__)
-#define MMKVInfo(format, ...) NSLog(format, ##__VA_ARGS__)
+#define MMKVError(format, ...) NSLog(@"[E] [%s, %d] " format, __func__, __LINE__, ##__VA_ARGS__)
+#define MMKVWarning(format, ...) NSLog(@"[W] [%s, %d] " format, __func__, __LINE__, ##__VA_ARGS__)
+#define MMKVInfo(format, ...) NSLog(@"[I] [%s, %d] " format, __func__, __LINE__, ##__VA_ARGS__)
 
 #ifndef NDEBUG
-#define MMKVDebug(format, ...) NSLog(format, ##__VA_ARGS__)
+#define MMKVDebug(format, ...) NSLog(@"[D] %s-%d " format, __func__, __LINE__, ##__VA_ARGS__)
 #else
-#define MMKVDebug(format, ...)                                                                     \
-    {}
+#define MMKVDebug(format, ...) \
+	{}
 #endif // NDEBUG
 
 #else
 
-#define MMKVError(format, ...)                                                                     \
-    {}
-#define MMKVWarning(format, ...)                                                                   \
-    {}
-#define MMKVInfo(format, ...)                                                                      \
-    {}
-#define MMKVDebug(format, ...)                                                                     \
-    {}
+#define MMKVError(format, ...) \
+	{}
+#define MMKVWarning(format, ...) \
+	{}
+#define MMKVInfo(format, ...) \
+	{}
+#define MMKVDebug(format, ...) \
+	{}
 
 #endif // ENABLE_MMKV_LOG
 
