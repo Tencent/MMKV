@@ -4,15 +4,15 @@
 ### iOS / macOS
 What's new  
 
-* Customizing root folder of MMKV is supproted now.
-* Customizing folder for specific MMKV is supprted now.
+* Customizing root folder of MMKV is supported now.
+* Customizing folder for specific MMKV is supported now.
 * Add method `getValueSizeForKey:` to get value's size of a key.
 
 ### Android
 What's new  
 
-* Customizing root folder of MMKV is supproted now.
-* Customizing folder for specific MMKV is supprted now.
+* Customizing root folder of MMKV is supported now.
+* Customizing folder for specific MMKV is supported now.
 * Add method `getValueSizeForKey()` to get value's size of a key.
 
 
