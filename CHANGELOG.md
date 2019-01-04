@@ -1,5 +1,24 @@
 # MMKV Change Log
 
+## v1.0.16 / 2019-01-04
+### iOS / macOS
+What's new  
+
+* Customizing root folder of MMKV is supproted now.
+* Customizing folder for specific MMKV is supprted now.
+* Add method `getValueSizeForKey:` to get value's size of a key.
+
+### Android
+What's new  
+
+* Customizing root folder of MMKV is supproted now.
+* Customizing folder for specific MMKV is supprted now.
+* Add method `getValueSizeForKey()` to get value's size of a key.
+
+
+### Win32
+MMKV for Windows is released now. Most things actually work!
+
 ## v1.0.15 / 2018-12-13
 ### iOS / macOS
 What's new  
