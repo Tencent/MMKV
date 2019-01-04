@@ -1,11 +1,11 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.0.15-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-1.0.16-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./readme_cn.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **iOS**, **macOS** and **Android**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **iOS**, **macOS**, **Android** and **Windows**.
 
 # MMKV for iOS/macOS
 
@@ -75,8 +75,8 @@ Add the following lines to `build.gradle` on your app module:
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.15'
-    // replace "1.0.15" with any available version
+    implementation 'com.tencent:mmkv:1.0.16'
+    // replace "1.0.16" with any available version
 }
 ```
 
@@ -137,27 +137,36 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 ## Getting Started
 
 ### Installation Via Source
-* Clone or Download source from GitHub;
-* Add `Win32/MMKV/MMKV.vcxproj` to your solution;
-* Add MMKV to your project's dependencies;
-* Add `$(OutDir)` to your project's `C/C++` -> `General` -> `Additional Include Directories`;
-* Add `$(OutDir)` to your project's `Linker` -> `General` -> `Additional Library Directories`;
-* Add `MMKV.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
-* MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or wise versa.
-* MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
+1. Getting source code from git repository:
+  
+   ```
+   git clone http://git.code.oa.com/wechat-team/mmkv.git
+   ```
+  
+2. Add `Win32/MMKV/MMKV.vcxproj` to your solution;
+3. Add `MMKV` project to your project's dependencies;
+4. Add `$(OutDir)include` to your project's `C/C++` -> `General` -> `Additional Include Directories`;
+5. Add `$(OutDir)` to your project's `Linker` -> `General` -> `Additional Library Directories`;
+6. Add `MMKV.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
+7. Add `#include <MMKV/MMKV.h>` to your source file and we are done.
 
-For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
+
+note:  
+
+1. MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or wise versa.
+2. MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
+
+For other installation options, see [Windows Setup](https://github.com/Tencent/MMKV/wiki/windows_setup).
 
 ### Quick Tutorial
 You can use MMKV as you go. All changes are saved immediately, no `sync`, no `save` calls needed.  
 Setup MMKV on App startup, say in your `main()`, add these lines:
 
 ```C++
-#include "MMKV.h"
-using namespace std;
+#include <MMKV/MMKV.h>
 
 int main() {
-    wstring rootDir = getYourAppDocumentDir();
+    std::wstring rootDir = getYourAppDocumentDir();
     MMKV::initializeMMKV(rootDir);
     //...
 }
@@ -169,23 +178,18 @@ MMKV has a global instance, that can be used directly:
 auto mmkv = MMKV::defaultMMKV();
 
 mmkv->set(true, "bool");
-cout << "bool = " << mmkv->getBoolForKey("bool") << endl;
+std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
 
 mmkv->set(1024, "int32");
-cout << "int32 = " << mmkv->getInt32ForKey("int32") << endl;
+std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
 
-mmkv->setStringForKey("Hello, MMKV for Win32 ", "string");
-string result;
-mmkv->getStringForKey("string", result);
-cout << "string = " << result << endl;
+mmkv->set("Hello, MMKV for Win32", "string");
+std::string result;
+mmkv->getString("string", result);
+std::cout << "string = " << result << std::endl;
 ```
 
-MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
-
-## Performance
-Writing random `int` for 1000 times, we get this chart:  
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
-For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
+MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Windows Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial).
 
 ## License
 MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](./LICENSE.TXT).
