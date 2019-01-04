@@ -14,6 +14,7 @@ What's new
 * Customizing root folder of MMKV is supported now.
 * Customizing folder for specific MMKV is supported now.
 * Add method `getValueSizeForKey()` to get value's size of a key.
+* Fix a potential crash when the meta file is not valid.
 
 
 ### Win32
