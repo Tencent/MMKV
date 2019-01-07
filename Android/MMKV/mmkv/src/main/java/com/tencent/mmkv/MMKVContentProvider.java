@@ -111,12 +111,14 @@ public class MMKVContentProvider extends ContentProvider {
         ActivityManager manager =
             (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
+            // clang-format off
             for (ActivityManager.RunningAppProcessInfo processInfo
                     : manager.getRunningAppProcesses()) {
                 if (processInfo.pid == pid) {
                     return processInfo.processName;
                 }
             }
+            // clang-format on
         }
         return "";
     }
