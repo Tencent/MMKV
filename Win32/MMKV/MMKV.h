@@ -126,6 +126,7 @@ class MMKV {
     // just forbid it for possibly misuse
     MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
+
 public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const std::wstring &rootDir);
