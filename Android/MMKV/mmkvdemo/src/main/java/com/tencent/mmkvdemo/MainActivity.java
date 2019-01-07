@@ -194,7 +194,11 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             kv.encode("parcel", testParcelable);
         }
         TestParcelable result = kv.decodeParcelable("parcel", TestParcelable.class);
-        Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+        if (result != null) {
+            Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+        } else {
+            Log.e("MMKV", "fail to decodeParcelable of key:parcel");
+        }
 
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
         Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
@@ -254,6 +258,9 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
     private void testReKey() {
         final String mmapID = "testAES_reKey";
         MMKV kv = testMMKV(mmapID, null, false, null);
+        if (kv == null) {
+            return;
+        }
 
         kv.reKey("Key_seq_1");
         kv.clearMemoryCache();
