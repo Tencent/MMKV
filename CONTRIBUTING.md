@@ -51,9 +51,10 @@ Before submitting a pull request, please make sure the followings are done:
 6. Now, you can submit your pull request on `dev` or `hotfix` branch.
 
 ## Code Style Guide
-Use [Code Style](./Android/MMKV/checkstyle.xml) for Java and Android.
+We choose the `LLVM code style` for MMKV project, with the specialization that using 4 space witdth for indent, and using tab for ObjC indentation. To make things simple, we have already defined our code style inside [clang-format](./.clang-format).  
+You can just run `make format_code` on top directory to format all your changes before committing them.  
 
-* 4 spaces for indentation rather than tabs
+Additionly, check out [Code Style](./Android/MMKV/checkstyle.xml) for Java and Android.
 
 ## License
 By contributing to MMKV, you agree that your contributions will be licensed
