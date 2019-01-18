@@ -36,6 +36,15 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
+	// set log level
+	[MMKV setLogLevel:MMKVLogInfo];
+
+	// you can turn off logging
+	//[MMKV setLogLevel:MMKVLogNone];
+
+	// register handler
+	[MMKV registerHandler:self];
+
 	// not necessary: set MMKV's root dir
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
 	NSString *libraryPath = (NSString *) [paths firstObject];
@@ -43,9 +52,6 @@
 		NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
 		[MMKV setMMKVBasePath:rootDir];
 	}
-
-	// register error handler
-	[MMKV registerHandler:self];
 
 	[self funcionalTest];
 	//[self testReKey];
@@ -401,6 +407,29 @@
 
 - (MMKVRecoverStrategic)onMMKVFileLengthError:(NSString *)mmapID {
 	return MMKVOnErrorRecover;
+}
+
+- (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message {
+	const char* levelDesc = nullptr;
+	switch (level) {
+		case MMKVLogDebug:
+			levelDesc = "D";
+			break;
+		case MMKVLogInfo:
+			levelDesc = "I";
+			break;
+		case MMKVLogWarning:
+			levelDesc = "W";
+			break;
+		case MMKVLogError:
+			levelDesc = "E";
+			break;
+		default:
+			levelDesc = "N";
+			break;
+	}
+
+	NSLog(@"redirect logging [%s] <%s:%d::%s> %@", levelDesc, file, line, funcname, message);
 }
 
 @end

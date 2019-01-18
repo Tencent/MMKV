@@ -159,6 +159,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)registerHandler:(id<MMKVHandler>)handler;
 + (void)unregiserHandler;
 
+// MMKVLogInfo by default
+// MMKVLogNone to disable all logging
++ (void)setLogLevel:(MMKVLogLevel)logLevel;
+
 NS_ASSUME_NONNULL_END
 
 @end

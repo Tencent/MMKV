@@ -41,7 +41,8 @@
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
-static id<MMKVHandler> g_callbackHandler;
+id<MMKVHandler> g_callbackHandler;
+bool g_isLogRedirecting = false;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
@@ -1397,11 +1398,24 @@ static NSString *g_basePath = nil;
 + (void)registerHandler:(id<MMKVHandler>)handler {
 	CScopedLock lock(g_instanceLock);
 	g_callbackHandler = handler;
+
+	if ([g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
+		g_isLogRedirecting = true;
+
+		// some logging before registerHandler
+		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
+	}
 }
 
 + (void)unregiserHandler {
 	CScopedLock lock(g_instanceLock);
 	g_callbackHandler = nil;
+	g_isLogRedirecting = false;
+}
+
++ (void)setLogLevel:(MMKVLogLevel)logLevel {
+	CScopedLock lock(g_instanceLock);
+	g_currentLogLevel = logLevel;
 }
 
 @end
