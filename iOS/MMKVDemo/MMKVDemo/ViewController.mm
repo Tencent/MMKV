@@ -410,7 +410,7 @@
 }
 
 - (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message {
-	const char* levelDesc = nullptr;
+	const char *levelDesc = nullptr;
 	switch (level) {
 		case MMKVLogDebug:
 			levelDesc = "D";

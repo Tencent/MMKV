@@ -49,7 +49,7 @@ typedef enum : NSUInteger {
 
 // by default MMKV will print log using NSLog
 // implement this method to redirect MMKV's log
-- (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char*)file line:(int)line func:(const char*)funcname message:(NSString *)message;
+- (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message;
 
 @end
 

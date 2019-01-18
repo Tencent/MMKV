@@ -21,8 +21,8 @@
 #ifndef MMKVLog_h
 #define MMKVLog_h
 
-#import <Foundation/Foundation.h>
 #import "MMKVHandler.h"
+#import <Foundation/Foundation.h>
 
 extern id<MMKVHandler> g_callbackHandler;
 
@@ -34,31 +34,36 @@ extern id<MMKVHandler> g_callbackHandler;
 extern bool g_isLogRedirecting;
 extern MMKVLogLevel g_currentLogLevel;
 
-#define __filename__ (strrchr(__FILE__,'/')+1)
+#define __filename__ (strrchr(__FILE__, '/') + 1)
 
-#define MMKVError(format, ...) _MMKVLogWithLevel(MMKVLogError, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
-#define MMKVWarning(format, ...) _MMKVLogWithLevel(MMKVLogWarning, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
-#define MMKVInfo(format, ...) _MMKVLogWithLevel(MMKVLogInfo, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define MMKVError(format, ...)                                                                     \
+    _MMKVLogWithLevel(MMKVLogError, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define MMKVWarning(format, ...)                                                                   \
+    _MMKVLogWithLevel(MMKVLogWarning, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define MMKVInfo(format, ...)                                                                      \
+    _MMKVLogWithLevel(MMKVLogInfo, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 
 #ifndef NDEBUG
-#define MMKVDebug(format, ...) _MMKVLogWithLevel(MMKVLogDebug, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define MMKVDebug(format, ...)                                                                     \
+    _MMKVLogWithLevel(MMKVLogDebug, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 #else
-#define MMKVDebug(format, ...) \
-	{}
+#define MMKVDebug(format, ...)                                                                     \
+    {}
 #endif // NDEBUG
 
-void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, NSString *format, ...);
+void _MMKVLogWithLevel(
+    MMKVLogLevel level, const char *file, const char *func, int line, NSString *format, ...);
 
 #else
 
-#define MMKVError(format, ...) \
-	{}
-#define MMKVWarning(format, ...) \
-	{}
-#define MMKVInfo(format, ...) \
-	{}
-#define MMKVDebug(format, ...) \
-	{}
+#define MMKVError(format, ...)                                                                     \
+    {}
+#define MMKVWarning(format, ...)                                                                   \
+    {}
+#define MMKVInfo(format, ...)                                                                      \
+    {}
+#define MMKVDebug(format, ...)                                                                     \
+    {}
 
 #endif // ENABLE_MMKV_LOG
 

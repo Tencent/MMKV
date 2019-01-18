@@ -36,6 +36,7 @@ import java.util.HashSet;
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVRecoverStrategic;
+import com.tencent.mmkv.MMKVLogLevel;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +56,12 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
         String rootDir = "mmkv root: " + MMKV.initialize(dir);
         Log.i("MMKV", rootDir);
+
+        // set log level
+        MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
+
+        // you can turn off logging
+        //MMKV.setLogLevel(MMKVLogLevel.LevelNone);
 
         MMKV.registerHandler(this);
 
@@ -385,5 +392,32 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
     @Override
     public MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
         return MMKVRecoverStrategic.OnErrorRecover;
+    }
+
+    @Override
+    public boolean wantLogRedirecting() {
+        return true;
+    }
+
+    @Override
+    public void mmkvLog(MMKVLogLevel level, String file, int line, String func, String message) {
+        String log = "<" + file + ":" + line + "::" + func + "> " + message;
+        switch (level) {
+            case LevelDebug:
+                Log.d("redirect logging MMKV", log);
+                break;
+            case LevelInfo:
+                Log.i("redirect logging MMKV", log);
+                break;
+            case LevelWarning:
+                Log.w("redirect logging MMKV", log);
+                break;
+            case LevelError:
+                Log.e("redirect logging MMKV", log);
+                break;
+            case LevelNone:
+                Log.e("redirect logging MMKV", log);
+                break;
+        }
     }
 }
