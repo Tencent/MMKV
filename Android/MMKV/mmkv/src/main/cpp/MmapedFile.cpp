@@ -19,9 +19,11 @@
  */
 
 #include "MmapedFile.h"
+#include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
-#include <errno.h>
+#include "ScopedLock.hpp"
+#include <cerrno>
 #include <fcntl.h>
 #include <libgen.h>
 #include <sys/mman.h>
@@ -40,6 +42,10 @@ MmapedFile::MmapedFile(const std::string &path, size_t size, bool fileType)
         if (m_fd < 0) {
             MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
         } else {
+            FileLock fileLock(m_fd);
+            InterProcessLock lock(&fileLock, ExclusiveLockType);
+            SCOPEDLOCK(lock);
+
             struct stat st = {};
             if (fstat(m_fd, &st) != -1) {
                 m_segmentSize = static_cast<size_t>(st.st_size);

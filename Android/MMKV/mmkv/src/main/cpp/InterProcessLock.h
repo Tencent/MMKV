@@ -21,7 +21,7 @@
 #ifndef MMKV_INTERPROCESSLOCK_H
 #define MMKV_INTERPROCESSLOCK_H
 
-#include <assert.h>
+#include <cassert>
 #include <fcntl.h>
 
 enum LockType {
