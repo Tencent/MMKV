@@ -111,7 +111,7 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](htt
   1. 获取 MMKV 源码：
   
      ```
-     git clone http://git.code.oa.com/wechat-team/mmkv.git
+     git clone https://github.com/Tencent/MMKV.git
      ```
   
   2. 添加工程 `Win32/MMKV/MMKV.vcxproj` 到你的项目里；

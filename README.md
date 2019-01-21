@@ -140,7 +140,7 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 1. Getting source code from git repository:
   
    ```
-   git clone http://git.code.oa.com/wechat-team/mmkv.git
+   git clone https://github.com/Tencent/MMKV.git
    ```
   
 2. Add `Win32/MMKV/MMKV.vcxproj` to your solution;
