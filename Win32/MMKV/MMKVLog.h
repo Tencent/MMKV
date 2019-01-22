@@ -21,6 +21,7 @@
 #ifndef MMKV_MMKVLOG_H
 #define MMKV_MMKVLOG_H
 
+#include "MMKV.h"
 #include <cstdio>
 #include <cstring>
 
@@ -29,20 +30,28 @@
 
 #ifdef ENABLE_MMKV_LOG
 
-#define APPNAME "MMKV"
+extern MMKVLogLevel g_currentLogLevel;
+extern MMKV::LogHandler g_logHandler;
 
-#define __NEW_LINE "\n"
+#define __filename__ (strrchr(__FILE__, '\\') + 1)
 
-#define MMKVError(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
-#define MMKVWarning(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
-#define MMKVInfo(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
+#define MMKVError(format, ...)                                                                     \
+    _MMKVLogWithLevel(MMKVLogError, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define MMKVWarning(format, ...)                                                                   \
+    _MMKVLogWithLevel(MMKVLogWarning, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define MMKVInfo(format, ...)                                                                      \
+    _MMKVLogWithLevel(MMKVLogInfo, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 
 #ifndef NDEBUG
-#define MMKVDebug(format, ...) ::printf(format __NEW_LINE, ##__VA_ARGS__)
+#define MMKVDebug(format, ...)                                                                     \
+    _MMKVLogWithLevel(MMKVLogDebug, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 #else
 #define MMKVDebug(format, ...)                                                                     \
     {}
-#endif
+#endif // NDEBUG
+
+void _MMKVLogWithLevel(
+    MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...);
 
 #else
 

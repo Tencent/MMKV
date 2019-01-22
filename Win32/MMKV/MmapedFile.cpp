@@ -20,9 +20,11 @@
 
 #include "pch.h"
 
+#include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
 #include "MmapedFile.h"
+#include "ScopedLock.hpp"
 
 using namespace std;
 
@@ -47,6 +49,10 @@ MmapedFile::MmapedFile(const std::wstring &path, size_t size)
     if (m_file == INVALID_HANDLE_VALUE) {
         MMKVError("fail to open:%ws, %d", m_name.c_str(), GetLastError());
     } else {
+        FileLock fileLock(m_file);
+        InterProcessLock lock(&fileLock, ExclusiveLockType);
+        SCOPEDLOCK(lock);
+
         getfilesize(m_file, m_segmentSize);
         if (m_segmentSize < DEFAULT_MMAP_SIZE) {
             m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);

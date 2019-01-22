@@ -48,6 +48,7 @@ static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
 static std::wstring g_rootDir;
 static MMKV::ErrorHandler g_errorHandler;
+MMKV::LogHandler g_logHandler;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
 #define SPECIAL_CHARACTER_DIRECTORY_NAME L"specialCharacter"
@@ -1216,6 +1217,21 @@ void MMKV::regiserErrorHandler(ErrorHandler handler) {
 void MMKV::unRegisetErrorHandler() {
     SCOPEDLOCK(g_instanceLock);
     g_errorHandler = nullptr;
+}
+
+void MMKV::regiserLogHandler(LogHandler handler) {
+    SCOPEDLOCK(g_instanceLock);
+    g_logHandler = handler;
+}
+
+void MMKV::unRegisetLogHandler() {
+    SCOPEDLOCK(g_instanceLock);
+    g_logHandler = nullptr;
+}
+
+void MMKV::setLogLevel(MMKVLogLevel level) {
+    SCOPEDLOCK(g_instanceLock);
+    g_currentLogLevel = level;
 }
 
 static void mkSpecialCharacterFileDirectory() {

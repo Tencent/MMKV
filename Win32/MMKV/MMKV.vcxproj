@@ -209,6 +209,7 @@
     <ClCompile Include="MmapedFile.cpp" />
     <ClCompile Include="MMBuffer.cpp" />
     <ClCompile Include="MMKV.cpp" />
+    <ClCompile Include="MMKVLog.cpp" />
     <ClCompile Include="PBUtility.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="ThreadLock.cpp" />
