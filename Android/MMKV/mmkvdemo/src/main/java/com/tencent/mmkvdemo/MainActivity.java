@@ -55,13 +55,13 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         // set root dir
         // String rootDir = "mmkv root: " + MMKV.initialize(this);
         String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
-        String rootDir = "mmkv root: " + MMKV.initialize(dir, new MMKV.LibLoader() {
+        String rootDir = MMKV.initialize(dir, new MMKV.LibLoader() {
             @Override
             public void loadLibrary(String libName) {
                 ReLinker.loadLibrary(MainActivity.this, libName);
             }
         });
-        Log.i("MMKV", rootDir);
+        Log.i("MMKV", "mmkv root: " + rootDir);
 
         // set log level
         MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
