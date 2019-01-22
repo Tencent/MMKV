@@ -37,6 +37,7 @@ import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.MMKVLogLevel;
+import com.getkeepsafe.relinker.ReLinker;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,12 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         // set root dir
         // String rootDir = "mmkv root: " + MMKV.initialize(this);
         String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
-        String rootDir = "mmkv root: " + MMKV.initialize(dir);
+        String rootDir = "mmkv root: " + MMKV.initialize(dir, new MMKV.LibLoader() {
+            @Override
+            public void loadLibrary(String libName) {
+                ReLinker.loadLibrary(MainActivity.this, libName);
+            }
+        });
         Log.i("MMKV", rootDir);
 
         // set log level

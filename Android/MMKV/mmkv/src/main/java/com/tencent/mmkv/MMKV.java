@@ -30,7 +30,6 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -59,26 +58,38 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         index2LogLevel = new MMKVLogLevel[] {MMKVLogLevel.LevelDebug, MMKVLogLevel.LevelInfo,
                                              MMKVLogLevel.LevelWarning, MMKVLogLevel.LevelError,
                                              MMKVLogLevel.LevelNone};
-
-        if (BuildConfig.FLAVOR.equals("SharedCpp")) {
-            System.loadLibrary("c++_shared");
-        }
-        System.loadLibrary("mmkv");
     }
+
+    public interface LibLoader { public void loadLibrary(String libName); }
 
     // call on program start
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
-        return initialize(root);
+        return initialize(root, null);
     }
 
-    static private String rootDir = null;
     public static String initialize(String rootDir) {
+        return initialize(rootDir, null);
+    }
+
+    public static String initialize(String rootDir, LibLoader loader) {
+        if (loader != null) {
+            if (BuildConfig.FLAVOR.equals("SharedCpp")) {
+                loader.loadLibrary("c++_shared");
+            }
+            loader.loadLibrary("mmkv");
+        } else {
+            if (BuildConfig.FLAVOR.equals("SharedCpp")) {
+                System.loadLibrary("c++_shared");
+            }
+            System.loadLibrary("mmkv");
+        }
         MMKV.rootDir = rootDir;
         jniInitialize(MMKV.rootDir);
         return rootDir;
     }
 
+    static private String rootDir = null;
     public static String getRootDir() {
         return rootDir;
     }
