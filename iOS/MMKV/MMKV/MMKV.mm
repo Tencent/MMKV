@@ -1428,8 +1428,9 @@ static NSString *g_basePath = nil;
 	[dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
 		if ([key isKindOfClass:[NSString class]]) {
 			NSString *stringKey = key;
-			[MMKV tranlateData:obj key:stringKey kv:self];
-			count++;
+			if ([MMKV tranlateData:obj key:stringKey kv:self]) {
+				count++;
+			}
 		} else {
 			MMKVWarning(@"unknown type of key:%@", key);
 		}
