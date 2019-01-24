@@ -163,8 +163,9 @@ NS_ASSUME_NONNULL_BEGIN
 // MMKVLogNone to disable all logging
 + (void)setLogLevel:(MMKVLogLevel)logLevel;
 
-//Migrate NSUserDefault data to MMKV
-+ (void)migrateDataWithID:(NSString *)mmapID userDefaults:(NSUserDefaults *)userDaults;
+// Migrate NSUserDefault data to MMKV
+// return imported count of key-values
+- (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults NS_SWIFT_NAME(migrateFrom(userDefaults:));
 
 NS_ASSUME_NONNULL_END
 

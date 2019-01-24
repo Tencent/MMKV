@@ -257,7 +257,7 @@ using namespace std;
 	XCTAssertEqual(ret, YES);
 
 	NSDate *value = [mmkv getObjectOfClass:NSDate.class forKey:@"date"];
-	XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, value.timeIntervalSince1970, 0.001);
+	[self compareDate:date withDate:value];
 
 	value = [mmkv getObjectOfClass:NSDate.class forKey:KeyNotExist];
 	XCTAssertEqualObjects(value, nil);
@@ -269,7 +269,7 @@ using namespace std;
 	XCTAssertEqual(ret, YES);
 
 	NSDate *value = [mmkv getDateForKey:@"date"];
-	XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, value.timeIntervalSince1970, 0.001);
+	[self compareDate:date withDate:value];
 
 	value = [mmkv getObjectOfClass:NSDate.class forKey:KeyNotExist];
 	XCTAssertEqualObjects(value, nil);
@@ -416,6 +416,123 @@ using namespace std;
 
 	NSString *sValue = [mmkv getObjectOfClass:NSString.class forKey:@"string_1"];
 	XCTAssertEqualObjects(sValue, @"hello");
+}
+
+- (void)compareDate:(NSDate *)date withDate:(NSDate *)other {
+	XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, other.timeIntervalSince1970, 0.001);
+}
+
+- (void)testImportFromNSUserDefaults {
+	NSUserDefaults *userDefault = [[NSUserDefaults alloc] initWithSuiteName:@"testNSUserDefaults"];
+	[userDefault setBool:YES forKey:@"bool"];
+	[userDefault setInteger:std::numeric_limits<NSInteger>::max() forKey:@"NSInteger"];
+	[userDefault setFloat:3.14 forKey:@"float"];
+	[userDefault setDouble:std::numeric_limits<double>::max() forKey:@"double"];
+	[userDefault setObject:@"hello, NSUserDefaults" forKey:@"string"];
+	[userDefault setObject:[NSDate date] forKey:@"date"];
+	[userDefault setObject:[@"hello, NSUserDefaults again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
+	[userDefault setURL:[NSURL URLWithString:@"https://mail.qq.com"] forKey:@"url"];
+
+	NSNumber *number = [NSNumber numberWithBool:YES];
+	[userDefault setObject:number forKey:@"number_bool"];
+
+	number = [NSNumber numberWithChar:std::numeric_limits<char>::min()];
+	[userDefault setObject:number forKey:@"number_char"];
+
+	number = [NSNumber numberWithUnsignedChar:std::numeric_limits<unsigned char>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_char"];
+
+	number = [NSNumber numberWithShort:std::numeric_limits<short>::min()];
+	[userDefault setObject:number forKey:@"number_short"];
+
+	number = [NSNumber numberWithUnsignedShort:std::numeric_limits<unsigned short>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_short"];
+
+	number = [NSNumber numberWithInt:std::numeric_limits<int>::min()];
+	[userDefault setObject:number forKey:@"number_int"];
+
+	number = [NSNumber numberWithUnsignedInt:std::numeric_limits<unsigned int>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_int"];
+
+	number = [NSNumber numberWithLong:std::numeric_limits<long>::min()];
+	[userDefault setObject:number forKey:@"number_long"];
+
+	number = [NSNumber numberWithUnsignedLong:std::numeric_limits<unsigned long>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_long"];
+
+	number = [NSNumber numberWithLongLong:std::numeric_limits<long long>::min()];
+	[userDefault setObject:number forKey:@"number_long_long"];
+
+	number = [NSNumber numberWithUnsignedLongLong:std::numeric_limits<unsigned long long>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_long_long"];
+
+	number = [NSNumber numberWithFloat:3.1415];
+	[userDefault setObject:number forKey:@"number_float"];
+
+	number = [NSNumber numberWithDouble:std::numeric_limits<double>::max()];
+	[userDefault setObject:number forKey:@"number_double"];
+
+	number = [NSNumber numberWithInteger:std::numeric_limits<NSInteger>::min()];
+	[userDefault setObject:number forKey:@"number_NSInteger"];
+
+	number = [NSNumber numberWithUnsignedInteger:std::numeric_limits<NSUInteger>::max()];
+	[userDefault setObject:number forKey:@"number_NSUInteger"];
+
+	[mmkv migrateFromUserDefaults:userDefault];
+
+	XCTAssertEqual([mmkv getBoolForKey:@"bool"], [userDefault boolForKey:@"bool"]);
+	XCTAssertEqual([mmkv getInt64ForKey:@"NSInteger"], [userDefault integerForKey:@"NSInteger"]);
+	XCTAssertEqualWithAccuracy([mmkv getFloatForKey:@"float"], [userDefault floatForKey:@"float"], 0.001);
+	XCTAssertEqualWithAccuracy([mmkv getDoubleForKey:@"double"], [userDefault doubleForKey:@"double"], 0.001);
+	XCTAssertEqualObjects([mmkv getStringForKey:@"string"], [userDefault stringForKey:@"string"]);
+	[self compareDate:[mmkv getDateForKey:@"date"] withDate:[userDefault objectForKey:@"date"]];
+	XCTAssertEqualObjects([mmkv getDataForKey:@"data"], [userDefault dataForKey:@"data"]);
+	XCTAssertEqualObjects([NSKeyedUnarchiver unarchiveObjectWithData:[mmkv getDataForKey:@"url"]], [userDefault URLForKey:@"url"]);
+
+	number = [userDefault objectForKey:@"number_bool"];
+	XCTAssertEqual([mmkv getBoolForKey:@"number_bool"], number.boolValue);
+
+	number = [userDefault objectForKey:@"number_char"];
+	XCTAssertEqual([mmkv getInt32ForKey:@"number_char"], number.charValue);
+
+	number = [userDefault objectForKey:@"number_unsigned_char"];
+	XCTAssertEqual([mmkv getInt32ForKey:@"number_unsigned_char"], number.unsignedCharValue);
+
+	number = [userDefault objectForKey:@"number_short"];
+	XCTAssertEqual([mmkv getInt32ForKey:@"number_short"], number.shortValue);
+
+	number = [userDefault objectForKey:@"number_unsigned_short"];
+	XCTAssertEqual([mmkv getInt32ForKey:@"number_unsigned_short"], number.unsignedShortValue);
+
+	number = [userDefault objectForKey:@"number_int"];
+	XCTAssertEqual([mmkv getInt32ForKey:@"number_int"], number.intValue);
+
+	number = [userDefault objectForKey:@"number_unsigned_int"];
+	XCTAssertEqual([mmkv getUInt32ForKey:@"number_unsigned_int"], number.unsignedIntValue);
+
+	number = [userDefault objectForKey:@"number_long"];
+	XCTAssertEqual([mmkv getInt64ForKey:@"number_long"], number.longValue);
+
+	number = [userDefault objectForKey:@"number_unsigned_long"];
+	XCTAssertEqual([mmkv getUInt64ForKey:@"number_unsigned_long"], number.unsignedLongValue);
+
+	number = [userDefault objectForKey:@"number_long_long"];
+	XCTAssertEqual([mmkv getInt64ForKey:@"number_long_long"], number.longLongValue);
+
+	number = [userDefault objectForKey:@"number_unsigned_long_long"];
+	XCTAssertEqual([mmkv getUInt64ForKey:@"number_unsigned_long_long"], number.unsignedLongLongValue);
+
+	number = [userDefault objectForKey:@"number_float"];
+	XCTAssertEqualWithAccuracy([mmkv getFloatForKey:@"number_float"], number.floatValue, 0.001);
+
+	number = [userDefault objectForKey:@"number_double"];
+	XCTAssertEqualWithAccuracy([mmkv getDoubleForKey:@"number_double"], number.doubleValue, 0.001);
+
+	number = [userDefault objectForKey:@"number_NSInteger"];
+	XCTAssertEqual([mmkv getInt64ForKey:@"number_NSInteger"], number.integerValue);
+
+	number = [userDefault objectForKey:@"number_NSUInteger"];
+	XCTAssertEqual([mmkv getUInt64ForKey:@"number_NSUInteger"], number.unsignedIntegerValue);
 }
 
 @end
