@@ -163,6 +163,9 @@ NS_ASSUME_NONNULL_BEGIN
 // MMKVLogNone to disable all logging
 + (void)setLogLevel:(MMKVLogLevel)logLevel;
 
+//Migrate NSUserDefault data to MMKV
++ (void)migrateDataWithID:(NSString *)mmapID;
+
 NS_ASSUME_NONNULL_END
 
 @end
