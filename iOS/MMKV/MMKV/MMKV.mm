@@ -1418,6 +1418,73 @@ static NSString *g_basePath = nil;
 	g_currentLogLevel = logLevel;
 }
 
++ (void)migrateDataWithID:(NSString *)mmapID userDefaults:(NSUserDefaults *)userDaults {
+	NSDictionary *dic = [userDaults dictionaryRepresentation];
+	if (dic.count <= 0) {
+		MMKVInfo(@"migrate data fail,userDaults is nil");
+		return;
+	}
+	MMKV *kv = [self mmkvWithID:mmapID];
+	if (kv == nil) {
+		kv = [self defaultMMKV];
+	}
+	[dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+		if ([key isKindOfClass:[NSString class]]) {
+			NSString *stringKey = key;
+			[self tranlateData:obj key:stringKey kv:kv];
+		} else {
+			MMKVInfo(@"unknown key:%@", key);
+		}
+	}];
+}
+
++ (void)tranlateData:(id)obj key:(NSString *)key kv:(MMKV *)kv {
+	if ([obj isKindOfClass:[NSString class]]) {
+		[kv setString:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSData class]]) {
+		[kv setData:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSDate class]]) {
+		[kv setDate:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSNumber class]]) {
+		NSNumber *num = obj;
+		CFNumberType numberType = CFNumberGetType((CFNumberRef) obj);
+		switch (numberType) {
+			case kCFNumberSInt8Type:
+			case kCFNumberSInt16Type:
+			case kCFNumberSInt32Type:
+			case kCFNumberIntType:
+			case kCFNumberShortType:
+				[kv setInt32:num.intValue forKey:key];
+				break;
+			case kCFNumberSInt64Type:
+			case kCFNumberLongType:
+			case kCFNumberNSIntegerType:
+				[kv setInt64:num.longValue forKey:key];
+				break;
+			case kCFNumberLongLongType:
+				[kv setInt64:num.longLongValue forKey:key];
+				break;
+			case kCFNumberFloat32Type:
+			case kCFNumberFloat64Type:
+				[kv setFloat:num.floatValue forKey:key];
+				break;
+			case kCFNumberCharType:
+				[kv setBool:num.boolValue forKey:key];
+				break;
+			case kCFNumberDoubleType:
+				[kv setDouble:num.doubleValue forKey:key];
+				break;
+			default:
+				MMKVInfo(@"unknown number type:%ld,key:%@", (long) numberType, key);
+				break;
+		}
+	} else if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]]) {
+		[kv setObject:obj forKey:key];
+	} else {
+		MMKVInfo(@"unknown type key:%@", key);
+	}
+}
+
 @end
 
 static NSString *md5(NSString *value) {
