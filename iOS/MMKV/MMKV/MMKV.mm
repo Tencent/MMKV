@@ -1418,6 +1418,7 @@ static NSString *g_basePath = nil;
 	g_currentLogLevel = logLevel;
 }
 
++ (void)migrateDataWithID:(NSString *)mmapID{
     MMKV *kv = [self mmkvWithID:mmapID];
     NSDictionary *dic = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
     [dic enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
