@@ -1418,9 +1418,16 @@ static NSString *g_basePath = nil;
 	g_currentLogLevel = logLevel;
 }
 
-+ (void)migrateDataWithID:(NSString *)mmapID{
++ (void)migrateDataWithID:(NSString *)mmapID userDefaults:(NSUserDefaults *)userDaults{
+    NSDictionary *dic = [userDaults dictionaryRepresentation];
+    if (dic.count <= 0) {
+        MMKVInfo(@"migrate data fail,userDaults is nil");
+        return;
+    }
     MMKV *kv = [self mmkvWithID:mmapID];
-    NSDictionary *dic = [[NSUserDefaults standardUserDefaults] dictionaryRepresentation];
+    if (kv == nil) {
+        kv = [self defaultMMKV];
+    }
     [dic enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         if ([key isKindOfClass:[NSString class]]) {
             NSString *stringKey = key;
@@ -1431,7 +1438,7 @@ static NSString *g_basePath = nil;
     }];
 }
 
-+(void)tranlateData:(id)obj key:(NSString *)key kv:(MMKV *)kv{
++ (void)tranlateData:(id)obj key:(NSString *)key kv:(MMKV *)kv{
     if ([obj isKindOfClass:[NSString class]]){
         [kv setString:obj forKey:key];
     }else if ([obj isKindOfClass:[NSData class]]){

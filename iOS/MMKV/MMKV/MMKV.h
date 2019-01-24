@@ -164,7 +164,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)setLogLevel:(MMKVLogLevel)logLevel;
 
 //Migrate NSUserDefault data to MMKV
-+ (void)migrateDataWithID:(NSString *)mmapID;
++ (void)migrateDataWithID:(NSString *)mmapID userDefaults:(NSUserDefaults *)userDaults;
 
 NS_ASSUME_NONNULL_END
 
