@@ -1,5 +1,28 @@
 # MMKV Change Log
 
+## v1.0.17 / 2019-01-25
+### iOS / macOS
+What's new  
+
+* Redirect logging of MMKV is supported now.
+* Dynamically disable logging of MMKV is supported now.
+* Add method `migrateFromUserDefaults ` to import from NSUserDefaults.
+
+### Android
+What's new  
+
+* Redirect logging of MMKV is supported now.
+* Dynamically disable logging of MMKV is supported now.  
+  Note: These two are breaking changes for interface `MMKVHandler`, update your implementation with `wantLogRedirecting()` & `mmkvLog()` for v1.0.17. (Interface with default method requires API level 24, sigh...)
+* Add option to use custom library loader `initialize(String rootDir, LibLoader loader)`. If you're facing `System.loadLibrary()` crash on some low API level device, consider using **ReLinker** to load MMKV. Example can be found in **mmkvdemo**.
+* Fix a potential corruption of meta file on multi-process mode.
+* Fix a potential crash when the meta file is not valid on multi-process mode.
+
+
+### Win32
+* Redirect logging of MMKV is supported now.
+* Dynamically disable logging of MMKV is supported now.
+
 ## v1.0.16 / 2019-01-04
 ### iOS / macOS
 What's new  
