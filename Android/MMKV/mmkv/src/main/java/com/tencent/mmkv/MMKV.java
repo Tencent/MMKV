@@ -42,7 +42,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
     private static EnumMap<MMKVLogLevel, Integer> logLevel2Index;
-    private static MMKVLogLevel index2LogLevel[];
+    private static MMKVLogLevel[] index2LogLevel;
     static {
         recoverIndex = new EnumMap<>(MMKVRecoverStrategic.class);
         recoverIndex.put(MMKVRecoverStrategic.OnErrorDiscard, 0);
@@ -60,7 +60,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                                              MMKVLogLevel.LevelNone};
     }
 
-    public interface LibLoader { public void loadLibrary(String libName); }
+    public interface LibLoader { void loadLibrary(String libName); }
 
     // call on program start
     public static String initialize(Context context) {
