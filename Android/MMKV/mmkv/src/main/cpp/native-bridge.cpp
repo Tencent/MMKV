@@ -32,6 +32,7 @@ static jclass g_cls = nullptr;
 static jfieldID g_fileID = nullptr;
 static jmethodID g_callbackOnCRCFailID = nullptr;
 static jmethodID g_callbackOnFileLengthErrorID = nullptr;
+static jmethodID g_mmkvLogID = nullptr;
 static JavaVM *g_currentJVM = nullptr;
 
 extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
@@ -65,6 +66,11 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         env->GetStaticMethodID(g_cls, "onMMKVFileLengthError", "(Ljava/lang/String;)I");
     if (!g_callbackOnFileLengthErrorID) {
         MMKVError("fail to get method id for onMMKVFileLengthError");
+    }
+    g_mmkvLogID = env->GetStaticMethodID(
+        g_cls, "mmkvLogImp", "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
+    if (!g_callbackOnFileLengthErrorID) {
+        MMKVError("fail to get method id for mmkvLogImp");
     }
 
     return JNI_VERSION_1_6;
@@ -170,6 +176,21 @@ MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
         return static_cast<MMKVRecoverStrategic>(strategic);
     }
     return OnErrorDiscard;
+}
+
+void mmkvLog(int level,
+             const std::string &file,
+             int line,
+             const std::string &function,
+             const std::string &message) {
+    auto currentEnv = getCurrentEnv();
+    if (currentEnv && g_mmkvLogID) {
+        jstring oFile = string2jstring(currentEnv, file);
+        jstring oFunction = string2jstring(currentEnv, function);
+        jstring oMessage = string2jstring(currentEnv, message);
+        currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, level, oFile, line, oFunction,
+                                         oMessage);
+    }
 }
 
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
@@ -690,4 +711,16 @@ extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(JNIEnv *e
         return kv->getValueSizeForKey(key);
     }
     return 0;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_setLogLevel(JNIEnv *env,
+                                                                         jclass type,
+                                                                         jint level) {
+    g_currentLogLevel = (MMKVLogLevel) level;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_setLogReDirecting(JNIEnv *env,
+                                                                               jclass type,
+                                                                               jboolean enable) {
+    g_isLogRedirecting = (enable == JNI_TRUE);
 }

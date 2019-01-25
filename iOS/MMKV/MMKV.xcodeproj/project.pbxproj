@@ -31,6 +31,8 @@
 		CB865F5720FF33F600427B9D /* MemoryFile.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB865F5420FF33F600427B9D /* MemoryFile.mm */; };
 		CB865F5820FF33F600427B9D /* MemoryFile.h in Headers */ = {isa = PBXBuildFile; fileRef = CB865F5520FF33F600427B9D /* MemoryFile.h */; };
 		CB8FB92E2100C52F00CC523D /* LRUCache.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB8FB92D2100C52F00CC523D /* LRUCache.hpp */; };
+		CB8FD91C21F1B8C10005EE8F /* MMKVLog.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */; };
+		CB8FD91D21F1B8C10005EE8F /* MMKVLog.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */; };
 		CBC1A8FE20DA948A00AD5087 /* MiniCodedInputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */; };
 		CBC1A8FF20DA948A00AD5087 /* MiniCodedOutputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */; };
 		CBC1A90020DA948A00AD5087 /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; };
@@ -92,6 +94,7 @@
 		CB865F5420FF33F600427B9D /* MemoryFile.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MemoryFile.mm; sourceTree = "<group>"; };
 		CB865F5520FF33F600427B9D /* MemoryFile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MemoryFile.h; sourceTree = "<group>"; };
 		CB8FB92D2100C52F00CC523D /* LRUCache.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LRUCache.hpp; sourceTree = "<group>"; };
+		CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVLog.mm; sourceTree = "<group>"; };
 		CBC1A8A620DA080800AD5087 /* MMKVLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKVLog.h; sourceTree = "<group>"; };
 		CBC1A8F620DA946200AD5087 /* MMKV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBC1A90320DA94A000AD5087 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
@@ -163,6 +166,7 @@
 				CB1FD4952046984F00931B5F /* MMKV.mm */,
 				CBDF328F2192C0000028DB4D /* MMKVHandler.h */,
 				CBC1A8A620DA080800AD5087 /* MMKVLog.h */,
+				CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */,
 				CBC1A90720DA959400AD5087 /* Resources */,
 				CB1FD5152049382F00931B5F /* ScopedLock.hpp */,
 			);
@@ -329,6 +333,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB1FD4C320469B8800931B5F /* MiniCodedOutputData.mm in Sources */,
+				CB8FD91C21F1B8C10005EE8F /* MMKVLog.mm in Sources */,
 				CB6DEFAB212E6F010024F0E8 /* cfb128.c in Sources */,
 				CB6DEFAF212E6F010024F0E8 /* aes_cfb.c in Sources */,
 				CB1FD4962046984F00931B5F /* MMKV.mm in Sources */,
@@ -348,6 +353,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CBC1A8FE20DA948A00AD5087 /* MiniCodedInputData.mm in Sources */,
+				CB8FD91D21F1B8C10005EE8F /* MMKVLog.mm in Sources */,
 				CB6DEFAC212E6F010024F0E8 /* cfb128.c in Sources */,
 				CB6DEFB0212E6F010024F0E8 /* aes_cfb.c in Sources */,
 				CBC1A8FF20DA948A00AD5087 /* MiniCodedOutputData.mm in Sources */,
@@ -530,6 +536,7 @@
 		CBC1A8FC20DA946200AD5087 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
@@ -567,6 +574,7 @@
 		CBC1A8FD20DA946200AD5087 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;

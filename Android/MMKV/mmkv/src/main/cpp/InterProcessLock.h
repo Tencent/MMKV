@@ -21,7 +21,7 @@
 #ifndef MMKV_INTERPROCESSLOCK_H
 #define MMKV_INTERPROCESSLOCK_H
 
-#include <assert.h>
+#include <cassert>
 #include <fcntl.h>
 
 enum LockType {
@@ -38,6 +38,8 @@ class FileLock {
     size_t m_exclusiveLockCount;
 
     bool doLock(LockType lockType, int cmd);
+
+    bool isFileLockValid() { return m_fd >= 0; }
 
     // just forbid it for possibly misuse
     FileLock(const FileLock &other) = delete;

@@ -485,6 +485,9 @@ void MMKV::checkLoadData() {
         return;
     }
 
+    if (!m_metaFile.isFileValid()) {
+        return;
+    }
     // TODO: atomic lock m_metaFile?
     MMKVMetaInfo metaInfo;
     metaInfo.read(m_metaFile.getMemory());
@@ -1304,7 +1307,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
 
     uint32_t crcFile = 0;
     MMBuffer *data = readWholeFile(crcPath.c_str());
-    if (data) {
+    if (data && data->getPtr()) {
         MMKVMetaInfo metaInfo;
         metaInfo.read(data->getPtr());
         crcFile = metaInfo.m_crcDigest;

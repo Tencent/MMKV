@@ -36,6 +36,8 @@ import java.util.HashSet;
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVRecoverStrategic;
+import com.tencent.mmkv.MMKVLogLevel;
+import com.getkeepsafe.relinker.ReLinker;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -53,8 +55,19 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         // set root dir
         // String rootDir = "mmkv root: " + MMKV.initialize(this);
         String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
-        String rootDir = "mmkv root: " + MMKV.initialize(dir);
-        Log.i("MMKV", rootDir);
+        String rootDir = MMKV.initialize(dir, new MMKV.LibLoader() {
+            @Override
+            public void loadLibrary(String libName) {
+                ReLinker.loadLibrary(MainActivity.this, libName);
+            }
+        });
+        Log.i("MMKV", "mmkv root: " + rootDir);
+
+        // set log level
+        MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
+
+        // you can turn off logging
+        //MMKV.setLogLevel(MMKVLogLevel.LevelNone);
 
         MMKV.registerHandler(this);
 
@@ -194,7 +207,11 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             kv.encode("parcel", testParcelable);
         }
         TestParcelable result = kv.decodeParcelable("parcel", TestParcelable.class);
-        Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+        if (result != null) {
+            Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+        } else {
+            Log.e("MMKV", "fail to decodeParcelable of key:parcel");
+        }
 
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
         Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
@@ -254,6 +271,9 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
     private void testReKey() {
         final String mmapID = "testAES_reKey";
         MMKV kv = testMMKV(mmapID, null, false, null);
+        if (kv == null) {
+            return;
+        }
 
         kv.reKey("Key_seq_1");
         kv.clearMemoryCache();
@@ -378,5 +398,32 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
     @Override
     public MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
         return MMKVRecoverStrategic.OnErrorRecover;
+    }
+
+    @Override
+    public boolean wantLogRedirecting() {
+        return true;
+    }
+
+    @Override
+    public void mmkvLog(MMKVLogLevel level, String file, int line, String func, String message) {
+        String log = "<" + file + ":" + line + "::" + func + "> " + message;
+        switch (level) {
+            case LevelDebug:
+                Log.d("redirect logging MMKV", log);
+                break;
+            case LevelInfo:
+                Log.i("redirect logging MMKV", log);
+                break;
+            case LevelWarning:
+                Log.w("redirect logging MMKV", log);
+                break;
+            case LevelError:
+                Log.e("redirect logging MMKV", log);
+                break;
+            case LevelNone:
+                Log.e("redirect logging MMKV", log);
+                break;
+        }
     }
 }

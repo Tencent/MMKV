@@ -29,4 +29,10 @@ public interface MMKVHandler {
     // by default MMKV will discard all data on file length mismatch
     // return `OnErrorRecover` to recover any data on the file
     MMKVRecoverStrategic onMMKVFileLengthError(String mmapID);
+
+    // return false if you don't want log redirecting
+    boolean wantLogRedirecting();
+
+    // log redirecting
+    void mmkvLog(MMKVLogLevel level, String file, int line, String function, String message);
 }

@@ -22,29 +22,45 @@
 #define MMKV_MMKVLOG_H
 
 #include <android/log.h>
+#include <cstdint>
 #include <cstring>
 #include <errno.h>
+
+enum MMKVLogLevel : uint32_t {
+    MMKVLogDebug = 0, // not available for release/product build
+    MMKVLogInfo = 1,  // default level
+    MMKVLogWarning,
+    MMKVLogError,
+    MMKVLogNone, // special level used to disable all log messages
+};
 
 // enable logging
 #define ENABLE_MMKV_LOG
 
 #ifdef ENABLE_MMKV_LOG
 
-#define APPNAME "MMKV"
+extern bool g_isLogRedirecting;
+extern MMKVLogLevel g_currentLogLevel;
+
+#define __filename__ (strrchr(__FILE__, '/') + 1)
 
 #define MMKVError(format, ...)                                                                     \
-    __android_log_print(ANDROID_LOG_ERROR, APPNAME, format, ##__VA_ARGS__)
+    _MMKVLogWithLevel(MMKVLogError, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 #define MMKVWarning(format, ...)                                                                   \
-    __android_log_print(ANDROID_LOG_WARN, APPNAME, format, ##__VA_ARGS__)
-#define MMKVInfo(format, ...) __android_log_print(ANDROID_LOG_INFO, APPNAME, format, ##__VA_ARGS__)
+    _MMKVLogWithLevel(MMKVLogWarning, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#define MMKVInfo(format, ...)                                                                      \
+    _MMKVLogWithLevel(MMKVLogInfo, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 
 #ifndef NDEBUG
 #define MMKVDebug(format, ...)                                                                     \
-    __android_log_print(ANDROID_LOG_DEBUG, APPNAME, format, ##__VA_ARGS__)
+    _MMKVLogWithLevel(MMKVLogDebug, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 #else
 #define MMKVDebug(format, ...)                                                                     \
     {}
 #endif
+
+void _MMKVLogWithLevel(
+    MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...);
 
 #else
 

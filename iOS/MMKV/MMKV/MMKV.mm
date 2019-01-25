@@ -41,7 +41,8 @@
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
-static id<MMKVHandler> g_callbackHandler;
+id<MMKVHandler> g_callbackHandler;
+bool g_isLogRedirecting = false;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
@@ -1397,11 +1398,84 @@ static NSString *g_basePath = nil;
 + (void)registerHandler:(id<MMKVHandler>)handler {
 	CScopedLock lock(g_instanceLock);
 	g_callbackHandler = handler;
+
+	if ([g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
+		g_isLogRedirecting = true;
+
+		// some logging before registerHandler
+		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
+	}
 }
 
 + (void)unregiserHandler {
 	CScopedLock lock(g_instanceLock);
 	g_callbackHandler = nil;
+	g_isLogRedirecting = false;
+}
+
++ (void)setLogLevel:(MMKVLogLevel)logLevel {
+	CScopedLock lock(g_instanceLock);
+	g_currentLogLevel = logLevel;
+}
+
+- (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults {
+	NSDictionary *dic = [userDaults dictionaryRepresentation];
+	if (dic.count <= 0) {
+		MMKVInfo(@"migrate data fail, userDaults is nil or empty");
+		return 0;
+	}
+	__block uint32_t count = 0;
+	[dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+		if ([key isKindOfClass:[NSString class]]) {
+			NSString *stringKey = key;
+			if ([MMKV tranlateData:obj key:stringKey kv:self]) {
+				count++;
+			}
+		} else {
+			MMKVWarning(@"unknown type of key:%@", key);
+		}
+	}];
+	return count;
+}
+
++ (BOOL)tranlateData:(id)obj key:(NSString *)key kv:(MMKV *)kv {
+	if ([obj isKindOfClass:[NSString class]]) {
+		return [kv setString:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSData class]]) {
+		return [kv setData:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSDate class]]) {
+		return [kv setDate:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSNumber class]]) {
+		NSNumber *num = obj;
+		CFNumberType numberType = CFNumberGetType((CFNumberRef) obj);
+		switch (numberType) {
+			case kCFNumberCharType:
+			case kCFNumberSInt8Type:
+			case kCFNumberSInt16Type:
+			case kCFNumberSInt32Type:
+			case kCFNumberIntType:
+			case kCFNumberShortType:
+				return [kv setInt32:num.intValue forKey:key];
+			case kCFNumberSInt64Type:
+			case kCFNumberLongType:
+			case kCFNumberNSIntegerType:
+			case kCFNumberLongLongType:
+				return [kv setInt64:num.longLongValue forKey:key];
+			case kCFNumberFloat32Type:
+				return [kv setFloat:num.floatValue forKey:key];
+			case kCFNumberFloat64Type:
+			case kCFNumberDoubleType:
+				return [kv setDouble:num.doubleValue forKey:key];
+			default:
+				MMKVWarning(@"unknown number type:%ld, key:%@", (long) numberType, key);
+				return NO;
+		}
+	} else if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]]) {
+		return [kv setObject:obj forKey:key];
+	} else {
+		MMKVWarning(@"unknown type of key:%@", key);
+	}
+	return NO;
 }
 
 @end

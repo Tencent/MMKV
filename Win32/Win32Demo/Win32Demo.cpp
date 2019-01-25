@@ -165,6 +165,30 @@ void processTest() {
     cout << "total count of process_test: " << mmkv->count() << endl;
 }
 
+static void LogHandler(MMKVLogLevel level,
+                       const std::string &file,
+                       int line,
+                       const std::string &function,
+                       const std::string &message) {
+
+    auto desc = [level] {
+        switch (level) {
+            case MMKVLogDebug:
+                return "D";
+            case MMKVLogInfo:
+                return "I";
+            case MMKVLogWarning:
+                return "W";
+            case MMKVLogError:
+                return "E";
+            default:
+                return "N";
+        }
+    }();
+    printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file.c_str(), line, function.c_str(),
+           message.c_str());
+}
+
 int main() {
     locale::global(locale(""));
     wcout.imbue(locale(""));
@@ -172,6 +196,8 @@ int main() {
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-MMKV");
     MMKV::initializeMMKV(rootDir);
+    //MMKV::setLogLevel(MMKVLogNone);
+    MMKV::regiserLogHandler(LogHandler);
 
     auto mmkv = MMKV::defaultMMKV();
     functionalTest(mmkv, false);
