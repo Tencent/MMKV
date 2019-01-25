@@ -22,6 +22,7 @@ What's new
 ### Win32
 * Redirect logging of MMKV is supported now.
 * Dynamically disable logging of MMKV is supported now.
+* Fix a potential corruption of meta file on multi-process mode.
 
 ## v1.0.16 / 2019-01-04
 ### iOS / macOS
