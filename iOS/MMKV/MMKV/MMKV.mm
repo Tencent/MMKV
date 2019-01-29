@@ -141,20 +141,19 @@ static NSString *encodeMmapID(NSString *mmapID);
 		[self loadFromFile];
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            auto appState = [UIApplication sharedApplication].applicationState;
-            if (appState == UIApplicationStateBackground) {
-                m_isInBackground = YES;
-            } else {
-                m_isInBackground = NO;
+        if ([NSThread isMainThread]) {
+            [self handleApplicationState];
+        } else {
+            __block BOOL flag = NO;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self handleApplicationState];
+                flag = YES;
+            });
+            
+            while (!flag) {
+                // Do nothing
             }
-            MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long) appState);
-        
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
-        });
+        }
         
 #endif
 	}
@@ -1285,6 +1284,20 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 #pragma mark - Boring stuff
+
+- (void)handleApplicationState {
+    auto appState = [UIApplication sharedApplication].applicationState;
+    if (appState == UIApplicationStateBackground) {
+        m_isInBackground = YES;
+    } else {
+        m_isInBackground = NO;
+    }
+    MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long) appState);
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+}
 
 - (void)sync {
 	CScopedLock lock(m_lock);
