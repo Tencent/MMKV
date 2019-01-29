@@ -141,17 +141,21 @@ static NSString *encodeMmapID(NSString *mmapID);
 		[self loadFromFile];
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-		auto appState = [UIApplication sharedApplication].applicationState;
-		if (appState == UIApplicationStateBackground) {
-			m_isInBackground = YES;
-		} else {
-			m_isInBackground = NO;
-		}
-		MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long) appState);
-
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            auto appState = [UIApplication sharedApplication].applicationState;
+            if (appState == UIApplicationStateBackground) {
+                m_isInBackground = YES;
+            } else {
+                m_isInBackground = NO;
+            }
+            MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long) appState);
+        
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+        });
+        
 #endif
 	}
 	return self;
