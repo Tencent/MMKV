@@ -152,6 +152,7 @@ static NSString *encodeMmapID(NSString *mmapID);
             
             while (!flag) {
                 // Do nothing
+                [[NSRunLoop currentRunLoop] runUntilDate:[NSDate distantFuture]];
             }
         }
         
