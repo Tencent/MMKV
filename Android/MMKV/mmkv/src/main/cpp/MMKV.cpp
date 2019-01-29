@@ -1307,28 +1307,32 @@ bool MMKV::isFileValid(const std::string &mmapID) {
 
     uint32_t crcFile = 0;
     MMBuffer *data = readWholeFile(crcPath.c_str());
-    if (data && data->getPtr()) {
-        MMKVMetaInfo metaInfo;
-        metaInfo.read(data->getPtr());
-        crcFile = metaInfo.m_crcDigest;
+    if (data) {
+        if (data->getPtr()) {
+            MMKVMetaInfo metaInfo;
+            metaInfo.read(data->getPtr());
+            crcFile = metaInfo.m_crcDigest;
+        }
         delete data;
     } else {
         return false;
     }
 
     const int offset = pbFixed32Size(0);
-    size_t actualSize = 0;
+    uint32_t crcDigest = 0;
     MMBuffer *fileData = readWholeFile(kvPath.c_str());
     if (fileData) {
-        actualSize = CodedInputData(fileData->getPtr(), fileData->length()).readFixed32();
-        if (actualSize > fileData->length() - offset) {
-            delete fileData;
-            return false;
+        if (fileData->getPtr()) {
+            size_t actualSize =
+                CodedInputData(fileData->getPtr(), fileData->length()).readFixed32();
+            if (actualSize > fileData->length() - offset) {
+                delete fileData;
+                return false;
+            }
+
+            crcDigest = (uint32_t) crc32(0, (const uint8_t *) fileData->getPtr() + offset,
+                                         (uint32_t) actualSize);
         }
-
-        uint32_t crcDigest = (uint32_t) crc32(0, (const uint8_t *) fileData->getPtr() + offset,
-                                              (uint32_t) actualSize);
-
         delete fileData;
         return crcFile == crcDigest;
     } else {
