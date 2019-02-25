@@ -15,6 +15,7 @@
  * The extra state information to record how much of the 128bit block we have
  * used is contained in *num;
  */
+namespace openssl {
 
 void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
@@ -24,3 +25,5 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
     CRYPTO_cfb128_encrypt(in, out, length, key, ivec, num, enc,
                           (block128_f) AES_encrypt);
 }
+
+} // namespace openssl

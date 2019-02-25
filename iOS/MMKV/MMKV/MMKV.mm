@@ -1483,7 +1483,7 @@ static NSString *g_basePath = nil;
 static NSString *md5(NSString *value) {
 	unsigned char md[MD5_DIGEST_LENGTH] = {0};
 	char tmp[3] = {0}, buf[33] = {0};
-	MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
+	openssl::MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
 	for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
 		sprintf(tmp, "%2.2x", md[i]);
 		strcat(buf, tmp);

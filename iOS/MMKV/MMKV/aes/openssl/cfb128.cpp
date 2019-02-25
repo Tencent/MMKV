@@ -11,6 +11,8 @@
 #include "modes.h"
 #include <string.h>
 
+namespace openssl {
+
 /*
  * The input and output encrypted as though 128bit cfb mode is being used.
  * The extra state information to record how much of the 128bit block we have
@@ -129,3 +131,5 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
         *num = n;
     }
 }
+
+} // namespace openssl

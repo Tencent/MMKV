@@ -31,7 +31,7 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 class AESCrypt {
     unsigned char m_vector[AES_KEY_LEN] = {0};
     unsigned char m_key[AES_KEY_LEN] = {0};
-    AES_KEY m_aesKey = {0};
+	openssl::AES_KEY m_aesKey = {0};
     int m_number = 0;
 
 public:
