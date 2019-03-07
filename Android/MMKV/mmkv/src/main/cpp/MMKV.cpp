@@ -341,6 +341,7 @@ void MMKV::loadFromFile() {
                 } else {
                     auto strategic = onMMKVFileLengthError(m_mmapID);
                     if (strategic == OnErrorRecover) {
+                        writeAcutalSize(m_size - Fixed32Size);
                         loadFromFile = true;
                         needFullWriteback = true;
                     }
