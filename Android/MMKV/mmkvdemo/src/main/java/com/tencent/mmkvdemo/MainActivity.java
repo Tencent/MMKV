@@ -204,10 +204,13 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
                           + ", value size consumption = " + kv.getValueSize("bytes")
                           + ", value size = " + kv.getValueActualSize("bytes"));
 
-        NativeBuffer nativeBuffer = MMKV.createNativeBuffer(1024);
-        int size = kv.writeValueToNativeBuffer("bytes", nativeBuffer);
-        Log.i("MMKV", "written size " + size);
-        MMKV.destroyNativeBuffer(nativeBuffer);
+        int sizeNeeded = kv.getValueActualSize("bytes");
+        NativeBuffer nativeBuffer = MMKV.createNativeBuffer(sizeNeeded);
+        if (nativeBuffer != null) {
+            int size = kv.writeValueToNativeBuffer("bytes", nativeBuffer);
+            Log.i("MMKV", "size Needed = " + sizeNeeded + " written size = " + size);
+            MMKV.destroyNativeBuffer(nativeBuffer);
+        }
 
         if (!decodeOnly) {
             TestParcelable testParcelable = new TestParcelable(1024, "Hi Parcelable");
