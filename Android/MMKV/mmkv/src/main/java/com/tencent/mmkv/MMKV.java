@@ -126,7 +126,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static public final int MULTI_PROCESS_MODE = 0x2;
 
-    static private final int ASHMEM_MODE = 0x4;
+    // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    static private final int CONTEXT_MODE_MULTI_PROCESS = 0x4;
+
+    static private final int ASHMEM_MODE = 0x8;
 
     public static MMKV mmkvWithID(String mmapID) {
         if (rootDir == null) {

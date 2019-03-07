@@ -76,7 +76,7 @@ MMKV::MMKV(
     , m_fileLock(m_metaFile.getFd())
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
-    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0)
+    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 || (mode & CONTEXT_MODE_MULTI_PROCESS) != 0)
     , m_isAshmem((mode & MMKV_ASHMEM) != 0) {
     m_fd = -1;
     m_ptr = nullptr;

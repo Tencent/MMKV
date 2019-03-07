@@ -38,7 +38,8 @@ class AESCrypt;
 enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 0x1,
     MMKV_MULTI_PROCESS = 0x2,
-    MMKV_ASHMEM = 0x4,
+    CONTEXT_MODE_MULTI_PROCESS = 0x4, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    MMKV_ASHMEM = 0x8,
 };
 
 class MMKV {
