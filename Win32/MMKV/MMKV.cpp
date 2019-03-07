@@ -238,6 +238,7 @@ void MMKV::loadFromFile() {
                         if (strategic == OnErrorRecover) {
                             loadFromFile = true;
                             needFullWriteback = true;
+                            writeAcutalSize(m_size - Fixed32Size);
                         }
                     }
                 }

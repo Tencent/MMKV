@@ -679,7 +679,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         if (m_isAshmem) {
             if (lenNeeded > m_size) {
                 MMKVError("ashmem %s reach size limit:%zu, consider configure with larger size",
-                            m_mmapID.c_str(), m_size);
+                          m_mmapID.c_str(), m_size);
                 return false;
             }
         } else {
