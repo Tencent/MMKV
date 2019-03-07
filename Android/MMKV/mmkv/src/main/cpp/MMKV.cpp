@@ -1228,6 +1228,29 @@ size_t MMKV::getValueSizeForKey(const std::string &key, bool actualSize) {
     return data.length();
 }
 
+int32_t MMKV::writeValueToBuffer(const std::string &key, void *ptr, int32_t size) {
+    if (key.empty()) {
+        return -1;
+    }
+    SCOPEDLOCK(m_lock);
+    auto &data = getDataForKey(key);
+    CodedInputData input(data.getPtr(), data.length());
+    auto length = input.readInt32();
+    auto offset = pbRawVarint32Size(length);
+    if (offset + length == data.length()) {
+        if (length <= size) {
+            memcpy(ptr, (uint8_t *) data.getPtr() + offset, length);
+            return length;
+        }
+    } else {
+        if (data.length() <= size) {
+            memcpy(ptr, data.getPtr(), data.length());
+            return static_cast<int32_t>(data.length());
+        }
+    }
+    return -1;
+}
+
 #pragma mark - enumerate
 
 bool MMKV::containsKey(const std::string &key) {

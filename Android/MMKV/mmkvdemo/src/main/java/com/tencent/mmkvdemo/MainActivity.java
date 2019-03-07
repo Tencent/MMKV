@@ -38,6 +38,7 @@ import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.MMKVLogLevel;
 import com.getkeepsafe.relinker.ReLinker;
+import com.tencent.mmkv.NativeBuffer;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -202,6 +203,11 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         Log.i("MMKV", "bytes length = " + bytes.length
                           + ", value size consumption = " + kv.getValueSize("bytes")
                           + ", value size = " + kv.getValueActualSize("bytes"));
+
+        NativeBuffer nativeBuffer = MMKV.createNativeBuffer(1024);
+        int size = kv.writeValueToNativeBuffer("bytes", nativeBuffer);
+        Log.i("MMKV", "written size " + size);
+        MMKV.destroyNativeBuffer(nativeBuffer);
 
         if (!decodeOnly) {
             TestParcelable testParcelable = new TestParcelable(1024, "Hi Parcelable");

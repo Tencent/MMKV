@@ -656,6 +656,24 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public native int ashmemMetaFD();
 
+    // native buffer
+    public static NativeBuffer createNativeBuffer(int size) {
+        long pointer = createNB(size);
+        if (pointer <= 0) {
+            return null;
+        }
+        return new NativeBuffer(pointer, size);
+    }
+
+    public static void destroyNativeBuffer(NativeBuffer buffer) {
+        destroyNB(buffer.pointer, buffer.size);
+    }
+
+    // return size written, -1 on error
+    public int writeValueToNativeBuffer(String key, NativeBuffer buffer) {
+        return writeValueToNB(nativeHandle, key, buffer.pointer, buffer.size);
+    }
+
     // callback handler
     private static MMKVHandler gCallbackHandler;
     private static boolean gWantLogReDirecting = false;
@@ -792,4 +810,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static native void setLogLevel(int level);
 
     private static native void setLogReDirecting(boolean enable);
+
+    private static native long createNB(int size);
+
+    private static native void destroyNB(long pointer, int size);
+
+    private native int writeValueToNB(long handle, String key, long pointer, int size);
 }

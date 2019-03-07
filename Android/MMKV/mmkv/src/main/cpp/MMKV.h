@@ -194,6 +194,8 @@ public:
 
     size_t getValueSizeForKey(const std::string &key, bool acutalSize);
 
+    int32_t writeValueToBuffer(const std::string &key, void *ptr, int32_t size);
+
     bool containsKey(const std::string &key);
 
     size_t count();

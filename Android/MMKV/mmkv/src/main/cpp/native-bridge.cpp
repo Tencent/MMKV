@@ -706,7 +706,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        return kv->getValueSizeForKey(key, (bool) actualSize);
+        return static_cast<jint>(kv->getValueSizeForKey(key, (bool) actualSize));
     }
     return 0;
 }
@@ -721,4 +721,32 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_setLogReDirecting(J
                                                                                jclass type,
                                                                                jboolean enable) {
     g_isLogRedirecting = (enable == JNI_TRUE);
+}
+
+extern "C" JNIEXPORT jlong JNICALL Java_com_tencent_mmkv_MMKV_createNB(JNIEnv *env,
+                                                                       jobject instance,
+                                                                       jint size) {
+    auto ptr = malloc(static_cast<size_t>(size));
+    if (!ptr) {
+        MMKVError("fail to create NativeBuffer:%s", strerror(errno));
+        return 0;
+    }
+    return reinterpret_cast<jlong>(ptr);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_destroyNB(JNIEnv *env,
+                                                                       jobject instance,
+                                                                       jlong pointer,
+                                                                       jint size) {
+    free(reinterpret_cast<void *>(pointer));
+}
+
+extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_writeValueToNB(
+    JNIEnv *env, jobject instance, jlong handle, jstring oKey, jlong pointer, jint size) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return kv->writeValueToBuffer(key, reinterpret_cast<void *>(pointer), size);
+    }
+    return -1;
 }
