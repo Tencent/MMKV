@@ -701,14 +701,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_close(JNIEnv *env, 
     }
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(JNIEnv *env,
-                                                                       jobject instance,
-                                                                       jlong handle,
-                                                                       jstring oKey) {
+extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(
+    JNIEnv *env, jobject instance, jlong handle, jstring oKey, jboolean actualSize) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        return kv->getValueSizeForKey(key);
+        return kv->getValueSizeForKey(key, (bool) actualSize);
     }
     return 0;
 }

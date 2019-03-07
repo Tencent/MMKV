@@ -192,7 +192,7 @@ public:
 
     bool getVectorForKey(const std::string &key, std::vector<std::string> &result);
 
-    size_t getValueSizeForKey(const std::string &key);
+    size_t getValueSizeForKey(const std::string &key, bool acutalSize);
 
     bool containsKey(const std::string &key);
 

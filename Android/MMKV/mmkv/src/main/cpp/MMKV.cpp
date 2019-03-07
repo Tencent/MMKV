@@ -1212,12 +1212,19 @@ bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &res
     return false;
 }
 
-size_t MMKV::getValueSizeForKey(const std::string &key) {
+size_t MMKV::getValueSizeForKey(const std::string &key, bool actualSize) {
     if (key.empty()) {
         return 0;
     }
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
+    if (actualSize) {
+        CodedInputData input(data.getPtr(), data.length());
+        auto length = input.readInt32();
+        if (pbRawVarint32Size(length) + length == data.length()) {
+            return static_cast<size_t>(length);
+        }
+    }
     return data.length();
 }
 

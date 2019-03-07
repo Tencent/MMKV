@@ -200,7 +200,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         byte[] bytes = kv.decodeBytes("bytes");
         Log.i("MMKV", "bytes: " + new String(bytes));
         Log.i("MMKV", "bytes length = " + bytes.length
-                          + ", value size consumption = " + kv.getValueSize("bytes"));
+                          + ", value size consumption = " + kv.getValueSize("bytes")
+                          + ", value size = " + kv.getValueActualSize("bytes"));
 
         if (!decodeOnly) {
             TestParcelable testParcelable = new TestParcelable(1024, "Hi Parcelable");
