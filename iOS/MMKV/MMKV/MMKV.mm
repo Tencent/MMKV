@@ -1181,7 +1181,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSString.class forKey:key];
+    NSString *valueString = [self getObjectOfClass:NSString.class forKey:key];
+    if (!valueString) {
+        valueString = defaultValue;
+    }
+    return valueString;
 }
 
 - (nullable NSDate *)getDateForKey:(NSString *)key {
@@ -1191,7 +1195,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSDate.class forKey:key];
+    NSDate *valueDate = [self getObjectOfClass:NSDate.class forKey:key];
+    if (!valueDate) {
+        valueDate = defaultValue;
+    }
+    return valueDate;
 }
 
 - (nullable NSData *)getDataForKey:(NSString *)key {
@@ -1201,7 +1209,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSData.class forKey:key];
+    NSData *valueData = [self getObjectOfClass:NSData.class forKey:key];
+    if (!valueData) {
+        valueData = defaultValue;
+    }
+	return valueData;
 }
 
 - (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:)) {
