@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.Process;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -136,7 +137,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, null);
+        long handle = getMMKVWithID(getRealMmapID(mmapID, SINGLE_PROCESS_MODE),
+                SINGLE_PROCESS_MODE, null, null);
         return new MMKV(handle);
     }
 
@@ -145,7 +147,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, null, null);
+        long handle = getMMKVWithID(getRealMmapID(mmapID, mode), mode, null, null);
         return new MMKV(handle);
     }
 
@@ -155,7 +157,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, null);
+        long handle = getMMKVWithID(getRealMmapID(mmapID, mode), mode, cryptKey, null);
         return new MMKV(handle);
     }
 
@@ -165,7 +167,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, relativePath);
+        long handle = getMMKVWithID(getRealMmapID(mmapID, SINGLE_PROCESS_MODE),
+                SINGLE_PROCESS_MODE, null, relativePath);
         if (handle == 0) {
             return null;
         }
@@ -179,11 +182,22 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, relativePath);
+        long handle = getMMKVWithID(getRealMmapID(mmapID, mode), mode, cryptKey, relativePath);
         if (handle == 0) {
             return null;
         }
         return new MMKV(handle);
+    }
+
+    private static String getRealMmapID(String mmapID, int mode) {
+        switch (mode) {
+            case SINGLE_PROCESS_MODE:
+                return mmapID + Process.myPid();
+            case MULTI_PROCESS_MODE:
+                return mmapID;
+            default:
+                return mmapID;
+        }
     }
 
     // a memory only MMKV, cleared on program exit

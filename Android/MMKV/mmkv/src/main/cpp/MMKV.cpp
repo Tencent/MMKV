@@ -180,7 +180,7 @@ MMKV::~MMKV() {
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
-    return mmkvWithID(DEFAULT_MMAP_ID, DEFAULT_MMAP_SIZE, mode, cryptKey);
+    return mmkvWithID(DEFAULT_MMAP_ID + to_string(getpid()), DEFAULT_MMAP_SIZE, mode, cryptKey);
 }
 
 void initialize() {
