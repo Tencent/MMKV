@@ -1181,11 +1181,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-    NSString *valueString = [self getObjectOfClass:NSString.class forKey:key];
-    if (!valueString) {
-        valueString = defaultValue;
-    }
-    return valueString;
+	NSString *valueString = [self getObjectOfClass:NSString.class forKey:key];
+	if (!valueString) {
+		valueString = defaultValue;
+	}
+	return valueString;
 }
 
 - (nullable NSDate *)getDateForKey:(NSString *)key {
@@ -1195,11 +1195,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-    NSDate *valueDate = [self getObjectOfClass:NSDate.class forKey:key];
-    if (!valueDate) {
-        valueDate = defaultValue;
-    }
-    return valueDate;
+	NSDate *valueDate = [self getObjectOfClass:NSDate.class forKey:key];
+	if (!valueDate) {
+		valueDate = defaultValue;
+	}
+	return valueDate;
 }
 
 - (nullable NSData *)getDataForKey:(NSString *)key {
@@ -1209,10 +1209,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-    NSData *valueData = [self getObjectOfClass:NSData.class forKey:key];
-    if (!valueData) {
-        valueData = defaultValue;
-    }
+	NSData *valueData = [self getObjectOfClass:NSData.class forKey:key];
+	if (!valueData) {
+		valueData = defaultValue;
+	}
 	return valueData;
 }
 
