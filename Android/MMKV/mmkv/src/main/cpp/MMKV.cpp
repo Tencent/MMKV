@@ -198,8 +198,10 @@ void MMKV::initializeMMKV(const std::string &rootDir) {
 
     g_rootDir = rootDir;
     char *path = strdup(g_rootDir.c_str());
-    mkPath(path);
-    free(path);
+    if (path) {
+        mkPath(path);
+        free(path);
+    }
 
     MMKVInfo("root dir: %s", g_rootDir.c_str());
 }
@@ -1373,8 +1375,10 @@ bool MMKV::isFileValid(const std::string &mmapID) {
 
 static void mkSpecialCharacterFileDirectory() {
     char *path = strdup((g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());
-    mkPath(path);
-    free(path);
+    if (path) {
+        mkPath(path);
+        free(path);
+    }
 }
 
 static string md5(const string &value) {

@@ -185,6 +185,9 @@ bool createFile(const std::string &filePath) {
     } else {
         // create parent dir
         char *path = strdup(filePath.c_str());
+        if (!path) {
+            return false;
+        }
         auto ptr = strrchr(path, '/');
         if (ptr) {
             *ptr = '\0';

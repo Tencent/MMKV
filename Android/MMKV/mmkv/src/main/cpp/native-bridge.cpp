@@ -160,7 +160,7 @@ static JNIEnv *getCurrentEnv() {
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
     auto currentEnv = getCurrentEnv();
-    if (g_currentJVM && g_callbackOnCRCFailID) {
+    if (currentEnv && g_callbackOnCRCFailID) {
         jstring str = string2jstring(currentEnv, mmapID);
         auto strategic = currentEnv->CallStaticIntMethod(g_cls, g_callbackOnCRCFailID, str);
         return static_cast<MMKVRecoverStrategic>(strategic);
