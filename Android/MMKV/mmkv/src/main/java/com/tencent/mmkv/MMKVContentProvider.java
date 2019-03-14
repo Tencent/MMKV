@@ -80,7 +80,9 @@ public class MMKVContentProvider extends ContentProvider {
             PackageManager mgr = context.getPackageManager();
             if (mgr != null) {
                 ProviderInfo providerInfo = mgr.getProviderInfo(componentName, 0);
-                return providerInfo.authority;
+                if (providerInfo != null) {
+                    return providerInfo.authority;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

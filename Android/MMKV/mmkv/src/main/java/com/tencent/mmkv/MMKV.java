@@ -126,7 +126,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static public final int MULTI_PROCESS_MODE = 0x2;
 
-    static private final int ASHMEM_MODE = 0x4;
+    // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    static private final int CONTEXT_MODE_MULTI_PROCESS = 0x4;
+
+    static private final int ASHMEM_MODE = 0x8;
 
     public static MMKV mmkvWithID(String mmapID) {
         if (rootDir == null) {
@@ -436,7 +439,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // return the actual size consumption of the key's value
     // Note: might be a little bigger than value's length
     public int getValueSize(String key) {
-        return valueSize(nativeHandle, key);
+        return valueSize(nativeHandle, key, false);
+    }
+
+    // return the actual size of the key's value
+    // String's length or byte[]'s length, etc
+    public int getValueActualSize(String key) {
+        return valueSize(nativeHandle, key, true);
     }
 
     public boolean containsKey(String key) {
@@ -647,6 +656,24 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public native int ashmemMetaFD();
 
+    // native buffer
+    public static NativeBuffer createNativeBuffer(int size) {
+        long pointer = createNB(size);
+        if (pointer <= 0) {
+            return null;
+        }
+        return new NativeBuffer(pointer, size);
+    }
+
+    public static void destroyNativeBuffer(NativeBuffer buffer) {
+        destroyNB(buffer.pointer, buffer.size);
+    }
+
+    // return size written, -1 on error
+    public int writeValueToNativeBuffer(String key, NativeBuffer buffer) {
+        return writeValueToNB(nativeHandle, key, buffer.pointer, buffer.size);
+    }
+
     // callback handler
     private static MMKVHandler gCallbackHandler;
     private static boolean gWantLogReDirecting = false;
@@ -778,9 +805,15 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private native void removeValueForKey(long handle, String key);
 
-    private native int valueSize(long handle, String key);
+    private native int valueSize(long handle, String key, boolean actualSize);
 
     private static native void setLogLevel(int level);
 
     private static native void setLogReDirecting(boolean enable);
+
+    private static native long createNB(int size);
+
+    private static native void destroyNB(long pointer, int size);
+
+    private native int writeValueToNB(long handle, String key, long pointer, int size);
 }

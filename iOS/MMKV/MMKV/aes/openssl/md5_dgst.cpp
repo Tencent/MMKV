@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "md5_locl.h"
 
+namespace openssl {
 /*
  * Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */
@@ -35,8 +36,8 @@ int MD5_Init(MD5_CTX *c)
 # endif
 void md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 {
-    const unsigned char *data = data_;
-    register unsigned MD32_REG_T A, B, C, D, l;
+    auto data = (const unsigned char *) data_;
+    unsigned MD32_REG_T A, B, C, D, l;
 # ifndef MD32_XARRAY
     /* See comment in crypto/sha/sha_locl.h for details. */
     unsigned MD32_REG_T XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
@@ -161,3 +162,5 @@ void md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
     }
 }
 #endif
+
+} // namespace openssl

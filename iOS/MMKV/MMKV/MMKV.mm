@@ -1181,7 +1181,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSString.class forKey:key];
+	NSString *valueString = [self getObjectOfClass:NSString.class forKey:key];
+	if (!valueString) {
+		valueString = defaultValue;
+	}
+	return valueString;
 }
 
 - (nullable NSDate *)getDateForKey:(NSString *)key {
@@ -1191,7 +1195,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSDate.class forKey:key];
+	NSDate *valueDate = [self getObjectOfClass:NSDate.class forKey:key];
+	if (!valueDate) {
+		valueDate = defaultValue;
+	}
+	return valueDate;
 }
 
 - (nullable NSData *)getDataForKey:(NSString *)key {
@@ -1201,7 +1209,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSData.class forKey:key];
+	NSData *valueData = [self getObjectOfClass:NSData.class forKey:key];
+	if (!valueData) {
+		valueData = defaultValue;
+	}
+	return valueData;
 }
 
 - (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:)) {
@@ -1483,7 +1495,7 @@ static NSString *g_basePath = nil;
 static NSString *md5(NSString *value) {
 	unsigned char md[MD5_DIGEST_LENGTH] = {0};
 	char tmp[3] = {0}, buf[33] = {0};
-	MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
+	openssl::MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
 	for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
 		sprintf(tmp, "%2.2x", md[i]);
 		strcat(buf, tmp);

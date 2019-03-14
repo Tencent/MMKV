@@ -1,5 +1,23 @@
 # MMKV Change Log
 
+## v1.0.18 / 2019-03-14
+### iOS / macOS
+What's new  
+
+* Fix a bug that defaultValue was not returned while decoding a `NSCoding` value.
+* Fix a compile error on static linking MMKV while openssl is static linked too.
+
+### Android
+What's new  
+
+* Introducing **Native Buffer**. Checkout [wiki](https://github.com/Tencent/MMKV/wiki/android_advance#native-buffer) for details.
+* Fix a potential crash when trying to recover data from file length error.
+* Protect from mistakenly passing `Context.MODE_MULTI_PROCESS` to init MMKV.
+
+
+### Win32
+* Fix a potential crash when trying to recover data from file length error.
+
 ## v1.0.17 / 2019-01-25
 ### iOS / macOS
 What's new  

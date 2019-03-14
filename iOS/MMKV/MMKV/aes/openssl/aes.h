@@ -13,9 +13,8 @@
 # include "opensslconf.h"
 
 # include <stddef.h>
-# ifdef  __cplusplus
-extern "C" {
-# endif
+
+namespace openssl {
 
 # define AES_ENCRYPT     1
 # define AES_DECRYPT     0
@@ -48,8 +47,6 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
                         unsigned char *ivec, int *num, const int enc);
 
-# ifdef  __cplusplus
-}
-# endif
+} // namespace openssl
 
 #endif
