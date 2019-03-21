@@ -25,7 +25,7 @@ Pod::Spec.new do |s|
   s.ios.frameworks = "UIKit"
   s.libraries    = "z", "c++"
   s.requires_arc = true
-  s.xcconfig = {
+  s.pod_target_xcconfig = {
     "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++17",
     "CLANG_CXX_LIBRARY" => "libc++",
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
