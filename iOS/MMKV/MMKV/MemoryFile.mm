@@ -30,7 +30,6 @@
 
 using namespace std;
 
-const int DEFAULT_MMAP_SIZE = getpagesize();
 // 1MB per segment
 constexpr uint32_t SegmentSize = 1024 * 1024;
 // count of segments in memory

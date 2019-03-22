@@ -44,6 +44,8 @@ static NSRecursiveLock *g_instanceLock;
 id<MMKVHandler> g_callbackHandler;
 bool g_isLogRedirecting = false;
 
+int DEFAULT_MMAP_SIZE;
+
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
 #define SPECIAL_CHARACTER_DIRECTORY_NAME @"specialCharacter"
@@ -80,6 +82,7 @@ static NSString *encodeMmapID(NSString *mmapID);
 		g_instanceDic = [NSMutableDictionary dictionary];
 		g_instanceLock = [[NSRecursiveLock alloc] init];
 
+		DEFAULT_MMAP_SIZE = getpagesize();
 		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 	}
 }

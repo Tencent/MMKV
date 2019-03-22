@@ -477,7 +477,7 @@ extern "C" JNIEXPORT JNICALL jbyteArray Java_com_tencent_mmkv_MMKV_decodeBytes(J
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
         MMBuffer value = kv->getBytesForKey(key);
-        if (value.length() > 0){
+        if (value.length() > 0) {
             jbyteArray result = env->NewByteArray(value.length());
             env->SetByteArrayRegion(result, 0, value.length(), (const jbyte *) value.getPtr());
             return result;
