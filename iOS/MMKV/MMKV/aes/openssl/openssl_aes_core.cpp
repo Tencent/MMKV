@@ -39,8 +39,8 @@
 #include <assert.h>
 
 #include <stdlib.h>
-#include "aes.h"
-#include "aes_locl.h"
+#include "openssl_aes.h"
+#include "openssl_aes_locl.h"
 
 namespace openssl {
 

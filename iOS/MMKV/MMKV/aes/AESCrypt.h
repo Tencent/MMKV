@@ -21,7 +21,7 @@
 #ifndef AES_CRYPT_H_
 #define AES_CRYPT_H_
 
-#include "openssl/aes.h"
+#include "openssl/openssl_aes.h"
 #include <cstddef>
 
 constexpr size_t AES_KEY_LEN = 16;

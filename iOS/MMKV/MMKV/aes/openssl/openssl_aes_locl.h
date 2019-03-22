@@ -10,7 +10,7 @@
 #ifndef HEADER_AES_LOCL_H
 # define HEADER_AES_LOCL_H
 
-# include "opensslconf.h"
+# include "openssl_opensslconf.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>

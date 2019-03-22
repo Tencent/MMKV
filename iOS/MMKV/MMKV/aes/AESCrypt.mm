@@ -20,7 +20,7 @@
 
 #include "AESCrypt.h"
 #include "MMKVLog.h"
-#include "openssl/aes.h"
+#include "openssl/openssl_aes.h"
 #include <cassert>
 #include <cstring>
 

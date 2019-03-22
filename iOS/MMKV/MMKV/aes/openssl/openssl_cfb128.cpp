@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "aes.h"
-#include "modes.h"
+#include "openssl_aes.h"
+#include "openssl_modes.h"
 #include <string.h>
 
 namespace openssl {

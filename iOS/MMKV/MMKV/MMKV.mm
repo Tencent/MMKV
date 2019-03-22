@@ -32,7 +32,7 @@
 #import <UIKit/UIKit.h>
 #endif
 
-#include "aes/openssl/md5.h"
+#include "aes/openssl/openssl_md5.h"
 #import <algorithm>
 #import <sys/mman.h>
 #import <sys/stat.h>
