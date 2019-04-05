@@ -526,7 +526,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 m_size *= 2;
             } while (lenNeeded + futureUsage >= m_size);
             MMKVInfo(
-                "extending [%s] file size from %zu to %zu, incoming size:%zu, futrue usage:%zu",
+                "extending [%s] file size from %zu to %zu, incoming size:%zu, future usage:%zu",
                 m_mmapID.c_str(), oldSize, m_size, newSize, futureUsage);
 
             // if we can't extend size, rollback to old state
