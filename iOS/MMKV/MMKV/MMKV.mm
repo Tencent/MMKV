@@ -542,7 +542,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			do {
 				m_size *= 2;
 			} while (lenNeeded + futureUsage >= m_size);
-			MMKVInfo(@"extending [%@] file size from %zu to %zu, incoming size:%zu, futrue usage:%zu",
+			MMKVInfo(@"extending [%@] file size from %zu to %zu, incoming size:%zu, future usage:%zu",
 			         m_mmapID, oldSize, m_size, newSize, futureUsage);
 
 			// if we can't extend size, rollback to old state
