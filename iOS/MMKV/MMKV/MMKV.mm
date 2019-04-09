@@ -1266,6 +1266,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MMKVInfo(@"enumerate [%@] finish", m_mmapID);
 }
 
+- (NSArray *)allKeys {
+	CScopedLock lock(m_lock);
+	[self checkLoadData];
+
+	return [m_dic allKeys];
+}
+
 - (void)removeValueForKey:(NSString *)key {
 	if (key.length <= 0) {
 		return;

@@ -128,6 +128,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (size_t)actualSize;
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
+- (NSArray *)allKeys;
 
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 
