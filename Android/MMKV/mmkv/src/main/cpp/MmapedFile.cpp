@@ -19,9 +19,11 @@
  */
 
 #include "MmapedFile.h"
+#include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
-#include <errno.h>
+#include "ScopedLock.hpp"
+#include <cerrno>
 #include <fcntl.h>
 #include <libgen.h>
 #include <sys/mman.h>
@@ -40,6 +42,10 @@ MmapedFile::MmapedFile(const std::string &path, size_t size, bool fileType)
         if (m_fd < 0) {
             MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
         } else {
+            FileLock fileLock(m_fd);
+            InterProcessLock lock(&fileLock, ExclusiveLockType);
+            SCOPEDLOCK(lock);
+
             struct stat st = {};
             if (fstat(m_fd, &st) != -1) {
                 m_segmentSize = static_cast<size_t>(st.st_size);
@@ -72,7 +78,7 @@ MmapedFile::MmapedFile(const std::string &path, size_t size, bool fileType)
             if (ioctl(m_fd, ASHMEM_SET_NAME, m_name.c_str()) != 0) {
                 MMKVError("fail to set ashmem name:%s, %s", m_name.c_str(), strerror(errno));
             } else if (ioctl(m_fd, ASHMEM_SET_SIZE, size) != 0) {
-                MMKVError("fail to set ashmem:%s, size %d, %s", m_name.c_str(), size,
+                MMKVError("fail to set ashmem:%s, size %zu, %s", m_name.c_str(), size,
                           strerror(errno));
             } else {
                 m_segmentSize = static_cast<size_t>(size);
@@ -154,7 +160,7 @@ bool mkPath(char *path) {
 
         if (stat(path, &sb) != 0) {
             if (errno != ENOENT || mkdir(path, 0777) != 0) {
-                MMKVWarning("%s", path);
+                MMKVWarning("%s : %s", path, strerror(errno));
                 return false;
             }
         } else if (!S_ISDIR(sb.st_mode)) {
@@ -166,6 +172,39 @@ bool mkPath(char *path) {
     }
 
     return true;
+}
+
+bool createFile(const std::string &filePath) {
+    bool ret = false;
+
+    // try create at once
+    auto fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+    if (fd >= 0) {
+        close(fd);
+        ret = true;
+    } else {
+        // create parent dir
+        char *path = strdup(filePath.c_str());
+        if (!path) {
+            return false;
+        }
+        auto ptr = strrchr(path, '/');
+        if (ptr) {
+            *ptr = '\0';
+        }
+        if (mkPath(path)) {
+            // try again
+            fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+            if (fd >= 0) {
+                close(fd);
+                ret = true;
+            } else {
+                MMKVWarning("fail to create file %s, %s", filePath.c_str(), strerror(errno));
+            }
+        }
+        free(path);
+    }
+    return ret;
 }
 
 bool removeFile(const string &nsFilePath) {

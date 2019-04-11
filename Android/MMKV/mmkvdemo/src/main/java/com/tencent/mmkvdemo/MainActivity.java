@@ -36,6 +36,11 @@ import java.util.HashSet;
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVRecoverStrategic;
+import com.tencent.mmkv.MMKVLogLevel;
+import com.getkeepsafe.relinker.ReLinker;
+import com.tencent.mmkv.NativeBuffer;
+
+import org.jetbrains.annotations.Nullable;
 
 import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_ID;
 import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_Size;
@@ -48,8 +53,22 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        String rootDir = "mmkv root: " + MMKV.initialize(this);
-        Log.i("MMKV", rootDir);
+        // set root dir
+        // String rootDir = "mmkv root: " + MMKV.initialize(this);
+        String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
+        String rootDir = MMKV.initialize(dir, new MMKV.LibLoader() {
+            @Override
+            public void loadLibrary(String libName) {
+                ReLinker.loadLibrary(MainActivity.this, libName);
+            }
+        });
+        Log.i("MMKV", "mmkv root: " + rootDir);
+
+        // set log level
+        MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
+
+        // you can turn off logging
+        //MMKV.setLogLevel(MMKVLogLevel.LevelNone);
 
         MMKV.registerHandler(this);
 
@@ -102,8 +121,11 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             }
         });
 
-        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false);
-        kv.close();
+        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
+        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false, otherDir);
+        if (kv != null) {
+            kv.close();
+        }
 
         testAshmem();
         testReKey();
@@ -134,9 +156,13 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         Log.d("mmkv", "" + value);
     }
 
-    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly) {
+    @Nullable
+    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String relativePath) {
         //MMKV kv = MMKV.defaultMMKV();
-        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, relativePath);
+        if (kv == null) {
+            return null;
+        }
 
         if (!decodeOnly) {
             kv.encode("bool", true);
@@ -172,14 +198,30 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             byte[] bytes = {'m', 'm', 'k', 'v'};
             kv.encode("bytes", bytes);
         }
-        Log.i("MMKV", "bytes: " + new String(kv.decodeBytes("bytes")));
+        byte[] bytes = kv.decodeBytes("bytes");
+        Log.i("MMKV", "bytes: " + new String(bytes));
+        Log.i("MMKV", "bytes length = " + bytes.length
+                          + ", value size consumption = " + kv.getValueSize("bytes")
+                          + ", value size = " + kv.getValueActualSize("bytes"));
+
+        int sizeNeeded = kv.getValueActualSize("bytes");
+        NativeBuffer nativeBuffer = MMKV.createNativeBuffer(sizeNeeded);
+        if (nativeBuffer != null) {
+            int size = kv.writeValueToNativeBuffer("bytes", nativeBuffer);
+            Log.i("MMKV", "size Needed = " + sizeNeeded + " written size = " + size);
+            MMKV.destroyNativeBuffer(nativeBuffer);
+        }
 
         if (!decodeOnly) {
             TestParcelable testParcelable = new TestParcelable(1024, "Hi Parcelable");
             kv.encode("parcel", testParcelable);
         }
         TestParcelable result = kv.decodeParcelable("parcel", TestParcelable.class);
-        Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+        if (result != null) {
+            Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+        } else {
+            Log.e("MMKV", "fail to decodeParcelable of key:parcel");
+        }
 
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
         Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
@@ -238,19 +280,22 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
 
     private void testReKey() {
         final String mmapID = "testAES_reKey";
-        MMKV kv = testMMKV(mmapID, null, false);
+        MMKV kv = testMMKV(mmapID, null, false, null);
+        if (kv == null) {
+            return;
+        }
 
         kv.reKey("Key_seq_1");
         kv.clearMemoryCache();
-        testMMKV(mmapID, "Key_seq_1", true);
+        testMMKV(mmapID, "Key_seq_1", true, null);
 
         kv.reKey("Key_seq_2");
         kv.clearMemoryCache();
-        testMMKV(mmapID, "Key_seq_2", true);
+        testMMKV(mmapID, "Key_seq_2", true, null);
 
         kv.reKey(null);
         kv.clearMemoryCache();
-        testMMKV(mmapID, null, true);
+        testMMKV(mmapID, null, true, null);
     }
 
     private void interProcessBaselineTest(String cmd) {
@@ -363,5 +408,32 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
     @Override
     public MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
         return MMKVRecoverStrategic.OnErrorRecover;
+    }
+
+    @Override
+    public boolean wantLogRedirecting() {
+        return true;
+    }
+
+    @Override
+    public void mmkvLog(MMKVLogLevel level, String file, int line, String func, String message) {
+        String log = "<" + file + ":" + line + "::" + func + "> " + message;
+        switch (level) {
+            case LevelDebug:
+                Log.d("redirect logging MMKV", log);
+                break;
+            case LevelInfo:
+                Log.i("redirect logging MMKV", log);
+                break;
+            case LevelWarning:
+                Log.w("redirect logging MMKV", log);
+                break;
+            case LevelError:
+                Log.e("redirect logging MMKV", log);
+                break;
+            case LevelNone:
+                Log.e("redirect logging MMKV", log);
+                break;
+        }
     }
 }

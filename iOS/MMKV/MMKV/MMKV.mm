@@ -32,7 +32,7 @@
 #import <UIKit/UIKit.h>
 #endif
 
-#include "aes/openssl/md5.h"
+#include "aes/openssl/openssl_md5.h"
 #import <algorithm>
 #import <sys/mman.h>
 #import <sys/stat.h>
@@ -41,7 +41,10 @@
 
 static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
-static id<MMKVHandler> g_callbackHandler;
+id<MMKVHandler> g_callbackHandler;
+bool g_isLogRedirecting = false;
+
+int DEFAULT_MMAP_SIZE;
 
 #define DEFAULT_MMAP_ID @"mmkv.default"
 #define CRC_FILE_SIZE DEFAULT_MMAP_SIZE
@@ -79,6 +82,7 @@ static NSString *encodeMmapID(NSString *mmapID);
 		g_instanceDic = [NSMutableDictionary dictionary];
 		g_instanceLock = [[NSRecursiveLock alloc] init];
 
+		DEFAULT_MMAP_SIZE = getpagesize();
 		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 	}
 }
@@ -101,60 +105,36 @@ static NSString *encodeMmapID(NSString *mmapID);
 	return [self mmkvWithID:mmapID cryptKey:nil relativePath:path];
 }
 
-+ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)path {
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
 	if (mmapID.length <= 0) {
 		return nil;
 	}
-	if (![self canCreateMMKVPath:mmapID relativePath:path]) {
-		return nil;
+
+	NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
+	if (!isFileExist(kvPath)) {
+		if (!createFile(kvPath)) {
+			MMKVError(@"fail to create file at %@", kvPath);
+			return nil;
+		}
 	}
+	NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
 
 	CScopedLock lock(g_instanceLock);
 
-	NSString *kvKey = [self mmapKeyWithMMapID:mmapID relativePath:path];
 	MMKV *kv = [g_instanceDic objectForKey:kvKey];
 	if (kv == nil) {
-		kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:path];
+		kv = [[MMKV alloc] initWithMMapID:kvKey cryptKey:cryptKey path:kvPath];
 		[g_instanceDic setObject:kv forKey:kvKey];
 	}
 	return kv;
 }
 
-+ (BOOL)canCreateMMKVPath:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
-	if (relativePath) {
-		NSString *path = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
-		if (isFileExist(path)) {
-			return true;
-		} else {
-			BOOL ret = createFile(path);
-			return ret;
-		}
-	} else {
-		return true;
-	}
-}
-
-+ (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
-	NSString *string = nil;
-	if ([relativePath length] > 0) {
-		string = md5([relativePath stringByAppendingPathComponent:mmapID]);
-	} else {
-		string = mmapID;
-	}
-	MMKVInfo(@"%s mmapKey: %@", __PRETTY_FUNCTION__, string);
-	return string;
-}
-
-- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
+- (instancetype)initWithMMapID:(NSString *)kvKey cryptKey:(NSData *)cryptKey path:(NSString *)path {
 	if (self = [super init]) {
 		m_lock = [[NSRecursiveLock alloc] init];
 
-		m_mmapID = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
-
-		m_path = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
-		if (!isFileExist(m_path)) {
-			createFile(m_path);
-		}
+		m_mmapID = kvKey;
+		m_path = path;
 		m_crcPath = [MMKV crcPathWithMappedKVPath:m_path];
 
 		if (cryptKey.length > 0) {
@@ -562,7 +542,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			do {
 				m_size *= 2;
 			} while (lenNeeded + futureUsage >= m_size);
-			MMKVInfo(@"extending [%@] file size from %zu to %zu, incoming size:%zu, futrue usage:%zu",
+			MMKVInfo(@"extending [%@] file size from %zu to %zu, incoming size:%zu, future usage:%zu",
 			         m_mmapID, oldSize, m_size, newSize, futureUsage);
 
 			// if we can't extend size, rollback to old state
@@ -1204,7 +1184,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSString.class forKey:key];
+	NSString *valueString = [self getObjectOfClass:NSString.class forKey:key];
+	if (!valueString) {
+		valueString = defaultValue;
+	}
+	return valueString;
 }
 
 - (nullable NSDate *)getDateForKey:(NSString *)key {
@@ -1214,7 +1198,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSDate.class forKey:key];
+	NSDate *valueDate = [self getObjectOfClass:NSDate.class forKey:key];
+	if (!valueDate) {
+		valueDate = defaultValue;
+	}
+	return valueDate;
 }
 
 - (nullable NSData *)getDataForKey:(NSString *)key {
@@ -1224,7 +1212,19 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (key.length <= 0) {
 		return defaultValue;
 	}
-	return [self getObjectOfClass:NSData.class forKey:key];
+	NSData *valueData = [self getObjectOfClass:NSData.class forKey:key];
+	if (!valueData) {
+		valueData = defaultValue;
+	}
+	return valueData;
+}
+
+- (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:)) {
+	if (key.length <= 0) {
+		return 0;
+	}
+	NSData *data = [self getRawDataForKey:key];
+	return data.length;
 }
 
 #pragma mark - enumerate
@@ -1264,6 +1264,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		block(key, stop);
 	}];
 	MMKVInfo(@"enumerate [%@] finish", m_mmapID);
+}
+
+- (NSArray *)allKeys {
+	CScopedLock lock(m_lock);
+	[self checkLoadData];
+
+	return [m_dic allKeys];
 }
 
 - (void)removeValueForKey:(NSString *)key {
@@ -1310,32 +1317,53 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
-+ (NSString *)mappedKVBasePath {
+static NSString *g_basePath = nil;
++ (NSString *)mmkvBasePath {
+	if (g_basePath.length > 0) {
+		return g_basePath;
+	}
+
 	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-	NSString *nsLibraryPath = (NSString *) [paths firstObject];
-	if ([nsLibraryPath length] > 0) {
-		return [nsLibraryPath stringByAppendingPathComponent:@"mmkv"];
+	NSString *documentPath = (NSString *) [paths firstObject];
+	if ([documentPath length] > 0) {
+		g_basePath = [documentPath stringByAppendingPathComponent:@"mmkv"];
+		return g_basePath;
 	} else {
 		return @"";
 	}
 }
 
-+ (NSString *)mappedKVPathWithID:(NSString *)mmapID {
-	return [self mappedKVPathWithID:mmapID relativePath:nil];
++ (void)setMMKVBasePath:(NSString *)basePath {
+	if (basePath.length > 0) {
+		g_basePath = basePath;
+		MMKVInfo(@"set MMKV base path to: %@", g_basePath);
+	}
+}
+
++ (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
+	NSString *string = nil;
+	if ([relativePath length] > 0 && [relativePath isEqualToString:[MMKV mmkvBasePath]] == NO) {
+		string = md5([relativePath stringByAppendingPathComponent:mmapID]);
+	} else {
+		string = mmapID;
+	}
+	MMKVInfo(@"mmapKey: %@", string);
+	return string;
 }
 
 + (NSString *)mappedKVPathWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
+	NSString *basePath = nil;
 	if ([path length] > 0) {
-		NSString *mmapIDstring = encodeMmapID(mmapID);
-		return [path stringByAppendingPathComponent:mmapIDstring];
+		basePath = path;
 	} else {
-		NSString *basePath = [self mappedKVBasePath];
-		if ([basePath length] > 0) {
-			NSString *mmapIDstring = encodeMmapID(mmapID);
-			return [basePath stringByAppendingPathComponent:mmapIDstring];
-		} else {
-			return @"";
-		}
+		basePath = [self mmkvBasePath];
+	}
+
+	if ([basePath length] > 0) {
+		NSString *mmapIDstring = encodeMmapID(mmapID);
+		return [basePath stringByAppendingPathComponent:mmapIDstring];
+	} else {
+		return @"";
 	}
 }
 
@@ -1392,11 +1420,84 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 + (void)registerHandler:(id<MMKVHandler>)handler {
 	CScopedLock lock(g_instanceLock);
 	g_callbackHandler = handler;
+
+	if ([g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
+		g_isLogRedirecting = true;
+
+		// some logging before registerHandler
+		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
+	}
 }
 
 + (void)unregiserHandler {
 	CScopedLock lock(g_instanceLock);
 	g_callbackHandler = nil;
+	g_isLogRedirecting = false;
+}
+
++ (void)setLogLevel:(MMKVLogLevel)logLevel {
+	CScopedLock lock(g_instanceLock);
+	g_currentLogLevel = logLevel;
+}
+
+- (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults {
+	NSDictionary *dic = [userDaults dictionaryRepresentation];
+	if (dic.count <= 0) {
+		MMKVInfo(@"migrate data fail, userDaults is nil or empty");
+		return 0;
+	}
+	__block uint32_t count = 0;
+	[dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+		if ([key isKindOfClass:[NSString class]]) {
+			NSString *stringKey = key;
+			if ([MMKV tranlateData:obj key:stringKey kv:self]) {
+				count++;
+			}
+		} else {
+			MMKVWarning(@"unknown type of key:%@", key);
+		}
+	}];
+	return count;
+}
+
++ (BOOL)tranlateData:(id)obj key:(NSString *)key kv:(MMKV *)kv {
+	if ([obj isKindOfClass:[NSString class]]) {
+		return [kv setString:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSData class]]) {
+		return [kv setData:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSDate class]]) {
+		return [kv setDate:obj forKey:key];
+	} else if ([obj isKindOfClass:[NSNumber class]]) {
+		NSNumber *num = obj;
+		CFNumberType numberType = CFNumberGetType((CFNumberRef) obj);
+		switch (numberType) {
+			case kCFNumberCharType:
+			case kCFNumberSInt8Type:
+			case kCFNumberSInt16Type:
+			case kCFNumberSInt32Type:
+			case kCFNumberIntType:
+			case kCFNumberShortType:
+				return [kv setInt32:num.intValue forKey:key];
+			case kCFNumberSInt64Type:
+			case kCFNumberLongType:
+			case kCFNumberNSIntegerType:
+			case kCFNumberLongLongType:
+				return [kv setInt64:num.longLongValue forKey:key];
+			case kCFNumberFloat32Type:
+				return [kv setFloat:num.floatValue forKey:key];
+			case kCFNumberFloat64Type:
+			case kCFNumberDoubleType:
+				return [kv setDouble:num.doubleValue forKey:key];
+			default:
+				MMKVWarning(@"unknown number type:%ld, key:%@", (long) numberType, key);
+				return NO;
+		}
+	} else if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]]) {
+		return [kv setObject:obj forKey:key];
+	} else {
+		MMKVWarning(@"unknown type of key:%@", key);
+	}
+	return NO;
 }
 
 @end
@@ -1404,7 +1505,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 static NSString *md5(NSString *value) {
 	unsigned char md[MD5_DIGEST_LENGTH] = {0};
 	char tmp[3] = {0}, buf[33] = {0};
-	MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
+	openssl::MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
 	for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
 		sprintf(tmp, "%2.2x", md[i]);
 		strcat(buf, tmp);

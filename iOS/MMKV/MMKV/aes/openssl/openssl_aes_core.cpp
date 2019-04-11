@@ -39,8 +39,10 @@
 #include <assert.h>
 
 #include <stdlib.h>
-#include "aes.h"
-#include "aes_locl.h"
+#include "openssl_aes.h"
+#include "openssl_aes_locl.h"
+
+namespace openssl {
 
 /*-
 Te0[x] = S [x].[02, 01, 01, 03];
@@ -627,6 +629,7 @@ static const u32 rcon[] = {
     0x1B000000, 0x36000000, /* for 128-bit blocks, Rijndael never uses more than 10 rcon values */
 };
 
+
 /**
  * Expand the cipher key into the encryption key schedule.
  */
@@ -919,3 +922,5 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
         rk[3];
     PUTU32(out + 12, s3);
 }
+
+} // namespace openssl

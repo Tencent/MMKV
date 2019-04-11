@@ -1,5 +1,5 @@
 # MMKV——基于 mmap 的高性能通用 key-value 组件
-MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今，在 iOS 微信上使用已有近 3 年，其性能和稳定性经过了时间的验证。近期也已移植到 Android / macOS 平台，一并开源。
+MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今在微信上使用，其性能和稳定性经过了时间的验证。近期也已移植到 Android / macOS / Windows 平台，一并开源。
 
 
 ## MMKV 源起
@@ -59,8 +59,8 @@ NSString *str = [mmkv getStringForKey:@"string"];
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.15'
-    // replace "1.0.15" with any available version
+    implementation 'com.tencent:mmkv:1.0.18'
+    // replace "1.0.18" with any available version
 }
 ```
 
@@ -70,7 +70,7 @@ dependencies {
 MMKV 的使用非常简单，所有变更立马生效，无需调用 `sync`、`apply`。
 在 App 启动时初始化 MMKV，设定 MMKV 的根目录（files/mmkv/），例如在 MainActivity 里：
 
-```
+```Java
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
@@ -103,6 +103,64 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](htt
 循环写入随机的`int` 1k 次，我们有如下性能对比：  
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
 更详细的性能对比参考 [Android Benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark_cn)。
+
+## Windows 指南
+### 安装引入
+推荐使用子工程：
+
+  1. 获取 MMKV 源码：
+  
+     ```
+     git clone https://github.com/Tencent/MMKV.git
+     ```
+  
+  2. 添加工程 `Win32/MMKV/MMKV.vcxproj` 到你的项目里；
+  3. 设置你的主工程依赖于 `MMKV` 工程;
+  4. 添加目录 `$(OutDir)include` 到你主工程的 `C/C++` -> `常规` -> `附加包含目录`;
+  5. 添加目录 `$(OutDir)` 到你主工程的 `链接器` -> `常规` -> `附加库目录`;
+  6. 添加 `MMKV.lib` 到你主工程的 `链接器` -> `输入` -> `附加依赖项`;
+  7. 添加头文件 `#include <MMKV/MMKV.h>`，就可以愉快地开始你的 MMKV 之旅了。
+
+注意：
+
+1. MMKV 默认使用 `MT/MTd` 运行时库来编译，如果你发现主工程的配置不一样，请修改 MMKV 的配置再编译;
+2. MMKV 使用 Visual Studio 2017 开发，如果你在使用其他版本的 Visual Studio，请修改 MMKV 的`工具集`与主工程一致，再编译.
+
+更多安装指引参考 [Windows Setup](https://github.com/Tencent/MMKV/wiki/windows_setup_cn)。
+
+### 快速上手
+MMKV 的使用非常简单，所有变更立马生效，无需调用 `save`、`sync`。
+在 App 启动时初始化 MMKV，设定 MMKV 的根目录，例如在 main() 里：
+
+
+```C++
+#include <MMKV/MMKV.h>
+
+int main() {
+    std::wstring rootDir = getYourAppDocumentDir();
+    MMKV::initializeMMKV(rootDir);
+    //...
+}
+```
+
+MMKV 提供一个全局的实例，可以直接使用：
+
+```C++
+auto mmkv = MMKV::defaultMMKV();
+
+mmkv->set(true, "bool");
+std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
+
+mmkv->set(1024, "int32");
+std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
+
+mmkv->set("Hello, MMKV for Win32", "string");
+std::string result;
+mmkv->getString("string", result);
+std::cout << "string = " << result << std::endl;
+```
+
+MMKV 支持**多进程访问**，更详细的用法参考 [Windows Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial_cn)。
 
 ## License
 MMKV 以 BSD 3-Clause 证书开源，详情参见 [LICENSE.TXT](./LICENSE.TXT)。

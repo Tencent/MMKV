@@ -40,6 +40,9 @@ FileLock::FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCoun
 }
 
 bool FileLock::doLock(LockType lockType, int cmd) {
+    if (!isFileLockValid()) {
+        return false;
+    }
     bool unLockFirstIfNeeded = false;
 
     if (lockType == SharedLockType) {
@@ -96,6 +99,9 @@ bool FileLock::try_lock(LockType lockType) {
 }
 
 bool FileLock::unlock(LockType lockType) {
+    if (!isFileLockValid()) {
+        return false;
+    }
     bool unlockToSharedLock = false;
 
     if (lockType == SharedLockType) {

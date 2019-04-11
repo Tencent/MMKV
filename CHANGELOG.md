@@ -1,5 +1,67 @@
 # MMKV Change Log
 
+## v1.0.18 / 2019-03-14
+### iOS / macOS
+What's new  
+
+* Fix a bug that defaultValue was not returned while decoding a `NSCoding` value.
+* Fix a compile error on static linking MMKV while openssl is static linked too.
+
+### Android
+What's new  
+
+* Introducing **Native Buffer**. Checkout [wiki](https://github.com/Tencent/MMKV/wiki/android_advance#native-buffer) for details.
+* Fix a potential crash when trying to recover data from file length error.
+* Protect from mistakenly passing `Context.MODE_MULTI_PROCESS` to init MMKV.
+
+
+### Win32
+* Fix a potential crash when trying to recover data from file length error.
+
+## v1.0.17 / 2019-01-25
+### iOS / macOS
+What's new  
+
+* Redirect logging of MMKV is supported now.
+* Dynamically disable logging of MMKV is supported now.
+* Add method `migrateFromUserDefaults ` to import from NSUserDefaults.
+
+### Android
+What's new  
+
+* Redirect logging of MMKV is supported now.
+* Dynamically disable logging of MMKV is supported now.  
+  Note: These two are breaking changes for interface `MMKVHandler`, update your implementation with `wantLogRedirecting()` & `mmkvLog()` for v1.0.17. (Interface with default method requires API level 24, sigh...)
+* Add option to use custom library loader `initialize(String rootDir, LibLoader loader)`. If you're facing `System.loadLibrary()` crash on some low API level device, consider using **ReLinker** to load MMKV. Example can be found in **mmkvdemo**.
+* Fix a potential corruption of meta file on multi-process mode.
+* Fix a potential crash when the meta file is not valid on multi-process mode.
+
+
+### Win32
+* Redirect logging of MMKV is supported now.
+* Dynamically disable logging of MMKV is supported now.
+* Fix a potential corruption of meta file on multi-process mode.
+
+## v1.0.16 / 2019-01-04
+### iOS / macOS
+What's new  
+
+* Customizing root folder of MMKV is supported now.
+* Customizing folder for specific MMKV is supported now.
+* Add method `getValueSizeForKey:` to get value's size of a key.
+
+### Android
+What's new  
+
+* Customizing root folder of MMKV is supported now.
+* Customizing folder for specific MMKV is supported now.
+* Add method `getValueSizeForKey()` to get value's size of a key.
+* Fix a potential crash when the meta file is not valid.
+
+
+### Win32
+MMKV for Windows is released now. Most things actually work!
+
 ## v1.0.15 / 2018-12-13
 ### iOS / macOS
 What's new  

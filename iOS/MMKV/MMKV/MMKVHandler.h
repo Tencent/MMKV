@@ -27,6 +27,14 @@ typedef enum : NSUInteger {
 	MMKVOnErrorRecover,
 } MMKVRecoverStrategic;
 
+typedef enum : NSUInteger {
+	MMKVLogDebug = 0, // not available for release/product build
+	MMKVLogInfo = 1,  // default level
+	MMKVLogWarning,
+	MMKVLogError,
+	MMKVLogNone, // special level used to disable all log messages
+} MMKVLogLevel;
+
 // callback is called on the operating thread of the MMKV instance
 @protocol MMKVHandler <NSObject>
 @optional
@@ -38,6 +46,10 @@ typedef enum : NSUInteger {
 // by default MMKV will discard all datas on file length mismatch
 // return `MMKVOnErrorRecover` to recover any data on the file
 - (MMKVRecoverStrategic)onMMKVFileLengthError:(NSString *)mmapID;
+
+// by default MMKV will print log using NSLog
+// implement this method to redirect MMKV's log
+- (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message;
 
 @end
 

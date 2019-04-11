@@ -80,7 +80,9 @@ public class MMKVContentProvider extends ContentProvider {
             PackageManager mgr = context.getPackageManager();
             if (mgr != null) {
                 ProviderInfo providerInfo = mgr.getProviderInfo(componentName, 0);
-                return providerInfo.authority;
+                if (providerInfo != null) {
+                    return providerInfo.authority;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,12 +113,14 @@ public class MMKVContentProvider extends ContentProvider {
         ActivityManager manager =
             (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
+            // clang-format off
             for (ActivityManager.RunningAppProcessInfo processInfo
                     : manager.getRunningAppProcesses()) {
                 if (processInfo.pid == pid) {
                     return processInfo.processName;
                 }
             }
+            // clang-format on
         }
         return "";
     }

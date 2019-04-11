@@ -20,7 +20,7 @@
 
 #include "AESCrypt.h"
 #include "MMKVLog.h"
-#include "openssl/aes.h"
+#include "openssl/openssl_aes.h"
 #include <cassert>
 #include <cstring>
 
@@ -29,7 +29,7 @@ AESCrypt::AESCrypt(const unsigned char *key, size_t keyLength) {
 		memcpy(m_key, key, (keyLength > AES_KEY_LEN) ? AES_KEY_LEN : keyLength);
 		memcpy(m_vector, m_key, AES_KEY_LEN);
 
-		int ret = AES_set_encrypt_key(m_key, AES_KEY_BITSET_LEN, &m_aesKey);
+		int ret = openssl::AES_set_encrypt_key(m_key, AES_KEY_BITSET_LEN, &m_aesKey);
 		assert(ret == 0);
 	}
 }
@@ -49,14 +49,14 @@ void AESCrypt::encrypt(const unsigned char *input, unsigned char *output, size_t
 	if (!input || !output || length == 0) {
 		return;
 	}
-	AES_cfb128_encrypt(input, output, length, &m_aesKey, m_vector, &m_number, AES_ENCRYPT);
+	openssl::AES_cfb128_encrypt(input, output, length, &m_aesKey, m_vector, &m_number, AES_ENCRYPT);
 }
 
 void AESCrypt::decrypt(const unsigned char *input, unsigned char *output, size_t length) {
 	if (!input || !output || length == 0) {
 		return;
 	}
-	AES_cfb128_encrypt(input, output, length, &m_aesKey, m_vector, &m_number, AES_DECRYPT);
+	openssl::AES_cfb128_encrypt(input, output, length, &m_aesKey, m_vector, &m_number, AES_DECRYPT);
 }
 
 #ifndef NDEBUG

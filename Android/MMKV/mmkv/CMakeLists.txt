@@ -21,6 +21,7 @@ add_library( # Sets the name of the library.
              src/main/cpp/MMKV.h
              src/main/cpp/MMKV.cpp
              src/main/cpp/MMKVLog.h
+             src/main/cpp/MMKVLog.cpp
              src/main/cpp/CodedInputData.h
              src/main/cpp/CodedInputData.cpp
              src/main/cpp/CodedOutputData.h

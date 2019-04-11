@@ -24,7 +24,7 @@
 #import "LRUCache.hpp"
 #import <Foundation/Foundation.h>
 
-extern const int DEFAULT_MMAP_SIZE;
+extern int DEFAULT_MMAP_SIZE;
 
 class MemoryFile {
 	NSString *m_name;

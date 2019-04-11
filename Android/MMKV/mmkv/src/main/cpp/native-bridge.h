@@ -32,4 +32,10 @@ MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
 
 MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
 
+void mmkvLog(int level,
+             const std::string &file,
+             int line,
+             const std::string &function,
+             const std::string &message);
+
 #endif //MMKV_NATIVE_BRIDGE_H

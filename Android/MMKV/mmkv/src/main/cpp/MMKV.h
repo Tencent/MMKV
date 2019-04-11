@@ -38,7 +38,8 @@ class AESCrypt;
 enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 0x1,
     MMKV_MULTI_PROCESS = 0x2,
-    MMKV_ASHMEM = 0x4,
+    CONTEXT_MODE_MULTI_PROCESS = 0x4, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    MMKV_ASHMEM = 0x8,
 };
 
 class MMKV {
@@ -106,9 +107,10 @@ class MMKV {
 
 public:
     MMKV(const std::string &mmapID,
-         int size = DEFAULT_MMAP_SIZE,
-         MMKVMode mode = MMKV_SINGLE_PROCESS,
-         std::string *cryptKey = nullptr);
+         int size,
+         MMKVMode mode,
+         std::string *cryptKey,
+         std::string *relativePath);
 
     MMKV(const std::string &mmapID,
          int ashmemFD,
@@ -127,7 +129,8 @@ public:
     static MMKV *mmkvWithID(const std::string &mmapID,
                             int size = DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
-                            std::string *cryptKey = nullptr);
+                            std::string *cryptKey = nullptr,
+                            std::string *relativePath = nullptr);
 
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID,
                                   int fd,
@@ -188,6 +191,10 @@ public:
     double getDoubleForKey(const std::string &key, double defaultValue = 0);
 
     bool getVectorForKey(const std::string &key, std::vector<std::string> &result);
+
+    size_t getValueSizeForKey(const std::string &key, bool acutalSize);
+
+    int32_t writeValueToBuffer(const std::string &key, void *ptr, int32_t size);
 
     bool containsKey(const std::string &key);
 

@@ -31,7 +31,6 @@
 @implementation MiniPBCoder {
 	NSObject *m_obj;
 
-	BOOL m_isTopObject;
 	NSData *m_inputBuffer;
 	MiniCodedInputData *m_inputData;
 
@@ -42,7 +41,6 @@
 
 - (id)initForReadingWithData:(NSData *)data {
 	if (self = [super init]) {
-		m_isTopObject = YES;
 		m_inputBuffer = data;
 		m_inputData = new MiniCodedInputData(data);
 	}
@@ -218,7 +216,6 @@
 #pragma mark - decode
 
 - (NSMutableDictionary *)decodeOneDictionaryOfValueClass:(Class)cls {
-	m_isTopObject = NO;
 	if (cls == nullptr) {
 		return nil;
 	}
@@ -249,8 +246,6 @@
 	if (!cls) {
 		cls = [(NSObject *) obj class];
 	}
-
-	m_isTopObject = NO;
 
 	if (cls == [NSString class]) {
 		return m_inputData->readString();

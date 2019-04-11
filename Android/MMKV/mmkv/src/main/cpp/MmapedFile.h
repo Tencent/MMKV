@@ -23,6 +23,7 @@
 
 #include <string>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 #define ASHMEM_NAME_LEN 256
 #define ASHMEM_NAME_DEF "/dev/ashmem"
@@ -63,6 +64,10 @@ public:
     std::string &getName() { return m_name; }
 
     int getFd() { return m_fd; }
+
+    bool isFileValid() {
+        return m_fd >= 0 && m_segmentSize > 0 && m_segmentPtr && m_segmentPtr != MAP_FAILED;
+    }
 };
 
 class MMBuffer;
@@ -72,5 +77,6 @@ extern bool isFileExist(const std::string &nsFilePath);
 extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const char *path);
 extern bool zeroFillFile(int fd, size_t startPos, size_t size);
+extern bool createFile(const std::string &filePath);
 
 #endif //MMKV_MMAPEDFILE_H

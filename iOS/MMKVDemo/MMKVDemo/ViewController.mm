@@ -36,10 +36,26 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
+	// set log level
+	[MMKV setLogLevel:MMKVLogInfo];
+
+	// you can turn off logging
+	//[MMKV setLogLevel:MMKVLogNone];
+
+	// register handler
 	[MMKV registerHandler:self];
+
+	// not necessary: set MMKV's root dir
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+	NSString *libraryPath = (NSString *) [paths firstObject];
+	if ([libraryPath length] > 0) {
+		NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
+		[MMKV setMMKVBasePath:rootDir];
+	}
 
 	[self funcionalTest];
 	//[self testReKey];
+	//[self testImportFromUserDefault];
 
 	DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
 	[swiftUsageDemo testSwiftFunctionality];
@@ -61,7 +77,10 @@
 }
 
 - (void)funcionalTest {
-	MMKV *mmkv = [MMKV mmkvWithID:@"test/case1"];
+	auto path = [MMKV mmkvBasePath];
+	path = [path stringByDeletingLastPathComponent];
+	path = [path stringByAppendingPathComponent:@"mmkv_2"];
+	auto mmkv = [MMKV mmkvWithID:@"test/case1" relativePath:path];
 
 	[mmkv setBool:YES forKey:@"bool"];
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
@@ -99,6 +118,7 @@
 	[mmkv setData:[@"hello, mmkv again and again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
 	NSData *data = [mmkv getDataForKey:@"data"];
 	NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+	NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data"]);
 
 	[mmkv removeValueForKey:@"bool"];
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
@@ -185,6 +205,93 @@
 	[kv reKey:nullptr];
 	[kv clearMemoryCache];
 	[self testMMKV:mmapID withCryptKey:nullptr decodeOnly:YES];
+}
+
+- (void)testImportFromUserDefault {
+	NSUserDefaults *userDefault = [[NSUserDefaults alloc] initWithSuiteName:@"testNSUserDefaults"];
+	[userDefault setBool:YES forKey:@"bool"];
+	[userDefault setInteger:std::numeric_limits<NSInteger>::max() forKey:@"NSInteger"];
+	[userDefault setFloat:3.14 forKey:@"float"];
+	[userDefault setDouble:std::numeric_limits<double>::max() forKey:@"double"];
+	[userDefault setObject:@"hello, NSUserDefaults" forKey:@"string"];
+	[userDefault setObject:[NSDate date] forKey:@"date"];
+	[userDefault setObject:[@"hello, NSUserDefaults again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
+	[userDefault setURL:[NSURL URLWithString:@"https://mail.qq.com"] forKey:@"url"];
+
+	NSNumber *number = [NSNumber numberWithBool:YES];
+	[userDefault setObject:number forKey:@"number_bool"];
+
+	number = [NSNumber numberWithChar:std::numeric_limits<char>::min()];
+	[userDefault setObject:number forKey:@"number_char"];
+
+	number = [NSNumber numberWithUnsignedChar:std::numeric_limits<unsigned char>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_char"];
+
+	number = [NSNumber numberWithShort:std::numeric_limits<short>::min()];
+	[userDefault setObject:number forKey:@"number_short"];
+
+	number = [NSNumber numberWithUnsignedShort:std::numeric_limits<unsigned short>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_short"];
+
+	number = [NSNumber numberWithInt:std::numeric_limits<int>::min()];
+	[userDefault setObject:number forKey:@"number_int"];
+
+	number = [NSNumber numberWithUnsignedInt:std::numeric_limits<unsigned int>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_int"];
+
+	number = [NSNumber numberWithLong:std::numeric_limits<long>::min()];
+	[userDefault setObject:number forKey:@"number_long"];
+
+	number = [NSNumber numberWithUnsignedLong:std::numeric_limits<unsigned long>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_long"];
+
+	number = [NSNumber numberWithLongLong:std::numeric_limits<long long>::min()];
+	[userDefault setObject:number forKey:@"number_long_long"];
+
+	number = [NSNumber numberWithUnsignedLongLong:std::numeric_limits<unsigned long long>::max()];
+	[userDefault setObject:number forKey:@"number_unsigned_long_long"];
+
+	number = [NSNumber numberWithFloat:3.1415];
+	[userDefault setObject:number forKey:@"number_float"];
+
+	number = [NSNumber numberWithDouble:std::numeric_limits<double>::max()];
+	[userDefault setObject:number forKey:@"number_double"];
+
+	number = [NSNumber numberWithInteger:std::numeric_limits<NSInteger>::min()];
+	[userDefault setObject:number forKey:@"number_NSInteger"];
+
+	number = [NSNumber numberWithUnsignedInteger:std::numeric_limits<NSUInteger>::max()];
+	[userDefault setObject:number forKey:@"number_NSUInteger"];
+
+	auto mmkv = [MMKV mmkvWithID:@"testImportNSUserDefaults"];
+	[mmkv migrateFromUserDefaults:userDefault];
+	NSLog(@"migrate from NSUserDefault begin");
+
+	NSLog(@"bool = %d", [mmkv getBoolForKey:@"bool"]);
+	NSLog(@"NSInteger = %lld", [mmkv getInt64ForKey:@"NSInteger"]);
+	NSLog(@"float = %f", [mmkv getFloatForKey:@"float"]);
+	NSLog(@"double = %f", [mmkv getDoubleForKey:@"double"]);
+	NSLog(@"string = %@", [mmkv getStringForKey:@"string"]);
+	NSLog(@"date = %@", [mmkv getDateForKey:@"date"]);
+	NSLog(@"data = %@", [[NSString alloc] initWithData:[mmkv getDataForKey:@"data"] encoding:NSUTF8StringEncoding]);
+	NSLog(@"url = %@", [NSKeyedUnarchiver unarchiveObjectWithData:[mmkv getDataForKey:@"url"]]);
+	NSLog(@"number_bool = %d", [mmkv getBoolForKey:@"number_bool"]);
+	NSLog(@"number_char = %d", [mmkv getInt32ForKey:@"number_char"]);
+	NSLog(@"number_unsigned_char = %d", [mmkv getInt32ForKey:@"number_unsigned_char"]);
+	NSLog(@"number_short = %d", [mmkv getInt32ForKey:@"number_short"]);
+	NSLog(@"number_unsigned_short = %d", [mmkv getInt32ForKey:@"number_unsigned_short"]);
+	NSLog(@"number_int = %d", [mmkv getInt32ForKey:@"number_int"]);
+	NSLog(@"number_unsigned_int = %u", [mmkv getUInt32ForKey:@"number_unsigned_int"]);
+	NSLog(@"number_long = %lld", [mmkv getInt64ForKey:@"number_long"]);
+	NSLog(@"number_unsigned_long = %llu", [mmkv getUInt64ForKey:@"number_unsigned_long"]);
+	NSLog(@"number_long_long = %lld", [mmkv getInt64ForKey:@"number_long_long"]);
+	NSLog(@"number_unsigned_long_long = %llu", [mmkv getUInt64ForKey:@"number_unsigned_long_long"]);
+	NSLog(@"number_float = %f", [mmkv getFloatForKey:@"number_float"]);
+	NSLog(@"number_double = %f", [mmkv getDoubleForKey:@"number_double"]);
+	NSLog(@"number_NSInteger = %lld", [mmkv getInt64ForKey:@"number_NSInteger"]);
+	NSLog(@"number_NSUInteger = %llu", [mmkv getUInt64ForKey:@"number_NSUInteger"]);
+
+	NSLog(@"migrate from NSUserDefault end");
 }
 
 - (IBAction)onBtnClick:(id)sender {
@@ -388,6 +495,29 @@
 
 - (MMKVRecoverStrategic)onMMKVFileLengthError:(NSString *)mmapID {
 	return MMKVOnErrorRecover;
+}
+
+- (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message {
+	const char *levelDesc = nullptr;
+	switch (level) {
+		case MMKVLogDebug:
+			levelDesc = "D";
+			break;
+		case MMKVLogInfo:
+			levelDesc = "I";
+			break;
+		case MMKVLogWarning:
+			levelDesc = "W";
+			break;
+		case MMKVLogError:
+			levelDesc = "E";
+			break;
+		default:
+			levelDesc = "N";
+			break;
+	}
+
+	NSLog(@"redirect logging [%s] <%s:%d::%s> %@", levelDesc, file, line, funcname, message);
 }
 
 @end

@@ -32,6 +32,7 @@ static jclass g_cls = nullptr;
 static jfieldID g_fileID = nullptr;
 static jmethodID g_callbackOnCRCFailID = nullptr;
 static jmethodID g_callbackOnFileLengthErrorID = nullptr;
+static jmethodID g_mmkvLogID = nullptr;
 static JavaVM *g_currentJVM = nullptr;
 
 extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
@@ -66,12 +67,17 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     if (!g_callbackOnFileLengthErrorID) {
         MMKVError("fail to get method id for onMMKVFileLengthError");
     }
+    g_mmkvLogID = env->GetStaticMethodID(
+        g_cls, "mmkvLogImp", "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
+    if (!g_callbackOnFileLengthErrorID) {
+        MMKVError("fail to get method id for mmkvLogImp");
+    }
 
     return JNI_VERSION_1_6;
 }
 
 extern "C" JNIEXPORT JNICALL void
-Java_com_tencent_mmkv_MMKV_initialize(JNIEnv *env, jobject obj, jstring rootDir) {
+Java_com_tencent_mmkv_MMKV_jniInitialize(JNIEnv *env, jobject obj, jstring rootDir) {
     if (!rootDir) {
         return;
     }
@@ -154,7 +160,7 @@ static JNIEnv *getCurrentEnv() {
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
     auto currentEnv = getCurrentEnv();
-    if (g_currentJVM && g_callbackOnCRCFailID) {
+    if (currentEnv && g_callbackOnCRCFailID) {
         jstring str = string2jstring(currentEnv, mmapID);
         auto strategic = currentEnv->CallStaticIntMethod(g_cls, g_callbackOnCRCFailID, str);
         return static_cast<MMKVRecoverStrategic>(strategic);
@@ -172,22 +178,49 @@ MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
     return OnErrorDiscard;
 }
 
+void mmkvLog(int level,
+             const std::string &file,
+             int line,
+             const std::string &function,
+             const std::string &message) {
+    auto currentEnv = getCurrentEnv();
+    if (currentEnv && g_mmkvLogID) {
+        jstring oFile = string2jstring(currentEnv, file);
+        jstring oFunction = string2jstring(currentEnv, function);
+        jstring oMessage = string2jstring(currentEnv, message);
+        currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, level, oFile, line, oFunction,
+                                         oMessage);
+    }
+}
+
 extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
-    JNIEnv *env, jobject obj, jstring mmapID, jint mode, jstring cryptKey) {
+    JNIEnv *env, jobject obj, jstring mmapID, jint mode, jstring cryptKey, jstring relativePath) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return (jlong) kv;
     }
     string str = jstring2string(env, mmapID);
 
-    if (cryptKey != nullptr) {
+    bool done = false;
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
-            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt);
+            if (relativePath) {
+                string path = jstring2string(env, relativePath);
+                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, &path);
+            } else {
+                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, nullptr);
+            }
+            done = true;
         }
     }
-    if (!kv) {
-        kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr);
+    if (!done) {
+        if (relativePath) {
+            string path = jstring2string(env, relativePath);
+            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, &path);
+        } else {
+            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, nullptr);
+        }
     }
 
     return (jlong) kv;
@@ -201,7 +234,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSi
     }
     string str = jstring2string(env, mmapID);
 
-    if (cryptKey != nullptr) {
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
             kv = MMKV::mmkvWithID(str, size, (MMKVMode) mode, &crypt);
@@ -219,7 +252,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNI
                                                                              jstring cryptKey) {
     MMKV *kv = nullptr;
 
-    if (cryptKey != nullptr) {
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
             kv = MMKV::defaultMMKV((MMKVMode) mode, &crypt);
@@ -240,7 +273,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithAshmemF
     }
     string id = jstring2string(env, mmapID);
 
-    if (cryptKey != nullptr) {
+    if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
             kv = MMKV::mmkvWithAshmemFD(id, fd, metaFD, &crypt);
@@ -444,8 +477,8 @@ extern "C" JNIEXPORT JNICALL jbyteArray Java_com_tencent_mmkv_MMKV_decodeBytes(J
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
         MMBuffer value = kv->getBytesForKey(key);
-        jbyteArray result = env->NewByteArray(value.length());
-        if (result) {
+        if (value.length() > 0) {
+            jbyteArray result = env->NewByteArray(value.length());
             env->SetByteArrayRegion(result, 0, value.length(), (const jbyte *) value.getPtr());
             return result;
         }
@@ -666,4 +699,54 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_close(JNIEnv *env, 
         kv->close();
         env->SetLongField(instance, g_fileID, 0);
     }
+}
+
+extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(
+    JNIEnv *env, jobject instance, jlong handle, jstring oKey, jboolean actualSize) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return static_cast<jint>(kv->getValueSizeForKey(key, (bool) actualSize));
+    }
+    return 0;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_setLogLevel(JNIEnv *env,
+                                                                         jclass type,
+                                                                         jint level) {
+    g_currentLogLevel = (MMKVLogLevel) level;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_setLogReDirecting(JNIEnv *env,
+                                                                               jclass type,
+                                                                               jboolean enable) {
+    g_isLogRedirecting = (enable == JNI_TRUE);
+}
+
+extern "C" JNIEXPORT jlong JNICALL Java_com_tencent_mmkv_MMKV_createNB(JNIEnv *env,
+                                                                       jobject instance,
+                                                                       jint size) {
+    auto ptr = malloc(static_cast<size_t>(size));
+    if (!ptr) {
+        MMKVError("fail to create NativeBuffer:%s", strerror(errno));
+        return 0;
+    }
+    return reinterpret_cast<jlong>(ptr);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_destroyNB(JNIEnv *env,
+                                                                       jobject instance,
+                                                                       jlong pointer,
+                                                                       jint size) {
+    free(reinterpret_cast<void *>(pointer));
+}
+
+extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_writeValueToNB(
+    JNIEnv *env, jobject instance, jlong handle, jstring oKey, jlong pointer, jint size) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return kv->writeValueToBuffer(key, reinterpret_cast<void *>(pointer), size);
+    }
+    return -1;
 }
