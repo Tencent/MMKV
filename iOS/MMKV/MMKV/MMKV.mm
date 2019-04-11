@@ -285,7 +285,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 						if (strategic == MMKVOnErrorRecover) {
 							loadFromFile = true;
 							needFullWriteback = true;
-							[self writeAcutalSize:m_size - offset];
+							[self writeActualSize:m_size - offset];
 						}
 					}
 				}
@@ -300,7 +300,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 						[self fullWriteback];
 					}
 				} else {
-					[self writeAcutalSize:0];
+					[self writeActualSize:0];
 					m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
 					[self recaculateCRCDigest];
 				}
@@ -577,7 +577,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			m_cryptor->encrypt(ptr, ptr, data.length);
 		}
 
-		if ([self writeAcutalSize:data.length] == NO) {
+		if ([self writeActualSize:data.length] == NO) {
 			return NO;
 		}
 
@@ -595,7 +595,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return YES;
 }
 
-- (BOOL)writeAcutalSize:(size_t)actualSize {
+- (BOOL)writeActualSize:(size_t)actualSize {
 	assert(m_ptr != 0);
 	assert(m_ptr != MAP_FAILED);
 
@@ -657,7 +657,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 				auto ptr = (unsigned char *) allData.bytes;
 				m_cryptor->encrypt(ptr, ptr, allData.length);
 			}
-			BOOL ret = [self writeAcutalSize:allData.length];
+			BOOL ret = [self writeActualSize:allData.length];
 			if (ret) {
 				ret = [self protectFromBackgroundWritting:m_actualSize
 				                               writeBlock:^(MiniCodedOutputData *output) {
@@ -671,7 +671,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		}
 		return NO;
 	} else {
-		BOOL ret = [self writeAcutalSize:m_actualSize + size];
+		BOOL ret = [self writeActualSize:m_actualSize + size];
 		if (ret) {
 			static const int offset = pbFixed32Size(0);
 			ret = [self protectFromBackgroundWritting:size
@@ -724,7 +724,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 				auto ptr = (unsigned char *) allData.bytes;
 				m_cryptor->encrypt(ptr, ptr, allData.length);
 			}
-			BOOL ret = [self writeAcutalSize:allData.length];
+			BOOL ret = [self writeActualSize:allData.length];
 			if (ret) {
 				delete m_output;
 				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
