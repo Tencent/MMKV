@@ -297,7 +297,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 					m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
 					m_output = new MiniCodedOutputData(m_ptr + offset + m_actualSize, m_size - offset - m_actualSize);
 					if (needFullWriteback) {
-						[self fullWriteback];
+						[self fullWriteBack];
 					}
 				} else {
 					[self writeActualSize:0];
@@ -453,7 +453,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return;
 	}
 
-	[self fullWriteback];
+	[self fullWriteBack];
 	auto oldSize = m_size;
 	while (m_size > (m_actualSize * 2)) {
 		m_size /= 2;
@@ -485,7 +485,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	MMKVInfo(@"finish trim %@ to size %zu", m_mmapID, m_size);
 }
 
-- (BOOL)protectFromBackgroundWritting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
+- (BOOL)protectFromBackgroundWriting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
 	if (m_isInBackground) {
 		static const int offset = pbFixed32Size(0);
 		static const int pagesize = getpagesize();
@@ -583,7 +583,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 		delete m_output;
 		m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-		BOOL ret = [self protectFromBackgroundWritting:m_actualSize
+		BOOL ret = [self protectFromBackgroundWriting:m_actualSize
 		                                    writeBlock:^(MiniCodedOutputData *output) {
 			                                    output->writeRawData(data);
 		                                    }];
@@ -659,7 +659,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			}
 			BOOL ret = [self writeActualSize:allData.length];
 			if (ret) {
-				ret = [self protectFromBackgroundWritting:m_actualSize
+				ret = [self protectFromBackgroundWriting:m_actualSize
 				                               writeBlock:^(MiniCodedOutputData *output) {
 					                               output->writeRawData(allData); // note: don't write size of data
 				                               }];
@@ -674,7 +674,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		BOOL ret = [self writeActualSize:m_actualSize + size];
 		if (ret) {
 			static const int offset = pbFixed32Size(0);
-			ret = [self protectFromBackgroundWritting:size
+			ret = [self protectFromBackgroundWriting:size
 			                               writeBlock:^(MiniCodedOutputData *output) {
 				                               output->writeString(key);
 				                               output->writeData(data); // note: write size of data
@@ -697,7 +697,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return [m_dic objectForKey:key];
 }
 
-- (BOOL)fullWriteback {
+- (BOOL)fullWriteBack {
 	CScopedLock lock(m_lock);
 	if (m_needLoadFromFile) {
 		return YES;
@@ -728,7 +728,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			if (ret) {
 				delete m_output;
 				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-				ret = [self protectFromBackgroundWritting:m_actualSize
+				ret = [self protectFromBackgroundWriting:m_actualSize
 				                               writeBlock:^(MiniCodedOutputData *output) {
 					                               output->writeRawData(allData); // note: don't write size of data
 				                               }];
@@ -884,14 +884,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 				delete m_cryptor;
 				auto ptr = (const unsigned char *) newKey.bytes;
 				m_cryptor = new AESCrypt(ptr, newKey.length);
-				return [self fullWriteback];
+				return [self fullWriteBack];
 			}
 		} else {
 			// decryption to plain text
 			MMKVInfo(@"reKey with no aes key");
 			delete m_cryptor;
 			m_cryptor = nullptr;
-			return [self fullWriteback];
+			return [self fullWriteBack];
 		}
 	} else {
 		if (newKey.length > 0) {
@@ -899,7 +899,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			MMKVInfo(@"reKey with aes key");
 			auto ptr = (const unsigned char *) newKey.bytes;
 			m_cryptor = new AESCrypt(ptr, newKey.length);
-			return [self fullWriteback];
+			return [self fullWriteBack];
 		} else {
 			return YES;
 		}
@@ -1299,7 +1299,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	MMKVInfo(@"remove [%@] %lu keys, %lu remain", m_mmapID, (unsigned long) arrKeys.count, (unsigned long) m_dic.count);
 
-	[self fullWriteback];
+	[self fullWriteBack];
 }
 
 #pragma mark - Boring stuff
