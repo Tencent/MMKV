@@ -535,4 +535,20 @@ using namespace std;
 	XCTAssertEqual([mmkv getUInt64ForKey:@"number_NSUInteger"], number.unsignedIntegerValue);
 }
 
+- (void)testMultiTimesOverwriteValue {
+	NSData *data;
+	int loops = 1000000;
+	for (int index = 0; index < loops; index++) {
+		NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
+		data = [str dataUsingEncoding:NSUTF8StringEncoding];
+		BOOL ret = [mmkv setData:data forKey:@"data"];
+		XCTAssertEqual(ret, YES);
+	}
+	NSData *value = [mmkv getObjectOfClass:NSData.class forKey:@"data"];
+	XCTAssertEqualObjects(value, data);
+
+	value = [mmkv getObjectOfClass:NSData.class forKey:KeyNotExist];
+	XCTAssertEqualObjects(value, nil);
+}
+
 @end
