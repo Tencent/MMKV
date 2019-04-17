@@ -1324,7 +1324,7 @@ void MMKV::sync(bool sync) {
     SCOPEDLOCK(m_exclusiveProcessLock);
     auto flag = sync ? MS_SYNC : MS_ASYNC;
     if (msync(m_ptr, m_size, flag) != 0) {
-        MMKVError("fail to msync[%d] [%s]:%s", sync, m_mmapID.c_str(), strerror(errno));
+        MMKVError("fail to msync[%d] [%s]:%s", flag, m_mmapID.c_str(), strerror(errno));
     }
 }
 

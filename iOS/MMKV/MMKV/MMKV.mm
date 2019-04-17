@@ -1305,15 +1305,25 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 #pragma mark - Boring stuff
 
 - (void)sync {
+	[self doSync:true];
+}
+
+- (void)async {
+	[self doSync:false];
+}
+
+- (void)doSync:(bool)sync {
 	CScopedLock lock(m_lock);
 	if (m_needLoadFromFile || ![self isFileValid] || m_crcPtr == nullptr) {
 		return;
 	}
-	if (msync(m_ptr, m_actualSize, MS_SYNC) != 0) {
-		MMKVError(@"fail to msync data file of [%@]:%s", m_mmapID, strerror(errno));
+
+	auto flag = sync ? MS_SYNC : MS_ASYNC;
+	if (msync(m_ptr, m_actualSize, flag) != 0) {
+		MMKVError(@"fail to msync[%d] data file of [%@]:%s", flag, m_mmapID, strerror(errno));
 	}
-	if (msync(m_crcPtr, CRC_FILE_SIZE, MS_SYNC) != 0) {
-		MMKVError(@"fail to msync crc-32 file of [%@]:%s", m_mmapID, strerror(errno));
+	if (msync(m_crcPtr, CRC_FILE_SIZE, flag) != 0) {
+		MMKVError(@"fail to msync[%d] crc-32 file of [%@]:%s", flag, m_mmapID, strerror(errno));
 	}
 }
 

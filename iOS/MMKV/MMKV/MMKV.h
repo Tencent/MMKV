@@ -152,6 +152,7 @@ NS_ASSUME_NONNULL_BEGIN
 // you don't need to call this, really, I mean it
 // unless you care about out of battery
 - (void)sync;
+- (void)async;
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));

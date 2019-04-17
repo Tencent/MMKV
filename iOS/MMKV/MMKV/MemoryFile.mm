@@ -95,6 +95,8 @@ void MemoryFile::prepareSegments() {
 	// I'm felling lucky
 	if (m_size <= SegmentSize && m_segmentCache.size() == 1) {
 		m_ptr = *m_segmentCache.get(0);
+	} else {
+		m_ptr = nullptr;
 	}
 }
 
