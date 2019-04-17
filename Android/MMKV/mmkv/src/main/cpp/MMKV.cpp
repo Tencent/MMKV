@@ -1316,14 +1316,15 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
 
 #pragma mark - file
 
-void MMKV::sync() {
+void MMKV::sync(bool sync) {
     SCOPEDLOCK(m_lock);
     if (m_needLoadFromFile || !isFileValid()) {
         return;
     }
     SCOPEDLOCK(m_exclusiveProcessLock);
-    if (msync(m_ptr, m_size, MS_SYNC) != 0) {
-        MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
+    auto flag = sync ? MS_SYNC : MS_ASYNC;
+    if (msync(m_ptr, m_size, flag) != 0) {
+        MMKVError("fail to msync[%d] [%s]:%s", sync, m_mmapID.c_str(), strerror(errno));
     }
 }
 

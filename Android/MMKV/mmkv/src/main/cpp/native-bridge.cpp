@@ -560,10 +560,11 @@ extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_clearAll(JNIEnv *en
     }
 }
 
-extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_sync(JNIEnv *env, jobject instance) {
+extern "C" JNIEXPORT JNICALL void
+Java_com_tencent_mmkv_MMKV_sync(JNIEnv *env, jobject instance, jboolean sync) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
-        kv->sync();
+        kv->sync((bool) sync);
     }
 }
 

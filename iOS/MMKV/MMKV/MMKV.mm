@@ -584,9 +584,9 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		delete m_output;
 		m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
 		BOOL ret = [self protectFromBackgroundWriting:m_actualSize
-		                                    writeBlock:^(MiniCodedOutputData *output) {
-			                                    output->writeRawData(data);
-		                                    }];
+		                                   writeBlock:^(MiniCodedOutputData *output) {
+			                                   output->writeRawData(data);
+		                                   }];
 		if (ret) {
 			[self recaculateCRCDigest];
 		}
@@ -660,9 +660,9 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			BOOL ret = [self writeActualSize:allData.length];
 			if (ret) {
 				ret = [self protectFromBackgroundWriting:m_actualSize
-				                               writeBlock:^(MiniCodedOutputData *output) {
-					                               output->writeRawData(allData); // note: don't write size of data
-				                               }];
+				                              writeBlock:^(MiniCodedOutputData *output) {
+					                              output->writeRawData(allData); // note: don't write size of data
+				                              }];
 				if (ret) {
 					[self recaculateCRCDigest];
 				}
@@ -675,10 +675,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		if (ret) {
 			static const int offset = pbFixed32Size(0);
 			ret = [self protectFromBackgroundWriting:size
-			                               writeBlock:^(MiniCodedOutputData *output) {
-				                               output->writeString(key);
-				                               output->writeData(data); // note: write size of data
-			                               }];
+			                              writeBlock:^(MiniCodedOutputData *output) {
+				                              output->writeString(key);
+				                              output->writeData(data); // note: write size of data
+			                              }];
 			if (ret) {
 				auto ptr = (uint8_t *) m_ptr + offset + m_actualSize - size;
 				if (m_cryptor) {
@@ -729,9 +729,9 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 				delete m_output;
 				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
 				ret = [self protectFromBackgroundWriting:m_actualSize
-				                               writeBlock:^(MiniCodedOutputData *output) {
-					                               output->writeRawData(allData); // note: don't write size of data
-				                               }];
+				                              writeBlock:^(MiniCodedOutputData *output) {
+					                              output->writeRawData(allData); // note: don't write size of data
+				                              }];
 				if (ret) {
 					[self recaculateCRCDigest];
 					m_hasFullWriteBack = YES;

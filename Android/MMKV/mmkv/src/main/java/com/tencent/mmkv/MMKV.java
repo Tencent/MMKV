@@ -486,7 +486,15 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // you don't need to call this, really, I mean it
     // unless you care about out of battery
-    public native void sync();
+    public void sync() {
+        sync(true);
+    }
+
+    public void async() {
+        sync(false);
+    }
+
+    private native void sync(boolean sync);
 
     public static native boolean isFileValid(String mmapID);
 
@@ -614,14 +622,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @Override
     public boolean commit() {
-        sync();
+        sync(true);
         return true;
     }
 
     @Override
     public void apply() {
-        // TODO: create a thread?
-        //sync();
+        sync(false);
     }
 
     @Override
