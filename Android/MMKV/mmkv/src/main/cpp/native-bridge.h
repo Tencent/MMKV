@@ -38,4 +38,6 @@ void mmkvLog(int level,
              const std::string &function,
              const std::string &message);
 
+extern int g_android_api;
+
 #endif //MMKV_NATIVE_BRIDGE_H
