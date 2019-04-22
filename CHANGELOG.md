@@ -1,5 +1,25 @@
 # MMKV Change Log
 
+## v1.0.19 / 2019-04-22
+### iOS / macOS
+What's new  
+
+* Support Swif 5.
+* Add method to get all keys `-[MMKV allKeys]`;
+* Add method to synchronize to file asynchronously `-[MMKV async]`.
+* Fix a pod configuration bug that might override target project's C++ setting on `CLANG_CXX_LANGUAGE_STANDARD`.
+* Fix a bug that `DEFAULT_MMAP_SIZE` might not be initialized before getting any MMKV instance.
+* Fix a bug that openssl's header files included inside MMKV might mess with target project's own openssl implementation.
+
+### Android
+What's new  
+
+* Support Android Q.
+* Add method to synchronize to file asynchronously `void sync()`, or `void apply()` that comes with `SharedPreferences.Editor` interface.
+* Fix a bug that a buffer with length of zero might be returned when the key is not existed.
+* Fix a bug that `DEFAULT_MMAP_SIZE` might not be initialized before getting any MMKV instance.
+
+
 ## v1.0.18 / 2019-03-14
 ### iOS / macOS
 What's new  
