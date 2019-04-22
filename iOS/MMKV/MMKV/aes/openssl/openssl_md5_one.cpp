@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "md5.h"
+#include "openssl_md5.h"
 
 namespace openssl {
 

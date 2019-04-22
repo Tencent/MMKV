@@ -34,6 +34,7 @@ static jmethodID g_callbackOnCRCFailID = nullptr;
 static jmethodID g_callbackOnFileLengthErrorID = nullptr;
 static jmethodID g_mmkvLogID = nullptr;
 static JavaVM *g_currentJVM = nullptr;
+int g_android_api = __ANDROID_API_L__;
 
 extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     g_currentJVM = vm;
@@ -71,6 +72,20 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         g_cls, "mmkvLogImp", "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
     if (!g_callbackOnFileLengthErrorID) {
         MMKVError("fail to get method id for mmkvLogImp");
+    }
+
+    // get current API level by accessing android.os.Build.VERSION.SDK_INT
+    jclass versionClass = env->FindClass("android/os/Build$VERSION");
+    if (versionClass) {
+        jfieldID sdkIntFieldID = env->GetStaticFieldID(versionClass, "SDK_INT", "I");
+        if (sdkIntFieldID) {
+            g_android_api = env->GetStaticIntField(versionClass, sdkIntFieldID);
+            MMKVInfo("current API level = %d", g_android_api);
+        } else {
+            MMKVError("fail to get field id android.os.Build.VERSION.SDK_INT");
+        }
+    } else {
+        MMKVError("fail to get class android.os.Build.VERSION");
     }
 
     return JNI_VERSION_1_6;
@@ -477,8 +492,8 @@ extern "C" JNIEXPORT JNICALL jbyteArray Java_com_tencent_mmkv_MMKV_decodeBytes(J
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
         MMBuffer value = kv->getBytesForKey(key);
-        jbyteArray result = env->NewByteArray(value.length());
-        if (result) {
+        if (value.length() > 0) {
+            jbyteArray result = env->NewByteArray(value.length());
             env->SetByteArrayRegion(result, 0, value.length(), (const jbyte *) value.getPtr());
             return result;
         }
@@ -560,10 +575,11 @@ extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_clearAll(JNIEnv *en
     }
 }
 
-extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_sync(JNIEnv *env, jobject instance) {
+extern "C" JNIEXPORT JNICALL void
+Java_com_tencent_mmkv_MMKV_sync(JNIEnv *env, jobject instance, jboolean sync) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
-        kv->sync();
+        kv->sync((bool) sync);
     }
 }
 

@@ -695,7 +695,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                     m_size *= 2;
                 } while (lenNeeded + futureUsage >= m_size);
                 MMKVInfo(
-                    "extending [%s] file size from %zu to %zu, incoming size:%zu, futrue usage:%zu",
+                    "extending [%s] file size from %zu to %zu, incoming size:%zu, future usage:%zu",
                     m_mmapID.c_str(), oldSize, m_size, newSize, futureUsage);
 
                 // if we can't extend size, rollback to old state
@@ -1316,14 +1316,15 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
 
 #pragma mark - file
 
-void MMKV::sync() {
+void MMKV::sync(bool sync) {
     SCOPEDLOCK(m_lock);
     if (m_needLoadFromFile || !isFileValid()) {
         return;
     }
     SCOPEDLOCK(m_exclusiveProcessLock);
-    if (msync(m_ptr, m_size, MS_SYNC) != 0) {
-        MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
+    auto flag = sync ? MS_SYNC : MS_ASYNC;
+    if (msync(m_ptr, m_size, flag) != 0) {
+        MMKVError("fail to msync[%d] [%s]:%s", flag, m_mmapID.c_str(), strerror(errno));
     }
 }
 

@@ -128,6 +128,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (size_t)actualSize;
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
+- (NSArray *)allKeys;
 
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 
@@ -151,6 +152,7 @@ NS_ASSUME_NONNULL_BEGIN
 // you don't need to call this, really, I mean it
 // unless you care about out of battery
 - (void)sync;
+- (void)async;
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));

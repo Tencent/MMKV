@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include "md5_locl.h"
+#include "openssl_md5_locl.h"
 
 namespace openssl {
 /*

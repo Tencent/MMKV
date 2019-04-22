@@ -25,14 +25,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
-#define ASHMEM_NAME_LEN 256
 #define ASHMEM_NAME_DEF "/dev/ashmem"
-
-#define __ASHMEMIOC 0x77
-#define ASHMEM_SET_NAME _IOW(__ASHMEMIOC, 1, char[ASHMEM_NAME_LEN])
-#define ASHMEM_GET_NAME _IOR(__ASHMEMIOC, 2, char[ASHMEM_NAME_LEN])
-#define ASHMEM_SET_SIZE _IOW(__ASHMEMIOC, 3, size_t)
-#define ASHMEM_GET_SIZE _IO(__ASHMEMIOC, 4)
 
 enum : bool { MMAP_FILE = false, MMAP_ASHMEM = true };
 
@@ -78,5 +71,10 @@ extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const char *path);
 extern bool zeroFillFile(int fd, size_t startPos, size_t size);
 extern bool createFile(const std::string &filePath);
+
+// for Android Q limiting ashmem access
+extern int ASharedMemory_create(const char *name, size_t size);
+extern size_t ASharedMemory_getSize(int fd);
+extern std::string ASharedMemory_getName(int fd);
 
 #endif //MMKV_MMAPEDFILE_H

@@ -225,7 +225,7 @@ public:
 
     // you don't need to call this, really, I mean it
     // unless you care about out of battery
-    void sync();
+    void sync(bool sync = true);
 
     static bool isFileValid(const std::string &mmapID);
 
