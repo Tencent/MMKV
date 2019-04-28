@@ -4,7 +4,7 @@
 ### iOS / macOS
 What's new  
 
-* Support Swif 5.
+* Support Swift 5.
 * Add method to get all keys `-[MMKV allKeys]`;
 * Add method to synchronize to file asynchronously `-[MMKV async]`.
 * Fix a pod configuration bug that might override target project's C++ setting on `CLANG_CXX_LANGUAGE_STANDARD`.
