@@ -334,14 +334,14 @@ void MMKV::loadFromFile() {
                     if (checkFileCRCValid()) {
                         loadFromFile = true;
                     } else {
-                        auto strategic = onMMKVCRCCheckFail(m_mmapID);
+                        auto strategic = mmkv::onMMKVCRCCheckFail(m_mmapID);
                         if (strategic == OnErrorRecover) {
                             loadFromFile = true;
                             needFullWriteback = true;
                         }
                     }
                 } else {
-                    auto strategic = onMMKVFileLengthError(m_mmapID);
+                    auto strategic = mmkv::onMMKVFileLengthError(m_mmapID);
                     if (strategic == OnErrorRecover) {
                         writeAcutalSize(m_size - Fixed32Size);
                         loadFromFile = true;
