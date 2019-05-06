@@ -36,6 +36,8 @@ static jmethodID g_mmkvLogID = nullptr;
 static JavaVM *g_currentJVM = nullptr;
 int g_android_api = __ANDROID_API_L__;
 
+static int registerNativeMethods(JNIEnv *env, jclass cls);
+
 extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     g_currentJVM = vm;
     JNIEnv *env;
@@ -43,7 +45,6 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return -1;
     }
 
-    // Get jclass with env->FindClass.
     if (g_cls) {
         env->DeleteGlobalRef(g_cls);
     }
@@ -54,10 +55,21 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return -2;
     }
     g_cls = reinterpret_cast<jclass>(env->NewGlobalRef(instance));
-    g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
-    if (!g_cls || !g_fileID) {
-        MMKVError("fail to locate fileID");
+    if (!g_cls) {
+        MMKVError("fail to create global reference for %s", clsName);
+        return -3;
     }
+    int ret = registerNativeMethods(env, g_cls);
+    if (ret != 0) {
+        MMKVError("fail to register native methods for class %s, ret = %d", clsName, ret);
+        return -4;
+    }
+    g_fileID = env->GetFieldID(g_cls, "nativeHandle", "J");
+    if (!g_fileID) {
+        MMKVError("fail to locate fileID");
+        return -5;
+    }
+
     g_callbackOnCRCFailID =
         env->GetStaticMethodID(g_cls, "onMMKVCRCCheckFail", "(Ljava/lang/String;)I");
     if (!g_callbackOnCRCFailID) {
@@ -91,8 +103,10 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     return JNI_VERSION_1_6;
 }
 
-extern "C" JNIEXPORT JNICALL void
-Java_com_tencent_mmkv_MMKV_jniInitialize(JNIEnv *env, jobject obj, jstring rootDir) {
+//#define MMKV_JNI extern "C" JNIEXPORT JNICALL
+#define MMKV_JNI static
+
+MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir) {
     if (!rootDir) {
         return;
     }
@@ -103,7 +117,7 @@ Java_com_tencent_mmkv_MMKV_jniInitialize(JNIEnv *env, jobject obj, jstring rootD
     }
 }
 
-extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_onExit(JNIEnv *env, jobject obj) {
+MMKV_JNI void onExit(JNIEnv *env, jobject obj) {
     MMKV::onExit();
 }
 
@@ -208,8 +222,8 @@ void mmkvLog(int level,
     }
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
-    JNIEnv *env, jobject obj, jstring mmapID, jint mode, jstring cryptKey, jstring relativePath) {
+MMKV_JNI jlong getMMKVWithID(
+    JNIEnv *env, jobject, jstring mmapID, jint mode, jstring cryptKey, jstring relativePath) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return (jlong) kv;
@@ -241,7 +255,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithID(
     return (jlong) kv;
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSize(
+MMKV_JNI jlong getMMKVWithIDAndSize(
     JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode, jstring cryptKey) {
     MMKV *kv = nullptr;
     if (!mmapID || size < 0) {
@@ -261,10 +275,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithIDAndSi
     return (jlong) kv;
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNIEnv *env,
-                                                                             jobject obj,
-                                                                             jint mode,
-                                                                             jstring cryptKey) {
+MMKV_JNI jlong getDefaultMMKV(JNIEnv *env, jobject obj, jint mode, jstring cryptKey) {
     MMKV *kv = nullptr;
 
     if (cryptKey) {
@@ -280,7 +291,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getDefaultMMKV(JNI
     return (jlong) kv;
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithAshmemFD(
+MMKV_JNI jlong getMMKVWithAshmemFD(
     JNIEnv *env, jobject obj, jstring mmapID, jint fd, jint metaFD, jstring cryptKey) {
     MMKV *kv = nullptr;
     if (!mmapID || fd < 0 || metaFD < 0) {
@@ -301,8 +312,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_getMMKVWithAshmemF
     return (jlong) kv;
 }
 
-extern "C" JNIEXPORT JNICALL jstring Java_com_tencent_mmkv_MMKV_mmapID(JNIEnv *env,
-                                                                       jobject instance) {
+MMKV_JNI jstring mmapID(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         return string2jstring(env, kv->mmapID());
@@ -310,8 +320,7 @@ extern "C" JNIEXPORT JNICALL jstring Java_com_tencent_mmkv_MMKV_mmapID(JNIEnv *e
     return nullptr;
 }
 
-extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_ashmemFD(JNIEnv *env,
-                                                                      jobject instance) {
+MMKV_JNI jint ashmemFD(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         return kv->ashmemFD();
@@ -319,8 +328,7 @@ extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_ashmemFD(JNIEnv *en
     return -1;
 }
 
-extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_ashmemMetaFD(JNIEnv *env,
-                                                                          jobject instance) {
+MMKV_JNI jint ashmemMetaFD(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         return kv->ashmemMetaFD();
@@ -328,8 +336,7 @@ extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_ashmemMetaFD(JNIEnv
     return -1;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeBool(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jboolean value) {
+MMKV_JNI jboolean encodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean value) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -338,8 +345,8 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeBool(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_decodeBool(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jboolean defaultValue) {
+MMKV_JNI jboolean
+decodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -348,8 +355,7 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_decodeBool(
     return defaultValue;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeInt(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jint value) {
+MMKV_JNI jboolean encodeInt(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jint value) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -358,8 +364,7 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeInt(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_decodeInt(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jint defaultValue) {
+MMKV_JNI jint decodeInt(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jint defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -368,8 +373,7 @@ extern "C" JNIEXPORT JNICALL jint Java_com_tencent_mmkv_MMKV_decodeInt(
     return defaultValue;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeLong(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong value) {
+MMKV_JNI jboolean encodeLong(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong value) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -378,8 +382,8 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeLong(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_decodeLong(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong defaultValue) {
+MMKV_JNI jlong
+decodeLong(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -388,8 +392,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_decodeLong(
     return defaultValue;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeFloat(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jfloat value) {
+MMKV_JNI jboolean encodeFloat(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jfloat value) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -398,8 +401,7 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeFloat(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jfloat Java_com_tencent_mmkv_MMKV_decodeFloat(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jfloat defaultValue) {
+MMKV_JNI jfloat decodeFloat(JNIEnv *env, jobject, jlong handle, jstring oKey, jfloat defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -408,8 +410,8 @@ extern "C" JNIEXPORT JNICALL jfloat Java_com_tencent_mmkv_MMKV_decodeFloat(
     return defaultValue;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeDouble(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jdouble value) {
+MMKV_JNI jboolean
+encodeDouble(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jdouble value) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -418,8 +420,8 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeDouble(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jdouble Java_com_tencent_mmkv_MMKV_decodeDouble(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jdouble defaultValue) {
+MMKV_JNI jdouble
+decodeDouble(JNIEnv *env, jobject, jlong handle, jstring oKey, jdouble defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -428,8 +430,7 @@ extern "C" JNIEXPORT JNICALL jdouble Java_com_tencent_mmkv_MMKV_decodeDouble(
     return defaultValue;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeString(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oValue) {
+MMKV_JNI jboolean encodeString(JNIEnv *env, jobject, jlong handle, jstring oKey, jstring oValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -444,8 +445,8 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeString(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jstring Java_com_tencent_mmkv_MMKV_decodeString(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oDefaultValue) {
+MMKV_JNI jstring
+decodeString(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oDefaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -458,8 +459,7 @@ extern "C" JNIEXPORT JNICALL jstring Java_com_tencent_mmkv_MMKV_decodeString(
     return oDefaultValue;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeBytes(
-    JNIEnv *env, jobject obj, jlong handle, jstring oKey, jbyteArray oValue) {
+MMKV_JNI jboolean encodeBytes(JNIEnv *env, jobject, jlong handle, jstring oKey, jbyteArray oValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -484,10 +484,7 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeBytes(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jbyteArray Java_com_tencent_mmkv_MMKV_decodeBytes(JNIEnv *env,
-                                                                               jobject obj,
-                                                                               jlong handle,
-                                                                               jstring oKey) {
+MMKV_JNI jbyteArray decodeBytes(JNIEnv *env, jobject obj, jlong handle, jstring oKey) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -501,8 +498,7 @@ extern "C" JNIEXPORT JNICALL jbyteArray Java_com_tencent_mmkv_MMKV_decodeBytes(J
     return nullptr;
 }
 
-extern "C" JNIEXPORT JNICALL jobjectArray Java_com_tencent_mmkv_MMKV_allKeys(JNIEnv *env,
-                                                                             jobject instance) {
+MMKV_JNI jobjectArray allKeys(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         vector<string> keys = kv->allKeys();
@@ -511,10 +507,7 @@ extern "C" JNIEXPORT JNICALL jobjectArray Java_com_tencent_mmkv_MMKV_allKeys(JNI
     return nullptr;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_containsKey(JNIEnv *env,
-                                                                             jobject instance,
-                                                                             jlong handle,
-                                                                             jstring oKey) {
+MMKV_JNI jboolean containsKey(JNIEnv *env, jobject instance, jlong handle, jstring oKey) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -523,9 +516,7 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_containsKey(JNI
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_count(JNIEnv *env,
-                                                                    jobject instance,
-                                                                    jlong handle) {
+MMKV_JNI jlong mmkv_count(JNIEnv *env, jobject instance, jlong handle) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
         jlong size = kv->count();
@@ -534,9 +525,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_count(JNIEnv *env,
     return 0;
 }
 
-extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_totalSize(JNIEnv *env,
-                                                                        jobject instance,
-                                                                        jlong handle) {
+MMKV_JNI jlong totalSize(JNIEnv *env, jobject instance, jlong handle) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
         jlong size = kv->totalSize();
@@ -545,10 +534,7 @@ extern "C" JNIEXPORT JNICALL jlong Java_com_tencent_mmkv_MMKV_totalSize(JNIEnv *
     return 0;
 }
 
-extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_removeValueForKey(JNIEnv *env,
-                                                                               jobject instance,
-                                                                               jlong handle,
-                                                                               jstring oKey) {
+MMKV_JNI void removeValueForKey(JNIEnv *env, jobject instance, jlong handle, jstring oKey) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -556,8 +542,7 @@ extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_removeValueForKey(J
     }
 }
 
-extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_removeValuesForKeys(
-    JNIEnv *env, jobject instance, jobjectArray arrKeys) {
+MMKV_JNI void removeValuesForKeys(JNIEnv *env, jobject instance, jobjectArray arrKeys) {
     MMKV *kv = getMMKV(env, instance);
     if (kv && arrKeys) {
         vector<string> keys = jarray2vector(env, arrKeys);
@@ -567,25 +552,21 @@ extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_removeValuesForKeys
     }
 }
 
-extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_clearAll(JNIEnv *env,
-                                                                      jobject instance) {
+MMKV_JNI void clearAll(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->clearAll();
     }
 }
 
-extern "C" JNIEXPORT JNICALL void
-Java_com_tencent_mmkv_MMKV_sync(JNIEnv *env, jobject instance, jboolean sync) {
+MMKV_JNI void mmkv_sync(JNIEnv *env, jobject instance, jboolean sync) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->sync((bool) sync);
     }
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_isFileValid(JNIEnv *env,
-                                                                             jclass type,
-                                                                             jstring oMmapID) {
+MMKV_JNI jboolean isFileValid(JNIEnv *env, jclass type, jstring oMmapID) {
     if (oMmapID) {
         string mmapID = jstring2string(env, oMmapID);
         return (jboolean) MMKV::isFileValid(mmapID);
@@ -593,8 +574,7 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_isFileValid(JNI
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeSet(
-    JNIEnv *env, jobject instance, jlong handle, jstring oKey, jobjectArray arrStr) {
+MMKV_JNI jboolean encodeSet(JNIEnv *env, jobject, jlong handle, jstring oKey, jobjectArray arrStr) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -609,8 +589,7 @@ extern "C" JNIEXPORT JNICALL jboolean Java_com_tencent_mmkv_MMKV_encodeSet(
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT JNICALL jobjectArray Java_com_tencent_mmkv_MMKV_decodeStringSet(
-    JNIEnv *env, jobject instance, jlong handle, jstring oKey) {
+MMKV_JNI jobjectArray decodeStringSet(JNIEnv *env, jobject, jlong handle, jstring oKey) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -623,30 +602,28 @@ extern "C" JNIEXPORT JNICALL jobjectArray Java_com_tencent_mmkv_MMKV_decodeStrin
     return nullptr;
 }
 
-extern "C" JNIEXPORT JNICALL void Java_com_tencent_mmkv_MMKV_clearMemoryCache(JNIEnv *env,
-                                                                              jobject instance) {
+MMKV_JNI void clearMemoryCache(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->clearMemoryState();
     }
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_lock(JNIEnv *env, jobject instance) {
+MMKV_JNI void lock(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->lock();
     }
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_unlock(JNIEnv *env, jobject instance) {
+MMKV_JNI void unlock(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->unlock();
     }
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv *env,
-                                                                         jobject instance) {
+MMKV_JNI jboolean tryLock(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         return (jboolean) kv->try_lock();
@@ -654,12 +631,11 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_tryLock(JNIEnv 
     return jboolean(false);
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_pageSize(JNIEnv *env, jclass type) {
+MMKV_JNI jint pageSize(JNIEnv *env, jclass type) {
     return DEFAULT_MMAP_SIZE;
 }
 
-extern "C" JNIEXPORT jstring JNICALL Java_com_tencent_mmkv_MMKV_cryptKey(JNIEnv *env,
-                                                                         jobject instance) {
+MMKV_JNI jstring cryptKey(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         string cryptKey = kv->cryptKey();
@@ -670,9 +646,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_tencent_mmkv_MMKV_cryptKey(JNIEnv 
     return nullptr;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_reKey(JNIEnv *env,
-                                                                       jobject instance,
-                                                                       jstring cryptKey) {
+MMKV_JNI jboolean reKey(JNIEnv *env, jobject instance, jstring cryptKey) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         string newKey;
@@ -684,9 +658,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_tencent_mmkv_MMKV_reKey(JNIEnv *e
     return (jboolean) false;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_checkReSetCryptKey(JNIEnv *env,
-                                                                                jobject instance,
-                                                                                jstring cryptKey) {
+MMKV_JNI void checkReSetCryptKey(JNIEnv *env, jobject instance, jstring cryptKey) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         string newKey;
@@ -702,14 +674,14 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_checkReSetCryptKey(
     }
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_trim(JNIEnv *env, jobject instance) {
+MMKV_JNI void trim(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->trim();
     }
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_close(JNIEnv *env, jobject instance) {
+MMKV_JNI void mmkv_close(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
         kv->close();
@@ -717,8 +689,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_close(JNIEnv *env, 
     }
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(
-    JNIEnv *env, jobject instance, jlong handle, jstring oKey, jboolean actualSize) {
+MMKV_JNI jint valueSize(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean actualSize) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -727,21 +698,15 @@ extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_valueSize(
     return 0;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_setLogLevel(JNIEnv *env,
-                                                                         jclass type,
-                                                                         jint level) {
+MMKV_JNI void setLogLevel(JNIEnv *env, jclass type, jint level) {
     g_currentLogLevel = (MMKVLogLevel) level;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_setLogReDirecting(JNIEnv *env,
-                                                                               jclass type,
-                                                                               jboolean enable) {
+MMKV_JNI void setLogReDirecting(JNIEnv *env, jclass type, jboolean enable) {
     g_isLogRedirecting = (enable == JNI_TRUE);
 }
 
-extern "C" JNIEXPORT jlong JNICALL Java_com_tencent_mmkv_MMKV_createNB(JNIEnv *env,
-                                                                       jobject instance,
-                                                                       jint size) {
+MMKV_JNI jlong createNB(JNIEnv *env, jobject instance, jint size) {
     auto ptr = malloc(static_cast<size_t>(size));
     if (!ptr) {
         MMKVError("fail to create NativeBuffer:%s", strerror(errno));
@@ -750,14 +715,11 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_tencent_mmkv_MMKV_createNB(JNIEnv *e
     return reinterpret_cast<jlong>(ptr);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_tencent_mmkv_MMKV_destroyNB(JNIEnv *env,
-                                                                       jobject instance,
-                                                                       jlong pointer,
-                                                                       jint size) {
+MMKV_JNI void destroyNB(JNIEnv *env, jobject instance, jlong pointer, jint size) {
     free(reinterpret_cast<void *>(pointer));
 }
 
-extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_writeValueToNB(
+MMKV_JNI jint writeValueToNB(
     JNIEnv *env, jobject instance, jlong handle, jstring oKey, jlong pointer, jint size) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -765,4 +727,65 @@ extern "C" JNIEXPORT jint JNICALL Java_com_tencent_mmkv_MMKV_writeValueToNB(
         return kv->writeValueToBuffer(key, reinterpret_cast<void *>(pointer), size);
     }
     return -1;
+}
+
+static JNINativeMethod g_methods[] = {
+    {"onExit", "()V", (void *) onExit},
+    {"cryptKey", "()Ljava/lang/String;", (void *) cryptKey},
+    {"reKey", "(Ljava/lang/String;)Z", (void *) reKey},
+    {"checkReSetCryptKey", "(Ljava/lang/String;)V", (void *) checkReSetCryptKey},
+    {"pageSize", "()I", (void *) pageSize},
+    {"mmapID", "()Ljava/lang/String;", (void *) mmapID},
+    {"lock", "()V", (void *) lock},
+    {"unlock", "()V", (void *) unlock},
+    {"tryLock", "()Z", (void *) tryLock},
+    {"allKeys", "()[Ljava/lang/String;", (void *) allKeys},
+    {"removeValuesForKeys", "([Ljava/lang/String;)V", (void *) removeValuesForKeys},
+    {"clearAll", "()V", (void *) clearAll},
+    {"trim", "()V", (void *) trim},
+    {"close", "()V", (void *) mmkv_close},
+    {"clearMemoryCache", "()V", (void *) clearMemoryCache},
+    {"sync", "(Z)V", (void *) mmkv_sync},
+    {"isFileValid", "(Ljava/lang/String;)Z", (void *) isFileValid},
+    {"ashmemFD", "()I", (void *) ashmemFD},
+    {"ashmemMetaFD", "()I", (void *) ashmemMetaFD},
+    {"jniInitialize", "(Ljava/lang/String;)V", (void *) jniInitialize},
+    {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)J",
+     (void *) getMMKVWithID},
+    {"getMMKVWithIDAndSize", "(Ljava/lang/String;IILjava/lang/String;)J",
+     (void *) getMMKVWithIDAndSize},
+    {"getDefaultMMKV", "(ILjava/lang/String;)J", (void *) getDefaultMMKV},
+    {"getMMKVWithAshmemFD", "(Ljava/lang/String;IILjava/lang/String;)J",
+     (void *) getMMKVWithAshmemFD},
+    {"encodeBool", "(JLjava/lang/String;Z)Z", (void *) encodeBool},
+    {"decodeBool", "(JLjava/lang/String;Z)Z", (void *) decodeBool},
+    {"encodeInt", "(JLjava/lang/String;I)Z", (void *) encodeInt},
+    {"decodeInt", "(JLjava/lang/String;I)I", (void *) decodeInt},
+    {"encodeLong", "(JLjava/lang/String;J)Z", (void *) encodeLong},
+    {"decodeLong", "(JLjava/lang/String;J)J", (void *) decodeLong},
+    {"encodeFloat", "(JLjava/lang/String;F)Z", (void *) encodeFloat},
+    {"decodeFloat", "(JLjava/lang/String;F)F", (void *) decodeFloat},
+    {"encodeDouble", "(JLjava/lang/String;D)Z", (void *) encodeDouble},
+    {"decodeDouble", "(JLjava/lang/String;D)D", (void *) decodeDouble},
+    {"encodeString", "(JLjava/lang/String;Ljava/lang/String;)Z", (void *) encodeString},
+    {"decodeString", "(JLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+     (void *) decodeString},
+    {"encodeSet", "(JLjava/lang/String;[Ljava/lang/String;)Z", (void *) encodeSet},
+    {"decodeStringSet", "(JLjava/lang/String;)[Ljava/lang/String;", (void *) decodeStringSet},
+    {"encodeBytes", "(JLjava/lang/String;[B)Z", (void *) encodeBytes},
+    {"decodeBytes", "(JLjava/lang/String;)[B", (void *) decodeBytes},
+    {"containsKey", "(JLjava/lang/String;)Z", (void *) containsKey},
+    {"count", "(J)J", (void *) mmkv_count},
+    {"totalSize", "(J)J", (void *) totalSize},
+    {"removeValueForKey", "(JLjava/lang/String;)V", (void *) removeValueForKey},
+    {"valueSize", "(JLjava/lang/String;Z)I", (void *) valueSize},
+    {"setLogLevel", "(I)V", (void *) setLogLevel},
+    {"setLogReDirecting", "(Z)V", (void *) setLogReDirecting},
+    {"createNB", "(I)J", (void *) createNB},
+    {"destroyNB", "(JI)V", (void *) destroyNB},
+    {"writeValueToNB", "(JLjava/lang/String;JI)I", (void *) writeValueToNB},
+};
+
+static int registerNativeMethods(JNIEnv *env, jclass cls) {
+    return env->RegisterNatives(cls, g_methods, sizeof(g_methods) / sizeof(g_methods[0]));
 }
