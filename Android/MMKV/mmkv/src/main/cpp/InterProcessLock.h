@@ -33,11 +33,10 @@ enum LockType {
 // handles lock upgrade & downgrade correctly
 class FileLock {
     int m_fd;
-    struct flock m_lockInfo;
     size_t m_sharedLockCount;
     size_t m_exclusiveLockCount;
 
-    bool doLock(LockType lockType, int cmd);
+    bool doLock(LockType lockType, bool wait);
 
     bool isFileLockValid() { return m_fd >= 0; }
 
@@ -62,7 +61,7 @@ class InterProcessLock {
 
 public:
     InterProcessLock(FileLock *fileLock, LockType lockType)
-        : m_fileLock(fileLock), m_lockType(lockType), m_enable(true) {
+            : m_fileLock(fileLock), m_lockType(lockType), m_enable(true) {
         assert(m_fileLock);
     }
 
