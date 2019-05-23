@@ -29,6 +29,10 @@ public class MyService extends BenchMarkBaseService {
     private static final String CALLER = "MyService";
     public static final String CMD_REMOVE = "cmd_remove";
 
+    public static final String CMD_LOCK = "cmd_lock";
+    public static final String LOCK_PHASE_1 = "lock_phase_1";
+    public static final String LOCK_PHASE_2 = "lock_phase_2";
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -59,6 +63,8 @@ public class MyService extends BenchMarkBaseService {
                     super.prepareAshmemMMKVByCP();
                 } else if (cmd.equals(CMD_REMOVE)) {
                     testRemove();
+                } else if (cmd.equals(CMD_LOCK)) {
+                    testLock();
                 }
             }
         }
@@ -69,5 +75,23 @@ public class MyService extends BenchMarkBaseService {
         MMKV mmkv = GetMMKV();
         Log.d("mmkv in child", "" + mmkv.decodeInt(CMD_ID));
         mmkv.remove(CMD_ID);
+    }
+
+    private void testLock() {
+        // get the lock immediately
+        MMKV mmkv2 = MMKV.mmkvWithID(LOCK_PHASE_2, MMKV.MULTI_PROCESS_MODE);
+        mmkv2.lock();
+        Log.d("locked in child", LOCK_PHASE_2);
+
+        Runnable waiter = new Runnable() {
+            @Override
+            public void run() {
+                MMKV mmkv1 = MMKV.mmkvWithID(LOCK_PHASE_1, MMKV.MULTI_PROCESS_MODE);
+                mmkv1.lock();
+                Log.d("locked in child", LOCK_PHASE_1);
+            }
+        };
+        // wait infinitely
+        new Thread(waiter).start();
     }
 }

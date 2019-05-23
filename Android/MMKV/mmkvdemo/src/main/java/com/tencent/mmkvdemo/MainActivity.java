@@ -54,8 +54,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         setContentView(R.layout.activity_main);
 
         // set root dir
-        // String rootDir = "mmkv root: " + MMKV.initialize(this);
-        String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
+        //String rootDir = MMKV.initialize(this);
+        String dir = getFilesDir().getAbsolutePath() + "/mmkv";
         String rootDir = MMKV.initialize(dir, new MMKV.LibLoader() {
             @Override
             public void loadLibrary(String libName) {
@@ -80,11 +80,12 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             final Baseline baseline = new Baseline(getApplicationContext(), 1000);
 
             public void onClick(View v) {
-                baseline.mmkvBaselineTest();
-                baseline.sharedPreferencesBaselineTest();
-                baseline.sqliteBaselineTest();
+//                baseline.mmkvBaselineTest();
+//                baseline.sharedPreferencesBaselineTest();
+//                baseline.sqliteBaselineTest();
 
                 //testInterProcessReKey();
+                testInterProcessLockPhase2();
             }
         });
 
@@ -133,7 +134,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         KotlinUsecaseKt.kotlinFunctionalTest();
 
         //testInterProcessLogic();
-        //estImportSharedPreferences();
+        //testImportSharedPreferences();
+        testInterProcessLockPhase1();
     }
 
     @Override
@@ -400,6 +402,21 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         for (int i = 0; i < THREAD_COUNT; ++i) {
             new Thread(task, "MMKV-" + i).start();
         }
+    }
+
+    private void testInterProcessLockPhase1() {
+        MMKV mmkv1 = MMKV.mmkvWithID(MyService.LOCK_PHASE_1, MMKV.MULTI_PROCESS_MODE);
+        mmkv1.lock();
+        Log.d("locked in main", MyService.LOCK_PHASE_1);
+
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, MyService.CMD_LOCK);
+        startService(intent);
+    }
+    private void testInterProcessLockPhase2() {
+        MMKV mmkv2 = MMKV.mmkvWithID(MyService.LOCK_PHASE_2, MMKV.MULTI_PROCESS_MODE);
+        mmkv2.lock();
+        Log.d("locked in main", MyService.LOCK_PHASE_2);
     }
 
     @Override
