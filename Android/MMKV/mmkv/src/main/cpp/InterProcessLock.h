@@ -46,7 +46,7 @@ class FileLock {
     FileLock &operator=(const FileLock &other) = delete;
 
 public:
-    FileLock(int fd);
+    FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 
     bool lock(LockType lockType);
 
@@ -61,7 +61,7 @@ class InterProcessLock {
 
 public:
     InterProcessLock(FileLock *fileLock, LockType lockType)
-            : m_fileLock(fileLock), m_lockType(lockType), m_enable(true) {
+        : m_fileLock(fileLock), m_lockType(lockType), m_enable(true) {
         assert(m_fileLock);
     }
 

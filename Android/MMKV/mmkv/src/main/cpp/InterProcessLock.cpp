@@ -20,10 +20,10 @@
 
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
-#include <unistd.h>
 #include <sys/file.h>
+#include <unistd.h>
 
-static short LockType2FlockType(LockType lockType) {
+static int LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
             return LOCK_SH;
@@ -31,10 +31,6 @@ static short LockType2FlockType(LockType lockType) {
             return LOCK_EX;
     }
     return LOCK_EX;
-}
-
-FileLock::FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {
-
 }
 
 bool FileLock::doLock(LockType lockType, bool wait) {
@@ -123,7 +119,7 @@ bool FileLock::unlock(LockType lockType) {
         }
     }
 
-    int cmd = static_cast<short>(unlockToSharedLock ? LOCK_SH : LOCK_UN);
+    int cmd = unlockToSharedLock ? LOCK_SH : LOCK_UN;
     auto ret = flock(m_fd, cmd);
     if (ret != 0) {
         MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
