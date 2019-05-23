@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
 
         //testInterProcessLogic();
         //testImportSharedPreferences();
-        testInterProcessLockPhase1();
+        //testInterProcessLockPhase1();
     }
 
     @Override
