@@ -80,12 +80,12 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
             final Baseline baseline = new Baseline(getApplicationContext(), 1000);
 
             public void onClick(View v) {
-//                baseline.mmkvBaselineTest();
-//                baseline.sharedPreferencesBaselineTest();
-//                baseline.sqliteBaselineTest();
+                baseline.mmkvBaselineTest();
+                baseline.sharedPreferencesBaselineTest();
+                baseline.sqliteBaselineTest();
 
                 //testInterProcessReKey();
-                testInterProcessLockPhase2();
+                //testInterProcessLockPhase2();
             }
         });
 
