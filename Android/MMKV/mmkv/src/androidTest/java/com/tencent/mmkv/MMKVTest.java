@@ -23,7 +23,7 @@ package com.tencent.mmkv;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
