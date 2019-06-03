@@ -814,6 +814,9 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     }
     if (m_actualSize == 0) {
         auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
+        if (allData.length() != size) {
+            MMKVError("size = %u, allData.length = %u", size, allData.length());
+        }
         if (allData.length() > 0) {
             if (m_crypter) {
                 m_crypter->reset();
