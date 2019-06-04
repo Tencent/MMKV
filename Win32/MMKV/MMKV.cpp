@@ -382,6 +382,19 @@ void MMKV::clearAll() {
         if (m_size != DEFAULT_MMAP_SIZE) {
             MMKVInfo("truncating [%s] from %zu to %zd", m_mmapID.c_str(), m_size,
                      DEFAULT_MMAP_SIZE);
+            if (m_ptr) {
+                if (!UnmapViewOfFile(m_ptr)) {
+                    MMKVError("fail to munmap [%s], %d", m_mmapID.c_str(), GetLastError());
+                }
+                m_ptr = nullptr;
+            }
+
+            if (m_fileMapping) {
+                if (!CloseHandle(m_fileMapping)) {
+                    MMKVError("fail to CloseHandle [%s], %d", m_mmapID.c_str(), GetLastError());
+                }
+                m_fileMapping = nullptr;
+            }
             if (!ftruncate(m_fd, DEFAULT_MMAP_SIZE)) {
                 MMKVError("fail to truncate [%s] to size %zd", m_mmapID.c_str(), DEFAULT_MMAP_SIZE);
             }
@@ -464,7 +477,7 @@ void MMKV::trim() {
 
     fullWriteback();
     auto oldSize = m_size;
-    while (m_size > (m_actualSize * 2)) {
+    while (m_size > (m_actualSize + Fixed32Size) * 2) {
         m_size /= 2;
     }
     if (oldSize == m_size) {
@@ -473,19 +486,21 @@ void MMKV::trim() {
         return;
     }
 
-    MMKVInfo("trimming %s from %zu to %zu", m_mmapID.c_str(), oldSize, m_size);
+    MMKVInfo("trimming %s from %zu to %zu, acutal size %zu", m_mmapID.c_str(), oldSize, m_size,
+             m_actualSize);
 
-    if (!ftruncate(m_fd, m_size)) {
-        MMKVError("fail to truncate [%s] to size %zu", m_mmapID.c_str(), m_size);
-        m_size = oldSize;
-        return;
-    }
     if (!UnmapViewOfFile(m_ptr)) {
         MMKVError("fail to munmap [%s], %d", m_mmapID.c_str(), GetLastError());
     }
     m_ptr = nullptr;
 
     CloseHandle(m_fileMapping);
+
+    if (!ftruncate(m_fd, m_size)) {
+        MMKVError("fail to truncate [%s] to size %zu", m_mmapID.c_str(), m_size);
+        m_size = oldSize;
+    }
+
     m_fileMapping = CreateFileMapping(m_fd, nullptr, PAGE_READWRITE, 0, 0, nullptr);
     if (!m_fileMapping) {
         MMKVError("fail to CreateFileMapping [%s], %d", m_mmapID.c_str(), GetLastError());
@@ -495,7 +510,6 @@ void MMKV::trim() {
             MMKVError("fail to mmap [%s], %d", m_mmapID.c_str(), GetLastError());
         }
     }
-
     delete m_output;
     m_output = new CodedOutputData(m_ptr + pbFixed32Size(0), m_size - pbFixed32Size(0));
     m_output->seek(m_actualSize);
@@ -514,7 +528,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     if (newSize >= m_output->spaceLeft()) {
         // try a full rewrite to make space
         static const int offset = pbFixed32Size(0);
-        MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
+        MMBuffer data = m_dic.empty() ? MMBuffer(0) : MiniPBCoder::encodeDataWithObject(m_dic);
         size_t lenNeeded = data.length() + offset + newSize;
         size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.size());
         size_t futureUsage = avgItemSize * std::max<size_t>(8, (m_dic.size() + 1) / 2);
@@ -605,16 +619,12 @@ bool MMKV::setDataForKey(MMBuffer &&data, const std::string &key) {
     SCOPEDLOCK(m_exclusiveProcessLock);
     checkLoadData();
 
-    // m_dic[key] = std::move(data);
-    auto itr = m_dic.find(key);
-    if (itr == m_dic.end()) {
-        itr = m_dic.emplace(key, std::move(data)).first;
-    } else {
-        itr->second = std::move(data);
+    auto ret = appendDataWithKey(data, key);
+    if (ret) {
+        m_dic[key] = std::move(data);
+        m_hasFullWriteback = false;
     }
-    m_hasFullWriteback = false;
-
-    return appendDataWithKey(itr->second, key);
+    return ret;
 }
 
 bool MMKV::removeDataForKey(const std::string &key) {
@@ -632,12 +642,20 @@ bool MMKV::removeDataForKey(const std::string &key) {
     return false;
 }
 
+constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
+
 bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     size_t keyLength = key.length();
     // size needed to encode the key
     size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength);
     // size needed to encode the value
     size += data.length() + pbRawVarint32Size((int32_t) data.length());
+
+    bool isFirstWrite = false;
+    if (m_actualSize == 0) {
+        isFirstWrite = true;
+        size += ItemSizeHolderSize; // size needed to encode the ItemSizeHolder
+    }
 
     SCOPEDLOCK(m_exclusiveProcessLock);
 
@@ -646,33 +664,24 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     if (!hasEnoughSize || !isFileValid()) {
         return false;
     }
-    if (m_actualSize == 0) {
-        auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
-        if (allData.length() > 0) {
-            if (m_crypter) {
-                m_crypter->reset();
-                auto ptr = (unsigned char *) allData.getPtr();
-                m_crypter->encrypt(ptr, ptr, allData.length());
-            }
-            writeAcutalSize(allData.length());
-            m_output->writeRawData(allData); // note: don't write size of data
-            recaculateCRCDigest();
-            return true;
-        }
-        return false;
-    } else {
-        writeAcutalSize(m_actualSize + size);
-        m_output->writeString(key);
-        m_output->writeData(data); // note: write size of data
-
-        auto ptr = (uint8_t *) m_ptr + Fixed32Size + m_actualSize - size;
-        if (m_crypter) {
-            m_crypter->encrypt(ptr, ptr, size);
-        }
-        updateCRCDigest(ptr, size, KeepSequence);
-
-        return true;
+    // write holder of size of m_dic
+    // which will be ignore while decoding
+    // yet it's required for decoding
+    if (isFirstWrite) {
+        m_output->writeInt32(ItemSizeHolder);
     }
+
+    writeAcutalSize(m_actualSize + size);
+    m_output->writeString(key);
+    m_output->writeData(data); // note: write size of data
+
+    auto ptr = (uint8_t *) m_ptr + Fixed32Size + m_actualSize - size;
+    if (m_crypter) {
+        m_crypter->encrypt(ptr, ptr, size);
+    }
+    updateCRCDigest(ptr, size, KeepSequence);
+
+    return true;
 }
 
 bool MMKV::fullWriteback() {

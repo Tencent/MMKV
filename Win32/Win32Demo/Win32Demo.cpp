@@ -165,6 +165,27 @@ void processTest() {
     cout << "total count of process_test: " << mmkv->count() << endl;
 }
 
+size_t getpagesize(void) {
+    SYSTEM_INFO system_info;
+    GetSystemInfo(&system_info);
+    return system_info.dwPageSize;
+}
+
+void cornetSizeTest() {
+    auto mmkv = MMKV::mmkvWithID("cornerSize", MMKV_MULTI_PROCESS, &string("aes"));
+    mmkv->clearAll();
+    auto size = getpagesize() - 2;
+    size -= 4;
+    string key = "key";
+    auto keySize = 3 + 1;
+    size -= keySize;
+    auto valueSize = 3;
+    size -= valueSize;
+    mmkv::MMBuffer value(size);
+    mmkv->set(value, key);
+    mmkv->trim();
+}
+
 static void LogHandler(MMKVLogLevel level,
                        const std::string &file,
                        int line,
@@ -207,6 +228,7 @@ int main() {
         arrStringKeys.push_back("string-" + to_string(index));
     }
 
+    //cornetSizeTest();
     //brutleTest();
     threadTest();
     processTest();
