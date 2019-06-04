@@ -633,7 +633,7 @@ void MMKV::trim() {
 
     fullWriteback();
     auto oldSize = m_size;
-    while (m_size > (m_actualSize * 2)) {
+    while (m_size > (m_actualSize + Fixed32Size) * 2) {
         m_size /= 2;
     }
     if (oldSize == m_size) {
@@ -642,7 +642,8 @@ void MMKV::trim() {
         return;
     }
 
-    MMKVInfo("trimming %s from %zu to %zu", m_mmapID.c_str(), oldSize, m_size);
+    MMKVInfo("trimming %s from %zu to %zu, actualSize %zu", m_mmapID.c_str(), oldSize, m_size,
+             m_actualSize);
 
     if (ftruncate(m_fd, m_size) != 0) {
         MMKVError("fail to truncate [%s] to size %zu, %s", m_mmapID.c_str(), m_size,

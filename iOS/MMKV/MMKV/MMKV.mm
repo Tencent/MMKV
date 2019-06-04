@@ -455,7 +455,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	[self fullWriteBack];
 	auto oldSize = m_size;
-	while (m_size > (m_actualSize * 2)) {
+	constexpr auto offset = pbFixed32Size(0);
+	while (m_size > (m_actualSize + offset) * 2) {
 		m_size /= 2;
 	}
 	if (oldSize == m_size) {
@@ -463,7 +464,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return;
 	}
 
-	MMKVInfo(@"trimming %@ from %zu to %zu", m_mmapID, oldSize, m_size);
+	MMKVInfo(@"trimming %@ from %zu to %zu, actualSize %zu", m_mmapID, oldSize, m_size, m_actualSize);
 
 	if (ftruncate(m_fd, m_size) != 0) {
 		MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
