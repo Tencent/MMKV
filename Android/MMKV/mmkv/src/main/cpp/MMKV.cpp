@@ -676,7 +676,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     if (newSize >= m_output->spaceLeft()) {
         // try a full rewrite to make space
         static const int offset = pbFixed32Size(0);
-        MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
+        MMBuffer data = m_dic.empty() ? MMBuffer(0) : MiniPBCoder::encodeDataWithObject(m_dic);
         size_t lenNeeded = data.length() + offset + newSize;
         if (m_isAshmem) {
             if (lenNeeded > m_size) {
@@ -771,16 +771,12 @@ bool MMKV::setDataForKey(MMBuffer &&data, const std::string &key) {
     SCOPEDLOCK(m_exclusiveProcessLock);
     checkLoadData();
 
-    // m_dic[key] = std::move(data);
-    auto itr = m_dic.find(key);
-    if (itr == m_dic.end()) {
-        itr = m_dic.emplace(key, std::move(data)).first;
-    } else {
-        itr->second = std::move(data);
+    auto ret = appendDataWithKey(data, key);
+    if (ret) {
+        m_dic[key] = std::move(data);
+        m_hasFullWriteback = false;
     }
-    m_hasFullWriteback = false;
-
-    return appendDataWithKey(itr->second, key);
+    return ret;
 }
 
 bool MMKV::removeDataForKey(const std::string &key) {
@@ -798,12 +794,20 @@ bool MMKV::removeDataForKey(const std::string &key) {
     return false;
 }
 
+constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
+
 bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     size_t keyLength = key.length();
     // size needed to encode the key
     size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength);
     // size needed to encode the value
     size += data.length() + pbRawVarint32Size((int32_t) data.length());
+
+    bool isFirstWrite = false;
+    if (m_actualSize == 0) {
+        isFirstWrite = true;
+        size += ItemSizeHolderSize; // size needed to encode the ItemSizeHolder
+    }
 
     SCOPEDLOCK(m_exclusiveProcessLock);
 
@@ -812,36 +816,24 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     if (!hasEnoughSize || !isFileValid()) {
         return false;
     }
-    if (m_actualSize == 0) {
-        auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
-        if (allData.length() != size) {
-            MMKVError("size = %u, allData.length = %u", size, allData.length());
-        }
-        if (allData.length() > 0) {
-            if (m_crypter) {
-                m_crypter->reset();
-                auto ptr = (unsigned char *) allData.getPtr();
-                m_crypter->encrypt(ptr, ptr, allData.length());
-            }
-            writeAcutalSize(allData.length());
-            m_output->writeRawData(allData); // note: don't write size of data
-            recaculateCRCDigest();
-            return true;
-        }
-        return false;
-    } else {
-        writeAcutalSize(m_actualSize + size);
-        m_output->writeString(key);
-        m_output->writeData(data); // note: write size of data
-
-        auto ptr = (uint8_t *) m_ptr + Fixed32Size + m_actualSize - size;
-        if (m_crypter) {
-            m_crypter->encrypt(ptr, ptr, size);
-        }
-        updateCRCDigest(ptr, size, KeepSequence);
-
-        return true;
+    // write holder of size of m_dic
+    // which will be ignore while decoding
+    // yet it's required for decoding
+    if (isFirstWrite) {
+        m_output->writeInt32(ItemSizeHolder);
     }
+
+    writeAcutalSize(m_actualSize + size);
+    m_output->writeString(key);
+    m_output->writeData(data); // note: write size of data
+
+    auto ptr = (uint8_t *) m_ptr + Fixed32Size + m_actualSize - size;
+    if (m_crypter) {
+        m_crypter->encrypt(ptr, ptr, size);
+    }
+    updateCRCDigest(ptr, size, KeepSequence);
+
+    return true;
 }
 
 bool MMKV::fullWriteback() {

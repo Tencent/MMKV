@@ -136,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         //testInterProcessLogic();
         //testImportSharedPreferences();
         //testInterProcessLockPhase1();
+        //testCornerSize();
     }
 
     @Override
@@ -417,6 +418,20 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         MMKV mmkv2 = MMKV.mmkvWithID(MyService.LOCK_PHASE_2, MMKV.MULTI_PROCESS_MODE);
         mmkv2.lock();
         Log.d("locked in main", MyService.LOCK_PHASE_2);
+    }
+
+    private void testCornerSize() {
+        MMKV mmkv = MMKV.mmkvWithID("cornerSize", MMKV.MULTI_PROCESS_MODE, "aes");
+        mmkv.clearAll();
+        int size = MMKV.pageSize() - 2;
+        size -= 4;
+        String key = "key";
+        int keySize = 3 + 1;
+        size -= keySize;
+        int valueSize = 3;
+        size -= valueSize;
+        byte[] value = new byte[size];
+        mmkv.encode(key, value);
     }
 
     @Override
