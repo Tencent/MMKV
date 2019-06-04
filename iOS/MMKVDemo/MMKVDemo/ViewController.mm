@@ -128,7 +128,7 @@
 }
 
 - (void)testCornerSize {
-	auto mmkv = [MMKV mmkvWithID:@"test/cornerSize"];
+	auto mmkv = [MMKV mmkvWithID:@"test/cornerSize" cryptKey:[@"crypt" dataUsingEncoding:NSUTF8StringEncoding]];
 	[mmkv clearAll];
 	auto size = getpagesize() - 2;
 	size -= 4;
@@ -139,7 +139,6 @@
 	size -= valueSize;
 	NSData *value = [NSMutableData dataWithLength:size];
 	[mmkv setObject:value forKey:key];
-	mmkv.count;
 }
 
 - (void)testMMKV:(NSString *)mmapID withCryptKey:(NSData *)cryptKey decodeOnly:(BOOL)decodeOnly {

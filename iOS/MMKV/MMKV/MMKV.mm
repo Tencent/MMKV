@@ -531,7 +531,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (newSize >= m_output->spaceLeft()) {
 		// try a full rewrite to make space
 		static const int offset = pbFixed32Size(0);
-		NSData *data = [MiniPBCoder encodeDataWithObject:m_dic];
+		NSData *data = m_dic.count > 0 ? [MiniPBCoder encodeDataWithObject:m_dic] : nil;
 		size_t lenNeeded = data.length + offset + newSize;
 		size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.count);
 		size_t futureUsage = avgItemSize * std::max<size_t>(8, m_dic.count / 2);
