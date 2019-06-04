@@ -56,6 +56,7 @@
 	[self funcionalTest];
 	//[self testReKey];
 	//[self testImportFromUserDefault];
+	//[self testCornerSize];
 
 	DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
 	[swiftUsageDemo testSwiftFunctionality];
@@ -124,6 +125,21 @@
 	NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
 
 	[mmkv close];
+}
+
+- (void)testCornerSize {
+	auto mmkv = [MMKV mmkvWithID:@"test/cornerSize"];
+	[mmkv clearAll];
+	auto size = getpagesize() - 2;
+	size -= 4;
+	NSString *key = @"key";
+	auto keySize = 3 + 1;
+	size -= keySize;
+	auto valueSize = 3;
+	size -= valueSize;
+	NSData *value = [NSMutableData dataWithLength:size];
+	[mmkv setObject:value forKey:key];
+	mmkv.count;
 }
 
 - (void)testMMKV:(NSString *)mmapID withCryptKey:(NSData *)cryptKey decodeOnly:(BOOL)decodeOnly {
