@@ -1,5 +1,25 @@
 # MMKV Change Log
 
+## v1.0.20 / 2019-06-05
+### iOS / macOS
+What's new  
+
+* Fix a bug that MMKV might crash while storing key-value with specific length.
+* Fix a bug that `-[MMKV trim]` might not work properly.
+
+### Android
+What's new  
+
+* Migrate to AndroidX library.
+* Fix a bug that MMKV might crash while storing key-value with specific length.
+* Fix a bug that `trim()` might not work properly.
+* Using `RegisterNatives()` to simpify native method naming.
+
+### Win32
+* Fix a bug that MMKV might crash while storing key-value with specific length.
+* Fix a bug that `trim()` might not work properly.
+* Fix a bug that `clearAll()` might not work properly.
+
 ## v1.0.19 / 2019-04-22
 ### iOS / macOS
 What's new  
