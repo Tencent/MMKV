@@ -60,6 +60,11 @@ void CodedOutputData::writeBool(bool value) {
 
 void CodedOutputData::writeString(const string &value) {
     size_t numberOfBytes = value.size();
+    if (m_position + numberOfBytes > m_size) {
+        MMKVError("m_position: %d, numberOfBytes: %zd, m_size: %zd", m_position, numberOfBytes,
+                  m_size);
+        return;
+    }
     this->writeRawVarint32((int32_t) numberOfBytes);
     memcpy(m_ptr + m_position, ((uint8_t *) value.data()), numberOfBytes);
     m_position += numberOfBytes;
@@ -93,6 +98,11 @@ void CodedOutputData::writeRawByte(uint8_t value) {
 
 void CodedOutputData::writeRawData(const MMBuffer &data) {
     size_t numberOfBytes = data.length();
+    if (m_position + numberOfBytes > m_size) {
+        MMKVError("m_position: %d, numberOfBytes: %zd, m_size: %zd", m_position, numberOfBytes,
+                  m_size);
+        return;
+    }
     memcpy(m_ptr + m_position, data.getPtr(), numberOfBytes);
     m_position += numberOfBytes;
 }

@@ -23,7 +23,7 @@ package com.tencent.mmkvdemo;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.SystemClock;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -54,8 +54,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         setContentView(R.layout.activity_main);
 
         // set root dir
-        // String rootDir = "mmkv root: " + MMKV.initialize(this);
-        String dir = getFilesDir().getAbsolutePath() + "/mmkv_2";
+        //String rootDir = MMKV.initialize(this);
+        String dir = getFilesDir().getAbsolutePath() + "/mmkv";
         String rootDir = MMKV.initialize(dir, new MMKV.LibLoader() {
             @Override
             public void loadLibrary(String libName) {
@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
                 baseline.sqliteBaselineTest();
 
                 //testInterProcessReKey();
+                //testInterProcessLockPhase2();
             }
         });
 
@@ -133,7 +134,9 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         KotlinUsecaseKt.kotlinFunctionalTest();
 
         //testInterProcessLogic();
-        //estImportSharedPreferences();
+        //testImportSharedPreferences();
+        //testInterProcessLockPhase1();
+        //testCornerSize();
     }
 
     @Override
@@ -400,6 +403,35 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         for (int i = 0; i < THREAD_COUNT; ++i) {
             new Thread(task, "MMKV-" + i).start();
         }
+    }
+
+    private void testInterProcessLockPhase1() {
+        MMKV mmkv1 = MMKV.mmkvWithID(MyService.LOCK_PHASE_1, MMKV.MULTI_PROCESS_MODE);
+        mmkv1.lock();
+        Log.d("locked in main", MyService.LOCK_PHASE_1);
+
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, MyService.CMD_LOCK);
+        startService(intent);
+    }
+    private void testInterProcessLockPhase2() {
+        MMKV mmkv2 = MMKV.mmkvWithID(MyService.LOCK_PHASE_2, MMKV.MULTI_PROCESS_MODE);
+        mmkv2.lock();
+        Log.d("locked in main", MyService.LOCK_PHASE_2);
+    }
+
+    private void testCornerSize() {
+        MMKV mmkv = MMKV.mmkvWithID("cornerSize", MMKV.MULTI_PROCESS_MODE, "aes");
+        mmkv.clearAll();
+        int size = MMKV.pageSize() - 2;
+        size -= 4;
+        String key = "key";
+        int keySize = 3 + 1;
+        size -= keySize;
+        int valueSize = 3;
+        size -= valueSize;
+        byte[] value = new byte[size];
+        mmkv.encode(key, value);
     }
 
     @Override

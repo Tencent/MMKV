@@ -20,26 +20,20 @@
 
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
+#include <sys/file.h>
 #include <unistd.h>
 
-static short LockType2FlockType(LockType lockType) {
+static int LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
-            return F_RDLCK;
+            return LOCK_SH;
         case ExclusiveLockType:
-            return F_WRLCK;
+            return LOCK_EX;
     }
+    return LOCK_EX;
 }
 
-FileLock::FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {
-    m_lockInfo.l_type = F_WRLCK;
-    m_lockInfo.l_start = 0;
-    m_lockInfo.l_whence = SEEK_SET;
-    m_lockInfo.l_len = 0;
-    m_lockInfo.l_pid = 0;
-}
-
-bool FileLock::doLock(LockType lockType, int cmd) {
+bool FileLock::doLock(LockType lockType, bool wait) {
     if (!isFileLockValid()) {
         return false;
     }
@@ -63,25 +57,23 @@ bool FileLock::doLock(LockType lockType, int cmd) {
         }
     }
 
-    m_lockInfo.l_type = LockType2FlockType(lockType);
+    int realLockType = LockType2FlockType(lockType);
+    int cmd = wait ? realLockType : (realLockType | LOCK_NB);
     if (unLockFirstIfNeeded) {
         // try lock
-        auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        auto ret = flock(m_fd, realLockType | LOCK_NB);
         if (ret == 0) {
             return true;
         }
         // lets be gentleman: unlock my shared-lock to prevent deadlock
-        auto type = m_lockInfo.l_type;
-        m_lockInfo.l_type = F_UNLCK;
-        ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        ret = flock(m_fd, LOCK_UN);
         if (ret != 0) {
             MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret,
                       strerror(errno));
         }
-        m_lockInfo.l_type = type;
     }
 
-    auto ret = fcntl(m_fd, cmd, &m_lockInfo);
+    auto ret = flock(m_fd, cmd);
     if (ret != 0) {
         MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         return false;
@@ -91,11 +83,11 @@ bool FileLock::doLock(LockType lockType, int cmd) {
 }
 
 bool FileLock::lock(LockType lockType) {
-    return doLock(lockType, F_SETLKW);
+    return doLock(lockType, true);
 }
 
 bool FileLock::try_lock(LockType lockType) {
-    return doLock(lockType, F_SETLK);
+    return doLock(lockType, false);
 }
 
 bool FileLock::unlock(LockType lockType) {
@@ -127,8 +119,8 @@ bool FileLock::unlock(LockType lockType) {
         }
     }
 
-    m_lockInfo.l_type = static_cast<short>(unlockToSharedLock ? F_RDLCK : F_UNLCK);
-    auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+    int cmd = unlockToSharedLock ? LOCK_SH : LOCK_UN;
+    auto ret = flock(m_fd, cmd);
     if (ret != 0) {
         MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         return false;

@@ -151,9 +151,9 @@ android.libraryVariants.all { variant ->
     }
 
     // require gradle 4.x +
-    if (GradleVersion.current() < GradleVersion.version('4.0')) {
+    /*if (GradleVersion.current() < GradleVersion.version('4.0')) {
         throw new GradleException('android-publish.gradle need Gradle 4.0 or newer')
-    }
+    }*/
 
     // For bintrayUpload
     def publicationName = "component${variant.name.capitalize()}"

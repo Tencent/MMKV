@@ -455,7 +455,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	[self fullWriteBack];
 	auto oldSize = m_size;
-	while (m_size > (m_actualSize * 2)) {
+	constexpr auto offset = pbFixed32Size(0);
+	while (m_size > (m_actualSize + offset) * 2) {
 		m_size /= 2;
 	}
 	if (oldSize == m_size) {
@@ -463,7 +464,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return;
 	}
 
-	MMKVInfo(@"trimming %@ from %zu to %zu", m_mmapID, oldSize, m_size);
+	MMKVInfo(@"trimming %@ from %zu to %zu, actualSize %zu", m_mmapID, oldSize, m_size, m_actualSize);
 
 	if (ftruncate(m_fd, m_size) != 0) {
 		MMKVError(@"fail to truncate [%@] to size %zu, %s", m_mmapID, m_size, strerror(errno));
@@ -531,7 +532,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (newSize >= m_output->spaceLeft()) {
 		// try a full rewrite to make space
 		static const int offset = pbFixed32Size(0);
-		NSData *data = [MiniPBCoder encodeDataWithObject:m_dic];
+		NSData *data = m_dic.count > 0 ? [MiniPBCoder encodeDataWithObject:m_dic] : nil;
 		size_t lenNeeded = data.length + offset + newSize;
 		size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.count);
 		size_t futureUsage = avgItemSize * std::max<size_t>(8, m_dic.count / 2);
@@ -634,61 +635,62 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	CScopedLock lock(m_lock);
 
-	[m_dic setObject:data forKey:key];
-	m_hasFullWriteBack = NO;
-
-	return [self appendData:data forKey:key];
+	auto ret = [self appendData:data forKey:key];
+	if (ret) {
+		[m_dic setObject:data forKey:key];
+		m_hasFullWriteBack = NO;
+	}
+	return ret;
 }
+
+constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
 
 - (BOOL)appendData:(NSData *)data forKey:(NSString *)key {
 	size_t keyLength = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-	size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
-	size += data.length + pbRawVarint32Size((int32_t) data.length);   // size needed to encode the value
+	auto kvSize = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
+	kvSize += data.length + pbRawVarint32Size((int32_t) data.length); // size needed to encode the value
+	auto size = kvSize;
+
+	bool isFirstWrite = false;
+	if (m_actualSize == 0) {
+		isFirstWrite = true;
+		size += ItemSizeHolderSize; // size needed to encode the ItemSizeHolder
+	}
 
 	BOOL hasEnoughSize = [self ensureMemorySize:size];
 	if (hasEnoughSize == NO || [self isFileValid] == NO) {
 		return NO;
 	}
-	if (m_actualSize == 0) {
-		NSData *allData = [MiniPBCoder encodeDataWithObject:m_dic];
-		if (allData.length > 0) {
-			if (m_cryptor) {
-				m_cryptor->reset();
-				auto ptr = (unsigned char *) allData.bytes;
-				m_cryptor->encrypt(ptr, ptr, allData.length);
-			}
-			BOOL ret = [self writeActualSize:allData.length];
-			if (ret) {
-				ret = [self protectFromBackgroundWriting:m_actualSize
-				                              writeBlock:^(MiniCodedOutputData *output) {
-					                              output->writeRawData(allData); // note: don't write size of data
-				                              }];
-				if (ret) {
-					[self recaculateCRCDigest];
-				}
-			}
-			return ret;
+	// write holder of size of m_dic
+	// which will be ignore while decoding
+	// yet it's required for decoding
+	if (isFirstWrite) {
+		auto ret = [self protectFromBackgroundWriting:ItemSizeHolderSize
+		                                   writeBlock:^(MiniCodedOutputData *output) {
+			                                   output->writeInt32(ItemSizeHolder);
+		                                   }];
+		if (!ret) {
+			return NO;
 		}
-		return NO;
-	} else {
-		BOOL ret = [self writeActualSize:m_actualSize + size];
+	}
+
+	BOOL ret = [self writeActualSize:m_actualSize + size];
+	if (ret) {
+		ret = [self protectFromBackgroundWriting:kvSize
+		                              writeBlock:^(MiniCodedOutputData *output) {
+			                              output->writeString(key);
+			                              output->writeData(data); // note: write size of data
+		                              }];
 		if (ret) {
 			static const int offset = pbFixed32Size(0);
-			ret = [self protectFromBackgroundWriting:size
-			                              writeBlock:^(MiniCodedOutputData *output) {
-				                              output->writeString(key);
-				                              output->writeData(data); // note: write size of data
-			                              }];
-			if (ret) {
-				auto ptr = (uint8_t *) m_ptr + offset + m_actualSize - size;
-				if (m_cryptor) {
-					m_cryptor->encrypt(ptr, ptr, size);
-				}
-				[self updateCRCDigest:ptr withSize:size];
+			auto ptr = (uint8_t *) m_ptr + offset + m_actualSize - size;
+			if (m_cryptor) {
+				m_cryptor->encrypt(ptr, ptr, size);
 			}
+			[self updateCRCDigest:ptr withSize:size];
 		}
-		return ret;
 	}
+	return ret;
 }
 
 - (NSData *)getRawDataForKey:(NSString *)key {

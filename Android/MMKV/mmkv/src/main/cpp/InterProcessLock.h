@@ -33,11 +33,10 @@ enum LockType {
 // handles lock upgrade & downgrade correctly
 class FileLock {
     int m_fd;
-    struct flock m_lockInfo;
     size_t m_sharedLockCount;
     size_t m_exclusiveLockCount;
 
-    bool doLock(LockType lockType, int cmd);
+    bool doLock(LockType lockType, bool wait);
 
     bool isFileLockValid() { return m_fd >= 0; }
 
@@ -47,7 +46,7 @@ class FileLock {
     FileLock &operator=(const FileLock &other) = delete;
 
 public:
-    FileLock(int fd);
+    FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 
     bool lock(LockType lockType);
 
