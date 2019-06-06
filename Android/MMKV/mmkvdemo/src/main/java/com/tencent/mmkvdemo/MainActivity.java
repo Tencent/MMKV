@@ -285,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
     }
 
     private void testReKey() {
-        final String mmapID = "testAES_reKey";
+        final String mmapID = "testAES_reKey1";
         MMKV kv = testMMKV(mmapID, null, false, null);
         if (kv == null) {
             return;
