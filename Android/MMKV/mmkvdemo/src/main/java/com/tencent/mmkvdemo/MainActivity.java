@@ -137,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         //testImportSharedPreferences();
         //testInterProcessLockPhase1();
         //testCornerSize();
+        testFastRemoveCornerSize();
     }
 
     @Override
@@ -432,6 +433,28 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         size -= valueSize;
         byte[] value = new byte[size];
         mmkv.encode(key, value);
+    }
+
+    private void testFastRemoveCornerSize() {
+        MMKV mmkv = MMKV.mmkvWithID("fastRemoveCornerSize");
+        mmkv.clearAll();
+        int size = MMKV.pageSize() - 4;
+        size -= 4; // place holder size
+        String key = "key";
+        int keySize = 3 + 1;
+        size -= keySize;
+        int valueSize = 3;
+        size -= valueSize;
+        size -= (keySize + 1); // total size of fast remove
+        size /= 16;
+        byte[] value = new byte[size];
+        for (int i = 0; i < value.length; i++) {
+            value[i] = 'A';
+        }
+        for (int i = 0; i < 16; i++) {
+            mmkv.encode(key, value); // when a full write back is occur, here's corruption happens
+            mmkv.removeValueForKey(key);
+        }
     }
 
     @Override
