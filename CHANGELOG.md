@@ -13,7 +13,8 @@ What's new
 * Migrate to AndroidX library.
 * Fix a bug that MMKV might crash while storing key-value with specific length.
 * Fix a bug that `trim()` might not work properly.
-* Using `RegisterNatives()` to simpify native method naming.
+* Fix a bug that dead-lock might be reported by Android mistakenly.
+* Using `RegisterNatives()` to simplify native method naming.
 
 ### Win32
 * Fix a bug that MMKV might crash while storing key-value with specific length.
