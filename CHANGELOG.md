@@ -1,5 +1,21 @@
 # MMKV Change Log
 
+## v1.0.21 / 2019-06-06
+### iOS / macOS
+What's new  
+
+* Fix a bug that MMKV might corrupt while repeatedly adding & removing key-value with specific length. This bug was introduced in v1.0.20.
+
+### Android
+What's new  
+
+* Fix a bug that MMKV might corrupt while repeatedly adding & removing key-value with specific length. This bug was introduced in v1.0.20.
+
+### Win32
+What's new  
+
+* Fix a bug that MMKV might corrupt while repeatedly adding & removing key-value with specific length. This bug was introduced in v1.0.20.
+
 ## v1.0.20 / 2019-06-05
 ### iOS / macOS
 What's new  
