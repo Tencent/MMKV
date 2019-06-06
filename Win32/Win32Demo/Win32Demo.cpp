@@ -186,6 +186,29 @@ void cornetSizeTest() {
     mmkv->trim();
 }
 
+void fastRemoveCornetSizeTest() {
+    auto mmkv = MMKV::mmkvWithID("fastRemoveCornerSize", MMKV_MULTI_PROCESS, &string("aes"));
+    mmkv->clearAll();
+    auto size = getpagesize() - 4;
+    size -= 4;
+    string key = "key";
+    auto keySize = 3 + 1;
+    size -= keySize;
+    auto valueSize = 3;
+    size -= valueSize;
+    size -= (keySize + 1); // total size of fast remove
+    size /= 16;
+    mmkv::MMBuffer value(size);
+    auto ptr = (char *) value.getPtr();
+    for (size_t i = 0; i < value.length(); i++) {
+        ptr[i] = 'A';
+    }
+    for (int i = 0; i < 16; i++) {
+        mmkv->set(value, key); // when a full write back is occur, here's corruption happens
+        mmkv->removeValueForKey(key);
+    }
+}
+
 static void LogHandler(MMKVLogLevel level,
                        const std::string &file,
                        int line,
@@ -228,6 +251,7 @@ int main() {
         arrStringKeys.push_back("string-" + to_string(index));
     }
 
+    //fastRemoveCornetSizeTest();
     //cornetSizeTest();
     //brutleTest();
     threadTest();

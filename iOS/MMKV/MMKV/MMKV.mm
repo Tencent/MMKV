@@ -652,8 +652,8 @@ constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
 
 - (BOOL)appendData:(NSData *)data forKey:(NSString *)key {
 	size_t keyLength = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-	auto size = keyLength + pbRawVarint32Size((int32_t)keyLength);		// size needed to encode the key
-	size += data.length + pbRawVarint32Size((int32_t)data.length);		// size needed to encode the value
+	auto size = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
+	size += data.length + pbRawVarint32Size((int32_t) data.length); // size needed to encode the value
 
 	BOOL hasEnoughSize = [self ensureMemorySize:size];
 	if (hasEnoughSize == NO || [self isFileValid] == NO) {

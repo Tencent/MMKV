@@ -155,7 +155,7 @@
 	size -= (keySize + 1); // total size of fast remove
 	size /= 16;
 	NSMutableData *value = [NSMutableData dataWithLength:size];
-	auto ptr = (char*)value.mutableBytes;
+	auto ptr = (char *) value.mutableBytes;
 	for (int i = 0; i < value.length; i++) {
 		ptr[i] = 'A';
 	}
