@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         //testImportSharedPreferences();
         //testInterProcessLockPhase1();
         //testCornerSize();
-        testFastRemoveCornerSize();
+        //testFastRemoveCornerSize();
     }
 
     @Override
