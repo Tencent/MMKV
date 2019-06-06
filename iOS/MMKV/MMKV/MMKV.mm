@@ -529,10 +529,15 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return NO;
 	}
 
+	// make some room for placeholder
+	constexpr size_t ItemSizeHolderSize = 4;
+	if (m_dic.count == 0) {
+		newSize += ItemSizeHolderSize;
+	}
 	if (newSize >= m_output->spaceLeft()) {
 		// try a full rewrite to make space
 		static const int offset = pbFixed32Size(0);
-		NSData *data = m_dic.count > 0 ? [MiniPBCoder encodeDataWithObject:m_dic] : nil;
+		NSData *data = [MiniPBCoder encodeDataWithObject:m_dic];
 		size_t lenNeeded = data.length + offset + newSize;
 		size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.count);
 		size_t futureUsage = avgItemSize * std::max<size_t>(8, m_dic.count / 2);
@@ -647,36 +652,17 @@ constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
 
 - (BOOL)appendData:(NSData *)data forKey:(NSString *)key {
 	size_t keyLength = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-	auto kvSize = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
-	kvSize += data.length + pbRawVarint32Size((int32_t) data.length); // size needed to encode the value
-	auto size = kvSize;
-
-	bool isFirstWrite = false;
-	if (m_actualSize == 0) {
-		isFirstWrite = true;
-		size += ItemSizeHolderSize; // size needed to encode the ItemSizeHolder
-	}
+	auto size = keyLength + pbRawVarint32Size((int32_t) keyLength); // size needed to encode the key
+	size += data.length + pbRawVarint32Size((int32_t) data.length); // size needed to encode the value
 
 	BOOL hasEnoughSize = [self ensureMemorySize:size];
 	if (hasEnoughSize == NO || [self isFileValid] == NO) {
 		return NO;
 	}
-	// write holder of size of m_dic
-	// which will be ignore while decoding
-	// yet it's required for decoding
-	if (isFirstWrite) {
-		auto ret = [self protectFromBackgroundWriting:ItemSizeHolderSize
-		                                   writeBlock:^(MiniCodedOutputData *output) {
-			                                   output->writeInt32(ItemSizeHolder);
-		                                   }];
-		if (!ret) {
-			return NO;
-		}
-	}
 
 	BOOL ret = [self writeActualSize:m_actualSize + size];
 	if (ret) {
-		ret = [self protectFromBackgroundWriting:kvSize
+		ret = [self protectFromBackgroundWriting:size
 		                              writeBlock:^(MiniCodedOutputData *output) {
 			                              output->writeString(key);
 			                              output->writeData(data); // note: write size of data

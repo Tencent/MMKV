@@ -674,10 +674,15 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         return false;
     }
 
+    // make some room for placeholder
+    constexpr size_t ItemSizeHolderSize = 4;
+    if (m_dic.empty()) {
+        newSize += ItemSizeHolderSize;
+    }
     if (newSize >= m_output->spaceLeft()) {
         // try a full rewrite to make space
         static const int offset = pbFixed32Size(0);
-        MMBuffer data = m_dic.empty() ? MMBuffer(0) : MiniPBCoder::encodeDataWithObject(m_dic);
+        MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
         size_t lenNeeded = data.length() + offset + newSize;
         if (m_isAshmem) {
             if (lenNeeded > m_size) {
@@ -795,8 +800,6 @@ bool MMKV::removeDataForKey(const std::string &key) {
     return false;
 }
 
-constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
-
 bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     size_t keyLength = key.length();
     // size needed to encode the key
@@ -804,24 +807,12 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
     // size needed to encode the value
     size += data.length() + pbRawVarint32Size((int32_t) data.length());
 
-    bool isFirstWrite = false;
-    if (m_actualSize == 0) {
-        isFirstWrite = true;
-        size += ItemSizeHolderSize; // size needed to encode the ItemSizeHolder
-    }
-
     SCOPEDLOCK(m_exclusiveProcessLock);
 
     bool hasEnoughSize = ensureMemorySize(size);
 
     if (!hasEnoughSize || !isFileValid()) {
         return false;
-    }
-    // write holder of size of m_dic
-    // which will be ignore while decoding
-    // yet it's required for decoding
-    if (isFirstWrite) {
-        m_output->writeInt32(ItemSizeHolder);
     }
 
     writeAcutalSize(m_actualSize + size);
