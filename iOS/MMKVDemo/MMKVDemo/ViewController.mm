@@ -54,7 +54,7 @@
 	}
 
 	[self funcionalTest];
-	//[self testReKey];
+	[self testReKey];
 	//[self testImportFromUserDefault];
 	//[self testCornerSize];
 	//[self testFastRemoveCornerSize];
