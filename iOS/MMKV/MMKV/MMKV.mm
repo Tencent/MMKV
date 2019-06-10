@@ -1266,6 +1266,9 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	CScopedLock lock(m_lock);
 	[self checkLoadData];
 
+	if ([m_dic objectForKey:key] == nil) {
+		return;
+	}
 	[m_dic removeObjectForKey:key];
 	m_hasFullWriteBack = NO;
 
