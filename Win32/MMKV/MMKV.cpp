@@ -530,7 +530,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     if (m_dic.empty()) {
         newSize += ItemSizeHolderSize;
     }
-    if (newSize >= m_output->spaceLeft()) {
+    if (newSize >= m_output->spaceLeft() || m_dic.empty()) {
         // try a full rewrite to make space
         static const int offset = pbFixed32Size(0);
         MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);

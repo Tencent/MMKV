@@ -1,5 +1,22 @@
 # MMKV Change Log
 
+## v1.0.22 / 2019-06-10
+
+### iOS / macOS
+What's new  
+
+* Fix a bug that MMKV will corrupt while adding just one key-value, and reboot or clear memory cache. This bug was introduced in v1.0.21.
+
+### Android
+What's new  
+
+* Fix a bug that MMKV will corrupt while adding just one key-value, and reboot or clear memory cache. This bug was introduced in v1.0.21.
+
+### Win32
+What's new  
+
+* Fix a bug that MMKV will corrupt while adding just one key-value, and reboot or clear memory cache. This bug was introduced in v1.0.21.
+
 ## v1.0.21 / 2019-06-06
 ### iOS / macOS
 What's new  

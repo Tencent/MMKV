@@ -530,11 +530,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 
 	// make some room for placeholder
-	constexpr size_t ItemSizeHolderSize = 4;
+	constexpr uint32_t /*ItemSizeHolder = 0x00ffffff,*/ ItemSizeHolderSize = 4;
 	if (m_dic.count == 0) {
 		newSize += ItemSizeHolderSize;
 	}
-	if (newSize >= m_output->spaceLeft()) {
+	if (newSize >= m_output->spaceLeft() || m_dic.count == 0) {
 		// try a full rewrite to make space
 		static const int offset = pbFixed32Size(0);
 		NSData *data = [MiniPBCoder encodeDataWithObject:m_dic];
@@ -647,8 +647,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	return ret;
 }
-
-constexpr uint32_t ItemSizeHolder = 0x00ffffff, ItemSizeHolderSize = 4;
 
 - (BOOL)appendData:(NSData *)data forKey:(NSString *)key {
 	size_t keyLength = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
