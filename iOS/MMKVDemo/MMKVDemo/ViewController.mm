@@ -61,6 +61,7 @@
 
 	DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
 	[swiftUsageDemo testSwiftFunctionality];
+	[swiftUsageDemo testSwiftPropertyWrapper];
 
 	m_loops = 10000;
 	m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
