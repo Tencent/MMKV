@@ -43,6 +43,7 @@ static NSMutableDictionary *g_instanceDic;
 static NSRecursiveLock *g_instanceLock;
 id<MMKVHandler> g_callbackHandler;
 bool g_isLogRedirecting = false;
+static bool g_isInBackground = false;
 
 int DEFAULT_MMAP_SIZE;
 
@@ -66,7 +67,6 @@ static NSString *encodeMmapID(NSString *mmapID);
 	MiniCodedOutputData *m_output;
 	AESCrypt *m_cryptor;
 
-	BOOL m_isInBackground;
 	BOOL m_needLoadFromFile;
 	BOOL m_hasFullWriteBack;
 
@@ -84,6 +84,15 @@ static NSString *encodeMmapID(NSString *mmapID);
 
 		DEFAULT_MMAP_SIZE = getpagesize();
 		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
+
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+		auto appState = [UIApplication sharedApplication].applicationState;
+		g_isInBackground = (appState == UIApplicationStateBackground);
+		MMKVInfo(@"g_isInBackground:%d, appState:%ld", g_isInBackground, appState);
+
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+#endif
 	}
 }
 
@@ -144,17 +153,10 @@ static NSString *encodeMmapID(NSString *mmapID);
 		[self loadFromFile];
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-		auto appState = [UIApplication sharedApplication].applicationState;
-		if (appState == UIApplicationStateBackground) {
-			m_isInBackground = YES;
-		} else {
-			m_isInBackground = NO;
-		}
-		MMKVInfo(@"m_isInBackground:%d, appState:%ld", m_isInBackground, (long) appState);
-
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onMemoryWarning) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+		[[NSNotificationCenter defaultCenter] addObserver:self
+		                                         selector:@selector(onMemoryWarning)
+		                                             name:UIApplicationDidReceiveMemoryWarningNotification
+		                                           object:nil];
 #endif
 	}
 	return self;
@@ -203,18 +205,18 @@ static NSString *encodeMmapID(NSString *mmapID);
 }
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-- (void)didEnterBackground {
-	CScopedLock lock(m_lock);
++ (void)didEnterBackground {
+	CScopedLock lock(g_instanceLock);
 
-	m_isInBackground = YES;
-	MMKVInfo(@"m_isInBackground:%d", m_isInBackground);
+	g_isInBackground = YES;
+	MMKVInfo(@"g_isInBackground:%d", g_isInBackground);
 }
 
-- (void)didBecomeActive {
-	CScopedLock lock(m_lock);
++ (void)didBecomeActive {
+	CScopedLock lock(g_instanceLock);
 
-	m_isInBackground = NO;
-	MMKVInfo(@"m_isInBackground:%d", m_isInBackground);
+	g_isInBackground = NO;
+	MMKVInfo(@"g_isInBackground:%d", g_isInBackground);
 }
 #endif
 
@@ -487,7 +489,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (BOOL)protectFromBackgroundWriting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
-	if (m_isInBackground) {
+	if (g_isInBackground) {
 		static const int offset = pbFixed32Size(0);
 		static const int pagesize = getpagesize();
 		size_t realOffset = offset + m_actualSize - size;
@@ -609,7 +611,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	char *tmpPtr = nullptr;
 	static const int offset = pbFixed32Size(0);
 
-	if (m_isInBackground) {
+	if (g_isInBackground) {
 		tmpPtr = m_ptr;
 		if (mlock(tmpPtr, offset) != 0) {
 			MMKVError(@"fail to mmap [%@], %d:%s", m_mmapID, errno, strerror(errno));
@@ -789,12 +791,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 
 	static const size_t bufferLength = pbFixed32Size(0);
-	if (m_isInBackground) {
+	auto hasMlock = false;
+	if (g_isInBackground) {
 		if (mlock(m_crcPtr, bufferLength) != 0) {
 			MMKVError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_crcPtr, errno, strerror(errno));
 			// just fail on this condition, otherwise app will crash anyway
 			return;
 		}
+		hasMlock = true;
 	}
 
 	@try {
@@ -803,7 +807,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	} @catch (NSException *exception) {
 		MMKVError(@"%@", exception);
 	}
-	if (m_isInBackground) {
+	if (hasMlock) {
 		munlock(m_crcPtr, bufferLength);
 	}
 }
