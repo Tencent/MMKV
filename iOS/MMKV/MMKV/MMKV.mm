@@ -21,6 +21,7 @@
 #import "MMKV.h"
 #import "AESCrypt.h"
 #import "MMKVLog.h"
+#import "MMKVMetaInfo.hpp"
 #import "MemoryFile.h"
 #import "MiniCodedInputData.h"
 #import "MiniCodedOutputData.h"
@@ -54,6 +55,11 @@ int DEFAULT_MMAP_SIZE;
 static NSString *md5(NSString *value);
 static NSString *encodeMmapID(NSString *mmapID);
 
+enum : bool {
+	KeepSequence = false,
+	IncreaseSequence = true,
+};
+
 @implementation MMKV {
 	NSRecursiveLock *m_lock;
 	NSMutableDictionary *m_dic;
@@ -71,6 +77,7 @@ static NSString *encodeMmapID(NSString *mmapID);
 	BOOL m_hasFullWriteBack;
 
 	uint32_t m_crcDigest;
+	MMKVMetaInfo m_metaInfo;
 	int m_crcFd;
 	char *m_crcPtr;
 }
@@ -234,6 +241,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (void)loadFromFile {
+	[self prepareCRCFile];
+	if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
+		m_metaInfo.read(m_crcPtr);
+	}
+
 	m_fd = open(m_path.UTF8String, O_RDWR, S_IRWXU);
 	if (m_fd < 0) {
 		MMKVError(@"fail to open:%@, %s", m_path, strerror(errno));
@@ -292,6 +304,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 					}
 				}
 				if (loadFromFile) {
+					MMKVInfo(@"loading [%@] with crc %u sequence %u", m_mmapID, m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
 					NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
 					if (m_cryptor) {
 						inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
@@ -673,7 +686,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			if (m_cryptor) {
 				m_cryptor->encrypt(ptr, ptr, size);
 			}
-			[self updateCRCDigest:ptr withSize:size];
+			[self updateCRCDigest:ptr withSize:size increaseSequence:KeepSequence];
 		}
 	}
 	return ret;
@@ -748,23 +761,18 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		int offset = pbFixed32Size(0);
 		m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
 
-		// for backward compatibility
-		if (!isFileExist(m_crcPath)) {
-			MMKVInfo(@"crc32 file not found:%@", m_crcPath);
+		if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
+			[self prepareCRCFile];
+		}
+		if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
+			MMKVError(@"Meta file not valid %@", m_mmapID);
+			return NO;
+		}
+		m_metaInfo.read(m_crcPtr);
+		if (m_crcDigest == m_metaInfo.m_crcDigest) {
 			return YES;
 		}
-		NSData *oData = [NSData dataWithContentsOfFile:m_crcPath];
-		uint32_t crc32 = 0;
-		@try {
-			MiniCodedInputData input(oData);
-			crc32 = input.readFixed32();
-		} @catch (NSException *exception) {
-			MMKVError(@"%@", exception);
-		}
-		if (m_crcDigest == crc32) {
-			return YES;
-		}
-		MMKVError(@"check crc [%@] fail, crc32:%u, m_crcDigest:%u", m_mmapID, crc32, m_crcDigest);
+		MMKVError(@"check crc [%@] fail, crc32:%u, m_crcDigest:%u", m_mmapID, m_metaInfo.m_crcDigest, m_crcDigest);
 	}
 	return NO;
 }
@@ -773,11 +781,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
 		m_crcDigest = 0;
 		int offset = pbFixed32Size(0);
-		[self updateCRCDigest:(const uint8_t *) m_ptr + offset withSize:m_actualSize];
+		[self updateCRCDigest:(const uint8_t *) m_ptr + offset withSize:m_actualSize increaseSequence:IncreaseSequence];
 	}
 }
 
-- (void)updateCRCDigest:(const uint8_t *)ptr withSize:(size_t)length {
+- (void)updateCRCDigest:(const uint8_t *)ptr withSize:(size_t)length increaseSequence:(bool)increaseSequence {
 	if (ptr == nullptr) {
 		return;
 	}
@@ -801,12 +809,15 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		hasMlock = true;
 	}
 
-	@try {
-		MiniCodedOutputData output(m_crcPtr, bufferLength);
-		output.writeFixed32((int32_t) m_crcDigest);
-	} @catch (NSException *exception) {
-		MMKVError(@"%@", exception);
+	m_metaInfo.m_crcDigest = m_crcDigest;
+	if (increaseSequence) {
+		m_metaInfo.m_sequence++;
 	}
+	if (m_metaInfo.m_version == 0) {
+		m_metaInfo.m_version = 1;
+	}
+	m_metaInfo.write(m_crcPtr);
+
 	if (hasMlock) {
 		munlock(m_crcPtr, bufferLength);
 	}
@@ -1395,11 +1406,10 @@ static NSString *g_basePath = nil;
 
 	NSData *fileData = [NSData dataWithContentsOfFile:crcPath];
 	uint32_t crcFile = 0;
-	@try {
-		MiniCodedInputData input(fileData);
-		crcFile = input.readFixed32();
-	} @catch (NSException *exception) {
-		return NO;
+	if (fileData.length > 0 && fileData.bytes) {
+		MMKVMetaInfo metaInfo;
+		metaInfo.read(fileData.bytes);
+		crcFile = metaInfo.m_crcDigest;
 	}
 
 	const int offset = pbFixed32Size(0);
