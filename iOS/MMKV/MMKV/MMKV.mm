@@ -78,8 +78,8 @@ enum : bool {
 
 	uint32_t m_crcDigest;
 	MMKVMetaInfo m_metaInfo;
-	int m_crcFd;
-	char *m_crcPtr;
+	int m_metaFd;
+	char *m_metaFilePtr;
 }
 
 #pragma mark - init
@@ -191,13 +191,13 @@ enum : bool {
 		m_cryptor = nullptr;
 	}
 
-	if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
-		munmap(m_crcPtr, CRC_FILE_SIZE);
-		m_crcPtr = nullptr;
+	if (m_metaFilePtr != nullptr && m_metaFilePtr != MAP_FAILED) {
+		munmap(m_metaFilePtr, CRC_FILE_SIZE);
+		m_metaFilePtr = nullptr;
 	}
-	if (m_crcFd >= 0) {
-		close(m_crcFd);
-		m_crcFd = -1;
+	if (m_metaFd >= 0) {
+		close(m_metaFd);
+		m_metaFd = -1;
 	}
 }
 
@@ -241,9 +241,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 - (void)loadFromFile {
-	[self prepareCRCFile];
-	if (m_crcPtr != nullptr && m_crcPtr != MAP_FAILED) {
-		m_metaInfo.read(m_crcPtr);
+	[self prepareMetaFile];
+	if (m_metaFilePtr != nullptr && m_metaFilePtr != MAP_FAILED) {
+		m_metaInfo.read(m_metaFilePtr);
+	}
+	if (m_cryptor) {
+		if (m_metaInfo.m_version >= 2) {
+			m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+		}
 	}
 
 	m_fd = open(m_path.UTF8String, O_RDWR, S_IRWXU);
@@ -400,8 +405,10 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_actualSize = 0;
 	m_crcDigest = 0;
 
+	m_metaInfo.m_crcDigest = 0;
+	[self updateIVAndIncreaseSequence:IncreaseSequence];
 	if (m_cryptor) {
-		m_cryptor->reset();
+		m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
 	}
 
 	[self loadFromFile];
@@ -439,9 +446,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_fd = -1;
 	m_size = 0;
 	m_actualSize = 0;
+	m_metaInfo.m_crcDigest = 0;
 
 	if (m_cryptor) {
-		m_cryptor->reset();
+		if (m_metaInfo.m_version >= 2) {
+			m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+		} else {
+			m_cryptor->reset();
+		}
 	}
 }
 
@@ -593,7 +605,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		}
 
 		if (m_cryptor) {
-			m_cryptor->reset();
+			[self updateIVAndIncreaseSequence:KeepSequence];
+			m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
 			auto ptr = (unsigned char *) data.bytes;
 			m_cryptor->encrypt(ptr, ptr, data.length);
 		}
@@ -721,7 +734,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		int offset = pbFixed32Size(0);
 		if (allData.length + offset <= m_size) {
 			if (m_cryptor) {
-				m_cryptor->reset();
+				[self updateIVAndIncreaseSequence:KeepSequence];
+				m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
 				auto ptr = (unsigned char *) allData.bytes;
 				m_cryptor->encrypt(ptr, ptr, allData.length);
 			}
@@ -761,14 +775,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		int offset = pbFixed32Size(0);
 		m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
 
-		if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
-			[self prepareCRCFile];
+		if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
+			[self prepareMetaFile];
 		}
-		if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
+		if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
 			MMKVError(@"Meta file not valid %@", m_mmapID);
 			return NO;
 		}
-		m_metaInfo.read(m_crcPtr);
+		m_metaInfo.read(m_metaFilePtr);
 		if (m_crcDigest == m_metaInfo.m_crcDigest) {
 			return YES;
 		}
@@ -791,18 +805,18 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 	m_crcDigest = (uint32_t) crc32(m_crcDigest, ptr, (uint32_t) length);
 
-	if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
-		[self prepareCRCFile];
+	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
+		[self prepareMetaFile];
 	}
-	if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
+	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
 		return;
 	}
 
 	static const size_t bufferLength = pbFixed32Size(0);
 	auto hasMlock = false;
 	if (g_isInBackground) {
-		if (mlock(m_crcPtr, bufferLength) != 0) {
-			MMKVError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_crcPtr, errno, strerror(errno));
+		if (mlock(m_metaFilePtr, bufferLength) != 0) {
+			MMKVError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_metaFilePtr, errno, strerror(errno));
 			// just fail on this condition, otherwise app will crash anyway
 			return;
 		}
@@ -816,47 +830,65 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (m_metaInfo.m_version == 0) {
 		m_metaInfo.m_version = 1;
 	}
-	m_metaInfo.write(m_crcPtr);
+	m_metaInfo.write(m_metaFilePtr);
 
 	if (hasMlock) {
-		munlock(m_crcPtr, bufferLength);
+		munlock(m_metaFilePtr, bufferLength);
 	}
 }
 
-- (void)prepareCRCFile {
-	if (m_crcPtr == nullptr || m_crcPtr == MAP_FAILED) {
+- (void)prepareMetaFile {
+	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
 		if (!isFileExist(m_crcPath)) {
 			createFile(m_crcPath);
 		}
-		m_crcFd = open(m_crcPath.UTF8String, O_RDWR, S_IRWXU);
-		if (m_crcFd < 0) {
+		m_metaFd = open(m_crcPath.UTF8String, O_RDWR, S_IRWXU);
+		if (m_metaFd < 0) {
 			MMKVError(@"fail to open:%@, %s", m_crcPath, strerror(errno));
 			removeFile(m_crcPath);
 		} else {
 			size_t size = 0;
 			struct stat st = {};
-			if (fstat(m_crcFd, &st) != -1) {
+			if (fstat(m_metaFd, &st) != -1) {
 				size = (size_t) st.st_size;
 			}
 			int fileLegth = CRC_FILE_SIZE;
 			if (size != fileLegth) {
 				size = fileLegth;
-				if (ftruncate(m_crcFd, size) != 0) {
+				if (ftruncate(m_metaFd, size) != 0) {
 					MMKVError(@"fail to truncate [%@] to size %zu, %s", m_crcPath, size, strerror(errno));
-					close(m_crcFd);
-					m_crcFd = -1;
+					close(m_metaFd);
+					m_metaFd = -1;
 					removeFile(m_crcPath);
 					return;
 				}
 			}
-			m_crcPtr = (char *) mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m_crcFd, 0);
-			if (m_crcPtr == MAP_FAILED) {
+			m_metaFilePtr = (char *) mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m_metaFd, 0);
+			if (m_metaFilePtr == MAP_FAILED) {
 				MMKVError(@"fail to mmap [%@], %s", m_crcPath, strerror(errno));
-				close(m_crcFd);
-				m_crcFd = -1;
+				close(m_metaFd);
+				m_metaFd = -1;
 			}
 		}
 	}
+}
+
+- (void)updateIVAndIncreaseSequence:(bool)increaseSequence {
+	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
+		[self prepareMetaFile];
+	}
+	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
+		return;
+	}
+
+	if (increaseSequence) {
+		m_metaInfo.m_sequence++;
+	}
+	if (m_metaInfo.m_version < 2) {
+		m_metaInfo.m_version = 2;
+	}
+	AESCrypt::fillRandomIV(m_metaInfo.m_vector);
+	m_metaInfo.write(m_metaFilePtr);
 }
 
 #pragma mark - encryption & decryption
@@ -1318,7 +1350,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (void)doSync:(bool)sync {
 	CScopedLock lock(m_lock);
-	if (m_needLoadFromFile || ![self isFileValid] || m_crcPtr == nullptr) {
+	if (m_needLoadFromFile || ![self isFileValid] || m_metaFilePtr == nullptr) {
 		return;
 	}
 
@@ -1326,7 +1358,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	if (msync(m_ptr, m_actualSize, flag) != 0) {
 		MMKVError(@"fail to msync[%d] data file of [%@]:%s", flag, m_mmapID, strerror(errno));
 	}
-	if (msync(m_crcPtr, CRC_FILE_SIZE, flag) != 0) {
+	if (msync(m_metaFilePtr, CRC_FILE_SIZE, flag) != 0) {
 		MMKVError(@"fail to msync[%d] crc-32 file of [%@]:%s", flag, m_mmapID, strerror(errno));
 	}
 }
