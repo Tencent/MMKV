@@ -300,6 +300,11 @@ void MMKV::loadFromFile() {
     if (m_metaFile.isFileValid()) {
         m_metaInfo.read(m_metaFile.getMemory());
     }
+    if (m_crypter) {
+        if (m_metaInfo.m_version >= 2) {
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        }
+    }
 
     m_fd = open(m_path.c_str(), O_RDWR | O_CREAT, S_IRWXU);
     if (m_fd < 0) {
@@ -350,8 +355,8 @@ void MMKV::loadFromFile() {
                 }
             }
             if (loadFromFile) {
-                MMKVInfo("loading [%s] with crc %u sequence %u", m_mmapID.c_str(),
-                         m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
+                MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
+                         m_metaInfo.m_crcDigest, m_metaInfo.m_sequence, m_metaInfo.m_version);
                 MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
                 if (m_crypter) {
                     decryptBuffer(*m_crypter, inputBuffer);
@@ -387,6 +392,11 @@ void MMKV::loadFromAshmem() {
     if (m_metaFile.isFileValid()) {
         m_metaInfo.read(m_metaFile.getMemory());
     }
+    if (m_crypter) {
+        if (m_metaInfo.m_version >= 2) {
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        }
+    }
 
     if (m_fd < 0 || !m_ashmemFile) {
         MMKVError("ashmem file invalid %s, fd:%d", m_path.c_str(), m_fd);
@@ -401,8 +411,9 @@ void MMKV::loadFromAshmem() {
             if (m_actualSize > 0) {
                 if (m_actualSize < m_size && m_actualSize + Fixed32Size <= m_size) {
                     if (checkFileCRCValid()) {
-                        MMKVInfo("loading [%s] with crc %u sequence %u", m_mmapID.c_str(),
-                                 m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
+                        MMKVInfo("loading [%s] with crc %u sequence %u version %u",
+                                 m_mmapID.c_str(), m_metaInfo.m_crcDigest, m_metaInfo.m_sequence,
+                                 m_metaInfo.m_version);
                         MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
                         if (m_crypter) {
                             decryptBuffer(*m_crypter, inputBuffer);
@@ -558,6 +569,7 @@ void MMKV::clearAll() {
         }
     }
 
+    updateIV(IncreaseSequence);
     clearMemoryState();
     loadFromFile();
 }
@@ -574,7 +586,11 @@ void MMKV::clearMemoryState() {
     m_hasFullWriteback = false;
 
     if (m_crypter) {
-        m_crypter->reset();
+        if (m_metaInfo.m_version >= 2) {
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        } else {
+            m_crypter->reset();
+        }
     }
 
     if (m_output) {
@@ -599,6 +615,7 @@ void MMKV::clearMemoryState() {
     }
     m_size = 0;
     m_actualSize = 0;
+    m_metaInfo.m_crcDigest = 0;
 }
 
 void MMKV::close() {
@@ -735,7 +752,8 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         }
 
         if (m_crypter) {
-            m_crypter->reset();
+            updateIV(KeepSequence);
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
             auto ptr = (unsigned char *) data.getPtr();
             m_crypter->encrypt(ptr, ptr, data.length());
         }
@@ -850,7 +868,8 @@ bool MMKV::fullWriteback() {
     if (allData.length() > 0) {
         if (allData.length() + Fixed32Size <= m_size) {
             if (m_crypter) {
-                m_crypter->reset();
+                updateIV(KeepSequence);
+                m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
                 auto ptr = (unsigned char *) allData.getPtr();
                 m_crypter->encrypt(ptr, ptr, allData.length());
             }
@@ -1008,6 +1027,22 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
     if (m_metaInfo.m_version == 0) {
         m_metaInfo.m_version = 1;
     }
+    auto crcPtr = m_metaFile.getMemory();
+    m_metaInfo.write(crcPtr);
+}
+
+void MMKV::updateIV(bool increaseSequence) {
+    if (!m_metaFile.isFileValid()) {
+        return;
+    }
+
+    if (increaseSequence) {
+        m_metaInfo.m_sequence++;
+    }
+    if (m_metaInfo.m_version < 2) {
+        m_metaInfo.m_version = 2;
+    }
+    AESCrypt::fillRandomIV(m_metaInfo.m_vector);
     auto crcPtr = m_metaFile.getMemory();
     m_metaInfo.write(crcPtr);
 }
