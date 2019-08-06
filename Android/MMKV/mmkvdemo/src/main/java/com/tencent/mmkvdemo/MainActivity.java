@@ -40,6 +40,7 @@ import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.NativeBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import org.jetbrains.annotations.Nullable;
 
 public class MainActivity extends AppCompatActivity implements MMKVHandler {
@@ -131,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         KotlinUsecaseKt.kotlinFunctionalTest();
 
         //testInterProcessLogic();
-        //testImportSharedPreferences();
+        testImportSharedPreferences();
         //testInterProcessLockPhase1();
         //testCornerSize();
         //testFastRemoveCornerSize();
@@ -279,6 +280,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         Log.i("MMKV", "double: " + kv.decodeDouble("double"));
         Log.i("MMKV", "string: " + kv.getString("string", null));
         Log.i("MMKV", "string-set: " + kv.getStringSet("string-set", null));
+        Log.i("MMKV",
+              "linked-string-set: " + kv.decodeStringSet("string-set", null, LinkedHashSet.class));
     }
 
     private void testReKey() {

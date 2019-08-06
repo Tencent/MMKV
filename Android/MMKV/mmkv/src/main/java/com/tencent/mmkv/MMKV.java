@@ -361,11 +361,26 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public Set<String> decodeStringSet(String key, Set<String> defaultValue) {
+        return decodeStringSet(key, defaultValue, HashSet.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Set<String>
+    decodeStringSet(String key, Set<String> defaultValue, Class<? extends Set> cls) {
         String[] result = decodeStringSet(nativeHandle, key);
         if (result == null) {
             return defaultValue;
         }
-        return new HashSet<String>(Arrays.asList(result));
+        Set<String> a;
+        try {
+            a = cls.newInstance();
+        } catch (IllegalAccessException e) {
+            return defaultValue;
+        } catch (InstantiationException e) {
+            return defaultValue;
+        }
+        a.addAll(Arrays.asList(result));
+        return a;
     }
 
     public boolean encode(String key, byte[] value) {
