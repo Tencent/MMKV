@@ -22,7 +22,6 @@ package com.tencent.mmkvdemo;
 
 import android.content.Intent;
 import android.util.Log;
-
 import com.tencent.mmkv.MMKV;
 
 public class MyService extends BenchMarkBaseService {

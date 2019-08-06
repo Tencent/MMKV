@@ -20,14 +20,13 @@
 
 package com.tencent.mmkvdemo;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import static android.content.Context.MODE_PRIVATE;
 
-import java.util.Random;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
-
 import com.tencent.mmkv.MMKV;
+import java.util.Random;
 
 public final class Baseline {
     private String[] m_arrStrings;

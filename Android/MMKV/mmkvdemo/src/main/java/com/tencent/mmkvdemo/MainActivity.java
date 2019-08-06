@@ -20,30 +20,27 @@
 
 package com.tencent.mmkvdemo;
 
+import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_ID;
+import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_Size;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.SystemClock;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.util.Arrays;
-import java.util.HashSet;
-
+import androidx.appcompat.app.AppCompatActivity;
+import com.getkeepsafe.relinker.ReLinker;
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.MMKVHandler;
-import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.MMKVLogLevel;
-import com.getkeepsafe.relinker.ReLinker;
+import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.NativeBuffer;
-
+import java.util.Arrays;
+import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
-
-import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_ID;
-import static com.tencent.mmkvdemo.BenchMarkBaseService.AshmemMMKV_Size;
 
 public class MainActivity extends AppCompatActivity implements MMKVHandler {
     static private final String KEY_1 = "Ashmem_Key_1";

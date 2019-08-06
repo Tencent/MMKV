@@ -23,7 +23,6 @@ package com.tencent.mmkv;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
-
 import java.io.IOException;
 
 public final class ParcelableMMKV implements Parcelable {
