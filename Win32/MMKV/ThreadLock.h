@@ -33,9 +33,15 @@ class ThreadLock {
 private:
     CRITICAL_SECTION m_lock;
 
+    // just forbid it for possibly misuse
+    ThreadLock(const ThreadLock &other) = delete;
+    ThreadLock &operator=(const ThreadLock &other) = delete;
+
 public:
     ThreadLock();
     ~ThreadLock();
+
+    void initialize();
 
     void lock();
     void unlock();

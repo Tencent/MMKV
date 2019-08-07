@@ -93,6 +93,7 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, int size, string *cryptKey)
 
     m_crcDigest = 0;
 
+    m_lock.initialize();
     m_sharedProcessLock.m_enable = m_isInterProcess;
     m_exclusiveProcessLock.m_enable = m_isInterProcess;
 
@@ -118,7 +119,7 @@ MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
 
 void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV *>;
-    g_instanceLock = ThreadLock();
+    g_instanceLock.initialize();
 
     MMKVInfo("page size:%zd", DEFAULT_MMAP_SIZE);
 }

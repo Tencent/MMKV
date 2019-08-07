@@ -25,15 +25,17 @@
 
 namespace mmkv {
 
-ThreadLock::ThreadLock() : m_lock{0} {
+ThreadLock::ThreadLock() : m_lock{0} {}
+
+ThreadLock::~ThreadLock() {
+    DeleteCriticalSection(&m_lock);
+}
+
+void ThreadLock::initialize() {
     // TODO: a better spin count?
     if (!InitializeCriticalSectionAndSpinCount(&m_lock, 1024)) {
         MMKVError("fail to init critical section:%d", GetLastError());
     }
-}
-
-ThreadLock::~ThreadLock() {
-    DeleteCriticalSection(&m_lock);
 }
 
 void ThreadLock::lock() {
