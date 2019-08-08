@@ -353,7 +353,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public boolean encode(String key, Set<String> value) {
-        return encodeSet(nativeHandle, key, value.toArray(new String[value.size()]));
+        return encodeSet(nativeHandle, key, value.toArray(new String[0]));
     }
 
     public Set<String> decodeStringSet(String key) {
@@ -723,7 +723,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             strategic = gCallbackHandler.onMMKVCRCCheckFail(mmapID);
         }
         simpleLog(MMKVLogLevel.LevelInfo, "Recover strategic for " + mmapID + " is " + strategic);
-        return recoverIndex.get(strategic);
+        Integer value = recoverIndex.get(strategic);
+        return (value == null) ? 0 : value;
     }
 
     private static int onMMKVFileLengthError(String mmapID) {
@@ -732,7 +733,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             strategic = gCallbackHandler.onMMKVFileLengthError(mmapID);
         }
         simpleLog(MMKVLogLevel.LevelInfo, "Recover strategic for " + mmapID + " is " + strategic);
-        return recoverIndex.get(strategic);
+        Integer value = recoverIndex.get(strategic);
+        return (value == null) ? 0 : value;
     }
 
     private static void
@@ -762,7 +764,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static void simpleLog(MMKVLogLevel level, String message) {
         StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
         StackTraceElement e = stacktrace[stacktrace.length - 1];
-        mmkvLogImp(logLevel2Index.get(level), e.getFileName(), e.getLineNumber(), e.getMethodName(),
+        Integer i = logLevel2Index.get(level);
+        int intLevel = (i == null) ? 0 : i;
+        mmkvLogImp(intLevel, e.getFileName(), e.getLineNumber(), e.getMethodName(),
                    message);
     }
 
