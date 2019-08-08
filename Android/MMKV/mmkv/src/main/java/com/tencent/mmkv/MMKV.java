@@ -388,7 +388,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public byte[] decodeBytes(String key) {
-        return decodeBytes(nativeHandle, key);
+        return decodeBytes(key, null);
+    }
+
+    public byte[] decodeBytes(String key, byte[] defaultValue) {
+        byte[] ret = decodeBytes(nativeHandle, key);
+        return (ret != null) ? ret : defaultValue;
     }
 
     private static final HashMap<String, Parcelable.Creator<?>> mCreators = new HashMap<>();
@@ -576,6 +581,15 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public Editor putStringSet(String key, @Nullable Set<String> values) {
         encode(key, values);
         return this;
+    }
+
+    public Editor putBytes(String key, @Nullable byte[] bytes) {
+        encode(key, bytes);
+        return this;
+    }
+
+    public byte[] getBytes(String key, @Nullable byte[] defValue) {
+        return decodeBytes(key, defValue);
     }
 
     @Override
@@ -766,8 +780,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         StackTraceElement e = stacktrace[stacktrace.length - 1];
         Integer i = logLevel2Index.get(level);
         int intLevel = (i == null) ? 0 : i;
-        mmkvLogImp(intLevel, e.getFileName(), e.getLineNumber(), e.getMethodName(),
-                   message);
+        mmkvLogImp(intLevel, e.getFileName(), e.getLineNumber(), e.getMethodName(), message);
     }
 
     // jni
