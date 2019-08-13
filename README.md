@@ -153,7 +153,7 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
 
 note:  
 
-1. MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or wise versa.
+1. MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or vise versa.
 2. MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
 
 For other installation options, see [Windows Setup](https://github.com/Tencent/MMKV/wiki/windows_setup).
