@@ -512,6 +512,7 @@ void MMKV::checkLoadData() {
 
         clearMemoryState();
         loadFromFile();
+        notifyContentChanged();
     } else if (m_metaInfo.m_crcDigest != metaInfo.m_crcDigest) {
         MMKVDebug("[%s] oldCrc %u, newCrc %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
                   metaInfo.m_crcDigest);
@@ -534,7 +535,19 @@ void MMKV::checkLoadData() {
         } else {
             partialLoadFromFile();
         }
+        notifyContentChanged();
     }
+}
+
+void MMKV::notifyContentChanged() {
+    if (g_isContentChangeNotifying) {
+        mmkv::onContentChangedByOuterProcess(m_mmapID);
+    }
+}
+
+void MMKV::checkContentChanged() {
+    SCOPEDLOCK(m_lock);
+    checkLoadData();
 }
 
 void MMKV::clearAll() {

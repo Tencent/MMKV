@@ -34,6 +34,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.getkeepsafe.relinker.ReLinker;
 import com.tencent.mmkv.MMKV;
+import com.tencent.mmkv.MMKVContentChangeNotification;
 import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVLogLevel;
 import com.tencent.mmkv.MMKVRecoverStrategic;
@@ -43,7 +44,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import org.jetbrains.annotations.Nullable;
 
-public class MainActivity extends AppCompatActivity implements MMKVHandler {
+public class MainActivity
+    extends AppCompatActivity implements MMKVHandler, MMKVContentChangeNotification {
     static private final String KEY_1 = "Ashmem_Key_1";
     static private final String KEY_2 = "Ashmem_Key_2";
     @Override
@@ -69,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         //MMKV.setLogLevel(MMKVLogLevel.LevelNone);
 
         MMKV.registerHandler(this);
+        MMKV.registerContentChangeNotify(this);
 
         TextView tv = (TextView) findViewById(R.id.sample_text);
         tv.setText(rootDir);
@@ -123,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
         String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
         MMKV kv = testMMKV("test/AES", "Tencent MMKV", false, otherDir);
         if (kv != null) {
+            kv.checkContentChangedByOuterProcess();
             kv.close();
         }
 
@@ -131,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
 
         KotlinUsecaseKt.kotlinFunctionalTest();
 
-        //testInterProcessLogic();
+        testInterProcessLogic();
         testImportSharedPreferences();
         //testInterProcessLockPhase1();
         //testCornerSize();
@@ -494,5 +498,10 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler {
                 Log.e("redirect logging MMKV", log);
                 break;
         }
+    }
+
+    @Override
+    public void onContentChangedByOuterProcess(String mmapID) {
+        Log.i("content changed", mmapID);
     }
 }

@@ -36,6 +36,8 @@ MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
 MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
 #endif
 
+bool g_isContentChangeNotifying = false;
+
 const char *_getFileName(const char *path) {
     const char *ptr = strrchr(path, '/');
     if (!ptr) {

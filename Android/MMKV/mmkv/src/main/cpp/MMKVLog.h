@@ -42,6 +42,8 @@ enum MMKVLogLevel : uint32_t {
 extern bool g_isLogRedirecting;
 extern MMKVLogLevel g_currentLogLevel;
 
+extern bool g_isContentChangeNotifying;
+
 extern const char *_getFileName(const char *path);
 
 #define __filename__ _getFileName(__FILE__)

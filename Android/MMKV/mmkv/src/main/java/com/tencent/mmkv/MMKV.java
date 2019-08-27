@@ -783,6 +783,28 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         mmkvLogImp(intLevel, e.getFileName(), e.getLineNumber(), e.getMethodName(), message);
     }
 
+    // content change notification of other process
+    // trigger by getXXX() or setXXX() or checkContentChangedByOuterProcess()
+    private static MMKVContentChangeNotification gContentChangeNotify;
+    public static void registerContentChangeNotify(MMKVContentChangeNotification notify) {
+        gContentChangeNotify = notify;
+        setWantsContentChangeNotify(gContentChangeNotify != null);
+    }
+
+    public static void unregisterContentChangeNotify() {
+        gContentChangeNotify = null;
+        setWantsContentChangeNotify(false);
+    }
+    private static void onContentChangedByOuterProcess(String mmapID) {
+        if (gContentChangeNotify != null) {
+            gContentChangeNotify.onContentChangedByOuterProcess(mmapID);
+        }
+    }
+    private static native void setWantsContentChangeNotify(boolean needsNotify);
+
+    // check change manually
+    public native void checkContentChangedByOuterProcess();
+
     // jni
     private long nativeHandle;
 

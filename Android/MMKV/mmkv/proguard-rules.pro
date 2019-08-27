@@ -5,4 +5,5 @@
     private static *** onMMKVCRCCheckFail(***);
     private static *** onMMKVFileLengthError(***);
     private static *** mmkvLogImp(...);
+    private static *** onContentChangedByOuterProcess(***);
 }
