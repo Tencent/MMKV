@@ -64,14 +64,30 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // call on program start
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
-        return initialize(root, null);
+        MMKVLogLevel logLevel =
+            BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(root, null, logLevel);
+    }
+    public static String initialize(Context context, MMKVLogLevel logLevel) {
+        String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        return initialize(root, null, logLevel);
     }
 
     public static String initialize(String rootDir) {
-        return initialize(rootDir, null);
+        MMKVLogLevel logLevel =
+            BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(rootDir, null, logLevel);
+    }
+    public static String initialize(String rootDir, MMKVLogLevel logLevel) {
+        return initialize(rootDir, null, logLevel);
     }
 
     public static String initialize(String rootDir, LibLoader loader) {
+        MMKVLogLevel logLevel =
+            BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(rootDir, loader, logLevel);
+    }
+    public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
         if (loader != null) {
             if (BuildConfig.FLAVOR.equals("SharedCpp")) {
                 loader.loadLibrary("c++_shared");
@@ -84,7 +100,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             System.loadLibrary("mmkv");
         }
         MMKV.rootDir = rootDir;
-        jniInitialize(MMKV.rootDir);
+        jniInitialize(MMKV.rootDir, LogLevel2Int(logLevel));
         return rootDir;
     }
 
@@ -93,7 +109,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return rootDir;
     }
 
-    public static void setLogLevel(MMKVLogLevel level) {
+    private static int LogLevel2Int(MMKVLogLevel level) {
         int realLevel;
         switch (level) {
             case LevelDebug:
@@ -115,6 +131,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 realLevel = 1;
                 break;
         }
+        return realLevel;
+    }
+
+    public static void setLogLevel(MMKVLogLevel level) {
+        int realLevel = LogLevel2Int(level);
         setLogLevel(realLevel);
     }
 
@@ -812,7 +833,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         nativeHandle = handle;
     }
 
-    private static native void jniInitialize(String rootDir);
+    private static native void jniInitialize(String rootDir, int level);
 
     private native static long
     getMMKVWithID(String mmapID, int mode, String cryptKey, String relativePath);

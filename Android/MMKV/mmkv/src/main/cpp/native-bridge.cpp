@@ -114,12 +114,14 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 namespace mmkv {
 
-MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir) {
+MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jint logLevel) {
     if (!rootDir) {
         return;
     }
     const char *kstr = env->GetStringUTFChars(rootDir, nullptr);
     if (kstr) {
+        g_currentLogLevel = (MMKVLogLevel) logLevel;
+
         MMKV::initializeMMKV(kstr);
         env->ReleaseStringUTFChars(rootDir, kstr);
     }
@@ -778,7 +780,7 @@ static JNINativeMethod g_methods[] = {
     {"isFileValid", "(Ljava/lang/String;)Z", (void *) mmkv::isFileValid},
     {"ashmemFD", "()I", (void *) mmkv::ashmemFD},
     {"ashmemMetaFD", "()I", (void *) mmkv::ashmemMetaFD},
-    {"jniInitialize", "(Ljava/lang/String;)V", (void *) mmkv::jniInitialize},
+    {"jniInitialize", "(Ljava/lang/String;I)V", (void *) mmkv::jniInitialize},
     {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)J",
      (void *) mmkv::getMMKVWithID},
     {"getMMKVWithIDAndSize", "(Ljava/lang/String;IILjava/lang/String;)J",

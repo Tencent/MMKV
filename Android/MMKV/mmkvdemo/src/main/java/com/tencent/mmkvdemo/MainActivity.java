@@ -61,7 +61,7 @@ public class MainActivity
             public void loadLibrary(String libName) {
                 ReLinker.loadLibrary(MainActivity.this, libName);
             }
-        });
+        }, MMKVLogLevel.LevelInfo);
         Log.i("MMKV", "mmkv root: " + rootDir);
 
         // set log level
