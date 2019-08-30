@@ -243,7 +243,8 @@ int main() {
     //MMKV::setLogLevel(MMKVLogNone);
     MMKV::regiserLogHandler(LogHandler);
 
-    auto mmkv = MMKV::defaultMMKV();
+    //auto mmkv = MMKV::defaultMMKV();
+    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &string("cryptKey"));
     functionalTest(mmkv, false);
 
     for (size_t index = 0; index < keyCount; index++) {

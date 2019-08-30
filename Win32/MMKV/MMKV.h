@@ -110,6 +110,8 @@ class MMKV {
     void recaculateCRCDigest();
 
     void updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence = false);
+ 
+	void updateIV(bool increaseSequence);
 
     void writeAcutalSize(size_t actualSize);
 
