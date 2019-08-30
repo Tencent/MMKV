@@ -331,8 +331,8 @@ void MMKV::loadFromFile() {
             MMKVError("fail to mmap [%s], %s", m_mmapID.c_str(), strerror(errno));
         } else {
             memcpy(&m_actualSize, m_ptr, Fixed32Size);
-            MMKVInfo("loading [%s] with %zu size in total, file size is %zu", m_mmapID.c_str(),
-                     m_actualSize, m_size);
+            MMKVInfo("loading [%s] with %zu size in total, file size is %zu, InterProcess %d",
+                     m_mmapID.c_str(), m_actualSize, m_size, m_isInterProcess);
             bool loadFromFile = false, needFullWriteback = false;
             if (m_actualSize > 0) {
                 if (m_actualSize < m_size && m_actualSize + Fixed32Size <= m_size) {
