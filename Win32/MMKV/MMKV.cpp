@@ -409,7 +409,7 @@ void MMKV::clearAll() {
         }
     }
 
-	updateIV(IncreaseSequence);
+    updateIV(IncreaseSequence);
     clearMemoryState();
     loadFromFile();
 }

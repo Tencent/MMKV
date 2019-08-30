@@ -51,7 +51,7 @@ public:
     // output must have [AES_KEY_LEN] space
     void getKey(void *output) const;
 
-	static void fillRandomIV(unsigned char *vector);
+    static void fillRandomIV(unsigned char *vector);
 };
 
 #ifndef NDEBUG

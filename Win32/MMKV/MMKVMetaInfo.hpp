@@ -21,10 +21,10 @@
 #ifndef MMKV_MMKVMETAINFO_H
 #define MMKV_MMKVMETAINFO_H
 
+#include "aes/AESCrypt.h"
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include "aes/AESCrypt.h"
 
 namespace mmkv {
 
