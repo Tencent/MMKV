@@ -100,7 +100,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             System.loadLibrary("mmkv");
         }
         MMKV.rootDir = rootDir;
-        jniInitialize(MMKV.rootDir, LogLevel2Int(logLevel));
+        jniInitialize(MMKV.rootDir, logLevel2Int(logLevel));
         return rootDir;
     }
 
@@ -109,7 +109,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return rootDir;
     }
 
-    private static int LogLevel2Int(MMKVLogLevel level) {
+    private static int logLevel2Int(MMKVLogLevel level) {
         int realLevel;
         switch (level) {
             case LevelDebug:
@@ -135,7 +135,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public static void setLogLevel(MMKVLogLevel level) {
-        int realLevel = LogLevel2Int(level);
+        int realLevel = logLevel2Int(level);
         setLogLevel(realLevel);
     }
 

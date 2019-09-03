@@ -1,5 +1,27 @@
 # MMKV Change Log
 
+## v1.0.23 / 2019-09-03
+
+### iOS / macOS
+What's new  
+
+* Fix a potential security leak on encrypted MMKV.
+
+### Android
+What's new  
+
+* Fix a potential security leak on encrypted MMKV.
+* Fix filename bug when compiled on Win32 environment.
+* Add option for decoding String Set into other `Set<>` classes other than the default `HashSet<String>`, check `decodeStringSet()` for details.
+* Add `putBytes()` & `getBytes()`, to make function names more clear and consistent.
+* Add notification of content changed by other process, check the new `MMKVContentChangeNotification<>` interface & `checkContentChangedByOuterProcess()` for details.
+
+### Win32
+What's new  
+
+* Fix a potential security leak on encrypted MMKV.
+* Fix `CriticalSection` init bug.
+
 ## v1.0.22 / 2019-06-10
 
 ### iOS / macOS
