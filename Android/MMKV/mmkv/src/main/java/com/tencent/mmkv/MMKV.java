@@ -27,9 +27,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import androidx.annotation.Nullable;
 import android.util.Log;
-
+import androidx.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -65,14 +64,30 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // call on program start
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
-        return initialize(root, null);
+        MMKVLogLevel logLevel =
+            BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(root, null, logLevel);
+    }
+    public static String initialize(Context context, MMKVLogLevel logLevel) {
+        String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        return initialize(root, null, logLevel);
     }
 
     public static String initialize(String rootDir) {
-        return initialize(rootDir, null);
+        MMKVLogLevel logLevel =
+            BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(rootDir, null, logLevel);
+    }
+    public static String initialize(String rootDir, MMKVLogLevel logLevel) {
+        return initialize(rootDir, null, logLevel);
     }
 
     public static String initialize(String rootDir, LibLoader loader) {
+        MMKVLogLevel logLevel =
+            BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(rootDir, loader, logLevel);
+    }
+    public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
         if (loader != null) {
             if (BuildConfig.FLAVOR.equals("SharedCpp")) {
                 loader.loadLibrary("c++_shared");
@@ -85,7 +100,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             System.loadLibrary("mmkv");
         }
         MMKV.rootDir = rootDir;
-        jniInitialize(MMKV.rootDir);
+        jniInitialize(MMKV.rootDir, logLevel2Int(logLevel));
         return rootDir;
     }
 
@@ -94,7 +109,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return rootDir;
     }
 
-    public static void setLogLevel(MMKVLogLevel level) {
+    private static int logLevel2Int(MMKVLogLevel level) {
         int realLevel;
         switch (level) {
             case LevelDebug:
@@ -116,6 +131,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 realLevel = 1;
                 break;
         }
+        return realLevel;
+    }
+
+    public static void setLogLevel(MMKVLogLevel level) {
+        int realLevel = logLevel2Int(level);
         setLogLevel(realLevel);
     }
 
@@ -354,7 +374,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public boolean encode(String key, Set<String> value) {
-        return encodeSet(nativeHandle, key, value.toArray(new String[value.size()]));
+        return encodeSet(nativeHandle, key, value.toArray(new String[0]));
     }
 
     public Set<String> decodeStringSet(String key) {
@@ -362,11 +382,26 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public Set<String> decodeStringSet(String key, Set<String> defaultValue) {
+        return decodeStringSet(key, defaultValue, HashSet.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Set<String>
+    decodeStringSet(String key, Set<String> defaultValue, Class<? extends Set> cls) {
         String[] result = decodeStringSet(nativeHandle, key);
         if (result == null) {
             return defaultValue;
         }
-        return new HashSet<String>(Arrays.asList(result));
+        Set<String> a;
+        try {
+            a = cls.newInstance();
+        } catch (IllegalAccessException e) {
+            return defaultValue;
+        } catch (InstantiationException e) {
+            return defaultValue;
+        }
+        a.addAll(Arrays.asList(result));
+        return a;
     }
 
     public boolean encode(String key, byte[] value) {
@@ -374,7 +409,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public byte[] decodeBytes(String key) {
-        return decodeBytes(nativeHandle, key);
+        return decodeBytes(key, null);
+    }
+
+    public byte[] decodeBytes(String key, byte[] defaultValue) {
+        byte[] ret = decodeBytes(nativeHandle, key);
+        return (ret != null) ? ret : defaultValue;
     }
 
     private static final HashMap<String, Parcelable.Creator<?>> mCreators = new HashMap<>();
@@ -564,6 +604,15 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return this;
     }
 
+    public Editor putBytes(String key, @Nullable byte[] bytes) {
+        encode(key, bytes);
+        return this;
+    }
+
+    public byte[] getBytes(String key, @Nullable byte[] defValue) {
+        return decodeBytes(key, defValue);
+    }
+
     @Override
     public int getInt(String key, int defValue) {
         return decodeInt(nativeHandle, key, defValue);
@@ -709,7 +758,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             strategic = gCallbackHandler.onMMKVCRCCheckFail(mmapID);
         }
         simpleLog(MMKVLogLevel.LevelInfo, "Recover strategic for " + mmapID + " is " + strategic);
-        return recoverIndex.get(strategic);
+        Integer value = recoverIndex.get(strategic);
+        return (value == null) ? 0 : value;
     }
 
     private static int onMMKVFileLengthError(String mmapID) {
@@ -718,7 +768,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             strategic = gCallbackHandler.onMMKVFileLengthError(mmapID);
         }
         simpleLog(MMKVLogLevel.LevelInfo, "Recover strategic for " + mmapID + " is " + strategic);
-        return recoverIndex.get(strategic);
+        Integer value = recoverIndex.get(strategic);
+        return (value == null) ? 0 : value;
     }
 
     private static void
@@ -748,9 +799,32 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static void simpleLog(MMKVLogLevel level, String message) {
         StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
         StackTraceElement e = stacktrace[stacktrace.length - 1];
-        mmkvLogImp(logLevel2Index.get(level), e.getFileName(), e.getLineNumber(), e.getMethodName(),
-                   message);
+        Integer i = logLevel2Index.get(level);
+        int intLevel = (i == null) ? 0 : i;
+        mmkvLogImp(intLevel, e.getFileName(), e.getLineNumber(), e.getMethodName(), message);
     }
+
+    // content change notification of other process
+    // trigger by getXXX() or setXXX() or checkContentChangedByOuterProcess()
+    private static MMKVContentChangeNotification gContentChangeNotify;
+    public static void registerContentChangeNotify(MMKVContentChangeNotification notify) {
+        gContentChangeNotify = notify;
+        setWantsContentChangeNotify(gContentChangeNotify != null);
+    }
+
+    public static void unregisterContentChangeNotify() {
+        gContentChangeNotify = null;
+        setWantsContentChangeNotify(false);
+    }
+    private static void onContentChangedByOuterProcess(String mmapID) {
+        if (gContentChangeNotify != null) {
+            gContentChangeNotify.onContentChangedByOuterProcess(mmapID);
+        }
+    }
+    private static native void setWantsContentChangeNotify(boolean needsNotify);
+
+    // check change manually
+    public native void checkContentChangedByOuterProcess();
 
     // jni
     private long nativeHandle;
@@ -759,7 +833,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         nativeHandle = handle;
     }
 
-    private static native void jniInitialize(String rootDir);
+    private static native void jniInitialize(String rootDir, int level);
 
     private native static long
     getMMKVWithID(String mmapID, int mode, String cryptKey, String relativePath);

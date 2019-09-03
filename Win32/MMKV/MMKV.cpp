@@ -93,6 +93,7 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, int size, string *cryptKey)
 
     m_crcDigest = 0;
 
+    m_lock.initialize();
     m_sharedProcessLock.m_enable = m_isInterProcess;
     m_exclusiveProcessLock.m_enable = m_isInterProcess;
 
@@ -118,7 +119,7 @@ MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
 
 void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV *>;
-    g_instanceLock = ThreadLock();
+    g_instanceLock.initialize();
 
     MMKVInfo("page size:%zd", DEFAULT_MMAP_SIZE);
 }
@@ -188,7 +189,14 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
 }
 
 void MMKV::loadFromFile() {
-    m_metaInfo.read(m_metaFile.getMemory());
+    if (m_metaFile.isFileValid()) {
+        m_metaInfo.read(m_metaFile.getMemory());
+    }
+    if (m_crypter) {
+        if (m_metaInfo.m_version >= 2) {
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        }
+    }
 
     m_fd = CreateFile(m_path.c_str(), GENERIC_READ | GENERIC_WRITE,
                       FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_ALWAYS,
@@ -243,8 +251,8 @@ void MMKV::loadFromFile() {
                     }
                 }
                 if (loadFromFile) {
-                    MMKVInfo("loading [%s] with crc %u sequence %u", m_mmapID.c_str(),
-                             m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
+                    MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
+                             m_metaInfo.m_crcDigest, m_metaInfo.m_sequence, m_metaInfo.m_version);
                     MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
@@ -401,6 +409,7 @@ void MMKV::clearAll() {
         }
     }
 
+    updateIV(IncreaseSequence);
     clearMemoryState();
     loadFromFile();
 }
@@ -417,7 +426,11 @@ void MMKV::clearMemoryState() {
     m_hasFullWriteback = false;
 
     if (m_crypter) {
-        m_crypter->reset();
+        if (m_metaInfo.m_version >= 2) {
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        } else {
+            m_crypter->reset();
+        }
     }
 
     if (m_output) {
@@ -447,6 +460,7 @@ void MMKV::clearMemoryState() {
     }
     m_size = 0;
     m_actualSize = 0;
+    m_metaInfo.m_crcDigest = 0;
 }
 
 void MMKV::close() {
@@ -583,7 +597,8 @@ bool MMKV::ensureMemorySize(size_t newSize) {
             }
         }
         if (m_crypter) {
-            m_crypter->reset();
+            updateIV(KeepSequence);
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
             auto ptr = (unsigned char *) data.getPtr();
             m_crypter->encrypt(ptr, ptr, data.length());
         }
@@ -847,6 +862,22 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSeque
     if (m_metaInfo.m_version == 0) {
         m_metaInfo.m_version = 1;
     }
+    m_metaInfo.write(crcPtr);
+}
+
+void MMKV::updateIV(bool increaseSequence) {
+    if (!m_metaFile.isFileValid()) {
+        return;
+    }
+
+    if (increaseSequence) {
+        m_metaInfo.m_sequence++;
+    }
+    if (m_metaInfo.m_version < 2) {
+        m_metaInfo.m_version = 2;
+    }
+    AESCrypt::fillRandomIV(m_metaInfo.m_vector);
+    auto crcPtr = m_metaFile.getMemory();
     m_metaInfo.write(crcPtr);
 }
 

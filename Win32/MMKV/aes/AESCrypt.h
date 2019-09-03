@@ -29,7 +29,7 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 
 namespace mmkv {
 
- // a AES CFB-128 encrypt-decrypt full-duplex wrapper
+// a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
     unsigned char m_vector[AES_KEY_LEN] = {0};
     unsigned char m_key[AES_KEY_LEN] = {0};
@@ -37,16 +37,21 @@ class AESCrypt {
     int m_number = 0;
 
 public:
-    AESCrypt(const unsigned char *key, size_t keyLength);
+    AESCrypt(const unsigned char *key,
+             size_t keyLength,
+             const unsigned char *iv = nullptr,
+             size_t ivLength = 0);
 
     void encrypt(const unsigned char *input, unsigned char *output, size_t length);
 
     void decrypt(const unsigned char *input, unsigned char *output, size_t length);
 
-    void reset();
+    void reset(const unsigned char *iv = nullptr, size_t ivLength = 0);
 
     // output must have [AES_KEY_LEN] space
     void getKey(void *output) const;
+
+    static void fillRandomIV(unsigned char *vector);
 };
 
 #ifndef NDEBUG

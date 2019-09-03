@@ -26,7 +26,6 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
-
 import com.tencent.mmkv.ParcelableMMKV;
 
 public class MyService_1 extends BenchMarkBaseService implements ServiceConnection {

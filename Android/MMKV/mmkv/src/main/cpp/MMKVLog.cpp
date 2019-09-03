@@ -36,6 +36,20 @@ MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
 MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
 #endif
 
+bool g_isContentChangeNotifying = false;
+
+const char *_getFileName(const char *path) {
+    const char *ptr = strrchr(path, '/');
+    if (!ptr) {
+        ptr = strrchr(path, '\\');
+    }
+    if (ptr) {
+        return ptr + 1;
+    } else {
+        return path;
+    }
+}
+
 static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
     switch (level) {
         case MMKVLogDebug:

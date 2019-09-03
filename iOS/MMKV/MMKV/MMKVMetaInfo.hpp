@@ -18,37 +18,29 @@
  * limitations under the License.
  */
 
-#ifndef MMKV_THREADLOCK_H
-#define MMKV_THREADLOCK_H
+#ifndef MMKV_MMKVMETAINFO_H
+#define MMKV_MMKVMETAINFO_H
 
-namespace mmkv {
+#include "AESCrypt.h"
+#include <cassert>
+#include <cstdint>
+#include <cstring>
 
-enum ThreadOnceToken : LONG {
-    ThreadOnceUninitialized = 0,
-    ThreadOnceInitializing,
-    ThreadOnceInitialized
+struct MMKVMetaInfo {
+    uint32_t m_crcDigest = 0;
+    uint32_t m_version = 1;
+    uint32_t m_sequence = 0; // full write-back count
+    unsigned char m_vector[AES_KEY_LEN] = {0};
+
+    void write(void *ptr) {
+        assert(ptr);
+        memcpy(ptr, this, sizeof(MMKVMetaInfo));
+    }
+
+    void read(const void *ptr) {
+        assert(ptr);
+        memcpy(this, ptr, sizeof(MMKVMetaInfo));
+    }
 };
 
-class ThreadLock {
-private:
-    CRITICAL_SECTION m_lock;
-
-    // just forbid it for possibly misuse
-    ThreadLock(const ThreadLock &other) = delete;
-    ThreadLock &operator=(const ThreadLock &other) = delete;
-
-public:
-    ThreadLock();
-    ~ThreadLock();
-
-    void initialize();
-
-    void lock();
-    void unlock();
-
-    static void ThreadOnce(ThreadOnceToken volatile &onceToken, void (*callback)(void));
-};
-
-} // namespace mmkv
-
-#endif //MMKV_THREADLOCK_H
+#endif //MMKV_MMKVMETAINFO_H

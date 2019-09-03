@@ -111,6 +111,8 @@ class MMKV {
 
     void updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence = false);
 
+    void updateIV(bool increaseSequence);
+
     void writeAcutalSize(size_t actualSize);
 
     bool ensureMemorySize(size_t newSize);

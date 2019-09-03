@@ -278,7 +278,7 @@ int ASharedMemory_create(const char *name, size_t size) {
         if (funcPtr) {
             fd = funcPtr(name, size);
             if (fd < 0) {
-                MMKVError("fail to ASharedMemory_create %s with size %z, errno:%s", name, size,
+                MMKVError("fail to ASharedMemory_create %s with size %zu, errno:%s", name, size,
                           strerror(errno));
             }
         } else {

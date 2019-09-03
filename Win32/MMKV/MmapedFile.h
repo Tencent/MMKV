@@ -49,6 +49,10 @@ public:
     std::wstring &getName() { return m_name; }
 
     HANDLE getFd() { return m_file; }
+
+    bool isFileValid() {
+        return m_file != INVALID_HANDLE_VALUE && m_segmentSize > 0 && m_fileMapping && m_segmentPtr;
+    }
 };
 
 class MMBuffer;

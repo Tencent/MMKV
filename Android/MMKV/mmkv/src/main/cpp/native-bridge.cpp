@@ -33,6 +33,7 @@ static jfieldID g_fileID = nullptr;
 static jmethodID g_callbackOnCRCFailID = nullptr;
 static jmethodID g_callbackOnFileLengthErrorID = nullptr;
 static jmethodID g_mmkvLogID = nullptr;
+static jmethodID g_callbackOnContentChange = nullptr;
 static JavaVM *g_currentJVM = nullptr;
 int g_android_api = __ANDROID_API_L__;
 
@@ -82,8 +83,13 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
     g_mmkvLogID = env->GetStaticMethodID(
         g_cls, "mmkvLogImp", "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
-    if (!g_callbackOnFileLengthErrorID) {
+    if (!g_mmkvLogID) {
         MMKVError("fail to get method id for mmkvLogImp");
+    }
+    g_callbackOnContentChange =
+        env->GetStaticMethodID(g_cls, "onContentChangedByOuterProcess", "(Ljava/lang/String;)V");
+    if (!g_callbackOnContentChange) {
+        MMKVError("fail to get method id for onContentChangedByOuterProcess()");
     }
 
     // get current API level by accessing android.os.Build.VERSION.SDK_INT
@@ -108,12 +114,14 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 namespace mmkv {
 
-MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir) {
+MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jint logLevel) {
     if (!rootDir) {
         return;
     }
     const char *kstr = env->GetStringUTFChars(rootDir, nullptr);
     if (kstr) {
+        g_currentLogLevel = (MMKVLogLevel) logLevel;
+
         MMKV::initializeMMKV(kstr);
         env->ReleaseStringUTFChars(rootDir, kstr);
     }
@@ -221,6 +229,14 @@ void mmkvLog(int level,
         jstring oMessage = string2jstring(currentEnv, message);
         currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, level, oFile, line, oFunction,
                                          oMessage);
+    }
+}
+
+void onContentChangedByOuterProcess(const std::string &mmapID) {
+    auto currentEnv = getCurrentEnv();
+    if (currentEnv && g_callbackOnContentChange) {
+        jstring str = string2jstring(currentEnv, mmapID);
+        currentEnv->CallStaticIntMethod(g_cls, g_callbackOnContentChange, str);
     }
 }
 
@@ -731,6 +747,17 @@ MMKV_JNI jint writeValueToNB(
     return -1;
 }
 
+MMKV_JNI void setWantsContentChangeNotify(JNIEnv *env, jclass type, jboolean notify) {
+    g_isContentChangeNotifying = (notify == JNI_TRUE);
+}
+
+MMKV_JNI void checkContentChanged(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->checkContentChanged();
+    }
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -753,7 +780,7 @@ static JNINativeMethod g_methods[] = {
     {"isFileValid", "(Ljava/lang/String;)Z", (void *) mmkv::isFileValid},
     {"ashmemFD", "()I", (void *) mmkv::ashmemFD},
     {"ashmemMetaFD", "()I", (void *) mmkv::ashmemMetaFD},
-    {"jniInitialize", "(Ljava/lang/String;)V", (void *) mmkv::jniInitialize},
+    {"jniInitialize", "(Ljava/lang/String;I)V", (void *) mmkv::jniInitialize},
     {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)J",
      (void *) mmkv::getMMKVWithID},
     {"getMMKVWithIDAndSize", "(Ljava/lang/String;IILjava/lang/String;)J",
@@ -788,6 +815,8 @@ static JNINativeMethod g_methods[] = {
     {"createNB", "(I)J", (void *) mmkv::createNB},
     {"destroyNB", "(JI)V", (void *) mmkv::destroyNB},
     {"writeValueToNB", "(JLjava/lang/String;JI)I", (void *) mmkv::writeValueToNB},
+    {"setWantsContentChangeNotify", "(Z)V", (void *) mmkv::setWantsContentChangeNotify},
+    {"checkContentChangedByOuterProcess", "()V", (void *) mmkv::checkContentChanged},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

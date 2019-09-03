@@ -84,6 +84,8 @@ class MMKV {
 
     void updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence = false);
 
+    void updateIV(bool increaseSequence);
+
     void writeAcutalSize(size_t actualSize);
 
     bool ensureMemorySize(size_t newSize);
@@ -99,6 +101,8 @@ class MMKV {
     bool appendDataWithKey(const MMBuffer &data, const std::string &key);
 
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
+
+    void notifyContentChanged();
 
     // just forbid it for possibly misuse
     MMKV(const MMKV &other) = delete;
@@ -226,6 +230,9 @@ public:
     // you don't need to call this, really, I mean it
     // unless you care about out of battery
     void sync(bool sync = true);
+
+    // check if content changed by other process
+    void checkContentChanged();
 
     static bool isFileValid(const std::string &mmapID);
 

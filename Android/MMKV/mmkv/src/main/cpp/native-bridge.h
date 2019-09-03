@@ -39,6 +39,8 @@ void mmkvLog(int level,
              int line,
              const std::string &function,
              const std::string &message);
+
+void onContentChangedByOuterProcess(const std::string &mmapID);
 } // namespace mmkv
 
 extern int g_android_api;

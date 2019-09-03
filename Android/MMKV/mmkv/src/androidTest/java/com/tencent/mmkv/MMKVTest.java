@@ -20,18 +20,16 @@
 
 package com.tencent.mmkv;
 
+import static org.junit.Assert.*;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
 import androidx.test.InstrumentationRegistry;
-
+import java.util.HashSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashSet;
-
-import static org.junit.Assert.*;
 
 public class MMKVTest {
 

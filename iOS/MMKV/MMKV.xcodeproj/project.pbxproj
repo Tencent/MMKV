@@ -14,6 +14,7 @@
 		CB1FD4C520469B8800931B5F /* MiniPBUtility.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */; };
 		CB1FD4C620469B8800931B5F /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; };
 		CB1FD4CD2046ACBC00931B5F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
+		CB45DE3422CE215400781B27 /* MMKVMetaInfo.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB45DE3322CE215400781B27 /* MMKVMetaInfo.hpp */; };
 		CB6DEFA9212E6F010024F0E8 /* AESCrypt.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6DEF9F212E6F010024F0E8 /* AESCrypt.h */; };
 		CB6DEFB4212E6F010024F0E8 /* AESCrypt.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6DEFA8212E6F010024F0E8 /* AESCrypt.mm */; };
 		CB6DEFB5212E6F010024F0E8 /* AESCrypt.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6DEFA8212E6F010024F0E8 /* AESCrypt.mm */; };
@@ -82,6 +83,7 @@
 		CB1FD4CC2046ACBC00931B5F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		CB1FD4CE2046ACC100931B5F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		CB1FD5152049382F00931B5F /* ScopedLock.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ScopedLock.hpp; sourceTree = "<group>"; };
+		CB45DE3322CE215400781B27 /* MMKVMetaInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MMKVMetaInfo.hpp; sourceTree = "<group>"; };
 		CB6DEF9F212E6F010024F0E8 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
 		CB6DEFA8212E6F010024F0E8 /* AESCrypt.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AESCrypt.mm; sourceTree = "<group>"; };
 		CB865F5420FF33F600427B9D /* MemoryFile.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MemoryFile.mm; sourceTree = "<group>"; };
@@ -167,6 +169,7 @@
 				CBDF328F2192C0000028DB4D /* MMKVHandler.h */,
 				CBC1A8A620DA080800AD5087 /* MMKVLog.h */,
 				CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */,
+				CB45DE3322CE215400781B27 /* MMKVMetaInfo.hpp */,
 				CBC1A90720DA959400AD5087 /* Resources */,
 				CB1FD5152049382F00931B5F /* ScopedLock.hpp */,
 			);
@@ -237,6 +240,7 @@
 				CBD1A9012244CE6B00BCC0F3 /* openssl_aes_locl.h in Headers */,
 				CB6DEFA9212E6F010024F0E8 /* AESCrypt.h in Headers */,
 				CBD1A9062244CE6B00BCC0F3 /* openssl_md32_common.h in Headers */,
+				CB45DE3422CE215400781B27 /* MMKVMetaInfo.hpp in Headers */,
 				CBD1A9002244CE6B00BCC0F3 /* openssl_modes.h in Headers */,
 				CBD1A9072244CE6B00BCC0F3 /* openssl_aes.h in Headers */,
 			);
@@ -554,7 +558,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.0.22;
+				MARKETING_VERSION = 1.0.23;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -594,7 +598,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.0.22;
+				MARKETING_VERSION = 1.0.23;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,

@@ -24,13 +24,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import androidx.annotation.Nullable;
 import android.util.Log;
-
-import java.util.Random;
-
+import androidx.annotation.Nullable;
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.ParcelableMMKV;
+import java.util.Random;
 
 public abstract class BenchMarkBaseService extends Service {
     public static final String CMD_ID = "cmd_id";
