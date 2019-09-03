@@ -1422,7 +1422,7 @@ static string md5(const string &value) {
     char tmp[3] = {0}, buf[33] = {0};
     MD5((const unsigned char *) value.c_str(), value.size(), md);
     for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-        sprintf(tmp, "%2.2x", md[i]);
+        snprintf(tmp, sizeof(tmp), "%2.2x", md[i]);
         strcat(buf, tmp);
     }
     return string(buf);
