@@ -975,6 +975,14 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return [self setRawData:data forKey:key];
 }
 
+- (BOOL)setInteger:(NSInteger)value forKey:(NSString *)key {
+    if (strcmp(@encode(typeof(value)), @encode(int32_t)) == 0) {
+        return [self setInt32:(int32_t)value forKey:key];
+    } else {
+        return [self setInt64:(int64_t)value forKey:key];
+    }
+}
+
 - (BOOL)setInt32:(int32_t)value forKey:(NSString *)key {
 	if (key.length <= 0) {
 		return NO;
@@ -1080,6 +1088,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 - (BOOL)getBoolForKey:(NSString *)key {
 	return [self getBoolForKey:key defaultValue:FALSE];
 }
+
 - (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
 	if (key.length <= 0) {
 		return defaultValue;
@@ -1094,6 +1103,18 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		}
 	}
 	return defaultValue;
+}
+
+- (NSInteger)getInteger:(NSInteger)value forKey:(NSString *)key {
+    return [self getInteger:value forKey:key defaultValue:0];
+}
+
+- (NSInteger)getInteger:(NSInteger)value forKey:(NSString *)key defaultValue:(NSInteger)defaultValue {
+    if (strcmp(@encode(typeof(value)), @encode(int32_t)) == 0) {
+        return [self getInt32ForKey:key defaultValue:(int32_t)defaultValue];
+    } else {
+        return [self getInt64ForKey:key defaultValue:(int64_t)defaultValue];
+    }
 }
 
 - (int32_t)getInt32ForKey:(NSString *)key {

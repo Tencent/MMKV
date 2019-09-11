@@ -65,6 +65,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
+- (BOOL)setInteger:(NSInteger)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
+
 - (BOOL)setInt32:(int32_t)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
 - (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
@@ -87,6 +89,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)getBoolForKey:(NSString *)key __attribute__((swift_name("bool(forKey:)")));
 - (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue __attribute__((swift_name("bool(forKey:defaultValue:)")));
+
+- (NSInteger)getInteger:(NSInteger)value forKey:(NSString *)key NS_SWIFT_NAME(integer(forKey:));
+- (NSInteger)getInteger:(NSInteger)value forKey:(NSString *)key defaultValue:(NSInteger)defaultValue  NS_SWIFT_NAME(integer(forKey:defaultValue:));
 
 - (int32_t)getInt32ForKey:(NSString *)key NS_SWIFT_NAME(int32(forKey:));
 - (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue NS_SWIFT_NAME(int32(forKey:defaultValue:));

@@ -105,6 +105,22 @@ using namespace std;
 	XCTAssertEqual(value, YES);
 }
 
+- (void)testInteger {
+    // This is an example of a functional test case.
+    // Use XCTAssert and related functions to verify your tests produce the correct results.
+    BOOL ret = [mmkv setInteger:numeric_limits<int32_t>::max() forKey:@"Integer"];
+    XCTAssertEqual(ret, YES);
+    
+    int64_t value = [mmkv getInt32ForKey:@"Integer"];
+    XCTAssertEqual(value, numeric_limits<int64_t>::max());
+    
+    value = [mmkv getInt64ForKey:KeyNotExist];
+    XCTAssertEqual(value, 0);
+    
+    value = [mmkv getInt64ForKey:KeyNotExist defaultValue:-1];
+    XCTAssertEqual(value, -1);
+}
+
 - (void)testInt32 {
 	// This is an example of a functional test case.
 	// Use XCTAssert and related functions to verify your tests produce the correct results.
