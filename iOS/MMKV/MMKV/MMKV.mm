@@ -1105,12 +1105,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	return defaultValue;
 }
 
-- (NSInteger)getInteger:(NSInteger)value forKey:(NSString *)key {
-    return [self getInteger:value forKey:key defaultValue:0];
+- (NSInteger)getIntegerForKey:(NSString *)key {
+    return [self getIntegerForKey:key defaultValue:0];
 }
 
-- (NSInteger)getInteger:(NSInteger)value forKey:(NSString *)key defaultValue:(NSInteger)defaultValue {
-    if (strcmp(@encode(typeof(value)), @encode(int32_t)) == 0) {
+- (NSInteger)getIntegerForKey:(NSString *)key defaultValue:(NSInteger)defaultValue {
+    NSInteger integerValue;
+    if (strcmp(@encode(typeof(integerValue)), @encode(int32_t)) == 0) {
         return [self getInt32ForKey:key defaultValue:(int32_t)defaultValue];
     } else {
         return [self getInt64ForKey:key defaultValue:(int64_t)defaultValue];

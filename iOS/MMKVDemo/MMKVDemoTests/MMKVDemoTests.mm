@@ -111,13 +111,13 @@ using namespace std;
     BOOL ret = [mmkv setInteger:numeric_limits<int32_t>::max() forKey:@"Integer"];
     XCTAssertEqual(ret, YES);
     
-    int64_t value = [mmkv getInt32ForKey:@"Integer"];
-    XCTAssertEqual(value, numeric_limits<int64_t>::max());
+    int64_t value = [mmkv getIntegerForKey:@"Integer"];
+    XCTAssertEqual(value, numeric_limits<int32_t>::max());
     
-    value = [mmkv getInt64ForKey:KeyNotExist];
+    value = [mmkv getIntegerForKey:KeyNotExist];
     XCTAssertEqual(value, 0);
     
-    value = [mmkv getInt64ForKey:KeyNotExist defaultValue:-1];
+    value = [mmkv getIntegerForKey:KeyNotExist defaultValue:-1];
     XCTAssertEqual(value, -1);
 }
 
