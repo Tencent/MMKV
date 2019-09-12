@@ -236,7 +236,7 @@ void onContentChangedByOuterProcess(const std::string &mmapID) {
     auto currentEnv = getCurrentEnv();
     if (currentEnv && g_callbackOnContentChange) {
         jstring str = string2jstring(currentEnv, mmapID);
-        currentEnv->CallStaticIntMethod(g_cls, g_callbackOnContentChange, str);
+        currentEnv->CallStaticVoidMethod(g_cls, g_callbackOnContentChange, str);
     }
 }
 
