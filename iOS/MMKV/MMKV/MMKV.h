@@ -168,6 +168,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Migrate NSUserDefault data to MMKV
 // return imported count of key-values
 - (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults NS_SWIFT_NAME(migrateFrom(userDefaults:));
+// Migrate dictionary data that NSUserDefault supported to MMKV
+// return imported count of key-values
+- (uint32_t)migrateFromDictionary:(NSDictionary *)dic NS_SWIFT_NAME(migrateFrom(dictionary:));
 
 NS_ASSUME_NONNULL_END
 

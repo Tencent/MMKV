@@ -1487,22 +1487,26 @@ static NSString *g_basePath = nil;
 
 - (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults {
 	NSDictionary *dic = [userDaults dictionaryRepresentation];
-	if (dic.count <= 0) {
-		MMKVInfo(@"migrate data fail, userDaults is nil or empty");
-		return 0;
-	}
-	__block uint32_t count = 0;
-	[dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
-		if ([key isKindOfClass:[NSString class]]) {
-			NSString *stringKey = key;
-			if ([MMKV tranlateData:obj key:stringKey kv:self]) {
-				count++;
-			}
-		} else {
-			MMKVWarning(@"unknown type of key:%@", key);
-		}
-	}];
-	return count;
+    return [self migrateFromDictionary:dic];
+}
+
+- (uint32_t)migrateFromDictionary:(NSDictionary *)dic {
+    if (dic.count <= 0) {
+        MMKVInfo(@"migrate data fail, userDaults is nil or empty");
+        return 0;
+    }
+    __block uint32_t count = 0;
+    [dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+        if ([key isKindOfClass:[NSString class]]) {
+            NSString *stringKey = key;
+            if ([MMKV tranlateData:obj key:stringKey kv:self]) {
+                count++;
+            }
+        } else {
+            MMKVWarning(@"unknown type of key:%@", key);
+        }
+    }];
+    return count;
 }
 
 + (BOOL)tranlateData:(id)obj key:(NSString *)key kv:(MMKV *)kv {
