@@ -32,3 +32,4 @@ about: Create a report to help us improve
 > Post the outputs or screenshots for errors.
 > 
 > Explain what you want by example or code **in English**.
+> If you have a crash/OOM/ANR on Android, please provide **symbolize stack traces**. https://developer.android.com/ndk/guides/ndk-stack.html
