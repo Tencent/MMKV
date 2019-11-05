@@ -32,6 +32,9 @@
 // note: NSDictionary's key must be NSString
 + (id)decodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(NSData *)oData;
 
+// decode as much data as possible before any errors
++ (id)greedyDecodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(NSData *)oData;
+
 + (BOOL)isMiniPBCoderCompatibleObject:(id)object;
 
 + (BOOL)isMiniPBCoderCompatibleType:(Class)cls;

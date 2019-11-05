@@ -314,7 +314,11 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 					if (m_cryptor) {
 						inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
 					}
-					m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+					if (needFullWriteback) {
+						m_dic = [MiniPBCoder greedyDecodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+					} else {
+						m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+					}
 					m_output = new MiniCodedOutputData(m_ptr + offset + m_actualSize, m_size - offset - m_actualSize);
 					if (needFullWriteback) {
 						[self fullWriteBack];

@@ -215,24 +215,36 @@
 
 #pragma mark - decode
 
-- (NSMutableDictionary *)decodeOneDictionaryOfValueClass:(Class)cls {
+- (NSMutableDictionary *)decodeOneDictionaryOfValueClass:(Class)cls greedy:(bool)greedy {
 	if (cls == nullptr) {
 		return nil;
 	}
 
 	NSMutableDictionary *dic = [NSMutableDictionary dictionary];
 
-	m_inputData->readInt32();
+	auto block = ^{
+		self->m_inputData->readInt32();
 
-	while (!m_inputData->isAtEnd()) {
-		NSString *nsKey = m_inputData->readString();
-		if (nsKey) {
-			id value = [self decodeOneObject:nil ofClass:cls];
-			if (value) {
-				[dic setObject:value forKey:nsKey];
-			} else {
-				[dic removeObjectForKey:nsKey];
+		while (!self->m_inputData->isAtEnd()) {
+			NSString *nsKey = self->m_inputData->readString();
+			if (nsKey) {
+				id value = [self decodeOneObject:nil ofClass:cls];
+				if (value) {
+					[dic setObject:value forKey:nsKey];
+				} else {
+					[dic removeObjectForKey:nsKey];
+				}
 			}
+		}
+	};
+
+	if (!greedy) {
+		block();
+	} else {
+		@try {
+			block();
+		} @catch (NSException *exception) {
+			MMKVError(@"%@", exception);
 		}
 	}
 
@@ -288,12 +300,27 @@
 	@try {
 		MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
 		if (cls == [NSMutableDictionary class] || cls == [NSDictionary class]) {
-			obj = [oCoder decodeOneDictionaryOfValueClass:valueClass];
+			obj = [oCoder decodeOneDictionaryOfValueClass:valueClass greedy:false];
 		} else {
 			MMKVError(@"%@ not recognized as container", NSStringFromClass(cls));
 		}
 	} @catch (NSException *exception) {
 		MMKVError(@"%@", exception);
+	}
+	return obj;
+}
+
++ (id)greedyDecodeContainerOfClass:(Class)cls withValueClass:(Class)valueClass fromData:(NSData *)oData {
+	if (!cls || !valueClass || oData.length <= 0) {
+		return nil;
+	}
+
+	id obj = nil;
+	MiniPBCoder *oCoder = [[MiniPBCoder alloc] initForReadingWithData:oData];
+	if (cls == [NSMutableDictionary class] || cls == [NSDictionary class]) {
+		obj = [oCoder decodeOneDictionaryOfValueClass:valueClass greedy:true];
+	} else {
+		MMKVError(@"%@ not recognized as container", NSStringFromClass(cls));
 	}
 	return obj;
 }
