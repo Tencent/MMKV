@@ -29,11 +29,6 @@ MiniCodedOutputData::MiniCodedOutputData(NSMutableData *oData)
     : m_ptr((uint8_t *) oData.mutableBytes), m_size(oData.length), m_position(0) {
 }
 
-MiniCodedOutputData::~MiniCodedOutputData() {
-	m_ptr = nullptr;
-	m_position = 0;
-}
-
 void MiniCodedOutputData::writeDouble(Float64 value) {
 	this->writeRawLittleEndian64(Float64ToInt64(value));
 }
@@ -98,6 +93,10 @@ void MiniCodedOutputData::seek(size_t addedSize) {
 	if (m_position > m_size) {
 		@throw [NSException exceptionWithName:@"OutOfSpace" reason:@"" userInfo:nil];
 	}
+}
+
+uint8_t *MiniCodedOutputData::curWritePointer() {
+	return m_ptr + m_position;
 }
 
 void MiniCodedOutputData::writeRawByte(uint8_t value) {

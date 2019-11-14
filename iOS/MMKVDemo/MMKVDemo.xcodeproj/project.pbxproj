@@ -273,7 +273,7 @@
 		CB1FD41820455E2D00931B5F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0940;
+				LastUpgradeCheck = 1120;
 				ORGANIZATIONNAME = Lingol;
 				TargetAttributes = {
 					CB1FD41F20455E2D00931B5F = {
@@ -647,6 +647,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 52LMU3A345;
+				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
@@ -668,6 +669,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = 52LMU3A345;
+				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;

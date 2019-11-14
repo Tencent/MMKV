@@ -246,7 +246,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		m_metaInfo.read(m_metaFilePtr);
 	}
 	if (m_cryptor) {
-		if (m_metaInfo.m_version >= 2) {
+		if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
 			m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
 		}
 	}
@@ -273,41 +273,15 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		if (m_ptr == MAP_FAILED) {
 			MMKVError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
 		} else {
-			const int offset = pbFixed32Size(0);
-			NSData *lenBuffer = [NSData dataWithBytesNoCopy:m_ptr length:offset freeWhenDone:NO];
-			@try {
-				m_actualSize = MiniCodedInputData(lenBuffer).readFixed32();
-			} @catch (NSException *exception) {
-				MMKVError(@"%@", exception);
-			}
-			MMKVInfo(@"loading [%@] with %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
+			constexpr auto offset = pbFixed32Size(0);
+			m_actualSize = [self readActualSize];
+			MMKVInfo(@"loading [%@] with %zu size in total, file size is %zu, meta info version:%u",
+			         m_mmapID, m_actualSize, m_size, m_metaInfo.m_version);
 			if (m_actualSize > 0) {
 				bool loadFromFile, needFullWriteback = false;
-				if (m_actualSize < m_size && m_actualSize + offset <= m_size) {
-					if ([self checkFileCRCValid] == YES) {
-						loadFromFile = true;
-					} else {
-						loadFromFile = false;
-						if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(onMMKVCRCCheckFail:)]) {
-							auto strategic = [g_callbackHandler onMMKVCRCCheckFail:m_mmapID];
-							if (strategic == MMKVOnErrorRecover) {
-								loadFromFile = true;
-								needFullWriteback = true;
-							}
-						}
-					}
-				} else {
-					MMKVError(@"load [%@] error: %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
-					loadFromFile = false;
-					if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(onMMKVFileLengthError:)]) {
-						auto strategic = [g_callbackHandler onMMKVFileLengthError:m_mmapID];
-						if (strategic == MMKVOnErrorRecover) {
-							loadFromFile = true;
-							needFullWriteback = true;
-							[self writeActualSize:m_size - offset];
-						}
-					}
-				}
+				// error checking
+				[self checkDataValid:loadFromFile needFullWriteBack:needFullWriteback];
+				// loading
 				if (loadFromFile) {
 					MMKVInfo(@"loading [%@] with crc %u sequence %u", m_mmapID, m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
 					NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
@@ -319,18 +293,20 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 					} else {
 						m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
 					}
-					m_output = new MiniCodedOutputData(m_ptr + offset + m_actualSize, m_size - offset - m_actualSize);
+					m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
+					m_output->seek(m_actualSize);
 					if (needFullWriteback) {
 						[self fullWriteBack];
 					}
 				} else {
-					[self writeActualSize:0];
+					// file not valid, discard everything
 					m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-					[self recaculateCRCDigest];
+					[self writeActualSize:0 andCRC:0 andIV:nullptr increaseSequence:IncreaseSequence];
+					[self sync];
 				}
 			} else {
 				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-				[self recaculateCRCDigest];
+				[self writeActualSize:0 andCRC:0 andIV:nullptr increaseSequence:KeepSequence];
 			}
 			MMKVInfo(@"loaded [%@] with %zu values", m_mmapID, (unsigned long) m_dic.count);
 		}
@@ -346,6 +322,65 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	tryResetFileProtection(m_path);
 	tryResetFileProtection(m_crcPath);
 	m_needLoadFromFile = NO;
+}
+
+- (void)checkDataValid:(bool &)loadFromFile needFullWriteBack:(bool &)needFullWriteback {
+	// try auto recover from last confirmed location
+	constexpr auto offset = pbFixed32Size(0);
+	auto checkLastConfirmedInfo = ^{
+		if (self->m_metaInfo.m_version >= MMKVVersionActualSize) {
+			auto lastActualSize = self->m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize;
+			if (lastActualSize < self->m_size && (lastActualSize + offset) <= self->m_size) {
+				auto lastCRCDigest = self->m_metaInfo.m_lastConfirmedMetaInfo.lastCRCDigest;
+				if ([self checkFileWithSize:lastActualSize toCRCDigest:lastCRCDigest]) {
+					loadFromFile = true;
+					[self writeActualSize:lastActualSize andCRC:lastCRCDigest andIV:nullptr increaseSequence:KeepSequence];
+				} else {
+					MMKVError(@"check [%@] error: lastActualSize %zu, lastActualCRC %zu", self->m_mmapID, lastActualSize, lastCRCDigest);
+				}
+			} else {
+				MMKVError(@"check [%@] error: lastActualSize %zu, file size is %zu", self->m_mmapID, lastActualSize, self->m_size);
+			}
+		}
+	};
+
+	if (m_actualSize < m_size && (m_actualSize + offset) <= m_size) {
+		if ([self checkFileWithSize:m_actualSize toCRCDigest:m_metaInfo.m_crcDigest]) {
+			loadFromFile = true;
+		} else {
+			checkLastConfirmedInfo();
+
+			if (!loadFromFile) {
+				MMKVRecoverStrategic strategic = MMKVOnErrorDiscard;
+				if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(onMMKVCRCCheckFail:)]) {
+					strategic = [g_callbackHandler onMMKVCRCCheckFail:m_mmapID];
+					if (strategic == MMKVOnErrorRecover) {
+						loadFromFile = true;
+						needFullWriteback = true;
+					}
+				}
+				MMKVInfo(@"recover strategic for [%@] is %d", m_mmapID, strategic);
+			}
+		}
+	} else {
+		MMKVError(@"check [%@] error: %zu size in total, file size is %zu", m_mmapID, m_actualSize, m_size);
+
+		checkLastConfirmedInfo();
+
+		if (!loadFromFile) {
+			MMKVRecoverStrategic strategic = MMKVOnErrorDiscard;
+			if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(onMMKVFileLengthError:)]) {
+				strategic = [g_callbackHandler onMMKVFileLengthError:m_mmapID];
+				if (strategic == MMKVOnErrorRecover) {
+					// make sure we don't overread the file
+					m_actualSize = m_size - offset;
+					loadFromFile = true;
+					needFullWriteback = true;
+				}
+			}
+			MMKVInfo(@"recover strategic for [%@] is %d", m_mmapID, strategic);
+		}
+	}
 }
 
 - (void)checkLoadData {
@@ -382,7 +417,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
 		// for truncate
-		size_t size = std::min<size_t>(DEFAULT_MMAP_SIZE, m_size);
+		size_t size = DEFAULT_MMAP_SIZE;
 		memset(m_ptr, 0, size);
 		if (msync(m_ptr, size, MS_SYNC) != 0) {
 			MMKVError(@"fail to msync [%@]:%s", m_mmapID, strerror(errno));
@@ -410,10 +445,13 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_crcDigest = 0;
 
 	m_metaInfo.m_crcDigest = 0;
-	[self updateIVAndIncreaseSequence:IncreaseSequence];
+	unsigned char newIV[AES_KEY_LEN];
+	AESCrypt::fillRandomIV(newIV);
 	if (m_cryptor) {
-		m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+		m_cryptor->reset(newIV, sizeof(newIV));
 	}
+	[self writeActualSize:0 andCRC:0 andIV:newIV increaseSequence:IncreaseSequence];
+	msync(m_metaFilePtr, DEFAULT_MMAP_SIZE, MS_SYNC);
 
 	[self loadFromFile];
 }
@@ -453,7 +491,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	m_metaInfo.m_crcDigest = 0;
 
 	if (m_cryptor) {
-		if (m_metaInfo.m_version >= 2) {
+		if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
 			m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
 		} else {
 			m_cryptor->reset();
@@ -519,30 +557,26 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 - (BOOL)protectFromBackgroundWriting:(size_t)size writeBlock:(void (^)(MiniCodedOutputData *output))block {
 	if (g_isInBackground) {
-		static const int offset = pbFixed32Size(0);
-		static const int pagesize = getpagesize();
-		size_t realOffset = offset + m_actualSize - size;
-		size_t pageOffset = (realOffset / pagesize) * pagesize;
-		size_t pointerOffset = realOffset - pageOffset;
-		size_t mmapSize = offset + m_actualSize - pageOffset;
-		char *ptr = m_ptr + pageOffset;
-		if (mlock(ptr, mmapSize) != 0) {
+		// calc ptr to be mlock()
+		auto writePtr = (size_t) m_output->curWritePointer();
+		auto ptr = (writePtr / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
+		size_t lockDownSize = writePtr - ptr + size;
+		if (mlock((void *) ptr, lockDownSize) != 0) {
 			MMKVError(@"fail to mlock [%@], %s", m_mmapID, strerror(errno));
 			// just fail on this condition, otherwise app will crash anyway
 			//block(m_output);
 			return NO;
 		} else {
 			@try {
-				MiniCodedOutputData output(ptr + pointerOffset, size);
-				block(&output);
-				m_output->seek(size);
+				block(m_output);
 			} @catch (NSException *exception) {
 				MMKVError(@"%@", exception);
 				return NO;
 			} @finally {
-				munlock(ptr, mmapSize);
+				munlock((void *) ptr, lockDownSize);
 			}
 		}
+
 	} else {
 		block(m_output);
 	}
@@ -602,44 +636,37 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 				MMKVWarning(@"[%@] file not valid", m_mmapID);
 				return NO;
 			}
-			// keep m_output consistent with m_ptr -- writeAcutalSize: may fail
-			delete m_output;
-			m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-			m_output->seek(m_actualSize);
 		}
-
-		if (m_cryptor) {
-			[self updateIVAndIncreaseSequence:KeepSequence];
-			m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
-			auto ptr = (unsigned char *) data.bytes;
-			m_cryptor->encrypt(ptr, ptr, data.length);
-		}
-
-		if ([self writeActualSize:data.length] == NO) {
-			return NO;
-		}
-
-		delete m_output;
-		m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-		BOOL ret = [self protectFromBackgroundWriting:m_actualSize
-		                                   writeBlock:^(MiniCodedOutputData *output) {
-			                                   output->writeRawData(data);
-		                                   }];
-		if (ret) {
-			[self recaculateCRCDigest];
-		}
-		return ret;
+		return [self doFullWriteBack:data];
 	}
 	return YES;
 }
 
-- (BOOL)writeActualSize:(size_t)actualSize {
-	assert(m_ptr != 0);
-	assert(m_ptr != MAP_FAILED);
+- (size_t)readActualSize {
+	assert(m_ptr != nullptr && m_ptr != MAP_FAILED);
+	assert(m_metaFilePtr != nullptr && m_metaFilePtr != MAP_FAILED);
+
+	uint32_t actualSize = 0;
+	memcpy(&actualSize, m_ptr, sizeof(actualSize));
+
+	if (m_metaInfo.m_version >= MMKVVersionActualSize) {
+		if (m_metaInfo.m_actualSize != actualSize) {
+			MMKVWarning(@"[%@] actual size %u, meta acutal size %zu", m_mmapID, actualSize, m_metaInfo.m_actualSize);
+		}
+		return m_metaInfo.m_actualSize;
+	} else {
+		return actualSize;
+	}
+}
+
+- (BOOL)oldStyleWriteActualSize:(size_t)actualSize {
+	if (m_ptr == nullptr || m_ptr == MAP_FAILED) {
+		return NO;
+	}
 
 	char *actualSizePtr = m_ptr;
 	char *tmpPtr = nullptr;
-	static const int offset = pbFixed32Size(0);
+	constexpr auto offset = pbFixed32Size(0);
 
 	if (g_isInBackground) {
 		tmpPtr = m_ptr;
@@ -652,16 +679,77 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		}
 	}
 
-	@try {
-		MiniCodedOutputData output(actualSizePtr, offset);
-		output.writeFixed32((int32_t) actualSize);
-	} @catch (NSException *exception) {
-		MMKVError(@"%@", exception);
-	}
 	m_actualSize = actualSize;
+	memcpy(actualSizePtr, &m_actualSize, offset);
 
 	if (tmpPtr != nullptr && tmpPtr != MAP_FAILED) {
 		munlock(tmpPtr, offset);
+	}
+	return YES;
+}
+
+- (BOOL)writeActualSize:(size_t)actualSize andCRC:(uint32_t)crcDigest andIV:(const unsigned char *)iv increaseSequence:(bool)increaseSequence {
+	// backword compatibility
+	// TODO: uncomment this a version later
+	//if (!increaseSequence && m_metaInfo.m_version < MMKVVersionActualSize) {
+	[self oldStyleWriteActualSize:actualSize];
+	//}
+
+	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
+		[self prepareMetaFile];
+	}
+	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
+		return NO;
+	}
+
+	char *ptr = m_metaFilePtr;
+	char *tmpPtr = nullptr;
+	constexpr auto length = sizeof(MMKVMetaInfo);
+
+	if (g_isInBackground) {
+		tmpPtr = m_metaFilePtr;
+		if (mlock(tmpPtr, length) != 0) {
+			MMKVError(@"fail to mmap [%@], %d:%s", m_mmapID, errno, strerror(errno));
+			// just fail on this condition, otherwise app will crash anyway
+			return NO;
+		} else {
+			ptr = tmpPtr;
+		}
+	}
+
+	bool needsFullWrite = false;
+	m_actualSize = actualSize;
+	m_metaInfo.m_actualSize = actualSize;
+	m_crcDigest = crcDigest;
+	m_metaInfo.m_crcDigest = crcDigest;
+	if (m_metaInfo.m_version < MMKVVersionSequence) {
+		m_metaInfo.m_version = MMKVVersionSequence;
+		needsFullWrite = true;
+	}
+	if (unlikely(iv)) {
+		memcpy(m_metaInfo.m_vector, iv, sizeof(m_metaInfo.m_vector));
+		if (m_metaInfo.m_version < MMKVVersionRandomIV) {
+			m_metaInfo.m_version = MMKVVersionRandomIV;
+		}
+		needsFullWrite = true;
+	}
+	if (unlikely(increaseSequence)) {
+		m_metaInfo.m_sequence++;
+		m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize = actualSize;
+		m_metaInfo.m_lastConfirmedMetaInfo.lastCRCDigest = crcDigest;
+		if (m_metaInfo.m_version < MMKVVersionActualSize) {
+			m_metaInfo.m_version = MMKVVersionActualSize;
+		}
+		needsFullWrite = true;
+	}
+	if (unlikely(needsFullWrite)) {
+		m_metaInfo.write(ptr);
+	} else {
+		m_metaInfo.writeCRCAndActualSizeOnly(ptr);
+	}
+
+	if (tmpPtr != nullptr && tmpPtr != MAP_FAILED) {
+		munlock(tmpPtr, length);
 	}
 	return YES;
 }
@@ -690,21 +778,19 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		return NO;
 	}
 
-	BOOL ret = [self writeActualSize:m_actualSize + size];
+	BOOL ret = [self protectFromBackgroundWriting:size
+	                                   writeBlock:^(MiniCodedOutputData *output) {
+		                                   output->writeString(key);
+		                                   output->writeData(data); // note: write size of data
+	                                   }];
 	if (ret) {
-		ret = [self protectFromBackgroundWriting:size
-		                              writeBlock:^(MiniCodedOutputData *output) {
-			                              output->writeString(key);
-			                              output->writeData(data); // note: write size of data
-		                              }];
-		if (ret) {
-			static const int offset = pbFixed32Size(0);
-			auto ptr = (uint8_t *) m_ptr + offset + m_actualSize - size;
-			if (m_cryptor) {
-				m_cryptor->encrypt(ptr, ptr, size);
-			}
-			[self updateCRCDigest:ptr withSize:size increaseSequence:KeepSequence];
+		constexpr auto offset = pbFixed32Size(0);
+		auto ptr = (uint8_t *) m_ptr + offset + m_actualSize;
+		if (m_cryptor) {
+			m_cryptor->encrypt(ptr, ptr, size);
 		}
+		m_actualSize += size;
+		[self updateCRCDigest:ptr withSize:size];
 	}
 	return ret;
 }
@@ -735,34 +821,54 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 
 	NSData *allData = [MiniPBCoder encodeDataWithObject:m_dic];
 	if (allData.length > 0) {
-		int offset = pbFixed32Size(0);
+		constexpr auto offset = pbFixed32Size(0);
 		if (allData.length + offset <= m_size) {
-			if (m_cryptor) {
-				[self updateIVAndIncreaseSequence:KeepSequence];
-				m_cryptor->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
-				auto ptr = (unsigned char *) allData.bytes;
-				m_cryptor->encrypt(ptr, ptr, allData.length);
-			}
-			BOOL ret = [self writeActualSize:allData.length];
-			if (ret) {
-				delete m_output;
-				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-				ret = [self protectFromBackgroundWriting:m_actualSize
-				                              writeBlock:^(MiniCodedOutputData *output) {
-					                              output->writeRawData(allData); // note: don't write size of data
-				                              }];
-				if (ret) {
-					[self recaculateCRCDigest];
-					m_hasFullWriteBack = YES;
-				}
-			}
-			return ret;
+			return [self doFullWriteBack:allData];
 		} else {
 			// ensureMemorySize will extend file & full rewrite, no need to write back again
 			return [self ensureMemorySize:allData.length + offset - m_size];
 		}
 	}
 	return NO;
+}
+
+- (BOOL)doFullWriteBack:(NSData *)allData {
+	unsigned char oldIV[AES_KEY_LEN];
+	unsigned char newIV[AES_KEY_LEN];
+	if (m_cryptor) {
+		AESCrypt::fillRandomIV(newIV);
+		memcpy(oldIV, m_cryptor->m_vector, sizeof(oldIV));
+		m_cryptor->reset(newIV, sizeof(newIV));
+		auto ptr = (unsigned char *) allData.bytes;
+		m_cryptor->encrypt(ptr, ptr, allData.length);
+	}
+
+	constexpr auto offset = pbFixed32Size(0);
+	delete m_output;
+	m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
+	auto ret = [self protectFromBackgroundWriting:allData.length
+	                                   writeBlock:^(MiniCodedOutputData *output) {
+		                                   output->writeRawData(allData); // note: don't write size of data
+	                                   }];
+	if (ret) {
+		m_actualSize = allData.length;
+		if (m_cryptor) {
+			[self recaculateCRCDigestWithIV:newIV];
+		} else {
+			[self recaculateCRCDigestWithIV:nullptr];
+		}
+		// make sure lastConfirmedMetaInfo is saved
+		[self sync];
+	} else {
+		// revert everything
+		if (m_cryptor) {
+			m_cryptor->reset(oldIV);
+		}
+		delete m_output;
+		m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
+		m_output->seek(m_actualSize);
+	}
+	return ret;
 }
 
 - (BOOL)isFileValid {
@@ -774,71 +880,35 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 }
 
 // assuming m_ptr & m_size is set
-- (BOOL)checkFileCRCValid {
+- (BOOL)checkFileWithSize:(size_t)acutalSize toCRCDigest:(uint32_t)crcDigest {
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
-		int offset = pbFixed32Size(0);
-		m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
+		constexpr auto offset = pbFixed32Size(0);
+		m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) acutalSize);
 
-		if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
-			[self prepareMetaFile];
-		}
-		if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
-			MMKVError(@"Meta file not valid %@", m_mmapID);
-			return NO;
-		}
-		m_metaInfo.read(m_metaFilePtr);
-		if (m_crcDigest == m_metaInfo.m_crcDigest) {
+		if (m_crcDigest == crcDigest) {
 			return YES;
 		}
-		MMKVError(@"check crc [%@] fail, crc32:%u, m_crcDigest:%u", m_mmapID, m_metaInfo.m_crcDigest, m_crcDigest);
+		MMKVError(@"check crc [%@] fail, crc32:%u, m_crcDigest:%u", m_mmapID, crcDigest, m_crcDigest);
 	}
 	return NO;
 }
 
-- (void)recaculateCRCDigest {
+- (void)recaculateCRCDigestWithIV:(const unsigned char *)iv {
 	if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
+		constexpr auto offset = pbFixed32Size(0);
 		m_crcDigest = 0;
-		int offset = pbFixed32Size(0);
-		[self updateCRCDigest:(const uint8_t *) m_ptr + offset withSize:m_actualSize increaseSequence:IncreaseSequence];
+		m_crcDigest = (uint32_t) crc32(m_crcDigest, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
+		[self writeActualSize:m_actualSize andCRC:m_crcDigest andIV:iv increaseSequence:IncreaseSequence];
 	}
 }
 
-- (void)updateCRCDigest:(const uint8_t *)ptr withSize:(size_t)length increaseSequence:(bool)increaseSequence {
+- (void)updateCRCDigest:(const uint8_t *)ptr withSize:(size_t)length {
 	if (ptr == nullptr) {
 		return;
 	}
 	m_crcDigest = (uint32_t) crc32(m_crcDigest, ptr, (uint32_t) length);
 
-	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
-		[self prepareMetaFile];
-	}
-	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
-		return;
-	}
-
-	static const size_t bufferLength = pbFixed32Size(0);
-	auto hasMlock = false;
-	if (g_isInBackground) {
-		if (mlock(m_metaFilePtr, bufferLength) != 0) {
-			MMKVError(@"fail to mlock crc [%@]-%p, %d:%s", m_mmapID, m_metaFilePtr, errno, strerror(errno));
-			// just fail on this condition, otherwise app will crash anyway
-			return;
-		}
-		hasMlock = true;
-	}
-
-	m_metaInfo.m_crcDigest = m_crcDigest;
-	if (increaseSequence) {
-		m_metaInfo.m_sequence++;
-	}
-	if (m_metaInfo.m_version == 0) {
-		m_metaInfo.m_version = 1;
-	}
-	m_metaInfo.write(m_metaFilePtr);
-
-	if (hasMlock) {
-		munlock(m_metaFilePtr, bufferLength);
-	}
+	[self writeActualSize:m_actualSize andCRC:m_crcDigest andIV:nullptr increaseSequence:KeepSequence];
 }
 
 - (void)prepareMetaFile {
@@ -849,7 +919,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		m_metaFd = open(m_crcPath.UTF8String, O_RDWR, S_IRWXU);
 		if (m_metaFd < 0) {
 			MMKVError(@"fail to open:%@, %s", m_crcPath, strerror(errno));
-			removeFile(m_crcPath);
 		} else {
 			size_t size = 0;
 			struct stat st = {};
@@ -863,7 +932,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 					MMKVError(@"fail to truncate [%@] to size %zu, %s", m_crcPath, size, strerror(errno));
 					close(m_metaFd);
 					m_metaFd = -1;
-					removeFile(m_crcPath);
 					return;
 				}
 			}
@@ -875,24 +943,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			}
 		}
 	}
-}
-
-- (void)updateIVAndIncreaseSequence:(bool)increaseSequence {
-	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
-		[self prepareMetaFile];
-	}
-	if (m_metaFilePtr == nullptr || m_metaFilePtr == MAP_FAILED) {
-		return;
-	}
-
-	if (increaseSequence) {
-		m_metaInfo.m_sequence++;
-	}
-	if (m_metaInfo.m_version < 2) {
-		m_metaInfo.m_version = 2;
-	}
-	AESCrypt::fillRandomIV(m_metaInfo.m_vector);
-	m_metaInfo.write(m_metaFilePtr);
 }
 
 #pragma mark - encryption & decryption

@@ -23,7 +23,7 @@
 #import <Foundation/Foundation.h>
 
 class MiniCodedOutputData {
-	uint8_t *m_ptr;
+	uint8_t *const m_ptr;
 	size_t m_size;
 	int32_t m_position;
 
@@ -42,9 +42,9 @@ public:
 
 	MiniCodedOutputData(NSMutableData *odata);
 
-	~MiniCodedOutputData();
-
 	int32_t spaceLeft();
+
+	uint8_t *curWritePointer();
 
 	void seek(size_t addedSize);
 

@@ -786,8 +786,8 @@ void MMKV::writeAcutalSize(size_t actualSize) {
     assert(m_ptr != 0);
     assert(m_ptr != MAP_FAILED);
 
-    memcpy(m_ptr, &actualSize, Fixed32Size);
     m_actualSize = actualSize;
+    memcpy(m_ptr, &actualSize, Fixed32Size);
 }
 
 const MMBuffer &MMKV::getDataForKey(const std::string &key) {
