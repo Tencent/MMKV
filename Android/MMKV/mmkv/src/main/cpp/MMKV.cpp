@@ -330,16 +330,13 @@ void MMKV::loadFromFile() {
         if (m_ptr == MAP_FAILED) {
             MMKVError("fail to mmap [%s], %s", m_mmapID.c_str(), strerror(errno));
         } else {
-            m_actualSize = readActualSize();
+            // error checking
+            bool loadFromFile = false, needFullWriteback = false;
+            checkDataValid(loadFromFile, needFullWriteback);
             MMKVInfo("loading [%s] with %zu actual size, file size %zu, InterProcess %d, meta info "
                      "version:%u",
                      m_mmapID.c_str(), m_actualSize, m_size, m_isInterProcess,
                      m_metaInfo.m_version);
-            bool loadFromFile = false, needFullWriteback = false;
-            if (m_actualSize > 0) {
-                // error checking
-                checkDataValid(loadFromFile, needFullWriteback);
-            }
             // loading
             if (loadFromFile) {
                 MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
@@ -483,6 +480,20 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
     constexpr auto offset = pbFixed32Size(0);
     auto checkLastConfirmedInfo = [&] {
         if (m_metaInfo.m_version >= MMKVVersionActualSize) {
+            uint32_t oldStyleActualSize = 0;
+            memcpy(&oldStyleActualSize, m_ptr, Fixed32Size);
+            if (oldStyleActualSize != m_actualSize) {
+                MMKVWarning("oldStyleActualSize %u not equal to meta actual size %lu",
+                            oldStyleActualSize, m_actualSize);
+                if (checkFileCRCValid(oldStyleActualSize, m_metaInfo.m_crcDigest)) {
+                    MMKVInfo("looks like [%s] been downgrade & upgrade again", m_mmapID.c_str());
+                    loadFromFile = true;
+                    writeActualSize(oldStyleActualSize, m_metaInfo.m_crcDigest, nullptr,
+                                    KeepSequence);
+                    return;
+                }
+            }
+
             auto lastActualSize = m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize;
             if (lastActualSize < m_size && (lastActualSize + offset) <= m_size) {
                 auto lastCRCDigest = m_metaInfo.m_lastConfirmedMetaInfo.lastCRCDigest;
@@ -499,6 +510,8 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             }
         }
     };
+
+    m_actualSize = readActualSize();
 
     if (m_actualSize < m_size && (m_actualSize + offset) <= m_size) {
         if (checkFileCRCValid(m_actualSize, m_metaInfo.m_crcDigest)) {
