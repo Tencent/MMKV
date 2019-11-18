@@ -29,11 +29,6 @@ CodedOutputData::CodedOutputData(void *ptr, size_t len)
     assert(m_ptr);
 }
 
-CodedOutputData::~CodedOutputData() {
-    m_ptr = nullptr;
-    m_position = 0;
-}
-
 void CodedOutputData::writeDouble(double value) {
     this->writeRawLittleEndian64(Float64ToInt64(value));
 }
@@ -85,6 +80,10 @@ void CodedOutputData::seek(size_t addedSize) {
     if (m_position > m_size) {
         MMKVError("OutOfSpace");
     }
+}
+
+uint8_t *CodedOutputData::curWritePointer() {
+    return m_ptr + m_position;
 }
 
 void CodedOutputData::writeRawByte(uint8_t value) {

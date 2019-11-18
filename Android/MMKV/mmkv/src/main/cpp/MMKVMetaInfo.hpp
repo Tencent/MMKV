@@ -26,15 +26,43 @@
 #include <cstdint>
 #include <cstring>
 
+enum MMKVVersion : uint32_t {
+    MMKVVersionDefault = 0,
+
+    // record full write back count
+    MMKVVersionSequence = 1,
+
+    // store random iv for encryption
+    MMKVVersionRandomIV = 2,
+
+    // store actual size together with crc checksum, try to reduce file corruption
+    MMKVVersionActualSize = 3,
+};
+
 struct MMKVMetaInfo {
     uint32_t m_crcDigest = 0;
-    uint32_t m_version = 1;
+    uint32_t m_version = MMKVVersionSequence;
     uint32_t m_sequence = 0; // full write-back count
     unsigned char m_vector[AES_KEY_LEN] = {0};
+    size_t m_actualSize = 0;
+
+    // confirmed info: it's been synced to file
+    struct {
+        size_t lastActualSize = 0;
+        uint32_t lastCRCDigest = 0;
+        uint32_t __reserved[16] = {0};
+    } m_lastConfirmedMetaInfo;
 
     void write(void *ptr) {
         assert(ptr);
         memcpy(ptr, this, sizeof(MMKVMetaInfo));
+    }
+
+    void writeCRCAndActualSizeOnly(void *ptr) {
+        assert(ptr);
+        auto other = (MMKVMetaInfo *) ptr;
+        other->m_crcDigest = m_crcDigest;
+        other->m_actualSize = m_actualSize;
     }
 
     void read(const void *ptr) {
@@ -42,5 +70,7 @@ struct MMKVMetaInfo {
         memcpy(this, ptr, sizeof(MMKVMetaInfo));
     }
 };
+
+static_assert(sizeof(MMKVMetaInfo) <= (4 * 1024), "MMKVMetaInfo lager than one pagesize");
 
 #endif //MMKV_MMKVMETAINFO_H

@@ -857,6 +857,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		} else {
 			[self recaculateCRCDigestWithIV:nullptr];
 		}
+        m_hasFullWriteBack = YES;
 		// make sure lastConfirmedMetaInfo is saved
 		[self sync];
 	} else {

@@ -74,23 +74,29 @@ class MMKV {
 
     void loadFromAshmem();
 
+    void checkDataValid(bool &loadFromFile, bool &needFullWriteback);
+
     void checkLoadData();
 
     bool isFileValid();
 
-    bool checkFileCRCValid();
+    bool checkFileCRCValid(size_t acutalSize, uint32_t crcDigest);
 
-    void recaculateCRCDigest();
+    void recaculateCRCDigestWithIV(const unsigned char *iv);
 
-    void updateCRCDigest(const uint8_t *ptr, size_t length, bool increaseSequence = false);
+    void updateCRCDigest(const uint8_t *ptr, size_t length);
 
-    void updateIV(bool increaseSequence);
+    size_t readActualSize();
 
-    void writeAcutalSize(size_t actualSize);
+    void oldStyleWriteActualSize(size_t actualSize);
+
+    bool writeActualSize(size_t actualSize, uint32_t crcDigest, const unsigned char *iv, bool increaseSequence);
 
     bool ensureMemorySize(size_t newSize);
 
     bool fullWriteback();
+
+    bool doFullWriteBack(MMBuffer &&allData);
 
     const MMBuffer &getDataForKey(const std::string &key);
 

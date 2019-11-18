@@ -23,6 +23,11 @@
 
 #include <cstdint>
 
+#ifndef likely
+#define unlikely(x) (__builtin_expect(bool(x), 0))
+#define likely(x) (__builtin_expect(bool(x), 1))
+#endif
+
 template <typename T, typename P>
 union Converter {
     static_assert(sizeof(T) == sizeof(P), "size not match");
