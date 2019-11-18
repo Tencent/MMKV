@@ -480,6 +480,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
     constexpr auto offset = pbFixed32Size(0);
     auto checkLastConfirmedInfo = [&] {
         if (m_metaInfo.m_version >= MMKVVersionActualSize) {
+            // downgrade & upgrade support
             uint32_t oldStyleActualSize = 0;
             memcpy(&oldStyleActualSize, m_ptr, Fixed32Size);
             if (oldStyleActualSize != m_actualSize) {

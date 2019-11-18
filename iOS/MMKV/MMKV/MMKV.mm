@@ -273,40 +273,39 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		if (m_ptr == MAP_FAILED) {
 			MMKVError(@"fail to mmap [%@], %s", m_mmapID, strerror(errno));
 		} else {
-			constexpr auto offset = pbFixed32Size(0);
-			m_actualSize = [self readActualSize];
+			// error checking
+			bool loadFromFile, needFullWriteback = false;
+			[self checkDataValid:loadFromFile needFullWriteBack:needFullWriteback];
+
 			MMKVInfo(@"loading [%@] with %zu size in total, file size is %zu, meta info version:%u",
 			         m_mmapID, m_actualSize, m_size, m_metaInfo.m_version);
-			if (m_actualSize > 0) {
-				bool loadFromFile, needFullWriteback = false;
-				// error checking
-				[self checkDataValid:loadFromFile needFullWriteBack:needFullWriteback];
-				// loading
-				if (loadFromFile) {
-					MMKVInfo(@"loading [%@] with crc %u sequence %u", m_mmapID, m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
-					NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
-					if (m_cryptor) {
-						inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
-					}
-					if (needFullWriteback) {
-						m_dic = [MiniPBCoder greedyDecodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
-					} else {
-						m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
-					}
-					m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-					m_output->seek(m_actualSize);
-					if (needFullWriteback) {
-						[self fullWriteBack];
-					}
+			constexpr auto offset = pbFixed32Size(0);
+			if (loadFromFile) {
+				MMKVInfo(@"loading [%@] with crc %u sequence %u", m_mmapID, m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
+				NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
+				if (m_cryptor) {
+					inputBuffer = decryptBuffer(*m_cryptor, inputBuffer);
+				}
+				if (needFullWriteback) {
+					m_dic = [MiniPBCoder greedyDecodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
 				} else {
-					// file not valid, discard everything
-					m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-					[self writeActualSize:0 andCRC:0 andIV:nullptr increaseSequence:IncreaseSequence];
-					[self sync];
+					m_dic = [MiniPBCoder decodeContainerOfClass:NSMutableDictionary.class withValueClass:NSData.class fromData:inputBuffer];
+				}
+				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
+				m_output->seek(m_actualSize);
+				if (needFullWriteback) {
+					[self fullWriteBack];
 				}
 			} else {
+				// file not valid, discard everything
 				m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
-				[self writeActualSize:0 andCRC:0 andIV:nullptr increaseSequence:KeepSequence];
+				if (m_actualSize > 0) {
+					[self writeActualSize:0 andCRC:0 andIV:nullptr increaseSequence:IncreaseSequence];
+					[self sync];
+				} else {
+					m_output = new MiniCodedOutputData(m_ptr + offset, m_size - offset);
+					[self writeActualSize:0 andCRC:0 andIV:nullptr increaseSequence:KeepSequence];
+				}
 			}
 			MMKVInfo(@"loaded [%@] with %zu values", m_mmapID, (unsigned long) m_dic.count);
 		}
@@ -329,6 +328,19 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	constexpr auto offset = pbFixed32Size(0);
 	auto checkLastConfirmedInfo = ^{
 		if (self->m_metaInfo.m_version >= MMKVVersionActualSize) {
+			// downgrade & upgrade support
+			uint32_t oldStyleActualSize = 0;
+			memcpy(&oldStyleActualSize, self->m_ptr, offset);
+			if (oldStyleActualSize != self->m_actualSize) {
+				MMKVWarning(@"oldStyleActualSize %u not equal to meta actual size %lu", oldStyleActualSize, self->m_actualSize);
+				if ([self checkFileWithSize:oldStyleActualSize toCRCDigest:self->m_metaInfo.m_crcDigest]) {
+					MMKVInfo(@"looks like [%@] been downgrade & upgrade again", self->m_mmapID);
+					loadFromFile = true;
+					[self writeActualSize:oldStyleActualSize andCRC:self->m_metaInfo.m_crcDigest andIV:nullptr increaseSequence:KeepSequence];
+					return;
+				}
+			}
+
 			auto lastActualSize = self->m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize;
 			if (lastActualSize < self->m_size && (lastActualSize + offset) <= self->m_size) {
 				auto lastCRCDigest = self->m_metaInfo.m_lastConfirmedMetaInfo.lastCRCDigest;
@@ -343,6 +355,8 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			}
 		}
 	};
+
+	m_actualSize = [self readActualSize];
 
 	if (m_actualSize < m_size && (m_actualSize + offset) <= m_size) {
 		if ([self checkFileWithSize:m_actualSize toCRCDigest:m_metaInfo.m_crcDigest]) {
