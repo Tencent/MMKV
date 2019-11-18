@@ -90,7 +90,10 @@ class MMKV {
 
     void oldStyleWriteActualSize(size_t actualSize);
 
-    bool writeActualSize(size_t actualSize, uint32_t crcDigest, const unsigned char *iv, bool increaseSequence);
+    bool writeActualSize(size_t actualSize,
+                         uint32_t crcDigest,
+                         const unsigned char *iv,
+                         bool increaseSequence);
 
     bool ensureMemorySize(size_t newSize);
 
