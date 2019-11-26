@@ -36,3 +36,8 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Linux/Makefile
+cmake-build-debug/
+cmake-build-release/
+
+#CLion
+.idea

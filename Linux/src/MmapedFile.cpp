@@ -331,12 +331,6 @@ size_t ASharedMemory_getSize(int fd) {
 }
 
 std::string ASharedMemory_getName(int fd) {
-    // Android Q doesn't have ASharedMemory_getName()
-    // I've make a request to Google, https://issuetracker.google.com/issues/130741665
-    // There's nothing we can do before it's supported officially by Google
-    if (g_android_api >= 29) {
-        return "";
-    }
 
     char name[ASHMEM_NAME_LEN] = {0};
     if (ioctl(fd, ASHMEM_GET_NAME, name) != 0) {

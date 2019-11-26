@@ -43,6 +43,4 @@ void mmkvLog(int level,
 void onContentChangedByOuterProcess(const std::string &mmapID);
 } // namespace mmkv
 
-extern int g_android_api;
-
 #endif //MMKV_NATIVE_BRIDGE_H
