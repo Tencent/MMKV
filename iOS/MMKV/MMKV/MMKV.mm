@@ -280,7 +280,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 			MMKVInfo(@"loading [%@] with %zu size in total, file size is %zu, meta info version:%u",
 			         m_mmapID, m_actualSize, m_size, m_metaInfo.m_version);
 			constexpr auto offset = pbFixed32Size(0);
-			if (loadFromFile) {
+			if (loadFromFile && m_actualSize > 0) {
 				MMKVInfo(@"loading [%@] with crc %u sequence %u", m_mmapID, m_metaInfo.m_crcDigest, m_metaInfo.m_sequence);
 				NSData *inputBuffer = [NSData dataWithBytesNoCopy:m_ptr + offset length:m_actualSize freeWhenDone:NO];
 				if (m_cryptor) {

@@ -338,7 +338,7 @@ void MMKV::loadFromFile() {
                      m_mmapID.c_str(), m_actualSize, m_size, m_isInterProcess,
                      m_metaInfo.m_version);
             // loading
-            if (loadFromFile) {
+            if (loadFromFile && m_actualSize > 0) {
                 MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
                          m_metaInfo.m_crcDigest, m_metaInfo.m_sequence, m_metaInfo.m_version);
                 MMBuffer inputBuffer(m_ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
