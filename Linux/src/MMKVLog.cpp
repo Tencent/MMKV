@@ -20,8 +20,8 @@
 
 #include "MMKVLog.h"
 #include "native-bridge.h"
-#include <string>
 #include <stdarg.h>
+#include <string>
 
 #ifdef ENABLE_MMKV_LOG
 
@@ -51,20 +51,20 @@ const char *_getFileName(const char *path) {
     }
 }
 
-/*static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
+static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
     switch (level) {
         case MMKVLogDebug:
-            return ANDROID_LOG_DEBUG;
+            return "D";
         case MMKVLogInfo:
-            return ANDROID_LOG_INFO;
+            return "I";
         case MMKVLogWarning:
-            return ANDROID_LOG_WARN;
+            return "W";
         case MMKVLogError:
-            return ANDROID_LOG_ERROR;
+            return "E";
         default:
-            return ANDROID_LOG_UNKNOWN;
+            return "N";
     }
-}*/
+}
 
 void _MMKVLogWithLevel(
     MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
@@ -92,8 +92,9 @@ void _MMKVLogWithLevel(
         if (g_isLogRedirecting) {
             mmkv::mmkvLog((int) level, file, line, func, message);
         } else {
-//            __android_log_print(MMKVLogLevelDesc(level), APPNAME, "<%s:%d::%s> %s", file, line,
- //                               func, message.c_str());
+            printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), file, line, func,
+                   message.c_str());
+            fflush(stdout);
         }
     }
 }

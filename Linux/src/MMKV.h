@@ -22,8 +22,8 @@
 #define MMKV_MMKV_H
 
 #include "InterProcessLock.h"
-#include "MMKVMetaInfo.hpp"
 #include "MMBuffer.h"
+#include "MMKVMetaInfo.hpp"
 #include "MmapedFile.h"
 #include "ThreadLock.h"
 #include <cstdint>

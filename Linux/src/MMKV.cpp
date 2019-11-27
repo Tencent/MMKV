@@ -30,6 +30,7 @@
 #include "ScopedLock.hpp"
 #include "aes/AESCrypt.h"
 #include "aes/openssl/md5.h"
+#include "crc32/Checksum.h"
 #include "native-bridge.h"
 #include <algorithm>
 #include <cstdio>
@@ -41,7 +42,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "crc32/Checksum.h"
 
 using namespace std;
 
@@ -450,8 +450,9 @@ void MMKV::partialLoadFromFile() {
                 MMBuffer inputBuffer(m_ptr + Fixed32Size + oldActualSize, bufferSize,
                                      MMBufferNoCopy);
                 // incremental update crc digest
-                m_crcDigest = (uint32_t) zlib::crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
-                                               static_cast<uInt>(inputBuffer.length()));
+                m_crcDigest =
+                    (uint32_t) zlib::crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
+                                           static_cast<uInt>(inputBuffer.length()));
                 if (m_crcDigest == m_metaInfo.m_crcDigest) {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
@@ -1135,7 +1136,8 @@ bool MMKV::isFileValid() {
 bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
     if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
         constexpr auto offset = pbFixed32Size(0);
-        m_crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) acutalSize);
+        m_crcDigest =
+            (uint32_t) zlib::crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) acutalSize);
 
         if (m_crcDigest == crcDigest) {
             return true;
@@ -1511,7 +1513,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
             }
 
             crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) fileData->getPtr() + offset,
-                                         (uint32_t) actualSize);
+                                               (uint32_t) actualSize);
         }
         delete fileData;
         return crcFile == crcDigest;

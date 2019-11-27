@@ -43,10 +43,8 @@ void mmkvLog(int level,
              const std::string &file,
              int line,
              const std::string &function,
-             const std::string &message) {
-}
+             const std::string &message) {}
 
-void onContentChangedByOuterProcess(const std::string &mmapID) {
-}
+void onContentChangedByOuterProcess(const std::string &mmapID) {}
 
-}
+} // namespace mmkv
