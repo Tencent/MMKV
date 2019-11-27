@@ -113,4 +113,4 @@ target_link_libraries( # Specifies the target library.
                        # included in the NDK.
                        #          ${log-lib}
         pthread
-        dl)
+        )

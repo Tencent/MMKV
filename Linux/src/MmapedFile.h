@@ -25,10 +25,6 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 
-#define ASHMEM_NAME_DEF "/dev/ashmem"
-
-enum : bool { MMAP_FILE = false, MMAP_ASHMEM = true };
-
 extern const int DEFAULT_MMAP_SIZE;
 
 class MmapedFile {
@@ -42,13 +38,9 @@ class MmapedFile {
     MmapedFile &operator=(const MmapedFile &other) = delete;
 
 public:
-    MmapedFile(const std::string &path,
-               size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE),
-               bool fileType = MMAP_FILE);
-    MmapedFile(int ashmemFD);
+    explicit MmapedFile(const std::string &path,
+                        size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE));
     ~MmapedFile();
-
-    const bool m_fileType;
 
     size_t getFileSize() { return m_segmentSize; }
 
@@ -71,10 +63,5 @@ extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const char *path);
 extern bool zeroFillFile(int fd, size_t startPos, size_t size);
 extern bool createFile(const std::string &filePath);
-
-// for Android Q limiting ashmem access
-extern int ASharedMemory_create(const char *name, size_t size);
-extern size_t ASharedMemory_getSize(int fd);
-extern std::string ASharedMemory_getName(int fd);
 
 #endif //MMKV_MMAPEDFILE_H
