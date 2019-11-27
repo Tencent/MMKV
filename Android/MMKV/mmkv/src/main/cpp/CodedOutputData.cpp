@@ -82,10 +82,6 @@ void CodedOutputData::seek(size_t addedSize) {
     }
 }
 
-uint8_t *CodedOutputData::curWritePointer() {
-    return m_ptr + m_position;
-}
-
 void CodedOutputData::writeRawByte(uint8_t value) {
     if (m_position == m_size) {
         MMKVError("m_position: %d, m_size: %zd", m_position, m_size);

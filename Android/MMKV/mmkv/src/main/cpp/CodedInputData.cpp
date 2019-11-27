@@ -21,7 +21,6 @@
 #include "CodedInputData.h"
 #include "MMKVLog.h"
 #include "PBUtility.h"
-#include <limits.h>
 
 using namespace std;
 

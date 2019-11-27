@@ -25,7 +25,6 @@
 #include "PBEncodeItem.hpp"
 #include "PBUtility.h"
 #include <string>
-#include <sys/stat.h>
 #include <vector>
 
 using namespace std;
@@ -40,18 +39,10 @@ MiniPBCoder::MiniPBCoder() {
 }
 
 MiniPBCoder::~MiniPBCoder() {
-    if (m_inputData) {
-        delete m_inputData;
-    }
-    if (m_outputBuffer) {
-        delete m_outputBuffer;
-    }
-    if (m_outputData) {
-        delete m_outputData;
-    }
-    if (m_encodeItems) {
-        delete m_encodeItems;
-    }
+    delete m_inputData;
+    delete m_outputBuffer;
+    delete m_outputData;
+    delete m_encodeItems;
 }
 
 MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
@@ -243,7 +234,7 @@ vector<string> MiniPBCoder::decodeOneSet() {
     auto length = m_inputData->readInt32();
 
     while (!m_inputData->isAtEnd()) {
-        const auto &value = m_inputData->readString();
+        auto value = m_inputData->readString();
         v.push_back(move(value));
     }
 

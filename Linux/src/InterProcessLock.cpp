@@ -21,9 +21,8 @@
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
 #include <sys/file.h>
-#include <unistd.h>
 
-static int LockType2FlockType(LockType lockType) {
+static uint32_t LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
             return LOCK_SH;
@@ -57,7 +56,7 @@ bool FileLock::doLock(LockType lockType, bool wait) {
         }
     }
 
-    int realLockType = LockType2FlockType(lockType);
+    auto realLockType = LockType2FlockType(lockType);
     int cmd = wait ? realLockType : (realLockType | LOCK_NB);
     if (unLockFirstIfNeeded) {
         // try lock

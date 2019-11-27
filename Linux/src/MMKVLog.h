@@ -22,9 +22,9 @@
 #define MMKV_MMKVLOG_H
 
 //#include <android/log.h>
+#include <cerrno>
 #include <cstdint>
 #include <cstring>
-#include <errno.h>
 
 enum MMKVLogLevel : uint32_t {
     MMKVLogDebug = 0, // not available for release/product build

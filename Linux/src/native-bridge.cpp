@@ -27,8 +27,6 @@
 
 using namespace std;
 
-#define MMKV_JNI static
-
 namespace mmkv {
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {

@@ -20,14 +20,12 @@
 
 #include "MMKVLog.h"
 #include "native-bridge.h"
-#include <stdarg.h>
+#include <cstdarg>
 #include <string>
 
 #ifdef ENABLE_MMKV_LOG
 
 using namespace std;
-
-#define APPNAME "MMKV"
 
 bool g_isLogRedirecting = false;
 

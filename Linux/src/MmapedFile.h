@@ -22,7 +22,6 @@
 #define MMKV_MMAPEDFILE_H
 
 #include <string>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 
 extern const int DEFAULT_MMAP_SIZE;

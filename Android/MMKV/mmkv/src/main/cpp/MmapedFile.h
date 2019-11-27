@@ -22,7 +22,6 @@
 #define MMKV_MMAPEDFILE_H
 
 #include <string>
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 
 #define ASHMEM_NAME_DEF "/dev/ashmem"

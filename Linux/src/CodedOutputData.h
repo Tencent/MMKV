@@ -35,8 +35,6 @@ public:
 
     int32_t spaceLeft();
 
-    uint8_t *curWritePointer();
-
     void seek(size_t addedSize);
 
     void writeRawByte(uint8_t value);

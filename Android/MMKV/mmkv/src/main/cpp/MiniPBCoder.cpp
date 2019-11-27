@@ -25,7 +25,6 @@
 #include "PBEncodeItem.hpp"
 #include "PBUtility.h"
 #include <string>
-#include <sys/stat.h>
 #include <vector>
 
 using namespace std;
@@ -243,7 +242,7 @@ vector<string> MiniPBCoder::decodeOneSet() {
     auto length = m_inputData->readInt32();
 
     while (!m_inputData->isAtEnd()) {
-        const auto &value = m_inputData->readString();
+        auto value = m_inputData->readString();
         v.push_back(move(value));
     }
 

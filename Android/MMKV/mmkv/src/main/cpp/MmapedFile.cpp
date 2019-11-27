@@ -26,6 +26,7 @@
 #include <cerrno>
 #include <fcntl.h>
 #include <libgen.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
