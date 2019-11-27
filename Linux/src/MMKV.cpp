@@ -41,7 +41,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <zlib.h>
+#include "crc32/Checksum.h"
 
 using namespace std;
 
@@ -450,7 +450,7 @@ void MMKV::partialLoadFromFile() {
                 MMBuffer inputBuffer(m_ptr + Fixed32Size + oldActualSize, bufferSize,
                                      MMBufferNoCopy);
                 // incremental update crc digest
-                m_crcDigest = (uint32_t) crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
+                m_crcDigest = (uint32_t) zlib::crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
                                                static_cast<uInt>(inputBuffer.length()));
                 if (m_crcDigest == m_metaInfo.m_crcDigest) {
                     if (m_crypter) {
@@ -1135,7 +1135,7 @@ bool MMKV::isFileValid() {
 bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
     if (m_ptr != nullptr && m_ptr != MAP_FAILED) {
         constexpr auto offset = pbFixed32Size(0);
-        m_crcDigest = (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) acutalSize);
+        m_crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) acutalSize);
 
         if (m_crcDigest == crcDigest) {
             return true;
@@ -1151,7 +1151,7 @@ void MMKV::recaculateCRCDigestWithIV(const unsigned char *iv) {
         constexpr auto offset = pbFixed32Size(0);
         m_crcDigest = 0;
         m_crcDigest =
-            (uint32_t) crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
+            (uint32_t) zlib::crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) m_actualSize);
         writeActualSize(m_actualSize, m_crcDigest, iv, IncreaseSequence);
     }
 }
@@ -1160,7 +1160,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
     if (ptr == nullptr) {
         return;
     }
-    m_crcDigest = (uint32_t) crc32(m_crcDigest, ptr, (uint32_t) length);
+    m_crcDigest = (uint32_t) zlib::crc32(m_crcDigest, ptr, (uint32_t) length);
 
     writeActualSize(m_actualSize, m_crcDigest, nullptr, KeepSequence);
 }
@@ -1510,7 +1510,7 @@ bool MMKV::isFileValid(const std::string &mmapID) {
                 return false;
             }
 
-            crcDigest = (uint32_t) crc32(0, (const uint8_t *) fileData->getPtr() + offset,
+            crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) fileData->getPtr() + offset,
                                          (uint32_t) actualSize);
         }
         delete fileData;

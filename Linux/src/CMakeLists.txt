@@ -73,6 +73,11 @@ add_library( # Sets the name of the library.
              aes/openssl/md5_one.c
              aes/openssl/md5.h
              aes/openssl/md32_common.h
+             crc32/Checksum.h
+             crc32/zlib/zconf.h
+             crc32/zlib/zutil.h
+             crc32/zlib/crc32.h
+             crc32/zlib/crc32.cpp
              )
 
 target_include_directories(mmkv PUBLIC
@@ -92,8 +97,6 @@ target_include_directories(mmkv PUBLIC
               #            log
               #)
 
-find_package(ZLIB)
-
 set_target_properties(mmkv PROPERTIES
             CXX_STANDARD 17
             CXX_EXTENSIONS OFF
@@ -109,6 +112,5 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
                        #          ${log-lib}
-                       z
         pthread
         dl)
