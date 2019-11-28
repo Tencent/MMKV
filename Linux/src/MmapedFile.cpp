@@ -31,6 +31,8 @@
 
 using namespace std;
 
+namespace mmkv {
+
 const int DEFAULT_MMAP_SIZE = getpagesize();
 
 MmapedFile::MmapedFile(const std::string &path, size_t size)
@@ -212,3 +214,5 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
     }
     return true;
 }
+
+} // namespace mmkv

@@ -23,6 +23,8 @@
 
 #include <pthread.h>
 
+namespace mmkv {
+
 class ThreadLock {
 private:
     pthread_mutex_t m_lock;
@@ -35,5 +37,7 @@ public:
     bool try_lock();
     void unlock();
 };
+
+} // namespace mmkv
 
 #endif //MMKV_THREADLOCK_H

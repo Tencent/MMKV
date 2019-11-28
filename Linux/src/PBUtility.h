@@ -28,6 +28,8 @@
 #define likely(x) (__builtin_expect(bool(x), 1))
 #endif
 
+namespace mmkv {
+
 template <typename T, typename P>
 union Converter {
     static_assert(sizeof(T) == sizeof(P), "size not match");
@@ -122,5 +124,7 @@ static inline uint32_t pbInt32Size(int32_t value) {
         return 10;
     }
 }
+
+} // namespace mmkv
 
 #endif //MMKV_PBUTILITY_H

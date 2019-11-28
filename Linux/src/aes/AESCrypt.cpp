@@ -25,6 +25,8 @@
 #include <cstring>
 #include <ctime>
 
+namespace mmkv {
+
 AESCrypt::AESCrypt(const unsigned char *key,
                    size_t keyLength,
                    const unsigned char *iv,
@@ -79,10 +81,14 @@ void AESCrypt::fillRandomIV(unsigned char *vector) {
     }
 }
 
+} // namespace mmkv
+
 #ifndef NDEBUG
 
 #include "../MMKVLog.h"
 #include "../MmapedFile.h"
+
+namespace mmkv {
 
 // check if AESCrypt is encrypt-decrypt full-duplex
 void testAESCrypt() {
@@ -140,5 +146,7 @@ void testAESCrypt() {
     delete[] encryptText;
     delete[] decryptText;
 }
+
+} // namespace mmkv
 
 #endif

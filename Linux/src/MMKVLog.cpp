@@ -19,7 +19,6 @@
  */
 
 #include "MMKVLog.h"
-#include "native-bridge.h"
 #include <cstdarg>
 #include <string>
 
@@ -87,8 +86,8 @@ void _MMKVLogWithLevel(
             va_end(args);
         }
 
-        if (g_isLogRedirecting) {
-            mmkv::mmkvLog((int) level, file, line, func, message);
+        if (g_logHandler) {
+            g_logHandler(level, file, line, func, message);
         } else {
             printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), file, line, func,
                    message.c_str());

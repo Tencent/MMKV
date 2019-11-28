@@ -23,6 +23,8 @@
 
 #include "MMKVLog.h"
 
+namespace mmkv {
+
 template <typename T>
 class ScopedLock {
     T *m_lock;
@@ -68,5 +70,7 @@ public:
 
 //#include <type_traits>
 //#define __SCOPEDLOCK(lock, counter) ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
+
+} // namespace mmkv
 
 #endif //MMKV_SCOPEDLOCK_HPP

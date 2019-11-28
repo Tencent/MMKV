@@ -24,6 +24,8 @@
 #include <string>
 #include <sys/mman.h>
 
+namespace mmkv {
+
 extern const int DEFAULT_MMAP_SIZE;
 
 class MmapedFile {
@@ -62,5 +64,7 @@ extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const char *path);
 extern bool zeroFillFile(int fd, size_t startPos, size_t size);
 extern bool createFile(const std::string &filePath);
+
+} // namespace mmkv
 
 #endif //MMKV_MMAPEDFILE_H

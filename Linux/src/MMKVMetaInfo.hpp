@@ -26,6 +26,8 @@
 #include <cstdint>
 #include <cstring>
 
+namespace mmkv {
+
 enum MMKVVersion : uint32_t {
     MMKVVersionDefault = 0,
 
@@ -72,5 +74,7 @@ struct MMKVMetaInfo {
 };
 
 static_assert(sizeof(MMKVMetaInfo) <= (4 * 1024), "MMKVMetaInfo lager than one pagesize");
+
+} // namespace mmkv
 
 #endif //MMKV_MMKVMETAINFO_H

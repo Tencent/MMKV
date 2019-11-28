@@ -24,6 +24,8 @@
 #include <cstdint>
 #include <cstdlib>
 
+namespace mmkv {
+
 enum MMBufferCopyFlag : bool {
     MMBufferCopy = false,
     MMBufferNoCopy = true,
@@ -52,5 +54,7 @@ public:
     MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;
 };
+
+} // namespace mmkv
 
 #endif //MMKV_MMBUFFER_H

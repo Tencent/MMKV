@@ -57,8 +57,6 @@ add_library( # Sets the name of the library.
              ThreadLock.h
              ThreadLock.cpp
              MMKVMetaInfo.hpp
-             native-bridge.h
-             native-bridge.cpp
              aes/AESCrypt.h
              aes/AESCrypt.cpp
              aes/openssl/aes.h

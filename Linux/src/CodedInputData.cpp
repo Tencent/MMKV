@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace mmkv {
+
 CodedInputData::CodedInputData(const void *oData, int32_t length)
     : m_ptr((uint8_t *) oData), m_size(length), m_position(0) {
     assert(m_ptr);
@@ -164,6 +166,8 @@ int8_t CodedInputData::readRawByte() {
         MMKVError("reach end, m_position: %d, m_size: %d", m_position, m_size);
         return 0;
     }
-    int8_t *bytes = (int8_t *) m_ptr;
+    auto *bytes = (int8_t *) m_ptr;
     return bytes[m_position++];
 }
+
+} // namespace mmkv

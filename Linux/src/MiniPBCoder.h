@@ -29,6 +29,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace mmkv {
+
 class CodedInputData;
 class CodedOutputData;
 
@@ -62,7 +64,7 @@ private:
     void decodeOneMap(std::unordered_map<std::string, MMBuffer> &dic, size_t size = 0);
 
 public:
-    template <typename T>
+    template<typename T>
     static MMBuffer encodeDataWithObject(const T &obj) {
         MiniPBCoder pbcoder;
         return pbcoder.getEncodeData(obj);
@@ -75,5 +77,7 @@ public:
                           const MMBuffer &oData,
                           size_t size = 0);
 };
+
+} // namespace mmkv
 
 #endif //MMKV_MINIPBCODER_H

@@ -20,6 +20,8 @@
 
 #include "PBUtility.h"
 
+namespace mmkv {
+
 uint32_t pbRawVarint32Size(int32_t value) {
     if ((value & (0xffffffff << 7)) == 0) {
         return 1;
@@ -55,3 +57,5 @@ uint32_t pbInt64Size(int64_t value) {
     }
     return 10;
 }
+
+} // namespace mmkv

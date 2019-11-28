@@ -24,6 +24,8 @@
 #include <cassert>
 #include <fcntl.h>
 
+namespace mmkv {
+
 enum LockType {
     SharedLockType,
     ExclusiveLockType,
@@ -85,5 +87,7 @@ public:
         }
     }
 };
+
+} // namespace mmkv
 
 #endif //MMKV_INTERPROCESSLOCK_H

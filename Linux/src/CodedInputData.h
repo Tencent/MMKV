@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <string>
 
+namespace mmkv {
+
 class CodedInputData {
     uint8_t *m_ptr;
     int32_t m_size;
@@ -61,5 +63,7 @@ public:
 
     MMBuffer readData();
 };
+
+} // namespace mmkv
 
 #endif //MMKV_CODEDINPUTDATA_H

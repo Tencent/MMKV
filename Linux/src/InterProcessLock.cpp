@@ -22,6 +22,8 @@
 #include "MMKVLog.h"
 #include <sys/file.h>
 
+namespace mmkv {
+
 static uint32_t LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
@@ -127,3 +129,5 @@ bool FileLock::unlock(LockType lockType) {
         return true;
     }
 }
+
+} // namespace mmkv

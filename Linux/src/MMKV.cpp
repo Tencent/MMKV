@@ -31,7 +31,6 @@
 #include "aes/AESCrypt.h"
 #include "aes/openssl/md5.h"
 #include "crc32/Checksum.h"
-#include "native-bridge.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -44,10 +43,13 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace mmkv;
 
 static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
 static std::string g_rootDir;
+static MMKV::ErrorHandler g_errorHandler;
+MMKV::LogHandler g_logHandler;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
 #define SPECIAL_CHARACTER_DIRECTORY_NAME "specialCharacter"
@@ -60,6 +62,9 @@ static string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativ
 static void mkSpecialCharacterFileDirectory();
 static string md5(const string &value);
 static string encodeFilePath(const string &mmapID);
+
+static MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
+static MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
 
 enum : bool {
     KeepSequence = false,
@@ -371,7 +376,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             checkLastConfirmedInfo();
 
             if (!loadFromFile) {
-                auto strategic = mmkv::onMMKVCRCCheckFail(m_mmapID);
+                auto strategic = onMMKVCRCCheckFail(m_mmapID);
                 if (strategic == OnErrorRecover) {
                     loadFromFile = true;
                     needFullWriteback = true;
@@ -386,7 +391,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
         checkLastConfirmedInfo();
 
         if (!loadFromFile) {
-            auto strategic = mmkv::onMMKVFileLengthError(m_mmapID);
+            auto strategic = onMMKVFileLengthError(m_mmapID);
             if (strategic == OnErrorRecover) {
                 // make sure we don't over read the file
                 m_actualSize = m_size - offset;
@@ -423,7 +428,6 @@ void MMKV::checkLoadData() {
 
         clearMemoryState();
         loadFromFile();
-        notifyContentChanged();
     } else if (m_metaInfo.m_crcDigest != metaInfo.m_crcDigest) {
         MMKVDebug("[%s] oldCrc %u, newCrc %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
                   metaInfo.m_crcDigest);
@@ -442,13 +446,6 @@ void MMKV::checkLoadData() {
         } else {
             partialLoadFromFile();
         }
-        notifyContentChanged();
-    }
-}
-
-void MMKV::notifyContentChanged() {
-    if (g_isContentChangeNotifying) {
-        mmkv::onContentChangedByOuterProcess(m_mmapID);
     }
 }
 
@@ -1341,6 +1338,31 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     }
 }
 
+void MMKV::regiserErrorHandler(ErrorHandler handler) {
+    SCOPEDLOCK(g_instanceLock);
+    g_errorHandler = handler;
+}
+
+void MMKV::unRegisetErrorHandler() {
+    SCOPEDLOCK(g_instanceLock);
+    g_errorHandler = nullptr;
+}
+
+void MMKV::regiserLogHandler(LogHandler handler) {
+    SCOPEDLOCK(g_instanceLock);
+    g_logHandler = handler;
+}
+
+void MMKV::unRegisetLogHandler() {
+    SCOPEDLOCK(g_instanceLock);
+    g_logHandler = nullptr;
+}
+
+void MMKV::setLogLevel(MMKVLogLevel level) {
+    SCOPEDLOCK(g_instanceLock);
+    g_currentLogLevel = level;
+}
+
 static void mkSpecialCharacterFileDirectory() {
     char *path = strdup((g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());
     if (path) {
@@ -1399,4 +1421,18 @@ static string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativ
         return *relativePath + "/" + encodeFilePath(mmapID) + ".crc";
     }
     return g_rootDir + "/" + encodeFilePath(mmapID) + ".crc";
+}
+
+static MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
+    if (g_errorHandler) {
+        return g_errorHandler(mmapID, MMKVErrorType::MMKVCRCCheckFail);
+    }
+    return OnErrorDiscard;
+}
+
+static MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
+    if (g_errorHandler) {
+        return g_errorHandler(mmapID, MMKVErrorType::MMKVFileLength);
+    }
+    return OnErrorDiscard;
 }

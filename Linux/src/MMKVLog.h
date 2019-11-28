@@ -21,26 +21,18 @@
 #ifndef MMKV_MMKVLOG_H
 #define MMKV_MMKVLOG_H
 
-//#include <android/log.h>
+#include "MMKV.h"
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
-
-enum MMKVLogLevel : uint32_t {
-    MMKVLogDebug = 0, // not available for release/product build
-    MMKVLogInfo = 1,  // default level
-    MMKVLogWarning,
-    MMKVLogError,
-    MMKVLogNone, // special level used to disable all log messages
-};
 
 // enable logging
 #define ENABLE_MMKV_LOG
 
 #ifdef ENABLE_MMKV_LOG
 
-extern bool g_isLogRedirecting;
 extern MMKVLogLevel g_currentLogLevel;
+extern MMKV::LogHandler g_logHandler;
 
 extern bool g_isContentChangeNotifying;
 

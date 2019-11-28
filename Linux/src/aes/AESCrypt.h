@@ -24,6 +24,8 @@
 #include "openssl/aes.h"
 #include <cstddef>
 
+namespace mmkv {
+
 constexpr size_t AES_KEY_LEN = 16;
 constexpr size_t AES_KEY_BITSET_LEN = 128;
 
@@ -60,5 +62,7 @@ public:
 void testAESCrypt();
 
 #endif
+
+} // namespace mmkv
 
 #endif /* AES_CRYPT_H_ */

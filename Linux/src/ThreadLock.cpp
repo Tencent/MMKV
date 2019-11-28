@@ -21,6 +21,8 @@
 #include "ThreadLock.h"
 #include "MMKVLog.h"
 
+namespace mmkv {
+
 ThreadLock::ThreadLock() {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -56,3 +58,5 @@ void ThreadLock::unlock() {
         MMKVError("fail to unlock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
     }
 }
+
+} // namespace mmkv
