@@ -23,7 +23,7 @@
     <ProjectGuid>{9D4250EF-E8D6-4652-B738-3D4B2E982126}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>MMKV</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
