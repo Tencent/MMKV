@@ -38,29 +38,36 @@ class CodedOutputData;
 } // namespace mmkv
 
 enum MMKVMode : uint32_t {
-  MMKV_SINGLE_PROCESS = 0x1,
-  MMKV_MULTI_PROCESS = 0x2,
+    MMKV_SINGLE_PROCESS = 0x1,
+    MMKV_MULTI_PROCESS = 0x2,
 };
 
 enum MMKVRecoverStrategic : int {
-  OnErrorDiscard = 0,
-  OnErrorRecover,
+    OnErrorDiscard = 0,
+    OnErrorRecover,
 };
 
 enum MMKVErrorType : int {
-  MMKVCRCCheckFail = 0,
-  MMKVFileLength,
+    MMKVCRCCheckFail = 0,
+    MMKVFileLength,
 };
 
 enum MMKVLogLevel : int {
-  MMKVLogDebug = 0, // not available for release/product build
-  MMKVLogInfo = 1,  // default level
-  MMKVLogWarning,
-  MMKVLogError,
-  MMKVLogNone, // special level used to disable all log messages
+    MMKVLogDebug = 0, // not available for release/product build
+    MMKVLogInfo = 1,  // default level
+    MMKVLogWarning,
+    MMKVLogError,
+    MMKVLogNone, // special level used to disable all log messages
 };
 
 class MMKV {
+    MMKV(const std::string &mmapID,
+         MMKVMode mode,
+         std::string *cryptKey,
+         std::string *relativePath);
+
+    ~MMKV();
+
     std::unordered_map<std::string, mmkv::MMBuffer> m_dic;
     std::string m_mmapID;
     std::string m_path;
@@ -125,19 +132,9 @@ class MMKV {
     bool appendDataWithKey(const mmkv::MMBuffer &data, const std::string &key);
 
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
+
 public:
-    MMKV(const std::string &mmapID,
-         int size,
-         MMKVMode mode,
-         std::string *cryptKey,
-         std::string *relativePath);
-
-    ~MMKV();
-
-    // just forbid it for possibly misuse
-    MMKV(const MMKV &other) = delete;
-    MMKV &operator=(const MMKV &other) = delete;
-
+    // call this before getting any MMKV instance
     static void initializeMMKV(const std::string &rootDir);
 
     // a generic purpose instance
@@ -146,7 +143,6 @@ public:
     // mmapID: any unique ID (com.tencent.xin.pay, etc)
     // if you want a per-user mmkv, you could merge user-id within mmapID
     static MMKV *mmkvWithID(const std::string &mmapID,
-                            int size = mmkv::DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
                             std::string *relativePath = nullptr);
@@ -168,39 +164,53 @@ public:
     // usually you should call this method after other process reKey() the inter-process mmkv
     void checkReSetCryptKey(const std::string *cryptKey);
 
-    bool setStringForKey(const std::string &value, const std::string &key);
+    bool set(bool value, const std::string &key);
 
-    bool setBytesForKey(const mmkv::MMBuffer &value, const std::string &key);
+    bool set(int32_t value, const std::string &key);
 
-    bool setBool(bool value, const std::string &key);
+    bool set(uint32_t value, const std::string &key);
 
-    bool setInt32(int32_t value, const std::string &key);
+    bool set(int64_t value, const std::string &key);
 
-    bool setInt64(int64_t value, const std::string &key);
+    bool set(uint64_t value, const std::string &key);
 
-    bool setFloat(float value, const std::string &key);
+    bool set(float value, const std::string &key);
 
-    bool setDouble(double value, const std::string &key);
+    bool set(double value, const std::string &key);
 
-    bool setVectorForKey(const std::vector<std::string> &vector, const std::string &key);
+    bool set(const char *value, const std::string &key);
 
-    bool getStringForKey(const std::string &key, std::string &result);
+    bool set(const std::string &value, const std::string &key);
 
-    mmkv::MMBuffer getBytesForKey(const std::string &key);
+    bool set(const mmkv::MMBuffer &value, const std::string &key);
 
-    bool getBoolForKey(const std::string &key, bool defaultValue = false);
+    bool set(const std::vector<std::string> &vector, const std::string &key);
 
-    int32_t getInt32ForKey(const std::string &key, int32_t defaultValue = 0);
+    // avoid unexpected type conversion (pointer to bool, etc)
+    template <typename T>
+    bool set(T value, const std::string &key) = delete;
 
-    int64_t getInt64ForKey(const std::string &key, int64_t defaultValue = 0);
+    bool getBool(const std::string &key, bool defaultValue = false);
 
-    float getFloatForKey(const std::string &key, float defaultValue = 0);
+    int32_t getInt32(const std::string &key, int32_t defaultValue = 0);
 
-    double getDoubleForKey(const std::string &key, double defaultValue = 0);
+    uint32_t getUInt32(const std::string &key, uint32_t defaultValue = 0);
 
-    bool getVectorForKey(const std::string &key, std::vector<std::string> &result);
+    int64_t getInt64(const std::string &key, int64_t defaultValue = 0);
 
-    size_t getValueSizeForKey(const std::string &key, bool acutalSize);
+    uint64_t getUInt64(const std::string &key, uint64_t defaultValue = 0);
+
+    float getFloat(const std::string &key, float defaultValue = 0);
+
+    double getDouble(const std::string &key, double defaultValue = 0);
+
+    bool getString(const std::string &key, std::string &result);
+
+    mmkv::MMBuffer getBytes(const std::string &key);
+
+    bool getVector(const std::string &key, std::vector<std::string> &result);
+
+    size_t getValueSize(const std::string &key, bool acutalSize);
 
     int32_t writeValueToBuffer(const std::string &key, void *ptr, int32_t size);
 
@@ -242,7 +252,6 @@ public:
 
     void lock() { m_exclusiveProcessLock.lock(); }
     void unlock() { m_exclusiveProcessLock.unlock(); }
-    bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
 
     typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID,
                                                  MMKVErrorType errorType);
@@ -258,6 +267,10 @@ public:
     static void unRegisetLogHandler();
 
     static void setLogLevel(MMKVLogLevel level);
+
+    // just forbid it for possibly misuse
+    MMKV(const MMKV &other) = delete;
+    MMKV &operator=(const MMKV &other) = delete;
 };
 
 #endif // MMKV_MMKV_H

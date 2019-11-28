@@ -44,12 +44,20 @@ void CodedOutputData::writeInt64(int64_t value) {
     this->writeRawVarint64(value);
 }
 
+void CodedOutputData::writeUInt64(uint64_t value) {
+    this->writeRawVarint64(value);
+}
+
 void CodedOutputData::writeInt32(int32_t value) {
     if (value >= 0) {
         this->writeRawVarint32(value);
     } else {
         this->writeRawVarint64(value);
     }
+}
+
+void CodedOutputData::writeUInt32(uint32_t value) {
+    this->writeRawVarint32(value);
 }
 
 void CodedOutputData::writeBool(bool value) {

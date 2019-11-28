@@ -55,7 +55,11 @@ public:
 
     int64_t readInt64();
 
+    uint64_t readUInt64();
+
     int32_t readInt32();
+
+    uint32_t readUInt32();
 
     int32_t readFixed32();
 

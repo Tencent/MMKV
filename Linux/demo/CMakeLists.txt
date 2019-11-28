@@ -27,3 +27,9 @@ add_executable(demo
 
 target_link_libraries(demo
         mmkv)
+
+add_executable(process
+        process.cpp)
+
+target_link_libraries(process
+        mmkv)

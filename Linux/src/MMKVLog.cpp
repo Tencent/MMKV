@@ -91,7 +91,7 @@ void _MMKVLogWithLevel(
         } else {
             printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), file, line, func,
                    message.c_str());
-            fflush(stdout);
+            //fflush(stdout);
         }
     }
 }

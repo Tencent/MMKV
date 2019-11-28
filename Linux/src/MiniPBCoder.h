@@ -64,7 +64,7 @@ private:
     void decodeOneMap(std::unordered_map<std::string, MMBuffer> &dic, size_t size = 0);
 
 public:
-    template<typename T>
+    template <typename T>
     static MMBuffer encodeDataWithObject(const T &obj) {
         MiniPBCoder pbcoder;
         return pbcoder.getEncodeData(obj);

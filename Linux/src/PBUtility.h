@@ -125,6 +125,14 @@ static inline uint32_t pbInt32Size(int32_t value) {
     }
 }
 
+static inline int32_t pbUInt32Size(uint32_t value) {
+    return pbRawVarint32Size(value);
+}
+
+static inline int32_t pbUInt64Size(uint64_t value) {
+    return pbInt64Size(value);
+}
+
 } // namespace mmkv
 
 #endif //MMKV_PBUTILITY_H
