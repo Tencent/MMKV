@@ -101,7 +101,7 @@ class MMKV {
 
     void partialLoadFromFile();
 
-	void checkDataValid(bool &loadFromFile, bool &needFullWriteback);
+    void checkDataValid(bool &loadFromFile, bool &needFullWriteback);
 
     void checkLoadData();
 
@@ -126,7 +126,7 @@ class MMKV {
 
     bool fullWriteback();
 
-	bool doFullWriteBack(mmkv::MMBuffer &&allData);
+    bool doFullWriteBack(mmkv::MMBuffer &&allData);
 
     const mmkv::MMBuffer &getDataForKey(const std::string &key);
 

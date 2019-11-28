@@ -251,7 +251,7 @@ void MMKV::loadFromFile() {
                     // file not valid or empty, discard everything
                     SCOPEDLOCK(m_exclusiveProcessLock);
 
-					m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
+                    m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
                     if (m_actualSize > 0) {
                         writeActualSize(0, 0, nullptr, IncreaseSequence);
                         sync();
@@ -350,7 +350,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
         }
     };
 
-	m_actualSize = readActualSize();
+    m_actualSize = readActualSize();
 
     if (m_actualSize < m_size && (m_actualSize + offset) <= m_size) {
         if (checkFileCRCValid(m_actualSize, m_metaInfo.m_crcDigest)) {
@@ -456,7 +456,7 @@ void MMKV::clearAll() {
         FlushViewOfFile(m_metaFile.getMemory(), m_metaFile.getFileSize());
     }
 
-	if (m_fd >= 0) {
+    if (m_fd >= 0) {
         if (m_size != DEFAULT_MMAP_SIZE) {
             MMKVInfo("truncating [%s] from %zu to %zd", m_mmapID.c_str(), m_size,
                      DEFAULT_MMAP_SIZE);
@@ -958,7 +958,8 @@ bool MMKV::isFileValid() {
 bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
     if (m_ptr) {
         constexpr auto offset = pbFixed32Size(0);
-        m_crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) acutalSize);
+        m_crcDigest =
+            (uint32_t) zlib::crc32(0, (const uint8_t *) m_ptr + offset, (uint32_t) acutalSize);
 
         if (m_crcDigest == crcDigest) {
             return true;
@@ -987,7 +988,6 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
 
     writeActualSize(m_actualSize, m_crcDigest, nullptr, KeepSequence);
 }
-
 
 // set & get
 
@@ -1309,7 +1309,7 @@ void MMKV::sync() {
     }
     if (!FlushViewOfFile(m_metaFile.getMemory(), m_metaFile.getFileSize())) {
         MMKVError("fail to FlushViewOfFile [%s]:%d", m_metaFile.getName(), GetLastError());
-	}
+    }
 }
 
 bool MMKV::isFileValid(const std::string &mmapID) {
