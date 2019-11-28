@@ -27,13 +27,8 @@ template <typename T>
 class ScopedLock {
     T *m_lock;
 
-    // just forbid it for possibly misuse
-    ScopedLock(const ScopedLock<T> &other) = delete;
-
-    ScopedLock &operator=(const ScopedLock<T> &other) = delete;
-
 public:
-    ScopedLock(T *oLock) : m_lock(oLock) {
+    explicit ScopedLock(T *oLock) : m_lock(oLock) {
         assert(m_lock);
         lock();
     }
@@ -42,6 +37,10 @@ public:
         unlock();
         m_lock = nullptr;
     }
+
+    // just forbid it for possibly misuse
+    ScopedLock(const ScopedLock<T> &other) = delete;
+    ScopedLock &operator=(const ScopedLock<T> &other) = delete;
 
     void lock() {
         if (m_lock) {

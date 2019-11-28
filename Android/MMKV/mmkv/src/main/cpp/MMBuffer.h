@@ -39,7 +39,7 @@ public:
 
     size_t length() const { return size; }
 
-    MMBuffer(size_t length = 0);
+    explicit MMBuffer(size_t length = 0);
     MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy = MMBufferCopy);
 
     MMBuffer(MMBuffer &&other) noexcept;

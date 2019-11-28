@@ -40,13 +40,12 @@ class FileLock {
 
     bool isFileLockValid() { return m_fd >= 0; }
 
+public:
+    explicit FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+
     // just forbid it for possibly misuse
     FileLock(const FileLock &other) = delete;
-
     FileLock &operator=(const FileLock &other) = delete;
-
-public:
-    FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 
     bool lock(LockType lockType);
 

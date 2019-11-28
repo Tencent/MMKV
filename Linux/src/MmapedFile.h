@@ -32,14 +32,14 @@ class MmapedFile {
     void *m_segmentPtr;
     size_t m_segmentSize;
 
-    // just forbid it for possibly misuse
-    MmapedFile(const MmapedFile &other) = delete;
-    MmapedFile &operator=(const MmapedFile &other) = delete;
-
 public:
     explicit MmapedFile(const std::string &path,
                         size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE));
     ~MmapedFile();
+
+    // just forbid it for possibly misuse
+    MmapedFile(const MmapedFile &other) = delete;
+    MmapedFile &operator=(const MmapedFile &other) = delete;
 
     size_t getFileSize() { return m_segmentSize; }
 

@@ -33,7 +33,7 @@ class ScopedLock {
     ScopedLock &operator=(const ScopedLock<T> &other) = delete;
 
 public:
-    ScopedLock(T *oLock) : m_lock(oLock) {
+    explicit ScopedLock(T *oLock) : m_lock(oLock) {
         assert(m_lock);
         lock();
     }

@@ -42,7 +42,7 @@ class MiniPBCoder {
 
 private:
     MiniPBCoder();
-    MiniPBCoder(const MMBuffer *inputBuffer);
+    explicit MiniPBCoder(const MMBuffer *inputBuffer);
     ~MiniPBCoder();
 
     void writeRootObject();

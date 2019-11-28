@@ -40,7 +40,7 @@ public:
 
     size_t length() const { return size; }
 
-    MMBuffer(size_t length = 0);
+    explicit MMBuffer(size_t length = 0);
     MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy = MMBufferCopy);
 
     MMBuffer(MMBuffer &&other) noexcept;
@@ -48,7 +48,6 @@ public:
 
     ~MMBuffer();
 
-private:
     // those are expensive, just forbid it for possibly misuse
     MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;

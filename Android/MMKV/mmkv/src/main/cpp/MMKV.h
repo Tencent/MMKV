@@ -113,11 +113,6 @@ class MMKV {
 
     void notifyContentChanged();
 
-    // just forbid it for possibly misuse
-    MMKV(const MMKV &other) = delete;
-
-    MMKV &operator=(const MMKV &other) = delete;
-
 public:
     MMKV(const std::string &mmapID,
          int size,
@@ -131,6 +126,10 @@ public:
          std::string *cryptKey = nullptr);
 
     ~MMKV();
+
+    // just forbid it for possibly misuse
+    MMKV(const MMKV &other) = delete;
+    MMKV &operator=(const MMKV &other) = delete;
 
     static void initializeMMKV(const std::string &rootDir);
 

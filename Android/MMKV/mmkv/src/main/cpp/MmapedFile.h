@@ -36,16 +36,16 @@ class MmapedFile {
     void *m_segmentPtr;
     size_t m_segmentSize;
 
+public:
+    explicit MmapedFile(const std::string &path,
+                        size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE),
+                        bool fileType = MMAP_FILE);
+    explicit MmapedFile(int ashmemFD);
+    ~MmapedFile();
+
     // just forbid it for possibly misuse
     MmapedFile(const MmapedFile &other) = delete;
     MmapedFile &operator=(const MmapedFile &other) = delete;
-
-public:
-    MmapedFile(const std::string &path,
-               size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE),
-               bool fileType = MMAP_FILE);
-    MmapedFile(int ashmemFD);
-    ~MmapedFile();
 
     const bool m_fileType;
 
