@@ -24,12 +24,16 @@ project(demo)
 
 add_executable(demo
         main.cpp)
-
 target_link_libraries(demo
         mmkv)
+set_target_properties(demo PROPERTIES
+        CXX_STANDARD 11
+        )
 
 add_executable(process
         process.cpp)
-
 target_link_libraries(process
         mmkv)
+set_target_properties(process PROPERTIES
+        CXX_STANDARD 11
+        )

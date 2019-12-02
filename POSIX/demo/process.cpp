@@ -22,11 +22,7 @@
 #include <chrono>
 #include <cstdio>
 #include <iostream>
-#include <limits>
-#include <pthread.h>
 #include <string>
-#include <sys/time.h>
-#include <wait.h>
 #include <zconf.h>
 
 using namespace std;
@@ -41,7 +37,7 @@ void brutleTest(int processID) {
     auto start = hclock::now();
 
     auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
-    for (size_t i = 0; i < keyCount; i++) {
+    for (int32_t i = 0; i < keyCount; i++) {
         mmkv->set(i, arrIntKeys[i]);
         mmkv->set("str-" + to_string(i), arrStringKeys[i]);
         mmkv->getInt32(arrIntKeys[i]);

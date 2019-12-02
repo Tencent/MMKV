@@ -25,7 +25,7 @@
 #include <limits>
 #include <pthread.h>
 #include <string>
-#include <wait.h>
+#include <sys/wait.h>
 #include <zconf.h>
 
 using namespace std;
@@ -67,15 +67,15 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     cout << "double = " << mmkv->getDouble("double") << endl;
 
     if (!decodeOnly) {
-        mmkv->set("Hello, MMKV-示例 for Win32", "string");
+        mmkv->set("Hello, MMKV-示例 for POSIX", "string");
     }
     string result;
     mmkv->getString("string", result);
     cout << "string = " << result << endl;
 }
 
-constexpr auto keyCount = 10000;
-constexpr auto threadCount = 10;
+constexpr int32_t keyCount = 10000;
+constexpr int32_t threadCount = 10;
 static const string MMKV_ID = "thread_test1";
 vector<string> arrIntKeys;
 vector<string> arrStringKeys;
@@ -89,7 +89,7 @@ void *threadFunction(void *lpParam) {
 
     auto segmentCount = keyCount / threadCount;
     auto startIndex = segmentCount * threadIndex;
-    for (auto index = startIndex; index < startIndex + segmentCount; index++) {
+    for (int32_t index = startIndex; index < startIndex + segmentCount; index++) {
         mmkv->set(index, arrIntKeys[index]);
         mmkv->set("str-" + to_string(index), arrStringKeys[index]);
     }
@@ -105,7 +105,7 @@ void threadTest() {
     for (size_t index = 0; index < threadCount; index++) {
         pthread_create(&threadHandles[index], nullptr, threadFunction, (void *) index);
     }
-    for (unsigned long threadHandle : threadHandles) {
+    for (auto threadHandle : threadHandles) {
         pthread_join(threadHandle, nullptr);
     }
 
@@ -118,7 +118,7 @@ void brutleTest() {
     auto start = hclock::now();
 
     auto mmkv = MMKV::mmkvWithID("brutleTest");
-    for (size_t i = 0; i < keyCount; i++) {
+    for (int32_t i = 0; i < keyCount; i++) {
         mmkv->set(i, arrIntKeys[i]);
         mmkv->set("str-" + to_string(i), arrStringKeys[i]);
     }
