@@ -19,7 +19,6 @@
  */
 
 #include "CodedInputData.h"
-#include "MMKVLog.h"
 #include "PBUtility.h"
 #include <cassert>
 
@@ -56,8 +55,7 @@ int64_t CodedInputData::readInt64() {
         }
         shift += 7;
     }
-    MMKVError("InvalidProtocolBuffer malformedInt64");
-    return 0;
+    throw std::invalid_argument("InvalidProtocolBuffer malformedInt64");
 }
 
 uint64_t CodedInputData::readUInt64() {
@@ -89,16 +87,14 @@ string CodedInputData::readString() {
     } else if (size == 0) {
         return "";
     } else {
-        MMKVError("Invalid Size: %d", size);
-        return "";
+        throw std::length_error("Invalid Size: " + to_string(size));
     }
 }
 
 MMBuffer CodedInputData::readData() {
     int32_t size = this->readRawVarint32();
     if (size < 0) {
-        MMKVError("InvalidProtocolBuffer negativeSize");
-        return MMBuffer(0);
+        throw std::length_error("InvalidProtocolBuffer negativeSize");
     }
 
     if (size <= m_size - m_position) {
@@ -106,8 +102,7 @@ MMBuffer CodedInputData::readData() {
         m_position += size;
         return data;
     } else {
-        MMKVError("InvalidProtocolBuffer truncatedMessage");
-        return MMBuffer(0);
+        throw std::out_of_range("InvalidProtocolBuffer truncatedMessage");
     }
 }
 
@@ -137,7 +132,7 @@ int32_t CodedInputData::readRawVarint32() {
                             return result;
                         }
                     }
-                    MMKVError("InvalidProtocolBuffer malformed varint32");
+                    throw std::invalid_argument("InvalidProtocolBuffer malformed varint32");
                 }
             }
         }
@@ -171,8 +166,9 @@ int64_t CodedInputData::readRawLittleEndian64() {
 
 int8_t CodedInputData::readRawByte() {
     if (m_position == m_size) {
-        MMKVError("reach end, m_position: %d, m_size: %d", m_position, m_size);
-        return 0;
+        auto msg =
+            "reach end, m_position: " + to_string(m_position) + ", m_size: " + to_string(m_size);
+        throw std::out_of_range(msg);
     }
     auto *bytes = (int8_t *) m_ptr;
     return bytes[m_position++];

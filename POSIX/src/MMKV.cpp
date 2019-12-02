@@ -32,9 +32,9 @@
 #include "aes/openssl/md5.h"
 #include "crc32/Checksum.h"
 #include <algorithm>
+#include <cerrno>
 #include <cstdio>
 #include <cstring>
-#include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <sys/mman.h>
@@ -259,7 +259,11 @@ void MMKV::loadFromFile() {
                     decryptBuffer(*m_crypter, inputBuffer);
                 }
                 m_dic.clear();
-                MiniPBCoder::decodeMap(m_dic, inputBuffer);
+                if (needFullWriteback) {
+                    MiniPBCoder::greedyDecodeMap(m_dic, inputBuffer);
+                } else {
+                    MiniPBCoder::decodeMap(m_dic, inputBuffer);
+                }
                 m_output = new CodedOutputData(m_ptr + Fixed32Size, m_size - Fixed32Size);
                 m_output->seek(m_actualSize);
                 if (needFullWriteback) {
@@ -310,7 +314,7 @@ void MMKV::partialLoadFromFile() {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
                     }
-                    MiniPBCoder::decodeMap(m_dic, inputBuffer, bufferSize);
+                    MiniPBCoder::greedyDecodeMap(m_dic, inputBuffer, bufferSize);
                     m_output->seek(bufferSize);
                     m_hasFullWriteback = false;
 
@@ -668,7 +672,7 @@ size_t MMKV::readActualSize() {
     assert(m_metaFile.isFileValid());
 
     uint32_t actualSize = 0;
-    memcpy(&actualSize, m_ptr, sizeof(actualSize));
+    memcpy(&actualSize, m_ptr, Fixed32Size);
 
     if (m_metaInfo.m_version >= MMKVVersionActualSize) {
         if (m_metaInfo.m_actualSize != actualSize) {
@@ -1106,8 +1110,12 @@ bool MMKV::getString(const std::string &key, std::string &result) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        result = MiniPBCoder::decodeString(data);
-        return true;
+        try {
+            result = MiniPBCoder::decodeString(data);
+            return true;
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return false;
 }
@@ -1119,7 +1127,11 @@ MMBuffer MMKV::getBytes(const std::string &key) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        return MiniPBCoder::decodeBytes(data);
+        try {
+            return MiniPBCoder::decodeBytes(data);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return MMBuffer(0);
 }
@@ -1131,8 +1143,12 @@ bool MMKV::getBool(const std::string &key, bool defaultValue) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        CodedInputData input(data.getPtr(), data.length());
-        return input.readBool();
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readBool();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return defaultValue;
 }
@@ -1144,8 +1160,12 @@ int32_t MMKV::getInt32(const std::string &key, int32_t defaultValue) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        CodedInputData input(data.getPtr(), data.length());
-        return input.readInt32();
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readInt32();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return defaultValue;
 }
@@ -1157,8 +1177,12 @@ uint32_t MMKV::getUInt32(const std::string &key, uint32_t defaultValue) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        CodedInputData input(data.getPtr(), data.length());
-        return input.readUInt32();
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readUInt32();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return defaultValue;
 }
@@ -1170,8 +1194,12 @@ int64_t MMKV::getInt64(const std::string &key, int64_t defaultValue) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        CodedInputData input(data.getPtr(), data.length());
-        return input.readInt64();
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readInt64();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return defaultValue;
 }
@@ -1183,8 +1211,12 @@ uint64_t MMKV::getUInt64(const std::string &key, uint64_t defaultValue) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        CodedInputData input(data.getPtr(), data.length());
-        return input.readUInt64();
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readUInt64();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return defaultValue;
 }
@@ -1196,8 +1228,12 @@ float MMKV::getFloat(const std::string &key, float defaultValue) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        CodedInputData input(data.getPtr(), data.length());
-        return input.readFloat();
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readFloat();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return defaultValue;
 }
@@ -1209,8 +1245,12 @@ double MMKV::getDouble(const std::string &key, double defaultValue) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        CodedInputData input(data.getPtr(), data.length());
-        return input.readDouble();
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readDouble();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return defaultValue;
 }
@@ -1222,8 +1262,12 @@ bool MMKV::getVector(const std::string &key, std::vector<std::string> &result) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        result = MiniPBCoder::decodeSet(data);
-        return true;
+        try {
+            result = MiniPBCoder::decodeSet(data);
+            return true;
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
     return false;
 }
@@ -1235,10 +1279,14 @@ size_t MMKV::getValueSize(const std::string &key, bool actualSize) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (actualSize) {
-        CodedInputData input(data.getPtr(), data.length());
-        auto length = input.readInt32();
-        if (pbRawVarint32Size(length) + length == data.length()) {
-            return static_cast<size_t>(length);
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            auto length = input.readInt32();
+            if (pbRawVarint32Size(length) + length == data.length()) {
+                return static_cast<size_t>(length);
+            }
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
         }
     }
     return data.length();
@@ -1250,19 +1298,23 @@ int32_t MMKV::writeValueToBuffer(const std::string &key, void *ptr, int32_t size
     }
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
-    CodedInputData input(data.getPtr(), data.length());
-    auto length = input.readInt32();
-    auto offset = pbRawVarint32Size(length);
-    if (offset + length == data.length()) {
-        if (length <= size) {
-            memcpy(ptr, (uint8_t *) data.getPtr() + offset, length);
-            return length;
+    try {
+        CodedInputData input(data.getPtr(), data.length());
+        auto length = input.readInt32();
+        auto offset = pbRawVarint32Size(length);
+        if (offset + length == data.length()) {
+            if (length <= size) {
+                memcpy(ptr, (uint8_t *) data.getPtr() + offset, length);
+                return length;
+            }
+        } else {
+            if (data.length() <= size) {
+                memcpy(ptr, data.getPtr(), data.length());
+                return static_cast<int32_t>(data.length());
+            }
         }
-    } else {
-        if (data.length() <= size) {
-            memcpy(ptr, data.getPtr(), data.length());
-            return static_cast<int32_t>(data.length());
-        }
+    } catch (std::exception &exception) {
+        MMKVError("%s", exception.what());
     }
     return -1;
 }
@@ -1376,9 +1428,9 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     uint32_t crcDigest = 0;
     MMBuffer *fileData = readWholeFile(kvPath.c_str());
     if (fileData) {
-        if (fileData->getPtr()) {
-            size_t actualSize =
-                CodedInputData(fileData->getPtr(), fileData->length()).readFixed32();
+        if (fileData->getPtr() && fileData->length() >= Fixed32Size) {
+            uint32_t actualSize = 0;
+            memcpy(&actualSize, fileData->getPtr(), Fixed32Size);
             if (actualSize > fileData->length() - offset) {
                 delete fileData;
                 return false;

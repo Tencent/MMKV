@@ -67,9 +67,10 @@ void CodedOutputData::writeBool(bool value) {
 void CodedOutputData::writeString(const string &value) {
     size_t numberOfBytes = value.size();
     if (m_position + numberOfBytes > m_size) {
-        MMKVError("m_position: %d, numberOfBytes: %zd, m_size: %zd", m_position, numberOfBytes,
-                  m_size);
-        return;
+        auto msg = "m_position: " + to_string(m_position) +
+                   ", numberOfBytes: " + to_string(numberOfBytes) +
+                   ", m_size: " + to_string(m_size);
+        throw out_of_range(msg);
     }
     this->writeRawVarint32((int32_t) numberOfBytes);
     memcpy(m_ptr + m_position, ((uint8_t *) value.data()), numberOfBytes);
@@ -89,13 +90,14 @@ void CodedOutputData::seek(size_t addedSize) {
     m_position += addedSize;
 
     if (m_position > m_size) {
-        MMKVError("OutOfSpace");
+        throw out_of_range("OutOfSpace");
     }
 }
 
 void CodedOutputData::writeRawByte(uint8_t value) {
     if (m_position == m_size) {
-        MMKVError("m_position: %d, m_size: %zd", m_position, m_size);
+        throw out_of_range("m_position: " + to_string(m_position) +
+                           " m_size: " + to_string(m_size));
         return;
     }
 
@@ -105,9 +107,10 @@ void CodedOutputData::writeRawByte(uint8_t value) {
 void CodedOutputData::writeRawData(const MMBuffer &data) {
     size_t numberOfBytes = data.length();
     if (m_position + numberOfBytes > m_size) {
-        MMKVError("m_position: %d, numberOfBytes: %zd, m_size: %zd", m_position, numberOfBytes,
-                  m_size);
-        return;
+        auto msg = "m_position: " + to_string(m_position) +
+                   ", numberOfBytes: " + to_string(numberOfBytes) +
+                   ", m_size: " + to_string(m_size);
+        throw out_of_range(msg);
     }
     memcpy(m_ptr + m_position, data.getPtr(), numberOfBytes);
     m_position += numberOfBytes;

@@ -243,19 +243,37 @@ vector<string> MiniPBCoder::decodeOneSet() {
     return v;
 }
 
-void MiniPBCoder::decodeOneMap(unordered_map<string, MMBuffer> &dic, size_t size) {
-    if (size == 0) {
-        auto length = m_inputData->readInt32();
-    }
-    while (!m_inputData->isAtEnd()) {
-        const auto &key = m_inputData->readString();
-        if (key.length() > 0) {
-            auto value = m_inputData->readData();
-            if (value.length() > 0) {
-                dic[key] = move(value);
-            } else {
-                dic.erase(key);
+void MiniPBCoder::decodeOneMap(unordered_map<string, MMBuffer> &dic, size_t size, bool greedy) {
+    auto block = [size, this](unordered_map<string, MMBuffer> &dictionary) {
+        if (size == 0) {
+            auto length = m_inputData->readInt32();
+        }
+        while (!m_inputData->isAtEnd()) {
+            const auto &key = m_inputData->readString();
+            if (key.length() > 0) {
+                auto value = m_inputData->readData();
+                if (value.length() > 0) {
+                    dictionary[key] = move(value);
+                } else {
+                    dictionary.erase(key);
+                }
             }
+        }
+    };
+
+    if (greedy) {
+        try {
+            block(dic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    } else {
+        try {
+            unordered_map<string, MMBuffer> tmpDic;
+            block(tmpDic);
+            dic.swap(tmpDic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
         }
     }
 }
@@ -274,7 +292,14 @@ void MiniPBCoder::decodeMap(unordered_map<string, MMBuffer> &dic,
                             const MMBuffer &oData,
                             size_t size) {
     MiniPBCoder oCoder(&oData);
-    oCoder.decodeOneMap(dic, size);
+    oCoder.decodeOneMap(dic, size, false);
+}
+
+void MiniPBCoder::greedyDecodeMap(unordered_map<string, MMBuffer> &dic,
+                                  const MMBuffer &oData,
+                                  size_t size) {
+    MiniPBCoder oCoder(&oData);
+    oCoder.decodeOneMap(dic, size, true);
 }
 
 vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {

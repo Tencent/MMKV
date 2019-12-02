@@ -61,21 +61,35 @@ private:
     std::string decodeOneString();
     MMBuffer decodeOneBytes();
     std::vector<std::string> decodeOneSet();
-    void decodeOneMap(std::unordered_map<std::string, MMBuffer> &dic, size_t size = 0);
+    void decodeOneMap(std::unordered_map<std::string, MMBuffer> &dic, size_t size, bool greedy);
 
 public:
     template <typename T>
     static MMBuffer encodeDataWithObject(const T &obj) {
-        MiniPBCoder pbcoder;
-        return pbcoder.getEncodeData(obj);
+        try {
+            MiniPBCoder pbcoder;
+            return pbcoder.getEncodeData(obj);
+        } catch (const std::exception &exception) {
+            MMKVError("%s", exception.what());
+            return MMBuffer(0);
+        }
     }
 
     static std::string decodeString(const MMBuffer &oData);
+
     static MMBuffer decodeBytes(const MMBuffer &oData);
+
     static std::vector<std::string> decodeSet(const MMBuffer &oData);
+
+    // return empty result if there's any error
     static void decodeMap(std::unordered_map<std::string, MMBuffer> &dic,
                           const MMBuffer &oData,
                           size_t size = 0);
+
+    // decode as much data as possible before any error happens
+    static void greedyDecodeMap(std::unordered_map<std::string, MMBuffer> &dic,
+                                const MMBuffer &oData,
+                                size_t size = 0);
 };
 
 } // namespace mmkv
