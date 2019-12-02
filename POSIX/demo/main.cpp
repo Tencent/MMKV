@@ -124,8 +124,8 @@ void brutleTest() {
     }
 
     auto finish = hclock::now();
-    auto used = chrono::duration_cast<chrono::milliseconds>(finish - start).count();
-    printf("encode int & string %d times, cost: %ld ms\n", keyCount, used);
+    long long used = chrono::duration_cast<chrono::milliseconds>(finish - start).count();
+    printf("encode int & string %d times, cost: %lld ms\n", keyCount, used);
 }
 
 void processTest() {
@@ -135,7 +135,7 @@ void processTest() {
         auto pid = fork();
         // this is child
         if (pid <= 0) {
-            execl("process", nullptr, nullptr);
+            execl("process", "process", nullptr);
             perror("execl"); // execl doesn't return unless there is a problem
             exit(1);
         } else {
