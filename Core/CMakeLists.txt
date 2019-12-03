@@ -82,5 +82,6 @@ target_include_directories(core PUBLIC
 set_target_properties(core PROPERTIES
             CXX_STANDARD 17
             CXX_EXTENSIONS OFF
+            POSITION_INDEPENDENT_CODE ON
             )
 
