@@ -21,6 +21,7 @@
 #include "CodedInputData.h"
 #include "PBUtility.h"
 #include <cassert>
+#include <stdexcept>
 
 using namespace std;
 

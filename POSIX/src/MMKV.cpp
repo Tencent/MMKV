@@ -49,7 +49,7 @@ static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
 static std::string g_rootDir;
 static MMKV::ErrorHandler g_errorHandler;
-MMKV::LogHandler g_logHandler;
+mmkv::LogHandler g_logHandler;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
 #define SPECIAL_CHARACTER_DIRECTORY_NAME "specialCharacter"

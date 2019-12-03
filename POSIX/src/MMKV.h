@@ -21,6 +21,8 @@
 #ifndef MMKV_MMKV_H
 #define MMKV_MMKV_H
 
+#include "MMKVPredef.h"
+
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVMetaInfo.hpp"
@@ -50,14 +52,6 @@ enum MMKVRecoverStrategic : int {
 enum MMKVErrorType : int {
     MMKVCRCCheckFail = 0,
     MMKVFileLength,
-};
-
-enum MMKVLogLevel : int {
-    MMKVLogDebug = 0, // not available for release/product build
-    MMKVLogInfo = 1,  // default level
-    MMKVLogWarning,
-    MMKVLogError,
-    MMKVLogNone, // special level used to disable all log messages
 };
 
 class MMKV {
@@ -258,12 +252,7 @@ public:
     static void regiserErrorHandler(ErrorHandler handler);
     static void unRegisetErrorHandler();
 
-    typedef void (*LogHandler)(MMKVLogLevel level,
-                               const std::string &file,
-                               int line,
-                               const std::string &function,
-                               const std::string &message);
-    static void regiserLogHandler(LogHandler handler);
+    static void regiserLogHandler(mmkv::LogHandler handler);
     static void unRegisetLogHandler();
 
     static void setLogLevel(MMKVLogLevel level);

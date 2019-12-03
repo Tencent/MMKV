@@ -19,9 +19,9 @@
  */
 
 #include "CodedOutputData.h"
-#include "MMKVLog.h"
 #include "PBUtility.h"
 #include <cassert>
+#include <stdexcept>
 
 using namespace std;
 

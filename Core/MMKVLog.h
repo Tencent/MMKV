@@ -21,7 +21,8 @@
 #ifndef MMKV_MMKVLOG_H
 #define MMKV_MMKVLOG_H
 
-#include "MMKV.h"
+#include "MMKVPredef.h"
+
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
@@ -32,7 +33,7 @@
 #ifdef ENABLE_MMKV_LOG
 
 extern MMKVLogLevel g_currentLogLevel;
-extern MMKV::LogHandler g_logHandler;
+extern mmkv::LogHandler g_logHandler;
 
 extern bool g_isContentChangeNotifying;
 
