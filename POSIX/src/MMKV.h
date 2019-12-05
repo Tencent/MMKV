@@ -66,9 +66,8 @@ class MMKV {
     std::string m_mmapID;
     std::string m_path;
     std::string m_crcPath;
-    int m_fd;
-    char *m_ptr;
-    size_t m_size;
+
+    mmkv::MemoryFile m_file;
     size_t m_actualSize;
     mmkv::CodedOutputData *m_output;
 
@@ -233,11 +232,11 @@ public:
 
     // call this method if you are facing memory-warning
     // any subsequent call to the instance will load all key-values from file again
-    void clearMemoryState();
+    void clearMemoryCache();
 
     // you don't need to call this, really, I mean it
     // unless you care about out of battery
-    void sync(bool sync = true);
+    void sync(SyncFlag flag = MMKV_SYNC);
 
     // check if content changed by other process
     void checkContentChanged();

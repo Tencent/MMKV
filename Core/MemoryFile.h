@@ -26,9 +26,9 @@
 #include <string>
 #include <sys/mman.h>
 
-namespace mmkv {
+enum SyncFlag : bool { MMKV_SYNC = true, MMKV_ASYNC = false };
 
-enum SyncFlag : bool { MMAP_SYNC = true, MMAP_ASYNC = false };
+namespace mmkv {
 
 class MemoryFile {
     std::string m_name;
@@ -36,9 +36,11 @@ class MemoryFile {
     void *m_ptr;
     size_t m_size;
 
+    bool mmap();
+
 public:
-    explicit MemoryFile(const std::string &path, size_t size);
-    ~MemoryFile();
+    explicit MemoryFile(const std::string &path);
+    ~MemoryFile() { clearMemoryCache(); }
 
     // just forbid it for possibly misuse
     MemoryFile(const MemoryFile &other) = delete;
@@ -56,6 +58,11 @@ public:
     bool truncate(size_t size);
 
     bool msync(SyncFlag syncFlag);
+
+    // call this if clearMemoryCache() has been called
+    void reloadFromFile();
+
+    void clearMemoryCache();
 
     bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
 };

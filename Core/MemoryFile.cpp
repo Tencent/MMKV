@@ -33,53 +33,13 @@ using namespace std;
 
 namespace mmkv {
 
-MemoryFile::MemoryFile(const std::string &path, size_t size)
+MemoryFile::MemoryFile(const std::string &path)
     : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
-    m_fd = open(m_name.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
-    if (m_fd < 0) {
-        MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
-    } else {
-        FileLock fileLock(m_fd);
-        InterProcessLock lock(&fileLock, ExclusiveLockType);
-        SCOPEDLOCK(lock);
-
-        struct stat st = {0};
-        if (fstat(m_fd, &st) != -1) {
-            m_size = static_cast<size_t>(st.st_size);
-        }
-        if (m_size < DEFAULT_MMAP_SIZE) {
-            m_size = static_cast<size_t>(DEFAULT_MMAP_SIZE);
-            if (ftruncate(m_fd, m_size) != 0 || !zeroFillFile(m_fd, 0, m_size)) {
-                MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(), m_size,
-                          strerror(errno));
-                close(m_fd);
-                m_fd = -1;
-                removeFile(m_name);
-                return;
-            }
-        }
-        m_ptr = (char *) mmap(nullptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
-        if (m_ptr == MAP_FAILED) {
-            MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
-            close(m_fd);
-            m_fd = -1;
-            m_ptr = nullptr;
-        }
-    }
+    reloadFromFile();
 }
 
-MemoryFile::~MemoryFile() {
-    if (m_ptr) {
-        munmap(m_ptr, m_size);
-        m_ptr = nullptr;
-    }
-    if (m_fd >= 0) {
-        close(m_fd);
-        m_fd = -1;
-    }
-}
 bool MemoryFile::truncate(size_t size) {
-    if (!isFileValid()) {
+    if (m_fd < 0) {
         return false;
     }
     if (size == m_size) {
@@ -107,10 +67,27 @@ bool MemoryFile::truncate(size_t size) {
         }
     }
 
-    if (munmap(m_ptr, oldSize) != 0) {
-        MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
+    if (m_ptr) {
+        if (munmap(m_ptr, oldSize) != 0) {
+            MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
+        }
     }
-    m_ptr = (char *) mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
+    return mmap();
+}
+
+bool MemoryFile::msync(SyncFlag syncFlag) {
+    if (m_ptr) {
+        auto ret = ::msync(m_ptr, m_size, syncFlag ? MMKV_SYNC : MMKV_ASYNC);
+        if (ret == 0) {
+            return true;
+        }
+        MMKVError("fail to msync [%s], %s", m_name.c_str(), strerror(errno));
+    }
+    return false;
+}
+
+bool MemoryFile::mmap() {
+    m_ptr = (char *) ::mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
     if (m_ptr == MAP_FAILED) {
         MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
         m_ptr = nullptr;
@@ -120,15 +97,52 @@ bool MemoryFile::truncate(size_t size) {
     return true;
 }
 
-bool MemoryFile::msync(SyncFlag syncFlag) {
-    if (m_ptr) {
-        auto ret = ::msync(m_ptr, m_size, syncFlag ? MMAP_SYNC : MMAP_ASYNC);
-        if (ret == 0) {
-            return true;
-        }
-        MMKVError("fail to msync [%s], %s", m_name.c_str(), strerror(errno));
+void MemoryFile::reloadFromFile() {
+    if (isFileValid()) {
+        clearMemoryCache();
     }
-    return false;
+
+    m_fd = open(m_name.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+    if (m_fd < 0) {
+        MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
+    } else {
+        FileLock fileLock(m_fd);
+        InterProcessLock lock(&fileLock, ExclusiveLockType);
+        SCOPEDLOCK(lock);
+
+        struct stat st = {};
+        if (fstat(m_fd, &st) != -1) {
+            m_size = static_cast<size_t>(st.st_size);
+        }
+        // round up to (n * pagesize)
+        if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+            size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+            truncate(roundSize);
+        } else {
+            auto ret = mmap();
+            if (!ret) {
+                close(m_fd);
+                m_fd = -1;
+            }
+        }
+    }
+}
+
+void MemoryFile::clearMemoryCache() {
+    if (m_ptr && m_ptr != MAP_FAILED) {
+        if (munmap(m_ptr, m_size) != 0) {
+            MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
+        }
+    }
+    m_ptr = nullptr;
+
+    if (m_fd >= 0) {
+        if (::close(m_fd) != 0) {
+            MMKVError("fail to close [%s], %s", m_name.c_str(), strerror(errno));
+        }
+    }
+    m_fd = -1;
+    m_size = 0;
 }
 
 #pragma mark - file

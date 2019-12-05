@@ -30,6 +30,17 @@
 
 using namespace std;
 
+string to_string(vector<string> &&arr) {
+    string str;
+    for (const auto &element : arr) {
+        str += element + ", ";
+    }
+    if (!str.empty()) {
+        str.erase(str.length() - 2);
+    }
+    return str;
+}
+
 void functionalTest(MMKV *mmkv, bool decodeOnly) {
     if (!decodeOnly) {
         mmkv->set(true, "bool");
@@ -72,6 +83,31 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     string result;
     mmkv->getString("string", result);
     cout << "string = " << result << endl;
+
+    cout << "allKeys: " << ::to_string(mmkv->allKeys()) << endl;
+    cout << "count = " << mmkv->count() << ", totalSize = " << mmkv->totalSize() << endl;
+    cout << "containsKey[string]: " << mmkv->containsKey("string") << endl;
+
+    mmkv->removeValueForKey("bool");
+    cout << "bool: " << mmkv->getBool("bool") << endl;
+    mmkv->removeValuesForKeys({"int", "long"});
+
+    mmkv->set("some string", "null string");
+    result.erase();
+    mmkv->getString("null string", result);
+    cout << "string before set null: " << result << endl;
+    mmkv->set((const char *) nullptr, "null string");
+    result.erase();
+    mmkv->getString("null string", result);
+    cout << "string after set null: " << result
+         << ", containsKey:" << mmkv->containsKey("null string") << endl;
+
+    //kv.sync();
+    //kv.async();
+    //kv.clearAll();
+    mmkv->clearMemoryCache();
+    cout << "allKeys: " << ::to_string(mmkv->allKeys()) << endl;
+    cout << "isFileValid[" << mmkv->mmapID() + "]: " << MMKV::isFileValid(mmkv->mmapID()) << endl;
 }
 
 constexpr int32_t keyCount = 10000;
