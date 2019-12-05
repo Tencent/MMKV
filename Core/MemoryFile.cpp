@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#include "MmapedFile.h"
+#include "MemoryFile.h"
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
@@ -33,11 +33,9 @@ using namespace std;
 
 namespace mmkv {
 
-const int DEFAULT_MMAP_SIZE = getpagesize();
-
-MmapedFile::MmapedFile(const std::string &path, size_t size)
-    : m_name(path), m_fd(-1), m_segmentPtr(nullptr), m_segmentSize(0) {
-    m_fd = open(m_name.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+MemoryFile::MemoryFile(const std::string &path, size_t size)
+    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
+    m_fd = open(m_name.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
     if (m_fd < 0) {
         MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
     } else {
@@ -45,14 +43,14 @@ MmapedFile::MmapedFile(const std::string &path, size_t size)
         InterProcessLock lock(&fileLock, ExclusiveLockType);
         SCOPEDLOCK(lock);
 
-        struct stat st = {};
+        struct stat st = {0};
         if (fstat(m_fd, &st) != -1) {
-            m_segmentSize = static_cast<size_t>(st.st_size);
+            m_size = static_cast<size_t>(st.st_size);
         }
-        if (m_segmentSize < DEFAULT_MMAP_SIZE) {
-            m_segmentSize = static_cast<size_t>(DEFAULT_MMAP_SIZE);
-            if (ftruncate(m_fd, m_segmentSize) != 0 || !zeroFillFile(m_fd, 0, m_segmentSize)) {
-                MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(), m_segmentSize,
+        if (m_size < DEFAULT_MMAP_SIZE) {
+            m_size = static_cast<size_t>(DEFAULT_MMAP_SIZE);
+            if (ftruncate(m_fd, m_size) != 0 || !zeroFillFile(m_fd, 0, m_size)) {
+                MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(), m_size,
                           strerror(errno));
                 close(m_fd);
                 m_fd = -1;
@@ -60,26 +58,77 @@ MmapedFile::MmapedFile(const std::string &path, size_t size)
                 return;
             }
         }
-        m_segmentPtr =
-            (char *) mmap(nullptr, m_segmentSize, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
-        if (m_segmentPtr == MAP_FAILED) {
+        m_ptr = (char *) mmap(nullptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
+        if (m_ptr == MAP_FAILED) {
             MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
             close(m_fd);
             m_fd = -1;
-            m_segmentPtr = nullptr;
+            m_ptr = nullptr;
         }
     }
 }
 
-MmapedFile::~MmapedFile() {
-    if (m_segmentPtr != MAP_FAILED && m_segmentPtr != nullptr) {
-        munmap(m_segmentPtr, m_segmentSize);
-        m_segmentPtr = nullptr;
+MemoryFile::~MemoryFile() {
+    if (m_ptr) {
+        munmap(m_ptr, m_size);
+        m_ptr = nullptr;
     }
     if (m_fd >= 0) {
         close(m_fd);
         m_fd = -1;
     }
+}
+bool MemoryFile::truncate(size_t size) {
+    if (!isFileValid()) {
+        return false;
+    }
+    if (size == m_size) {
+        return true;
+    }
+
+    auto oldSize = m_size;
+    m_size = size;
+    // round up to (n * pagesize)
+    if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+        m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+    }
+
+    if (::ftruncate(m_fd, m_size) != 0) {
+        MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(), m_size, strerror(errno));
+        m_size = oldSize;
+        return false;
+    }
+    if (m_size > oldSize) {
+        if (!zeroFillFile(m_fd, oldSize, m_size - oldSize)) {
+            MMKVError("fail to zeroFile [%s] to size %zu, %s", m_name.c_str(), m_size,
+                      strerror(errno));
+            m_size = oldSize;
+            return false;
+        }
+    }
+
+    if (munmap(m_ptr, oldSize) != 0) {
+        MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
+    }
+    m_ptr = (char *) mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
+    if (m_ptr == MAP_FAILED) {
+        MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
+        m_ptr = nullptr;
+        return false;
+    }
+
+    return true;
+}
+
+bool MemoryFile::msync(SyncFlag syncFlag) {
+    if (m_ptr) {
+        auto ret = ::msync(m_ptr, m_size, syncFlag ? MMAP_SYNC : MMAP_ASYNC);
+        if (ret == 0) {
+            return true;
+        }
+        MMKVError("fail to msync [%s], %s", m_name.c_str(), strerror(errno));
+    }
+    return false;
 }
 
 #pragma mark - file
@@ -89,12 +138,12 @@ bool isFileExist(const string &nsFilePath) {
         return false;
     }
 
-    struct stat temp;
+    struct stat temp = {0};
     return lstat(nsFilePath.c_str(), &temp) == 0;
 }
 
 bool mkPath(char *path) {
-    struct stat sb = {};
+    struct stat sb = {0};
     bool done = false;
     char *slash = path;
 
@@ -125,7 +174,7 @@ bool createFile(const std::string &filePath) {
     bool ret = false;
 
     // try create at once
-    auto fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+    auto fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
     if (fd >= 0) {
         close(fd);
         ret = true;
@@ -141,7 +190,7 @@ bool createFile(const std::string &filePath) {
         }
         if (mkPath(path)) {
             // try again
-            fd = open(filePath.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+            fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
             if (fd >= 0) {
                 close(fd);
                 ret = true;
@@ -165,7 +214,7 @@ bool removeFile(const string &nsFilePath) {
 
 MMBuffer *readWholeFile(const char *path) {
     MMBuffer *buffer = nullptr;
-    int fd = open(path, O_RDONLY);
+    int fd = open(path, O_RDONLY | O_CLOEXEC);
     if (fd >= 0) {
         auto fileLength = lseek(fd, 0, SEEK_END);
         if (fileLength > 0) {

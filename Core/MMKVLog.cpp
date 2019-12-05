@@ -28,11 +28,11 @@ using namespace std;
 
 bool g_isLogRedirecting = false;
 
-#ifndef NDEBUG
+#    ifndef NDEBUG
 MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
-#else
+#    else
 MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
-#endif
+#    endif
 
 bool g_isContentChangeNotifying = false;
 

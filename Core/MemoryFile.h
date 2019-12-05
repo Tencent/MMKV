@@ -21,39 +21,43 @@
 #ifndef MMKV_MMAPEDFILE_H
 #define MMKV_MMAPEDFILE_H
 
+#include "MMKVPredef.h"
+
 #include <string>
 #include <sys/mman.h>
 
 namespace mmkv {
 
-extern const int DEFAULT_MMAP_SIZE;
+enum SyncFlag : bool { MMAP_SYNC = true, MMAP_ASYNC = false };
 
-class MmapedFile {
+class MemoryFile {
     std::string m_name;
     int m_fd;
-    void *m_segmentPtr;
-    size_t m_segmentSize;
+    void *m_ptr;
+    size_t m_size;
 
 public:
-    explicit MmapedFile(const std::string &path,
-                        size_t size = static_cast<size_t>(DEFAULT_MMAP_SIZE));
-    ~MmapedFile();
+    explicit MemoryFile(const std::string &path, size_t size);
+    ~MemoryFile();
 
     // just forbid it for possibly misuse
-    MmapedFile(const MmapedFile &other) = delete;
-    MmapedFile &operator=(const MmapedFile &other) = delete;
+    MemoryFile(const MemoryFile &other) = delete;
+    MemoryFile &operator=(const MemoryFile &other) = delete;
 
-    size_t getFileSize() { return m_segmentSize; }
+    size_t getFileSize() { return m_size; }
 
-    void *getMemory() { return m_segmentPtr; }
+    void *getMemory() { return m_ptr; }
 
     std::string &getName() { return m_name; }
 
     int getFd() { return m_fd; }
 
-    bool isFileValid() {
-        return m_fd >= 0 && m_segmentSize > 0 && m_segmentPtr && m_segmentPtr != MAP_FAILED;
-    }
+    // the newly expanded file content will be zeroed
+    bool truncate(size_t size);
+
+    bool msync(SyncFlag syncFlag);
+
+    bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
 };
 
 class MMBuffer;

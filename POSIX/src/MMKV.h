@@ -26,7 +26,7 @@
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVMetaInfo.hpp"
-#include "MmapedFile.h"
+#include "MemoryFile.h"
 #include "ThreadLock.h"
 #include <cstdint>
 #include <functional>
@@ -76,7 +76,7 @@ class MMKV {
     bool m_hasFullWriteback;
 
     uint32_t m_crcDigest;
-    mmkv::MmapedFile m_metaFile;
+    mmkv::MemoryFile m_metaFile;
     mmkv::MMKVMetaInfo m_metaInfo;
 
     mmkv::AESCrypt *m_crypter;

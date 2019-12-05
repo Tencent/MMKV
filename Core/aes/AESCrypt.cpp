@@ -85,8 +85,8 @@ void AESCrypt::fillRandomIV(unsigned char *vector) {
 
 #ifndef NDEBUG
 
-#include "../MMKVLog.h"
-#include "../MmapedFile.h"
+#    include "../MMKVLog.h"
+#    include "MemoryFile.h"
 
 namespace mmkv {
 

@@ -24,8 +24,8 @@
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
+#include "MemoryFile.h"
 #include "MiniPBCoder.h"
-#include "MmapedFile.h"
 #include "PBUtility.h"
 #include "ScopedLock.hpp"
 #include "aes/AESCrypt.h"
@@ -36,7 +36,6 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
-#include <libgen.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -50,6 +49,7 @@ static ThreadLock g_instanceLock;
 static std::string g_rootDir;
 static MMKV::ErrorHandler g_errorHandler;
 mmkv::LogHandler g_logHandler;
+int mmkv::DEFAULT_MMAP_SIZE;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
 #define SPECIAL_CHARACTER_DIRECTORY_NAME "specialCharacter"
@@ -123,8 +123,7 @@ void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV *>;
     g_instanceLock = ThreadLock();
 
-    //testAESCrypt();
-
+    mmkv::DEFAULT_MMAP_SIZE = getpagesize();
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
@@ -219,7 +218,7 @@ void MMKV::loadFromFile() {
         }
     }
 
-    m_fd = open(m_path.c_str(), O_RDWR | O_CREAT, S_IRWXU);
+    m_fd = open(m_path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
     if (m_fd < 0) {
         MMKVError("fail to open:%s, %s", m_path.c_str(), strerror(errno));
     } else {

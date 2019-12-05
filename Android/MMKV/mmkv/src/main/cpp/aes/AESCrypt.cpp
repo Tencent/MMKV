@@ -81,8 +81,8 @@ void AESCrypt::fillRandomIV(unsigned char *vector) {
 
 #ifndef NDEBUG
 
-#include "../MMKVLog.h"
-#include "../MmapedFile.h"
+#    include "../MMKVLog.h"
+#    include "../MmapedFile.h"
 
 // check if AESCrypt is encrypt-decrypt full-duplex
 void testAESCrypt() {

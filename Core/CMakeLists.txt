@@ -50,8 +50,8 @@ add_library( # Sets the name of the library.
              MMBuffer.cpp
              InterProcessLock.h
              InterProcessLock.cpp
-             MmapedFile.h
-             MmapedFile.cpp
+             MemoryFile.h
+             MemoryFile.cpp
              ThreadLock.h
              ThreadLock.cpp
              MMKVMetaInfo.hpp

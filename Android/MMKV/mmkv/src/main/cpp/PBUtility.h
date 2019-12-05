@@ -24,8 +24,8 @@
 #include <cstdint>
 
 #ifndef likely
-#define unlikely(x) (__builtin_expect(bool(x), 0))
-#define likely(x) (__builtin_expect(bool(x), 1))
+#    define unlikely(x) (__builtin_expect(bool(x), 0))
+#    define likely(x) (__builtin_expect(bool(x), 1))
 #endif
 
 template <typename T, typename P>

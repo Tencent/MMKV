@@ -39,36 +39,36 @@ extern bool g_isContentChangeNotifying;
 
 extern const char *_getFileName(const char *path);
 
-#define __filename__ _getFileName(__FILE__)
+#    define __filename__ _getFileName(__FILE__)
 
-#define MMKVError(format, ...)                                                                     \
-    _MMKVLogWithLevel(MMKVLogError, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
-#define MMKVWarning(format, ...)                                                                   \
-    _MMKVLogWithLevel(MMKVLogWarning, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
-#define MMKVInfo(format, ...)                                                                      \
-    _MMKVLogWithLevel(MMKVLogInfo, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#    define MMKVError(format, ...)                                                                 \
+        _MMKVLogWithLevel(MMKVLogError, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#    define MMKVWarning(format, ...)                                                               \
+        _MMKVLogWithLevel(MMKVLogWarning, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#    define MMKVInfo(format, ...)                                                                  \
+        _MMKVLogWithLevel(MMKVLogInfo, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 
-#ifndef NDEBUG
-#define MMKVDebug(format, ...)                                                                     \
-    _MMKVLogWithLevel(MMKVLogDebug, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
-#else
-#define MMKVDebug(format, ...)                                                                     \
-    {}
-#endif
+#    ifndef NDEBUG
+#        define MMKVDebug(format, ...)                                                             \
+            _MMKVLogWithLevel(MMKVLogDebug, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
+#    else
+#        define MMKVDebug(format, ...)                                                             \
+            {}
+#    endif
 
 void _MMKVLogWithLevel(
     MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...);
 
 #else
 
-#define MMKVError(format, ...)                                                                     \
-    {}
-#define MMKVWarning(format, ...)                                                                   \
-    {}
-#define MMKVInfo(format, ...)                                                                      \
-    {}
-#define MMKVDebug(format, ...)                                                                     \
-    {}
+#    define MMKVError(format, ...)                                                                 \
+        {}
+#    define MMKVWarning(format, ...)                                                               \
+        {}
+#    define MMKVInfo(format, ...)                                                                  \
+        {}
+#    define MMKVDebug(format, ...)                                                                 \
+        {}
 
 #endif
 

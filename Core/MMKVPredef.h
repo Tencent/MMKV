@@ -22,18 +22,18 @@
 #define MMKV_SRC_MMKVPREDEF_H
 
 #ifdef __ANDROID__
-#   define MMKV_ANDROID
+#    define MMKV_ANDROID
 #elif __APPLE__
-#   define MMKV_IOS_OR_MAC
-#   ifdef __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
-#       define MMKV_IOS
-#   else
-#       define MMKV_MAC
-#   endif
+#    define MMKV_IOS_OR_MAC
+#    ifdef __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
+#        define MMKV_IOS
+#    else
+#        define MMKV_MAC
+#    endif
 #elif __linux__ || __unix__
-#   define MMKV_POSIX
+#    define MMKV_POSIX
 #elif _WIN32
-#   define MMKV_WIN32
+#    define MMKV_WIN32
 #endif
 
 enum MMKVLogLevel : int {
@@ -54,7 +54,8 @@ typedef void (*LogHandler)(MMKVLogLevel level,
                            const std::string &function,
                            const std::string &message);
 
+extern int DEFAULT_MMAP_SIZE;
 
-}
+} // namespace mmkv
 
 #endif //MMKV_SRC_MMKVPREDEF_H

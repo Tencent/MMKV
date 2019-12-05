@@ -22,6 +22,7 @@ ReflowComments: false
 ---
 Language: Cpp
 ColumnLimit: 100
+IndentPPDirectives: AfterHash
 ---
 Language: ObjC
 ColumnLimit: 0
