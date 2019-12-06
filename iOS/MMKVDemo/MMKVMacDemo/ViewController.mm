@@ -20,7 +20,7 @@
 - (void)viewDidLoad {
 	[super viewDidLoad];
 
-	//	[self funcionalTest];
+	[self funcionalTest];
 	[self testNeedLoadFromFile];
 
 	m_loops = 10000;
