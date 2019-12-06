@@ -35,7 +35,6 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
-#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -126,8 +125,8 @@ void initialize() {
 }
 
 void MMKV::initializeMMKV(const std::string &rootDir) {
-    static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-    pthread_once(&once_control, initialize);
+    static ThreadOnceToken once_control = ThreadOnceUninitialized;
+    ThreadLock::ThreadOnce(&once_control, initialize);
 
     g_rootDir = rootDir;
     char *path = strdup(g_rootDir.c_str());
@@ -262,9 +261,6 @@ void MMKV::loadFromFile() {
             }
         }
         MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
-    }
-    if (!isFileValid()) {
-        MMKVWarning("[%s] file not valid", m_mmapID.c_str());
     }
 
     m_needLoadFromFile = false;
@@ -1432,8 +1428,8 @@ static string encodeFilePath(const string &mmapID) {
         }
     }
     if (hasSpecialCharacter) {
-        static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-        pthread_once(&once_control, mkSpecialCharacterFileDirectory);
+        static ThreadOnceToken once_control = ThreadOnceUninitialized;
+        ThreadLock::ThreadOnce(&once_control, mkSpecialCharacterFileDirectory);
         return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + "/" + encodedID;
     } else {
         return mmapID;

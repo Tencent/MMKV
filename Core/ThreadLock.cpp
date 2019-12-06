@@ -20,6 +20,9 @@
 
 #include "ThreadLock.h"
 #include "MMKVLog.h"
+#include <atomic>
+
+using namespace std;
 
 namespace mmkv {
 
@@ -58,5 +61,62 @@ void ThreadLock::unlock() {
         MMKVError("fail to unlock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
     }
 }
+
+#if MMKV_USING_PTHREAD
+void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
+    pthread_once(onceToken, callback);
+}
+#    ifndef NDEBUG
+static uint64_t gettid() {
+    uint64_t tid = 0;
+    pthread_threadid_np(nullptr, &tid);
+    return tid;
+}
+#    endif
+#else
+void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
+    if (!onceToken || !callback) {
+        assert(onceToken);
+        assert(callback);
+        return;
+    }
+    while (true) {
+        auto expected = ThreadOnceUninitialized;
+        atomic_compare_exchange_weak(onceToken, &expected, ThreadOnceInitializing);
+        switch (expected) {
+            case ThreadOnceInitialized:
+                return;
+            case ThreadOnceUninitialized:
+                callback();
+                onceToken->store(ThreadOnceInitialized);
+                return;
+            case ThreadOnceInitializing: {
+                // another thread is initializing, let's wait for 1ms
+                Sleep(1);
+                break;
+            }
+            default: {
+                MMKVError("should never happen:%d", expected);
+                assert(0);
+                return;
+            }
+        }
+    }
+}
+
+void ThreadLock::Sleep(int ms) {
+    constexpr auto MILLI_SECOND_MULTIPLIER = 1000;
+    constexpr auto NANO_SECOND_MULTIPLIER = MILLI_SECOND_MULTIPLIER * MILLI_SECOND_MULTIPLIER;
+    timespec duration = {0};
+    if (ms > 999) {
+        duration.tv_sec = ms / MILLI_SECOND_MULTIPLIER;
+        duration.tv_nsec = (ms % MILLI_SECOND_MULTIPLIER) * NANO_SECOND_MULTIPLIER;
+    } else {
+        duration.tv_nsec = ms * NANO_SECOND_MULTIPLIER;
+    }
+    nanosleep(&duration, nullptr);
+}
+
+#endif
 
 } // namespace mmkv
