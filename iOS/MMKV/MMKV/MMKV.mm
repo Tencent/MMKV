@@ -251,7 +251,7 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 		}
 	}
 
-	m_fd = open(m_path.UTF8String, O_RDWR, S_IRWXU);
+	m_fd = open(m_path.UTF8String, O_RDWR | O_CREAT, S_IRWXU);
 	if (m_fd < 0) {
 		MMKVError(@"fail to open:%@, %s", m_path, strerror(errno));
 	} else {
