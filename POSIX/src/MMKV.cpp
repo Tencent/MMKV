@@ -47,7 +47,7 @@ using namespace mmkv;
 static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
 static std::string g_rootDir;
-static MMKV::ErrorHandler g_errorHandler;
+static mmkv::ErrorHandler g_errorHandler;
 mmkv::LogHandler g_logHandler;
 int mmkv::DEFAULT_MMAP_SIZE;
 
@@ -86,7 +86,7 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, string *r
     m_output = nullptr;
 
     if (cryptKey && cryptKey->length() > 0) {
-        m_crypter = new AESCrypt((const unsigned char *) cryptKey->data(), cryptKey->length());
+        m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
     }
 
     m_needLoadFromFile = true;
@@ -199,8 +199,8 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
     size_t length = inputBuffer.length();
     MMBuffer tmp(length);
 
-    auto input = (unsigned char *) inputBuffer.getPtr();
-    auto output = (unsigned char *) tmp.getPtr();
+    auto input = inputBuffer.getPtr();
+    auto output = tmp.getPtr();
     crypter.decrypt(input, output, length);
 
     inputBuffer = std::move(tmp);
@@ -229,7 +229,7 @@ void MMKV::loadFromFile() {
                  "version:%u",
                  m_mmapID.c_str(), m_actualSize, m_file.getFileSize(), m_isInterProcess,
                  m_metaInfo.m_version);
-        auto ptr = (char *) m_file.getMemory();
+        auto ptr = (uint8_t *) m_file.getMemory();
         // loading
         if (loadFromFile && m_actualSize > 0) {
             MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
@@ -284,7 +284,7 @@ void MMKV::partialLoadFromFile() {
         if (m_actualSize < fileSize && m_actualSize + Fixed32Size <= fileSize) {
             if (m_actualSize > oldActualSize) {
                 size_t bufferSize = m_actualSize - oldActualSize;
-                auto ptr = (char *) m_file.getMemory();
+                auto ptr = (uint8_t *) m_file.getMemory();
                 MMBuffer inputBuffer(ptr + Fixed32Size + oldActualSize, bufferSize, MMBufferNoCopy);
                 // incremental update crc digest
                 m_crcDigest =
@@ -444,7 +444,7 @@ void MMKV::clearAll() {
     SCOPEDLOCK(m_exclusiveProcessLock);
 
     if (m_needLoadFromFile) {
-        removeFile(m_path.c_str());
+        removeFile(m_path);
         loadFromFile();
         return;
     }
@@ -549,10 +549,9 @@ void MMKV::trim() {
              m_actualSize);
 
     if (!m_file.truncate(fileSize)) {
-        // TODO: what if m_file.truncate() just fail on mmap() ?
         return;
     }
-    auto ptr = (char *) m_file.getMemory();
+    auto ptr = (uint8_t *) m_file.getMemory();
     delete m_output;
     m_output = new CodedOutputData(ptr + pbFixed32Size(0), fileSize - pbFixed32Size(0));
     m_output->seek(m_actualSize);
@@ -594,7 +593,6 @@ bool MMKV::ensureMemorySize(size_t newSize) {
 
             // if we can't extend size, rollback to old state
             if (!m_file.truncate(fileSize)) {
-                // TODO: what if just fail on mmap() ?
                 return false;
             }
 
@@ -634,20 +632,17 @@ void MMKV::oldStyleWriteActualSize(size_t actualSize) {
     memcpy(m_file.getMemory(), &actualSize, Fixed32Size);
 }
 
-bool MMKV::writeActualSize(size_t actualSize,
-                           uint32_t crcDigest,
-                           const unsigned char *iv,
-                           bool increaseSequence) {
+bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool increaseSequence) {
     // backward compatibility
-    oldStyleWriteActualSize(actualSize);
+    oldStyleWriteActualSize(size);
 
     if (!m_metaFile.isFileValid()) {
         return false;
     }
 
     bool needsFullWrite = false;
-    m_actualSize = actualSize;
-    m_metaInfo.m_actualSize = actualSize;
+    m_actualSize = size;
+    m_metaInfo.m_actualSize = size;
     m_crcDigest = crcDigest;
     m_metaInfo.m_crcDigest = crcDigest;
     if (m_metaInfo.m_version < MMKVVersionSequence) {
@@ -663,7 +658,7 @@ bool MMKV::writeActualSize(size_t actualSize,
     }
     if (unlikely(increaseSequence)) {
         m_metaInfo.m_sequence++;
-        m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize = actualSize;
+        m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize = size;
         m_metaInfo.m_lastConfirmedMetaInfo.lastCRCDigest = crcDigest;
         if (m_metaInfo.m_version < MMKVVersionActualSize) {
             m_metaInfo.m_version = MMKVVersionActualSize;
@@ -784,7 +779,7 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
     if (m_crypter) {
         AESCrypt::fillRandomIV(newIV);
         m_crypter->reset(newIV, sizeof(newIV));
-        auto ptr = (unsigned char *) allData.getPtr();
+        auto ptr = allData.getPtr();
         m_crypter->encrypt(ptr, ptr, allData.length());
     }
 
@@ -818,7 +813,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
                 // change encryption key
                 MMKVInfo("reKey with new aes key");
                 delete m_crypter;
-                auto ptr = (const unsigned char *) cryptKey.data();
+                auto ptr = cryptKey.data();
                 m_crypter = new AESCrypt(ptr, cryptKey.length());
                 return fullWriteback();
             }
@@ -833,7 +828,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
         if (cryptKey.length() > 0) {
             // transform plain text to encrypted text
             MMKVInfo("reKey with aes key");
-            auto ptr = (const unsigned char *) cryptKey.data();
+            auto ptr = cryptKey.data();
             m_crypter = new AESCrypt(ptr, cryptKey.length());
             return fullWriteback();
         } else {
@@ -852,7 +847,7 @@ void MMKV::checkReSetCryptKey(const std::string *cryptKey) {
             if (oldKey != *cryptKey) {
                 MMKVInfo("setting new aes key");
                 delete m_crypter;
-                auto ptr = (const unsigned char *) cryptKey->data();
+                auto ptr = cryptKey->data();
                 m_crypter = new AESCrypt(ptr, cryptKey->length());
 
                 checkLoadData();
@@ -869,7 +864,7 @@ void MMKV::checkReSetCryptKey(const std::string *cryptKey) {
     } else {
         if (cryptKey) {
             MMKVInfo("setting new aes key");
-            auto ptr = (const unsigned char *) cryptKey->data();
+            auto ptr = cryptKey->data();
             m_crypter = new AESCrypt(ptr, cryptKey->length());
 
             checkLoadData();
@@ -893,7 +888,7 @@ bool MMKV::isFileValid() {
 
 // assuming m_file is valid
 bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
-    auto ptr = (char *) m_file.getMemory();
+    auto ptr = (uint8_t *) m_file.getMemory();
     if (ptr) {
         constexpr auto offset = pbFixed32Size(0);
         m_crcDigest =
@@ -908,7 +903,7 @@ bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
     return false;
 }
 
-void MMKV::recaculateCRCDigestWithIV(const unsigned char *iv) {
+void MMKV::recaculateCRCDigestWithIV(const void *iv) {
     auto ptr = (const uint8_t *) m_file.getMemory();
     if (ptr) {
         constexpr auto offset = pbFixed32Size(0);

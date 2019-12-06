@@ -21,6 +21,8 @@
 #ifndef MMKV_SRC_MMKVPREDEF_H
 #define MMKV_SRC_MMKVPREDEF_H
 
+#include <string>
+
 #ifdef __ANDROID__
 #    define MMKV_ANDROID
 #elif __APPLE__
@@ -44,7 +46,15 @@ enum MMKVLogLevel : int {
     MMKVLogNone, // special level used to disable all log messages
 };
 
-#include <string>
+enum MMKVRecoverStrategic : int {
+    OnErrorDiscard = 0,
+    OnErrorRecover,
+};
+
+enum MMKVErrorType : int {
+    MMKVCRCCheckFail = 0,
+    MMKVFileLength,
+};
 
 namespace mmkv {
 
@@ -53,6 +63,8 @@ typedef void (*LogHandler)(MMKVLogLevel level,
                            int line,
                            const std::string &function,
                            const std::string &message);
+
+typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErrorType errorType);
 
 extern int DEFAULT_MMAP_SIZE;
 

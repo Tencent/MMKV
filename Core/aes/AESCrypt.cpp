@@ -27,10 +27,7 @@
 
 namespace mmkv {
 
-AESCrypt::AESCrypt(const unsigned char *key,
-                   size_t keyLength,
-                   const unsigned char *iv,
-                   size_t ivLength) {
+AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivLength) {
     if (key && keyLength > 0) {
         memcpy(m_key, key, (keyLength > AES_KEY_LEN) ? AES_KEY_LEN : keyLength);
 
@@ -41,7 +38,7 @@ AESCrypt::AESCrypt(const unsigned char *key,
     }
 }
 
-void AESCrypt::reset(const unsigned char *iv, size_t ivLength) {
+void AESCrypt::reset(const void *iv, size_t ivLength) {
     m_number = 0;
     if (iv && ivLength > 0) {
         memcpy(m_vector, iv, (ivLength > AES_KEY_LEN) ? AES_KEY_LEN : ivLength);
@@ -56,21 +53,23 @@ void AESCrypt::getKey(void *output) const {
     }
 }
 
-void AESCrypt::encrypt(const unsigned char *input, unsigned char *output, size_t length) {
+void AESCrypt::encrypt(const void *input, void *output, size_t length) {
     if (!input || !output || length == 0) {
         return;
     }
-    AES_cfb128_encrypt(input, output, length, &m_aesKey, m_vector, &m_number, AES_ENCRYPT);
+    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, &m_aesKey,
+                       m_vector, &m_number, AES_ENCRYPT);
 }
 
-void AESCrypt::decrypt(const unsigned char *input, unsigned char *output, size_t length) {
+void AESCrypt::decrypt(const void *input, void *output, size_t length) {
     if (!input || !output || length == 0) {
         return;
     }
-    AES_cfb128_encrypt(input, output, length, &m_aesKey, m_vector, &m_number, AES_DECRYPT);
+    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, &m_aesKey,
+                       m_vector, &m_number, AES_DECRYPT);
 }
 
-void AESCrypt::fillRandomIV(unsigned char *vector) {
+void AESCrypt::fillRandomIV(void *vector) {
     if (!vector) {
         return;
     }

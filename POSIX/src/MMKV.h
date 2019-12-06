@@ -44,16 +44,6 @@ enum MMKVMode : uint32_t {
     MMKV_MULTI_PROCESS = 0x2,
 };
 
-enum MMKVRecoverStrategic : int {
-    OnErrorDiscard = 0,
-    OnErrorRecover,
-};
-
-enum MMKVErrorType : int {
-    MMKVCRCCheckFail = 0,
-    MMKVFileLength,
-};
-
 class MMKV {
     MMKV(const std::string &mmapID,
          MMKVMode mode,
@@ -97,7 +87,7 @@ class MMKV {
 
     bool checkFileCRCValid(size_t acutalSize, uint32_t crcDigest);
 
-    void recaculateCRCDigestWithIV(const unsigned char *iv);
+    void recaculateCRCDigestWithIV(const void *iv);
 
     void updateCRCDigest(const uint8_t *ptr, size_t length);
 
@@ -105,10 +95,7 @@ class MMKV {
 
     void oldStyleWriteActualSize(size_t actualSize);
 
-    bool writeActualSize(size_t actualSize,
-                         uint32_t crcDigest,
-                         const unsigned char *iv,
-                         bool increaseSequence);
+    bool writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool increaseSequence);
 
     bool ensureMemorySize(size_t newSize);
 
@@ -246,9 +233,7 @@ public:
     void lock() { m_exclusiveProcessLock.lock(); }
     void unlock() { m_exclusiveProcessLock.unlock(); }
 
-    typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID,
-                                                 MMKVErrorType errorType);
-    static void regiserErrorHandler(ErrorHandler handler);
+    static void regiserErrorHandler(mmkv::ErrorHandler handler);
     static void unRegisetErrorHandler();
 
     static void regiserLogHandler(mmkv::LogHandler handler);

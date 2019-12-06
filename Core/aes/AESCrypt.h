@@ -39,21 +39,18 @@ public:
     unsigned char m_vector[AES_KEY_LEN] = {0};
 
 public:
-    AESCrypt(const unsigned char *key,
-             size_t keyLength,
-             const unsigned char *iv = nullptr,
-             size_t ivLength = 0);
+    AESCrypt(const void *key, size_t keyLength, const void *iv = nullptr, size_t ivLength = 0);
 
-    void encrypt(const unsigned char *input, unsigned char *output, size_t length);
+    void encrypt(const void *input, void *output, size_t length);
 
-    void decrypt(const unsigned char *input, unsigned char *output, size_t length);
+    void decrypt(const void *input, void *output, size_t length);
 
-    void reset(const unsigned char *iv = nullptr, size_t ivLength = 0);
+    void reset(const void *iv = nullptr, size_t ivLength = 0);
 
     // output must have [AES_KEY_LEN] space
     void getKey(void *output) const;
 
-    static void fillRandomIV(unsigned char *vector);
+    static void fillRandomIV(void *vector);
 };
 
 #ifndef NDEBUG
