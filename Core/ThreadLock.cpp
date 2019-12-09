@@ -68,9 +68,13 @@ void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
 }
 #    ifndef NDEBUG
 static uint64_t gettid() {
+#        if MMKV_MAC
     uint64_t tid = 0;
     pthread_threadid_np(nullptr, &tid);
     return tid;
+#        else
+    return gettid();
+#        endif
 }
 #    endif
 #else
