@@ -110,10 +110,7 @@ void MemoryFile::reloadFromFile() {
         InterProcessLock lock(&fileLock, ExclusiveLockType);
         SCOPEDLOCK(lock);
 
-        struct stat st = {};
-        if (fstat(m_fd, &st) != -1) {
-            m_size = static_cast<size_t>(st.st_size);
-        }
+        mmkv::getFileSize(m_fd, m_size);
         // round up to (n * pagesize)
         if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
             size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
@@ -276,6 +273,19 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
         }
     }
     return true;
+}
+
+bool getFileSize(int fd, size_t &size) {
+    struct stat st = {0};
+    if (fstat(fd, &st) != -1) {
+        size = (size_t) st.st_size;
+        return true;
+    }
+    return false;
+}
+
+int getPageSize() {
+    return getpagesize();
 }
 
 } // namespace mmkv

@@ -37,3 +37,6 @@ target_link_libraries(process
 set_target_properties(process PROPERTIES
         CXX_STANDARD 11
         )
+
+add_dependencies(demo
+        process)

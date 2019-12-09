@@ -85,7 +85,7 @@ void AESCrypt::fillRandomIV(void *vector) {
 #ifndef NDEBUG
 
 #    include "../MMKVLog.h"
-#    include "MemoryFile.h"
+#    include "../MemoryFile.h"
 
 namespace mmkv {
 
@@ -98,7 +98,7 @@ void testAESCrypt() {
     constexpr size_t keyLength = sizeof(key) - 1;
 
     unsigned char iv[AES_KEY_LEN];
-    srand((unsigned) time(NULL));
+    srand((unsigned) time(nullptr));
     for (int i = 0; i < AES_KEY_LEN; i++) {
         iv[i] = rand();
     }

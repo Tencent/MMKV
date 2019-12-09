@@ -32,13 +32,8 @@
 #include "aes/openssl/md5.h"
 #include "crc32/Checksum.h"
 #include <algorithm>
-#include <cerrno>
 #include <cstdio>
 #include <cstring>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 using namespace std;
 using namespace mmkv;
@@ -120,7 +115,7 @@ void initialize() {
     g_instanceDic = new unordered_map<std::string, MMKV *>;
     g_instanceLock = ThreadLock();
 
-    mmkv::DEFAULT_MMAP_SIZE = getpagesize();
+    mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
@@ -414,10 +409,7 @@ void MMKV::checkLoadData() {
         SCOPEDLOCK(m_sharedProcessLock);
 
         size_t fileSize = 0;
-        struct stat st = {0};
-        if (fstat(m_file.getFd(), &st) != -1) {
-            fileSize = (size_t) st.st_size;
-        }
+        getFileSize(m_file.getFd(), fileSize);
         if (m_file.getFileSize() != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(),
                      m_file.getFileSize(), fileSize);
@@ -445,22 +437,12 @@ void MMKV::clearAll() {
         return;
     }
 
+    m_file.truncate(DEFAULT_MMAP_SIZE);
     auto ptr = m_file.getMemory();
     if (ptr) {
-        // for truncate
-        size_t size = DEFAULT_MMAP_SIZE;
-        memset(ptr, 0, size);
-        if (msync(ptr, size, MS_SYNC) != 0) {
-            MMKVError("fail to msync [%s]:%s", m_mmapID.c_str(), strerror(errno));
-        }
+        memset(ptr, 0, m_file.getFileSize());
     }
-    if (m_file.getFd() >= 0) {
-        if (m_file.getFileSize() != DEFAULT_MMAP_SIZE) {
-            MMKVInfo("truncating [%s] from %zu to %d", m_mmapID.c_str(), m_file.getFileSize(),
-                     DEFAULT_MMAP_SIZE);
-            m_file.truncate(DEFAULT_MMAP_SIZE);
-        }
-    }
+    m_file.msync(MMKV_SYNC);
 
     unsigned char newIV[AES_KEY_LEN];
     AESCrypt::fillRandomIV(newIV);
@@ -468,9 +450,7 @@ void MMKV::clearAll() {
         m_crypter->reset(newIV, sizeof(newIV));
     }
     writeActualSize(0, 0, newIV, IncreaseSequence);
-    if (m_metaFile.isFileValid()) {
-        msync(m_metaFile.getMemory(), DEFAULT_MMAP_SIZE, MS_SYNC);
-    }
+    m_metaFile.msync(MMKV_SYNC);
 
     clearMemoryCache();
     loadFromFile();
@@ -1279,7 +1259,7 @@ std::vector<std::string> MMKV::allKeys() {
     vector<string> keys;
     for (const auto &itr : m_dic) {
         keys.push_back(itr.first);
-    };
+    }
     return keys;
 }
 
@@ -1409,8 +1389,8 @@ static string md5(const string &value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {0};
     char tmp[3] = {0}, buf[33] = {0};
     MD5((const unsigned char *) value.c_str(), value.size(), md);
-    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-        snprintf(tmp, sizeof(tmp), "%2.2x", md[i]);
+    for (auto ch : md) {
+        snprintf(tmp, sizeof(tmp), "%2.2x", ch);
         strcat(buf, tmp);
     }
     return string(buf);
@@ -1421,7 +1401,7 @@ static string encodeFilePath(const string &mmapID) {
     string encodedID;
     bool hasSpecialCharacter = false;
     for (int i = 0; i < mmapID.size(); i++) {
-        if (strchr(specialCharacters, mmapID[i]) != NULL) {
+        if (strchr(specialCharacters, mmapID[i]) != nullptr) {
             encodedID = md5(mmapID);
             hasSpecialCharacter = true;
             break;
