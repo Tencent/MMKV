@@ -34,6 +34,9 @@
 #    endif
 #elif __linux__ || __unix__
 #    define MMKV_POSIX
+#    if __linux__
+#        define MMKV_LINUX
+#    endif
 #elif _WIN32
 #    define MMKV_WIN32
 #endif

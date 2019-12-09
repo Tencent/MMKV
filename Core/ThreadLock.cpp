@@ -22,7 +22,7 @@
 #include "MMKVLog.h"
 #include <atomic>
 
-#ifndef MMKV_MAC
+#ifdef MMKV_LINUX
 #    include <sys/syscall.h>
 #    include <unistd.h>
 static pid_t gettid() {
@@ -80,8 +80,11 @@ static uint64_t gettid() {
     uint64_t tid = 0;
     pthread_threadid_np(nullptr, &tid);
     return tid;
-#        else
+#        elif MMKV_LINUX
     return ::gettid();
+#        else
+    assert(0);
+    return 0;
 #        endif
 }
 #    endif
