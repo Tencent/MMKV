@@ -21,6 +21,7 @@
 #include "ThreadLock.h"
 #include "MMKVLog.h"
 #include <atomic>
+#include <cassert>
 
 #ifdef MMKV_LINUX
 #    include <sys/syscall.h>
@@ -80,7 +81,7 @@ static uint64_t gettid() {
     uint64_t tid = 0;
     pthread_threadid_np(nullptr, &tid);
     return tid;
-#        elif MMKV_LINUX
+#        elif defined MMKV_LINUX
     return ::gettid();
 #        else
     assert(0);
