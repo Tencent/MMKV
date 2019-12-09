@@ -22,6 +22,14 @@
 #include "MMKVLog.h"
 #include <atomic>
 
+#ifndef MMKV_MAC
+#    include <sys/syscall.h>
+#    include <unistd.h>
+static pid_t gettid() {
+    return syscall(SYS_gettid);
+}
+#endif
+
 using namespace std;
 
 namespace mmkv {
