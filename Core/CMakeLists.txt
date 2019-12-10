@@ -29,8 +29,7 @@ project(core)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-add_library( # Sets the name of the library.
-             core
+add_library(core
 
              # Sets the library as a shared library.
              STATIC
