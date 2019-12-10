@@ -1378,7 +1378,7 @@ void MMKV::setLogLevel(MMKVLogLevel level) {
 }
 
 static void mkSpecialCharacterFileDirectory() {
-    char *path = strdup((g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());
+    char *path = strdup((g_rootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());
     if (path) {
         mkPath(path);
         free(path);
@@ -1410,7 +1410,7 @@ static string encodeFilePath(const string &mmapID) {
     if (hasSpecialCharacter) {
         static ThreadOnceToken once_control = ThreadOnceUninitialized;
         ThreadLock::ThreadOnce(&once_control, mkSpecialCharacterFileDirectory);
-        return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + "/" + encodedID;
+        return string(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + encodedID;
     } else {
         return mmapID;
     }
@@ -1418,23 +1418,23 @@ static string encodeFilePath(const string &mmapID) {
 
 static string mmapedKVKey(const string &mmapID, string *relativePath) {
     if (relativePath && g_rootDir != (*relativePath)) {
-        return md5(*relativePath + "/" + mmapID);
+        return md5(*relativePath + MMKV_PATH_SLASH + mmapID);
     }
     return mmapID;
 }
 
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
     if (relativePath) {
-        return *relativePath + "/" + encodeFilePath(mmapID);
+        return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
     }
-    return g_rootDir + "/" + encodeFilePath(mmapID);
+    return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
 }
 
 static string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
     if (relativePath) {
-        return *relativePath + "/" + encodeFilePath(mmapID) + ".crc";
+        return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + ".crc";
     }
-    return g_rootDir + "/" + encodeFilePath(mmapID) + ".crc";
+    return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID) + ".crc";
 }
 
 static MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {

@@ -41,6 +41,12 @@
 #    define MMKV_WIN32
 #endif
 
+#ifdef MMKV_WIN32
+#define MMKV_PATH_SLASH "\\"
+#else
+#define MMKV_PATH_SLASH "/"
+#endif
+
 enum MMKVLogLevel : int {
     MMKVLogDebug = 0, // not available for release/product build
     MMKVLogInfo = 1,  // default level
