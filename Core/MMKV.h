@@ -42,13 +42,30 @@ class CodedOutputData;
 enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 0x1,
     MMKV_MULTI_PROCESS = 0x2,
+#ifdef MMKV_ANDROID
+    CONTEXT_MODE_MULTI_PROCESS = 0x4, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    MMKV_ASHMEM = 0x8,
+#endif
 };
 
 class MMKV {
+#ifndef MMKV_ANDROID
     MMKV(const std::string &mmapID,
          MMKVMode mode,
          std::string *cryptKey,
          std::string *relativePath);
+#else
+    MMKV(const std::string &mmapID,
+         int size,
+         MMKVMode mode,
+         std::string *cryptKey,
+         std::string *relativePath);
+
+    MMKV(const std::string &mmapID,
+         int ashmemFD,
+         int ashmemMetaFd,
+         std::string *cryptKey = nullptr);
+#endif
 
     ~MMKV();
 
@@ -111,21 +128,47 @@ class MMKV {
 
     bool appendDataWithKey(const mmkv::MMBuffer &data, const std::string &key);
 
+    void notifyContentChanged();
+
+#ifdef MMKV_ANDROID
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
+
+    void loadFromAshmem();
+#endif
 
 public:
     // call this before getting any MMKV instance
-    static void initializeMMKV(const std::string &rootDir);
+    static void initializeMMKV(const std::string &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
 
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
 
+#ifndef MMKV_ANDROID
     // mmapID: any unique ID (com.tencent.xin.pay, etc)
     // if you want a per-user mmkv, you could merge user-id within mmapID
     static MMKV *mmkvWithID(const std::string &mmapID,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
                             std::string *relativePath = nullptr);
+#else
+    // mmapID: any unique ID (com.tencent.xin.pay, etc)
+    // if you want a per-user mmkv, you could merge user-id within mmapID
+    static MMKV *mmkvWithID(const std::string &mmapID,
+                            int size = mmkv::DEFAULT_MMAP_SIZE,
+                            MMKVMode mode = MMKV_SINGLE_PROCESS,
+                            std::string *cryptKey = nullptr,
+                            std::string *relativePath = nullptr);
+
+    static MMKV *mmkvWithAshmemFD(const std::string &mmapID,
+                                  int fd,
+                                  int metaFD,
+                                  std::string *cryptKey = nullptr);
+    const bool m_isAshmem;
+
+    int ashmemFD() { return m_isAshmem ? m_file.getFd() : -1; }
+
+    int ashmemMetaFD() { return m_isAshmem ? m_metaFile.getFd() : -1; }
+#endif
 
     static void onExit();
 
@@ -227,17 +270,20 @@ public:
 
     // check if content changed by other process
     void checkContentChanged();
+    static void registerContentChangeHandler(mmkv::ContentChangeHandler handler);
+    static void unRegisterContentChangeHandler();
 
     static bool isFileValid(const std::string &mmapID);
 
     void lock() { m_exclusiveProcessLock.lock(); }
     void unlock() { m_exclusiveProcessLock.unlock(); }
+    bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
 
-    static void regiserErrorHandler(mmkv::ErrorHandler handler);
-    static void unRegisetErrorHandler();
+    static void registerErrorHandler(mmkv::ErrorHandler handler);
+    static void unRegisterErrorHandler();
 
-    static void regiserLogHandler(mmkv::LogHandler handler);
-    static void unRegisetLogHandler();
+    static void registerLogHandler(mmkv::LogHandler handler);
+    static void unRegisterLogHandler();
 
     static void setLogLevel(MMKVLogLevel level);
 

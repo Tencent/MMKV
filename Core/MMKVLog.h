@@ -27,6 +27,10 @@
 #include <cstdint>
 #include <cstring>
 
+#ifdef MMKV_ANDROID
+#    include <android/log.h>
+#endif
+
 // enable logging
 #define ENABLE_MMKV_LOG
 
@@ -34,8 +38,6 @@
 
 extern MMKVLogLevel g_currentLogLevel;
 extern mmkv::LogHandler g_logHandler;
-
-extern bool g_isContentChangeNotifying;
 
 extern const char *_getFileName(const char *path);
 

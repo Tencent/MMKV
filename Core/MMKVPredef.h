@@ -42,9 +42,9 @@
 #endif
 
 #ifdef MMKV_WIN32
-#define MMKV_PATH_SLASH "\\"
+#    define MMKV_PATH_SLASH "\\"
 #else
-#define MMKV_PATH_SLASH "/"
+#    define MMKV_PATH_SLASH "/"
 #endif
 
 enum MMKVLogLevel : int {
@@ -74,6 +74,8 @@ typedef void (*LogHandler)(MMKVLogLevel level,
                            const std::string &message);
 
 typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErrorType errorType);
+
+typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
 extern int DEFAULT_MMAP_SIZE;
 

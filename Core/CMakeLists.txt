@@ -35,6 +35,8 @@ add_library(core
              STATIC
 
              # Provides a relative path to your source file(s).
+             MMKV.h
+             MMKV.cpp
              MMKVLog.h
              MMKVLog.cpp
              CodedInputData.h

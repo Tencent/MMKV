@@ -737,10 +737,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         gCallbackHandler = handler;
 
         if (gCallbackHandler.wantLogRedirecting()) {
-            setLogReDirecting(true);
+            setCallbackHandler(true, true);
             gWantLogReDirecting = true;
         } else {
-            setLogReDirecting(false);
+            setCallbackHandler(false, true);
             gWantLogReDirecting = false;
         }
     }
@@ -748,7 +748,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static void unregisterHandler() {
         gCallbackHandler = null;
 
-        setLogReDirecting(false);
+        setCallbackHandler(false, false);
         gWantLogReDirecting = false;
     }
 
@@ -890,7 +890,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void setLogLevel(int level);
 
-    private static native void setLogReDirecting(boolean enable);
+    private static native void setCallbackHandler(boolean logReDirecting, boolean hasCallback);
 
     private static native long createNB(int size);
 

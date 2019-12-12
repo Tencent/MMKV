@@ -34,9 +34,44 @@ using namespace std;
 namespace mmkv {
 
 MemoryFile::MemoryFile(const std::string &path)
-    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
+    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(MMAP_FILE) {
     reloadFromFile();
 }
+
+#ifdef MMKV_ANDROID
+MemoryFile::MemoryFile(const std::string &path, size_t size, FileType fileType)
+    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
+    if (m_fileType == MMAP_FILE) {
+        reloadFromFile();
+    } else {
+        m_fd = ASharedMemory_create(m_name.c_str(), size);
+        if (m_fd >= 0) {
+            m_size = static_cast<size_t>(size);
+            auto ret = mmap();
+            if (!ret) {
+                close(m_fd);
+                m_fd = -1;
+            }
+        }
+    }
+}
+
+MemoryFile::MemoryFile(int ashmemFD)
+    : m_name(""), m_fd(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMAP_ASHMEM) {
+    if (m_fd < 0) {
+        MMKVError("fd %d invalid", m_fd);
+    } else {
+        m_name = ASharedMemory_getName(m_fd);
+        m_size = ASharedMemory_getSize(m_fd);
+        MMKVInfo("ashmem name:%s, size:%zu", m_name.c_str(), m_size);
+        auto ret = mmap();
+        if (!ret) {
+            close(m_fd);
+            m_fd = -1;
+        }
+    }
+}
+#endif
 
 bool MemoryFile::truncate(size_t size) {
     if (m_fd < 0) {
@@ -44,6 +79,9 @@ bool MemoryFile::truncate(size_t size) {
     }
     if (size == m_size) {
         return true;
+    }
+    if (m_fileType == MMAP_ASHMEM) {
+        return false;
     }
 
     auto oldSize = m_size;
@@ -98,6 +136,9 @@ bool MemoryFile::mmap() {
 }
 
 void MemoryFile::reloadFromFile() {
+    if (m_fileType == MMAP_ASHMEM) {
+        return;
+    }
     if (isFileValid()) {
         clearMemoryCache();
     }
@@ -287,5 +328,110 @@ bool getFileSize(int fd, size_t &size) {
 int getPageSize() {
     return getpagesize();
 }
+
+#ifdef MMKV_ANDROID
+#    pragma mark - ashmem
+#    include <dlfcn.h>
+#    include <sys/ioctl.h>
+
+constexpr auto ASHMEM_NAME_LEN = 256;
+constexpr auto __ASHMEMIOC = 0x77;
+#    define ASHMEM_SET_NAME _IOW(__ASHMEMIOC, 1, char[ASHMEM_NAME_LEN])
+#    define ASHMEM_GET_NAME _IOR(__ASHMEMIOC, 2, char[ASHMEM_NAME_LEN])
+#    define ASHMEM_SET_SIZE _IOW(__ASHMEMIOC, 3, size_t)
+#    define ASHMEM_GET_SIZE _IO(__ASHMEMIOC, 4)
+
+int g_android_api = __ANDROID_API_L__;
+
+void *loadLibrary() {
+    auto name = "libandroid.so";
+    static auto handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
+    if (handle == RTLD_DEFAULT) {
+        MMKVError("unable to load library %s", name);
+    }
+    return handle;
+}
+
+typedef int (*AShmem_create_t)(const char *name, size_t size);
+
+int ASharedMemory_create(const char *name, size_t size) {
+    int fd = -1;
+    if (g_android_api >= __ANDROID_API_O__) {
+        static auto handle = loadLibrary();
+        static AShmem_create_t funcPtr =
+            (handle != nullptr)
+                ? reinterpret_cast<AShmem_create_t>(dlsym(handle, "ASharedMemory_create"))
+                : nullptr;
+        if (funcPtr) {
+            fd = funcPtr(name, size);
+            if (fd < 0) {
+                MMKVError("fail to ASharedMemory_create %s with size %zu, errno:%s", name, size,
+                          strerror(errno));
+            }
+        } else {
+            MMKVWarning("fail to locate ASharedMemory_create() from loading libandroid.so");
+        }
+    }
+    if (fd < 0) {
+        fd = open(ASHMEM_NAME_DEF, O_RDWR | O_CLOEXEC);
+        if (fd < 0) {
+            MMKVError("fail to open ashmem:%s, %s", name, strerror(errno));
+        } else {
+            if (ioctl(fd, ASHMEM_SET_NAME, name) != 0) {
+                MMKVError("fail to set ashmem name:%s, %s", name, strerror(errno));
+            } else if (ioctl(fd, ASHMEM_SET_SIZE, size) != 0) {
+                MMKVError("fail to set ashmem:%s, size %zu, %s", name, size, strerror(errno));
+            }
+        }
+    }
+    return fd;
+}
+
+typedef size_t (*AShmem_getSize_t)(int fd);
+
+size_t ASharedMemory_getSize(int fd) {
+    size_t size = 0;
+    if (g_android_api >= __ANDROID_API_O__) {
+        static auto handle = loadLibrary();
+        static AShmem_getSize_t funcPtr =
+            (handle != nullptr)
+                ? reinterpret_cast<AShmem_getSize_t>(dlsym(handle, "ASharedMemory_getSize"))
+                : nullptr;
+        if (funcPtr) {
+            size = funcPtr(fd);
+            if (size == 0) {
+                MMKVError("fail to ASharedMemory_getSize:%d, %s", fd, strerror(errno));
+            }
+        } else {
+            MMKVWarning("fail to locate ASharedMemory_create() from loading libandroid.so");
+        }
+    }
+    if (size == 0) {
+        int tmp = ioctl(fd, ASHMEM_GET_SIZE, nullptr);
+        if (tmp < 0) {
+            MMKVError("fail to get ashmem size:%d, %s", fd, strerror(errno));
+        } else {
+            size = static_cast<size_t>(tmp);
+        }
+    }
+    return size;
+}
+
+std::string ASharedMemory_getName(int fd) {
+    // Android Q doesn't have ASharedMemory_getName()
+    // I've make a request to Google, https://issuetracker.google.com/issues/130741665
+    // There's nothing we can do before it's supported officially by Google
+    if (g_android_api >= 29) {
+        return "";
+    }
+
+    char name[ASHMEM_NAME_LEN] = {0};
+    if (ioctl(fd, ASHMEM_GET_NAME, name) != 0) {
+        MMKVError("fail to get ashmem name:%d, %s", fd, strerror(errno));
+        return "";
+    }
+    return string(name);
+}
+#endif
 
 } // namespace mmkv

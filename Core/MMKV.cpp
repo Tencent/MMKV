@@ -42,7 +42,6 @@ static unordered_map<std::string, MMKV *> *g_instanceDic;
 static ThreadLock g_instanceLock;
 static std::string g_rootDir;
 static mmkv::ErrorHandler g_errorHandler;
-mmkv::LogHandler g_logHandler;
 int mmkv::DEFAULT_MMAP_SIZE;
 
 #define DEFAULT_MMAP_ID "mmkv.default"
@@ -65,6 +64,7 @@ enum : bool {
     IncreaseSequence = true,
 };
 
+#ifndef MMKV_ANDROID
 MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, string *relativePath)
     : m_mmapID(mmapedKVKey(mmapID, relativePath))
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
@@ -97,6 +97,90 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, string *r
         loadFromFile();
     }
 }
+#else
+MMKV::MMKV(
+    const std::string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath)
+    : m_mmapID(mmapedKVKey(mmapID, relativePath))
+    , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
+    , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
+    , m_file(m_path)
+    , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, (mode & MMKV_ASHMEM) ? MMAP_ASHMEM : MMAP_FILE)
+    , m_crypter(nullptr)
+    , m_fileLock(m_metaFile.getFd())
+    , m_sharedProcessLock(&m_fileLock, SharedLockType)
+    , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
+    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 || (mode & CONTEXT_MODE_MULTI_PROCESS) != 0)
+    , m_isAshmem((mode & MMKV_ASHMEM) != 0) {
+    m_actualSize = 0;
+    m_output = nullptr;
+
+    if (cryptKey && cryptKey->length() > 0) {
+        m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
+    }
+
+    m_needLoadFromFile = true;
+    m_hasFullWriteback = false;
+
+    m_crcDigest = 0;
+
+    m_sharedProcessLock.m_enable = m_isInterProcess;
+    m_exclusiveProcessLock.m_enable = m_isInterProcess;
+
+    // sensitive zone
+    {
+        SCOPEDLOCK(m_sharedProcessLock);
+        loadFromFile();
+    }
+}
+
+MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
+    : m_mmapID(mmapID)
+    , m_path("")
+    , m_crcPath("")
+    , m_file(ashmemFD)
+    , m_metaFile(ashmemMetaFD)
+    , m_crypter(nullptr)
+    , m_fileLock(m_metaFile.getFd())
+    , m_sharedProcessLock(&m_fileLock, SharedLockType)
+    , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
+    , m_isInterProcess(true)
+    , m_isAshmem(true) {
+
+    // check mmapID with ashmemID
+    {
+        auto ashmemID = m_metaFile.getName();
+        size_t pos = ashmemID.find_last_of('.');
+        if (pos != string::npos) {
+            ashmemID.erase(pos, string::npos);
+        }
+        if (mmapID != ashmemID) {
+            MMKVWarning("mmapID[%s] != ashmem[%s]", mmapID.c_str(), ashmemID.c_str());
+        }
+    }
+    m_path = string(ASHMEM_NAME_DEF) + "/" + m_mmapID;
+    m_crcPath = string(ASHMEM_NAME_DEF) + "/" + m_metaFile.getName();
+    m_actualSize = 0;
+    m_output = nullptr;
+
+    if (cryptKey && cryptKey->length() > 0) {
+        m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
+    }
+
+    m_needLoadFromFile = true;
+    m_hasFullWriteback = false;
+
+    m_crcDigest = 0;
+
+    m_sharedProcessLock.m_enable = m_isInterProcess;
+    m_exclusiveProcessLock.m_enable = m_isInterProcess;
+
+    // sensitive zone
+    {
+        SCOPEDLOCK(m_sharedProcessLock);
+        loadFromFile();
+    }
+}
+#endif
 
 MMKV::~MMKV() {
     clearMemoryCache();
@@ -108,7 +192,11 @@ MMKV::~MMKV() {
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
+#ifndef MMKV_ANDROID
     return mmkvWithID(DEFAULT_MMAP_ID, mode, cryptKey);
+#else
+    return mmkvWithID(DEFAULT_MMAP_ID, DEFAULT_MMAP_SIZE, mode, cryptKey);
+#endif
 }
 
 void initialize() {
@@ -119,7 +207,9 @@ void initialize() {
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
-void MMKV::initializeMMKV(const std::string &rootDir) {
+void MMKV::initializeMMKV(const std::string &rootDir, MMKVLogLevel logLevel) {
+    g_currentLogLevel = logLevel;
+
     static ThreadOnceToken once_control = ThreadOnceUninitialized;
     ThreadLock::ThreadOnce(&once_control, initialize);
 
@@ -133,6 +223,7 @@ void MMKV::initializeMMKV(const std::string &rootDir) {
     MMKVInfo("root dir: %s", g_rootDir.c_str());
 }
 
+#ifndef MMKV_ANDROID
 MMKV *
 MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, string *cryptKey, string *relativePath) {
 
@@ -161,6 +252,54 @@ MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, string *cryptKey, str
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }
+#else
+MMKV *MMKV::mmkvWithID(
+    const std::string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath) {
+
+    if (mmapID.empty()) {
+        return nullptr;
+    }
+    SCOPEDLOCK(g_instanceLock);
+
+    auto mmapKey = mmapedKVKey(mmapID, relativePath);
+    auto itr = g_instanceDic->find(mmapKey);
+    if (itr != g_instanceDic->end()) {
+        MMKV *kv = itr->second;
+        return kv;
+    }
+    if (relativePath) {
+        auto filePath = mappedKVPathWithID(mmapID, mode, relativePath);
+        if (!isFileExist(filePath)) {
+            if (!createFile(filePath)) {
+                return nullptr;
+            }
+        }
+        MMKVInfo("prepare to load %s (id %s) from relativePath %s", mmapID.c_str(), mmapKey.c_str(),
+                 relativePath->c_str());
+    }
+    auto kv = new MMKV(mmapID, size, mode, cryptKey, relativePath);
+    (*g_instanceDic)[mmapKey] = kv;
+    return kv;
+}
+
+MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *cryptKey) {
+
+    if (fd < 0) {
+        return nullptr;
+    }
+    SCOPEDLOCK(g_instanceLock);
+
+    auto itr = g_instanceDic->find(mmapID);
+    if (itr != g_instanceDic->end()) {
+        MMKV *kv = itr->second;
+        kv->checkReSetCryptKey(fd, metaFD, cryptKey);
+        return kv;
+    }
+    auto kv = new MMKV(mmapID, fd, metaFD, cryptKey);
+    (*g_instanceDic)[mmapID] = kv;
+    return kv;
+}
+#endif
 
 void MMKV::onExit() {
     SCOPEDLOCK(g_instanceLock);
@@ -201,6 +340,12 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
 }
 
 void MMKV::loadFromFile() {
+#ifdef MMKV_ANDROID
+    if (m_isAshmem) {
+        loadFromAshmem();
+        return;
+    }
+#endif
     if (m_metaFile.isFileValid()) {
         m_metaInfo.read(m_metaFile.getMemory());
     }
@@ -260,6 +405,68 @@ void MMKV::loadFromFile() {
 
     m_needLoadFromFile = false;
 }
+
+#ifdef MMKV_ANDROID
+void MMKV::loadFromAshmem() {
+    if (m_metaFile.isFileValid()) {
+        m_metaInfo.read(m_metaFile.getMemory());
+    }
+    if (m_crypter) {
+        if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
+            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        }
+    }
+
+    if (!m_file.isFileValid()) {
+        MMKVError("ashmem file invalid %s, fd:%d", m_path.c_str(), m_file.getFd());
+    } else {
+        auto fileSize = m_file.getFileSize();
+        auto ptr = (char *) m_file.getMemory();
+        if (ptr) {
+            m_actualSize = readActualSize();
+            MMKVInfo("loading [%s] with %zu size in total, file size is %zu", m_mmapID.c_str(),
+                     m_actualSize, fileSize);
+            bool loaded = false;
+            if (m_actualSize > 0) {
+                bool loadFromFile = false, needFullWriteback = false;
+                // error checking
+                checkDataValid(loadFromFile, needFullWriteback);
+                if (loadFromFile) {
+                    MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
+                             m_metaInfo.m_crcDigest, m_metaInfo.m_sequence, m_metaInfo.m_version);
+                    MMBuffer inputBuffer(ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
+                    if (m_crypter) {
+                        decryptBuffer(*m_crypter, inputBuffer);
+                    }
+                    m_dic.clear();
+                    MiniPBCoder::decodeMap(m_dic, inputBuffer);
+                    m_output = new CodedOutputData(ptr + Fixed32Size, fileSize - Fixed32Size);
+                    m_output->seek(m_actualSize);
+                    loaded = true;
+                }
+            }
+            if (!loaded) {
+                // file not valid or empty, discard everything
+                SCOPEDLOCK(m_exclusiveProcessLock);
+
+                m_output = new CodedOutputData(ptr + Fixed32Size, fileSize - Fixed32Size);
+                if (m_actualSize > 0) {
+                    writeActualSize(0, 0, nullptr, IncreaseSequence);
+                } else {
+                    writeActualSize(0, 0, nullptr, KeepSequence);
+                }
+            }
+            MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
+        }
+    }
+
+    if (!isFileValid()) {
+        MMKVWarning("[%s] ashmem not valid", m_mmapID.c_str());
+    }
+
+    m_needLoadFromFile = false;
+}
+#endif
 
 // read from last m_position
 void MMKV::partialLoadFromFile() {
@@ -403,13 +610,22 @@ void MMKV::checkLoadData() {
 
         clearMemoryCache();
         loadFromFile();
+        notifyContentChanged();
     } else if (m_metaInfo.m_crcDigest != metaInfo.m_crcDigest) {
         MMKVDebug("[%s] oldCrc %u, newCrc %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
                   metaInfo.m_crcDigest);
         SCOPEDLOCK(m_sharedProcessLock);
 
         size_t fileSize = 0;
+#ifndef MMKV_ANDROID
         getFileSize(m_file.getFd(), fileSize);
+#else
+        if (m_isAshmem) {
+            fileSize = m_file.getFileSize();
+        } else {
+            getFileSize(m_file.getFd(), fileSize);
+        }
+#endif
         if (m_file.getFileSize() != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(),
                      m_file.getFileSize(), fileSize);
@@ -418,6 +634,15 @@ void MMKV::checkLoadData() {
         } else {
             partialLoadFromFile();
         }
+        notifyContentChanged();
+    }
+}
+
+mmkv::ContentChangeHandler g_contentChangeHandler = nullptr;
+
+void MMKV::notifyContentChanged() {
+    if (g_contentChangeHandler) {
+        g_contentChangeHandler(m_mmapID);
     }
 }
 
@@ -426,18 +651,36 @@ void MMKV::checkContentChanged() {
     checkLoadData();
 }
 
+void MMKV::registerContentChangeHandler(mmkv::ContentChangeHandler handler) {
+    g_contentChangeHandler = handler;
+}
+
+void MMKV::unRegisterContentChangeHandler() {
+    g_contentChangeHandler = nullptr;
+}
+
 void MMKV::clearAll() {
     MMKVInfo("cleaning all key-values from [%s]", m_mmapID.c_str());
     SCOPEDLOCK(m_lock);
     SCOPEDLOCK(m_exclusiveProcessLock);
 
+#ifndef MMKV_ANDROID
     if (m_needLoadFromFile) {
+#else
+    if (m_needLoadFromFile && !m_isAshmem) {
+#endif
         removeFile(m_path);
         loadFromFile();
         return;
     }
 
+#ifndef MMKV_ANDROID
     m_file.truncate(DEFAULT_MMAP_SIZE);
+#else
+    if (!m_isAshmem) {
+        m_file.truncate(DEFAULT_MMAP_SIZE);
+    }
+#endif
     auto ptr = m_file.getMemory();
     if (ptr) {
         memset(ptr, 0, m_file.getFileSize());
@@ -478,7 +721,13 @@ void MMKV::clearMemoryCache() {
     delete m_output;
     m_output = nullptr;
 
+#ifndef MMKV_ANDROID
     m_file.clearMemoryCache();
+#else
+    if (!m_isAshmem) {
+        m_file.clearMemoryCache();
+    }
+#endif
     m_actualSize = 0;
     m_metaInfo.m_crcDigest = 0;
 }
@@ -496,6 +745,12 @@ void MMKV::close() {
 }
 
 void MMKV::trim() {
+#ifdef MMKV_ANDROID
+    if (m_isAshmem) {
+        MMKVInfo("there's no way to trim ashmem MMKV:%s", m_mmapID.c_str());
+        return;
+    }
+#endif
     SCOPEDLOCK(m_lock);
     MMKVInfo("prepare to trim %s", m_mmapID.c_str());
 
@@ -551,11 +806,18 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     if (newSize >= m_output->spaceLeft() || m_dic.empty()) {
         // try a full rewrite to make space
         static const int offset = pbFixed32Size(0);
+        auto fileSize = m_file.getFileSize();
         MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
         size_t lenNeeded = data.length() + offset + newSize;
+#ifdef MMKV_ANDROID
+        if (m_isAshmem && (lenNeeded > fileSize)) {
+            MMKVError("ashmem %s reach size limit:%zu, consider configure with larger size",
+                      m_mmapID.c_str(), fileSize);
+            return false;
+        }
+#endif
         size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.size());
         size_t futureUsage = avgItemSize * std::max<size_t>(8, (m_dic.size() + 1) / 2);
-        auto fileSize = m_file.getFileSize();
         // 1. no space for a full rewrite, double it
         // 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
         if (lenNeeded >= fileSize || (lenNeeded + futureUsage) >= fileSize) {
@@ -850,11 +1112,23 @@ void MMKV::checkReSetCryptKey(const std::string *cryptKey) {
     }
 }
 
+#ifdef MMKV_ANDROID
 void MMKV::checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey) {
     SCOPEDLOCK(m_lock);
 
     checkReSetCryptKey(cryptKey);
+
+    if (m_isAshmem) {
+        // TODO: close ashmem file
+        //        if (m_fd != fd) {
+        //            ::close(fd);
+        //        }
+        //        if (m_metaFile.getFd() != metaFD) {
+        //            ::close(metaFD);
+        //        }
+    }
 }
+#endif
 
 bool MMKV::isFileValid() {
     return m_file.isFileValid();
@@ -1352,22 +1626,22 @@ bool MMKV::isFileValid(const std::string &mmapID) {
     }
 }
 
-void MMKV::regiserErrorHandler(ErrorHandler handler) {
+void MMKV::registerErrorHandler(ErrorHandler handler) {
     SCOPEDLOCK(g_instanceLock);
     g_errorHandler = handler;
 }
 
-void MMKV::unRegisetErrorHandler() {
+void MMKV::unRegisterErrorHandler() {
     SCOPEDLOCK(g_instanceLock);
     g_errorHandler = nullptr;
 }
 
-void MMKV::regiserLogHandler(LogHandler handler) {
+void MMKV::registerLogHandler(LogHandler handler) {
     SCOPEDLOCK(g_instanceLock);
     g_logHandler = handler;
 }
 
-void MMKV::unRegisetLogHandler() {
+void MMKV::unRegisterLogHandler() {
     SCOPEDLOCK(g_instanceLock);
     g_logHandler = nullptr;
 }
@@ -1424,14 +1698,26 @@ static string mmapedKVKey(const string &mmapID, string *relativePath) {
 }
 
 static string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
+#ifndef MMKV_ANDROID
     if (relativePath) {
+#else
+    if (mode & MMKV_ASHMEM) {
+        return string(ASHMEM_NAME_DEF) + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+    } else if (relativePath) {
+#endif
         return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
     }
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
 }
 
 static string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
+#ifndef MMKV_ANDROID
     if (relativePath) {
+#else
+    if (mode & MMKV_ASHMEM) {
+        return encodeFilePath(mmapID) + ".crc";
+    } else if (relativePath) {
+#endif
         return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + ".crc";
     }
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID) + ".crc";

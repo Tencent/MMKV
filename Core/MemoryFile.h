@@ -18,15 +18,21 @@
  * limitations under the License.
  */
 
-#ifndef MMKV_MMAPEDFILE_H
-#define MMKV_MMAPEDFILE_H
+#ifndef MMKV_MAMERYFILE_H
+#define MMKV_MAMERYFILE_H
 
 #include "MMKVPredef.h"
 
 #include <string>
-#include <sys/mman.h>
 
 enum SyncFlag : bool { MMKV_SYNC = true, MMKV_ASYNC = false };
+
+#ifdef MMKV_ANDROID
+#    define ASHMEM_NAME_DEF "/dev/ashmem"
+
+enum FileType : bool { MMAP_FILE = false, MMAP_ASHMEM = true };
+
+#endif
 
 namespace mmkv {
 
@@ -65,6 +71,13 @@ public:
     void clearMemoryCache();
 
     bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
+
+#ifdef MMKV_ANDROID
+    MemoryFile(const std::string &path, size_t size, FileType fileType);
+    explicit MemoryFile(int ashmemFD);
+
+    const FileType m_fileType;
+#endif
 };
 
 class MMBuffer;
@@ -78,6 +91,15 @@ extern bool createFile(const std::string &filePath);
 extern bool getFileSize(int fd, size_t &size);
 extern int getPageSize();
 
+#ifdef MMKV_ANDROID
+// for Android Q limiting ashmem access
+extern int ASharedMemory_create(const char *name, size_t size);
+extern size_t ASharedMemory_getSize(int fd);
+extern std::string ASharedMemory_getName(int fd);
+
+extern int g_android_api;
+#endif
+
 } // namespace mmkv
 
-#endif //MMKV_MMAPEDFILE_H
+#endif //MMKV_MAMERYFILE_H
