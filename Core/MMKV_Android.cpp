@@ -42,10 +42,9 @@ using namespace mmkv;
 extern unordered_map<std::string, MMKV *> *g_instanceDic;
 extern ThreadLock g_instanceLock;
 
-extern string mmapedKVKey(const string &mmapID, string *relativePath = nullptr);
-extern string
-mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath = nullptr);
-extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath = nullptr);
+extern string mmapedKVKey(const string &mmapID, string *relativePath);
+extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
+extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
 
 #ifdef MMKV_ANDROID
 
