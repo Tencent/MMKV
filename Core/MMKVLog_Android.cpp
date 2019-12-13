@@ -20,44 +20,27 @@
 
 #include "MMKVLog.h"
 
-#ifndef NDEBUG
-MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
-#else
-MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
-#endif
-mmkv::LogHandler g_logHandler;
-
 #ifdef ENABLE_MMKV_LOG
-#    include <cstdarg>
-#    include <string>
-
+#    ifdef MMKV_ANDROID
+#        include <android/log.h>
+#        include <cstdarg>
+#        include <string>
 using namespace std;
 
-const char *_getFileName(const char *path) {
-    const char *ptr = strrchr(path, '/');
-    if (!ptr) {
-        ptr = strrchr(path, '\\');
-    }
-    if (ptr) {
-        return ptr + 1;
-    } else {
-        return path;
-    }
-}
+constexpr auto APP_NAME = "MMKV";
 
-#    ifndef MMKV_ANDROID
-static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
+static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
     switch (level) {
         case MMKVLogDebug:
-            return "D";
+            return ANDROID_LOG_DEBUG;
         case MMKVLogInfo:
-            return "I";
+            return ANDROID_LOG_INFO;
         case MMKVLogWarning:
-            return "W";
+            return ANDROID_LOG_WARN;
         case MMKVLogError:
-            return "E";
+            return ANDROID_LOG_ERROR;
         default:
-            return "N";
+            return ANDROID_LOG_UNKNOWN;
     }
 }
 
@@ -87,12 +70,11 @@ void _MMKVLogWithLevel(
         if (g_logHandler) {
             g_logHandler(level, file, line, func, message);
         } else {
-            printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), file, line, func,
-                   message.c_str());
-            //fflush(stdout);
+            __android_log_print(MMKVLogLevelDesc(level), APP_NAME, "<%s:%d::%s> %s", file, line,
+                                func, message.c_str());
         }
     }
 }
-#    endif
+#    endif // MMKV_ANDROID
 
 #endif // ENABLE_MMKV_LOG

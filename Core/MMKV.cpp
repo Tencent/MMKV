@@ -39,8 +39,8 @@
 using namespace std;
 using namespace mmkv;
 
-static unordered_map<std::string, MMKV *> *g_instanceDic;
-static ThreadLock g_instanceLock;
+unordered_map<std::string, MMKV *> *g_instanceDic;
+ThreadLock g_instanceLock;
 static std::string g_rootDir;
 static mmkv::ErrorHandler g_errorHandler;
 int mmkv::DEFAULT_MMAP_SIZE;
@@ -49,10 +49,9 @@ constexpr auto DEFAULT_MMAP_ID = "mmkv.default";
 constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = "specialCharacter";
 constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
-static string mmapedKVKey(const string &mmapID, string *relativePath = nullptr);
-static string
-mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath = nullptr);
-static string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath = nullptr);
+string mmapedKVKey(const string &mmapID, string *relativePath = nullptr);
+string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath = nullptr);
+string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath = nullptr);
 static void mkSpecialCharacterFileDirectory();
 static string md5(const string &value);
 static string encodeFilePath(const string &mmapID);
@@ -77,88 +76,6 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, string *r
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
     , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0) {
-    m_actualSize = 0;
-    m_output = nullptr;
-
-    if (cryptKey && cryptKey->length() > 0) {
-        m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
-    }
-
-    m_needLoadFromFile = true;
-    m_hasFullWriteback = false;
-
-    m_crcDigest = 0;
-
-    m_sharedProcessLock.m_enable = m_isInterProcess;
-    m_exclusiveProcessLock.m_enable = m_isInterProcess;
-
-    // sensitive zone
-    {
-        SCOPEDLOCK(m_sharedProcessLock);
-        loadFromFile();
-    }
-}
-#else
-MMKV::MMKV(
-    const std::string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath)
-    : m_mmapID(mmapedKVKey(mmapID, relativePath))
-    , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
-    , m_file(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE)
-    , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file.m_fileType)
-    , m_crypter(nullptr)
-    , m_fileLock(m_metaFile.getFd())
-    , m_sharedProcessLock(&m_fileLock, SharedLockType)
-    , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
-    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 ||
-                       (mode & CONTEXT_MODE_MULTI_PROCESS) != 0) {
-    m_actualSize = 0;
-    m_output = nullptr;
-
-    if (cryptKey && cryptKey->length() > 0) {
-        m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
-    }
-
-    m_needLoadFromFile = true;
-    m_hasFullWriteback = false;
-
-    m_crcDigest = 0;
-
-    m_sharedProcessLock.m_enable = m_isInterProcess;
-    m_exclusiveProcessLock.m_enable = m_isInterProcess;
-
-    // sensitive zone
-    {
-        SCOPEDLOCK(m_sharedProcessLock);
-        loadFromFile();
-    }
-}
-
-MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
-    : m_mmapID(mmapID)
-    , m_path("")
-    , m_crcPath("")
-    , m_file(ashmemFD)
-    , m_metaFile(ashmemMetaFD)
-    , m_crypter(nullptr)
-    , m_fileLock(m_metaFile.getFd())
-    , m_sharedProcessLock(&m_fileLock, SharedLockType)
-    , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
-    , m_isInterProcess(true) {
-
-    // check mmapID with ashmemID
-    {
-        auto ashmemID = m_metaFile.getName();
-        size_t pos = ashmemID.find_last_of('.');
-        if (pos != string::npos) {
-            ashmemID.erase(pos, string::npos);
-        }
-        if (mmapID != ashmemID) {
-            MMKVWarning("mmapID[%s] != ashmem[%s]", mmapID.c_str(), ashmemID.c_str());
-        }
-    }
-    m_path = string(ASHMEM_NAME_DEF) + "/" + m_mmapID;
-    m_crcPath = string(ASHMEM_NAME_DEF) + "/" + m_metaFile.getName();
     m_actualSize = 0;
     m_output = nullptr;
 
@@ -250,53 +167,6 @@ MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, string *cryptKey, str
     }
     auto kv = new MMKV(mmapID, mode, cryptKey, relativePath);
     (*g_instanceDic)[mmapKey] = kv;
-    return kv;
-}
-#else
-MMKV *MMKV::mmkvWithID(
-    const std::string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath) {
-
-    if (mmapID.empty()) {
-        return nullptr;
-    }
-    SCOPEDLOCK(g_instanceLock);
-
-    auto mmapKey = mmapedKVKey(mmapID, relativePath);
-    auto itr = g_instanceDic->find(mmapKey);
-    if (itr != g_instanceDic->end()) {
-        MMKV *kv = itr->second;
-        return kv;
-    }
-    if (relativePath) {
-        auto filePath = mappedKVPathWithID(mmapID, mode, relativePath);
-        if (!isFileExist(filePath)) {
-            if (!createFile(filePath)) {
-                return nullptr;
-            }
-        }
-        MMKVInfo("prepare to load %s (id %s) from relativePath %s", mmapID.c_str(), mmapKey.c_str(),
-                 relativePath->c_str());
-    }
-    auto kv = new MMKV(mmapID, size, mode, cryptKey, relativePath);
-    (*g_instanceDic)[mmapKey] = kv;
-    return kv;
-}
-
-MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *cryptKey) {
-
-    if (fd < 0) {
-        return nullptr;
-    }
-    SCOPEDLOCK(g_instanceLock);
-
-    auto itr = g_instanceDic->find(mmapID);
-    if (itr != g_instanceDic->end()) {
-        MMKV *kv = itr->second;
-        kv->checkReSetCryptKey(fd, metaFD, cryptKey);
-        return kv;
-    }
-    auto kv = new MMKV(mmapID, fd, metaFD, cryptKey);
-    (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
 #endif
@@ -1005,23 +875,6 @@ void MMKV::checkReSetCryptKey(const std::string *cryptKey) {
     }
 }
 
-#ifdef MMKV_ANDROID
-void MMKV::checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey) {
-    SCOPEDLOCK(m_lock);
-
-    checkReSetCryptKey(cryptKey);
-
-    if (m_file.m_fileType & MMFILE_TYPE_ASHMEM) {
-        if (m_file.getFd() != fd) {
-            ::close(fd);
-        }
-        if (m_metaFile.getFd() != metaFD) {
-            ::close(metaFD);
-        }
-    }
-}
-#endif
-
 bool MMKV::isFileValid() {
     return m_file.isFileValid();
 }
@@ -1582,14 +1435,14 @@ static string encodeFilePath(const string &mmapID) {
     }
 }
 
-static string mmapedKVKey(const string &mmapID, string *relativePath) {
+string mmapedKVKey(const string &mmapID, string *relativePath) {
     if (relativePath && g_rootDir != (*relativePath)) {
         return md5(*relativePath + MMKV_PATH_SLASH + mmapID);
     }
     return mmapID;
 }
 
-static string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
+string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
 #ifndef MMKV_ANDROID
     if (relativePath) {
 #else
@@ -1602,7 +1455,7 @@ static string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *re
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
 }
 
-static string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
+string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) {
 #ifndef MMKV_ANDROID
     if (relativePath) {
 #else

@@ -22,6 +22,15 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+IF(APPLE)
+    # tell ranlib to ignore empty compilation units
+    SET(CMAKE_C_ARCHIVE_FINISH   "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
+    SET(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
+    # prevents ar from invoking ranlib, let CMake do it
+    SET(CMAKE_C_ARCHIVE_CREATE   "<CMAKE_AR> qc -S <TARGET> <LINK_FLAGS> <OBJECTS>")
+    SET(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> qc -S <TARGET> <LINK_FLAGS> <OBJECTS>")
+ENDIF()
+
 project(core)
 
 # Creates and names a library, sets it as either STATIC
@@ -31,58 +40,60 @@ project(core)
 
 add_library(core
 
-             # Sets the library as a shared library.
-             STATIC
+        # Sets the library as a shared library.
+        STATIC
 
-             # Provides a relative path to your source file(s).
-             MMKV.h
-             MMKV.cpp
-             MMKVLog.h
-             MMKVLog.cpp
-             CodedInputData.h
-             CodedInputData.cpp
-             CodedOutputData.h
-             CodedOutputData.cpp
-             PBUtility.h
-             PBUtility.cpp
-             MiniPBCoder.h
-             MiniPBCoder.cpp
-             MMBuffer.h
-             MMBuffer.cpp
-             InterProcessLock.h
-             InterProcessLock.cpp
-             MemoryFile.h
-             MemoryFile.cpp
-             ThreadLock.h
-             ThreadLock.cpp
-             MMKVMetaInfo.hpp
-             aes/AESCrypt.h
-             aes/AESCrypt.cpp
-             aes/openssl/aes.h
-             aes/openssl/aes_cfb.c
-             aes/openssl/aes_core.c
-             aes/openssl/aes_locl.h
-             aes/openssl/cfb128.c
-             aes/openssl/modes.h
-             aes/openssl/opensslconf.h
-             aes/openssl/md5_dgst.c
-             aes/openssl/md5_locl.h
-             aes/openssl/md5_one.c
-             aes/openssl/md5.h
-             aes/openssl/md32_common.h
-             crc32/Checksum.h
-             crc32/zlib/zconf.h
-             crc32/zlib/zutil.h
-             crc32/zlib/crc32.h
-             crc32/zlib/crc32.cpp
-             MMKVPredef.h)
+        # Provides a relative path to your source file(s).
+        MMKV.h
+        MMKV.cpp
+        MMKV_Android.cpp
+        MMKVLog.h
+        MMKVLog.cpp
+        MMKVLog_Android.cpp
+        CodedInputData.h
+        CodedInputData.cpp
+        CodedOutputData.h
+        CodedOutputData.cpp
+        PBUtility.h
+        PBUtility.cpp
+        MiniPBCoder.h
+        MiniPBCoder.cpp
+        MMBuffer.h
+        MMBuffer.cpp
+        InterProcessLock.h
+        InterProcessLock.cpp
+        MemoryFile.h
+        MemoryFile.cpp
+        MemoryFile_Android.cpp
+        ThreadLock.h
+        ThreadLock.cpp
+        MMKVMetaInfo.hpp
+        aes/AESCrypt.h
+        aes/AESCrypt.cpp
+        aes/openssl/aes.h
+        aes/openssl/aes_cfb.c
+        aes/openssl/aes_core.c
+        aes/openssl/aes_locl.h
+        aes/openssl/cfb128.c
+        aes/openssl/modes.h
+        aes/openssl/opensslconf.h
+        aes/openssl/md5_dgst.c
+        aes/openssl/md5_locl.h
+        aes/openssl/md5_one.c
+        aes/openssl/md5.h
+        aes/openssl/md32_common.h
+        crc32/Checksum.h
+        crc32/zlib/zconf.h
+        crc32/zlib/zutil.h
+        crc32/zlib/crc32.h
+        crc32/zlib/crc32.cpp
+        MMKVPredef.h
+        )
 
-target_include_directories(core PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 set_target_properties(core PROPERTIES
-            CXX_STANDARD 17
-            CXX_EXTENSIONS OFF
-            POSITION_INDEPENDENT_CODE ON
-            )
-
+        CXX_STANDARD 17
+        CXX_EXTENSIONS OFF
+        POSITION_INDEPENDENT_CODE ON
+        )
