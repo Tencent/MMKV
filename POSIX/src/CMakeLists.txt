@@ -38,8 +38,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             MMKV.h
-             MMKV.cpp
+             libmmkv.cpp
         )
 
 target_include_directories(mmkv PUBLIC

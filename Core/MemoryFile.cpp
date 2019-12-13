@@ -44,7 +44,7 @@ extern std::string ASharedMemory_getName(int fd);
 
 #ifndef MMKV_ANDROID
 MemoryFile::MemoryFile(const std::string &path)
-    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_FILE) {
+    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
 #else
