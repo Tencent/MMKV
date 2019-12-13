@@ -485,6 +485,7 @@ public class MainActivity
             case LevelDebug:
                 Log.d("redirect logging MMKV", log);
                 break;
+            case LevelNone:
             case LevelInfo:
                 Log.i("redirect logging MMKV", log);
                 break;
@@ -492,9 +493,6 @@ public class MainActivity
                 Log.w("redirect logging MMKV", log);
                 break;
             case LevelError:
-                Log.e("redirect logging MMKV", log);
-                break;
-            case LevelNone:
                 Log.e("redirect logging MMKV", log);
                 break;
         }

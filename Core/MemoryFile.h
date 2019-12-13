@@ -28,10 +28,13 @@
 enum SyncFlag : bool { MMKV_SYNC = true, MMKV_ASYNC = false };
 
 #ifdef MMKV_ANDROID
-#    define ASHMEM_NAME_DEF "/dev/ashmem"
+constexpr auto ASHMEM_NAME_DEF = "/dev/ashmem";
 
-enum FileType : bool { MMAP_FILE = false, MMAP_ASHMEM = true };
+namespace mmkv {
+extern int g_android_api;
 
+enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
+} // namespace mmkv
 #endif
 
 namespace mmkv {
@@ -44,19 +47,28 @@ class MemoryFile {
 
     bool mmap();
 
-public:
-    explicit MemoryFile(const std::string &path);
-    ~MemoryFile() { clearMemoryCache(); }
+    void doCleanMemoryCache(bool forceClean);
 
-    // just forbid it for possibly misuse
-    MemoryFile(const MemoryFile &other) = delete;
-    MemoryFile &operator=(const MemoryFile &other) = delete;
+public:
+#ifndef MMKV_ANDROID
+    explicit MemoryFile(const std::string &path);
+#else
+    MemoryFile(const std::string &path, size_t size, FileType fileType);
+    explicit MemoryFile(int ashmemFD);
+
+    const FileType m_fileType;
+#endif
+
+    ~MemoryFile() { doCleanMemoryCache(true); }
 
     size_t getFileSize() { return m_size; }
 
+    // get the actual file size on disk
+    size_t getActualFileSize();
+
     void *getMemory() { return m_ptr; }
 
-    std::string &getName() { return m_name; }
+    const std::string &getName() { return m_name; }
 
     int getFd() { return m_fd; }
 
@@ -68,16 +80,13 @@ public:
     // call this if clearMemoryCache() has been called
     void reloadFromFile();
 
-    void clearMemoryCache();
+    void clearMemoryCache() { doCleanMemoryCache(false); }
 
     bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
 
-#ifdef MMKV_ANDROID
-    MemoryFile(const std::string &path, size_t size, FileType fileType);
-    explicit MemoryFile(int ashmemFD);
-
-    const FileType m_fileType;
-#endif
+    // just forbid it for possibly misuse
+    MemoryFile(const MemoryFile &other) = delete;
+    MemoryFile &operator=(const MemoryFile &other) = delete;
 };
 
 class MMBuffer;
@@ -88,17 +97,7 @@ extern bool removeFile(const std::string &nsFilePath);
 extern MMBuffer *readWholeFile(const char *path);
 extern bool zeroFillFile(int fd, size_t startPos, size_t size);
 extern bool createFile(const std::string &filePath);
-extern bool getFileSize(int fd, size_t &size);
 extern int getPageSize();
-
-#ifdef MMKV_ANDROID
-// for Android Q limiting ashmem access
-extern int ASharedMemory_create(const char *name, size_t size);
-extern size_t ASharedMemory_getSize(int fd);
-extern std::string ASharedMemory_getName(int fd);
-
-extern int g_android_api;
-#endif
 
 } // namespace mmkv
 

@@ -132,8 +132,6 @@ class MMKV {
 
 #ifdef MMKV_ANDROID
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
-
-    void loadFromAshmem();
 #endif
 
 public:
@@ -163,11 +161,12 @@ public:
                                   int fd,
                                   int metaFD,
                                   std::string *cryptKey = nullptr);
-    const bool m_isAshmem;
 
-    int ashmemFD() { return m_isAshmem ? m_file.getFd() : -1; }
+    int ashmemFD() { return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_file.getFd() : -1; }
 
-    int ashmemMetaFD() { return m_isAshmem ? m_metaFile.getFd() : -1; }
+    int ashmemMetaFD() {
+        return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile.getFd() : -1;
+    }
 #endif
 
     static void onExit();
@@ -288,7 +287,7 @@ public:
     static void setLogLevel(MMKVLogLevel level);
 
     // just forbid it for possibly misuse
-    MMKV(const MMKV &other) = delete;
+    explicit MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
 };
 

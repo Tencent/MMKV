@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <unistd.h>
 
 using namespace std;
 using namespace mmkv;
@@ -44,8 +45,8 @@ static std::string g_rootDir;
 static mmkv::ErrorHandler g_errorHandler;
 int mmkv::DEFAULT_MMAP_SIZE;
 
-#define DEFAULT_MMAP_ID "mmkv.default"
-#define SPECIAL_CHARACTER_DIRECTORY_NAME "specialCharacter"
+constexpr auto DEFAULT_MMAP_ID = "mmkv.default";
+constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = "specialCharacter";
 constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
 static string mmapedKVKey(const string &mmapID, string *relativePath = nullptr);
@@ -103,14 +104,14 @@ MMKV::MMKV(
     : m_mmapID(mmapedKVKey(mmapID, relativePath))
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
-    , m_file(m_path)
-    , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, (mode & MMKV_ASHMEM) ? MMAP_ASHMEM : MMAP_FILE)
+    , m_file(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE)
+    , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file.m_fileType)
     , m_crypter(nullptr)
     , m_fileLock(m_metaFile.getFd())
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
-    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 || (mode & CONTEXT_MODE_MULTI_PROCESS) != 0)
-    , m_isAshmem((mode & MMKV_ASHMEM) != 0) {
+    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 ||
+                       (mode & CONTEXT_MODE_MULTI_PROCESS) != 0) {
     m_actualSize = 0;
     m_output = nullptr;
 
@@ -143,8 +144,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     , m_fileLock(m_metaFile.getFd())
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
-    , m_isInterProcess(true)
-    , m_isAshmem(true) {
+    , m_isInterProcess(true) {
 
     // check mmapID with ashmemID
     {
@@ -340,12 +340,6 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
 }
 
 void MMKV::loadFromFile() {
-#ifdef MMKV_ANDROID
-    if (m_isAshmem) {
-        loadFromAshmem();
-        return;
-    }
-#endif
     if (m_metaFile.isFileValid()) {
         m_metaInfo.read(m_metaFile.getMemory());
     }
@@ -405,68 +399,6 @@ void MMKV::loadFromFile() {
 
     m_needLoadFromFile = false;
 }
-
-#ifdef MMKV_ANDROID
-void MMKV::loadFromAshmem() {
-    if (m_metaFile.isFileValid()) {
-        m_metaInfo.read(m_metaFile.getMemory());
-    }
-    if (m_crypter) {
-        if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
-            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
-        }
-    }
-
-    if (!m_file.isFileValid()) {
-        MMKVError("ashmem file invalid %s, fd:%d", m_path.c_str(), m_file.getFd());
-    } else {
-        auto fileSize = m_file.getFileSize();
-        auto ptr = (char *) m_file.getMemory();
-        if (ptr) {
-            m_actualSize = readActualSize();
-            MMKVInfo("loading [%s] with %zu size in total, file size is %zu", m_mmapID.c_str(),
-                     m_actualSize, fileSize);
-            bool loaded = false;
-            if (m_actualSize > 0) {
-                bool loadFromFile = false, needFullWriteback = false;
-                // error checking
-                checkDataValid(loadFromFile, needFullWriteback);
-                if (loadFromFile) {
-                    MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
-                             m_metaInfo.m_crcDigest, m_metaInfo.m_sequence, m_metaInfo.m_version);
-                    MMBuffer inputBuffer(ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
-                    if (m_crypter) {
-                        decryptBuffer(*m_crypter, inputBuffer);
-                    }
-                    m_dic.clear();
-                    MiniPBCoder::decodeMap(m_dic, inputBuffer);
-                    m_output = new CodedOutputData(ptr + Fixed32Size, fileSize - Fixed32Size);
-                    m_output->seek(m_actualSize);
-                    loaded = true;
-                }
-            }
-            if (!loaded) {
-                // file not valid or empty, discard everything
-                SCOPEDLOCK(m_exclusiveProcessLock);
-
-                m_output = new CodedOutputData(ptr + Fixed32Size, fileSize - Fixed32Size);
-                if (m_actualSize > 0) {
-                    writeActualSize(0, 0, nullptr, IncreaseSequence);
-                } else {
-                    writeActualSize(0, 0, nullptr, KeepSequence);
-                }
-            }
-            MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
-        }
-    }
-
-    if (!isFileValid()) {
-        MMKVWarning("[%s] ashmem not valid", m_mmapID.c_str());
-    }
-
-    m_needLoadFromFile = false;
-}
-#endif
 
 // read from last m_position
 void MMKV::partialLoadFromFile() {
@@ -616,16 +548,7 @@ void MMKV::checkLoadData() {
                   metaInfo.m_crcDigest);
         SCOPEDLOCK(m_sharedProcessLock);
 
-        size_t fileSize = 0;
-#ifndef MMKV_ANDROID
-        getFileSize(m_file.getFd(), fileSize);
-#else
-        if (m_isAshmem) {
-            fileSize = m_file.getFileSize();
-        } else {
-            getFileSize(m_file.getFd(), fileSize);
-        }
-#endif
+        size_t fileSize = m_file.getActualFileSize();
         if (m_file.getFileSize() != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(),
                      m_file.getFileSize(), fileSize);
@@ -664,23 +587,11 @@ void MMKV::clearAll() {
     SCOPEDLOCK(m_lock);
     SCOPEDLOCK(m_exclusiveProcessLock);
 
-#ifndef MMKV_ANDROID
     if (m_needLoadFromFile) {
-#else
-    if (m_needLoadFromFile && !m_isAshmem) {
-#endif
-        removeFile(m_path);
-        loadFromFile();
-        return;
+        m_file.reloadFromFile();
     }
 
-#ifndef MMKV_ANDROID
     m_file.truncate(DEFAULT_MMAP_SIZE);
-#else
-    if (!m_isAshmem) {
-        m_file.truncate(DEFAULT_MMAP_SIZE);
-    }
-#endif
     auto ptr = m_file.getMemory();
     if (ptr) {
         memset(ptr, 0, m_file.getFileSize());
@@ -721,13 +632,7 @@ void MMKV::clearMemoryCache() {
     delete m_output;
     m_output = nullptr;
 
-#ifndef MMKV_ANDROID
     m_file.clearMemoryCache();
-#else
-    if (!m_isAshmem) {
-        m_file.clearMemoryCache();
-    }
-#endif
     m_actualSize = 0;
     m_metaInfo.m_crcDigest = 0;
 }
@@ -745,12 +650,6 @@ void MMKV::close() {
 }
 
 void MMKV::trim() {
-#ifdef MMKV_ANDROID
-    if (m_isAshmem) {
-        MMKVInfo("there's no way to trim ashmem MMKV:%s", m_mmapID.c_str());
-        return;
-    }
-#endif
     SCOPEDLOCK(m_lock);
     MMKVInfo("prepare to trim %s", m_mmapID.c_str());
 
@@ -779,6 +678,7 @@ void MMKV::trim() {
     MMKVInfo("trimming %s from %zu to %zu, actualSize %zu", m_mmapID.c_str(), oldSize, fileSize,
              m_actualSize);
 
+    // TODO: check if ashmem works
     if (!m_file.truncate(fileSize)) {
         return;
     }
@@ -787,7 +687,7 @@ void MMKV::trim() {
     m_output = new CodedOutputData(ptr + pbFixed32Size(0), fileSize - pbFixed32Size(0));
     m_output->seek(m_actualSize);
 
-    MMKVInfo("finish trim %s from to %zu", m_mmapID.c_str(), fileSize);
+    MMKVInfo("finish trim %s from %zu to %zu", m_mmapID.c_str(), oldSize, fileSize);
 }
 
 // since we use append mode, when -[setData: forKey:] many times, space may not be enough
@@ -809,13 +709,6 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         auto fileSize = m_file.getFileSize();
         MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
         size_t lenNeeded = data.length() + offset + newSize;
-#ifdef MMKV_ANDROID
-        if (m_isAshmem && (lenNeeded > fileSize)) {
-            MMKVError("ashmem %s reach size limit:%zu, consider configure with larger size",
-                      m_mmapID.c_str(), fileSize);
-            return false;
-        }
-#endif
         size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.size());
         size_t futureUsage = avgItemSize * std::max<size_t>(8, (m_dic.size() + 1) / 2);
         // 1. no space for a full rewrite, double it
@@ -1118,14 +1011,13 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey) {
 
     checkReSetCryptKey(cryptKey);
 
-    if (m_isAshmem) {
-        // TODO: close ashmem file
-        //        if (m_fd != fd) {
-        //            ::close(fd);
-        //        }
-        //        if (m_metaFile.getFd() != metaFD) {
-        //            ::close(metaFD);
-        //        }
+    if (m_file.m_fileType & MMFILE_TYPE_ASHMEM) {
+        if (m_file.getFd() != fd) {
+            ::close(fd);
+        }
+        if (m_metaFile.getFd() != metaFD) {
+            ::close(metaFD);
+        }
     }
 }
 #endif

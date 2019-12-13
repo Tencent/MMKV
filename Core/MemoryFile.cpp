@@ -33,31 +33,43 @@ using namespace std;
 
 namespace mmkv {
 
-MemoryFile::MemoryFile(const std::string &path)
-    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(MMAP_FILE) {
-    reloadFromFile();
-}
+static bool getFileSize(int fd, size_t &size);
 
 #ifdef MMKV_ANDROID
+// for Android Q limiting ashmem access
+extern int ASharedMemory_create(const char *name, size_t size);
+extern size_t ASharedMemory_getSize(int fd);
+extern std::string ASharedMemory_getName(int fd);
+#endif
+
+#ifndef MMKV_ANDROID
+MemoryFile::MemoryFile(const std::string &path)
+    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_FILE) {
+    reloadFromFile();
+}
+#else
 MemoryFile::MemoryFile(const std::string &path, size_t size, FileType fileType)
     : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
-    if (m_fileType == MMAP_FILE) {
+    if (m_fileType == MMFILE_TYPE_FILE) {
         reloadFromFile();
     } else {
+        // round up to (n * pagesize)
+        if (size < DEFAULT_MMAP_SIZE || (size % DEFAULT_MMAP_SIZE != 0)) {
+            size = ((size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+        }
         m_fd = ASharedMemory_create(m_name.c_str(), size);
         if (m_fd >= 0) {
-            m_size = static_cast<size_t>(size);
+            m_size = size;
             auto ret = mmap();
             if (!ret) {
-                close(m_fd);
-                m_fd = -1;
+                doCleanMemoryCache(true);
             }
         }
     }
 }
 
 MemoryFile::MemoryFile(int ashmemFD)
-    : m_name(""), m_fd(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMAP_ASHMEM) {
+    : m_name(""), m_fd(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM) {
     if (m_fd < 0) {
         MMKVError("fd %d invalid", m_fd);
     } else {
@@ -66,8 +78,7 @@ MemoryFile::MemoryFile(int ashmemFD)
         MMKVInfo("ashmem name:%s, size:%zu", m_name.c_str(), m_size);
         auto ret = mmap();
         if (!ret) {
-            close(m_fd);
-            m_fd = -1;
+            doCleanMemoryCache(true);
         }
     }
 }
@@ -80,9 +91,18 @@ bool MemoryFile::truncate(size_t size) {
     if (size == m_size) {
         return true;
     }
-    if (m_fileType == MMAP_ASHMEM) {
+#ifdef MMKV_ANDROID
+    if (m_fileType == MMFILE_TYPE_ASHMEM) {
+        if (size > m_size) {
+            MMKVError("ashmem %s reach size limit:%zu, consider configure with larger size",
+                      m_name.c_str(), m_size);
+        } else {
+            MMKVInfo("no way to trim ashmem %s from %zu to smaller size %zu", m_name.c_str(),
+                     m_size, size);
+        }
         return false;
     }
+#endif
 
     auto oldSize = m_size;
     m_size = size;
@@ -136,10 +156,14 @@ bool MemoryFile::mmap() {
 }
 
 void MemoryFile::reloadFromFile() {
-    if (m_fileType == MMAP_ASHMEM) {
+#ifdef MMKV_ANDROID
+    if (m_fileType == MMFILE_TYPE_ASHMEM) {
         return;
     }
+#endif
     if (isFileValid()) {
+        MMKVWarning("calling reloadFromFile while the cache [%s] is still valid", m_name.c_str());
+        assert(0);
         clearMemoryCache();
     }
 
@@ -159,14 +183,18 @@ void MemoryFile::reloadFromFile() {
         } else {
             auto ret = mmap();
             if (!ret) {
-                close(m_fd);
-                m_fd = -1;
+                doCleanMemoryCache(true);
             }
         }
     }
 }
 
-void MemoryFile::clearMemoryCache() {
+void MemoryFile::doCleanMemoryCache(bool forceClean) {
+#ifdef MMKV_ANDROID
+    if (m_fileType == MMFILE_TYPE_ASHMEM && !forceClean) {
+        return;
+    }
+#endif
     if (m_ptr && m_ptr != MAP_FAILED) {
         if (munmap(m_ptr, m_size) != 0) {
             MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
@@ -181,6 +209,17 @@ void MemoryFile::clearMemoryCache() {
     }
     m_fd = -1;
     m_size = 0;
+}
+
+size_t MemoryFile::getActualFileSize() {
+#ifdef MMKV_ANDROID
+    if (m_fileType == MMFILE_TYPE_ASHMEM) {
+        return ASharedMemory_getSize(m_fd);
+    }
+#endif
+    size_t size = 0;
+    mmkv::getFileSize(m_fd, size);
+    return size;
 }
 
 #pragma mark - file
@@ -316,7 +355,7 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
     return true;
 }
 
-bool getFileSize(int fd, size_t &size) {
+static bool getFileSize(int fd, size_t &size) {
     struct stat st = {0};
     if (fstat(fd, &st) != -1) {
         size = (size_t) st.st_size;
@@ -329,10 +368,14 @@ int getPageSize() {
     return getpagesize();
 }
 
+} // namespace mmkv
+
 #ifdef MMKV_ANDROID
 #    pragma mark - ashmem
 #    include <dlfcn.h>
 #    include <sys/ioctl.h>
+
+namespace mmkv {
 
 constexpr auto ASHMEM_NAME_LEN = 256;
 constexpr auto __ASHMEMIOC = 0x77;
@@ -432,6 +475,7 @@ std::string ASharedMemory_getName(int fd) {
     }
     return string(name);
 }
-#endif
 
 } // namespace mmkv
+
+#endif // MMKV_ANDROID
