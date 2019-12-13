@@ -117,14 +117,14 @@ MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
 }
 
 void initialize() {
-    g_instanceDic = new unordered_map<std::string, MMKV *>;
+    g_instanceDic = new unordered_map<string, MMKV *>;
     g_instanceLock = ThreadLock();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
-void MMKV::initializeMMKV(const std::string &rootDir, MMKVLogLevel logLevel) {
+void MMKV::initializeMMKV(const string &rootDir, MMKVLogLevel logLevel) {
     g_currentLogLevel = logLevel;
 
     static ThreadOnceToken once_control = ThreadOnceUninitialized;
@@ -142,7 +142,7 @@ void MMKV::initializeMMKV(const std::string &rootDir, MMKVLogLevel logLevel) {
 
 #ifndef MMKV_ANDROID
 MMKV *
-MMKV::mmkvWithID(const std::string &mmapID, MMKVMode mode, string *cryptKey, string *relativePath) {
+MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, string *relativePath) {
 
     if (mmapID.empty()) {
         return nullptr;
@@ -181,11 +181,11 @@ void MMKV::onExit() {
     }
 }
 
-const std::string &MMKV::mmapID() {
+const string &MMKV::mmapID() {
     return m_mmapID;
 }
 
-std::string MMKV::cryptKey() {
+string MMKV::cryptKey() {
     SCOPEDLOCK(m_lock);
 
     if (m_crypter) {
@@ -675,7 +675,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
     return true;
 }
 
-const MMBuffer &MMKV::getDataForKey(const std::string &key) {
+const MMBuffer &MMKV::getDataForKey(const string &key) {
     checkLoadData();
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
@@ -685,7 +685,7 @@ const MMBuffer &MMKV::getDataForKey(const std::string &key) {
     return nan;
 }
 
-bool MMKV::setDataForKey(MMBuffer &&data, const std::string &key) {
+bool MMKV::setDataForKey(MMBuffer &&data, const string &key) {
     if (data.length() == 0 || key.empty()) {
         return false;
     }
@@ -701,7 +701,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, const std::string &key) {
     return ret;
 }
 
-bool MMKV::removeDataForKey(const std::string &key) {
+bool MMKV::removeDataForKey(const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -716,7 +716,7 @@ bool MMKV::removeDataForKey(const std::string &key) {
     return false;
 }
 
-bool MMKV::appendDataWithKey(const MMBuffer &data, const std::string &key) {
+bool MMKV::appendDataWithKey(const MMBuffer &data, const string &key) {
     size_t keyLength = key.length();
     // size needed to encode the key
     size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength);
@@ -801,7 +801,7 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
     return true;
 }
 
-bool MMKV::reKey(const std::string &cryptKey) {
+bool MMKV::reKey(const string &cryptKey) {
     SCOPEDLOCK(m_lock);
     checkLoadData();
 
@@ -839,7 +839,7 @@ bool MMKV::reKey(const std::string &cryptKey) {
     return false;
 }
 
-void MMKV::checkReSetCryptKey(const std::string *cryptKey) {
+void MMKV::checkReSetCryptKey(const string *cryptKey) {
     SCOPEDLOCK(m_lock);
 
     if (m_crypter) {
@@ -919,7 +919,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
 
 #pragma mark - set & get
 
-bool MMKV::set(const char *value, const std::string &key) {
+bool MMKV::set(const char *value, const string &key) {
     if (!value) {
         removeValueForKey(key);
         return true;
@@ -927,7 +927,7 @@ bool MMKV::set(const char *value, const std::string &key) {
     return set(string(value), key);
 }
 
-bool MMKV::set(const std::string &value, const std::string &key) {
+bool MMKV::set(const string &value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -935,7 +935,7 @@ bool MMKV::set(const std::string &value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(const MMBuffer &value, const std::string &key) {
+bool MMKV::set(const MMBuffer &value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -943,7 +943,7 @@ bool MMKV::set(const MMBuffer &value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(bool value, const std::string &key) {
+bool MMKV::set(bool value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -955,7 +955,7 @@ bool MMKV::set(bool value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(int32_t value, const std::string &key) {
+bool MMKV::set(int32_t value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -967,7 +967,7 @@ bool MMKV::set(int32_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(uint32_t value, const std::string &key) {
+bool MMKV::set(uint32_t value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -979,7 +979,7 @@ bool MMKV::set(uint32_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(int64_t value, const std::string &key) {
+bool MMKV::set(int64_t value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -991,7 +991,7 @@ bool MMKV::set(int64_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(uint64_t value, const std::string &key) {
+bool MMKV::set(uint64_t value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -1003,7 +1003,7 @@ bool MMKV::set(uint64_t value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(float value, const std::string &key) {
+bool MMKV::set(float value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -1015,7 +1015,7 @@ bool MMKV::set(float value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(double value, const std::string &key) {
+bool MMKV::set(double value, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -1027,7 +1027,7 @@ bool MMKV::set(double value, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(const std::vector<std::string> &v, const std::string &key) {
+bool MMKV::set(const vector<string> &v, const string &key) {
     if (key.empty()) {
         return false;
     }
@@ -1035,7 +1035,7 @@ bool MMKV::set(const std::vector<std::string> &v, const std::string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::getString(const std::string &key, std::string &result) {
+bool MMKV::getString(const string &key, string &result) {
     if (key.empty()) {
         return false;
     }
@@ -1052,7 +1052,7 @@ bool MMKV::getString(const std::string &key, std::string &result) {
     return false;
 }
 
-MMBuffer MMKV::getBytes(const std::string &key) {
+MMBuffer MMKV::getBytes(const string &key) {
     if (key.empty()) {
         return MMBuffer(0);
     }
@@ -1068,7 +1068,7 @@ MMBuffer MMKV::getBytes(const std::string &key) {
     return MMBuffer(0);
 }
 
-bool MMKV::getBool(const std::string &key, bool defaultValue) {
+bool MMKV::getBool(const string &key, bool defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1085,7 +1085,7 @@ bool MMKV::getBool(const std::string &key, bool defaultValue) {
     return defaultValue;
 }
 
-int32_t MMKV::getInt32(const std::string &key, int32_t defaultValue) {
+int32_t MMKV::getInt32(const string &key, int32_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1102,7 +1102,7 @@ int32_t MMKV::getInt32(const std::string &key, int32_t defaultValue) {
     return defaultValue;
 }
 
-uint32_t MMKV::getUInt32(const std::string &key, uint32_t defaultValue) {
+uint32_t MMKV::getUInt32(const string &key, uint32_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1119,7 +1119,7 @@ uint32_t MMKV::getUInt32(const std::string &key, uint32_t defaultValue) {
     return defaultValue;
 }
 
-int64_t MMKV::getInt64(const std::string &key, int64_t defaultValue) {
+int64_t MMKV::getInt64(const string &key, int64_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1136,7 +1136,7 @@ int64_t MMKV::getInt64(const std::string &key, int64_t defaultValue) {
     return defaultValue;
 }
 
-uint64_t MMKV::getUInt64(const std::string &key, uint64_t defaultValue) {
+uint64_t MMKV::getUInt64(const string &key, uint64_t defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1153,7 +1153,7 @@ uint64_t MMKV::getUInt64(const std::string &key, uint64_t defaultValue) {
     return defaultValue;
 }
 
-float MMKV::getFloat(const std::string &key, float defaultValue) {
+float MMKV::getFloat(const string &key, float defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1170,7 +1170,7 @@ float MMKV::getFloat(const std::string &key, float defaultValue) {
     return defaultValue;
 }
 
-double MMKV::getDouble(const std::string &key, double defaultValue) {
+double MMKV::getDouble(const string &key, double defaultValue) {
     if (key.empty()) {
         return defaultValue;
     }
@@ -1187,7 +1187,7 @@ double MMKV::getDouble(const std::string &key, double defaultValue) {
     return defaultValue;
 }
 
-bool MMKV::getVector(const std::string &key, std::vector<std::string> &result) {
+bool MMKV::getVector(const string &key, vector<string> &result) {
     if (key.empty()) {
         return false;
     }
@@ -1204,7 +1204,7 @@ bool MMKV::getVector(const std::string &key, std::vector<std::string> &result) {
     return false;
 }
 
-size_t MMKV::getValueSize(const std::string &key, bool actualSize) {
+size_t MMKV::getValueSize(const string &key, bool actualSize) {
     if (key.empty()) {
         return 0;
     }
@@ -1224,7 +1224,7 @@ size_t MMKV::getValueSize(const std::string &key, bool actualSize) {
     return data.length();
 }
 
-int32_t MMKV::writeValueToBuffer(const std::string &key, void *ptr, int32_t size) {
+int32_t MMKV::writeValueToBuffer(const string &key, void *ptr, int32_t size) {
     if (key.empty()) {
         return -1;
     }
@@ -1253,7 +1253,7 @@ int32_t MMKV::writeValueToBuffer(const std::string &key, void *ptr, int32_t size
 
 #pragma mark - enumerate
 
-bool MMKV::containsKey(const std::string &key) {
+bool MMKV::containsKey(const string &key) {
     SCOPEDLOCK(m_lock);
     checkLoadData();
     return m_dic.find(key) != m_dic.end();
@@ -1271,7 +1271,7 @@ size_t MMKV::totalSize() {
     return m_file.getFileSize();
 }
 
-std::vector<std::string> MMKV::allKeys() {
+vector<string> MMKV::allKeys() {
     SCOPEDLOCK(m_lock);
     checkLoadData();
 
@@ -1282,7 +1282,7 @@ std::vector<std::string> MMKV::allKeys() {
     return keys;
 }
 
-void MMKV::removeValueForKey(const std::string &key) {
+void MMKV::removeValueForKey(const string &key) {
     if (key.empty()) {
         return;
     }
@@ -1293,7 +1293,7 @@ void MMKV::removeValueForKey(const std::string &key) {
     removeDataForKey(key);
 }
 
-void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
+void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     if (arrKeys.empty()) {
         return;
     }
@@ -1325,7 +1325,7 @@ void MMKV::sync(SyncFlag flag) {
     m_metaFile.msync(flag);
 }
 
-bool MMKV::isFileValid(const std::string &mmapID) {
+bool MMKV::isFileValid(const string &mmapID) {
     string kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS);
     if (!isFileExist(kvPath)) {
         return true;
@@ -1468,14 +1468,14 @@ string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath) 
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID) + ".crc";
 }
 
-static MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) {
+static MMKVRecoverStrategic onMMKVCRCCheckFail(const string &mmapID) {
     if (g_errorHandler) {
         return g_errorHandler(mmapID, MMKVErrorType::MMKVCRCCheckFail);
     }
     return OnErrorDiscard;
 }
 
-static MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) {
+static MMKVRecoverStrategic onMMKVFileLengthError(const string &mmapID) {
     if (g_errorHandler) {
         return g_errorHandler(mmapID, MMKVErrorType::MMKVFileLength);
     }

@@ -35,7 +35,6 @@
 #include <vector>
 
 namespace mmkv {
-class AESCrypt;
 class CodedOutputData;
 } // namespace mmkv
 

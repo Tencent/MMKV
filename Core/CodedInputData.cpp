@@ -56,7 +56,7 @@ int64_t CodedInputData::readInt64() {
         }
         shift += 7;
     }
-    throw std::invalid_argument("InvalidProtocolBuffer malformedInt64");
+    throw invalid_argument("InvalidProtocolBuffer malformedInt64");
 }
 
 uint64_t CodedInputData::readUInt64() {
@@ -88,14 +88,14 @@ string CodedInputData::readString() {
     } else if (size == 0) {
         return "";
     } else {
-        throw std::length_error("Invalid Size: " + to_string(size));
+        throw length_error("Invalid Size: " + to_string(size));
     }
 }
 
 MMBuffer CodedInputData::readData() {
     int32_t size = this->readRawVarint32();
     if (size < 0) {
-        throw std::length_error("InvalidProtocolBuffer negativeSize");
+        throw length_error("InvalidProtocolBuffer negativeSize");
     }
 
     if (size <= m_size - m_position) {
@@ -103,7 +103,7 @@ MMBuffer CodedInputData::readData() {
         m_position += size;
         return data;
     } else {
-        throw std::out_of_range("InvalidProtocolBuffer truncatedMessage");
+        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }
 }
 
@@ -133,7 +133,7 @@ int32_t CodedInputData::readRawVarint32() {
                             return result;
                         }
                     }
-                    throw std::invalid_argument("InvalidProtocolBuffer malformed varint32");
+                    throw invalid_argument("InvalidProtocolBuffer malformed varint32");
                 }
             }
         }
@@ -169,7 +169,7 @@ int8_t CodedInputData::readRawByte() {
     if (m_position == m_size) {
         auto msg =
             "reach end, m_position: " + to_string(m_position) + ", m_size: " + to_string(m_size);
-        throw std::out_of_range(msg);
+        throw out_of_range(msg);
     }
     auto *bytes = (int8_t *) m_ptr;
     return bytes[m_position++];

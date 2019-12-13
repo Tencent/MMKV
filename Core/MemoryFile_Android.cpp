@@ -37,9 +37,9 @@ namespace mmkv {
 // for Android Q limiting ashmem access
 extern int ASharedMemory_create(const char *name, size_t size);
 extern size_t ASharedMemory_getSize(int fd);
-extern std::string ASharedMemory_getName(int fd);
+extern string ASharedMemory_getName(int fd);
 
-MemoryFile::MemoryFile(const std::string &path, size_t size, FileType fileType)
+MemoryFile::MemoryFile(const string &path, size_t size, FileType fileType)
     : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
     if (m_fileType == MMFILE_TYPE_FILE) {
         reloadFromFile();
@@ -168,7 +168,7 @@ size_t ASharedMemory_getSize(int fd) {
     return size;
 }
 
-std::string ASharedMemory_getName(int fd) {
+string ASharedMemory_getName(int fd) {
     // Android Q doesn't have ASharedMemory_getName()
     // I've make a request to Google, https://issuetracker.google.com/issues/130741665
     // There's nothing we can do before it's supported officially by Google

@@ -38,8 +38,7 @@ static bool getFileSize(int fd, size_t &size);
 #ifdef MMKV_ANDROID
 extern size_t ASharedMemory_getSize(int fd);
 #else
-MemoryFile::MemoryFile(const std::string &path)
-    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
+MemoryFile::MemoryFile(const string &path) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
 #endif
@@ -221,7 +220,7 @@ bool mkPath(char *path) {
     return true;
 }
 
-bool createFile(const std::string &filePath) {
+bool createFile(const string &filePath) {
     bool ret = false;
 
     // try create at once

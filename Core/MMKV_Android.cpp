@@ -18,38 +18,23 @@
  * limitations under the License.
  */
 
-#include "CodedInputData.h"
-#include "CodedOutputData.h"
-#include "InterProcessLock.h"
-#include "MMBuffer.h"
 #include "MMKV.h"
-#include "MMKVLog.h"
-#include "MemoryFile.h"
-#include "MiniPBCoder.h"
-#include "PBUtility.h"
 #include "ScopedLock.hpp"
-#include "aes/AESCrypt.h"
-#include "aes/openssl/md5.h"
-#include "crc32/Checksum.h"
-#include <algorithm>
-#include <cstdio>
-#include <cstring>
 #include <unistd.h>
 
 using namespace std;
 using namespace mmkv;
 
-extern unordered_map<std::string, MMKV *> *g_instanceDic;
+extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock g_instanceLock;
+
+#ifdef MMKV_ANDROID
 
 extern string mmapedKVKey(const string &mmapID, string *relativePath);
 extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
 extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
 
-#ifdef MMKV_ANDROID
-
-MMKV::MMKV(
-    const std::string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath)
+MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath)
     : m_mmapID(mmapedKVKey(mmapID, relativePath))
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
@@ -131,7 +116,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 }
 
 MMKV *MMKV::mmkvWithID(
-    const std::string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath) {
+    const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath) {
 
     if (mmapID.empty()) {
         return nullptr;
@@ -177,7 +162,7 @@ MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *c
     return kv;
 }
 
-void MMKV::checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey) {
+void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
     SCOPEDLOCK(m_lock);
 
     checkReSetCryptKey(cryptKey);
