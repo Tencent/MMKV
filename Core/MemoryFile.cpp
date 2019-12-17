@@ -19,15 +19,18 @@
  */
 
 #include "MemoryFile.h"
-#include "InterProcessLock.h"
-#include "MMBuffer.h"
-#include "MMKVLog.h"
-#include "ScopedLock.hpp"
-#include <cerrno>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
+
+#ifndef MMKV_WIN32
+
+#    include "InterProcessLock.h"
+#    include "MMBuffer.h"
+#    include "MMKVLog.h"
+#    include "ScopedLock.hpp"
+#    include <cerrno>
+#    include <fcntl.h>
+#    include <sys/mman.h>
+#    include <sys/stat.h>
+#    include <unistd.h>
 
 using namespace std;
 
@@ -35,13 +38,14 @@ namespace mmkv {
 
 static bool getFileSize(int fd, size_t &size);
 
-#ifdef MMKV_ANDROID
+#    ifdef MMKV_ANDROID
 extern size_t ASharedMemory_getSize(int fd);
-#else
-MemoryFile::MemoryFile(const string &path) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
+#    else
+MemoryFile::MemoryFile(const MMKV_PATH_TYPE &path)
+    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
-#endif
+#    endif
 
 bool MemoryFile::truncate(size_t size) {
     if (m_fd < 0) {
@@ -50,7 +54,7 @@ bool MemoryFile::truncate(size_t size) {
     if (size == m_size) {
         return true;
     }
-#ifdef MMKV_ANDROID
+#    ifdef MMKV_ANDROID
     if (m_fileType == MMFILE_TYPE_ASHMEM) {
         if (size > m_size) {
             MMKVError("ashmem %s reach size limit:%zu, consider configure with larger size",
@@ -61,7 +65,7 @@ bool MemoryFile::truncate(size_t size) {
         }
         return false;
     }
-#endif
+#    endif
 
     auto oldSize = m_size;
     m_size = size;
@@ -89,7 +93,11 @@ bool MemoryFile::truncate(size_t size) {
             MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
         }
     }
-    return mmap();
+    auto ret = mmap();
+    if (!ret) {
+        doCleanMemoryCache(true);
+    }
+    return ret;
 }
 
 bool MemoryFile::msync(SyncFlag syncFlag) {
@@ -115,11 +123,11 @@ bool MemoryFile::mmap() {
 }
 
 void MemoryFile::reloadFromFile() {
-#ifdef MMKV_ANDROID
+#    ifdef MMKV_ANDROID
     if (m_fileType == MMFILE_TYPE_ASHMEM) {
         return;
     }
-#endif
+#    endif
     if (isFileValid()) {
         MMKVWarning("calling reloadFromFile while the cache [%s] is still valid", m_name.c_str());
         assert(0);
@@ -149,11 +157,11 @@ void MemoryFile::reloadFromFile() {
 }
 
 void MemoryFile::doCleanMemoryCache(bool forceClean) {
-#ifdef MMKV_ANDROID
+#    ifdef MMKV_ANDROID
     if (m_fileType == MMFILE_TYPE_ASHMEM && !forceClean) {
         return;
     }
-#endif
+#    endif
     if (m_ptr && m_ptr != MAP_FAILED) {
         if (munmap(m_ptr, m_size) != 0) {
             MMKVError("fail to munmap [%s], %s", m_name.c_str(), strerror(errno));
@@ -171,17 +179,15 @@ void MemoryFile::doCleanMemoryCache(bool forceClean) {
 }
 
 size_t MemoryFile::getActualFileSize() {
-#ifdef MMKV_ANDROID
+#    ifdef MMKV_ANDROID
     if (m_fileType == MMFILE_TYPE_ASHMEM) {
         return ASharedMemory_getSize(m_fd);
     }
-#endif
+#    endif
     size_t size = 0;
     mmkv::getFileSize(m_fd, size);
     return size;
 }
-
-#pragma mark - file
 
 bool isFileExist(const string &nsFilePath) {
     if (nsFilePath.empty()) {
@@ -262,9 +268,9 @@ bool removeFile(const string &nsFilePath) {
     return true;
 }
 
-MMBuffer *readWholeFile(const char *path) {
+MMBuffer *readWholeFile(const MMKV_PATH_TYPE &path) {
     MMBuffer *buffer = nullptr;
-    int fd = open(path, O_RDONLY | O_CLOEXEC);
+    int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
     if (fd >= 0) {
         auto fileLength = lseek(fd, 0, SEEK_END);
         if (fileLength > 0) {
@@ -274,7 +280,7 @@ MMBuffer *readWholeFile(const char *path) {
             if (readSize != -1) {
                 //fileSize = readSize;
             } else {
-                MMKVWarning("fail to read %s: %s", path, strerror(errno));
+                MMKVWarning("fail to read %s: %s", path.c_str(), strerror(errno));
 
                 delete buffer;
                 buffer = nullptr;
@@ -282,7 +288,7 @@ MMBuffer *readWholeFile(const char *path) {
         }
         close(fd);
     } else {
-        MMKVWarning("fail to open %s: %s", path, strerror(errno));
+        MMKVWarning("fail to open %s: %s", path.c_str(), strerror(errno));
     }
     return buffer;
 }
@@ -328,3 +334,5 @@ int getPageSize() {
 }
 
 } // namespace mmkv
+
+#endif // MMKV_WIN32

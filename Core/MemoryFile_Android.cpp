@@ -18,22 +18,23 @@
  * limitations under the License.
  */
 
-#include "InterProcessLock.h"
-#include "MMBuffer.h"
-#include "MMKVLog.h"
 #include "MemoryFile.h"
-#include "ScopedLock.hpp"
-#include <cerrno>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
+
+#ifdef MMKV_ANDROID
+#    include "InterProcessLock.h"
+#    include "MMBuffer.h"
+#    include "MMKVLog.h"
+#    include "ScopedLock.hpp"
+#    include <cerrno>
+#    include <fcntl.h>
+#    include <sys/mman.h>
+#    include <sys/stat.h>
+#    include <unistd.h>
 
 using namespace std;
 
 namespace mmkv {
 
-#ifdef MMKV_ANDROID
 // for Android Q limiting ashmem access
 extern int ASharedMemory_create(const char *name, size_t size);
 extern size_t ASharedMemory_getSize(int fd);
@@ -74,9 +75,9 @@ MemoryFile::MemoryFile(int ashmemFD)
     }
 }
 
-#endif
-
 } // namespace mmkv
+
+#endif
 
 #ifdef MMKV_ANDROID
 #    pragma mark - ashmem

@@ -52,7 +52,7 @@ struct MMKVMetaInfo {
     struct {
         size_t lastActualSize = 0;
         uint32_t lastCRCDigest = 0;
-        uint32_t __reserved[16] = {0};
+        uint32_t __reserved__[16] = {0};
     } m_lastConfirmedMetaInfo;
 
     void write(void *ptr) {

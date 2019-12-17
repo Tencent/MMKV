@@ -19,16 +19,17 @@
  */
 
 #include "MMKV.h"
-#include "ScopedLock.hpp"
-#include <unistd.h>
+
+#ifdef MMKV_ANDROID
+
+#    include "ScopedLock.hpp"
+#    include <unistd.h>
 
 using namespace std;
 using namespace mmkv;
 
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock g_instanceLock;
-
-#ifdef MMKV_ANDROID
 
 extern string mmapedKVKey(const string &mmapID, string *relativePath);
 extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);

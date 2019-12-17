@@ -21,11 +21,20 @@
 #ifndef MMKV_PBUTILITY_H
 #define MMKV_PBUTILITY_H
 
+#include "MMKVPredef.h"
+
 #include <cstdint>
 
-#ifndef likely
-#    define unlikely(x) (__builtin_expect(bool(x), 0))
-#    define likely(x) (__builtin_expect(bool(x), 1))
+#ifndef MMKV_WIN32
+#    ifndef likely
+#        define unlikely(x) (__builtin_expect(bool(x), 0))
+#        define likely(x) (__builtin_expect(bool(x), 1))
+#    endif
+#else
+#    ifndef likely
+#        define unlikely(x) (x)
+#        define likely(x) (x)
+#    endif
 #endif
 
 namespace mmkv {

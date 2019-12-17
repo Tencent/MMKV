@@ -20,10 +20,13 @@
 
 #include "InterProcessLock.h"
 #include "MMKVLog.h"
-#include <sys/file.h>
+
+#ifndef MMKV_WIN32
+#    include <sys/file.h>
+#endif
 
 namespace mmkv {
-
+#ifndef MMKV_WIN32
 static uint32_t LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
@@ -33,6 +36,20 @@ static uint32_t LockType2FlockType(LockType lockType) {
     }
     return LOCK_EX;
 }
+#else
+static DWORD LockType2Flag(LockType lockType) {
+    DWORD flag = 0;
+    switch (lockType) {
+        case SharedLockType:
+            flag = 0;
+            break;
+        case ExclusiveLockType:
+            flag = LOCKFILE_EXCLUSIVE_LOCK;
+            break;
+    }
+    return flag;
+}
+#endif
 
 bool FileLock::doLock(LockType lockType, bool wait) {
     if (!isFileLockValid()) {
@@ -58,6 +75,7 @@ bool FileLock::doLock(LockType lockType, bool wait) {
         }
     }
 
+#ifndef MMKV_WIN32
     auto realLockType = LockType2FlockType(lockType);
     int cmd = wait ? realLockType : (realLockType | LOCK_NB);
     if (unLockFirstIfNeeded) {
@@ -81,6 +99,30 @@ bool FileLock::doLock(LockType lockType, bool wait) {
     } else {
         return true;
     }
+#else
+    auto realLockType = LockType2Flag(lockType);
+    auto flag = wait ? realLockType : (realLockType | LOCKFILE_FAIL_IMMEDIATELY);
+    if (unLockFirstIfNeeded) {
+        /* try exclusive-lock above shared-lock will always fail in Win32
+		auto ret = LockFileEx(m_fd, realLockType | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &m_overLapped);
+		if (ret) {
+			return true;
+		}*/
+        // lets be gentleman: unlock my shared-lock to prevent deadlock
+        auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
+        if (!ret) {
+            MMKVError("fail to try unlock first fd=%p, error:%d", m_fd, GetLastError());
+        }
+    }
+
+    auto ret = LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped);
+    if (!ret) {
+        MMKVError("fail to lock fd=%p, error:%d", m_fd, GetLastError());
+        return false;
+    } else {
+        return true;
+    }
+#endif
 }
 
 bool FileLock::lock(LockType lockType) {
@@ -120,6 +162,7 @@ bool FileLock::unlock(LockType lockType) {
         }
     }
 
+#ifndef MMKV_WIN32
     int cmd = unlockToSharedLock ? LOCK_SH : LOCK_UN;
     auto ret = flock(m_fd, cmd);
     if (ret != 0) {
@@ -128,6 +171,27 @@ bool FileLock::unlock(LockType lockType) {
     } else {
         return true;
     }
+#else
+    /* quote from MSDN:
+	* If the same range is locked with an exclusive and a shared lock,
+	* two unlock operations are necessary to unlock the region;
+	* the first unlock operation unlocks the exclusive lock,
+	* the second unlock operation unlocks the shared lock.
+	*/
+    if (unlockToSharedLock) {
+        auto flag = LockType2Flag(SharedLockType);
+        if (!LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped)) {
+            MMKVError("fail to roll back to shared-lock, error:%d", GetLastError());
+        }
+    }
+    auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
+    if (!ret) {
+        MMKVError("fail to unlock fd=%p, error:%d", m_fd, GetLastError());
+        return false;
+    } else {
+        return true;
+    }
+#endif
 }
 
 } // namespace mmkv

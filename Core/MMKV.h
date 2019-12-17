@@ -52,13 +52,13 @@ class MMKV {
     MMKV(const std::string &mmapID,
          MMKVMode mode,
          std::string *cryptKey,
-         std::string *relativePath);
+         MMKV_PATH_TYPE *relativePath);
 #else
     MMKV(const std::string &mmapID,
          int size,
          MMKVMode mode,
          std::string *cryptKey,
-         std::string *relativePath);
+         MMKV_PATH_TYPE *relativePath);
 
     MMKV(const std::string &mmapID,
          int ashmemFD,
@@ -70,8 +70,8 @@ class MMKV {
 
     std::unordered_map<std::string, mmkv::MMBuffer> m_dic;
     std::string m_mmapID;
-    std::string m_path;
-    std::string m_crcPath;
+    MMKV_PATH_TYPE m_path;
+    MMKV_PATH_TYPE m_crcPath;
 
     mmkv::MemoryFile m_file;
     size_t m_actualSize;
@@ -135,7 +135,7 @@ class MMKV {
 
 public:
     // call this before getting any MMKV instance
-    static void initializeMMKV(const std::string &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
+    static void initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
 
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
@@ -146,7 +146,7 @@ public:
     static MMKV *mmkvWithID(const std::string &mmapID,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
-                            std::string *relativePath = nullptr);
+                            MMKV_PATH_TYPE *relativePath = nullptr);
 #else
     // mmapID: any unique ID (com.tencent.xin.pay, etc)
     // if you want a per-user mmkv, you could merge user-id within mmapID
@@ -154,7 +154,7 @@ public:
                             int size = mmkv::DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
-                            std::string *relativePath = nullptr);
+                            MMKV_PATH_TYPE *relativePath = nullptr);
 
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID,
                                   int fd,

@@ -241,7 +241,7 @@ int main() {
     wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-MMKV");
     MMKV::initializeMMKV(rootDir);
     //MMKV::setLogLevel(MMKVLogNone);
-    MMKV::regiserLogHandler(LogHandler);
+    MMKV::registerLogHandler(LogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
     auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &string("cryptKey"));

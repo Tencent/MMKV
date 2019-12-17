@@ -40,8 +40,11 @@ enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
 namespace mmkv {
 
 class MemoryFile {
-    std::string m_name;
-    int m_fd;
+    MMKV_PATH_TYPE m_name;
+    MMKV_FILE_HANDLE m_fd;
+#ifdef MMKV_WIN32
+    HANDLE m_fileMapping;
+#endif
     void *m_ptr;
     size_t m_size;
 
@@ -51,10 +54,10 @@ class MemoryFile {
 
 public:
 #ifndef MMKV_ANDROID
-    explicit MemoryFile(const std::string &path);
+    explicit MemoryFile(const MMKV_PATH_TYPE &path);
 #else
-    MemoryFile(const std::string &path, size_t size, FileType fileType);
-    explicit MemoryFile(int ashmemFD);
+    MemoryFile(const MMKV_PATH_TYPE &path, size_t size, FileType fileType);
+    explicit MemoryFile(MMKV_FILE_HANDLE ashmemFD);
 
     const FileType m_fileType;
 #endif
@@ -68,9 +71,9 @@ public:
 
     void *getMemory() { return m_ptr; }
 
-    const std::string &getName() { return m_name; }
+    const MMKV_PATH_TYPE &getName() { return m_name; }
 
-    int getFd() { return m_fd; }
+    MMKV_FILE_HANDLE getFd() { return m_fd; }
 
     // the newly expanded file content will be zeroed
     bool truncate(size_t size);
@@ -81,9 +84,13 @@ public:
     void reloadFromFile();
 
     void clearMemoryCache() { doCleanMemoryCache(false); }
-
+#ifndef MMKV_WIN32
     bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
-
+#else
+    bool isFileValid() {
+        return m_fd != INVALID_HANDLE_VALUE && m_size > 0 && m_fileMapping && m_ptr;
+    }
+#endif
     // just forbid it for possibly misuse
     MemoryFile(const MemoryFile &other) = delete;
     MemoryFile &operator=(const MemoryFile &other) = delete;
@@ -91,14 +98,13 @@ public:
 
 class MMBuffer;
 
-extern bool mkPath(char *path);
-extern bool isFileExist(const std::string &nsFilePath);
-extern bool removeFile(const std::string &nsFilePath);
-extern MMBuffer *readWholeFile(const char *path);
-extern bool zeroFillFile(int fd, size_t startPos, size_t size);
-extern bool createFile(const std::string &filePath);
+extern bool mkPath(const MMKV_PATH_TYPE &path);
+extern bool isFileExist(const MMKV_PATH_TYPE &nsFilePath);
+extern bool removeFile(const MMKV_PATH_TYPE &nsFilePath);
+extern MMBuffer *readWholeFile(const MMKV_PATH_TYPE &path);
+extern bool zeroFillFile(MMKV_FILE_HANDLE fd, size_t startPos, size_t size);
+extern bool createFile(const MMKV_PATH_TYPE &filePath);
 extern int getPageSize();
-
 } // namespace mmkv
 
 #endif //MMKV_MAMERYFILE_H

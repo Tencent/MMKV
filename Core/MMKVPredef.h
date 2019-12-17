@@ -41,11 +41,32 @@
 #    define MMKV_WIN32
 #endif
 
+// TODO: fix later
+#define MMKV_WIN32
+
 #ifdef MMKV_WIN32
-#    define MMKV_PATH_SLASH "\\"
+#    if !defined(_WIN32_WINNT)
+#        define _WIN32_WINNT _WIN32_WINNT_WINXP
+#    endif
+
+#    include <SDKDDKVer.h>
+
+#    define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers                  \
+                                // Windows Header Files
+#    include <windows.h>
+
+constexpr auto MMKV_PATH_SLASH = L"\\";
+#    define MMKV_PATH_FORMAT "%ws"
+using MMKV_FILE_HANDLE = HANDLE;
+using MMKV_PATH_TYPE = std::wstring;
+extern MMKV_PATH_TYPE string2MMKV_PATH_TYPE(const std::string &str);
 #else
-#    define MMKV_PATH_SLASH "/"
-#endif
+constexpr auto MMKV_PATH_SLASH = "/";
+#    define MMKV_PATH_FORMAT "%s"
+using MMKV_FILE_HANDLE = int;
+using MMKV_PATH_TYPE = std::string;
+#    define string2MMKV_PATH_TYPE(str) (str)
+#endif // MMKV_WIN32
 
 enum MMKVLogLevel : int {
     MMKVLogDebug = 0, // not available for release/product build

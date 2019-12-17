@@ -49,15 +49,17 @@ typedef std::atomic<ThreadOnceTokenEnum> ThreadOnceToken;
 
 class ThreadLock {
 private:
-    //#if MMKV_USING_PTHREAD
+#if MMKV_USING_PTHREAD
     pthread_mutex_t m_lock;
-    //#else
-    // CRITICAL_SECTION m_lock;
-    //#endif
+#else
+    CRITICAL_SECTION m_lock;
+#endif
 
 public:
     ThreadLock();
     ~ThreadLock();
+
+    void initialize();
 
     void lock();
     bool try_lock();

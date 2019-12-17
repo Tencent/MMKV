@@ -34,7 +34,7 @@ static pid_t gettid() {
 using namespace std;
 
 namespace mmkv {
-
+#if MMKV_USING_PTHREAD
 ThreadLock::ThreadLock() {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -48,6 +48,8 @@ ThreadLock::ThreadLock() {
 ThreadLock::~ThreadLock() {
     pthread_mutex_destroy(&m_lock);
 }
+
+void ThreadLock::initialize() {}
 
 void ThreadLock::lock() {
     auto ret = pthread_mutex_lock(&m_lock);
@@ -70,6 +72,33 @@ void ThreadLock::unlock() {
         MMKVError("fail to unlock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
     }
 }
+#else
+ThreadLock::ThreadLock() : m_lock{0} {}
+
+ThreadLock::~ThreadLock() {
+    DeleteCriticalSection(&m_lock);
+}
+
+void ThreadLock::initialize() {
+    // TODO: a better spin count?
+    if (!InitializeCriticalSectionAndSpinCount(&m_lock, 1024)) {
+        MMKVError("fail to init critical section:%d", GetLastError());
+    }
+}
+
+void ThreadLock::lock() {
+    EnterCriticalSection(&m_lock);
+}
+
+bool ThreadLock::try_lock() {
+    auto ret = TryEnterCriticalSection(&m_lock);
+    return ret != 0;
+}
+
+void ThreadLock::unlock() {
+    LeaveCriticalSection(&m_lock);
+}
+#endif
 
 #if MMKV_USING_PTHREAD
 void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
@@ -89,6 +118,18 @@ static uint64_t gettid() {
 #        endif
 }
 #    endif
+void ThreadLock::Sleep(int ms) {
+    constexpr auto MILLI_SECOND_MULTIPLIER = 1000;
+    constexpr auto NANO_SECOND_MULTIPLIER = MILLI_SECOND_MULTIPLIER * MILLI_SECOND_MULTIPLIER;
+    timespec duration = {0};
+    if (ms > 999) {
+        duration.tv_sec = ms / MILLI_SECOND_MULTIPLIER;
+        duration.tv_nsec = (ms % MILLI_SECOND_MULTIPLIER) * NANO_SECOND_MULTIPLIER;
+    } else {
+        duration.tv_nsec = ms * NANO_SECOND_MULTIPLIER;
+    }
+    nanosleep(&duration, nullptr);
+}
 #else
 void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
     if (!onceToken || !callback) {
@@ -108,7 +149,7 @@ void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
                 return;
             case ThreadOnceInitializing: {
                 // another thread is initializing, let's wait for 1ms
-                Sleep(1);
+                ThreadLock::Sleep(1);
                 break;
             }
             default: {
@@ -121,16 +162,7 @@ void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
 }
 
 void ThreadLock::Sleep(int ms) {
-    constexpr auto MILLI_SECOND_MULTIPLIER = 1000;
-    constexpr auto NANO_SECOND_MULTIPLIER = MILLI_SECOND_MULTIPLIER * MILLI_SECOND_MULTIPLIER;
-    timespec duration = {0};
-    if (ms > 999) {
-        duration.tv_sec = ms / MILLI_SECOND_MULTIPLIER;
-        duration.tv_nsec = (ms % MILLI_SECOND_MULTIPLIER) * NANO_SECOND_MULTIPLIER;
-    } else {
-        duration.tv_nsec = ms * NANO_SECOND_MULTIPLIER;
-    }
-    nanosleep(&duration, nullptr);
+    ::Sleep(ms);
 }
 
 #endif
