@@ -42,7 +42,7 @@ unordered_map<std::string, MMKV *> *g_instanceDic;
 ThreadLock g_instanceLock;
 static MMKV_PATH_TYPE g_rootDir;
 static mmkv::ErrorHandler g_errorHandler;
-int mmkv::DEFAULT_MMAP_SIZE;
+size_t mmkv::DEFAULT_MMAP_SIZE;
 
 constexpr auto DEFAULT_MMAP_ID = "mmkv.default";
 #ifndef MMKV_WIN32
@@ -885,7 +885,7 @@ bool MMKV::isFileValid() {
     return m_file.isFileValid();
 }
 
-#pragma mark - crc
+// crc
 
 // assuming m_file is valid
 bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
@@ -923,7 +923,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
     writeActualSize(m_actualSize, m_crcDigest, nullptr, KeepSequence);
 }
 
-#pragma mark - set & get
+// set & get
 
 bool MMKV::set(const char *value, const string &key) {
     if (!value) {
@@ -1246,7 +1246,7 @@ int32_t MMKV::writeValueToBuffer(const string &key, void *ptr, int32_t size) {
                 return length;
             }
         } else {
-            if (data.length() <= size) {
+            if (static_cast<int32_t>(data.length()) <= size) {
                 memcpy(ptr, data.getPtr(), data.length());
                 return static_cast<int32_t>(data.length());
             }
@@ -1257,7 +1257,7 @@ int32_t MMKV::writeValueToBuffer(const string &key, void *ptr, int32_t size) {
     return -1;
 }
 
-#pragma mark - enumerate
+// enumerate
 
 bool MMKV::containsKey(const string &key) {
     SCOPEDLOCK(m_lock);
@@ -1318,7 +1318,7 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     fullWriteback();
 }
 
-#pragma mark - file
+// file
 
 void MMKV::sync(SyncFlag flag) {
     SCOPEDLOCK(m_lock);
@@ -1434,8 +1434,8 @@ static MMKV_PATH_TYPE encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
     string encodedID;
     bool hasSpecialCharacter = false;
-    for (int i = 0; i < mmapID.size(); i++) {
-        if (strchr(specialCharacters, mmapID[i]) != nullptr) {
+    for (auto ch : mmapID) {
+        if (strchr(specialCharacters, ch) != nullptr) {
             encodedID = md5(mmapID);
             hasSpecialCharacter = true;
             break;

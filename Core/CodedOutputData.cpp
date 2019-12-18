@@ -83,7 +83,7 @@ void CodedOutputData::writeData(const MMBuffer &value) {
     this->writeRawData(value);
 }
 
-int32_t CodedOutputData::spaceLeft() {
+size_t CodedOutputData::spaceLeft() {
     return int32_t(m_size - m_position);
 }
 

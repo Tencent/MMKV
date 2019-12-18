@@ -95,7 +95,7 @@ typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErro
 
 typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
-extern int DEFAULT_MMAP_SIZE;
+extern size_t DEFAULT_MMAP_SIZE;
 
 } // namespace mmkv
 

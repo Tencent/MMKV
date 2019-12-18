@@ -1,153 +1,144 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Z:\mmkv\Core\MMKV.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\MMKV_Android.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\MMKVLog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\MMKVLog_Android.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\CodedInputData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\CodedOutputData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\PBUtility.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\MiniPBCoder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\MMBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\InterProcessLock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\MemoryFile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\MemoryFile_Android.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\ThreadLock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\aes\AESCrypt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\aes\openssl\aes_cfb.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\aes\openssl\aes_core.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\aes\openssl\cfb128.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\aes\openssl\md5_dgst.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\aes\openssl\md5_one.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Z:\mmkv\Core\crc32\zlib\crc32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MemoryFile_Win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Z:\mmkv\Core\MMKV.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\MMKVLog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\CodedInputData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\CodedOutputData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\PBUtility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\MiniPBCoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\MMBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\InterProcessLock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\MemoryFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\ThreadLock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\MMKVMetaInfo.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\AESCrypt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\openssl\aes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\openssl\aes_locl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\openssl\modes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\openssl\opensslconf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\openssl\md5_locl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\openssl\md5.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\aes\openssl\md32_common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\crc32\Checksum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\crc32\zlib\zconf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\crc32\zlib\zutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\crc32\zlib\crc32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Z:\mmkv\Core\MMKVPredef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="Z:\mmkv\Core\CMakeLists.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <Filter Include="Header Files">
       <UniqueIdentifier>{A23FB4D7-B12B-3111-88E9-80ECCF93DBA8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{047F57F7-8EBB-3570-BBF5-21BCA0934FD5}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CodedInputData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CodedOutputData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes\openssl\aes_cfb.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes\openssl\aes_core.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes\AESCrypt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes\openssl\cfb128.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="crc32\zlib\crc32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InterProcessLock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes\openssl\md5_dgst.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aes\openssl\md5_one.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryFile_Win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MMBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MMKV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MMKVLog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadLock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniPBCoder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PBUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CodedInputData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CodedOutputData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InterProcessLock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniPBCoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMKV.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMKVLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc32\zlib\crc32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc32\zlib\zconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc32\zlib\zutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\AESCrypt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\aes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\aes_locl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\md5_locl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\md32_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\modes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\opensslconf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc32\Checksum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMKVMetaInfo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MMKVPredef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PBEncodeItem.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PBUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScopedLock.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadLock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
