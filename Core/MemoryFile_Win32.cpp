@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making
  * MMKV available.
  *
- * Copyright (C) 2018 THL A29 Limited, a Tencent company.
+ * Copyright (C) 2019 THL A29 Limited, a Tencent company.
  * All rights reserved.
  *
  * Licensed under the BSD 3-Clause License (the "License"); you may not use
@@ -18,15 +18,16 @@
  * limitations under the License.
  */
 
-#include "InterProcessLock.h"
-#include "MMBuffer.h"
-#include "MMKVLog.h"
 #include "MemoryFile.h"
-#include "ScopedLock.hpp"
-
-using namespace std;
 
 #ifdef MMKV_WIN32
+
+#    include "InterProcessLock.h"
+#    include "MMBuffer.h"
+#    include "MMKVLog.h"
+#    include "ScopedLock.hpp"
+
+using namespace std;
 
 namespace mmkv {
 

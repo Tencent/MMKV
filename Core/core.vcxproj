@@ -42,7 +42,7 @@
     <ClCompile Include="MMKV.cpp" />
     <ClCompile Include="MMKVLog.cpp" />
     <ClCompile Include="PBUtility.cpp" />
-    <ClCompile Include="ThreadLock.cpp" />
+    <ClCompile Include="ThreadLock_Win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aes\AESCrypt.h" />

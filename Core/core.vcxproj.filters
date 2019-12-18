@@ -51,13 +51,13 @@
     <ClCompile Include="MMKVLog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadLock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MiniPBCoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PBUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadLock_Win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

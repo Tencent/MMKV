@@ -19,22 +19,23 @@
  */
 
 #include "ThreadLock.h"
-#include "MMKVLog.h"
-#include <atomic>
-#include <cassert>
 
-#ifdef MMKV_LINUX
-#    include <sys/syscall.h>
-#    include <unistd.h>
+#if MMKV_USING_PTHREAD
+
+#    include "MMKVLog.h"
+#    include <atomic>
+
+#    ifdef MMKV_LINUX
+#        include <sys/syscall.h>
+#        include <unistd.h>
 static pid_t gettid() {
     return syscall(SYS_gettid);
 }
-#endif
+#    endif
 
 using namespace std;
 
 namespace mmkv {
-#if MMKV_USING_PTHREAD
 ThreadLock::ThreadLock() {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -72,38 +73,11 @@ void ThreadLock::unlock() {
         MMKVError("fail to unlock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
     }
 }
-#else
-ThreadLock::ThreadLock() : m_lock{0} {}
 
-ThreadLock::~ThreadLock() {
-    DeleteCriticalSection(&m_lock);
-}
-
-void ThreadLock::initialize() {
-    // TODO: a better spin count?
-    if (!InitializeCriticalSectionAndSpinCount(&m_lock, 1024)) {
-        MMKVError("fail to init critical section:%d", GetLastError());
-    }
-}
-
-void ThreadLock::lock() {
-    EnterCriticalSection(&m_lock);
-}
-
-bool ThreadLock::try_lock() {
-    auto ret = TryEnterCriticalSection(&m_lock);
-    return ret != 0;
-}
-
-void ThreadLock::unlock() {
-    LeaveCriticalSection(&m_lock);
-}
-#endif
-
-#if MMKV_USING_PTHREAD
 void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
     pthread_once(onceToken, callback);
 }
+
 #    ifndef NDEBUG
 static uint64_t gettid() {
 #        ifdef MMKV_MAC
@@ -118,6 +92,7 @@ static uint64_t gettid() {
 #        endif
 }
 #    endif
+
 void ThreadLock::Sleep(int ms) {
     constexpr auto MILLI_SECOND_MULTIPLIER = 1000;
     constexpr auto NANO_SECOND_MULTIPLIER = MILLI_SECOND_MULTIPLIER * MILLI_SECOND_MULTIPLIER;
@@ -130,41 +105,7 @@ void ThreadLock::Sleep(int ms) {
     }
     nanosleep(&duration, nullptr);
 }
-#else
-void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
-    if (!onceToken || !callback) {
-        assert(onceToken);
-        assert(callback);
-        return;
-    }
-    while (true) {
-        auto expected = ThreadOnceUninitialized;
-        atomic_compare_exchange_weak(onceToken, &expected, ThreadOnceInitializing);
-        switch (expected) {
-            case ThreadOnceInitialized:
-                return;
-            case ThreadOnceUninitialized:
-                callback();
-                onceToken->store(ThreadOnceInitialized);
-                return;
-            case ThreadOnceInitializing: {
-                // another thread is initializing, let's wait for 1ms
-                ThreadLock::Sleep(1);
-                break;
-            }
-            default: {
-                MMKVError("should never happen:%d", expected);
-                assert(0);
-                return;
-            }
-        }
-    }
-}
-
-void ThreadLock::Sleep(int ms) {
-    ::Sleep(ms);
-}
-
-#endif
 
 } // namespace mmkv
+
+#endif // MMKV_USING_PTHREAD
