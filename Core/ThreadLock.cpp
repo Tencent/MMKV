@@ -36,6 +36,7 @@ static pid_t gettid() {
 using namespace std;
 
 namespace mmkv {
+
 ThreadLock::ThreadLock() {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);

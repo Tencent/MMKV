@@ -24,6 +24,7 @@
 #    include "MMKVLog.h"
 
 namespace mmkv {
+
 static DWORD LockType2Flag(LockType lockType) {
     DWORD flag = 0;
     switch (lockType) {
