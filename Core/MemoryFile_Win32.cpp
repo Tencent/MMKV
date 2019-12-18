@@ -199,12 +199,12 @@ bool mkPath(const MMKV_PATH_TYPE &str) {
         if (attribute == INVALID_FILE_ATTRIBUTES) {
             if (!CreateDirectory(path, nullptr)) {
                 MMKVError("fail to create dir:%ws, %d", str.c_str(), GetLastError());
-                delete[] path;
+                free(path);
                 return false;
             }
         } else if (!(attribute & FILE_ATTRIBUTE_DIRECTORY)) {
             MMKVError("%ws attribute:%d not a directry", str.c_str(), attribute);
-            delete[] path;
+            free(path);
             return false;
         }
 

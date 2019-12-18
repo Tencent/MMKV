@@ -65,6 +65,7 @@ add_library(core
         MemoryFile.h
         MemoryFile.cpp
         MemoryFile_Android.cpp
+        MemoryFile_Win32.cpp
         ThreadLock.h
         ThreadLock.cpp
         MMKVMetaInfo.hpp

@@ -41,9 +41,6 @@
 #    define MMKV_WIN32
 #endif
 
-// TODO: fix later
-#define MMKV_WIN32
-
 #ifdef MMKV_WIN32
 #    if !defined(_WIN32_WINNT)
 #        define _WIN32_WINNT _WIN32_WINNT_WINXP

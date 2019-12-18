@@ -198,7 +198,9 @@ bool isFileExist(const string &nsFilePath) {
     return lstat(nsFilePath.c_str(), &temp) == 0;
 }
 
-bool mkPath(char *path) {
+extern bool mkPath(const MMKV_PATH_TYPE &str) {
+    char *path = strdup(str.c_str());
+
     struct stat sb = {0};
     bool done = false;
     char *slash = path;
@@ -213,15 +215,18 @@ bool mkPath(char *path) {
         if (stat(path, &sb) != 0) {
             if (errno != ENOENT || mkdir(path, 0777) != 0) {
                 MMKVWarning("%s : %s", path, strerror(errno));
+                free(path);
                 return false;
             }
         } else if (!S_ISDIR(sb.st_mode)) {
             MMKVWarning("%s: %s", path, strerror(ENOTDIR));
+            free(path);
             return false;
         }
 
         *slash = '/';
     }
+    free(path);
 
     return true;
 }
