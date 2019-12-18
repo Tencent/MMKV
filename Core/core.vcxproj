@@ -36,6 +36,7 @@
     <ClCompile Include="CodedOutputData.cpp" />
     <ClCompile Include="crc32\zlib\crc32.cpp" />
     <ClCompile Include="InterProcessLock.cpp" />
+    <ClCompile Include="InterProcessLock_Win32.cpp" />
     <ClCompile Include="MemoryFile_Win32.cpp" />
     <ClCompile Include="MiniPBCoder.cpp" />
     <ClCompile Include="MMBuffer.cpp" />

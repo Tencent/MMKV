@@ -41,6 +41,8 @@ class FileLock {
     size_t m_exclusiveLockCount;
 
     bool doLock(LockType lockType, bool wait);
+    bool platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded);
+    bool platformUnLock(LockType lockType, bool unLockFirstIfNeeded);
 
 #ifndef MMKV_WIN32
     bool isFileLockValid() { return m_fd >= 0; }

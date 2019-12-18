@@ -89,7 +89,7 @@ add_library(core
         crc32/zlib/crc32.h
         crc32/zlib/crc32.cpp
         MMKVPredef.h
-        ThreadLock_Win32.cpp)
+        ThreadLock_Win32.cpp InterProcessLock_Win32.cpp)
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
