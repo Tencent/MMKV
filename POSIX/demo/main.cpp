@@ -29,6 +29,7 @@
 #include <zconf.h>
 
 using namespace std;
+using namespace mmkv;
 
 string to_string(vector<string> &&arr) {
     string str;
@@ -229,11 +230,11 @@ void fastRemoveCornetSizeTest() {
     }
 }
 
-static void LogHandler(MMKVLogLevel level,
-                       const std::string &file,
-                       int line,
-                       const std::string &function,
-                       const std::string &message) {
+static void MyLogHandler(MMKVLogLevel level,
+                         const std::string &file,
+                         int line,
+                         const std::string &function,
+                         const std::string &message) {
 
     auto desc = [level] {
         switch (level) {
@@ -262,7 +263,7 @@ int main() {
     string rootDir = "/tmp/mmkv";
     MMKV::initializeMMKV(rootDir);
     //MMKV::setLogLevel(MMKVLogNone);
-    MMKV::registerLogHandler(LogHandler);
+    MMKV::registerLogHandler(MyLogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
     string aesKey = "cryptKey";

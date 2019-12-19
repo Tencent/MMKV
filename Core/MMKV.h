@@ -38,6 +38,8 @@ namespace mmkv {
 class CodedOutputData;
 } // namespace mmkv
 
+MMKV_NAMESPACE_BEGIN
+
 enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 0x1,
     MMKV_MULTI_PROCESS = 0x2,
@@ -289,5 +291,7 @@ public:
     explicit MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
 };
+
+MMKV_NAMESPACE_END
 
 #endif // MMKV_MMKV_H

@@ -1,0 +1,497 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
+		CB58B40223AB3699002457F1 /* AESCrypt.h in Copy AES Files */ = {isa = PBXBuildFile; fileRef = CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */; };
+		CB58B40423AB36D5002457F1 /* opensslconf.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* opensslconf.h */; };
+		CB58B40523AB36D5002457F1 /* aes.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640523AB2E9100ACCD39 /* aes.h */; };
+		CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563E823AB2E9100ACCD39 /* crc32.cpp */; };
+		CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */; };
+		CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */; };
+		CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F223AB2E9100ACCD39 /* MMKV.cpp */; };
+		CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */; };
+		CB95641823AB2E9100ACCD39 /* ThreadLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */; };
+		CB95641923AB2E9100ACCD39 /* MMBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */; };
+		CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */; };
+		CB95641B23AB2E9100ACCD39 /* cfb128.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640123AB2E9100ACCD39 /* cfb128.c */; };
+		CB95641C23AB2E9100ACCD39 /* aes_core.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640323AB2E9100ACCD39 /* aes_core.c */; };
+		CB95641D23AB2E9100ACCD39 /* aes_cfb.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640423AB2E9100ACCD39 /* aes_cfb.c */; };
+		CB95641E23AB2E9100ACCD39 /* md5_one.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640723AB2E9100ACCD39 /* md5_one.c */; };
+		CB95641F23AB2E9100ACCD39 /* md5_dgst.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640923AB2E9100ACCD39 /* md5_dgst.c */; };
+		CB95642023AB2E9100ACCD39 /* AESCrypt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */; };
+		CB95642123AB2E9100ACCD39 /* InterProcessLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */; };
+		CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */; };
+		CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641223AB2E9100ACCD39 /* PBUtility.cpp */; };
+		CB95642423AB2F7200ACCD39 /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563ED23AB2E9100ACCD39 /* MMKV.h */; };
+		CB95642523AB2FA800ACCD39 /* MMBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */; };
+		CB95642623AB2FB800ACCD39 /* InterProcessLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */; };
+		CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F623AB2E9100ACCD39 /* PBUtility.h */; };
+		CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640D23AB2E9100ACCD39 /* ThreadLock.h */; };
+		CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */; };
+		CB95642A23AB2FCF00ACCD39 /* MemoryFile.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640E23AB2E9100ACCD39 /* MemoryFile.h */; };
+		CB95642B23AB2FDC00ACCD39 /* MMKVMetaInfo.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CB58B40123AB3675002457F1 /* Copy AES Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)/aes";
+			dstSubfolderSpec = 16;
+			files = (
+				CB58B40223AB3699002457F1 /* AESCrypt.h in Copy AES Files */,
+			);
+			name = "Copy AES Files";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB58B40323AB36A8002457F1 /* Copy OpenSSL Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)/aes/openssl";
+			dstSubfolderSpec = 16;
+			files = (
+				CB58B40423AB36D5002457F1 /* opensslconf.h in Copy OpenSSL Files */,
+				CB58B40523AB36D5002457F1 /* aes.h in Copy OpenSSL Files */,
+			);
+			name = "Copy OpenSSL Files";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB9563D623AB2D9500ACCD39 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+				CB95642B23AB2FDC00ACCD39 /* MMKVMetaInfo.hpp in CopyFiles */,
+				CB95642A23AB2FCF00ACCD39 /* MemoryFile.h in CopyFiles */,
+				CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */,
+				CB95642623AB2FB800ACCD39 /* InterProcessLock.h in CopyFiles */,
+				CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */,
+				CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */,
+				CB95642523AB2FA800ACCD39 /* MMBuffer.h in CopyFiles */,
+				CB95642423AB2F7200ACCD39 /* MMKV.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		CB58B3FF23AB3035002457F1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		CB9563D823AB2D9500ACCD39 /* libCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB9563E423AB2E9100ACCD39 /* CodedInputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedInputData.h; sourceTree = "<group>"; };
+		CB9563E723AB2E9100ACCD39 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
+		CB9563E823AB2E9100ACCD39 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = crc32.cpp; sourceTree = "<group>"; };
+		CB9563E923AB2E9100ACCD39 /* crc32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crc32.h; sourceTree = "<group>"; };
+		CB9563EA23AB2E9100ACCD39 /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zconf.h; sourceTree = "<group>"; };
+		CB9563EB23AB2E9100ACCD39 /* Checksum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Checksum.h; sourceTree = "<group>"; };
+		CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MMKVMetaInfo.hpp; sourceTree = "<group>"; };
+		CB9563ED23AB2E9100ACCD39 /* MMKV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
+		CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVPredef.h; sourceTree = "<group>"; };
+		CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodedOutputData.cpp; sourceTree = "<group>"; };
+		CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryFile.cpp; sourceTree = "<group>"; };
+		CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniPBCoder.h; sourceTree = "<group>"; };
+		CB9563F223AB2E9100ACCD39 /* MMKV.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MMKV.cpp; sourceTree = "<group>"; };
+		CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ScopedLock.hpp; sourceTree = "<group>"; };
+		CB9563F423AB2E9100ACCD39 /* MMKVLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVLog.h; sourceTree = "<group>"; };
+		CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MiniPBCoder.cpp; sourceTree = "<group>"; };
+		CB9563F623AB2E9100ACCD39 /* PBUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBUtility.h; sourceTree = "<group>"; };
+		CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadLock.cpp; sourceTree = "<group>"; };
+		CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MMBuffer.cpp; sourceTree = "<group>"; };
+		CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodedInputData.cpp; sourceTree = "<group>"; };
+		CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMBuffer.h; sourceTree = "<group>"; };
+		CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InterProcessLock.h; sourceTree = "<group>"; };
+		CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
+		CB9563FF23AB2E9100ACCD39 /* md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md32_common.h; sourceTree = "<group>"; };
+		CB95640023AB2E9100ACCD39 /* opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opensslconf.h; sourceTree = "<group>"; };
+		CB95640123AB2E9100ACCD39 /* cfb128.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cfb128.c; sourceTree = "<group>"; };
+		CB95640223AB2E9100ACCD39 /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
+		CB95640323AB2E9100ACCD39 /* aes_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aes_core.c; sourceTree = "<group>"; };
+		CB95640423AB2E9100ACCD39 /* aes_cfb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aes_cfb.c; sourceTree = "<group>"; };
+		CB95640523AB2E9100ACCD39 /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
+		CB95640623AB2E9100ACCD39 /* md5_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5_locl.h; sourceTree = "<group>"; };
+		CB95640723AB2E9100ACCD39 /* md5_one.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_one.c; sourceTree = "<group>"; };
+		CB95640823AB2E9100ACCD39 /* modes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modes.h; sourceTree = "<group>"; };
+		CB95640923AB2E9100ACCD39 /* md5_dgst.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_dgst.c; sourceTree = "<group>"; };
+		CB95640A23AB2E9100ACCD39 /* aes_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes_locl.h; sourceTree = "<group>"; };
+		CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AESCrypt.cpp; sourceTree = "<group>"; };
+		CB95640C23AB2E9100ACCD39 /* CodedOutputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedOutputData.h; sourceTree = "<group>"; };
+		CB95640D23AB2E9100ACCD39 /* ThreadLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadLock.h; sourceTree = "<group>"; };
+		CB95640E23AB2E9100ACCD39 /* MemoryFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryFile.h; sourceTree = "<group>"; };
+		CB95640F23AB2E9100ACCD39 /* PBEncodeItem.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = PBEncodeItem.hpp; sourceTree = "<group>"; };
+		CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InterProcessLock.cpp; sourceTree = "<group>"; };
+		CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MMKVLog.cpp; sourceTree = "<group>"; };
+		CB95641223AB2E9100ACCD39 /* PBUtility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PBUtility.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CB9563D523AB2D9500ACCD39 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CB58B3FE23AB3035002457F1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CB58B3FF23AB3035002457F1 /* Foundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CB9563CF23AB2D9500ACCD39 = {
+			isa = PBXGroup;
+			children = (
+				CB9563FC23AB2E9100ACCD39 /* aes */,
+				CB9563E523AB2E9100ACCD39 /* crc32 */,
+				CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */,
+				CB9563E423AB2E9100ACCD39 /* CodedInputData.h */,
+				CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */,
+				CB95640C23AB2E9100ACCD39 /* CodedOutputData.h */,
+				CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */,
+				CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */,
+				CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */,
+				CB95640E23AB2E9100ACCD39 /* MemoryFile.h */,
+				CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */,
+				CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */,
+				CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */,
+				CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */,
+				CB9563F223AB2E9100ACCD39 /* MMKV.cpp */,
+				CB9563ED23AB2E9100ACCD39 /* MMKV.h */,
+				CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */,
+				CB9563F423AB2E9100ACCD39 /* MMKVLog.h */,
+				CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */,
+				CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */,
+				CB95640F23AB2E9100ACCD39 /* PBEncodeItem.hpp */,
+				CB95641223AB2E9100ACCD39 /* PBUtility.cpp */,
+				CB9563F623AB2E9100ACCD39 /* PBUtility.h */,
+				CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */,
+				CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */,
+				CB95640D23AB2E9100ACCD39 /* ThreadLock.h */,
+				CB9563D923AB2D9500ACCD39 /* Products */,
+				CB58B3FE23AB3035002457F1 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		CB9563D923AB2D9500ACCD39 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CB9563D823AB2D9500ACCD39 /* libCore.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CB9563E523AB2E9100ACCD39 /* crc32 */ = {
+			isa = PBXGroup;
+			children = (
+				CB9563EB23AB2E9100ACCD39 /* Checksum.h */,
+				CB9563E623AB2E9100ACCD39 /* zlib */,
+			);
+			path = crc32;
+			sourceTree = "<group>";
+		};
+		CB9563E623AB2E9100ACCD39 /* zlib */ = {
+			isa = PBXGroup;
+			children = (
+				CB9563E823AB2E9100ACCD39 /* crc32.cpp */,
+				CB9563E923AB2E9100ACCD39 /* crc32.h */,
+				CB9563EA23AB2E9100ACCD39 /* zconf.h */,
+				CB9563E723AB2E9100ACCD39 /* zutil.h */,
+			);
+			path = zlib;
+			sourceTree = "<group>";
+		};
+		CB9563FC23AB2E9100ACCD39 /* aes */ = {
+			isa = PBXGroup;
+			children = (
+				CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */,
+				CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */,
+				CB9563FE23AB2E9100ACCD39 /* openssl */,
+			);
+			path = aes;
+			sourceTree = "<group>";
+		};
+		CB9563FE23AB2E9100ACCD39 /* openssl */ = {
+			isa = PBXGroup;
+			children = (
+				CB9563FF23AB2E9100ACCD39 /* md32_common.h */,
+				CB95640023AB2E9100ACCD39 /* opensslconf.h */,
+				CB95640123AB2E9100ACCD39 /* cfb128.c */,
+				CB95640223AB2E9100ACCD39 /* md5.h */,
+				CB95640323AB2E9100ACCD39 /* aes_core.c */,
+				CB95640423AB2E9100ACCD39 /* aes_cfb.c */,
+				CB95640523AB2E9100ACCD39 /* aes.h */,
+				CB95640623AB2E9100ACCD39 /* md5_locl.h */,
+				CB95640723AB2E9100ACCD39 /* md5_one.c */,
+				CB95640823AB2E9100ACCD39 /* modes.h */,
+				CB95640923AB2E9100ACCD39 /* md5_dgst.c */,
+				CB95640A23AB2E9100ACCD39 /* aes_locl.h */,
+			);
+			path = openssl;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CB9563D723AB2D9500ACCD39 /* Core */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB9563E123AB2D9500ACCD39 /* Build configuration list for PBXNativeTarget "Core" */;
+			buildPhases = (
+				CB9563D423AB2D9500ACCD39 /* Sources */,
+				CB9563D523AB2D9500ACCD39 /* Frameworks */,
+				CB9563D623AB2D9500ACCD39 /* CopyFiles */,
+				CB58B40123AB3675002457F1 /* Copy AES Files */,
+				CB58B40323AB36A8002457F1 /* Copy OpenSSL Files */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Core;
+			productName = Core;
+			productReference = CB9563D823AB2D9500ACCD39 /* libCore.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CB9563D023AB2D9500ACCD39 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1130;
+				ORGANIZATIONNAME = lingol;
+				TargetAttributes = {
+					CB9563D723AB2D9500ACCD39 = {
+						CreatedOnToolsVersion = 11.3;
+					};
+				};
+			};
+			buildConfigurationList = CB9563D323AB2D9500ACCD39 /* Build configuration list for PBXProject "Core" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CB9563CF23AB2D9500ACCD39;
+			productRefGroup = CB9563D923AB2D9500ACCD39 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CB9563D723AB2D9500ACCD39 /* Core */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CB9563D423AB2D9500ACCD39 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB95641823AB2E9100ACCD39 /* ThreadLock.cpp in Sources */,
+				CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */,
+				CB95642023AB2E9100ACCD39 /* AESCrypt.cpp in Sources */,
+				CB95641D23AB2E9100ACCD39 /* aes_cfb.c in Sources */,
+				CB95641B23AB2E9100ACCD39 /* cfb128.c in Sources */,
+				CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */,
+				CB95641F23AB2E9100ACCD39 /* md5_dgst.c in Sources */,
+				CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */,
+				CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */,
+				CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */,
+				CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */,
+				CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */,
+				CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */,
+				CB95641E23AB2E9100ACCD39 /* md5_one.c in Sources */,
+				CB95641C23AB2E9100ACCD39 /* aes_core.c in Sources */,
+				CB95641923AB2E9100ACCD39 /* MMBuffer.cpp in Sources */,
+				CB95642123AB2E9100ACCD39 /* InterProcessLock.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CB9563DF23AB2D9500ACCD39 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		CB9563E023AB2D9500ACCD39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CB9563E223AB2D9500ACCD39 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = "";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 armv7";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7";
+				"VALID_ARCHS[sdk=macosx*]" = x86_64;
+			};
+			name = Debug;
+		};
+		CB9563E323AB2D9500ACCD39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CODE_SIGN_STYLE = Automatic;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = "";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 armv7";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7";
+				"VALID_ARCHS[sdk=macosx*]" = x86_64;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CB9563D323AB2D9500ACCD39 /* Build configuration list for PBXProject "Core" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB9563DF23AB2D9500ACCD39 /* Debug */,
+				CB9563E023AB2D9500ACCD39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CB9563E123AB2D9500ACCD39 /* Build configuration list for PBXNativeTarget "Core" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB9563E223AB2D9500ACCD39 /* Debug */,
+				CB9563E323AB2D9500ACCD39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CB9563D023AB2D9500ACCD39 /* Project object */;
+}

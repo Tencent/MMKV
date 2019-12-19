@@ -26,6 +26,7 @@
 #include <zconf.h>
 
 using namespace std;
+using namespace mmkv;
 
 constexpr auto keyCount = 1000;
 static const string MMKV_ID = "process_test";

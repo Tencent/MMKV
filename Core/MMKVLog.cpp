@@ -20,18 +20,23 @@
 
 #include "MMKVLog.h"
 
+MMKV_NAMESPACE_BEGIN
+
 #ifndef NDEBUG
 MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
 #else
 MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
 #endif
+
 mmkv::LogHandler g_logHandler;
+
+MMKV_NAMESPACE_END
 
 #ifdef ENABLE_MMKV_LOG
 #    include <cstdarg>
 #    include <string>
 
-using namespace std;
+MMKV_NAMESPACE_BEGIN
 
 const char *_getFileName(const char *path) {
     const char *ptr = strrchr(path, '/');
@@ -64,7 +69,7 @@ static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
 void _MMKVLogWithLevel(
     MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
-        string message;
+        std::string message;
         char buffer[16];
 
         va_list args;
@@ -75,7 +80,7 @@ void _MMKVLogWithLevel(
         if (length < 0) { // something wrong
             message = {};
         } else if (length < sizeof(buffer)) {
-            message = string(buffer, static_cast<unsigned long>(length));
+            message = std::string(buffer, static_cast<unsigned long>(length));
         } else {
             message.resize(static_cast<unsigned long>(length), '\0');
             va_start(args, format);
@@ -96,3 +101,5 @@ void _MMKVLogWithLevel(
 #    endif
 
 #endif // ENABLE_MMKV_LOG
+
+MMKV_NAMESPACE_END

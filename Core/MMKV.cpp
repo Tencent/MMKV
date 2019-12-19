@@ -70,6 +70,8 @@ enum : bool {
     IncreaseSequence = true,
 };
 
+MMKV_NAMESPACE_BEGIN
+
 #ifndef MMKV_ANDROID
 MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKV_PATH_TYPE *relativePath)
     : m_mmapID(mmapedKVKey(mmapID, relativePath))
@@ -1401,6 +1403,8 @@ void MMKV::setLogLevel(MMKVLogLevel level) {
     SCOPEDLOCK(g_instanceLock);
     g_currentLogLevel = level;
 }
+
+MMKV_NAMESPACE_END
 
 static void mkSpecialCharacterFileDirectory() {
     MMKV_PATH_TYPE path = g_rootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;

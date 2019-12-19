@@ -27,6 +27,8 @@
 #include <cstdint>
 #include <cstring>
 
+MMKV_NAMESPACE_BEGIN
+
 extern MMKVLogLevel g_currentLogLevel;
 extern mmkv::LogHandler g_logHandler;
 
@@ -69,5 +71,7 @@ void _MMKVLogWithLevel(
         {}
 
 #endif
+
+MMKV_NAMESPACE_END
 
 #endif //MMKV_MMKVLOG_H

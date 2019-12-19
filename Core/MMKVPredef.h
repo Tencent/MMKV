@@ -65,6 +65,16 @@ using MMKV_PATH_TYPE = std::string;
 #    define string2MMKV_PATH_TYPE(str) (str)
 #endif // MMKV_WIN32
 
+#ifdef MMKV_IOS_OR_MAC
+#    define MMKV_NAMESPACE_BEGIN namespace mmkv {
+#    define MMKV_NAMESPACE_END }
+#else
+#    define MMKV_NAMESPACE_BEGIN
+#    define MMKV_NAMESPACE_END
+#endif
+
+MMKV_NAMESPACE_BEGIN
+
 enum MMKVLogLevel : int {
     MMKVLogDebug = 0, // not available for release/product build
     MMKVLogInfo = 1,  // default level
@@ -82,6 +92,8 @@ enum MMKVErrorType : int {
     MMKVCRCCheckFail = 0,
     MMKVFileLength,
 };
+
+MMKV_NAMESPACE_END
 
 namespace mmkv {
 
