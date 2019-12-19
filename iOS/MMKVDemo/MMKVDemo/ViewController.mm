@@ -338,6 +338,12 @@
 	self.m_btn.enabled = NO;
 
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+		self->m_arrStrings = [NSMutableArray arrayWithCapacity:self->m_loops];
+		for (size_t index = 0; index < self->m_loops; index++) {
+			NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
+			[self->m_arrStrings addObject:str];
+		}
+
 		[self mmkvBaselineTest:self->m_loops];
 		[self userDefaultBaselineTest:self->m_loops];
 		//[self brutleTest];
