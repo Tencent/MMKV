@@ -93,17 +93,17 @@
 		CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MMKVMetaInfo.hpp; sourceTree = "<group>"; };
 		CB9563ED23AB2E9100ACCD39 /* MMKV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
 		CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVPredef.h; sourceTree = "<group>"; };
-		CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodedOutputData.cpp; sourceTree = "<group>"; };
-		CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryFile.cpp; sourceTree = "<group>"; };
+		CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = CodedOutputData.cpp; sourceTree = "<group>"; };
+		CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MemoryFile.cpp; sourceTree = "<group>"; };
 		CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniPBCoder.h; sourceTree = "<group>"; };
-		CB9563F223AB2E9100ACCD39 /* MMKV.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MMKV.cpp; sourceTree = "<group>"; };
+		CB9563F223AB2E9100ACCD39 /* MMKV.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MMKV.cpp; sourceTree = "<group>"; };
 		CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ScopedLock.hpp; sourceTree = "<group>"; };
 		CB9563F423AB2E9100ACCD39 /* MMKVLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVLog.h; sourceTree = "<group>"; };
-		CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MiniPBCoder.cpp; sourceTree = "<group>"; };
+		CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MiniPBCoder.cpp; sourceTree = "<group>"; };
 		CB9563F623AB2E9100ACCD39 /* PBUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBUtility.h; sourceTree = "<group>"; };
-		CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadLock.cpp; sourceTree = "<group>"; };
-		CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MMBuffer.cpp; sourceTree = "<group>"; };
-		CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodedInputData.cpp; sourceTree = "<group>"; };
+		CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = ThreadLock.cpp; sourceTree = "<group>"; };
+		CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MMBuffer.cpp; sourceTree = "<group>"; };
+		CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = CodedInputData.cpp; sourceTree = "<group>"; };
 		CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMBuffer.h; sourceTree = "<group>"; };
 		CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InterProcessLock.h; sourceTree = "<group>"; };
 		CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
@@ -119,14 +119,14 @@
 		CB95640823AB2E9100ACCD39 /* modes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modes.h; sourceTree = "<group>"; };
 		CB95640923AB2E9100ACCD39 /* md5_dgst.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_dgst.c; sourceTree = "<group>"; };
 		CB95640A23AB2E9100ACCD39 /* aes_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes_locl.h; sourceTree = "<group>"; };
-		CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AESCrypt.cpp; sourceTree = "<group>"; };
+		CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = AESCrypt.cpp; sourceTree = "<group>"; };
 		CB95640C23AB2E9100ACCD39 /* CodedOutputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedOutputData.h; sourceTree = "<group>"; };
 		CB95640D23AB2E9100ACCD39 /* ThreadLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadLock.h; sourceTree = "<group>"; };
 		CB95640E23AB2E9100ACCD39 /* MemoryFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryFile.h; sourceTree = "<group>"; };
 		CB95640F23AB2E9100ACCD39 /* PBEncodeItem.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = PBEncodeItem.hpp; sourceTree = "<group>"; };
-		CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = InterProcessLock.cpp; sourceTree = "<group>"; };
-		CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MMKVLog.cpp; sourceTree = "<group>"; };
-		CB95641223AB2E9100ACCD39 /* PBUtility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PBUtility.cpp; sourceTree = "<group>"; };
+		CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = InterProcessLock.cpp; sourceTree = "<group>"; };
+		CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MMKVLog.cpp; sourceTree = "<group>"; };
+		CB95641223AB2E9100ACCD39 /* PBUtility.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = PBUtility.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

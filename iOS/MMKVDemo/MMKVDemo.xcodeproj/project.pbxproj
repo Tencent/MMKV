@@ -17,6 +17,9 @@
 		CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
+		CB6F6BBC23AB7353000351EA /* FakeMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6F6BBB23AB7353000351EA /* FakeMMKV.mm */; };
+		CB6F6BBF23AB73DF000351EA /* FakeMMKV+MRC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB6F6BBE23AB73DF000351EA /* FakeMMKV+MRC.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB6F6BC223AB7EAA000351EA /* CityHash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB6F6BC123AB7EAA000351EA /* CityHash.cpp */; };
 		CB9C2731215E5DF000448B6C /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
 		CB9C2733215E5ECC00448B6C /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB9C2732215E5ECC00448B6C /* libz.tbd */; };
 		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
@@ -82,6 +85,11 @@
 		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
 		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVPerformanceTest.mm; sourceTree = "<group>"; };
+		CB6F6BBA23AB7353000351EA /* FakeMMKV.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FakeMMKV.h; sourceTree = "<group>"; };
+		CB6F6BBB23AB7353000351EA /* FakeMMKV.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FakeMMKV.mm; sourceTree = "<group>"; };
+		CB6F6BBE23AB73DF000351EA /* FakeMMKV+MRC.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = "FakeMMKV+MRC.cpp"; sourceTree = "<group>"; };
+		CB6F6BC023AB7E79000351EA /* CityHash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CityHash.h; sourceTree = "<group>"; };
+		CB6F6BC123AB7EAA000351EA /* CityHash.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CityHash.cpp; sourceTree = "<group>"; };
 		CB9C2732215E5ECC00448B6C /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
 		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
@@ -162,6 +170,11 @@
 				CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */,
 				CB1FD42620455E2D00931B5F /* ViewController.h */,
 				CB1FD42720455E2D00931B5F /* ViewController.mm */,
+				CB6F6BBA23AB7353000351EA /* FakeMMKV.h */,
+				CB6F6BBE23AB73DF000351EA /* FakeMMKV+MRC.cpp */,
+				CB6F6BBB23AB7353000351EA /* FakeMMKV.mm */,
+				CB6F6BC023AB7E79000351EA /* CityHash.h */,
+				CB6F6BC123AB7EAA000351EA /* CityHash.cpp */,
 			);
 			path = MMKVDemo;
 			sourceTree = "<group>";
@@ -374,7 +387,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB6F6BBF23AB73DF000351EA /* FakeMMKV+MRC.cpp in Sources */,
+				CB6F6BC223AB7EAA000351EA /* CityHash.cpp in Sources */,
 				CB1FD42820455E2D00931B5F /* ViewController.mm in Sources */,
+				CB6F6BBC23AB7353000351EA /* FakeMMKV.mm in Sources */,
 				CB1FD43320455E2D00931B5F /* main.m in Sources */,
 				CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */,
 				CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */,

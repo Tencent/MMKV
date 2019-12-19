@@ -21,6 +21,8 @@
 #ifndef MMKV_CODEDINPUTDATA_H
 #define MMKV_CODEDINPUTDATA_H
 
+#include "MMKVPredef.h"
+
 #include "MMBuffer.h"
 #include <cstdint>
 #include <string>
@@ -66,6 +68,10 @@ public:
     std::string readString();
 
     MMBuffer readData();
+
+#ifdef MMKV_IOS_OR_MAC
+    NSString *readNSString();
+#endif
 };
 
 } // namespace mmkv

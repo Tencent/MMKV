@@ -19,6 +19,7 @@
  */
 
 #import "ViewController.h"
+#import "FakeMMKV.h"
 #import "MMKVDemo-Swift.h"
 #import <MMKV/MMKV.h>
 
@@ -29,8 +30,10 @@
 	NSMutableArray *m_arrStrings;
 	NSMutableArray *m_arrStrKeys;
 	NSMutableArray *m_arrIntKeys;
+	NSMutableArray *m_arrDatas;
 
 	int m_loops;
+	FakeMMKV *m_fakeMMKV;
 }
 
 - (void)viewDidLoad {
@@ -62,13 +65,17 @@
 	DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
 	[swiftUsageDemo testSwiftFunctionality];
 
-	m_loops = 10000;
+	m_loops = 100000;
+	m_fakeMMKV = [[FakeMMKV alloc] init];
+	m_arrDatas = [NSMutableArray arrayWithCapacity:m_loops];
 	m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
 	m_arrStrKeys = [NSMutableArray arrayWithCapacity:m_loops];
 	m_arrIntKeys = [NSMutableArray arrayWithCapacity:m_loops];
 	for (size_t index = 0; index < m_loops; index++) {
 		NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
 		[m_arrStrings addObject:str];
+
+		[m_arrDatas addObject:[str dataUsingEncoding:NSUTF8StringEncoding]];
 
 		NSString *strKey = [NSString stringWithFormat:@"str-%zu", index];
 		[m_arrStrKeys addObject:strKey];
@@ -338,19 +345,103 @@
 	self.m_btn.enabled = NO;
 
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-		self->m_arrStrings = [NSMutableArray arrayWithCapacity:self->m_loops];
+		/*self->m_arrStrings = [NSMutableArray arrayWithCapacity:self->m_loops];
 		for (size_t index = 0; index < self->m_loops; index++) {
 			NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
 			[self->m_arrStrings addObject:str];
 		}
 
 		[self mmkvBaselineTest:self->m_loops];
-		[self userDefaultBaselineTest:self->m_loops];
+		[self userDefaultBaselineTest:self->m_loops];*/
 		//[self brutleTest];
+		[self fakeMMKVTest:self->m_loops];
+		[self fakeMMKVTest2:self->m_loops];
+		[self fakeMMKVTest3:self->m_loops];
+		[self fakeMMKVReadTest:self->m_loops];
+		[self fakeMMKVReadTest2:self->m_loops];
+		[self fakeMMKVReadTest3:self->m_loops];
 
 		[self.m_loading stopAnimating];
 		self.m_btn.enabled = YES;
 	});
+}
+
+- (void)fakeMMKVTest:(int)loops {
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
+
+		for (int index = 0; index < loops; index++) {
+			[m_fakeMMKV setData:m_arrDatas[index] forKey:m_arrStrKeys[index]];
+		}
+		NSDate *endDate = [NSDate date];
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"fake mmkv write data %d times, cost:%d ms", loops, cost);
+	}
+}
+
+- (void)fakeMMKVTest2:(int)loops {
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
+
+		for (int index = 0; index < loops; index++) {
+			[m_fakeMMKV setData2:m_arrDatas[index] forKey:m_arrStrKeys[index]];
+		}
+		NSDate *endDate = [NSDate date];
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"fake MmKv write data %d times, cost:%d ms", loops, cost);
+	}
+}
+
+- (void)fakeMMKVTest3:(int)loops {
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
+
+		for (int index = 0; index < loops; index++) {
+			[m_fakeMMKV setData3:m_arrDatas[index] forKey:m_arrStrKeys[index]];
+		}
+		NSDate *endDate = [NSDate date];
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"fake MmKv write data %d times, cost:%d ms", loops, cost);
+	}
+}
+
+- (void)fakeMMKVReadTest:(int)loops {
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
+
+		for (int index = 0; index < loops; index++) {
+			[m_fakeMMKV getDataForKey:m_arrStrKeys[index]];
+		}
+		NSDate *endDate = [NSDate date];
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"fake mmkv get data %d times, cost:%d ms", loops, cost);
+	}
+}
+
+- (void)fakeMMKVReadTest2:(int)loops {
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
+
+		for (int index = 0; index < loops; index++) {
+			[m_fakeMMKV getDataForKey2:m_arrStrKeys[index]];
+		}
+		NSDate *endDate = [NSDate date];
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"fake MmKv get data %d times, cost:%d ms", loops, cost);
+	}
+}
+
+- (void)fakeMMKVReadTest3:(int)loops {
+	@autoreleasepool {
+		NSDate *startDate = [NSDate date];
+
+		for (int index = 0; index < loops; index++) {
+			[m_fakeMMKV getDataForKey3:m_arrStrKeys[index]];
+		}
+		NSDate *endDate = [NSDate date];
+		int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+		NSLog(@"fake MmKv get data %d times, cost:%d ms", loops, cost);
+	}
 }
 
 #pragma mark - mmkv baseline test

@@ -175,4 +175,24 @@ int8_t CodedInputData::readRawByte() {
     return bytes[m_position++];
 }
 
+#ifdef MMKV_IOS_OR_MAC
+NSString *CodedInputData::readNSString() {
+    int32_t size = this->readRawVarint32();
+    if (size <= (m_size - m_position) && size > 0) {
+        NSString *result = [[NSString alloc] initWithBytes:(m_ptr + m_position)
+                                                    length:size
+                                                  encoding:NSUTF8StringEncoding];
+        m_position += size;
+        return result;
+    } else if (size == 0) {
+        return @"";
+    } else if (size < 0) {
+        throw length_error("InvalidProtocolBuffer negativeSize");
+    } else {
+        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
+    }
+    return nil;
+}
+#endif
+
 } // namespace mmkv

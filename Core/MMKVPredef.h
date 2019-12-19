@@ -66,6 +66,7 @@ using MMKV_PATH_TYPE = std::string;
 #endif // MMKV_WIN32
 
 #ifdef MMKV_IOS_OR_MAC
+#    import <Foundation/Foundation.h>
 #    define MMKV_NAMESPACE_BEGIN namespace mmkv {
 #    define MMKV_NAMESPACE_END }
 #else
