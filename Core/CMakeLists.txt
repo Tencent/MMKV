@@ -29,6 +29,8 @@ IF(APPLE)
     # prevents ar from invoking ranlib, let CMake do it
     SET(CMAKE_C_ARCHIVE_CREATE   "<CMAKE_AR> qc -S <TARGET> <LINK_FLAGS> <OBJECTS>")
     SET(CMAKE_CXX_ARCHIVE_CREATE "<CMAKE_AR> qc -S <TARGET> <LINK_FLAGS> <OBJECTS>")
+
+    add_compile_definitions(FORCE_POSIX)
 ENDIF()
 
 project(core)

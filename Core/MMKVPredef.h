@@ -22,16 +22,21 @@
 #define MMKV_SRC_MMKVPREDEF_H
 
 #include <string>
+#include <unordered_map>
 
 #ifdef __ANDROID__
 #    define MMKV_ANDROID
 #elif __APPLE__
-#    define MMKV_IOS_OR_MAC
-#    ifdef __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
-#        define MMKV_IOS
+#    ifdef FORCE_POSIX
+#        define MMKV_POSIX
 #    else
-#        define MMKV_MAC
-#    endif
+#        define MMKV_IOS_OR_MAC
+#        ifdef __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
+#            define MMKV_IOS
+#        else
+#            define MMKV_MAC
+#        endif
+#    endif // FORCE_POSIX
 #elif __linux__ || __unix__
 #    define MMKV_POSIX
 #    if __linux__
@@ -109,6 +114,27 @@ typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErro
 typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
 extern size_t DEFAULT_MMAP_SIZE;
+
+class MMBuffer;
+
+#ifdef MMKV_IOS_OR_MAC
+struct KeyHasher {
+    size_t operator()(NSString *key) const { return key.hash; }
+};
+
+struct KeyEqualer {
+    bool operator()(NSString *left, NSString *right) const {
+        if (left == right) {
+            return true;
+        }
+        return ([left isEqualToString:right] == YES);
+    }
+};
+
+using MMKVMap = std::unordered_map<NSString *, MMBuffer, KeyHasher, KeyEqualer>;
+#else
+using MMKVMap = std::unordered_map<std::string, mmkv::MMBuffer>;
+#endif
 
 } // namespace mmkv
 

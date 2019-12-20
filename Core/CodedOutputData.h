@@ -21,6 +21,8 @@
 #ifndef MMKV_CODEDOUTPUTDATA_H
 #define MMKV_CODEDOUTPUTDATA_H
 
+#include "MMKVPredef.h"
+
 #include "MMBuffer.h"
 #include <cstdint>
 #include <string>
@@ -68,6 +70,10 @@ public:
     void writeString(const std::string &value);
 
     void writeData(const MMBuffer &value);
+
+#ifdef MMKV_IOS_OR_MAC
+    void writeString(__unsafe_unretained NSString *value);
+#endif
 };
 
 } // namespace mmkv

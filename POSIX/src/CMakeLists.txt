@@ -24,6 +24,10 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project(mmkv)
 
+IF(APPLE)
+    add_compile_definitions(FORCE_POSIX)
+ENDIF()
+
 add_subdirectory(../../Core Core)
 
 # Creates and names a library, sets it as either STATIC

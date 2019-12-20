@@ -21,6 +21,8 @@
 #ifndef MMKV_MINIPBCODER_H
 #define MMKV_MINIPBCODER_H
 
+#include "MMKVPredef.h"
+
 #include "MMBuffer.h"
 #include "MMKVLog.h"
 #include "PBEncodeItem.hpp"
@@ -51,17 +53,23 @@ private:
     size_t prepareObjectForEncode(const std::string &str);
     size_t prepareObjectForEncode(const MMBuffer &buffer);
     size_t prepareObjectForEncode(const std::vector<std::string> &vector);
-    size_t prepareObjectForEncode(const std::unordered_map<std::string, MMBuffer> &map);
+    size_t prepareObjectForEncode(const MMKVMap &map);
 
     MMBuffer getEncodeData(const std::string &str);
     MMBuffer getEncodeData(const MMBuffer &buffer);
     MMBuffer getEncodeData(const std::vector<std::string> &vector);
-    MMBuffer getEncodeData(const std::unordered_map<std::string, MMBuffer> &map);
+    MMBuffer getEncodeData(const MMKVMap &map);
 
     std::string decodeOneString();
     MMBuffer decodeOneBytes();
     std::vector<std::string> decodeOneSet();
-    void decodeOneMap(std::unordered_map<std::string, MMBuffer> &dic, size_t size, bool greedy);
+    void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
+
+#ifdef MMKV_IOS_OR_MAC
+    // NSString, NSData, NSDate
+    size_t prepareObjectForEncode(__unsafe_unretained NSObject *obj);
+    MMBuffer getEncodeData(__unsafe_unretained NSObject *obj);
+#endif
 
 public:
     template <typename T>
@@ -82,14 +90,15 @@ public:
     static std::vector<std::string> decodeSet(const MMBuffer &oData);
 
     // return empty result if there's any error
-    static void decodeMap(std::unordered_map<std::string, MMBuffer> &dic,
-                          const MMBuffer &oData,
-                          size_t size = 0);
+    static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
 
     // decode as much data as possible before any error happens
-    static void greedyDecodeMap(std::unordered_map<std::string, MMBuffer> &dic,
-                                const MMBuffer &oData,
-                                size_t size = 0);
+    static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
+
+#ifdef MMKV_IOS_OR_MAC
+    // NSString, NSData, NSDate
+    static NSObject *decodeObject(const MMBuffer &oData, Class cls);
+#endif
 };
 
 } // namespace mmkv

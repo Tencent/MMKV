@@ -70,7 +70,7 @@ class MMKV {
 
     ~MMKV();
 
-    std::unordered_map<std::string, mmkv::MMBuffer> m_dic;
+    mmkv::MMKVMap m_dic;
     std::string m_mmapID;
     MMKV_PATH_TYPE m_path;
     MMKV_PATH_TYPE m_crcPath;
@@ -92,6 +92,16 @@ class MMKV {
     mmkv::FileLock m_fileLock;
     mmkv::InterProcessLock m_sharedProcessLock;
     mmkv::InterProcessLock m_exclusiveProcessLock;
+
+#ifdef MMKV_IOS_OR_MAC
+    using MMKV_KEY_TYPE = NSString *__unsafe_unretained;
+    using MMKV_KEY_CLEAN_TYPE = NSString *;
+#    define MMKV_IS_KEY_EMPTY(key) (key.length <= 0)
+#else
+    using MMKV_KEY_TYPE = const std::string &;
+    using MMKV_KEY_CLEAN_TYPE = std::string;
+#    define MMKV_IS_KEY_EMPTY(key) key.empty()
+#endif
 
     void loadFromFile();
 
@@ -121,13 +131,13 @@ class MMKV {
 
     bool doFullWriteBack(mmkv::MMBuffer &&allData);
 
-    const mmkv::MMBuffer &getDataForKey(const std::string &key);
+    const mmkv::MMBuffer &getDataForKey(MMKV_KEY_TYPE key);
 
-    bool setDataForKey(mmkv::MMBuffer &&data, const std::string &key);
+    bool setDataForKey(mmkv::MMBuffer &&data, MMKV_KEY_TYPE key);
 
-    bool removeDataForKey(const std::string &key);
+    bool removeDataForKey(MMKV_KEY_TYPE key);
 
-    bool appendDataWithKey(const mmkv::MMBuffer &data, const std::string &key);
+    bool appendDataWithKey(const mmkv::MMBuffer &data, MMKV_KEY_TYPE key);
 
     void notifyContentChanged();
 
@@ -187,67 +197,73 @@ public:
     // usually you should call this method after other process reKey() the inter-process mmkv
     void checkReSetCryptKey(const std::string *cryptKey);
 
-    bool set(bool value, const std::string &key);
+    bool set(bool value, MMKV_KEY_TYPE key);
 
-    bool set(int32_t value, const std::string &key);
+    bool set(int32_t value, MMKV_KEY_TYPE key);
 
-    bool set(uint32_t value, const std::string &key);
+    bool set(uint32_t value, MMKV_KEY_TYPE key);
 
-    bool set(int64_t value, const std::string &key);
+    bool set(int64_t value, MMKV_KEY_TYPE key);
 
-    bool set(uint64_t value, const std::string &key);
+    bool set(uint64_t value, MMKV_KEY_TYPE key);
 
-    bool set(float value, const std::string &key);
+    bool set(float value, MMKV_KEY_TYPE key);
 
-    bool set(double value, const std::string &key);
+    bool set(double value, MMKV_KEY_TYPE key);
 
-    bool set(const char *value, const std::string &key);
+    bool set(const char *value, MMKV_KEY_TYPE key);
 
-    bool set(const std::string &value, const std::string &key);
+    bool set(const std::string &value, MMKV_KEY_TYPE key);
 
-    bool set(const mmkv::MMBuffer &value, const std::string &key);
+    bool set(const mmkv::MMBuffer &value, MMKV_KEY_TYPE key);
 
-    bool set(const std::vector<std::string> &vector, const std::string &key);
+    bool set(const std::vector<std::string> &vector, MMKV_KEY_TYPE key);
 
     // avoid unexpected type conversion (pointer to bool, etc)
     template <typename T>
-    bool set(T value, const std::string &key) = delete;
+    bool set(T value, MMKV_KEY_TYPE key) = delete;
 
-    bool getBool(const std::string &key, bool defaultValue = false);
+#ifdef MMKV_IOS_OR_MAC
+    bool set(NSObject *__unsafe_unretained obj, MMKV_KEY_TYPE key);
 
-    int32_t getInt32(const std::string &key, int32_t defaultValue = 0);
+    NSObject *getObject(MMKV_KEY_TYPE key, Class cls);
+#endif
 
-    uint32_t getUInt32(const std::string &key, uint32_t defaultValue = 0);
+    bool getBool(MMKV_KEY_TYPE key, bool defaultValue = false);
 
-    int64_t getInt64(const std::string &key, int64_t defaultValue = 0);
+    int32_t getInt32(MMKV_KEY_TYPE key, int32_t defaultValue = 0);
 
-    uint64_t getUInt64(const std::string &key, uint64_t defaultValue = 0);
+    uint32_t getUInt32(MMKV_KEY_TYPE key, uint32_t defaultValue = 0);
 
-    float getFloat(const std::string &key, float defaultValue = 0);
+    int64_t getInt64(MMKV_KEY_TYPE key, int64_t defaultValue = 0);
 
-    double getDouble(const std::string &key, double defaultValue = 0);
+    uint64_t getUInt64(MMKV_KEY_TYPE key, uint64_t defaultValue = 0);
 
-    bool getString(const std::string &key, std::string &result);
+    float getFloat(MMKV_KEY_TYPE key, float defaultValue = 0);
 
-    mmkv::MMBuffer getBytes(const std::string &key);
+    double getDouble(MMKV_KEY_TYPE key, double defaultValue = 0);
 
-    bool getVector(const std::string &key, std::vector<std::string> &result);
+    bool getString(MMKV_KEY_TYPE key, std::string &result);
 
-    size_t getValueSize(const std::string &key, bool acutalSize);
+    mmkv::MMBuffer getBytes(MMKV_KEY_TYPE key);
 
-    int32_t writeValueToBuffer(const std::string &key, void *ptr, int32_t size);
+    bool getVector(MMKV_KEY_TYPE key, std::vector<std::string> &result);
 
-    bool containsKey(const std::string &key);
+    size_t getValueSize(MMKV_KEY_TYPE key, bool acutalSize);
+
+    int32_t writeValueToBuffer(MMKV_KEY_TYPE key, void *ptr, int32_t size);
+
+    bool containsKey(MMKV_KEY_TYPE key);
 
     size_t count();
 
     size_t totalSize();
 
-    std::vector<std::string> allKeys();
+    std::vector<MMKV_KEY_CLEAN_TYPE> allKeys();
 
-    void removeValueForKey(const std::string &key);
+    void removeValueForKey(MMKV_KEY_TYPE key);
 
-    void removeValuesForKeys(const std::vector<std::string> &arrKeys);
+    void removeValuesForKeys(const std::vector<MMKV_KEY_CLEAN_TYPE> &arrKeys);
 
     void clearAll();
 

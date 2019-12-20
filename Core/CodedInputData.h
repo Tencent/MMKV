@@ -31,8 +31,8 @@ namespace mmkv {
 
 class CodedInputData {
     uint8_t *m_ptr;
-    int32_t m_size;
-    int32_t m_position;
+    size_t m_size;
+    size_t m_position;
 
     int8_t readRawByte();
 
@@ -43,7 +43,7 @@ class CodedInputData {
     int64_t readRawLittleEndian64();
 
 public:
-    CodedInputData(const void *oData, int32_t length);
+    CodedInputData(const void *oData, size_t length);
 
     ~CodedInputData();
 
@@ -71,6 +71,7 @@ public:
 
 #ifdef MMKV_IOS_OR_MAC
     NSString *readNSString();
+    NSData *readNSData();
 #endif
 };
 

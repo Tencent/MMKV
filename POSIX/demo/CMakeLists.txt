@@ -22,6 +22,10 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project(demo)
 
+IF(APPLE)
+    add_compile_definitions(FORCE_POSIX)
+ENDIF()
+
 add_executable(demo
         main.cpp)
 target_link_libraries(demo

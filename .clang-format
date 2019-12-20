@@ -26,7 +26,7 @@ IndentPPDirectives: AfterHash
 ---
 Language: ObjC
 ColumnLimit: 0
-UseTab: ForIndentation
+#UseTab: ForIndentation
 ObjCBlockIndentWidth: 4
 ---
 Language: Java

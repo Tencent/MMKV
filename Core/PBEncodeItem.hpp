@@ -21,6 +21,8 @@
 #ifndef MMKV_PBENCODEITEM_HPP
 #define MMKV_PBENCODEITEM_HPP
 
+#include "MMKVPredef.h"
+
 #include "MMBuffer.h"
 #include <cstdint>
 #include <memory.h>
@@ -33,6 +35,11 @@ enum PBEncodeItemType {
     PBEncodeItemType_String,
     PBEncodeItemType_Data,
     PBEncodeItemType_Container,
+#ifdef MMKV_IOS_OR_MAC
+    PBEncodeItemType_NSString,
+    PBEncodeItemType_NSData,
+    PBEncodeItemType_NSDate,
+#endif
 };
 
 struct PBEncodeItem {
@@ -42,11 +49,54 @@ struct PBEncodeItem {
     union {
         const std::string *strValue;
         const MMBuffer *bufferValue;
+#ifdef MMKV_IOS_OR_MAC
+        void *objectValue;
+        void *tmpObjectValue; // this object should release on dealloc
+#endif
     } value;
 
     PBEncodeItem() : type(PBEncodeItemType_None), compiledSize(0), valueSize(0) {
         memset(&value, 0, sizeof(value));
     }
+
+#ifdef MMKV_IOS_OR_MAC
+    PBEncodeItem(const PBEncodeItem &other)
+        : type(other.type)
+        , compiledSize(other.compiledSize)
+        , valueSize(other.valueSize)
+        , value(other.value) {
+        if (type == PBEncodeItemType_NSString) {
+            if (value.tmpObjectValue != nullptr) {
+                CFRetain(value.tmpObjectValue);
+            }
+        }
+    }
+
+    PBEncodeItem &operator=(const PBEncodeItem &other) {
+        if (this != &other) {
+            type = other.type;
+            compiledSize = other.compiledSize;
+            valueSize = other.valueSize;
+            value = other.value;
+
+            if (type == PBEncodeItemType_NSString) {
+                if (value.tmpObjectValue != nullptr) {
+                    CFRetain(value.tmpObjectValue);
+                }
+            }
+        }
+        return *this;
+    }
+
+    ~PBEncodeItem() {
+        if (type == PBEncodeItemType_NSString) {
+            if (value.tmpObjectValue != nullptr) {
+                CFRelease(value.tmpObjectValue);
+                value.tmpObjectValue = nullptr;
+            }
+        }
+    }
+#endif
 };
 
 } // namespace mmkv

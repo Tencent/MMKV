@@ -24,6 +24,10 @@
 #include <cstring>
 #include <stdexcept>
 
+#if __has_feature(objc_arc)
+#    error This file must be compiled with MRC. Use -fno-objc-arc flag.
+#endif
+
 using namespace std;
 
 namespace mmkv {
@@ -82,6 +86,21 @@ void CodedOutputData::writeData(const MMBuffer &value) {
     this->writeRawVarint32((int32_t) value.length());
     this->writeRawData(value);
 }
+
+#ifdef MMKV_IOS_OR_MAC
+void CodedOutputData::writeString(__unsafe_unretained NSString *value) {
+    NSUInteger numberOfBytes = [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    this->writeRawVarint32((int32_t) numberOfBytes);
+    [value getBytes:m_ptr + m_position
+             maxLength:numberOfBytes
+            usedLength:0
+              encoding:NSUTF8StringEncoding
+               options:0
+                 range:NSMakeRange(0, value.length)
+        remainingRange:nullptr];
+    m_position += numberOfBytes;
+}
+#endif
 
 size_t CodedOutputData::spaceLeft() {
     return int32_t(m_size - m_position);

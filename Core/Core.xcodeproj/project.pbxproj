@@ -12,13 +12,13 @@
 		CB58B40423AB36D5002457F1 /* opensslconf.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* opensslconf.h */; };
 		CB58B40523AB36D5002457F1 /* aes.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640523AB2E9100ACCD39 /* aes.h */; };
 		CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563E823AB2E9100ACCD39 /* crc32.cpp */; };
-		CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */; };
+		CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */; };
-		CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F223AB2E9100ACCD39 /* MMKV.cpp */; };
-		CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */; };
+		CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F223AB2E9100ACCD39 /* MMKV.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB95641823AB2E9100ACCD39 /* ThreadLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */; };
 		CB95641923AB2E9100ACCD39 /* MMBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */; };
-		CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */; };
+		CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB95641B23AB2E9100ACCD39 /* cfb128.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640123AB2E9100ACCD39 /* cfb128.c */; };
 		CB95641C23AB2E9100ACCD39 /* aes_core.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640323AB2E9100ACCD39 /* aes_core.c */; };
 		CB95641D23AB2E9100ACCD39 /* aes_cfb.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640423AB2E9100ACCD39 /* aes_cfb.c */; };

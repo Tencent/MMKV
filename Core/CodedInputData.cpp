@@ -23,11 +23,15 @@
 #include <cassert>
 #include <stdexcept>
 
+#if __has_feature(objc_arc)
+#    error This file must be compiled with MRC. Use -fno-objc-arc flag.
+#endif
+
 using namespace std;
 
 namespace mmkv {
 
-CodedInputData::CodedInputData(const void *oData, int32_t length)
+CodedInputData::CodedInputData(const void *oData, size_t length)
     : m_ptr((uint8_t *) oData), m_size(length), m_position(0) {
     assert(m_ptr);
 }
@@ -179,9 +183,9 @@ int8_t CodedInputData::readRawByte() {
 NSString *CodedInputData::readNSString() {
     int32_t size = this->readRawVarint32();
     if (size <= (m_size - m_position) && size > 0) {
-        NSString *result = [[NSString alloc] initWithBytes:(m_ptr + m_position)
-                                                    length:size
-                                                  encoding:NSUTF8StringEncoding];
+        NSString *result = [[[NSString alloc] initWithBytes:(m_ptr + m_position)
+                                                     length:size
+                                                   encoding:NSUTF8StringEncoding] autorelease];
         m_position += size;
         return result;
     } else if (size == 0) {
@@ -190,6 +194,19 @@ NSString *CodedInputData::readNSString() {
         throw length_error("InvalidProtocolBuffer negativeSize");
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");
+    }
+    return nil;
+}
+
+NSData *CodedInputData::readNSData() {
+    int32_t size = this->readRawVarint32();
+    if (size <= m_size - m_position && size > 0) {
+        NSData *result = [NSData dataWithBytes:(m_ptr + m_position) length:size];
+        m_position += size;
+        return result;
+    } else if (size < 0) {
+        throw length_error("InvalidProtocolBuffer negativeSize");
+        return nil;
     }
     return nil;
 }

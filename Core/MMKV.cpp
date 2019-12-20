@@ -35,6 +35,10 @@
 #include <cstdio>
 #include <cstring>
 
+#if __has_feature(objc_arc)
+#    error This file must be compiled with MRC. Use -fno-objc-arc flag.
+#endif
+
 using namespace std;
 using namespace mmkv;
 
@@ -683,7 +687,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
     return true;
 }
 
-const MMBuffer &MMKV::getDataForKey(const string &key) {
+const MMBuffer &MMKV::getDataForKey(MMKV_KEY_TYPE key) {
     checkLoadData();
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
@@ -693,8 +697,8 @@ const MMBuffer &MMKV::getDataForKey(const string &key) {
     return nan;
 }
 
-bool MMKV::setDataForKey(MMBuffer &&data, const string &key) {
-    if (data.length() == 0 || key.empty()) {
+bool MMKV::setDataForKey(MMBuffer &&data, MMKV_KEY_TYPE key) {
+    if (data.length() == 0 || MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     SCOPEDLOCK(m_lock);
@@ -709,8 +713,8 @@ bool MMKV::setDataForKey(MMBuffer &&data, const string &key) {
     return ret;
 }
 
-bool MMKV::removeDataForKey(const string &key) {
-    if (key.empty()) {
+bool MMKV::removeDataForKey(MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
 
@@ -724,8 +728,12 @@ bool MMKV::removeDataForKey(const string &key) {
     return false;
 }
 
-bool MMKV::appendDataWithKey(const MMBuffer &data, const string &key) {
+bool MMKV::appendDataWithKey(const MMBuffer &data, MMKV_KEY_TYPE key) {
+#ifdef MMKV_IOS_OR_MAC
+    size_t keyLength = key.length;
+#else
     size_t keyLength = key.length();
+#endif
     // size needed to encode the key
     size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength);
     // size needed to encode the value
@@ -927,7 +935,7 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
 
 // set & get
 
-bool MMKV::set(const char *value, const string &key) {
+bool MMKV::set(const char *value, MMKV_KEY_TYPE key) {
     if (!value) {
         removeValueForKey(key);
         return true;
@@ -935,24 +943,24 @@ bool MMKV::set(const char *value, const string &key) {
     return set(string(value), key);
 }
 
-bool MMKV::set(const string &value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(const string &value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(value);
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(const MMBuffer &value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(const MMBuffer &value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(value);
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(bool value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(bool value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     size_t size = pbBoolSize(value);
@@ -963,8 +971,8 @@ bool MMKV::set(bool value, const string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(int32_t value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(int32_t value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     size_t size = pbInt32Size(value);
@@ -975,8 +983,8 @@ bool MMKV::set(int32_t value, const string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(uint32_t value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(uint32_t value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     size_t size = pbUInt32Size(value);
@@ -987,8 +995,8 @@ bool MMKV::set(uint32_t value, const string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(int64_t value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(int64_t value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     size_t size = pbInt64Size(value);
@@ -999,8 +1007,8 @@ bool MMKV::set(int64_t value, const string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(uint64_t value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(uint64_t value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     size_t size = pbUInt64Size(value);
@@ -1011,8 +1019,8 @@ bool MMKV::set(uint64_t value, const string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(float value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(float value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     size_t size = pbFloatSize(value);
@@ -1023,8 +1031,8 @@ bool MMKV::set(float value, const string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(double value, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(double value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     size_t size = pbDoubleSize(value);
@@ -1035,16 +1043,16 @@ bool MMKV::set(double value, const string &key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(const vector<string> &v, const string &key) {
-    if (key.empty()) {
+bool MMKV::set(const vector<string> &v, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(v);
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::getString(const string &key, string &result) {
-    if (key.empty()) {
+bool MMKV::getString(MMKV_KEY_TYPE key, string &result) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     SCOPEDLOCK(m_lock);
@@ -1060,8 +1068,8 @@ bool MMKV::getString(const string &key, string &result) {
     return false;
 }
 
-MMBuffer MMKV::getBytes(const string &key) {
-    if (key.empty()) {
+MMBuffer MMKV::getBytes(MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return MMBuffer(0);
     }
     SCOPEDLOCK(m_lock);
@@ -1076,8 +1084,8 @@ MMBuffer MMKV::getBytes(const string &key) {
     return MMBuffer(0);
 }
 
-bool MMKV::getBool(const string &key, bool defaultValue) {
-    if (key.empty()) {
+bool MMKV::getBool(MMKV_KEY_TYPE key, bool defaultValue) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1093,8 +1101,8 @@ bool MMKV::getBool(const string &key, bool defaultValue) {
     return defaultValue;
 }
 
-int32_t MMKV::getInt32(const string &key, int32_t defaultValue) {
-    if (key.empty()) {
+int32_t MMKV::getInt32(MMKV_KEY_TYPE key, int32_t defaultValue) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1110,8 +1118,8 @@ int32_t MMKV::getInt32(const string &key, int32_t defaultValue) {
     return defaultValue;
 }
 
-uint32_t MMKV::getUInt32(const string &key, uint32_t defaultValue) {
-    if (key.empty()) {
+uint32_t MMKV::getUInt32(MMKV_KEY_TYPE key, uint32_t defaultValue) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1127,8 +1135,8 @@ uint32_t MMKV::getUInt32(const string &key, uint32_t defaultValue) {
     return defaultValue;
 }
 
-int64_t MMKV::getInt64(const string &key, int64_t defaultValue) {
-    if (key.empty()) {
+int64_t MMKV::getInt64(MMKV_KEY_TYPE key, int64_t defaultValue) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1144,8 +1152,8 @@ int64_t MMKV::getInt64(const string &key, int64_t defaultValue) {
     return defaultValue;
 }
 
-uint64_t MMKV::getUInt64(const string &key, uint64_t defaultValue) {
-    if (key.empty()) {
+uint64_t MMKV::getUInt64(MMKV_KEY_TYPE key, uint64_t defaultValue) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1161,8 +1169,8 @@ uint64_t MMKV::getUInt64(const string &key, uint64_t defaultValue) {
     return defaultValue;
 }
 
-float MMKV::getFloat(const string &key, float defaultValue) {
-    if (key.empty()) {
+float MMKV::getFloat(MMKV_KEY_TYPE key, float defaultValue) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1178,8 +1186,8 @@ float MMKV::getFloat(const string &key, float defaultValue) {
     return defaultValue;
 }
 
-double MMKV::getDouble(const string &key, double defaultValue) {
-    if (key.empty()) {
+double MMKV::getDouble(MMKV_KEY_TYPE key, double defaultValue) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1195,8 +1203,8 @@ double MMKV::getDouble(const string &key, double defaultValue) {
     return defaultValue;
 }
 
-bool MMKV::getVector(const string &key, vector<string> &result) {
-    if (key.empty()) {
+bool MMKV::getVector(MMKV_KEY_TYPE key, vector<string> &result) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
     }
     SCOPEDLOCK(m_lock);
@@ -1212,8 +1220,8 @@ bool MMKV::getVector(const string &key, vector<string> &result) {
     return false;
 }
 
-size_t MMKV::getValueSize(const string &key, bool actualSize) {
-    if (key.empty()) {
+size_t MMKV::getValueSize(MMKV_KEY_TYPE key, bool actualSize) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return 0;
     }
     SCOPEDLOCK(m_lock);
@@ -1232,8 +1240,41 @@ size_t MMKV::getValueSize(const string &key, bool actualSize) {
     return data.length();
 }
 
-int32_t MMKV::writeValueToBuffer(const string &key, void *ptr, int32_t size) {
-    if (key.empty()) {
+#ifdef MMKV_IOS_OR_MAC
+
+bool MMKV::set(NSObject *__unsafe_unretained obj, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
+        return false;
+    }
+    if (!obj) {
+        removeValueForKey(key);
+        return true;
+    }
+    auto data = MiniPBCoder::encodeDataWithObject(obj);
+    return setDataForKey(std::move(data), key);
+}
+
+NSObject *MMKV::getObject(MMKV_KEY_TYPE key, Class cls) {
+    if (MMKV_IS_KEY_EMPTY(key) || !cls) {
+        return nil;
+    }
+    SCOPEDLOCK(m_lock);
+    auto &data = getDataForKey(key);
+    if (data.length() > 0) {
+        try {
+            auto result = MiniPBCoder::decodeObject(data, cls);
+            return result;
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    }
+    return nil;
+}
+
+#endif
+
+int32_t MMKV::writeValueToBuffer(MMKV_KEY_TYPE key, void *ptr, int32_t size) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return -1;
     }
     SCOPEDLOCK(m_lock);
@@ -1261,7 +1302,7 @@ int32_t MMKV::writeValueToBuffer(const string &key, void *ptr, int32_t size) {
 
 // enumerate
 
-bool MMKV::containsKey(const string &key) {
+bool MMKV::containsKey(MMKV_KEY_TYPE key) {
     SCOPEDLOCK(m_lock);
     checkLoadData();
     return m_dic.find(key) != m_dic.end();
@@ -1279,19 +1320,19 @@ size_t MMKV::totalSize() {
     return m_file.getFileSize();
 }
 
-vector<string> MMKV::allKeys() {
+vector<MMKV::MMKV_KEY_CLEAN_TYPE> MMKV::allKeys() {
     SCOPEDLOCK(m_lock);
     checkLoadData();
 
-    vector<string> keys;
+    vector<MMKV_KEY_CLEAN_TYPE> keys;
     for (const auto &itr : m_dic) {
         keys.push_back(itr.first);
     }
     return keys;
 }
 
-void MMKV::removeValueForKey(const string &key) {
-    if (key.empty()) {
+void MMKV::removeValueForKey(MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
         return;
     }
     SCOPEDLOCK(m_lock);
@@ -1301,7 +1342,7 @@ void MMKV::removeValueForKey(const string &key) {
     removeDataForKey(key);
 }
 
-void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
+void MMKV::removeValuesForKeys(const vector<MMKV_KEY_CLEAN_TYPE> &arrKeys) {
     if (arrKeys.empty()) {
         return;
     }
@@ -1422,6 +1463,7 @@ static string md5(const string &value) {
     return string(buf);
 }
 
+#ifdef MMKV_WIN32
 static string md5(const wstring &value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {0};
     char tmp[3] = {0}, buf[33] = {0};
@@ -1433,6 +1475,7 @@ static string md5(const wstring &value) {
     }
     return string(buf);
 }
+#endif
 
 static MMKV_PATH_TYPE encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
