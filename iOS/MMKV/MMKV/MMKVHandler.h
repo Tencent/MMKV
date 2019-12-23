@@ -23,16 +23,16 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSUInteger, MMKVRecoverStrategic) {
-	MMKVOnErrorDiscard = 0,
-	MMKVOnErrorRecover,
+    MMKVOnErrorDiscard = 0,
+    MMKVOnErrorRecover,
 };
 
 typedef NS_ENUM(NSUInteger, MMKVLogLevel) {
-	MMKVLogDebug = 0, // not available for release/product build
-	MMKVLogInfo = 1,  // default level
-	MMKVLogWarning,
-	MMKVLogError,
-	MMKVLogNone, // special level used to disable all log messages
+    MMKVLogDebug = 0, // not available for release/product build
+    MMKVLogInfo = 1,  // default level
+    MMKVLogWarning,
+    MMKVLogError,
+    MMKVLogNone, // special level used to disable all log messages
 };
 
 // callback is called on the operating thread of the MMKV instance

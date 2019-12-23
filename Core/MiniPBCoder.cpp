@@ -100,7 +100,7 @@ void MiniPBCoder::writeRootObject() {
                 m_outputData->writeDouble(oDate.timeIntervalSince1970);
                 break;
             }
-#endif
+#endif // MMKV_IOS_OR_MAC
             case PBEncodeItemType_None: {
                 MMKVError("%d", encodeItem->type);
                 break;
@@ -249,7 +249,7 @@ MMBuffer MiniPBCoder::getEncodeData(__unsafe_unretained NSObject *obj) {
     return move(*m_outputBuffer);
 }
 
-#endif
+#endif // MMKV_IOS_OR_MAC
 
 MMBuffer MiniPBCoder::getEncodeData(const string &str) {
     m_encodeItems = new vector<PBEncodeItem>();
@@ -339,10 +339,21 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
 #ifdef MMKV_IOS_OR_MAC
             const auto &key = m_inputData->readNSString();
             if (key.length > 0) {
+                auto value = m_inputData->readData();
+                if (value.length() > 0) {
+                    dictionary[key] = move(value);
+                    [key retain];
+                } else {
+                    auto itr = dictionary.find(key);
+                    if (itr != dictionary.end()) {
+                        dictionary.erase(itr);
+                        [itr->first release];
+                    }
+                }
+            }
 #else
             const auto &key = m_inputData->readString();
             if (key.length() > 0) {
-#endif
                 auto value = m_inputData->readData();
                 if (value.length() > 0) {
                     dictionary[key] = move(value);
@@ -350,6 +361,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
                     dictionary.erase(key);
                 }
             }
+#endif
         }
     };
 
@@ -364,6 +376,11 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
             MMKVMap tmpDic;
             block(tmpDic);
             dic.swap(tmpDic);
+#ifdef MMKV_IOS_OR_MAC
+            for (auto &pair : tmpDic) {
+                [pair.first release];
+            }
+#endif
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
@@ -417,6 +434,40 @@ NSObject *MiniPBCoder::decodeObject(const MMBuffer &oData, Class cls) {
     }
 
     return nil;
+}
+
+bool MiniPBCoder::isCompatibleObject(NSObject *obj) {
+    if ([obj isKindOfClass:[NSString class]]) {
+        return true;
+    }
+    if ([obj isKindOfClass:[NSData class]]) {
+        return true;
+    }
+    if ([obj isKindOfClass:[NSDate class]]) {
+        return true;
+    }
+
+    return false;
+}
+
+bool MiniPBCoder::isCompatibleClass(Class cls) {
+    if (cls == [NSString class]) {
+        return true;
+    }
+    if (cls == [NSMutableString class]) {
+        return true;
+    }
+    if (cls == [NSData class]) {
+        return true;
+    }
+    if (cls == [NSMutableData class]) {
+        return true;
+    }
+    if (cls == [NSDate class]) {
+        return true;
+    }
+
+    return false;
 }
 
 #endif // MMKV_IOS_OR_MAC

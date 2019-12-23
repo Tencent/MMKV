@@ -52,9 +52,9 @@
 #    endif
 
 #    include <SDKDDKVer.h>
-
-#    define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers                  \
-                                // Windows Header Files
+// Exclude rarely-used stuff from Windows headers
+#    define WIN32_LEAN_AND_MEAN
+// Windows Header Files
 #    include <windows.h>
 
 constexpr auto MMKV_PATH_SLASH = L"\\";
@@ -77,7 +77,7 @@ using MMKV_PATH_TYPE = std::string;
 #else
 #    define MMKV_NAMESPACE_BEGIN
 #    define MMKV_NAMESPACE_END
-#endif
+#endif // MMKV_IOS_OR_MAC
 
 MMKV_NAMESPACE_BEGIN
 
@@ -114,6 +114,7 @@ typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErro
 typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
 extern size_t DEFAULT_MMAP_SIZE;
+#define DEFAULT_MMAP_ID "mmkv.default"
 
 class MMBuffer;
 
@@ -134,7 +135,7 @@ struct KeyEqualer {
 using MMKVMap = std::unordered_map<NSString *, MMBuffer, KeyHasher, KeyEqualer>;
 #else
 using MMKVMap = std::unordered_map<std::string, mmkv::MMBuffer>;
-#endif
+#endif // MMKV_IOS_OR_MAC
 
 } // namespace mmkv
 

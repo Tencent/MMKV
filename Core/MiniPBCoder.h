@@ -98,6 +98,9 @@ public:
 #ifdef MMKV_IOS_OR_MAC
     // NSString, NSData, NSDate
     static NSObject *decodeObject(const MMBuffer &oData, Class cls);
+
+    static bool isCompatibleObject(NSObject *obj);
+    static bool isCompatibleClass(Class cls);
 #endif
 };
 

@@ -37,6 +37,10 @@ CodedOutputData::CodedOutputData(void *ptr, size_t len)
     assert(m_ptr);
 }
 
+uint8_t *CodedOutputData::curWritePointer() {
+    return m_ptr + m_position;
+}
+
 void CodedOutputData::writeDouble(double value) {
     this->writeRawLittleEndian64(Float64ToInt64(value));
 }

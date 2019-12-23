@@ -210,6 +210,6 @@ NSData *CodedInputData::readNSData() {
     }
     return nil;
 }
-#endif
+#endif // MMKV_IOS_OR_MAC
 
 } // namespace mmkv

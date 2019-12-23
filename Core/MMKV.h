@@ -145,6 +145,11 @@ class MMKV {
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 #endif
 
+#ifdef MMKV_IOS
+    typedef void (^WriteBlock)(mmkv::CodedOutputData *output);
+    bool protectFromBackgroundWriting(size_t size, WriteBlock block);
+#endif
+
 public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
@@ -224,7 +229,7 @@ public:
     bool set(T value, MMKV_KEY_TYPE key) = delete;
 
 #ifdef MMKV_IOS_OR_MAC
-    bool set(NSObject *__unsafe_unretained obj, MMKV_KEY_TYPE key);
+    bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKV_KEY_TYPE key);
 
     NSObject *getObject(MMKV_KEY_TYPE key, Class cls);
 #endif
@@ -259,11 +264,26 @@ public:
 
     size_t totalSize();
 
+    size_t actualSize();
+
+#ifdef MMKV_IOS_OR_MAC
+    NSArray *allKeys();
+
+    void removeValuesForKeys(NSArray *arrKeys);
+
+    typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
+    void enumerateKeys(EnumerateBlock block);
+
+#    ifdef MMKV_IOS
+    static void setIsInBackground(bool isInBackground);
+#    endif
+#else
     std::vector<MMKV_KEY_CLEAN_TYPE> allKeys();
 
-    void removeValueForKey(MMKV_KEY_TYPE key);
-
     void removeValuesForKeys(const std::vector<MMKV_KEY_CLEAN_TYPE> &arrKeys);
+#endif
+
+    void removeValueForKey(MMKV_KEY_TYPE key);
 
     void clearAll();
 

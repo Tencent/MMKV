@@ -66,6 +66,24 @@ static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
     }
 }
 
+#        ifdef MMKV_IOS_OR_MAC
+void _MMKVLogWithLevel(
+    MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
+    if (level >= g_currentLogLevel) {
+        NSString *nsFormat = [NSString stringWithUTF8String:format];
+        va_list argList;
+        va_start(argList, format);
+        NSString *message = [[NSString alloc] initWithFormat:nsFormat arguments:argList];
+        va_end(argList);
+
+        if (g_logHandler) {
+            g_logHandler(level, file, line, func, message.UTF8String);
+        } else {
+            NSLog(@"[%s] <%s:%d::%s> %@", MMKVLogLevelDesc(level), file, line, func, message);
+        }
+    }
+}
+#        else
 void _MMKVLogWithLevel(
     MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
@@ -98,6 +116,8 @@ void _MMKVLogWithLevel(
         }
     }
 }
+#        endif
+
 #    endif
 
 #endif // ENABLE_MMKV_LOG

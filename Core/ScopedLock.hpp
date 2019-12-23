@@ -21,8 +21,6 @@
 #ifndef MMKV_SCOPEDLOCK_HPP
 #define MMKV_SCOPEDLOCK_HPP
 
-#include "MMKVLog.h"
-
 namespace mmkv {
 
 template <typename T>
@@ -66,7 +64,7 @@ public:
 
 #define SCOPEDLOCK(lock) _SCOPEDLOCK(lock, __COUNTER__)
 #define _SCOPEDLOCK(lock, counter) __SCOPEDLOCK(lock, counter)
-#define __SCOPEDLOCK(lock, counter) ScopedLock<decltype(lock)> __scopedLock##counter(&lock)
+#define __SCOPEDLOCK(lock, counter) mmkv::ScopedLock<decltype(lock)> __scopedLock##counter(&lock)
 
 //#include <type_traits>
 //#define __SCOPEDLOCK(lock, counter) ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
