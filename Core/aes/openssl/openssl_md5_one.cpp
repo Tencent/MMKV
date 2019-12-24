@@ -9,7 +9,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "md5.h"
+#include "openssl_md5.h"
+
+namespace openssl {
 
 unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
 {
@@ -24,3 +26,5 @@ unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
     MD5_Final(md, &c);
     return md;
 }
+
+} // namespace openssl

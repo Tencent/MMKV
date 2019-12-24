@@ -274,6 +274,8 @@ public:
     typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
     void enumerateKeys(EnumerateBlock block);
 
+    static void minimalInit(MMKV_PATH_TYPE defaultRootDir);
+
 #    ifdef MMKV_IOS
     static void setIsInBackground(bool isInBackground);
 #    endif
@@ -309,7 +311,7 @@ public:
     static void registerContentChangeHandler(mmkv::ContentChangeHandler handler);
     static void unRegisterContentChangeHandler();
 
-    static bool isFileValid(const std::string &mmapID);
+    static bool isFileValid(const std::string &mmapID, MMKV_PATH_TYPE *relatePath = nullptr);
 
     void lock() { m_exclusiveProcessLock.lock(); }
     void unlock() { m_exclusiveProcessLock.unlock(); }

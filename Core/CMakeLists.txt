@@ -73,18 +73,18 @@ add_library(core
         MMKVMetaInfo.hpp
         aes/AESCrypt.h
         aes/AESCrypt.cpp
-        aes/openssl/aes.h
-        aes/openssl/aes_cfb.c
-        aes/openssl/aes_core.c
-        aes/openssl/aes_locl.h
-        aes/openssl/cfb128.c
-        aes/openssl/modes.h
-        aes/openssl/opensslconf.h
-        aes/openssl/md5_dgst.c
-        aes/openssl/md5_locl.h
-        aes/openssl/md5_one.c
-        aes/openssl/md5.h
-        aes/openssl/md32_common.h
+        aes/openssl/openssl_aes.h
+        aes/openssl/openssl_aes_cfb.cpp
+        aes/openssl/openssl_aes_core.cpp
+        aes/openssl/openssl_aes_locl.h
+        aes/openssl/openssl_cfb128.cpp
+        aes/openssl/openssl_modes.h
+        aes/openssl/openssl_opensslconf.h
+        aes/openssl/openssl_md5_dgst.cpp
+        aes/openssl/openssl_md5_locl.h
+        aes/openssl/openssl_md5_one.cpp
+        aes/openssl/openssl_md5.h
+        aes/openssl/openssl_md32_common.h
         crc32/Checksum.h
         crc32/zlib/zconf.h
         crc32/zlib/zutil.h

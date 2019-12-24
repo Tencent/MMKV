@@ -24,6 +24,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// call this in main thread, before calling any other MMKV methods
+/// @param rootDir the root dir of MMKV, can be null (default to {NSDocumentDirectory}/mmkv)
+/// @return root dir of MMKV
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir;
+
+/// call this in main thread, before calling any other MMKV methods
+/// @param rootDir the root dir of MMKV, can be null (default to {NSDocumentDirectory}/mmkv)
+/// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
+/// @return root dir of MMKV
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel;
+
 // a generic purpose instance
 + (instancetype)defaultMMKV;
 
@@ -51,12 +62,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 // clang-format on
 
-// default to `NSDocumentDirectory/mmkv`
 + (NSString *)mmkvBasePath;
 
 // if you want to change the base path, do it BEFORE getting any MMKV instance
 // otherwise the behavior is undefined
-+ (void)setMMKVBasePath:(NSString *)basePath;
++ (void)setMMKVBasePath:(NSString *)basePath __attribute__((deprecated("use +initializeMMKV: instead", "+initializeMMKV:")));
 
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
@@ -163,7 +173,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // MMKVLogInfo by default
 // MMKVLogNone to disable all logging
-+ (void)setLogLevel:(MMKVLogLevel)logLevel;
++ (void)setLogLevel:(MMKVLogLevel)logLevel __attribute__((deprecated("use +initializeMMKV:logLevel: instead", "initializeMMKV:nil logLevel")));
 
 // Migrate NSUserDefault data to MMKV
 // return imported count of key-values

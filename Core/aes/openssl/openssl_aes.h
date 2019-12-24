@@ -10,12 +10,11 @@
 #ifndef HEADER_AES_H
 # define HEADER_AES_H
 
-# include "opensslconf.h"
+# include "openssl_opensslconf.h"
 
 # include <stddef.h>
-# ifdef  __cplusplus
-extern "C" {
-# endif
+
+namespace openssl {
 
 # define AES_ENCRYPT     1
 # define AES_DECRYPT     0
@@ -28,7 +27,7 @@ extern "C" {
 # define AES_BLOCK_SIZE 16
 
 /* This should be a hidden type, but EVP requires that the size be known */
-struct aes_key_st {
+struct AES_KEY {
 # ifdef AES_LONG
     unsigned long rd_key[4 * (AES_MAXNR + 1)];
 # else
@@ -36,7 +35,6 @@ struct aes_key_st {
 # endif
     int rounds;
 };
-typedef struct aes_key_st AES_KEY;
 
 int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
                         AES_KEY *key);
@@ -48,8 +46,6 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
                         unsigned char *ivec, int *num, const int enc);
 
-# ifdef  __cplusplus
-}
-# endif
+} // namespace openssl
 
 #endif

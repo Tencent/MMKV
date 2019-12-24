@@ -23,9 +23,11 @@
 #include <cassert>
 #include <stdexcept>
 
-#if __has_feature(objc_arc)
-#    error This file must be compiled with MRC. Use -fno-objc-arc flag.
-#endif
+#ifdef MMKV_IOS_OR_MAC
+#    if __has_feature(objc_arc)
+#        error This file must be compiled with MRC. Use -fno-objc-arc flag.
+#    endif
+#endif // MMKV_IOS_OR_MAC
 
 using namespace std;
 

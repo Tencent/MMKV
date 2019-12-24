@@ -21,8 +21,11 @@
 #ifndef AES_CRYPT_H_
 #define AES_CRYPT_H_
 
-#include "openssl/aes.h"
 #include <cstddef>
+
+namespace openssl {
+struct AES_KEY;
+}
 
 namespace mmkv {
 
@@ -32,7 +35,7 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
     unsigned char m_key[AES_KEY_LEN] = {0};
-    AES_KEY m_aesKey = {0};
+    openssl::AES_KEY *m_aesKey = nullptr;
     int m_number = 0;
 
 public:
@@ -40,6 +43,8 @@ public:
 
 public:
     AESCrypt(const void *key, size_t keyLength, const void *iv = nullptr, size_t ivLength = 0);
+
+    ~AESCrypt();
 
     void encrypt(const void *input, void *output, size_t length);
 

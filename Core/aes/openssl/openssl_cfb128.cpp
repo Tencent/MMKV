@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "aes.h"
-#include "modes.h"
+#include "openssl_aes.h"
+#include "openssl_modes.h"
 #include <string.h>
+
+namespace openssl {
 
 /*
  * The input and output encrypted as though 128bit cfb mode is being used.
@@ -129,3 +131,5 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
         *num = n;
     }
 }
+
+} // namespace openssl

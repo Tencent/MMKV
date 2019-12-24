@@ -29,15 +29,17 @@
 #include "PBUtility.h"
 #include "ScopedLock.hpp"
 #include "aes/AESCrypt.h"
-#include "aes/openssl/md5.h"
+#include "aes/openssl/openssl_md5.h"
 #include "crc32/Checksum.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
 
-#if __has_feature(objc_arc)
-#    error This file must be compiled with MRC. Use -fno-objc-arc flag.
-#endif
+#ifdef MMKV_IOS_OR_MAC
+#    if __has_feature(objc_arc)
+#        error This file must be compiled with MRC. Use -fno-objc-arc flag.
+#    endif
+#endif // MMKV_IOS_OR_MAC
 
 using namespace std;
 using namespace mmkv;
@@ -64,9 +66,8 @@ constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
 string mmapedKVKey(const string &mmapID, MMKV_PATH_TYPE *relativePath = nullptr);
 MMKV_PATH_TYPE
-mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath = nullptr);
-MMKV_PATH_TYPE
-crcPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath = nullptr);
+mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath);
+MMKV_PATH_TYPE crcPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath);
 static void mkSpecialCharacterFileDirectory();
 static MMKV_PATH_TYPE encodeFilePath(const string &mmapID);
 
@@ -142,10 +143,22 @@ void initialize() {
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
+static ThreadOnceToken once_control = ThreadOnceUninitialized;
+
+#ifdef MMKV_IOS_OR_MAC
+void MMKV::minimalInit(MMKV_PATH_TYPE defaultRootDir) {
+    ThreadLock::ThreadOnce(&once_control, initialize);
+
+    g_rootDir = defaultRootDir;
+    mkPath(g_rootDir);
+
+    MMKVInfo("default root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
+}
+#endif
+
 void MMKV::initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel) {
     g_currentLogLevel = logLevel;
 
-    static ThreadOnceToken once_control = ThreadOnceUninitialized;
     ThreadLock::ThreadOnce(&once_control, initialize);
 
     g_rootDir = rootDir;
@@ -1563,13 +1576,13 @@ void MMKV::sync(SyncFlag flag) {
     m_metaFile.msync(flag);
 }
 
-bool MMKV::isFileValid(const string &mmapID) {
-    MMKV_PATH_TYPE kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS);
+bool MMKV::isFileValid(const string &mmapID, MMKV_PATH_TYPE *relatePath) {
+    MMKV_PATH_TYPE kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
     if (!isFileExist(kvPath)) {
         return true;
     }
 
-    MMKV_PATH_TYPE crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS);
+    MMKV_PATH_TYPE crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
     if (!isFileExist(crcPath.c_str())) {
         return false;
     }
@@ -1653,7 +1666,7 @@ static void mkSpecialCharacterFileDirectory() {
 static string md5(const string &value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {0};
     char tmp[3] = {0}, buf[33] = {0};
-    MD5((const unsigned char *) value.c_str(), value.size(), md);
+    openssl::MD5((const unsigned char *) value.c_str(), value.size(), md);
     for (auto ch : md) {
         snprintf(tmp, sizeof(tmp), "%2.2x", ch);
         strcat(buf, tmp);
@@ -1665,8 +1678,8 @@ static string md5(const string &value) {
 static string md5(const wstring &value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {0};
     char tmp[3] = {0}, buf[33] = {0};
-    MD5((const unsigned char *) value.c_str(),
-        value.size() * (sizeof(wchar_t) / sizeof(unsigned char)), md);
+    openssl::MD5((const unsigned char *) value.c_str(),
+                 value.size() * (sizeof(wchar_t) / sizeof(unsigned char)), md);
     for (auto ch : md) {
         snprintf(tmp, sizeof(tmp), "%2.2x", ch);
         strcat(buf, tmp);

@@ -19,11 +19,13 @@
  */
 
 #include "AESCrypt.h"
-#include "openssl/aes.h"
+#include "openssl/openssl_aes.h"
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+
+using namespace openssl;
 
 namespace mmkv {
 
@@ -33,9 +35,16 @@ AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivL
 
         reset(iv, ivLength);
 
-        int ret = AES_set_encrypt_key(m_key, AES_KEY_BITSET_LEN, &m_aesKey);
+        m_aesKey = new AES_KEY;
+        memset(m_aesKey, 0, sizeof(AES_KEY));
+        int ret = AES_set_encrypt_key(m_key, AES_KEY_BITSET_LEN, m_aesKey);
         assert(ret == 0);
     }
+}
+
+AESCrypt::~AESCrypt() {
+    delete m_aesKey;
+    m_aesKey = nullptr;
 }
 
 void AESCrypt::reset(const void *iv, size_t ivLength) {
@@ -57,7 +66,7 @@ void AESCrypt::encrypt(const void *input, void *output, size_t length) {
     if (!input || !output || length == 0) {
         return;
     }
-    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, &m_aesKey,
+    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, m_aesKey,
                        m_vector, &m_number, AES_ENCRYPT);
 }
 
@@ -65,7 +74,7 @@ void AESCrypt::decrypt(const void *input, void *output, size_t length) {
     if (!input || !output || length == 0) {
         return;
     }
-    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, &m_aesKey,
+    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, m_aesKey,
                        m_vector, &m_number, AES_DECRYPT);
 }
 

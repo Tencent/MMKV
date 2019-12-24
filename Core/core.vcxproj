@@ -12,26 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aes\AESCrypt.cpp" />
-    <ClCompile Include="aes\openssl\aes_cfb.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="aes\openssl\aes_core.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="aes\openssl\cfb128.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="aes\openssl\md5_dgst.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="aes\openssl\md5_one.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
+    <ClCompile Include="aes\openssl\openssl_aes_cfb.cpp" />
+    <ClCompile Include="aes\openssl\openssl_aes_core.cpp" />
+    <ClCompile Include="aes\openssl\openssl_cfb128.cpp" />
+    <ClCompile Include="aes\openssl\openssl_md5_dgst.cpp" />
+    <ClCompile Include="aes\openssl\openssl_md5_one.cpp" />
     <ClCompile Include="CodedInputData.cpp" />
     <ClCompile Include="CodedOutputData.cpp" />
     <ClCompile Include="crc32\zlib\crc32.cpp" />
@@ -47,13 +32,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aes\AESCrypt.h" />
-    <ClInclude Include="aes\openssl\aes.h" />
-    <ClInclude Include="aes\openssl\aes_locl.h" />
-    <ClInclude Include="aes\openssl\md32_common.h" />
-    <ClInclude Include="aes\openssl\md5.h" />
-    <ClInclude Include="aes\openssl\md5_locl.h" />
-    <ClInclude Include="aes\openssl\modes.h" />
-    <ClInclude Include="aes\openssl\opensslconf.h" />
+    <ClInclude Include="aes\openssl\openssl_aes.h" />
+    <ClInclude Include="aes\openssl\openssl_aes_locl.h" />
+    <ClInclude Include="aes\openssl\openssl_md32_common.h" />
+    <ClInclude Include="aes\openssl\openssl_md5.h" />
+    <ClInclude Include="aes\openssl\openssl_md5_locl.h" />
+    <ClInclude Include="aes\openssl\openssl_modes.h" />
+    <ClInclude Include="aes\openssl\openssl_opensslconf.h" />
     <ClInclude Include="CodedInputData.h" />
     <ClInclude Include="CodedOutputData.h" />
     <ClInclude Include="crc32\Checksum.h" />
@@ -145,8 +130,7 @@
     </Lib>
     <PostBuildEvent>
       <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MemoryFile.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"
-for %%f in ("$(ProjectDir)aes\AESCrypt.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\"
-for %%f in ("$(ProjectDir)aes\openssl\aes.h", "$(ProjectDir)aes\openssl\opensslconf.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\openssl\"</Command>
+for %%f in ("$(ProjectDir)aes\AESCrypt.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>
@@ -187,8 +171,7 @@ for %%f in ("$(ProjectDir)aes\openssl\aes.h", "$(ProjectDir)aes\openssl\opensslc
     </Lib>
     <PostBuildEvent>
       <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MemoryFile.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"
-for %%f in ("$(ProjectDir)aes\AESCrypt.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\"
-for %%f in ("$(ProjectDir)aes\openssl\aes.h", "$(ProjectDir)aes\openssl\opensslconf.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\openssl\"</Command>
+for %%f in ("$(ProjectDir)aes\AESCrypt.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>

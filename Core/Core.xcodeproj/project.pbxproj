@@ -9,10 +9,9 @@
 /* Begin PBXBuildFile section */
 		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
 		CB58B40223AB3699002457F1 /* AESCrypt.h in Copy AES Files */ = {isa = PBXBuildFile; fileRef = CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */; };
-		CB58B40423AB36D5002457F1 /* opensslconf.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* opensslconf.h */; };
-		CB58B40523AB36D5002457F1 /* aes.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640523AB2E9100ACCD39 /* aes.h */; };
+		CB58B40423AB36D5002457F1 /* openssl_opensslconf.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
 		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
-		CB6F6C0923ACD031000351EA /* md5.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* md5.h */; };
+		CB6F6C0923ACD031000351EA /* openssl_md5.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
 		CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563E823AB2E9100ACCD39 /* crc32.cpp */; };
 		CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */; };
@@ -21,11 +20,11 @@
 		CB95641823AB2E9100ACCD39 /* ThreadLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */; };
 		CB95641923AB2E9100ACCD39 /* MMBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */; };
 		CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		CB95641B23AB2E9100ACCD39 /* cfb128.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640123AB2E9100ACCD39 /* cfb128.c */; };
-		CB95641C23AB2E9100ACCD39 /* aes_core.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640323AB2E9100ACCD39 /* aes_core.c */; };
-		CB95641D23AB2E9100ACCD39 /* aes_cfb.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640423AB2E9100ACCD39 /* aes_cfb.c */; };
-		CB95641E23AB2E9100ACCD39 /* md5_one.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640723AB2E9100ACCD39 /* md5_one.c */; };
-		CB95641F23AB2E9100ACCD39 /* md5_dgst.c in Sources */ = {isa = PBXBuildFile; fileRef = CB95640923AB2E9100ACCD39 /* md5_dgst.c */; };
+		CB95641B23AB2E9100ACCD39 /* openssl_cfb128.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95640123AB2E9100ACCD39 /* openssl_cfb128.cpp */; };
+		CB95641C23AB2E9100ACCD39 /* openssl_aes_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95640323AB2E9100ACCD39 /* openssl_aes_core.cpp */; };
+		CB95641D23AB2E9100ACCD39 /* openssl_aes_cfb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95640423AB2E9100ACCD39 /* openssl_aes_cfb.cpp */; };
+		CB95641E23AB2E9100ACCD39 /* openssl_md5_one.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95640723AB2E9100ACCD39 /* openssl_md5_one.cpp */; };
+		CB95641F23AB2E9100ACCD39 /* openssl_md5_dgst.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95640923AB2E9100ACCD39 /* openssl_md5_dgst.cpp */; };
 		CB95642023AB2E9100ACCD39 /* AESCrypt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */; };
 		CB95642123AB2E9100ACCD39 /* InterProcessLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */; };
 		CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */; };
@@ -58,9 +57,8 @@
 			dstPath = "include/$(PRODUCT_NAME)/aes/openssl";
 			dstSubfolderSpec = 16;
 			files = (
-				CB6F6C0923ACD031000351EA /* md5.h in Copy OpenSSL Files */,
-				CB58B40423AB36D5002457F1 /* opensslconf.h in Copy OpenSSL Files */,
-				CB58B40523AB36D5002457F1 /* aes.h in Copy OpenSSL Files */,
+				CB6F6C0923ACD031000351EA /* openssl_md5.h in Copy OpenSSL Files */,
+				CB58B40423AB36D5002457F1 /* openssl_opensslconf.h in Copy OpenSSL Files */,
 			);
 			name = "Copy OpenSSL Files";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -111,18 +109,18 @@
 		CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMBuffer.h; sourceTree = "<group>"; };
 		CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InterProcessLock.h; sourceTree = "<group>"; };
 		CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
-		CB9563FF23AB2E9100ACCD39 /* md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md32_common.h; sourceTree = "<group>"; };
-		CB95640023AB2E9100ACCD39 /* opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opensslconf.h; sourceTree = "<group>"; };
-		CB95640123AB2E9100ACCD39 /* cfb128.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cfb128.c; sourceTree = "<group>"; };
-		CB95640223AB2E9100ACCD39 /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
-		CB95640323AB2E9100ACCD39 /* aes_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aes_core.c; sourceTree = "<group>"; };
-		CB95640423AB2E9100ACCD39 /* aes_cfb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = aes_cfb.c; sourceTree = "<group>"; };
-		CB95640523AB2E9100ACCD39 /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
-		CB95640623AB2E9100ACCD39 /* md5_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5_locl.h; sourceTree = "<group>"; };
-		CB95640723AB2E9100ACCD39 /* md5_one.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_one.c; sourceTree = "<group>"; };
-		CB95640823AB2E9100ACCD39 /* modes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modes.h; sourceTree = "<group>"; };
-		CB95640923AB2E9100ACCD39 /* md5_dgst.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = md5_dgst.c; sourceTree = "<group>"; };
-		CB95640A23AB2E9100ACCD39 /* aes_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes_locl.h; sourceTree = "<group>"; };
+		CB9563FF23AB2E9100ACCD39 /* openssl_md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md32_common.h; sourceTree = "<group>"; };
+		CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_opensslconf.h; sourceTree = "<group>"; };
+		CB95640123AB2E9100ACCD39 /* openssl_cfb128.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_cfb128.cpp; sourceTree = "<group>"; };
+		CB95640223AB2E9100ACCD39 /* openssl_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5.h; sourceTree = "<group>"; };
+		CB95640323AB2E9100ACCD39 /* openssl_aes_core.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_aes_core.cpp; sourceTree = "<group>"; };
+		CB95640423AB2E9100ACCD39 /* openssl_aes_cfb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_aes_cfb.cpp; sourceTree = "<group>"; };
+		CB95640523AB2E9100ACCD39 /* openssl_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_aes.h; sourceTree = "<group>"; };
+		CB95640623AB2E9100ACCD39 /* openssl_md5_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5_locl.h; sourceTree = "<group>"; };
+		CB95640723AB2E9100ACCD39 /* openssl_md5_one.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_md5_one.cpp; sourceTree = "<group>"; };
+		CB95640823AB2E9100ACCD39 /* openssl_modes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_modes.h; sourceTree = "<group>"; };
+		CB95640923AB2E9100ACCD39 /* openssl_md5_dgst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_md5_dgst.cpp; sourceTree = "<group>"; };
+		CB95640A23AB2E9100ACCD39 /* openssl_aes_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_aes_locl.h; sourceTree = "<group>"; };
 		CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = AESCrypt.cpp; sourceTree = "<group>"; };
 		CB95640C23AB2E9100ACCD39 /* CodedOutputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedOutputData.h; sourceTree = "<group>"; };
 		CB95640D23AB2E9100ACCD39 /* ThreadLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadLock.h; sourceTree = "<group>"; };
@@ -228,18 +226,18 @@
 		CB9563FE23AB2E9100ACCD39 /* openssl */ = {
 			isa = PBXGroup;
 			children = (
-				CB9563FF23AB2E9100ACCD39 /* md32_common.h */,
-				CB95640023AB2E9100ACCD39 /* opensslconf.h */,
-				CB95640123AB2E9100ACCD39 /* cfb128.c */,
-				CB95640223AB2E9100ACCD39 /* md5.h */,
-				CB95640323AB2E9100ACCD39 /* aes_core.c */,
-				CB95640423AB2E9100ACCD39 /* aes_cfb.c */,
-				CB95640523AB2E9100ACCD39 /* aes.h */,
-				CB95640623AB2E9100ACCD39 /* md5_locl.h */,
-				CB95640723AB2E9100ACCD39 /* md5_one.c */,
-				CB95640823AB2E9100ACCD39 /* modes.h */,
-				CB95640923AB2E9100ACCD39 /* md5_dgst.c */,
-				CB95640A23AB2E9100ACCD39 /* aes_locl.h */,
+				CB95640423AB2E9100ACCD39 /* openssl_aes_cfb.cpp */,
+				CB95640323AB2E9100ACCD39 /* openssl_aes_core.cpp */,
+				CB95640A23AB2E9100ACCD39 /* openssl_aes_locl.h */,
+				CB95640523AB2E9100ACCD39 /* openssl_aes.h */,
+				CB95640123AB2E9100ACCD39 /* openssl_cfb128.cpp */,
+				CB95640923AB2E9100ACCD39 /* openssl_md5_dgst.cpp */,
+				CB95640623AB2E9100ACCD39 /* openssl_md5_locl.h */,
+				CB95640723AB2E9100ACCD39 /* openssl_md5_one.cpp */,
+				CB95640223AB2E9100ACCD39 /* openssl_md5.h */,
+				CB9563FF23AB2E9100ACCD39 /* openssl_md32_common.h */,
+				CB95640823AB2E9100ACCD39 /* openssl_modes.h */,
+				CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */,
 			);
 			path = openssl;
 			sourceTree = "<group>";
@@ -306,18 +304,18 @@
 				CB95641823AB2E9100ACCD39 /* ThreadLock.cpp in Sources */,
 				CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */,
 				CB95642023AB2E9100ACCD39 /* AESCrypt.cpp in Sources */,
-				CB95641D23AB2E9100ACCD39 /* aes_cfb.c in Sources */,
-				CB95641B23AB2E9100ACCD39 /* cfb128.c in Sources */,
+				CB95641D23AB2E9100ACCD39 /* openssl_aes_cfb.cpp in Sources */,
+				CB95641B23AB2E9100ACCD39 /* openssl_cfb128.cpp in Sources */,
 				CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */,
-				CB95641F23AB2E9100ACCD39 /* md5_dgst.c in Sources */,
+				CB95641F23AB2E9100ACCD39 /* openssl_md5_dgst.cpp in Sources */,
 				CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */,
 				CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */,
 				CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */,
 				CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */,
 				CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */,
 				CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */,
-				CB95641E23AB2E9100ACCD39 /* md5_one.c in Sources */,
-				CB95641C23AB2E9100ACCD39 /* aes_core.c in Sources */,
+				CB95641E23AB2E9100ACCD39 /* openssl_md5_one.cpp in Sources */,
+				CB95641C23AB2E9100ACCD39 /* openssl_aes_core.cpp in Sources */,
 				CB95641923AB2E9100ACCD39 /* MMBuffer.cpp in Sources */,
 				CB95642123AB2E9100ACCD39 /* InterProcessLock.cpp in Sources */,
 			);

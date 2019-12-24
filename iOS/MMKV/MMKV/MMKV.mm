@@ -21,7 +21,7 @@
 #import "MMKV.h"
 #import <Core/MMKV.h>
 #import <Core/ScopedLock.hpp>
-#import <Core/aes/openssl/md5.h>
+#import <Core/aes/openssl/openssl_md5.h>
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #import <UIKit/UIKit.h>
@@ -38,11 +38,9 @@ static NSMutableDictionary *g_instanceDic;
 static mmkv::ThreadLock g_lock;
 id<MMKVHandler> g_callbackHandler;
 bool g_isLogRedirecting = false;
-
-#define SPECIAL_CHARACTER_DIRECTORY_NAME @"specialCharacter"
+static NSString *g_basePath = nil;
 
 static NSString *md5(NSString *value);
-static NSString *encodeMmapID(NSString *mmapID);
 
 enum : bool {
     KeepSequence = false,
@@ -62,9 +60,8 @@ enum : bool {
         g_lock = mmkv::ThreadLock();
         g_lock.initialize();
 
-        mmkv::MMKV::initializeMMKV([self mmkvBasePath].UTF8String, mmkv::MMKVLogInfo);
-
-        MMKVInfo(@"pagesize:%zu", mmkv::DEFAULT_MMAP_SIZE);
+        // protect from some old code that don't call +initializeMMKV:
+        mmkv::MMKV::minimalInit([self mmkvBasePath].UTF8String);
 
 #ifdef MMKV_IOS
         auto appState = [UIApplication sharedApplication].applicationState;
@@ -76,6 +73,28 @@ enum : bool {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
 #endif
     }
+}
+
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir {
+    return [MMKV initializeMMKV:rootDir logLevel:MMKVLogInfo];
+}
+
+static BOOL g_hasCalledInitializeMMKV = NO;
+
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel {
+    if (g_hasCalledInitializeMMKV) {
+        MMKVWarning(@"already called +initializeMMKV before, ignore this request");
+        return [self mmkvBasePath];
+    }
+
+    g_basePath = (rootDir != nil) ? rootDir : [self mmkvBasePath];
+    mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
+
+    MMKVInfo(@"pagesize:%zu", mmkv::DEFAULT_MMAP_SIZE);
+
+    g_hasCalledInitializeMMKV = YES;
+
+    return [self mmkvBasePath];
 }
 
 // a generic purpose instance
@@ -97,22 +116,16 @@ enum : bool {
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
+    if (!g_hasCalledInitializeMMKV) {
+        MMKVError(@"MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
+    }
     if (mmapID.length <= 0) {
         return nil;
     }
 
-    // TODO: calc kvKey from mmkv::MMKV::xxx()
-    NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
-    if (!mmkv::isFileExist(kvPath.UTF8String)) {
-        if (!mmkv::createFile(kvPath.UTF8String)) {
-            MMKVError(@"fail to create file at %@", kvPath);
-            return nil;
-        }
-    }
-    NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
-
     SCOPEDLOCK(g_lock);
 
+    NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
         kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey path:relativePath];
@@ -400,7 +413,6 @@ enum : bool {
     m_mmkv->sync(MMKV_ASYNC);
 }
 
-static NSString *g_basePath = nil;
 + (NSString *)mmkvBasePath {
     if (g_basePath.length > 0) {
         return g_basePath;
@@ -419,6 +431,11 @@ static NSString *g_basePath = nil;
 + (void)setMMKVBasePath:(NSString *)basePath {
     if (basePath.length > 0) {
         g_basePath = basePath;
+        [MMKV initializeMMKV:basePath];
+
+        // still warn about it
+        g_hasCalledInitializeMMKV = NO;
+
         MMKVInfo(@"set MMKV base path to: %@", g_basePath);
     }
 }
@@ -434,26 +451,6 @@ static NSString *g_basePath = nil;
     return string;
 }
 
-+ (NSString *)mappedKVPathWithID:(NSString *)mmapID relativePath:(nullable NSString *)path {
-    NSString *basePath = nil;
-    if ([path length] > 0) {
-        basePath = path;
-    } else {
-        basePath = [self mmkvBasePath];
-    }
-
-    if ([basePath length] > 0) {
-        NSString *mmapIDstring = encodeMmapID(mmapID);
-        return [basePath stringByAppendingPathComponent:mmapIDstring];
-    } else {
-        return @"";
-    }
-}
-
-+ (NSString *)crcPathWithMappedKVPath:(NSString *)kvPath {
-    return [kvPath stringByAppendingString:@".crc"];
-}
-
 + (BOOL)isFileValid:(NSString *)mmapID {
     return [self isFileValid:mmapID relativePath:nil];
 }
@@ -461,10 +458,10 @@ static NSString *g_basePath = nil;
 + (BOOL)isFileValid:(NSString *)mmapID relativePath:(nullable NSString *)path {
     if (mmapID.length > 0) {
         if (path.length > 0) {
-            // TODO: relativePath
-            //        return mmkv::MMKV::isFileValid(mmapID.UTF8String, path.UTF8String);
+            string relativePath(path.UTF8String);
+            return mmkv::MMKV::isFileValid(mmapID.UTF8String, &relativePath);
         } else {
-            return mmkv::MMKV::isFileValid(mmapID.UTF8String);
+            return mmkv::MMKV::isFileValid(mmapID.UTF8String, nullptr);
         }
     }
     return NO;
@@ -557,22 +554,11 @@ static NSString *g_basePath = nil;
 static NSString *md5(NSString *value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {0};
     char tmp[3] = {0}, buf[33] = {0};
-    // TODO: namespace openssl & rename files
-    MD5((unsigned char *) value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], md);
-    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-        sprintf(tmp, "%2.2x", md[i]);
+    auto data = [value dataUsingEncoding:NSUTF8StringEncoding];
+    openssl::MD5((unsigned char *) data.bytes, data.length, md);
+    for (auto ch : md) {
+        sprintf(tmp, "%2.2x", ch);
         strcat(buf, tmp);
     }
     return [NSString stringWithCString:buf encoding:NSASCIIStringEncoding];
-}
-
-static NSString *encodeMmapID(NSString *mmapID) {
-    static NSCharacterSet *specialCharacters = [NSCharacterSet characterSetWithCharactersInString:@"\\/:*?\"<>|"];
-    auto range = [mmapID rangeOfCharacterFromSet:specialCharacters];
-    if (range.location != NSNotFound) {
-        NSString *encodedID = md5(mmapID);
-        return [SPECIAL_CHARACTER_DIRECTORY_NAME stringByAppendingFormat:@"/%@", encodedID];
-    } else {
-        return mmapID;
-    }
 }
