@@ -74,9 +74,11 @@ using MMKV_PATH_TYPE = std::string;
 #    import <Foundation/Foundation.h>
 #    define MMKV_NAMESPACE_BEGIN namespace mmkv {
 #    define MMKV_NAMESPACE_END }
+using MMKV_LOG_TYPE = NSString *;
 #else
 #    define MMKV_NAMESPACE_BEGIN
 #    define MMKV_NAMESPACE_END
+using MMKV_LOG_TYPE = const std::string &;
 #endif // MMKV_IOS_OR_MAC
 
 MMKV_NAMESPACE_BEGIN
@@ -103,11 +105,7 @@ MMKV_NAMESPACE_END
 
 namespace mmkv {
 
-typedef void (*LogHandler)(MMKVLogLevel level,
-                           const std::string &file,
-                           int line,
-                           const std::string &function,
-                           const std::string &message);
+typedef void (*LogHandler)(MMKVLogLevel level, const char *file, int line, const char *function, MMKV_LOG_TYPE message);
 
 typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErrorType errorType);
 

@@ -44,8 +44,7 @@ static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
     }
 }
 
-void _MMKVLogWithLevel(
-    MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         string message;
         char buffer[16];
@@ -62,16 +61,14 @@ void _MMKVLogWithLevel(
         } else {
             message.resize(static_cast<unsigned long>(length), '\0');
             va_start(args, format);
-            std::vsnprintf(const_cast<char *>(message.data()), static_cast<size_t>(length) + 1,
-                           format, args);
+            std::vsnprintf(const_cast<char *>(message.data()), static_cast<size_t>(length) + 1, format, args);
             va_end(args);
         }
 
         if (g_logHandler) {
             g_logHandler(level, file, line, func, message);
         } else {
-            __android_log_print(MMKVLogLevelDesc(level), APP_NAME, "<%s:%d::%s> %s", file, line,
-                                func, message.c_str());
+            __android_log_print(MMKVLogLevelDesc(level), APP_NAME, "<%s:%d::%s> %s", file, line, func, message.c_str());
         }
     }
 }

@@ -124,9 +124,9 @@ void MemoryFile::reloadFromFile() {
         clearMemoryCache();
     }
 
-    m_fd = CreateFile(m_name.c_str(), GENERIC_READ | GENERIC_WRITE,
-                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_ALWAYS,
-                      FILE_ATTRIBUTE_NORMAL, nullptr);
+    m_fd =
+        CreateFile(m_name.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                   nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (m_fd == INVALID_HANDLE_VALUE) {
         MMKVError("fail to open:%ws, %d", m_name.c_str(), GetLastError());
     } else {
@@ -228,8 +228,8 @@ extern bool createFile(const MMKV_PATH_TYPE &filePath) {
 
     // try create at once
     auto fd = CreateFile(filePath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
-                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                         FILE_ATTRIBUTE_NORMAL, nullptr);
     if (fd != INVALID_HANDLE_VALUE) {
         CloseHandle(fd);
         ret = true;
@@ -246,8 +246,8 @@ extern bool createFile(const MMKV_PATH_TYPE &filePath) {
         if (mkPath(path)) {
             // try again
             fd = CreateFile(filePath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
-                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                            FILE_ATTRIBUTE_NORMAL, nullptr);
             if (fd != INVALID_HANDLE_VALUE) {
                 CloseHandle(fd);
                 ret = true;
@@ -263,8 +263,8 @@ extern bool createFile(const MMKV_PATH_TYPE &filePath) {
 MMBuffer *readWholeFile(const MMKV_PATH_TYPE &nsFilePath) {
     MMBuffer *buffer = nullptr;
     auto fd = CreateFile(nsFilePath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
-                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                         FILE_ATTRIBUTE_NORMAL, nullptr);
     if (fd != INVALID_HANDLE_VALUE) {
         size_t fileLength = 0;
         getFileSize(fd, fileLength);

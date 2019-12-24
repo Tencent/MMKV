@@ -51,6 +51,9 @@ typedef NS_ENUM(NSUInteger, MMKVLogLevel) {
 // implement this method to redirect MMKV's log
 - (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message;
 
+// TODO: content change notification
+- (void)onMMKVContentChange:(NSString *)mmapID;
+
 @end
 
 #endif /* MMKVHandler_h */

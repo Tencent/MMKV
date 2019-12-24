@@ -168,10 +168,7 @@ void MMKV::initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel) 
 }
 
 #ifndef MMKV_ANDROID
-MMKV *MMKV::mmkvWithID(const string &mmapID,
-                       MMKVMode mode,
-                       string *cryptKey,
-                       MMKV_PATH_TYPE *relativePath) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKV_PATH_TYPE *relativePath) {
 
     if (mmapID.empty()) {
         return nullptr;
@@ -268,13 +265,12 @@ void MMKV::loadFromFile() {
         checkDataValid(loadFromFile, needFullWriteback);
         MMKVInfo("loading [%s] with %zu actual size, file size %zu, InterProcess %d, meta info "
                  "version:%u",
-                 m_mmapID.c_str(), m_actualSize, m_file.getFileSize(), m_isInterProcess,
-                 m_metaInfo.m_version);
+                 m_mmapID.c_str(), m_actualSize, m_file.getFileSize(), m_isInterProcess, m_metaInfo.m_version);
         auto ptr = (uint8_t *) m_file.getMemory();
         // loading
         if (loadFromFile && m_actualSize > 0) {
-            MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(),
-                     m_metaInfo.m_crcDigest, m_metaInfo.m_sequence, m_metaInfo.m_version);
+            MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
+                     m_metaInfo.m_sequence, m_metaInfo.m_version);
             MMBuffer inputBuffer(ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
             if (m_crypter) {
                 decryptBuffer(*m_crypter, inputBuffer);
@@ -315,8 +311,8 @@ void MMKV::partialLoadFromFile() {
     size_t oldActualSize = m_actualSize;
     m_actualSize = readActualSize();
     auto fileSize = m_file.getFileSize();
-    MMKVDebug("loading [%s] with file size %zu, oldActualSize %zu, newActualSize %zu",
-              m_mmapID.c_str(), fileSize, oldActualSize, m_actualSize);
+    MMKVDebug("loading [%s] with file size %zu, oldActualSize %zu, newActualSize %zu", m_mmapID.c_str(), fileSize,
+              oldActualSize, m_actualSize);
 
     if (m_actualSize > 0) {
         if (m_actualSize < fileSize && m_actualSize + Fixed32Size <= fileSize) {
@@ -325,9 +321,8 @@ void MMKV::partialLoadFromFile() {
                 auto ptr = (uint8_t *) m_file.getMemory();
                 MMBuffer inputBuffer(ptr + Fixed32Size + oldActualSize, bufferSize, MMBufferNoCopy);
                 // incremental update crc digest
-                m_crcDigest =
-                    (uint32_t) zlib::crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
-                                           static_cast<uInt>(inputBuffer.length()));
+                m_crcDigest = (uint32_t) zlib::crc32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
+                                                     static_cast<uInt>(inputBuffer.length()));
                 if (m_crcDigest == m_metaInfo.m_crcDigest) {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
@@ -336,12 +331,10 @@ void MMKV::partialLoadFromFile() {
                     m_output->seek(bufferSize);
                     m_hasFullWriteback = false;
 
-                    MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(),
-                              m_dic.size());
+                    MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
                     return;
                 } else {
-                    MMKVError("m_crcDigest[%u] != m_metaInfo.m_crcDigest[%u]", m_crcDigest,
-                              m_metaInfo.m_crcDigest);
+                    MMKVError("m_crcDigest[%u] != m_metaInfo.m_crcDigest[%u]", m_crcDigest, m_metaInfo.m_crcDigest);
                 }
             }
         }
@@ -361,13 +354,12 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             uint32_t oldStyleActualSize = 0;
             memcpy(&oldStyleActualSize, m_file.getMemory(), Fixed32Size);
             if (oldStyleActualSize != m_actualSize) {
-                MMKVWarning("oldStyleActualSize %u not equal to meta actual size %lu",
-                            oldStyleActualSize, m_actualSize);
+                MMKVWarning("oldStyleActualSize %u not equal to meta actual size %lu", oldStyleActualSize,
+                            m_actualSize);
                 if (checkFileCRCValid(oldStyleActualSize, m_metaInfo.m_crcDigest)) {
                     MMKVInfo("looks like [%s] been downgrade & upgrade again", m_mmapID.c_str());
                     loadFromFile = true;
-                    writeActualSize(oldStyleActualSize, m_metaInfo.m_crcDigest, nullptr,
-                                    KeepSequence);
+                    writeActualSize(oldStyleActualSize, m_metaInfo.m_crcDigest, nullptr, KeepSequence);
                     return;
                 }
             }
@@ -379,12 +371,12 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
                     loadFromFile = true;
                     writeActualSize(lastActualSize, lastCRCDigest, nullptr, KeepSequence);
                 } else {
-                    MMKVError("check [%s] error: lastActualSize %zu, lastActualCRC %zu",
-                              m_mmapID.c_str(), lastActualSize, lastCRCDigest);
+                    MMKVError("check [%s] error: lastActualSize %zu, lastActualCRC %zu", m_mmapID.c_str(),
+                              lastActualSize, lastCRCDigest);
                 }
             } else {
-                MMKVError("check [%s] error: lastActualSize %zu, file size is %zu",
-                          m_mmapID.c_str(), lastActualSize, fileSize);
+                MMKVError("check [%s] error: lastActualSize %zu, file size is %zu", m_mmapID.c_str(), lastActualSize,
+                          fileSize);
             }
         }
     };
@@ -407,8 +399,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             }
         }
     } else {
-        MMKVError("check [%s] error: %zu size in total, file size is %zu", m_mmapID.c_str(),
-                  m_actualSize, fileSize);
+        MMKVError("check [%s] error: %zu size in total, file size is %zu", m_mmapID.c_str(), m_actualSize, fileSize);
 
         checkLastConfirmedInfo();
 
@@ -444,22 +435,19 @@ void MMKV::checkLoadData() {
     MMKVMetaInfo metaInfo;
     metaInfo.read(m_metaFile.getMemory());
     if (m_metaInfo.m_sequence != metaInfo.m_sequence) {
-        MMKVInfo("[%s] oldSeq %u, newSeq %u", m_mmapID.c_str(), m_metaInfo.m_sequence,
-                 metaInfo.m_sequence);
+        MMKVInfo("[%s] oldSeq %u, newSeq %u", m_mmapID.c_str(), m_metaInfo.m_sequence, metaInfo.m_sequence);
         SCOPEDLOCK(m_sharedProcessLock);
 
         clearMemoryCache();
         loadFromFile();
         notifyContentChanged();
     } else if (m_metaInfo.m_crcDigest != metaInfo.m_crcDigest) {
-        MMKVDebug("[%s] oldCrc %u, newCrc %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
-                  metaInfo.m_crcDigest);
+        MMKVDebug("[%s] oldCrc %u, newCrc %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest, metaInfo.m_crcDigest);
         SCOPEDLOCK(m_sharedProcessLock);
 
         size_t fileSize = m_file.getActualFileSize();
         if (m_file.getFileSize() != fileSize) {
-            MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(),
-                     m_file.getFileSize(), fileSize);
+            MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(), m_file.getFileSize(), fileSize);
             clearMemoryCache();
             loadFromFile();
         } else {
@@ -578,13 +566,11 @@ void MMKV::trim() {
         fileSize /= 2;
     }
     if (oldSize == fileSize) {
-        MMKVInfo("there's no need to trim %s with size %zu, actualSize %zu", m_mmapID.c_str(),
-                 fileSize, m_actualSize);
+        MMKVInfo("there's no need to trim %s with size %zu, actualSize %zu", m_mmapID.c_str(), fileSize, m_actualSize);
         return;
     }
 
-    MMKVInfo("trimming %s from %zu to %zu, actualSize %zu", m_mmapID.c_str(), oldSize, fileSize,
-             m_actualSize);
+    MMKVInfo("trimming %s from %zu to %zu, actualSize %zu", m_mmapID.c_str(), oldSize, fileSize, m_actualSize);
 
     if (!m_file.truncate(fileSize)) {
         return;
@@ -664,9 +650,8 @@ bool MMKV::ensureMemorySize(size_t newSize) {
             do {
                 fileSize *= 2;
             } while (lenNeeded + futureUsage >= fileSize);
-            MMKVInfo(
-                "extending [%s] file size from %zu to %zu, incoming size:%zu, future usage:%zu",
-                m_mmapID.c_str(), oldSize, fileSize, newSize, futureUsage);
+            MMKVInfo("extending [%s] file size from %zu to %zu, incoming size:%zu, future usage:%zu", m_mmapID.c_str(),
+                     oldSize, fileSize, newSize, futureUsage);
 
             // if we can't extend size, rollback to old state
             if (!m_file.truncate(fileSize)) {
@@ -1007,14 +992,12 @@ bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
     auto ptr = (uint8_t *) m_file.getMemory();
     if (ptr) {
         constexpr auto offset = pbFixed32Size(0);
-        m_crcDigest =
-            (uint32_t) zlib::crc32(0, (const uint8_t *) ptr + offset, (uint32_t) acutalSize);
+        m_crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) ptr + offset, (uint32_t) acutalSize);
 
         if (m_crcDigest == crcDigest) {
             return true;
         }
-        MMKVError("check crc [%s] fail, crc32:%u, m_crcDigest:%u", m_mmapID.c_str(), crcDigest,
-                  m_crcDigest);
+        MMKVError("check crc [%s] fail, crc32:%u, m_crcDigest:%u", m_mmapID.c_str(), crcDigest, m_crcDigest);
     }
     return false;
 }
@@ -1384,8 +1367,7 @@ NSObject *MMKV::getObject(MMKV_KEY_TYPE key, Class cls) {
             }
         } else {
             if ([cls conformsToProtocol:@protocol(NSCoding)]) {
-                auto tmp =
-                    [NSData dataWithBytesNoCopy:data.getPtr() length:data.length() freeWhenDone:NO];
+                auto tmp = [NSData dataWithBytesNoCopy:data.getPtr() length:data.length() freeWhenDone:NO];
                 return [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
             }
         }
@@ -1612,8 +1594,7 @@ bool MMKV::isFileValid(const string &mmapID, MMKV_PATH_TYPE *relatePath) {
                 return false;
             }
 
-            crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) fileData->getPtr() + offset,
-                                               (uint32_t) actualSize);
+            crcDigest = (uint32_t) zlib::crc32(0, (const uint8_t *) fileData->getPtr() + offset, (uint32_t) actualSize);
         }
         delete fileData;
         return crcFile == crcDigest;
@@ -1678,8 +1659,7 @@ static string md5(const string &value) {
 static string md5(const wstring &value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {0};
     char tmp[3] = {0}, buf[33] = {0};
-    openssl::MD5((const unsigned char *) value.c_str(),
-                 value.size() * (sizeof(wchar_t) / sizeof(unsigned char)), md);
+    openssl::MD5((const unsigned char *) value.c_str(), value.size() * (sizeof(wchar_t) / sizeof(unsigned char)), md);
     for (auto ch : md) {
         snprintf(tmp, sizeof(tmp), "%2.2x", ch);
         strcat(buf, tmp);
@@ -1702,8 +1682,7 @@ static MMKV_PATH_TYPE encodeFilePath(const string &mmapID) {
     if (hasSpecialCharacter) {
         static ThreadOnceToken once_control = ThreadOnceUninitialized;
         ThreadLock::ThreadOnce(&once_control, mkSpecialCharacterFileDirectory);
-        return MMKV_PATH_TYPE(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH +
-               string2MMKV_PATH_TYPE(encodedID);
+        return MMKV_PATH_TYPE(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKV_PATH_TYPE(encodedID);
     } else {
         return string2MMKV_PATH_TYPE(mmapID);
     }

@@ -53,11 +53,9 @@ class FileLock {
 #endif
 public:
 #ifndef MMKV_WIN32
-    explicit FileLock(MMKV_FILE_HANDLE fd)
-        : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+    explicit FileLock(MMKV_FILE_HANDLE fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 #else
-    explicit FileLock(MMKV_FILE_HANDLE fd)
-        : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+    explicit FileLock(MMKV_FILE_HANDLE fd) : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 #endif
     bool lock(LockType lockType);
 

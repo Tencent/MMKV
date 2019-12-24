@@ -73,18 +73,16 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return -5;
     }
 
-    g_callbackOnCRCFailID =
-        env->GetStaticMethodID(g_cls, "onMMKVCRCCheckFail", "(Ljava/lang/String;)I");
+    g_callbackOnCRCFailID = env->GetStaticMethodID(g_cls, "onMMKVCRCCheckFail", "(Ljava/lang/String;)I");
     if (!g_callbackOnCRCFailID) {
         MMKVError("fail to get method id for onMMKVCRCCheckFail");
     }
-    g_callbackOnFileLengthErrorID =
-        env->GetStaticMethodID(g_cls, "onMMKVFileLengthError", "(Ljava/lang/String;)I");
+    g_callbackOnFileLengthErrorID = env->GetStaticMethodID(g_cls, "onMMKVFileLengthError", "(Ljava/lang/String;)I");
     if (!g_callbackOnFileLengthErrorID) {
         MMKVError("fail to get method id for onMMKVFileLengthError");
     }
-    g_mmkvLogID = env->GetStaticMethodID(
-        g_cls, "mmkvLogImp", "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
+    g_mmkvLogID =
+        env->GetStaticMethodID(g_cls, "mmkvLogImp", "(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V");
     if (!g_mmkvLogID) {
         MMKVError("fail to get method id for mmkvLogImp");
     }
@@ -170,8 +168,7 @@ static vector<string> jarray2vector(JNIEnv *env, jobjectArray array) {
 
 static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
     if (!arr.empty()) {
-        jobjectArray result =
-            env->NewObjectArray(arr.size(), env->FindClass("java/lang/String"), nullptr);
+        jobjectArray result = env->NewObjectArray(arr.size(), env->FindClass("java/lang/String"), nullptr);
         if (result) {
             for (size_t index = 0; index < arr.size(); index++) {
                 jstring value = string2jstring(env, arr[index]);
@@ -214,19 +211,15 @@ MMKVRecoverStrategic onMMKVError(const std::string &mmapID, MMKVErrorType errorT
     return OnErrorDiscard;
 }
 
-static void mmkvLog(MMKVLogLevel level,
-                    const std::string &file,
-                    int line,
-                    const std::string &function,
-                    const std::string &message) {
+static void mmkvLog(
+    MMKVLogLevel level, const std::string &file, int line, const std::string &function, const std::string &message) {
     auto currentEnv = getCurrentEnv();
     if (currentEnv && g_mmkvLogID) {
         jstring oFile = string2jstring(currentEnv, file);
         jstring oFunction = string2jstring(currentEnv, function);
         jstring oMessage = string2jstring(currentEnv, message);
         int readLevel = level;
-        currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, readLevel, oFile, line, oFunction,
-                                         oMessage);
+        currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, readLevel, oFile, line, oFunction, oMessage);
     }
 }
 
@@ -238,8 +231,7 @@ static void onContentChangedByOuterProcess(const std::string &mmapID) {
     }
 }
 
-MMKV_JNI jlong getMMKVWithID(
-    JNIEnv *env, jobject, jstring mmapID, jint mode, jstring cryptKey, jstring relativePath) {
+MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, jstring cryptKey, jstring relativePath) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return (jlong) kv;
@@ -271,8 +263,7 @@ MMKV_JNI jlong getMMKVWithID(
     return (jlong) kv;
 }
 
-MMKV_JNI jlong getMMKVWithIDAndSize(
-    JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode, jstring cryptKey) {
+MMKV_JNI jlong getMMKVWithIDAndSize(JNIEnv *env, jobject obj, jstring mmapID, jint size, jint mode, jstring cryptKey) {
     MMKV *kv = nullptr;
     if (!mmapID || size < 0) {
         return (jlong) kv;
@@ -307,8 +298,7 @@ MMKV_JNI jlong getDefaultMMKV(JNIEnv *env, jobject obj, jint mode, jstring crypt
     return (jlong) kv;
 }
 
-MMKV_JNI jlong getMMKVWithAshmemFD(
-    JNIEnv *env, jobject obj, jstring mmapID, jint fd, jint metaFD, jstring cryptKey) {
+MMKV_JNI jlong getMMKVWithAshmemFD(JNIEnv *env, jobject obj, jstring mmapID, jint fd, jint metaFD, jstring cryptKey) {
     MMKV *kv = nullptr;
     if (!mmapID || fd < 0 || metaFD < 0) {
         return (jlong) kv;
@@ -361,8 +351,7 @@ MMKV_JNI jboolean encodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, j
     return (jboolean) false;
 }
 
-MMKV_JNI jboolean
-decodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean defaultValue) {
+MMKV_JNI jboolean decodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -398,8 +387,7 @@ MMKV_JNI jboolean encodeLong(JNIEnv *env, jobject obj, jlong handle, jstring oKe
     return (jboolean) false;
 }
 
-MMKV_JNI jlong
-decodeLong(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong defaultValue) {
+MMKV_JNI jlong decodeLong(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -426,8 +414,7 @@ MMKV_JNI jfloat decodeFloat(JNIEnv *env, jobject, jlong handle, jstring oKey, jf
     return defaultValue;
 }
 
-MMKV_JNI jboolean
-encodeDouble(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jdouble value) {
+MMKV_JNI jboolean encodeDouble(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jdouble value) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -436,8 +423,7 @@ encodeDouble(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jdouble value
     return (jboolean) false;
 }
 
-MMKV_JNI jdouble
-decodeDouble(JNIEnv *env, jobject, jlong handle, jstring oKey, jdouble defaultValue) {
+MMKV_JNI jdouble decodeDouble(JNIEnv *env, jobject, jlong handle, jstring oKey, jdouble defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -461,8 +447,7 @@ MMKV_JNI jboolean encodeString(JNIEnv *env, jobject, jlong handle, jstring oKey,
     return (jboolean) false;
 }
 
-MMKV_JNI jstring
-decodeString(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oDefaultValue) {
+MMKV_JNI jstring decodeString(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oDefaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -718,8 +703,7 @@ MMKV_JNI void setLogLevel(JNIEnv *env, jclass type, jint level) {
     MMKV::setLogLevel((MMKVLogLevel) level);
 }
 
-MMKV_JNI void
-setCallbackHandler(JNIEnv *env, jclass type, jboolean logReDirecting, jboolean hasCallback) {
+MMKV_JNI void setCallbackHandler(JNIEnv *env, jclass type, jboolean logReDirecting, jboolean hasCallback) {
     if (logReDirecting == JNI_TRUE) {
         MMKV::registerLogHandler(mmkvLog);
     } else {
@@ -746,8 +730,7 @@ MMKV_JNI void destroyNB(JNIEnv *env, jobject instance, jlong pointer, jint size)
     free(reinterpret_cast<void *>(pointer));
 }
 
-MMKV_JNI jint writeValueToNB(
-    JNIEnv *env, jobject instance, jlong handle, jstring oKey, jlong pointer, jint size) {
+MMKV_JNI jint writeValueToNB(JNIEnv *env, jobject instance, jlong handle, jstring oKey, jlong pointer, jint size) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
@@ -794,13 +777,10 @@ static JNINativeMethod g_methods[] = {
     {"ashmemFD", "()I", (void *) mmkv::ashmemFD},
     {"ashmemMetaFD", "()I", (void *) mmkv::ashmemMetaFD},
     {"jniInitialize", "(Ljava/lang/String;I)V", (void *) mmkv::jniInitialize},
-    {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)J",
-     (void *) mmkv::getMMKVWithID},
-    {"getMMKVWithIDAndSize", "(Ljava/lang/String;IILjava/lang/String;)J",
-     (void *) mmkv::getMMKVWithIDAndSize},
+    {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)J", (void *) mmkv::getMMKVWithID},
+    {"getMMKVWithIDAndSize", "(Ljava/lang/String;IILjava/lang/String;)J", (void *) mmkv::getMMKVWithIDAndSize},
     {"getDefaultMMKV", "(ILjava/lang/String;)J", (void *) mmkv::getDefaultMMKV},
-    {"getMMKVWithAshmemFD", "(Ljava/lang/String;IILjava/lang/String;)J",
-     (void *) mmkv::getMMKVWithAshmemFD},
+    {"getMMKVWithAshmemFD", "(Ljava/lang/String;IILjava/lang/String;)J", (void *) mmkv::getMMKVWithAshmemFD},
     {"encodeBool", "(JLjava/lang/String;Z)Z", (void *) mmkv::encodeBool},
     {"decodeBool", "(JLjava/lang/String;Z)Z", (void *) mmkv::decodeBool},
     {"encodeInt", "(JLjava/lang/String;I)Z", (void *) mmkv::encodeInt},
@@ -812,8 +792,7 @@ static JNINativeMethod g_methods[] = {
     {"encodeDouble", "(JLjava/lang/String;D)Z", (void *) mmkv::encodeDouble},
     {"decodeDouble", "(JLjava/lang/String;D)D", (void *) mmkv::decodeDouble},
     {"encodeString", "(JLjava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::encodeString},
-    {"decodeString", "(JLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-     (void *) mmkv::decodeString},
+    {"decodeString", "(JLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", (void *) mmkv::decodeString},
     {"encodeSet", "(JLjava/lang/String;[Ljava/lang/String;)Z", (void *) mmkv::encodeSet},
     {"decodeStringSet", "(JLjava/lang/String;)[Ljava/lang/String;", (void *) mmkv::decodeStringSet},
     {"encodeBytes", "(JLjava/lang/String;[B)Z", (void *) mmkv::encodeBytes},

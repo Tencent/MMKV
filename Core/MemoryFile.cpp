@@ -41,8 +41,7 @@ static bool getFileSize(int fd, size_t &size);
 #    ifdef MMKV_ANDROID
 extern size_t ASharedMemory_getSize(int fd);
 #    else
-MemoryFile::MemoryFile(const MMKV_PATH_TYPE &path)
-    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
+MemoryFile::MemoryFile(const MMKV_PATH_TYPE &path) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
 #    endif
@@ -57,11 +56,9 @@ bool MemoryFile::truncate(size_t size) {
 #    ifdef MMKV_ANDROID
     if (m_fileType == MMFILE_TYPE_ASHMEM) {
         if (size > m_size) {
-            MMKVError("ashmem %s reach size limit:%zu, consider configure with larger size",
-                      m_name.c_str(), m_size);
+            MMKVError("ashmem %s reach size limit:%zu, consider configure with larger size", m_name.c_str(), m_size);
         } else {
-            MMKVInfo("no way to trim ashmem %s from %zu to smaller size %zu", m_name.c_str(),
-                     m_size, size);
+            MMKVInfo("no way to trim ashmem %s from %zu to smaller size %zu", m_name.c_str(), m_size, size);
         }
         return false;
     }
@@ -81,8 +78,7 @@ bool MemoryFile::truncate(size_t size) {
     }
     if (m_size > oldSize) {
         if (!zeroFillFile(m_fd, oldSize, m_size - oldSize)) {
-            MMKVError("fail to zeroFile [%s] to size %zu, %s", m_name.c_str(), m_size,
-                      strerror(errno));
+            MMKVError("fail to zeroFile [%s] to size %zu, %s", m_name.c_str(), m_size, strerror(errno));
             m_size = oldSize;
             return false;
         }

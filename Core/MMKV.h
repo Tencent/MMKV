@@ -51,21 +51,11 @@ enum MMKVMode : uint32_t {
 
 class MMKV {
 #ifndef MMKV_ANDROID
-    MMKV(const std::string &mmapID,
-         MMKVMode mode,
-         std::string *cryptKey,
-         MMKV_PATH_TYPE *relativePath);
+    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKV_PATH_TYPE *relativePath);
 #else
-    MMKV(const std::string &mmapID,
-         int size,
-         MMKVMode mode,
-         std::string *cryptKey,
-         MMKV_PATH_TYPE *relativePath);
+    MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKV_PATH_TYPE *relativePath);
 
-    MMKV(const std::string &mmapID,
-         int ashmemFD,
-         int ashmemMetaFd,
-         std::string *cryptKey = nullptr);
+    MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
 #endif
 
     ~MMKV();
@@ -173,16 +163,11 @@ public:
                             std::string *cryptKey = nullptr,
                             MMKV_PATH_TYPE *relativePath = nullptr);
 
-    static MMKV *mmkvWithAshmemFD(const std::string &mmapID,
-                                  int fd,
-                                  int metaFD,
-                                  std::string *cryptKey = nullptr);
+    static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, std::string *cryptKey = nullptr);
 
     int ashmemFD() { return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_file.getFd() : -1; }
 
-    int ashmemMetaFD() {
-        return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile.getFd() : -1;
-    }
+    int ashmemMetaFD() { return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile.getFd() : -1; }
 #endif
 
     static void onExit();

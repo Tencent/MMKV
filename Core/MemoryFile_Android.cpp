@@ -112,14 +112,11 @@ int ASharedMemory_create(const char *name, size_t size) {
     if (g_android_api >= __ANDROID_API_O__) {
         static auto handle = loadLibrary();
         static AShmem_create_t funcPtr =
-            (handle != nullptr)
-                ? reinterpret_cast<AShmem_create_t>(dlsym(handle, "ASharedMemory_create"))
-                : nullptr;
+            (handle != nullptr) ? reinterpret_cast<AShmem_create_t>(dlsym(handle, "ASharedMemory_create")) : nullptr;
         if (funcPtr) {
             fd = funcPtr(name, size);
             if (fd < 0) {
-                MMKVError("fail to ASharedMemory_create %s with size %zu, errno:%s", name, size,
-                          strerror(errno));
+                MMKVError("fail to ASharedMemory_create %s with size %zu, errno:%s", name, size, strerror(errno));
             }
         } else {
             MMKVWarning("fail to locate ASharedMemory_create() from loading libandroid.so");
@@ -147,9 +144,7 @@ size_t ASharedMemory_getSize(int fd) {
     if (g_android_api >= __ANDROID_API_O__) {
         static auto handle = loadLibrary();
         static AShmem_getSize_t funcPtr =
-            (handle != nullptr)
-                ? reinterpret_cast<AShmem_getSize_t>(dlsym(handle, "ASharedMemory_getSize"))
-                : nullptr;
+            (handle != nullptr) ? reinterpret_cast<AShmem_getSize_t>(dlsym(handle, "ASharedMemory_getSize")) : nullptr;
         if (funcPtr) {
             size = funcPtr(fd);
             if (size == 0) {

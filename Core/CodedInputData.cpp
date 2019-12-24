@@ -166,15 +166,13 @@ int64_t CodedInputData::readRawLittleEndian64() {
     int8_t b7 = this->readRawByte();
     int8_t b8 = this->readRawByte();
     return (((int64_t) b1 & 0xff)) | (((int64_t) b2 & 0xff) << 8) | (((int64_t) b3 & 0xff) << 16) |
-           (((int64_t) b4 & 0xff) << 24) | (((int64_t) b5 & 0xff) << 32) |
-           (((int64_t) b6 & 0xff) << 40) | (((int64_t) b7 & 0xff) << 48) |
-           (((int64_t) b8 & 0xff) << 56);
+           (((int64_t) b4 & 0xff) << 24) | (((int64_t) b5 & 0xff) << 32) | (((int64_t) b6 & 0xff) << 40) |
+           (((int64_t) b7 & 0xff) << 48) | (((int64_t) b8 & 0xff) << 56);
 }
 
 int8_t CodedInputData::readRawByte() {
     if (m_position == m_size) {
-        auto msg =
-            "reach end, m_position: " + to_string(m_position) + ", m_size: " + to_string(m_size);
+        auto msg = "reach end, m_position: " + to_string(m_position) + ", m_size: " + to_string(m_size);
         throw out_of_range(msg);
     }
     auto *bytes = (int8_t *) m_ptr;
@@ -185,9 +183,9 @@ int8_t CodedInputData::readRawByte() {
 NSString *CodedInputData::readNSString() {
     int32_t size = this->readRawVarint32();
     if (size <= (m_size - m_position) && size > 0) {
-        NSString *result = [[[NSString alloc] initWithBytes:(m_ptr + m_position)
-                                                     length:size
-                                                   encoding:NSUTF8StringEncoding] autorelease];
+        NSString *result =
+            [[[NSString alloc] initWithBytes:(m_ptr + m_position) length:size encoding:NSUTF8StringEncoding]
+                autorelease];
         m_position += size;
         return result;
     } else if (size == 0) {

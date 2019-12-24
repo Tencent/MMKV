@@ -55,8 +55,7 @@ MiniPBCoder::~MiniPBCoder() {
 
 MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
     m_inputBuffer = inputBuffer;
-    m_inputData =
-        new CodedInputData(m_inputBuffer->getPtr(), static_cast<int32_t>(m_inputBuffer->length()));
+    m_inputData = new CodedInputData(m_inputBuffer->getPtr(), static_cast<int32_t>(m_inputBuffer->length()));
 }
 
 // encode

@@ -39,11 +39,7 @@ namespace mmkv {
 #    define ThreadOnceToken pthread_once_t
 #    define ThreadOnceUninitialized PTHREAD_ONCE_INIT
 #else
-enum ThreadOnceTokenEnum : int32_t {
-    ThreadOnceUninitialized = 0,
-    ThreadOnceInitializing,
-    ThreadOnceInitialized
-};
+enum ThreadOnceTokenEnum : int32_t { ThreadOnceUninitialized = 0, ThreadOnceInitializing, ThreadOnceInitialized };
 typedef std::atomic<ThreadOnceTokenEnum> ThreadOnceToken;
 #endif
 

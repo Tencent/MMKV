@@ -34,8 +34,7 @@ using namespace std;
 
 namespace mmkv {
 
-CodedOutputData::CodedOutputData(void *ptr, size_t len)
-    : m_ptr((uint8_t *) ptr), m_size(len), m_position(0) {
+CodedOutputData::CodedOutputData(void *ptr, size_t len) : m_ptr((uint8_t *) ptr), m_size(len), m_position(0) {
     assert(m_ptr);
 }
 
@@ -78,8 +77,7 @@ void CodedOutputData::writeBool(bool value) {
 void CodedOutputData::writeString(const string &value) {
     size_t numberOfBytes = value.size();
     if (m_position + numberOfBytes > m_size) {
-        auto msg = "m_position: " + to_string(m_position) +
-                   ", numberOfBytes: " + to_string(numberOfBytes) +
+        auto msg = "m_position: " + to_string(m_position) + ", numberOfBytes: " + to_string(numberOfBytes) +
                    ", m_size: " + to_string(m_size);
         throw out_of_range(msg);
     }
@@ -122,8 +120,7 @@ void CodedOutputData::seek(size_t addedSize) {
 
 void CodedOutputData::writeRawByte(uint8_t value) {
     if (m_position == m_size) {
-        throw out_of_range("m_position: " + to_string(m_position) +
-                           " m_size: " + to_string(m_size));
+        throw out_of_range("m_position: " + to_string(m_position) + " m_size: " + to_string(m_size));
         return;
     }
 
@@ -133,8 +130,7 @@ void CodedOutputData::writeRawByte(uint8_t value) {
 void CodedOutputData::writeRawData(const MMBuffer &data) {
     size_t numberOfBytes = data.length();
     if (m_position + numberOfBytes > m_size) {
-        auto msg = "m_position: " + to_string(m_position) +
-                   ", numberOfBytes: " + to_string(numberOfBytes) +
+        auto msg = "m_position: " + to_string(m_position) + ", numberOfBytes: " + to_string(numberOfBytes) +
                    ", m_size: " + to_string(m_size);
         throw out_of_range(msg);
     }

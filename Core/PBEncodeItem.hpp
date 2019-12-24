@@ -55,16 +55,11 @@ struct PBEncodeItem {
 #endif
     } value;
 
-    PBEncodeItem() : type(PBEncodeItemType_None), compiledSize(0), valueSize(0) {
-        memset(&value, 0, sizeof(value));
-    }
+    PBEncodeItem() : type(PBEncodeItemType_None), compiledSize(0), valueSize(0) { memset(&value, 0, sizeof(value)); }
 
 #ifdef MMKV_IOS_OR_MAC
     PBEncodeItem(const PBEncodeItem &other)
-        : type(other.type)
-        , compiledSize(other.compiledSize)
-        , valueSize(other.valueSize)
-        , value(other.value) {
+        : type(other.type), compiledSize(other.compiledSize), valueSize(other.valueSize), value(other.value) {
         if (type == PBEncodeItemType_NSString) {
             if (value.tmpObjectValue != nullptr) {
                 CFRetain(value.tmpObjectValue);

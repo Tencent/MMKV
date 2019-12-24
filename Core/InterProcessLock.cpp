@@ -84,8 +84,7 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
         // lets be gentleman: unlock my shared-lock to prevent deadlock
         ret = flock(m_fd, LOCK_UN);
         if (ret != 0) {
-            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret,
-                      strerror(errno));
+            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         }
     }
 

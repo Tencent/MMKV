@@ -100,8 +100,7 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     mmkv->set((const char *) nullptr, "null string");
     result.erase();
     mmkv->getString("null string", result);
-    cout << "string after set null: " << result
-         << ", containsKey:" << mmkv->containsKey("null string") << endl;
+    cout << "string after set null: " << result << ", containsKey:" << mmkv->containsKey("null string") << endl;
 
     //kv.sync();
     //kv.async();
@@ -230,11 +229,7 @@ void fastRemoveCornetSizeTest() {
     }
 }
 
-static void MyLogHandler(MMKVLogLevel level,
-                         const std::string &file,
-                         int line,
-                         const std::string &function,
-                         const std::string &message) {
+void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
         switch (level) {
@@ -250,8 +245,7 @@ static void MyLogHandler(MMKVLogLevel level,
                 return "N";
         }
     }();
-    printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file.c_str(), line, function.c_str(),
-           message.c_str());
+    printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
 }
 
 int main() {

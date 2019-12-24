@@ -35,32 +35,25 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return root dir of MMKV
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel;
 
-// a generic purpose instance
+/// a generic purpose instance
 + (instancetype)defaultMMKV;
 
-// mmapID: any unique ID (com.tencent.xin.pay, etc)
-// if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(init(mmapID:));
 
-// mmapID: any unique ID (com.tencent.xin.pay, etc)
-// if you want a per-user mmkv, you could merge user-id within mmapID
-// cryptKey: 16 byte at most
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 byte at most
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
 
-// mmapID: any unique ID (com.tencent.xin.pay, etc)
-// if you want a per-user mmkv, you could merge user-id within mmapID
-// relativePath: custom path of the file, `NSDocumentDirectory/mmkv` by default
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:relativePath:));
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:relativePath:));
 
-// clang-format off
-
-// mmapID: any unique ID (com.tencent.xin.pay, etc)
-// if you want a per-user mmkv, you could merge user-id within mmapID
-// cryptKey: 16 byte at most
-// relativePath: custom path of the file, `NSDocumentDirectory/mmkv` by default
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)path NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
-
-// clang-format on
+// TODO: multi-process mode
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 byte at most
+/// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
 
 + (NSString *)mmkvBasePath;
 

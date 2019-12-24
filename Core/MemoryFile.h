@@ -87,9 +87,7 @@ public:
 #ifndef MMKV_WIN32
     bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
 #else
-    bool isFileValid() {
-        return m_fd != INVALID_HANDLE_VALUE && m_size > 0 && m_fileMapping && m_ptr;
-    }
+    bool isFileValid() { return m_fd != INVALID_HANDLE_VALUE && m_size > 0 && m_fileMapping && m_ptr; }
 #endif
     // just forbid it for possibly misuse
     MemoryFile(const MemoryFile &other) = delete;

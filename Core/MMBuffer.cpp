@@ -31,16 +31,14 @@ MMBuffer::MMBuffer(size_t length) : ptr(nullptr), size(length), isNoCopy(MMBuffe
     }
 }
 
-MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy)
-    : ptr(source), size(length), isNoCopy(noCopy) {
+MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy) : ptr(source), size(length), isNoCopy(noCopy) {
     if (isNoCopy == MMBufferCopy) {
         ptr = malloc(size);
         memcpy(ptr, source, size);
     }
 }
 
-MMBuffer::MMBuffer(MMBuffer &&other) noexcept
-    : ptr(other.ptr), size(other.size), isNoCopy(other.isNoCopy) {
+MMBuffer::MMBuffer(MMBuffer &&other) noexcept : ptr(other.ptr), size(other.size), isNoCopy(other.isNoCopy) {
     other.ptr = nullptr;
     other.size = 0;
     other.isNoCopy = MMBufferCopy;

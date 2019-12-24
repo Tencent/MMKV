@@ -21,7 +21,7 @@ BinPackParameters: false
 ReflowComments: false
 ---
 Language: Cpp
-ColumnLimit: 100
+ColumnLimit: 120
 IndentPPDirectives: AfterHash
 ---
 Language: ObjC

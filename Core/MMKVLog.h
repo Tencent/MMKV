@@ -41,33 +41,32 @@ extern const char *_getFileName(const char *path);
 
 #    define __filename__ _getFileName(__FILE__)
 
-#    define MMKVError(format, ...)                                                                 \
+#    define MMKVError(format, ...)                                                                                     \
         _MMKVLogWithLevel(MMKVLogError, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
-#    define MMKVWarning(format, ...)                                                               \
+#    define MMKVWarning(format, ...)                                                                                   \
         _MMKVLogWithLevel(MMKVLogWarning, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
-#    define MMKVInfo(format, ...)                                                                  \
+#    define MMKVInfo(format, ...)                                                                                      \
         _MMKVLogWithLevel(MMKVLogInfo, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 
 #    ifndef NDEBUG
-#        define MMKVDebug(format, ...)                                                             \
+#        define MMKVDebug(format, ...)                                                                                 \
             _MMKVLogWithLevel(MMKVLogDebug, __filename__, __func__, __LINE__, format, ##__VA_ARGS__)
 #    else
-#        define MMKVDebug(format, ...)                                                             \
+#        define MMKVDebug(format, ...)                                                                                 \
             {}
 #    endif
 
-void _MMKVLogWithLevel(
-    MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...);
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...);
 
 #else
 
-#    define MMKVError(format, ...)                                                                 \
+#    define MMKVError(format, ...)                                                                                     \
         {}
-#    define MMKVWarning(format, ...)                                                               \
+#    define MMKVWarning(format, ...)                                                                                   \
         {}
-#    define MMKVInfo(format, ...)                                                                  \
+#    define MMKVInfo(format, ...)                                                                                      \
         {}
-#    define MMKVDebug(format, ...)                                                                 \
+#    define MMKVDebug(format, ...)                                                                                     \
         {}
 
 #endif

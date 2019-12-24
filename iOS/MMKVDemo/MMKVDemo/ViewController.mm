@@ -544,6 +544,10 @@
     return MMKVOnErrorRecover;
 }
 
+- (void)onMMKVContentChange:(NSString *)mmapID {
+    NSLog(@"%s: %@", __func__, mmapID);
+}
+
 - (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message {
     const char *levelDesc = nullptr;
     switch (level) {

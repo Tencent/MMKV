@@ -67,8 +67,7 @@ static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
 }
 
 #        ifdef MMKV_IOS_OR_MAC
-void _MMKVLogWithLevel(
-    MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         NSString *nsFormat = [NSString stringWithUTF8String:format];
         va_list argList;
@@ -77,15 +76,14 @@ void _MMKVLogWithLevel(
         va_end(argList);
 
         if (g_logHandler) {
-            g_logHandler(level, file, line, func, message.UTF8String);
+            g_logHandler(level, file, line, func, message);
         } else {
             NSLog(@"[%s] <%s:%d::%s> %@", MMKVLogLevelDesc(level), file, line, func, message);
         }
     }
 }
 #        else
-void _MMKVLogWithLevel(
-    MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         std::string message;
         char buffer[16];
@@ -102,16 +100,14 @@ void _MMKVLogWithLevel(
         } else {
             message.resize(static_cast<unsigned long>(length), '\0');
             va_start(args, format);
-            std::vsnprintf(const_cast<char *>(message.data()), static_cast<size_t>(length) + 1,
-                           format, args);
+            std::vsnprintf(const_cast<char *>(message.data()), static_cast<size_t>(length) + 1, format, args);
             va_end(args);
         }
 
         if (g_logHandler) {
             g_logHandler(level, file, line, func, message);
         } else {
-            printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), file, line, func,
-                   message.c_str());
+            printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), file, line, func, message.c_str());
             //fflush(stdout);
         }
     }
