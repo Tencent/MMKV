@@ -211,12 +211,11 @@ MMKVRecoverStrategic onMMKVError(const std::string &mmapID, MMKVErrorType errorT
     return OnErrorDiscard;
 }
 
-static void mmkvLog(
-    MMKVLogLevel level, const std::string &file, int line, const std::string &function, const std::string &message) {
+static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
     auto currentEnv = getCurrentEnv();
     if (currentEnv && g_mmkvLogID) {
-        jstring oFile = string2jstring(currentEnv, file);
-        jstring oFunction = string2jstring(currentEnv, function);
+        jstring oFile = string2jstring(currentEnv, string(file));
+        jstring oFunction = string2jstring(currentEnv, string(function));
         jstring oMessage = string2jstring(currentEnv, message);
         int readLevel = level;
         currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, readLevel, oFile, line, oFunction, oMessage);

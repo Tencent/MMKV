@@ -103,8 +103,7 @@ public abstract class BenchMarkBaseService extends Service {
             mmkv.encode(key, tmp);
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV",
-              caller + " mmkv write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " mmkv write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteWriteInt(String caller) {
@@ -120,16 +119,14 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", caller + " sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime)
-                          + " ms");
+        Log.i("MMKV", caller + " sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchWriteInt(String caller) {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
-        SharedPreferences preferences =
-            MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
+        SharedPreferences preferences = MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
@@ -158,8 +155,7 @@ public abstract class BenchMarkBaseService extends Service {
             int tmp = mmkv.decodeInt(key);
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV",
-              caller + " mmkv read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " mmkv read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteReadInt(String caller) {
@@ -173,15 +169,13 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV",
-              caller + " sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadInt(String caller) {
         long startTime = System.currentTimeMillis();
 
-        SharedPreferences preferences =
-            MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
+        SharedPreferences preferences = MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = preferences.getInt(key, 0);
@@ -207,8 +201,7 @@ public abstract class BenchMarkBaseService extends Service {
             mmkv.encode(strKey, valueStr);
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", caller + " mmkv write String: loop[" + m_loops + "]: " + (endTime - startTime)
-                          + " ms");
+        Log.i("MMKV", caller + " mmkv write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteWriteString(String caller) {
@@ -223,15 +216,13 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", caller + " sqlite write String: loop[" + m_loops
-                          + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchWrieString(String caller) {
         long startTime = System.currentTimeMillis();
 
-        SharedPreferences preferences =
-            MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
+        SharedPreferences preferences = MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         for (int index = 0; index < m_loops; index++) {
             final String str = m_arrStrings[index];
@@ -260,8 +251,7 @@ public abstract class BenchMarkBaseService extends Service {
             final String tmpStr = mmkv.decodeString(strKey);
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", caller + " mmkv read String: loop[" + m_loops + "]: " + (endTime - startTime)
-                          + " ms");
+        Log.i("MMKV", caller + " mmkv read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteReadString(String caller) {
@@ -275,15 +265,13 @@ public abstract class BenchMarkBaseService extends Service {
         }
         //sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", caller + " sqlite read String: loop[" + m_loops
-                          + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", caller + " sqlite read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadStrinfg(String caller) {
         long startTime = System.currentTimeMillis();
 
-        SharedPreferences preferences =
-            MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
+        SharedPreferences preferences = MultiProcessSharedPreferences.getSharedPreferences(this, SP_ID, MODE_PRIVATE);
         for (int index = 0; index < m_loops; index++) {
             final String key = m_arrKeys[index];
             final String tmp = preferences.getString(key, null);
@@ -328,7 +316,6 @@ public abstract class BenchMarkBaseService extends Service {
     protected void prepareAshmemMMKVByCP() {
         // it's ok for other process not knowing cryptKey
         final String cryptKey = null;
-        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size,
-                                             MMKV.MULTI_PROCESS_MODE, cryptKey);
+        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
     }
 }

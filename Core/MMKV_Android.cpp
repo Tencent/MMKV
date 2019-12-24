@@ -22,6 +22,7 @@
 
 #ifdef MMKV_ANDROID
 
+#    include "MMKVLog.h"
 #    include "ScopedLock.hpp"
 #    include <unistd.h>
 

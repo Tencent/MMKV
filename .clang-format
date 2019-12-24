@@ -30,6 +30,6 @@ ColumnLimit: 0
 ObjCBlockIndentWidth: 4
 ---
 Language: Java
-ColumnLimit: 100
+ColumnLimit: 120
 AllowShortFunctionsOnASingleLine: None
 BreakBeforeBinaryOperators: NonAssignment
