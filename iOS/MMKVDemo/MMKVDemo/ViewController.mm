@@ -36,22 +36,20 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    // set log level
-    [MMKV setLogLevel:MMKVLogInfo];
+    // usally you can just init MMKV like this
+    //[MMKV initializeMMKV:nil];
 
-    // you can turn off logging
-    //[MMKV setLogLevel:MMKVLogNone];
-
-    // register handler
-    [MMKV registerHandler:self];
-
-    // not necessary: set MMKV's root dir
+    // or you can customize MMKV's root dir
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
     NSString *libraryPath = (NSString *) [paths firstObject];
     if ([libraryPath length] > 0) {
         NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
-        [MMKV setMMKVBasePath:rootDir];
+        // you can turn off logging by passing MMKVLogNone
+        [MMKV initializeMMKV:rootDir logLevel:MMKVLogInfo];
     }
+
+    // register handler
+    [MMKV registerHandler:self];
 
     [self funcionalTest];
     [self testReKey];

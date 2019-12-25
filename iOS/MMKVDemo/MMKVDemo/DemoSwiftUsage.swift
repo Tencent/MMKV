@@ -23,10 +23,6 @@ import Foundation
 
 class DemoSwiftUsage : NSObject {
 	@objc func testSwiftFunctionality() {
-
-        MMKV.setLogLevel(MMKVLogLevel.info)
-        var _ = MMKVRecoverStrategic.onErrorDiscard
-
         guard let mmkv = MMKV(mmapID: "testSwift") else {
             return
         }
