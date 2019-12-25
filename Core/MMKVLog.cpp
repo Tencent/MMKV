@@ -36,9 +36,9 @@ MMKV_NAMESPACE_END
 #    include <cstdarg>
 #    include <string>
 
-MMKV_NAMESPACE_BEGIN
+using namespace mmkv;
 
-const char *_getFileName(const char *path) {
+static const char *_getFileName(const char *path) {
     const char *ptr = strrchr(path, '/');
     if (!ptr) {
         ptr = strrchr(path, '\\');
@@ -75,10 +75,12 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
         NSString *message = [[NSString alloc] initWithFormat:nsFormat arguments:argList];
         va_end(argList);
 
+        auto filename = _getFileName(file);
+
         if (g_logHandler) {
-            g_logHandler(level, file, line, func, message);
+            g_logHandler(level, filename, line, func, message);
         } else {
-            NSLog(@"[%s] <%s:%d::%s> %@", MMKVLogLevelDesc(level), file, line, func, message);
+            NSLog(@"[%s] <%s:%d::%s> %@", MMKVLogLevelDesc(level), filename, line, func, message);
         }
     }
 }
@@ -104,10 +106,12 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
             va_end(args);
         }
 
+        auto filename = _getFileName(file);
+
         if (g_logHandler) {
-            g_logHandler(level, file, line, func, message);
+            g_logHandler(level, filename, line, func, message);
         } else {
-            printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), file, line, func, message.c_str());
+            printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), filename, line, func, message.c_str());
             //fflush(stdout);
         }
     }
@@ -117,5 +121,3 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
 #    endif
 
 #endif // ENABLE_MMKV_LOG
-
-MMKV_NAMESPACE_END

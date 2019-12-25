@@ -20,17 +20,13 @@
 
 #import "MMKV.h"
 #import <Core/MMKV.h>
+#import <Core/MMKVLog.h>
 #import <Core/ScopedLock.hpp>
 #import <Core/aes/openssl/openssl_md5.h>
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 #import <UIKit/UIKit.h>
 #endif
-
-#define MMKVDebug NSLog
-#define MMKVInfo NSLog
-#define MMKVWarning NSLog
-#define MMKVError NSLog
 
 using namespace std;
 
@@ -70,7 +66,7 @@ enum : bool {
         auto appState = [UIApplication sharedApplication].applicationState;
         auto isInBackground = (appState == UIApplicationStateBackground);
         mmkv::MMKV::setIsInBackground(isInBackground);
-        MMKVInfo(@"appState:%ld", (long) appState);
+        MMKVInfo("appState:%ld", (long) appState);
 
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
@@ -86,14 +82,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel {
     if (g_hasCalledInitializeMMKV) {
-        MMKVWarning(@"already called +initializeMMKV before, ignore this request");
+        MMKVWarning("already called +initializeMMKV before, ignore this request");
         return [self mmkvBasePath];
     }
 
     g_basePath = (rootDir != nil) ? rootDir : [self mmkvBasePath];
     mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
 
-    MMKVInfo(@"pagesize:%zu", mmkv::DEFAULT_MMAP_SIZE);
+    MMKVInfo("pagesize:%zu", mmkv::DEFAULT_MMAP_SIZE);
 
     g_hasCalledInitializeMMKV = YES;
 
@@ -120,7 +116,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
     if (!g_hasCalledInitializeMMKV) {
-        MMKVError(@"MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
+        MMKVError("MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
     }
     if (mmapID.length <= 0) {
         return nil;
@@ -172,19 +168,19 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 #ifdef MMKV_IOS
 - (void)onMemoryWarning {
-    MMKVInfo(@"cleaning on memory warning %@", m_mmapID);
+    MMKVInfo("cleaning on memory warning %@", m_mmapID);
 
     [self clearMemoryCache];
 }
 
 + (void)didEnterBackground {
     mmkv::MMKV::setIsInBackground(true);
-    MMKVInfo(@"isInBackground:%d", true);
+    MMKVInfo("isInBackground:%d", true);
 }
 
 + (void)didBecomeActive {
     mmkv::MMKV::setIsInBackground(false);
-    MMKVInfo(@"isInBackground:%d", false);
+    MMKVInfo("isInBackground:%d", false);
 }
 #endif
 
@@ -200,7 +196,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (void)close {
     SCOPEDLOCK(g_lock);
-    MMKVInfo(@"closing %@", m_mmapID);
+    MMKVInfo("closing %@", m_mmapID);
 
     m_mmkv->close();
     m_mmkv = nullptr;
@@ -439,7 +435,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         // still warn about it
         g_hasCalledInitializeMMKV = NO;
 
-        MMKVInfo(@"set MMKV base path to: %@", g_basePath);
+        MMKVInfo("set MMKV base path to: %@", g_basePath);
     }
 }
 
@@ -450,7 +446,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     } else {
         string = mmapID;
     }
-    MMKVInfo(@"mmapKey: %@", string);
+    MMKVInfo("mmapKey: %@", string);
     return string;
 }
 
@@ -505,7 +501,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults {
     NSDictionary *dic = [userDaults dictionaryRepresentation];
     if (dic.count <= 0) {
-        MMKVInfo(@"migrate data fail, userDaults is nil or empty");
+        MMKVInfo("migrate data fail, userDaults is nil or empty");
         return 0;
     }
     __block uint32_t count = 0;
@@ -516,7 +512,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
                 count++;
             }
         } else {
-            MMKVWarning(@"unknown type of key:%@", key);
+            MMKVWarning("unknown type of key:%@", key);
         }
     }];
     return count;
@@ -551,13 +547,13 @@ static BOOL g_hasCalledInitializeMMKV = NO;
             case kCFNumberDoubleType:
                 return [kv setDouble:num.doubleValue forKey:key];
             default:
-                MMKVWarning(@"unknown number type:%ld, key:%@", (long) numberType, key);
+                MMKVWarning("unknown number type:%ld, key:%@", (long) numberType, key);
                 return NO;
         }
     } else if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]]) {
         return [kv setObject:obj forKey:key];
     } else {
-        MMKVWarning(@"unknown type of key:%@", key);
+        MMKVWarning("unknown type of key:%@", key);
     }
     return NO;
 }
@@ -576,32 +572,29 @@ static NSString *md5(NSString *value) {
     return [NSString stringWithCString:buf encoding:NSASCIIStringEncoding];
 }
 
-static inline const char *MMKVLogLevelDesc(MMKVLogLevel level) {
-    switch (level) {
-        case MMKVLogDebug:
-            return "D";
-        case MMKVLogInfo:
-            return "I";
-        case MMKVLogWarning:
-            return "W";
-        case MMKVLogError:
-            return "E";
-        default:
-            return "N";
-    }
-}
+#pragma makr - callbacks
 
 static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, const char *function, NSString *message) {
-    if (g_isLogRedirecting) {
-        [g_callbackHandler mmkvLogWithLevel:(MMKVLogLevel) level file:file line:line func:function message:message];
-    } else {
-        NSLog(@"[%s] <%s:%d::%s> %@", MMKVLogLevelDesc((MMKVLogLevel) level), file, line, function, message);
-    }
+    [g_callbackHandler mmkvLogWithLevel:(MMKVLogLevel) level file:file line:line func:function message:message];
 }
 
 static mmkv::MMKVRecoverStrategic ErrorHandler(const std::string &mmapID, mmkv::MMKVErrorType errorType) {
+    if (errorType == mmkv::MMKVCRCCheckFail) {
+        if ([g_callbackHandler respondsToSelector:@selector(onMMKVCRCCheckFail:)]) {
+            auto ret = [g_callbackHandler onMMKVCRCCheckFail:[NSString stringWithUTF8String:mmapID.c_str()]];
+            return (mmkv::MMKVRecoverStrategic) ret;
+        }
+    } else {
+        if ([g_callbackHandler respondsToSelector:@selector(onMMKVFileLengthError:)]) {
+            auto ret = [g_callbackHandler onMMKVFileLengthError:[NSString stringWithUTF8String:mmapID.c_str()]];
+            return (mmkv::MMKVRecoverStrategic) ret;
+        }
+    }
     return mmkv::OnErrorDiscard;
 }
 
 static void ContentChangeHandler(const std::string &mmapID) {
+    if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
+        [g_callbackHandler onMMKVContentChange:[NSString stringWithUTF8String:mmapID.c_str()]];
+    }
 }

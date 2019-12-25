@@ -10,6 +10,7 @@
 		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
 		CB58B40223AB3699002457F1 /* AESCrypt.h in Copy AES Files */ = {isa = PBXBuildFile; fileRef = CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */; };
 		CB58B40423AB36D5002457F1 /* openssl_opensslconf.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
+		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
 		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
 		CB6F6C0923ACD031000351EA /* openssl_md5.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
 		CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563E823AB2E9100ACCD39 /* crc32.cpp */; };
@@ -69,6 +70,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */,
 				CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */,
 				CB95642B23AB2FDC00ACCD39 /* MMKVMetaInfo.hpp in CopyFiles */,
 				CB95642A23AB2FCF00ACCD39 /* MemoryFile.h in CopyFiles */,
