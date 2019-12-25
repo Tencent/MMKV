@@ -27,7 +27,8 @@
 #include <cstdint>
 #include <cstring>
 
-void _MMKVLogWithLevel(mmkv::MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...);
+void _MMKVLogWithLevel(
+    MMKV_NAMESPACE_PREFIX::MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...);
 
 MMKV_NAMESPACE_BEGIN
 
@@ -40,15 +41,15 @@ extern mmkv::LogHandler g_logHandler;
 #ifdef ENABLE_MMKV_LOG
 
 #    define MMKVError(format, ...)                                                                                     \
-        _MMKVLogWithLevel(mmkv::MMKVLogError, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+        _MMKVLogWithLevel(MMKV_NAMESPACE_PREFIX::MMKVLogError, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
 #    define MMKVWarning(format, ...)                                                                                   \
-        _MMKVLogWithLevel(mmkv::MMKVLogWarning, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+        _MMKVLogWithLevel(MMKV_NAMESPACE_PREFIX::MMKVLogWarning, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
 #    define MMKVInfo(format, ...)                                                                                      \
-        _MMKVLogWithLevel(mmkv::MMKVLogInfo, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+        _MMKVLogWithLevel(MMKV_NAMESPACE_PREFIX::MMKVLogInfo, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
 
 #    ifndef NDEBUG
 #        define MMKVDebug(format, ...)                                                                                 \
-            _MMKVLogWithLevel(mmkv::MMKVLogDebug, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
+            _MMKVLogWithLevel(MMKV_NAMESPACE_PREFIX::MMKVLogDebug, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
 #    else
 #        define MMKVDebug(format, ...)                                                                                 \
             {}

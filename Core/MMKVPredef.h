@@ -74,10 +74,12 @@ using MMKV_PATH_TYPE = std::string;
 #    import <Foundation/Foundation.h>
 #    define MMKV_NAMESPACE_BEGIN namespace mmkv {
 #    define MMKV_NAMESPACE_END }
+#    define MMKV_NAMESPACE_PREFIX mmkv
 using MMKV_LOG_TYPE = NSString *;
 #else
 #    define MMKV_NAMESPACE_BEGIN
 #    define MMKV_NAMESPACE_END
+#    define MMKV_NAMESPACE_PREFIX
 using MMKV_LOG_TYPE = const std::string &;
 #endif // MMKV_IOS_OR_MAC
 
@@ -107,8 +109,12 @@ namespace mmkv {
 
 typedef void (*LogHandler)(MMKVLogLevel level, const char *file, int line, const char *function, MMKV_LOG_TYPE message);
 
+// by default MMKV will discard all datas on failure
+// return `OnErrorRecover` to recover any data from file
 typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErrorType errorType);
 
+// called when content is changed by other process
+// doesn't guarantee real-time notification
 typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
 extern size_t DEFAULT_MMAP_SIZE;

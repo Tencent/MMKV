@@ -37,7 +37,7 @@ extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *re
 extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
 
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath)
-    : m_mmapID(mmapedKVKey(mmapID, relativePath))
+    : m_mmapID(mmapedKVKey(mmapID, relativePath)) // historically Android mistakenly use mmapKey as mmapID
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
     , m_file(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE)
@@ -130,7 +130,9 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
         return kv;
     }
     if (relativePath) {
-        auto filePath = mappedKVPathWithID(mmapID, mode, relativePath);
+        // historically Android mistakenly use mmapKey as mmapID, now it's too late to make it right
+        auto deptID = mmapedKVKey(mmapID, relativePath);
+        auto filePath = mappedKVPathWithID(deptID, mode, relativePath);
         if (!isFileExist(filePath)) {
             if (!createFile(filePath)) {
                 return nullptr;

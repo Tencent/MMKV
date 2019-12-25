@@ -34,7 +34,9 @@ static NSMutableDictionary *g_instanceDic;
 static mmkv::ThreadLock g_lock;
 id<MMKVHandler> g_callbackHandler;
 bool g_isLogRedirecting = false;
+// TODO: MRC
 static NSString *g_basePath = nil;
+static NSString *g_groupPath = nil;
 
 static NSString *md5(NSString *value);
 static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, const char *function, NSString *message);
@@ -55,7 +57,7 @@ enum : bool {
 
 + (void)initialize {
     if (self == MMKV.class) {
-        g_instanceDic = [NSMutableDictionary dictionary];
+        g_instanceDic = [[NSMutableDictionary alloc] init];
         g_lock = mmkv::ThreadLock();
         g_lock.initialize();
 
@@ -87,6 +89,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     }
 
     g_basePath = (rootDir != nil) ? rootDir : [self mmkvBasePath];
+    //[g_basePath retain];
     mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
 
     MMKVInfo("pagesize:%zu", mmkv::DEFAULT_MMAP_SIZE);
@@ -96,6 +99,16 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [self mmkvBasePath];
 }
 
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel {
+    auto ret = [MMKV initializeMMKV:rootDir logLevel:logLevel];
+
+    g_groupPath = [groupDir stringByAppendingPathComponent:@"mmkv"];
+    //g_groupPath = [groupDir retain];
+    MMKVInfo("groupDir: %@", g_groupPath);
+
+    return ret;
+}
+
 // a generic purpose instance
 + (instancetype)defaultMMKV {
     return [MMKV mmkvWithID:@"" DEFAULT_MMAP_ID];
@@ -103,18 +116,32 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 // any unique ID (com.tencent.xin.pay, etc)
 + (instancetype)mmkvWithID:(NSString *)mmapID {
-    return [MMKV mmkvWithID:mmapID cryptKey:nil];
+    return [MMKV mmkvWithID:mmapID cryptKey:nil relativePath:nil mode:MMKVSingleProcess];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode {
+    auto relativePath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
+    return [MMKV mmkvWithID:mmapID cryptKey:nil relativePath:relativePath mode:mode];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
-    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey relativePath:nil];
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey relativePath:nil mode:MMKVSingleProcess];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode {
+    auto relativePath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey relativePath:relativePath mode:mode];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
-    return [MMKV mmkvWithID:mmapID cryptKey:nil relativePath:relativePath];
+    return [MMKV mmkvWithID:mmapID cryptKey:nil relativePath:relativePath mode:MMKVSingleProcess];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey relativePath:relativePath mode:MMKVSingleProcess];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath mode:(MMKVMode)mode {
     if (!g_hasCalledInitializeMMKV) {
         MMKVError("MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
     }
@@ -124,16 +151,25 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
     SCOPEDLOCK(g_lock);
 
+    if (mode == MMKVMultiProcess) {
+        if (!relativePath) {
+            relativePath = g_groupPath;
+        }
+        if (!relativePath) {
+            MMKVError("Getting a multi-process MMKV [%@] without setting groupDir makes no sense", mmapID);
+            assert(0);
+        }
+    }
     NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
-        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:relativePath];
+        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:relativePath mode:mode];
         [g_instanceDic setObject:kv forKey:kvKey];
     }
     return kv;
 }
 
-- (instancetype)initWithMMapID:(NSString *)kvKey cryptKey:(NSData *)cryptKey relativePath:(NSString *)relativePath {
+- (instancetype)initWithMMapID:(NSString *)kvKey cryptKey:(NSData *)cryptKey relativePath:(NSString *)relativePath mode:(MMKVMode)mode {
     if (self = [super init]) {
         string pathTmp;
         if (relativePath.length > 0) {
@@ -145,7 +181,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         }
         string *relativePathPtr = pathTmp.empty() ? nullptr : &pathTmp;
         string *cryptKeyPtr = cryptKeyTmp.empty() ? nullptr : &cryptKeyTmp;
-        m_mmkv = mmkv::MMKV::mmkvWithID(kvKey.UTF8String, mmkv::MMKV_SINGLE_PROCESS, cryptKeyPtr, relativePathPtr);
+        m_mmkv = mmkv::MMKV::mmkvWithID(kvKey.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, relativePathPtr);
         m_mmapID = [NSString stringWithUTF8String:m_mmkv->mmapID().c_str()];
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
@@ -421,6 +457,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     NSString *documentPath = (NSString *) [paths firstObject];
     if ([documentPath length] > 0) {
         g_basePath = [documentPath stringByAppendingPathComponent:@"mmkv"];
+        //g_basePath = [[documentPath stringByAppendingPathComponent:@"mmkv"] retain];
         return g_basePath;
     } else {
         return @"";
@@ -429,7 +466,11 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (void)setMMKVBasePath:(NSString *)basePath {
     if (basePath.length > 0) {
+        /*if (g_basePath) {
+            [g_basePath release];
+        }*/
         g_basePath = basePath;
+        //g_basePath = [basePath retain];
         [MMKV initializeMMKV:basePath];
 
         // still warn about it

@@ -20,20 +20,32 @@
 
 #import "MMKVHandler.h"
 
+typedef NS_ENUM(NSUInteger, MMKVMode) {
+    MMKVSingleProcess = 0x1,
+    MMKVMultiProcess = 0x2,
+};
+
 @interface MMKV : NSObject
 
 NS_ASSUME_NONNULL_BEGIN
 
 /// call this in main thread, before calling any other MMKV methods
-/// @param rootDir the root dir of MMKV, can be null (default to {NSDocumentDirectory}/mmkv)
+/// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
 /// @return root dir of MMKV
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir;
 
 /// call this in main thread, before calling any other MMKV methods
-/// @param rootDir the root dir of MMKV, can be null (default to {NSDocumentDirectory}/mmkv)
+/// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
 /// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
 /// @return root dir of MMKV
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel;
+
+/// call this in main thread, before calling any other MMKV methods
+/// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
+/// @param groupDir the root dir of multi-process MMKV, MMKV with MMKVMultiProcess mode will be stored in groupDir/mmkv
+/// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
+/// @return root dir of MMKV
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel;
 
 /// a generic purpose instance
 + (instancetype)defaultMMKV;
@@ -42,14 +54,22 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(init(mmapID:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param mode MMKVMultiProcess for multi-process MMKV
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(init(mmapID:mode:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 byte at most
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 byte at most
+/// @param mode MMKVMultiProcess for multi-process MMKV
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode NS_SWIFT_NAME(init(mmapID:cryptKey:mode:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:relativePath:));
 
-// TODO: multi-process mode
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 byte at most
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default

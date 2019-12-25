@@ -83,7 +83,7 @@ MMKV_NAMESPACE_BEGIN
 
 #ifndef MMKV_ANDROID
 MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKV_PATH_TYPE *relativePath)
-    : m_mmapID(mmapedKVKey(mmapID, relativePath))
+    : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
     , m_file(m_path)

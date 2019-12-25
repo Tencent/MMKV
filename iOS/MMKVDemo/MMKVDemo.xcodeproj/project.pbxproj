@@ -82,6 +82,7 @@
 		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
 		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVPerformanceTest.mm; sourceTree = "<group>"; };
+		CB6D44C423B3924E00F369AA /* MMKVDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MMKVDemo.entitlements; sourceTree = "<group>"; };
 		CB9C2732215E5ECC00448B6C /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
 		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
@@ -151,6 +152,7 @@
 		CB1FD42220455E2D00931B5F /* MMKVDemo */ = {
 			isa = PBXGroup;
 			children = (
+				CB6D44C423B3924E00F369AA /* MMKVDemo.entitlements */,
 				CB1FD42320455E2D00931B5F /* AppDelegate.h */,
 				CB1FD42420455E2D00931B5F /* AppDelegate.m */,
 				CB1FD42C20455E2D00931B5F /* Assets.xcassets */,
@@ -562,6 +564,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LP4KGRS5XZ;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
@@ -584,6 +587,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LP4KGRS5XZ;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;

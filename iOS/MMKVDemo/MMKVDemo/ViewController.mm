@@ -44,21 +44,25 @@
     NSString *libraryPath = (NSString *) [paths firstObject];
     if ([libraryPath length] > 0) {
         NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
+        NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.lingol.mmkv"].path;
+
         // you can turn off logging by passing MMKVLogNone
-        [MMKV initializeMMKV:rootDir logLevel:MMKVLogInfo];
+        [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:MMKVLogInfo];
     }
 
     // register handler
     [MMKV registerHandler:self];
 
-    [self funcionalTest];
-    [self testReKey];
-    [self testImportFromUserDefault];
-    [self testCornerSize];
-    [self testFastRemoveCornerSize];
+    //[self funcionalTest];
+    //[self testReKey];
+    //[self testImportFromUserDefault];
+    //[self testCornerSize];
+    //[self testFastRemoveCornerSize];
 
-    DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
-    [swiftUsageDemo testSwiftFunctionality];
+    //DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
+    //[swiftUsageDemo testSwiftFunctionality];
+
+    [self testMultiProcess];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -543,7 +547,7 @@
 }
 
 - (void)onMMKVContentChange:(NSString *)mmapID {
-    NSLog(@"%s: %@", __func__, mmapID);
+    NSLog(@"onMMKVContentChange: %@", mmapID);
 }
 
 - (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message {
@@ -567,6 +571,58 @@
     }
 
     NSLog(@"redirect logging [%s] <%s:%d::%s> %@", levelDesc, file, line, funcname, message);
+}
+
+#pragma mark - multi-process
+
+- (void)testMultiProcess {
+    NSData *key_1 = [@"multi_process" dataUsingEncoding:NSUTF8StringEncoding];
+    auto mmkv = [MMKV mmkvWithID:@"multi_process" cryptKey:key_1 mode:MMKVMultiProcess];
+
+    [mmkv setBool:YES forKey:@"bool"];
+    NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
+
+    [mmkv setInt32:-1024 forKey:@"int32"];
+    NSLog(@"int32:%d", [mmkv getInt32ForKey:@"int32"]);
+
+    [mmkv setUInt32:std::numeric_limits<uint32_t>::max() forKey:@"uint32"];
+    NSLog(@"uint32:%u", [mmkv getUInt32ForKey:@"uint32"]);
+
+    [mmkv setInt64:std::numeric_limits<int64_t>::min() forKey:@"int64"];
+    NSLog(@"int64:%lld", [mmkv getInt64ForKey:@"int64"]);
+
+    [mmkv setUInt64:std::numeric_limits<uint64_t>::max() forKey:@"uint64"];
+    NSLog(@"uint64:%llu", [mmkv getInt64ForKey:@"uint64"]);
+
+    [mmkv setFloat:-3.1415926 forKey:@"float"];
+    NSLog(@"float:%f", [mmkv getFloatForKey:@"float"]);
+
+    [mmkv setDouble:std::numeric_limits<double>::max() forKey:@"double"];
+    NSLog(@"double:%f", [mmkv getDoubleForKey:@"double"]);
+
+    [mmkv setString:@"hello, mmkv" forKey:@"string"];
+    NSLog(@"string:%@", [mmkv getStringForKey:@"string"]);
+
+    [mmkv setObject:nil forKey:@"string"];
+    NSLog(@"string after set nil:%@, containsKey:%d",
+          [mmkv getObjectOfClass:NSString.class
+                          forKey:@"string"],
+          [mmkv containsKey:@"string"]);
+
+    [mmkv setDate:[NSDate date] forKey:@"date"];
+    NSLog(@"date:%@", [mmkv getDateForKey:@"date"]);
+
+    [mmkv setData:[@"hello, mmkv again and again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
+    NSData *data = [mmkv getDataForKey:@"data"];
+    NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+    NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data"]);
+
+    [mmkv removeValueForKey:@"bool"];
+    NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
+    [mmkv removeValuesForKeys:@[ @"int32", @"uint64" ]];
+    NSLog(@"allKeys %@", [mmkv allKeys]);
+
+    [mmkv close];
 }
 
 @end

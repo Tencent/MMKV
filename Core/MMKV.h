@@ -291,24 +291,29 @@ public:
     // unless you care about out of battery
     void sync(SyncFlag flag = MMKV_SYNC);
 
-    // check if content changed by other process
-    void checkContentChanged();
-    static void registerContentChangeHandler(mmkv::ContentChangeHandler handler);
-    static void unRegisterContentChangeHandler();
-
-    static bool isFileValid(const std::string &mmapID, MMKV_PATH_TYPE *relatePath = nullptr);
-
     void lock() { m_exclusiveProcessLock.lock(); }
     void unlock() { m_exclusiveProcessLock.unlock(); }
     bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
 
+    // check if content changed by other process
+    void checkContentChanged();
+
+    // called when content is changed by other process
+    // doesn't guarantee real-time notification
+    static void registerContentChangeHandler(mmkv::ContentChangeHandler handler);
+    static void unRegisterContentChangeHandler();
+
+    // by default MMKV will discard all datas on failure
+    // return `OnErrorRecover` to recover any data from file
     static void registerErrorHandler(mmkv::ErrorHandler handler);
     static void unRegisterErrorHandler();
+
+    static void setLogLevel(MMKVLogLevel level);
 
     static void registerLogHandler(mmkv::LogHandler handler);
     static void unRegisterLogHandler();
 
-    static void setLogLevel(MMKVLogLevel level);
+    static bool isFileValid(const std::string &mmapID, MMKV_PATH_TYPE *relatePath = nullptr);
 
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;
