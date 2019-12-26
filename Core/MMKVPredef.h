@@ -62,12 +62,14 @@ constexpr auto MMKV_PATH_SLASH = L"\\";
 using MMKV_FILE_HANDLE = HANDLE;
 using MMKV_PATH_TYPE = std::wstring;
 extern MMKV_PATH_TYPE string2MMKV_PATH_TYPE(const std::string &str);
+#    define MMKV_EMBED_ZLIB 1
 #else
 constexpr auto MMKV_PATH_SLASH = "/";
 #    define MMKV_PATH_FORMAT "%s"
 using MMKV_FILE_HANDLE = int;
 using MMKV_PATH_TYPE = std::string;
 #    define string2MMKV_PATH_TYPE(str) (str)
+#    define MMKV_EMBED_ZLIB 0
 #endif // MMKV_WIN32
 
 #ifdef MMKV_IOS_OR_MAC

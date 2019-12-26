@@ -13,7 +13,6 @@
 		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
 		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
 		CB6F6C0923ACD031000351EA /* openssl_md5.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
-		CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563E823AB2E9100ACCD39 /* crc32.cpp */; };
 		CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */; };
 		CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F223AB2E9100ACCD39 /* MMKV.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -89,10 +88,6 @@
 		CB58B3FF23AB3035002457F1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		CB9563D823AB2D9500ACCD39 /* libCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB9563E423AB2E9100ACCD39 /* CodedInputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedInputData.h; sourceTree = "<group>"; };
-		CB9563E723AB2E9100ACCD39 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
-		CB9563E823AB2E9100ACCD39 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = crc32.cpp; sourceTree = "<group>"; };
-		CB9563E923AB2E9100ACCD39 /* crc32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crc32.h; sourceTree = "<group>"; };
-		CB9563EA23AB2E9100ACCD39 /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zconf.h; sourceTree = "<group>"; };
 		CB9563EB23AB2E9100ACCD39 /* Checksum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Checksum.h; sourceTree = "<group>"; };
 		CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MMKVMetaInfo.hpp; sourceTree = "<group>"; };
 		CB9563ED23AB2E9100ACCD39 /* MMKV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
@@ -131,6 +126,7 @@
 		CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = InterProcessLock.cpp; sourceTree = "<group>"; };
 		CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MMKVLog.cpp; sourceTree = "<group>"; };
 		CB95641223AB2E9100ACCD39 /* PBUtility.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = PBUtility.cpp; sourceTree = "<group>"; };
+		CBF3450323B4BABA00168AC7 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,6 +144,7 @@
 		CB58B3FE23AB3035002457F1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CBF3450323B4BABA00168AC7 /* libz.tbd */,
 				CB58B3FF23AB3035002457F1 /* Foundation.framework */,
 			);
 			name = Frameworks;
@@ -199,20 +196,8 @@
 			isa = PBXGroup;
 			children = (
 				CB9563EB23AB2E9100ACCD39 /* Checksum.h */,
-				CB9563E623AB2E9100ACCD39 /* zlib */,
 			);
 			path = crc32;
-			sourceTree = "<group>";
-		};
-		CB9563E623AB2E9100ACCD39 /* zlib */ = {
-			isa = PBXGroup;
-			children = (
-				CB9563E823AB2E9100ACCD39 /* crc32.cpp */,
-				CB9563E923AB2E9100ACCD39 /* crc32.h */,
-				CB9563EA23AB2E9100ACCD39 /* zconf.h */,
-				CB9563E723AB2E9100ACCD39 /* zutil.h */,
-			);
-			path = zlib;
 			sourceTree = "<group>";
 		};
 		CB9563FC23AB2E9100ACCD39 /* aes */ = {
@@ -315,7 +300,6 @@
 				CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */,
 				CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */,
 				CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */,
-				CB95641323AB2E9100ACCD39 /* crc32.cpp in Sources */,
 				CB95641E23AB2E9100ACCD39 /* openssl_md5_one.cpp in Sources */,
 				CB95641C23AB2E9100ACCD39 /* openssl_aes_core.cpp in Sources */,
 				CB95641923AB2E9100ACCD39 /* MMBuffer.cpp in Sources */,

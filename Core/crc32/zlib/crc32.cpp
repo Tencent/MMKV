@@ -11,6 +11,10 @@
 
 /* @(#) $Id$ */
 
+#include "../../MMKVPredef.h"
+
+#if MMKV_EMBED_ZLIB
+
 #include "zutil.h"      /* for STDC and FAR definitions */
 
 #define Z_NULL 0   /* for initializing zalloc, zfree, opaque */
@@ -47,3 +51,5 @@ unsigned long ZEXPORT crc32(unsigned long crc, const unsigned char FAR *buf, z_s
 }
 
 } // namespace zlib
+
+#endif // MMKV_EMBED_ZLIB

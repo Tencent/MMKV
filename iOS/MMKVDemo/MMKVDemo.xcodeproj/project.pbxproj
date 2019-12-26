@@ -31,6 +31,7 @@
 		CBD5359023B46E8500D3A404 /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
 		CBD5359323B46E9400D3A404 /* libMMKV For App Extension.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD5358D23B46E7400D3A404 /* libMMKV For App Extension.a */; };
 		CBD5359923B4718200D3A404 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD5359823B4718200D3A404 /* libc++.tbd */; };
+		CBF3450623B4BB1A00168AC7 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +169,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CBF3450623B4BB1A00168AC7 /* libz.tbd in Frameworks */,
 				CBD5359923B4718200D3A404 /* libc++.tbd in Frameworks */,
 				CBD5359323B46E9400D3A404 /* libMMKV For App Extension.a in Frameworks */,
 				CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */,
