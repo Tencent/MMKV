@@ -34,7 +34,6 @@ static NSMutableDictionary *g_instanceDic;
 static mmkv::ThreadLock g_lock;
 id<MMKVHandler> g_callbackHandler;
 bool g_isLogRedirecting = false;
-// TODO: MRC
 static NSString *g_basePath = nil;
 static NSString *g_groupPath = nil;
 
@@ -166,7 +165,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     if (kv == nil) {
         kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:relativePath mode:mode];
         if (!kv->m_mmkv) {
-            // TODO: MRC [kv release];
             return nil;
         }
         kv->m_mmapKey = kvKey;
@@ -205,9 +203,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (void)dealloc {
     [self clearMemoryCache];
-
-    // TODO: MRC
-    //[self.m_mmapKey release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -478,11 +473,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (void)setMMKVBasePath:(NSString *)basePath {
     if (basePath.length > 0) {
-        /*if (g_basePath) {
-            [g_basePath release];
-        }*/
         g_basePath = basePath;
-        //g_basePath = [basePath retain];
         [MMKV initializeMMKV:basePath];
 
         // still warn about it
