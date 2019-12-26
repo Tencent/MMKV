@@ -89,7 +89,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     }
 
     g_basePath = (rootDir != nil) ? rootDir : [self mmkvBasePath];
-    //[g_basePath retain];
     mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
 
     MMKVInfo("pagesize:%zu", mmkv::DEFAULT_MMAP_SIZE);
@@ -103,7 +102,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     auto ret = [MMKV initializeMMKV:rootDir logLevel:logLevel];
 
     g_groupPath = [groupDir stringByAppendingPathComponent:@"mmkv"];
-    //g_groupPath = [groupDir retain];
     MMKVInfo("groupDir: %@", g_groupPath);
 
     return ret;
@@ -464,7 +462,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     NSString *documentPath = (NSString *) [paths firstObject];
     if ([documentPath length] > 0) {
         g_basePath = [documentPath stringByAppendingPathComponent:@"mmkv"];
-        //g_basePath = [[documentPath stringByAppendingPathComponent:@"mmkv"] retain];
         return g_basePath;
     } else {
         return @"";
