@@ -32,20 +32,20 @@ NS_ASSUME_NONNULL_BEGIN
 /// call this in main thread, before calling any other MMKV methods
 /// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
 /// @return root dir of MMKV
-+ (NSString *)initializeMMKV:(nullable NSString *)rootDir;
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir NS_SWIFT_NAME(initialize(rootDir:));
 
 /// call this in main thread, before calling any other MMKV methods
 /// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
 /// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
 /// @return root dir of MMKV
-+ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel;
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel NS_SWIFT_NAME(initialize(rootDir:logLevel:));
 
 /// call this in main thread, before calling any other MMKV methods
 /// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
 /// @param groupDir the root dir of multi-process MMKV, MMKV with MMKVMultiProcess mode will be stored in groupDir/mmkv
 /// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
 /// @return root dir of MMKV
-+ (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel;
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel NS_SWIFT_NAME(initialize(rootDir:groupDir:logLevel:));
 
 /// a generic purpose instance
 + (instancetype)defaultMMKV;

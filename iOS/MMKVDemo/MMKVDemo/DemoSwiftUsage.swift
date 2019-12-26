@@ -23,6 +23,7 @@ import Foundation
 
 class DemoSwiftUsage : NSObject {
 	@objc func testSwiftFunctionality() {
+
         guard let mmkv = MMKV(mmapID: "testSwift") else {
             return
         }
