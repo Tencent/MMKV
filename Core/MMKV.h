@@ -52,6 +52,7 @@ enum MMKVMode : uint32_t {
 class MMKV {
 #ifndef MMKV_ANDROID
     MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKV_PATH_TYPE *relativePath);
+    std::string m_mmapKey;
 #else
     MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKV_PATH_TYPE *relativePath);
 

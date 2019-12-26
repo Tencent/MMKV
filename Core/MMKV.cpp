@@ -192,6 +192,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
                  relativePath->c_str());
     }
     auto kv = new MMKV(mmapID, mode, cryptKey, relativePath);
+    kv->m_mmapKey = mmapKey;
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }
@@ -200,11 +201,16 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
 void MMKV::onExit() {
     SCOPEDLOCK(g_instanceLock);
 
-    for (auto &itr : *g_instanceDic) {
-        MMKV *kv = itr.second;
+    for (auto &pair : *g_instanceDic) {
+        MMKV *kv = pair.second;
         kv->sync();
         kv->clearMemoryCache();
+        delete kv;
+        pair.second = nullptr;
     }
+
+    delete g_instanceDic;
+    g_instanceDic = nullptr;
 }
 
 const string &MMKV::mmapID() {
@@ -538,7 +544,11 @@ void MMKV::close() {
     SCOPEDLOCK(g_instanceLock);
     SCOPEDLOCK(m_lock);
 
+#ifndef MMKV_ANDROID
+    auto itr = g_instanceDic->find(m_mmapKey);
+#else
     auto itr = g_instanceDic->find(m_mmapID);
+#endif
     if (itr != g_instanceDic->end()) {
         g_instanceDic->erase(itr);
     }

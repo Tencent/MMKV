@@ -24,7 +24,7 @@
 #import <Core/ScopedLock.hpp>
 #import <Core/aes/openssl/openssl_md5.h>
 
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
 #import <UIKit/UIKit.h>
 #endif
 
@@ -48,6 +48,10 @@ enum : bool {
     IncreaseSequence = true,
 };
 
+@interface MMKV ()
+@property(nonatomic, retain) NSString *m_mmapKey;
+@end
+
 @implementation MMKV {
     NSString *m_mmapID;
     mmkv::MMKV *m_mmkv;
@@ -64,7 +68,7 @@ enum : bool {
         // protect from some old code that don't call +initializeMMKV:
         mmkv::MMKV::minimalInit([self mmkvBasePath].UTF8String);
 
-#ifdef MMKV_IOS
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
         auto appState = [UIApplication sharedApplication].applicationState;
         auto isInBackground = (appState == UIApplicationStateBackground);
         mmkv::MMKV::setIsInBackground(isInBackground);
@@ -164,6 +168,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
         kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:relativePath mode:mode];
+        kv.m_mmapKey = kvKey;
         [g_instanceDic setObject:kv forKey:kvKey];
     }
     return kv;
@@ -184,7 +189,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         m_mmkv = mmkv::MMKV::mmkvWithID(kvKey.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, relativePathPtr);
         m_mmapID = [NSString stringWithUTF8String:m_mmkv->mmapID().c_str()];
 
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+#ifdef MMKV_IOS
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(onMemoryWarning)
                                                      name:UIApplicationDidReceiveMemoryWarningNotification
@@ -196,6 +201,9 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (void)dealloc {
     [self clearMemoryCache];
+
+    // TODO: MRC
+    //[self.m_mmapKey release];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
@@ -237,7 +245,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->close();
     m_mmkv = nullptr;
 
-    [g_instanceDic removeObjectForKey:m_mmapID];
+    [g_instanceDic removeObjectForKey:self.m_mmapKey];
 }
 
 - (void)trim {
@@ -266,7 +274,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key {
-    return m_mmkv->set(value, key);
+    return m_mmkv->set((bool) value, key);
 }
 
 - (BOOL)setInt32:(int32_t)value forKey:(NSString *)key {

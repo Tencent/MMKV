@@ -141,6 +141,9 @@ using MMKVMap = std::unordered_map<NSString *, MMBuffer, KeyHasher, KeyEqualer>;
 using MMKVMap = std::unordered_map<std::string, mmkv::MMBuffer>;
 #endif // MMKV_IOS_OR_MAC
 
+template <class T>
+void unused(const T &) {}
+
 } // namespace mmkv
 
 #endif //MMKV_SRC_MMKVPREDEF_H

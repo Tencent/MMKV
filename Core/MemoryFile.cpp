@@ -227,6 +227,7 @@ extern bool mkPath(const MMKV_PATH_TYPE &str) {
     return true;
 }
 
+// TODO: reset iOS file protection
 bool createFile(const string &filePath) {
     bool ret = false;
 

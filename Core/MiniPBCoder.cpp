@@ -322,6 +322,7 @@ vector<string> MiniPBCoder::decodeOneSet() {
     vector<string> v;
 
     auto length = m_inputData->readInt32();
+    unused(length);
 
     while (!m_inputData->isAtEnd()) {
         auto value = m_inputData->readString();
@@ -335,6 +336,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
     auto block = [size, this](MMKVMap &dictionary) {
         if (size == 0) {
             auto length = m_inputData->readInt32();
+            unused(length);
         }
         while (!m_inputData->isAtEnd()) {
 #ifdef MMKV_IOS_OR_MAC

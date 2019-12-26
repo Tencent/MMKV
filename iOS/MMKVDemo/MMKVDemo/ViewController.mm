@@ -63,6 +63,7 @@
     //[swiftUsageDemo testSwiftFunctionality];
 
     [self testMultiProcess];
+    [self testMultiProcess];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
