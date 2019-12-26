@@ -46,6 +46,10 @@ MemoryFile::MemoryFile(const MMKV_PATH_TYPE &path) : m_name(path), m_fd(-1), m_p
 }
 #    endif
 
+#    ifdef MMKV_IOS
+void tryResetFileProtection(const string &path);
+#    endif
+
 bool MemoryFile::truncate(size_t size) {
     if (m_fd < 0) {
         return false;
@@ -149,6 +153,9 @@ void MemoryFile::reloadFromFile() {
                 doCleanMemoryCache(true);
             }
         }
+#    ifdef MMKV_IOS
+        tryResetFileProtection(m_name);
+#    endif
     }
 }
 
@@ -227,49 +234,6 @@ extern bool mkPath(const MMKV_PATH_TYPE &str) {
     return true;
 }
 
-// TODO: reset iOS file protection
-bool createFile(const string &filePath) {
-    bool ret = false;
-
-    // try create at once
-    auto fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
-    if (fd >= 0) {
-        close(fd);
-        ret = true;
-    } else {
-        // create parent dir
-        char *path = strdup(filePath.c_str());
-        if (!path) {
-            return false;
-        }
-        auto ptr = strrchr(path, '/');
-        if (ptr) {
-            *ptr = '\0';
-        }
-        if (mkPath(path)) {
-            // try again
-            fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
-            if (fd >= 0) {
-                close(fd);
-                ret = true;
-            } else {
-                MMKVWarning("fail to create file %s, %s", filePath.c_str(), strerror(errno));
-            }
-        }
-        free(path);
-    }
-    return ret;
-}
-
-bool removeFile(const string &nsFilePath) {
-    int ret = unlink(nsFilePath.c_str());
-    if (ret != 0) {
-        MMKVError("remove file failed. filePath=%s, err=%s", nsFilePath.c_str(), strerror(errno));
-        return false;
-    }
-    return true;
-}
-
 MMBuffer *readWholeFile(const MMKV_PATH_TYPE &path) {
     MMBuffer *buffer = nullptr;
     int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
@@ -334,6 +298,27 @@ static bool getFileSize(int fd, size_t &size) {
 int getPageSize() {
     return getpagesize();
 }
+
+#    ifdef MMKV_IOS
+void tryResetFileProtection(const string &path) {
+    @autoreleasepool {
+        NSString *nsPath = [NSString stringWithUTF8String:path.c_str()];
+        NSDictionary *attr = [[NSFileManager defaultManager] attributesOfItemAtPath:nsPath error:nullptr];
+        NSString *protection = [attr valueForKey:NSFileProtectionKey];
+        MMKVInfo("protection on [%@] is %@", nsPath, protection);
+        if ([protection isEqualToString:NSFileProtectionCompleteUntilFirstUserAuthentication] == NO) {
+            NSMutableDictionary *newAttr = [NSMutableDictionary dictionaryWithDictionary:attr];
+            [newAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
+            NSError *err = nil;
+            [[NSFileManager defaultManager] setAttributes:newAttr ofItemAtPath:nsPath error:&err];
+            if (err != nil) {
+                MMKVError("fail to set attribute %@ on [%@]: %@", NSFileProtectionCompleteUntilFirstUserAuthentication,
+                          nsPath, err);
+            }
+        }
+    }
+}
+#    endif
 
 } // namespace mmkv
 

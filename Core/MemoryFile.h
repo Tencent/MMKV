@@ -98,10 +98,8 @@ class MMBuffer;
 
 extern bool mkPath(const MMKV_PATH_TYPE &path);
 extern bool isFileExist(const MMKV_PATH_TYPE &nsFilePath);
-extern bool removeFile(const MMKV_PATH_TYPE &nsFilePath);
 extern MMBuffer *readWholeFile(const MMKV_PATH_TYPE &path);
 extern bool zeroFillFile(MMKV_FILE_HANDLE fd, size_t startPos, size_t size);
-extern bool createFile(const MMKV_PATH_TYPE &filePath);
 extern int getPageSize();
 } // namespace mmkv
 

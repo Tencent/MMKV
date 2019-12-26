@@ -130,11 +130,8 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
         return kv;
     }
     if (relativePath) {
-        // historically Android mistakenly use mmapKey as mmapID, now it's too late to make it right
-        auto deptID = mmapedKVKey(mmapID, relativePath);
-        auto filePath = mappedKVPathWithID(deptID, mode, relativePath);
-        if (!isFileExist(filePath)) {
-            if (!createFile(filePath)) {
+        if (!isFileExist(*relativePath)) {
+            if (!mkPath(*relativePath)) {
                 return nullptr;
             }
         }

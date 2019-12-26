@@ -51,6 +51,13 @@
 			remoteGlobalIDString = CB9563D723AB2D9500ACCD39;
 			remoteInfo = Core;
 		};
+		CBF344FD23B4A3E300168AC7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4892046984F00931B5F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1FD4902046984F00931B5F;
+			remoteInfo = "MMKV Static";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -242,6 +249,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				CBF344FE23B4A3E300168AC7 /* PBXTargetDependency */,
 				CBD5359523B46EB300D3A404 /* PBXTargetDependency */,
 			);
 			name = "MMKV For App Extension";
@@ -359,6 +367,11 @@
 			isa = PBXTargetDependency;
 			name = Core;
 			targetProxy = CBD5359423B46EB300D3A404 /* PBXContainerItemProxy */;
+		};
+		CBF344FE23B4A3E300168AC7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CB1FD4902046984F00931B5F /* MMKV Static */;
+			targetProxy = CBF344FD23B4A3E300168AC7 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -635,7 +648,11 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 x86_64";
+				"VALID_ARCHS[sdk=iphoneos*]" = arm64;
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 			};
 			name = Debug;
 		};
@@ -655,7 +672,11 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "";
+				"VALID_ARCHS[sdk=iphoneos*]" = arm64;
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 			};
 			name = Release;
 		};

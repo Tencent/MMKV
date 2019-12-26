@@ -215,51 +215,6 @@ bool mkPath(const MMKV_PATH_TYPE &str) {
     return true;
 }
 
-bool removeFile(const MMKV_PATH_TYPE &nsFilePath) {
-    if (!DeleteFile(nsFilePath.c_str())) {
-        MMKVError("remove file failed. filePath=%ws, %d", nsFilePath.c_str(), GetLastError());
-        return false;
-    }
-    return true;
-}
-
-extern bool createFile(const MMKV_PATH_TYPE &filePath) {
-    bool ret = false;
-
-    // try create at once
-    auto fd = CreateFile(filePath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-                         FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (fd != INVALID_HANDLE_VALUE) {
-        CloseHandle(fd);
-        ret = true;
-    } else {
-        // create parent dir
-        wchar_t *path = _wcsdup(filePath.c_str());
-        if (!path) {
-            return false;
-        }
-        auto ptr = wcsrchr(path, L'\\');
-        if (ptr) {
-            *ptr = L'\0';
-        }
-        if (mkPath(path)) {
-            // try again
-            fd = CreateFile(filePath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-                            FILE_ATTRIBUTE_NORMAL, nullptr);
-            if (fd != INVALID_HANDLE_VALUE) {
-                CloseHandle(fd);
-                ret = true;
-            } else {
-                MMKVWarning("fail to create file %ws, %d", filePath.c_str(), GetLastError());
-            }
-        }
-        free(path);
-    }
-    return ret;
-}
-
 MMBuffer *readWholeFile(const MMKV_PATH_TYPE &nsFilePath) {
     MMBuffer *buffer = nullptr;
     auto fd = CreateFile(nsFilePath.c_str(), GENERIC_READ | GENERIC_WRITE,

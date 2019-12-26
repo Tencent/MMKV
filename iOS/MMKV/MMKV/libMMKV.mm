@@ -48,12 +48,9 @@ enum : bool {
     IncreaseSequence = true,
 };
 
-@interface MMKV ()
-@property(nonatomic, retain) NSString *m_mmapKey;
-@end
-
 @implementation MMKV {
     NSString *m_mmapID;
+    NSString *m_mmapKey;
     mmkv::MMKV *m_mmkv;
 }
 
@@ -168,13 +165,17 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
         kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey relativePath:relativePath mode:mode];
-        kv.m_mmapKey = kvKey;
+        if (!kv->m_mmkv) {
+            // TODO: MRC [kv release];
+            return nil;
+        }
+        kv->m_mmapKey = kvKey;
         [g_instanceDic setObject:kv forKey:kvKey];
     }
     return kv;
 }
 
-- (instancetype)initWithMMapID:(NSString *)kvKey cryptKey:(NSData *)cryptKey relativePath:(NSString *)relativePath mode:(MMKVMode)mode {
+- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(NSString *)relativePath mode:(MMKVMode)mode {
     if (self = [super init]) {
         string pathTmp;
         if (relativePath.length > 0) {
@@ -186,7 +187,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         }
         string *relativePathPtr = pathTmp.empty() ? nullptr : &pathTmp;
         string *cryptKeyPtr = cryptKeyTmp.empty() ? nullptr : &cryptKeyTmp;
-        m_mmkv = mmkv::MMKV::mmkvWithID(kvKey.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, relativePathPtr);
+        m_mmkv = mmkv::MMKV::mmkvWithID(mmapID.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, relativePathPtr);
+        if (!m_mmkv) {
+            return self;
+        }
         m_mmapID = [NSString stringWithUTF8String:m_mmkv->mmapID().c_str()];
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
@@ -245,7 +249,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->close();
     m_mmkv = nullptr;
 
-    [g_instanceDic removeObjectForKey:self.m_mmapKey];
+    [g_instanceDic removeObjectForKey:m_mmapKey];
 }
 
 - (void)trim {

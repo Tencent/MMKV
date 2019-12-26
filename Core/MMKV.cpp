@@ -182,9 +182,8 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
         return kv;
     }
     if (relativePath) {
-        auto filePath = mappedKVPathWithID(mmapID, mode, relativePath);
-        if (!isFileExist(filePath)) {
-            if (!createFile(filePath)) {
+        if (!isFileExist(*relativePath)) {
+            if (!mkPath(*relativePath)) {
                 return nullptr;
             }
         }
