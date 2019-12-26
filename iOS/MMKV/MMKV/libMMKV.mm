@@ -189,7 +189,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         m_mmkv = mmkv::MMKV::mmkvWithID(kvKey.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, relativePathPtr);
         m_mmapID = [NSString stringWithUTF8String:m_mmkv->mmapID().c_str()];
 
-#ifdef MMKV_IOS
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(onMemoryWarning)
                                                      name:UIApplicationDidReceiveMemoryWarningNotification
@@ -210,7 +210,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 #pragma mark - Application state
 
-#ifdef MMKV_IOS
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
 - (void)onMemoryWarning {
     MMKVInfo("cleaning on memory warning %@", m_mmapID);
 

@@ -31,6 +31,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+
     NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.lingol.mmkv"].path;
     [MMKV initializeMMKV:nil groupDir:groupDir logLevel:MMKVLogInfo];
 
