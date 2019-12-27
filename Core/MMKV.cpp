@@ -46,14 +46,9 @@ using namespace mmkv;
 
 unordered_map<std::string, MMKV *> *g_instanceDic;
 ThreadLock g_instanceLock;
-static MMKV_PATH_TYPE g_rootDir;
+MMKV_PATH_TYPE g_rootDir;
 static mmkv::ErrorHandler g_errorHandler;
 size_t mmkv::DEFAULT_MMAP_SIZE;
-
-#ifdef MMKV_IOS
-static bool g_isInBackground = false;
-#    include <sys/mman.h>
-#endif
 
 #ifndef MMKV_WIN32
 constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = "specialCharacter";
@@ -143,18 +138,7 @@ void initialize() {
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
-static ThreadOnceToken once_control = ThreadOnceUninitialized;
-
-#ifdef MMKV_IOS_OR_MAC
-void MMKV::minimalInit(MMKV_PATH_TYPE defaultRootDir) {
-    ThreadLock::ThreadOnce(&once_control, initialize);
-
-    g_rootDir = defaultRootDir;
-    mkPath(g_rootDir);
-
-    MMKVInfo("default root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
-}
-#endif
+ThreadOnceToken once_control = ThreadOnceUninitialized;
 
 void MMKV::initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel) {
     g_currentLogLevel = logLevel;
@@ -591,45 +575,6 @@ void MMKV::trim() {
 
     MMKVInfo("finish trim %s from %zu to %zu", m_mmapID.c_str(), oldSize, fileSize);
 }
-
-// @finally in C++ stype
-template <typename F>
-struct FinalAction {
-    FinalAction(F f) : m_func{f} {}
-    ~FinalAction() { m_func(); }
-
-private:
-    F m_func;
-};
-
-#ifdef MMKV_IOS
-bool MMKV::protectFromBackgroundWriting(size_t size, WriteBlock block) {
-    if (g_isInBackground) {
-        // calc ptr to be mlock()
-        auto writePtr = (size_t) m_output->curWritePointer();
-        auto ptr = (writePtr / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
-        size_t lockDownSize = writePtr - ptr + size;
-        if (mlock((void *) ptr, lockDownSize) != 0) {
-            MMKVError("fail to mlock [%s], %s", m_mmapID.c_str(), strerror(errno));
-            // just fail on this condition, otherwise app will crash anyway
-            //block(m_output);
-            return false;
-        } else {
-            FinalAction cleanup([=] { munlock((void *) ptr, lockDownSize); });
-            try {
-                block(m_output);
-            } catch (std::exception &exception) {
-                MMKVError("%s", exception.what());
-                return false;
-            }
-        }
-    } else {
-        block(m_output);
-    }
-
-    return true;
-}
-#endif
 
 // since we use append mode, when -[setData: forKey:] many times, space may not be enough
 // try a full rewrite to make space
@@ -1337,55 +1282,6 @@ size_t MMKV::getValueSize(MMKV_KEY_TYPE key, bool actualSize) {
     return data.length();
 }
 
-#ifdef MMKV_IOS_OR_MAC
-
-bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
-        return false;
-    }
-    if (!obj) {
-        removeValueForKey(key);
-        return true;
-    }
-    MMBuffer data;
-    if (MiniPBCoder::isCompatibleObject(obj)) {
-        data = MiniPBCoder::encodeDataWithObject(obj);
-    } else {
-        /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
-            auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
-            data = MMBuffer((void *) tmp.bytes, tmp.length);
-        }
-    }
-
-    return setDataForKey(std::move(data), key);
-}
-
-NSObject *MMKV::getObject(MMKV_KEY_TYPE key, Class cls) {
-    if (MMKV_IS_KEY_EMPTY(key) || !cls) {
-        return nil;
-    }
-    SCOPEDLOCK(m_lock);
-    auto &data = getDataForKey(key);
-    if (data.length() > 0) {
-        if (MiniPBCoder::isCompatibleClass(cls)) {
-            try {
-                auto result = MiniPBCoder::decodeObject(data, cls);
-                return result;
-            } catch (std::exception &exception) {
-                MMKVError("%s", exception.what());
-            }
-        } else {
-            if ([cls conformsToProtocol:@protocol(NSCoding)]) {
-                auto tmp = [NSData dataWithBytesNoCopy:data.getPtr() length:data.length() freeWhenDone:NO];
-                return [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
-            }
-        }
-    }
-    return nil;
-}
-
-#endif // MMKV_IOS_OR_MAC
-
 int32_t MMKV::writeValueToBuffer(MMKV_KEY_TYPE key, void *ptr, int32_t size) {
     if (MMKV_IS_KEY_EMPTY(key)) {
         return -1;
@@ -1450,66 +1346,7 @@ void MMKV::removeValueForKey(MMKV_KEY_TYPE key) {
     removeDataForKey(key);
 }
 
-#ifdef MMKV_IOS_OR_MAC
-
-NSArray *MMKV::allKeys() {
-    SCOPEDLOCK(m_lock);
-    checkLoadData();
-
-    NSMutableArray *keys = [NSMutableArray array];
-    for (const auto &pair : m_dic) {
-        [keys addObject:pair.first];
-    }
-    return keys;
-}
-
-void MMKV::removeValuesForKeys(NSArray *arrKeys) {
-    if (arrKeys.count == 0) {
-        return;
-    }
-    if (arrKeys.count == 1) {
-        return removeValueForKey(arrKeys[0]);
-    }
-
-    SCOPEDLOCK(m_lock);
-    SCOPEDLOCK(m_exclusiveProcessLock);
-    checkLoadData();
-
-    size_t deleteCount = 0;
-    for (NSString *key in arrKeys) {
-        auto itr = m_dic.find(key);
-        if (itr != m_dic.end()) {
-            [itr->first release];
-            m_dic.erase(itr);
-            deleteCount++;
-        }
-    }
-    if (deleteCount > 0) {
-        m_hasFullWriteback = false;
-
-        fullWriteback();
-    }
-}
-
-void MMKV::enumerateKeys(EnumerateBlock block) {
-    if (block == nil) {
-        return;
-    }
-    SCOPEDLOCK(m_lock);
-    checkLoadData();
-
-    MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-    for (const auto &pair : m_dic) {
-        BOOL stop = NO;
-        block(pair.first, &stop);
-        if (stop) {
-            break;
-        }
-    }
-    MMKVInfo("enumerate [%s] finish", m_mmapID.c_str());
-}
-
-#else
+#ifndef MMKV_IOS_OR_MAC
 
 vector<MMKV::MMKV_KEY_CLEAN_TYPE> MMKV::allKeys() {
     SCOPEDLOCK(m_lock);
@@ -1538,9 +1375,6 @@ void MMKV::removeValuesForKeys(const vector<MMKV_KEY_CLEAN_TYPE> &arrKeys) {
     for (const auto &key : arrKeys) {
         auto itr = m_dic.find(key);
         if (itr != m_dic.end()) {
-#    ifdef MMKV_IOS_OR_MAC
-            [itr->first release];
-#    endif
             m_dic.erase(itr);
             deleteCount++;
         }
@@ -1637,15 +1471,6 @@ void MMKV::setLogLevel(MMKVLogLevel level) {
     g_currentLogLevel = level;
 }
 
-#ifdef MMKV_IOS
-void MMKV::setIsInBackground(bool isInBackground) {
-    SCOPEDLOCK(g_instanceLock);
-
-    g_isInBackground = isInBackground;
-    MMKVInfo("g_isInBackground:%d", g_isInBackground);
-}
-#endif
-
 MMKV_NAMESPACE_END
 
 static void mkSpecialCharacterFileDirectory() {
@@ -1704,8 +1529,7 @@ string mmapedKVKey(const string &mmapID, MMKV_PATH_TYPE *relativePath) {
     return mmapID;
 }
 
-MMKV_PATH_TYPE
-mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath) {
+MMKV_PATH_TYPE mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath) {
 #ifndef MMKV_ANDROID
     if (relativePath) {
 #else

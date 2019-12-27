@@ -22,19 +22,21 @@
 #include "../MMKVPredef.h"
 
 #if MMKV_EMBED_ZLIB
+
 #    include "zlib/zconf.h"
 
 namespace zlib {
 
 uLong crc32(uLong crc, const Bytef *buf, z_size_t len);
 
-}
+} // namespace zlib
 
 #    define CRC32(crc, buf, len) zlib::crc32(crc, buf, len)
 
 #else
 
 #    include <zlib.h>
+
 #    define CRC32(crc, buf, len) ::crc32(crc, buf, len)
 
 #endif
