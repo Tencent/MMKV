@@ -65,12 +65,12 @@ public:
 
     int32_t readFixed32();
 
-    std::string readString();
-
     MMBuffer readData();
 
-#ifdef MMKV_IOS_OR_MAC
-    NSString *readNSString();
+#ifndef MMKV_IOS_OR_MAC
+    std::string readString();
+#else
+    NSString *readString();
     NSData *readNSData();
 #endif
 };

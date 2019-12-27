@@ -299,27 +299,6 @@ int getPageSize() {
     return getpagesize();
 }
 
-#    ifdef MMKV_IOS
-void tryResetFileProtection(const string &path) {
-    @autoreleasepool {
-        NSString *nsPath = [NSString stringWithUTF8String:path.c_str()];
-        NSDictionary *attr = [[NSFileManager defaultManager] attributesOfItemAtPath:nsPath error:nullptr];
-        NSString *protection = [attr valueForKey:NSFileProtectionKey];
-        MMKVInfo("protection on [%@] is %@", nsPath, protection);
-        if ([protection isEqualToString:NSFileProtectionCompleteUntilFirstUserAuthentication] == NO) {
-            NSMutableDictionary *newAttr = [NSMutableDictionary dictionaryWithDictionary:attr];
-            [newAttr setObject:NSFileProtectionCompleteUntilFirstUserAuthentication forKey:NSFileProtectionKey];
-            NSError *err = nil;
-            [[NSFileManager defaultManager] setAttributes:newAttr ofItemAtPath:nsPath error:&err];
-            if (err != nil) {
-                MMKVError("fail to set attribute %@ on [%@]: %@", NSFileProtectionCompleteUntilFirstUserAuthentication,
-                          nsPath, err);
-            }
-        }
-    }
-}
-#    endif
-
 } // namespace mmkv
 
 #endif // MMKV_WIN32

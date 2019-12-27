@@ -69,11 +69,11 @@ public:
 
     void writeBool(bool value);
 
-    void writeString(const std::string &value);
-
     void writeData(const MMBuffer &value);
 
-#ifdef MMKV_IOS_OR_MAC
+#ifndef MMKV_IOS_OR_MAC
+    void writeString(const std::string &value);
+#else
     void writeString(__unsafe_unretained NSString *value);
 #endif
 };

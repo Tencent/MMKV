@@ -32,10 +32,11 @@ namespace mmkv {
 
 enum PBEncodeItemType {
     PBEncodeItemType_None,
-    PBEncodeItemType_String,
     PBEncodeItemType_Data,
     PBEncodeItemType_Container,
-#ifdef MMKV_IOS_OR_MAC
+#ifndef MMKV_IOS_OR_MAC
+    PBEncodeItemType_String,
+#else
     PBEncodeItemType_NSString,
     PBEncodeItemType_NSData,
     PBEncodeItemType_NSDate,
@@ -47,9 +48,10 @@ struct PBEncodeItem {
     uint32_t compiledSize;
     uint32_t valueSize;
     union {
-        const std::string *strValue;
         const MMBuffer *bufferValue;
-#ifdef MMKV_IOS_OR_MAC
+#ifndef MMKV_IOS_OR_MAC
+        const std::string *strValue;
+#else
         void *objectValue;
         void *tmpObjectValue; // this object should release on dealloc
 #endif

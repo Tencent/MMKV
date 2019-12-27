@@ -899,11 +899,12 @@ bool MMKV::reKey(const string &cryptKey) {
     return false;
 }
 
+// TODO: this looks like wrong after iv changes
 void MMKV::checkReSetCryptKey(const string *cryptKey) {
     SCOPEDLOCK(m_lock);
 
     if (m_crypter) {
-        if (cryptKey) {
+        if (cryptKey && cryptKey->length() > 0) {
             string oldKey = this->cryptKey();
             if (oldKey != *cryptKey) {
                 MMKVInfo("setting new aes key");
@@ -923,7 +924,7 @@ void MMKV::checkReSetCryptKey(const string *cryptKey) {
             checkLoadData();
         }
     } else {
-        if (cryptKey) {
+        if (cryptKey && cryptKey->length() > 0) {
             MMKVInfo("setting new aes key");
             auto ptr = cryptKey->data();
             m_crypter = new AESCrypt(ptr, cryptKey->length());
@@ -976,30 +977,6 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
 }
 
 // set & get
-
-bool MMKV::set(const char *value, MMKV_KEY_TYPE key) {
-    if (!value) {
-        removeValueForKey(key);
-        return true;
-    }
-    return set(string(value), key);
-}
-
-bool MMKV::set(const string &value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
-        return false;
-    }
-    auto data = MiniPBCoder::encodeDataWithObject(value);
-    return setDataForKey(std::move(data), key);
-}
-
-bool MMKV::set(const MMBuffer &value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
-        return false;
-    }
-    auto data = MiniPBCoder::encodeDataWithObject(value);
-    return setDataForKey(std::move(data), key);
-}
 
 bool MMKV::set(bool value, MMKV_KEY_TYPE key) {
     if (MMKV_IS_KEY_EMPTY(key)) {
@@ -1085,6 +1062,32 @@ bool MMKV::set(double value, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
+#ifndef MMKV_IOS_OR_MAC
+
+bool MMKV::set(const char *value, MMKV_KEY_TYPE key) {
+    if (!value) {
+        removeValueForKey(key);
+        return true;
+    }
+    return set(string(value), key);
+}
+
+bool MMKV::set(const string &value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
+        return false;
+    }
+    auto data = MiniPBCoder::encodeDataWithObject(value);
+    return setDataForKey(std::move(data), key);
+}
+
+bool MMKV::set(const MMBuffer &value, MMKV_KEY_TYPE key) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
+        return false;
+    }
+    auto data = MiniPBCoder::encodeDataWithObject(value);
+    return setDataForKey(std::move(data), key);
+}
+
 bool MMKV::set(const vector<string> &v, MMKV_KEY_TYPE key) {
     if (MMKV_IS_KEY_EMPTY(key)) {
         return false;
@@ -1125,6 +1128,25 @@ MMBuffer MMKV::getBytes(MMKV_KEY_TYPE key) {
     }
     return MMBuffer(0);
 }
+
+bool MMKV::getVector(MMKV_KEY_TYPE key, vector<string> &result) {
+    if (MMKV_IS_KEY_EMPTY(key)) {
+        return false;
+    }
+    SCOPEDLOCK(m_lock);
+    auto &data = getDataForKey(key);
+    if (data.length() > 0) {
+        try {
+            result = MiniPBCoder::decodeSet(data);
+            return true;
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    }
+    return false;
+}
+
+#endif // MMKV_IOS_OR_MAC
 
 bool MMKV::getBool(MMKV_KEY_TYPE key, bool defaultValue) {
     if (MMKV_IS_KEY_EMPTY(key)) {
@@ -1243,23 +1265,6 @@ double MMKV::getDouble(MMKV_KEY_TYPE key, double defaultValue) {
         }
     }
     return defaultValue;
-}
-
-bool MMKV::getVector(MMKV_KEY_TYPE key, vector<string> &result) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
-        return false;
-    }
-    SCOPEDLOCK(m_lock);
-    auto &data = getDataForKey(key);
-    if (data.length() > 0) {
-        try {
-            result = MiniPBCoder::decodeSet(data);
-            return true;
-        } catch (std::exception &exception) {
-            MMKVError("%s", exception.what());
-        }
-    }
-    return false;
 }
 
 size_t MMKV::getValueSize(MMKV_KEY_TYPE key, bool actualSize) {

@@ -38,6 +38,10 @@
 		CB95642A23AB2FCF00ACCD39 /* MemoryFile.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640E23AB2E9100ACCD39 /* MemoryFile.h */; };
 		CB95642B23AB2FDC00ACCD39 /* MMKVMetaInfo.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */; };
 		CBD723BF23B5C22800D3CDAF /* MMKV_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CBD723F323B5E59800D3CDAF /* MemoryFile_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */; };
+		CBD723F523B5E76200D3CDAF /* MiniPBCoder_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CBD723F723B5FD9E00D3CDAF /* CodedInputData_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CBD723F923B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F823B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -128,6 +132,10 @@
 		CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MMKVLog.cpp; sourceTree = "<group>"; };
 		CB95641223AB2E9100ACCD39 /* PBUtility.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = PBUtility.cpp; sourceTree = "<group>"; };
 		CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = MMKV_OSX.cpp; sourceTree = "<group>"; };
+		CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = MemoryFile_OSX.cpp; sourceTree = "<group>"; };
+		CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = MiniPBCoder_OSX.cpp; sourceTree = "<group>"; };
+		CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = CodedInputData_OSX.cpp; sourceTree = "<group>"; };
+		CBD723F823B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = CodedOutputData_OSX.cpp; sourceTree = "<group>"; };
 		CBF3450323B4BABA00168AC7 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
@@ -157,14 +165,18 @@
 			children = (
 				CB9563FC23AB2E9100ACCD39 /* aes */,
 				CB9563E523AB2E9100ACCD39 /* crc32 */,
+				CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */,
 				CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */,
 				CB9563E423AB2E9100ACCD39 /* CodedInputData.h */,
+				CBD723F823B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp */,
 				CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */,
 				CB95640C23AB2E9100ACCD39 /* CodedOutputData.h */,
 				CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */,
 				CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */,
+				CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */,
 				CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */,
 				CB95640E23AB2E9100ACCD39 /* MemoryFile.h */,
+				CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */,
 				CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */,
 				CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */,
 				CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */,
@@ -292,7 +304,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB95641823AB2E9100ACCD39 /* ThreadLock.cpp in Sources */,
+				CBD723F323B5E59800D3CDAF /* MemoryFile_OSX.cpp in Sources */,
 				CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */,
+				CBD723F523B5E76200D3CDAF /* MiniPBCoder_OSX.cpp in Sources */,
 				CB95642023AB2E9100ACCD39 /* AESCrypt.cpp in Sources */,
 				CB95641D23AB2E9100ACCD39 /* openssl_aes_cfb.cpp in Sources */,
 				CB95641B23AB2E9100ACCD39 /* openssl_cfb128.cpp in Sources */,
@@ -300,12 +314,14 @@
 				CB95641F23AB2E9100ACCD39 /* openssl_md5_dgst.cpp in Sources */,
 				CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */,
 				CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */,
+				CBD723F923B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp in Sources */,
 				CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */,
 				CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */,
 				CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */,
 				CB95641E23AB2E9100ACCD39 /* openssl_md5_one.cpp in Sources */,
 				CB95641C23AB2E9100ACCD39 /* openssl_aes_core.cpp in Sources */,
 				CB95641923AB2E9100ACCD39 /* MMBuffer.cpp in Sources */,
+				CBD723F723B5FD9E00D3CDAF /* CodedInputData_OSX.cpp in Sources */,
 				CBD723BF23B5C22800D3CDAF /* MMKV_OSX.cpp in Sources */,
 				CB95642123AB2E9100ACCD39 /* InterProcessLock.cpp in Sources */,
 			);

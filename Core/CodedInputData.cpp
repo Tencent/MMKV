@@ -85,6 +85,8 @@ bool CodedInputData::readBool() {
     return this->readRawVarint32() != 0;
 }
 
+#ifndef MMKV_IOS_OR_MAC
+
 string CodedInputData::readString() {
     int32_t size = this->readRawVarint32();
     if (size <= (m_size - m_position) && size > 0) {
@@ -97,6 +99,8 @@ string CodedInputData::readString() {
         throw length_error("Invalid Size: " + to_string(size));
     }
 }
+
+#endif
 
 MMBuffer CodedInputData::readData() {
     int32_t size = this->readRawVarint32();
@@ -180,36 +184,6 @@ int8_t CodedInputData::readRawByte() {
 }
 
 #ifdef MMKV_IOS_OR_MAC
-NSString *CodedInputData::readNSString() {
-    int32_t size = this->readRawVarint32();
-    if (size <= (m_size - m_position) && size > 0) {
-        NSString *result =
-            [[[NSString alloc] initWithBytes:(m_ptr + m_position) length:size encoding:NSUTF8StringEncoding]
-                autorelease];
-        m_position += size;
-        return result;
-    } else if (size == 0) {
-        return @"";
-    } else if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    } else {
-        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
-    }
-    return nil;
-}
-
-NSData *CodedInputData::readNSData() {
-    int32_t size = this->readRawVarint32();
-    if (size <= m_size - m_position && size > 0) {
-        NSData *result = [NSData dataWithBytes:(m_ptr + m_position) length:size];
-        m_position += size;
-        return result;
-    } else if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-        return nil;
-    }
-    return nil;
-}
 #endif // MMKV_IOS_OR_MAC
 
 } // namespace mmkv

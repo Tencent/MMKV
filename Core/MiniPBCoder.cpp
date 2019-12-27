@@ -65,10 +65,6 @@ void MiniPBCoder::writeRootObject() {
     for (size_t index = 0, total = m_encodeItems->size(); index < total; index++) {
         PBEncodeItem *encodeItem = &(*m_encodeItems)[index];
         switch (encodeItem->type) {
-            case PBEncodeItemType_String: {
-                m_outputData->writeString(*(encodeItem->value.strValue));
-                break;
-            }
             case PBEncodeItemType_Data: {
                 m_outputData->writeData(*(encodeItem->value.bufferValue));
                 break;
@@ -77,7 +73,12 @@ void MiniPBCoder::writeRootObject() {
                 m_outputData->writeRawVarint32(encodeItem->valueSize);
                 break;
             }
-#ifdef MMKV_IOS_OR_MAC
+#ifndef MMKV_IOS_OR_MAC
+            case PBEncodeItemType_String: {
+                m_outputData->writeString(*(encodeItem->value.strValue));
+                break;
+            }
+#else
             case PBEncodeItemType_NSString: {
                 m_outputData->writeRawVarint32(encodeItem->valueSize);
                 if (encodeItem->valueSize > 0 && encodeItem->value.tmpObjectValue != nullptr) {
@@ -110,20 +111,6 @@ void MiniPBCoder::writeRootObject() {
     }
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const string &str) {
-    m_encodeItems->push_back(PBEncodeItem());
-    PBEncodeItem *encodeItem = &(m_encodeItems->back());
-    size_t index = m_encodeItems->size() - 1;
-    {
-        encodeItem->type = PBEncodeItemType_String;
-        encodeItem->value.strValue = &str;
-        encodeItem->valueSize = static_cast<int32_t>(str.size());
-    }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
-
-    return index;
-}
-
 size_t MiniPBCoder::prepareObjectForEncode(const MMBuffer &buffer) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
@@ -138,35 +125,13 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMBuffer &buffer) {
     return index;
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const vector<string> &v) {
-    m_encodeItems->push_back(PBEncodeItem());
-    PBEncodeItem *encodeItem = &(m_encodeItems->back());
-    size_t index = m_encodeItems->size() - 1;
-    {
-        encodeItem->type = PBEncodeItemType_Container;
-        encodeItem->value.strValue = nullptr;
-
-        for (const auto &str : v) {
-            size_t itemIndex = prepareObjectForEncode(str);
-            if (itemIndex < m_encodeItems->size()) {
-                (*m_encodeItems)[index].valueSize += (*m_encodeItems)[itemIndex].compiledSize;
-            }
-        }
-
-        encodeItem = &(*m_encodeItems)[index];
-    }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
-
-    return index;
-}
-
 size_t MiniPBCoder::prepareObjectForEncode(const MMKVMap &map) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
     size_t index = m_encodeItems->size() - 1;
     {
         encodeItem->type = PBEncodeItemType_Container;
-        encodeItem->value.strValue = nullptr;
+        encodeItem->value.bufferValue = nullptr;
 
         for (const auto &itr : map) {
             const auto &key = itr.first;
@@ -198,47 +163,9 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVMap &map) {
     return index;
 }
 
-#ifdef MMKV_IOS_OR_MAC
-
-size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
-    if (!obj) {
-        return m_encodeItems->size();
-    }
-    m_encodeItems->push_back(PBEncodeItem());
-    PBEncodeItem *encodeItem = &(m_encodeItems->back());
-    size_t index = m_encodeItems->size() - 1;
-
-    if ([obj isKindOfClass:[NSString class]]) {
-        NSString *str = (NSString *) obj;
-        encodeItem->type = PBEncodeItemType_NSString;
-        NSData *buffer = [[str dataUsingEncoding:NSUTF8StringEncoding] retain];
-        encodeItem->value.tmpObjectValue = (__bridge void *) buffer;
-        encodeItem->valueSize = static_cast<int32_t>(buffer.length);
-    } else if ([obj isKindOfClass:[NSDate class]]) {
-        NSDate *oDate = (NSDate *) obj;
-        encodeItem->type = PBEncodeItemType_NSDate;
-        encodeItem->value.objectValue = (__bridge void *) oDate;
-        encodeItem->valueSize = pbDoubleSize(oDate.timeIntervalSince1970);
-        encodeItem->compiledSize = encodeItem->valueSize;
-        return index; // double has fixed compilesize
-    } else if ([obj isKindOfClass:[NSData class]]) {
-        NSData *oData = (NSData *) obj;
-        encodeItem->type = PBEncodeItemType_NSData;
-        encodeItem->value.objectValue = (__bridge void *) oData;
-        encodeItem->valueSize = static_cast<int32_t>(oData.length);
-    } else {
-        m_encodeItems->pop_back();
-        MMKVError("%@ not recognized", NSStringFromClass(obj.class));
-        return m_encodeItems->size();
-    }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
-
-    return index;
-}
-
-MMBuffer MiniPBCoder::getEncodeData(__unsafe_unretained NSObject *obj) {
+MMBuffer MiniPBCoder::getEncodeData(const MMKVMap &map) {
     m_encodeItems = new vector<PBEncodeItem>();
-    size_t index = prepareObjectForEncode(obj);
+    size_t index = prepareObjectForEncode(map);
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
     if (oItem && oItem->compiledSize > 0) {
         m_outputBuffer = new MMBuffer(oItem->compiledSize);
@@ -247,10 +174,46 @@ MMBuffer MiniPBCoder::getEncodeData(__unsafe_unretained NSObject *obj) {
         writeRootObject();
     }
 
-    return move(*m_outputBuffer);
+    return std::move(*m_outputBuffer);
 }
 
-#endif // MMKV_IOS_OR_MAC
+#ifndef MMKV_IOS_OR_MAC
+
+size_t MiniPBCoder::prepareObjectForEncode(const string &str) {
+    m_encodeItems->push_back(PBEncodeItem());
+    PBEncodeItem *encodeItem = &(m_encodeItems->back());
+    size_t index = m_encodeItems->size() - 1;
+    {
+        encodeItem->type = PBEncodeItemType_String;
+        encodeItem->value.strValue = &str;
+        encodeItem->valueSize = static_cast<int32_t>(str.size());
+    }
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+
+    return index;
+}
+
+size_t MiniPBCoder::prepareObjectForEncode(const vector<string> &v) {
+    m_encodeItems->push_back(PBEncodeItem());
+    PBEncodeItem *encodeItem = &(m_encodeItems->back());
+    size_t index = m_encodeItems->size() - 1;
+    {
+        encodeItem->type = PBEncodeItemType_Container;
+        encodeItem->value.bufferValue = nullptr;
+
+        for (const auto &str : v) {
+            size_t itemIndex = prepareObjectForEncode(str);
+            if (itemIndex < m_encodeItems->size()) {
+                (*m_encodeItems)[index].valueSize += (*m_encodeItems)[itemIndex].compiledSize;
+            }
+        }
+
+        encodeItem = &(*m_encodeItems)[index];
+    }
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+
+    return index;
+}
 
 MMBuffer MiniPBCoder::getEncodeData(const string &str) {
     m_encodeItems = new vector<PBEncodeItem>();
@@ -294,22 +257,6 @@ MMBuffer MiniPBCoder::getEncodeData(const vector<string> &v) {
     return move(*m_outputBuffer);
 }
 
-MMBuffer MiniPBCoder::getEncodeData(const MMKVMap &map) {
-    m_encodeItems = new vector<PBEncodeItem>();
-    size_t index = prepareObjectForEncode(map);
-    PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
-    if (oItem && oItem->compiledSize > 0) {
-        m_outputBuffer = new MMBuffer(oItem->compiledSize);
-        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
-
-        writeRootObject();
-    }
-
-    return std::move(*m_outputBuffer);
-}
-
-// decode
-
 string MiniPBCoder::decodeOneString() {
     return m_inputData->readString();
 }
@@ -339,22 +286,6 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
             unused(length);
         }
         while (!m_inputData->isAtEnd()) {
-#ifdef MMKV_IOS_OR_MAC
-            const auto &key = m_inputData->readNSString();
-            if (key.length > 0) {
-                auto value = m_inputData->readData();
-                if (value.length() > 0) {
-                    dictionary[key] = move(value);
-                    [key retain];
-                } else {
-                    auto itr = dictionary.find(key);
-                    if (itr != dictionary.end()) {
-                        dictionary.erase(itr);
-                        [itr->first release];
-                    }
-                }
-            }
-#else
             const auto &key = m_inputData->readString();
             if (key.length() > 0) {
                 auto value = m_inputData->readData();
@@ -364,7 +295,6 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
                     dictionary.erase(key);
                 }
             }
-#endif
         }
     };
 
@@ -379,11 +309,6 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
             MMKVMap tmpDic;
             block(tmpDic);
             dic.swap(tmpDic);
-#ifdef MMKV_IOS_OR_MAC
-            for (auto &pair : tmpDic) {
-                [pair.first release];
-            }
-#endif
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
@@ -400,6 +325,13 @@ MMBuffer MiniPBCoder::decodeBytes(const MMBuffer &oData) {
     return oCoder.decodeOneBytes();
 }
 
+vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
+    MiniPBCoder oCoder(&oData);
+    return oCoder.decodeOneSet();
+}
+
+#endif // MMKV_IOS_OR_MAC
+
 void MiniPBCoder::decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size) {
     MiniPBCoder oCoder(&oData);
     oCoder.decodeOneMap(dic, size, false);
@@ -409,70 +341,5 @@ void MiniPBCoder::greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t si
     MiniPBCoder oCoder(&oData);
     oCoder.decodeOneMap(dic, size, true);
 }
-
-vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
-    MiniPBCoder oCoder(&oData);
-    return oCoder.decodeOneSet();
-}
-
-#ifdef MMKV_IOS_OR_MAC
-
-NSObject *MiniPBCoder::decodeObject(const MMBuffer &oData, Class cls) {
-    if (!cls || oData.length() == 0) {
-        return nil;
-    }
-    CodedInputData input(oData.getPtr(), static_cast<int32_t>(oData.length()));
-    if (cls == [NSString class]) {
-        return input.readNSString();
-    } else if (cls == [NSMutableString class]) {
-        return [NSMutableString stringWithString:input.readNSString()];
-    } else if (cls == [NSData class]) {
-        return input.readNSData();
-    } else if (cls == [NSMutableData class]) {
-        return [NSMutableData dataWithData:input.readNSData()];
-    } else if (cls == [NSDate class]) {
-        return [NSDate dateWithTimeIntervalSince1970:input.readDouble()];
-    } else {
-        MMKVError("%@ not recognized", NSStringFromClass(cls));
-    }
-
-    return nil;
-}
-
-bool MiniPBCoder::isCompatibleObject(NSObject *obj) {
-    if ([obj isKindOfClass:[NSString class]]) {
-        return true;
-    }
-    if ([obj isKindOfClass:[NSData class]]) {
-        return true;
-    }
-    if ([obj isKindOfClass:[NSDate class]]) {
-        return true;
-    }
-
-    return false;
-}
-
-bool MiniPBCoder::isCompatibleClass(Class cls) {
-    if (cls == [NSString class]) {
-        return true;
-    }
-    if (cls == [NSMutableString class]) {
-        return true;
-    }
-    if (cls == [NSData class]) {
-        return true;
-    }
-    if (cls == [NSMutableData class]) {
-        return true;
-    }
-    if (cls == [NSDate class]) {
-        return true;
-    }
-
-    return false;
-}
-
-#endif // MMKV_IOS_OR_MAC
 
 } // namespace mmkv

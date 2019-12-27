@@ -55,22 +55,28 @@ add_library(core
         MMKVLog_Android.cpp
         CodedInputData.h
         CodedInputData.cpp
+        CodedInputData_OSX.cpp
         CodedOutputData.h
         CodedOutputData.cpp
+        CodedOutputData_OSX.cpp
         PBUtility.h
         PBUtility.cpp
         MiniPBCoder.h
         MiniPBCoder.cpp
+        MiniPBCoder_OSX.cpp
         MMBuffer.h
         MMBuffer.cpp
         InterProcessLock.h
         InterProcessLock.cpp
+        InterProcessLock_Win32.cpp
         MemoryFile.h
         MemoryFile.cpp
         MemoryFile_Android.cpp
         MemoryFile_Win32.cpp
+        MemoryFile_OSX.cpp
         ThreadLock.h
         ThreadLock.cpp
+        ThreadLock_Win32.cpp
         MMKVMetaInfo.hpp
         aes/AESCrypt.h
         aes/AESCrypt.cpp
@@ -92,7 +98,6 @@ add_library(core
         crc32/zlib/crc32.h
         crc32/zlib/crc32.cpp
         MMKVPredef.h
-        ThreadLock_Win32.cpp InterProcessLock_Win32.cpp
         )
 
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

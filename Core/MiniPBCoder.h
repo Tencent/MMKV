@@ -50,22 +50,26 @@ private:
     ~MiniPBCoder();
 
     void writeRootObject();
-    size_t prepareObjectForEncode(const std::string &str);
-    size_t prepareObjectForEncode(const MMBuffer &buffer);
-    size_t prepareObjectForEncode(const std::vector<std::string> &vector);
+
     size_t prepareObjectForEncode(const MMKVMap &map);
+    size_t prepareObjectForEncode(const MMBuffer &buffer);
+
+    MMBuffer getEncodeData(const MMKVMap &map);
+
+    void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
+
+#ifndef MMKV_IOS_OR_MAC
+    size_t prepareObjectForEncode(const std::string &str);
+    size_t prepareObjectForEncode(const std::vector<std::string> &vector);
 
     MMBuffer getEncodeData(const std::string &str);
     MMBuffer getEncodeData(const MMBuffer &buffer);
     MMBuffer getEncodeData(const std::vector<std::string> &vector);
-    MMBuffer getEncodeData(const MMKVMap &map);
 
     std::string decodeOneString();
     MMBuffer decodeOneBytes();
     std::vector<std::string> decodeOneSet();
-    void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
-
-#ifdef MMKV_IOS_OR_MAC
+#else
     // NSString, NSData, NSDate
     size_t prepareObjectForEncode(__unsafe_unretained NSObject *obj);
     MMBuffer getEncodeData(__unsafe_unretained NSObject *obj);
@@ -83,19 +87,19 @@ public:
         }
     }
 
-    static std::string decodeString(const MMBuffer &oData);
-
-    static MMBuffer decodeBytes(const MMBuffer &oData);
-
-    static std::vector<std::string> decodeSet(const MMBuffer &oData);
-
     // return empty result if there's any error
     static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
 
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
 
-#ifdef MMKV_IOS_OR_MAC
+#ifndef MMKV_IOS_OR_MAC
+    static std::string decodeString(const MMBuffer &oData);
+
+    static MMBuffer decodeBytes(const MMBuffer &oData);
+
+    static std::vector<std::string> decodeSet(const MMBuffer &oData);
+#else
     // NSString, NSData, NSDate
     static NSObject *decodeObject(const MMBuffer &oData, Class cls);
 

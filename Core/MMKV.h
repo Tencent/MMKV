@@ -202,14 +202,6 @@ public:
 
     bool set(double value, MMKV_KEY_TYPE key);
 
-    bool set(const char *value, MMKV_KEY_TYPE key);
-
-    bool set(const std::string &value, MMKV_KEY_TYPE key);
-
-    bool set(const mmkv::MMBuffer &value, MMKV_KEY_TYPE key);
-
-    bool set(const std::vector<std::string> &vector, MMKV_KEY_TYPE key);
-
     // avoid unexpected type conversion (pointer to bool, etc)
     template <typename T>
     bool set(T value, MMKV_KEY_TYPE key) = delete;
@@ -218,6 +210,20 @@ public:
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKV_KEY_TYPE key);
 
     NSObject *getObject(MMKV_KEY_TYPE key, Class cls);
+#else
+    bool set(const char *value, MMKV_KEY_TYPE key);
+
+    bool set(const std::string &value, MMKV_KEY_TYPE key);
+
+    bool set(const mmkv::MMBuffer &value, MMKV_KEY_TYPE key);
+
+    bool set(const std::vector<std::string> &vector, MMKV_KEY_TYPE key);
+
+    bool getString(MMKV_KEY_TYPE key, std::string &result);
+
+    mmkv::MMBuffer getBytes(MMKV_KEY_TYPE key);
+
+    bool getVector(MMKV_KEY_TYPE key, std::vector<std::string> &result);
 #endif
 
     bool getBool(MMKV_KEY_TYPE key, bool defaultValue = false);
@@ -233,12 +239,6 @@ public:
     float getFloat(MMKV_KEY_TYPE key, float defaultValue = 0);
 
     double getDouble(MMKV_KEY_TYPE key, double defaultValue = 0);
-
-    bool getString(MMKV_KEY_TYPE key, std::string &result);
-
-    mmkv::MMBuffer getBytes(MMKV_KEY_TYPE key);
-
-    bool getVector(MMKV_KEY_TYPE key, std::vector<std::string> &result);
 
     size_t getValueSize(MMKV_KEY_TYPE key, bool acutalSize);
 

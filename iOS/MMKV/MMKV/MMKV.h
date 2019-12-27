@@ -75,6 +75,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
 
+// call this on applicationWillTerminate, it is fine if you don't call
++ (void)onExit;
+
 + (NSString *)mmkvBasePath;
 
 // if you want to change the base path, do it BEFORE getting any MMKV instance
@@ -83,6 +86,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
+
+// just reset cryptKey (will not encrypt or decrypt anything)
+// usually you should call this method after other process reKey() the inter-process mmkv
+- (void)checkReSetCryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(checkReSet(cryptKey:));
 
 - (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
 
@@ -142,6 +149,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Note: might be a little bigger than value's length
 - (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:));
 
+// return size written into buffer
+// return -1 on any error
+- (int32_t)writeValueForKey:(NSString *)key toBuffer:(NSMutableData *)buffer NS_SWIFT_NAME(writeValue(forKey:buffer:));
+
 - (BOOL)containsKey:(NSString *)key NS_SWIFT_NAME(contains(key:));
 
 - (size_t)count;
@@ -176,6 +187,9 @@ NS_ASSUME_NONNULL_BEGIN
 // unless you care about out of battery
 - (void)sync;
 - (void)async;
+
+// check if content changed by other process
+- (void)checkContentChanged;
 
 // for CrashProtected Only!!
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));

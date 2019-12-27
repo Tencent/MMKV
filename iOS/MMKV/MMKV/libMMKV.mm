@@ -264,6 +264,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return m_mmkv->reKey(key);
 }
 
+- (void)checkReSetCryptKey:(nullable NSData *)cryptKey {
+    string key;
+    if (cryptKey.length > 0) {
+        key = string((char *) cryptKey.bytes, cryptKey.length);
+    }
+    m_mmkv->checkReSetCryptKey(&key);
+}
+
 #pragma mark - set & get
 
 - (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key {
@@ -409,6 +417,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return m_mmkv->getValueSize(key, false);
 }
 
+- (int32_t)writeValueForKey:(NSString *)key toBuffer:(NSMutableData *)buffer {
+    return m_mmkv->writeValueToBuffer(key, buffer.mutableBytes, static_cast<int32_t>(buffer.length));
+}
+
 #pragma mark - enumerate
 
 - (BOOL)containsKey:(NSString *)key {
@@ -451,6 +463,18 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (void)async {
     m_mmkv->sync(MMKV_ASYNC);
+}
+
+- (void)checkContentChanged {
+    m_mmkv->checkContentChanged();
+}
+
++ (void)onExit {
+    SCOPEDLOCK(g_lock);
+
+    [g_instanceDic removeAllObjects];
+
+    mmkv::MMKV::onExit();
 }
 
 + (NSString *)mmkvBasePath {
