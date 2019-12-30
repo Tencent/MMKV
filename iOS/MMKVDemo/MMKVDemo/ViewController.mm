@@ -36,7 +36,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    // usally you can just init MMKV like this
+    // usally you can just init MMKV with default root dir like this
     //[MMKV initializeMMKV:nil];
 
     // or you can customize MMKV's root dir
@@ -59,8 +59,8 @@
     //[self testCornerSize];
     //[self testFastRemoveCornerSize];
 
-    //DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
-    //[swiftUsageDemo testSwiftFunctionality];
+    DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
+    [swiftUsageDemo testSwiftFunctionality];
 
     [self testMultiProcess];
     //[self testMultiProcess];
