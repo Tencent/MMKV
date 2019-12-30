@@ -43,7 +43,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     , m_file(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE)
     , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file.m_fileType)
     , m_crypter(nullptr)
-    , m_fileLock(m_metaFile.getFd())
+    , m_fileLock(m_metaFile.getFd(), (mode & MMKV_ASHMEM))
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
     , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 || (mode & CONTEXT_MODE_MULTI_PROCESS) != 0) {
@@ -76,7 +76,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     , m_file(ashmemFD)
     , m_metaFile(ashmemMetaFD)
     , m_crypter(nullptr)
-    , m_fileLock(m_metaFile.getFd())
+    , m_fileLock(m_metaFile.getFd(), true)
     , m_sharedProcessLock(&m_fileLock, SharedLockType)
     , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
     , m_isInterProcess(true) {

@@ -169,7 +169,7 @@ public:
     int ashmemFD() { return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_file.getFd() : -1; }
 
     int ashmemMetaFD() { return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile.getFd() : -1; }
-#endif
+#endif // MMKV_ANDROID
 
     static void onExit();
 
@@ -224,7 +224,7 @@ public:
     mmkv::MMBuffer getBytes(MMKV_KEY_TYPE key);
 
     bool getVector(MMKV_KEY_TYPE key, std::vector<std::string> &result);
-#endif
+#endif // MMKV_IOS_OR_MAC
 
     bool getBool(MMKV_KEY_TYPE key, bool defaultValue = false);
 
@@ -269,7 +269,7 @@ public:
     std::vector<MMKV_KEY_CLEAN_TYPE> allKeys();
 
     void removeValuesForKeys(const std::vector<MMKV_KEY_CLEAN_TYPE> &arrKeys);
-#endif
+#endif // MMKV_IOS_OR_MAC
 
     void removeValueForKey(MMKV_KEY_TYPE key);
 

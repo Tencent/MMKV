@@ -69,6 +69,7 @@ add_library(core
         InterProcessLock.h
         InterProcessLock.cpp
         InterProcessLock_Win32.cpp
+        InterProcessLock_Android.cpp
         MemoryFile.h
         MemoryFile.cpp
         MemoryFile_Android.cpp

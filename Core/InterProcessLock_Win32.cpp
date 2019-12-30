@@ -63,7 +63,7 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
     }
 }
 
-bool FileLock::platformUnLock(LockType lockType, bool unlockToSharedLock) {
+bool FileLock::platformUnLock(bool unlockToSharedLock) {
     /* quote from MSDN:
     * If the same range is locked with an exclusive and a shared lock,
     * two unlock operations are necessary to unlock the region;

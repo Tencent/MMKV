@@ -27,6 +27,7 @@ import android.os.IBinder;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import com.tencent.mmkv.MMKV;
+import com.tencent.mmkv.MMKVLogLevel;
 import com.tencent.mmkv.ParcelableMMKV;
 import java.util.Random;
 
@@ -50,8 +51,8 @@ public abstract class BenchMarkBaseService extends Service {
     private static final int m_loops = 1000;
     public static final String MMKV_ID = "benchmark_interprocess";
     private static final String SP_ID = "benchmark_interprocess_sp";
-    private static final String CryptKey = null;
-    //private static final String CryptKey = "Tencent MMKV";
+    public static final String CryptKey = null;
+    //public static final String CryptKey = "Tencent MMKV";
 
     @Override
     public void onCreate() {
@@ -59,10 +60,11 @@ public abstract class BenchMarkBaseService extends Service {
         Log.i("MMKV", "onCreate BenchMarkBaseService");
 
         MMKV.initialize(this);
+        //MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
         {
             long startTime = System.currentTimeMillis();
 
-            MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+            MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.MULTI_PROCESS_MODE, CryptKey);
 
             long endTime = System.currentTimeMillis();
             Log.i("MMKV", "load [" + MMKV_ID + "]: " + (endTime - startTime) + " ms");

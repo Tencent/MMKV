@@ -42,21 +42,34 @@ class FileLock {
 
     bool doLock(LockType lockType, bool wait);
     bool platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded);
-    bool platformUnLock(LockType lockType, bool unLockFirstIfNeeded);
+    bool platformUnLock(bool unLockFirstIfNeeded);
 
 #ifndef MMKV_WIN32
     bool isFileLockValid() { return m_fd >= 0; }
+#    ifdef MMKV_ANDROID
+    const bool m_isAshmem;
+    struct flock m_lockInfo;
+    bool ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded);
+    bool ashmemUnLock(bool unLockFirstIfNeeded);
+#    endif
+
 #else
     OVERLAPPED m_overLapped;
 
     bool isFileLockValid() { return m_fd != INVALID_HANDLE_VALUE; }
-#endif
+#endif // MMKV_WIN32
+
 public:
 #ifndef MMKV_WIN32
+#    ifndef MMKV_ANDROID
     explicit FileLock(MMKV_FILE_HANDLE fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+#    else
+    explicit FileLock(MMKV_FILE_HANDLE fd, bool isAshmem = false);
+#    endif // MMKV_ANDROID
 #else
     explicit FileLock(MMKV_FILE_HANDLE fd) : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
-#endif
+#endif // MMKV_WIN32
+
     bool lock(LockType lockType);
 
     bool try_lock(LockType lockType);

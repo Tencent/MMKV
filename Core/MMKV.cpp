@@ -239,7 +239,7 @@ void MMKV::loadFromFile() {
     }
     if (m_crypter) {
         if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
-            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+            m_crypter->resetIV(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
         }
     }
 
@@ -431,7 +431,8 @@ void MMKV::checkLoadData() {
         loadFromFile();
         notifyContentChanged();
     } else if (m_metaInfo.m_crcDigest != metaInfo.m_crcDigest) {
-        MMKVDebug("[%s] oldCrc %u, newCrc %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest, metaInfo.m_crcDigest);
+        MMKVDebug("[%s] oldCrc %u, newCrc %u, new actualSize %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
+                  metaInfo.m_crcDigest, metaInfo.m_actualSize);
         SCOPEDLOCK(m_sharedProcessLock);
 
         size_t fileSize = m_file.getActualFileSize();
@@ -486,7 +487,7 @@ void MMKV::clearAll() {
     unsigned char newIV[AES_KEY_LEN];
     AESCrypt::fillRandomIV(newIV);
     if (m_crypter) {
-        m_crypter->reset(newIV, sizeof(newIV));
+        m_crypter->resetIV(newIV, sizeof(newIV));
     }
     writeActualSize(0, 0, newIV, IncreaseSequence);
     m_metaFile.msync(MMKV_SYNC);
@@ -508,9 +509,9 @@ void MMKV::clearMemoryCache() {
 
     if (m_crypter) {
         if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
-            m_crypter->reset(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+            m_crypter->resetIV(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
         } else {
-            m_crypter->reset();
+            m_crypter->resetIV();
         }
     }
 
@@ -822,7 +823,7 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
     if (m_crypter) {
 #endif
         AESCrypt::fillRandomIV(newIV);
-        m_crypter->reset(newIV, sizeof(newIV));
+        m_crypter->resetIV(newIV, sizeof(newIV));
         auto ptr = allData.getPtr();
         m_crypter->encrypt(ptr, ptr, allData.length());
     }
@@ -899,7 +900,6 @@ bool MMKV::reKey(const string &cryptKey) {
     return false;
 }
 
-// TODO: this looks like wrong after iv changes
 void MMKV::checkReSetCryptKey(const string *cryptKey) {
     SCOPEDLOCK(m_lock);
 

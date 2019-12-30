@@ -73,6 +73,11 @@ static uint32_t LockType2FlockType(LockType lockType) {
 }
 
 bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded) {
+#    ifdef MMKV_ANDROID
+    if (m_isAshmem) {
+        return ashmemLock(lockType, wait, unLockFirstIfNeeded);
+    }
+#    endif
     auto realLockType = LockType2FlockType(lockType);
     int cmd = wait ? realLockType : (realLockType | LOCK_NB);
     if (unLockFirstIfNeeded) {
@@ -97,7 +102,12 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
     }
 }
 
-bool FileLock::platformUnLock(LockType lockType, bool unlockToSharedLock) {
+bool FileLock::platformUnLock(bool unlockToSharedLock) {
+#    ifdef MMKV_ANDROID
+    if (m_isAshmem) {
+        return ashmemUnLock(unlockToSharedLock);
+    }
+#    endif
     int cmd = unlockToSharedLock ? LOCK_SH : LOCK_UN;
     auto ret = flock(m_fd, cmd);
     if (ret != 0) {
@@ -137,7 +147,7 @@ bool FileLock::unlock(LockType lockType) {
             unlockToSharedLock = true;
         }
     }
-    return platformUnLock(lockType, unlockToSharedLock);
+    return platformUnLock(unlockToSharedLock);
 }
 
 } // namespace mmkv

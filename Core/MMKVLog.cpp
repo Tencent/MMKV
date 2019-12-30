@@ -38,7 +38,7 @@ MMKV_NAMESPACE_END
 
 using namespace mmkv;
 
-static const char *_getFileName(const char *path) {
+const char *_getFileName(const char *path) {
     const char *ptr = strrchr(path, '/');
     if (!ptr) {
         ptr = strrchr(path, '\\');
@@ -51,6 +51,7 @@ static const char *_getFileName(const char *path) {
 }
 
 #    ifndef MMKV_ANDROID
+
 static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
     switch (level) {
         case MMKVLogDebug:
@@ -67,6 +68,7 @@ static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
 }
 
 #        ifdef MMKV_IOS_OR_MAC
+
 void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         NSString *nsFormat = [NSString stringWithUTF8String:format];
@@ -84,7 +86,9 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
         }
     }
 }
+
 #        else
+
 void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         std::string message;
@@ -116,8 +120,9 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
         }
     }
 }
-#        endif
 
-#    endif
+#        endif // MMKV_IOS_OR_MAC
+
+#    endif // MMKV_ANDROID
 
 #endif // ENABLE_MMKV_LOG

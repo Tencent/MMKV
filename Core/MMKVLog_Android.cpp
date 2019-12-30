@@ -25,9 +25,12 @@
 #        include <android/log.h>
 #        include <cstdarg>
 #        include <string>
+
 using namespace std;
 
 constexpr auto APP_NAME = "MMKV";
+
+extern const char *_getFileName(const char *path);
 
 static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
     switch (level) {
@@ -65,10 +68,13 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
             va_end(args);
         }
 
+        auto filename = _getFileName(file);
+
         if (g_logHandler) {
-            g_logHandler(level, file, line, func, message);
+            g_logHandler(level, filename, line, func, message);
         } else {
-            __android_log_print(MMKVLogLevelDesc(level), APP_NAME, "<%s:%d::%s> %s", file, line, func, message.c_str());
+            auto desc = MMKVLogLevelDesc(level);
+            __android_log_print(desc, APP_NAME, "<%s:%d::%s> %s", filename, line, func, message.c_str());
         }
     }
 }

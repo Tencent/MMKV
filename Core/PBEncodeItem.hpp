@@ -53,7 +53,7 @@ struct PBEncodeItem {
         const std::string *strValue;
 #else
         void *objectValue;
-        void *tmpObjectValue; // this object should release on dealloc
+        void *tmpObjectValue; // this object should be released on dealloc
 #endif
     } value;
 
@@ -80,6 +80,7 @@ struct PBEncodeItem {
         : type(other.type), compiledSize(other.compiledSize), valueSize(other.valueSize), value(other.value) {
         // omit unnecessary CFRetain() & CFRelease()
         other.type = PBEncodeItemType_None;
+        //other.value = {0};
     }
 
     // in fact this is never called in MMKV's usage, just provide it to meet std::vector's requirements

@@ -33,7 +33,7 @@ AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivL
     if (key && keyLength > 0) {
         memcpy(m_key, key, (keyLength > AES_KEY_LEN) ? AES_KEY_LEN : keyLength);
 
-        reset(iv, ivLength);
+        resetIV(iv, ivLength);
 
         m_aesKey = new AES_KEY;
         memset(m_aesKey, 0, sizeof(AES_KEY));
@@ -47,7 +47,7 @@ AESCrypt::~AESCrypt() {
     m_aesKey = nullptr;
 }
 
-void AESCrypt::reset(const void *iv, size_t ivLength) {
+void AESCrypt::resetIV(const void *iv, size_t ivLength) {
     m_number = 0;
     if (iv && ivLength > 0) {
         memcpy(m_vector, iv, (ivLength > AES_KEY_LEN) ? AES_KEY_LEN : ivLength);

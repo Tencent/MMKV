@@ -50,7 +50,7 @@ public:
 
     void decrypt(const void *input, void *output, size_t length);
 
-    void reset(const void *iv = nullptr, size_t ivLength = 0);
+    void resetIV(const void *iv = nullptr, size_t ivLength = 0);
 
     // output must have [AES_KEY_LEN] space
     void getKey(void *output) const;

@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
                 baseline.sharedPreferencesBaselineTest();
                 baseline.sqliteBaselineTest();
 
-                //testInterProcessReKey();
+                testInterProcessReKey();
                 //testInterProcessLockPhase2();
             }
         });
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
         //testHolderForMultiThread();
 
         //prepareInterProcessAshmem();
-        //prepareInterProcessAshmemByContentProvider(KEY_1);
+        prepareInterProcessAshmemByContentProvider(KEY_1);
 
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
     }
 
     private void testInterProcessLogic() {
-        MMKV mmkv = MMKV.mmkvWithID(MyService.MMKV_ID, MMKV.MULTI_PROCESS_MODE);
+        MMKV mmkv = MMKV.mmkvWithID(MyService.MMKV_ID, MMKV.MULTI_PROCESS_MODE, MyService.CryptKey);
         mmkv.putInt(MyService.CMD_ID, 1024);
         Log.d("mmkv in main", "" + mmkv.decodeInt(MyService.CMD_ID));
 
