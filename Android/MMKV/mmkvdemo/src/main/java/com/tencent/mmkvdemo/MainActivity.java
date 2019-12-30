@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
                 baseline.sharedPreferencesBaselineTest();
                 baseline.sqliteBaselineTest();
 
-                testInterProcessReKey();
+                //testInterProcessReKey();
                 //testInterProcessLockPhase2();
             }
         });
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
         //testHolderForMultiThread();
 
         //prepareInterProcessAshmem();
-        prepareInterProcessAshmemByContentProvider(KEY_1);
+        //prepareInterProcessAshmemByContentProvider(KEY_1);
 
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {

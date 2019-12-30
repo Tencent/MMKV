@@ -165,15 +165,16 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
         MMKV *kv = itr->second;
         return kv;
     }
+
     if (relativePath) {
-        if (!isFileExist(*relativePath)) {
-            if (!mkPath(*relativePath)) {
-                return nullptr;
-            }
+        MMKV_PATH_TYPE specialPath = (*relativePath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+        if (!isFileExist(specialPath)) {
+            mkPath(specialPath);
         }
         MMKVInfo("prepare to load %s (id %s) from relativePath %s", mmapID.c_str(), mmapKey.c_str(),
                  relativePath->c_str());
     }
+
     auto kv = new MMKV(mmapID, mode, cryptKey, relativePath);
     kv->m_mmapKey = mmapKey;
     (*g_instanceDic)[mmapKey] = kv;
@@ -839,7 +840,7 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
     if (!ret) {
         // revert everything
         if (m_crypter) {
-            m_crypter->reset(oldIV);
+            m_crypter->resetIV(oldIV);
         }
         delete m_output;
         m_output = new CodedOutputData(ptr + offset, m_file.getFileSize() - offset);
