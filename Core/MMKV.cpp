@@ -943,11 +943,11 @@ bool MMKV::isFileValid() {
 // crc
 
 // assuming m_file is valid
-bool MMKV::checkFileCRCValid(size_t acutalSize, uint32_t crcDigest) {
+bool MMKV::checkFileCRCValid(size_t actualSize, uint32_t crcDigest) {
     auto ptr = (uint8_t *) m_file.getMemory();
     if (ptr) {
         constexpr auto offset = pbFixed32Size(0);
-        m_crcDigest = (uint32_t) CRC32(0, (const uint8_t *) ptr + offset, (uint32_t) acutalSize);
+        m_crcDigest = (uint32_t) CRC32(0, (const uint8_t *) ptr + offset, (uint32_t) actualSize);
 
         if (m_crcDigest == crcDigest) {
             return true;

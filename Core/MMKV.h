@@ -104,7 +104,7 @@ class MMKV {
 
     bool isFileValid();
 
-    bool checkFileCRCValid(size_t acutalSize, uint32_t crcDigest);
+    bool checkFileCRCValid(size_t actualSize, uint32_t crcDigest);
 
     void recaculateCRCDigestWithIV(const void *iv);
 
@@ -240,7 +240,7 @@ public:
 
     double getDouble(MMKV_KEY_TYPE key, double defaultValue = 0);
 
-    size_t getValueSize(MMKV_KEY_TYPE key, bool acutalSize);
+    size_t getValueSize(MMKV_KEY_TYPE key, bool actualSize);
 
     int32_t writeValueToBuffer(MMKV_KEY_TYPE key, void *ptr, int32_t size);
 
