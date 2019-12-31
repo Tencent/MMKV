@@ -62,6 +62,7 @@ bool FileLock::doLock(LockType lockType, bool wait) {
 }
 
 #ifndef MMKV_WIN32
+
 static uint32_t LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
@@ -117,7 +118,8 @@ bool FileLock::platformUnLock(bool unlockToSharedLock) {
         return true;
     }
 }
-#endif
+
+#endif // MMKV_WIN32
 
 bool FileLock::unlock(LockType lockType) {
     if (!isFileLockValid()) {
