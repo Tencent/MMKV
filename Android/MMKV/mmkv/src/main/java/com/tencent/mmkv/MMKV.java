@@ -274,13 +274,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // encryption & decryption key
     public native String cryptKey();
 
-    // transform plain text into encrypted text
-    // or vice versa by passing cryptKey = null
-    // or change existing crypt key
+    // transform plain text into encrypted text, or vice versa by passing cryptKey = null
+    // you can change existing crypt key with different cryptKey
     public native boolean reKey(String cryptKey);
 
     // just reset cryptKey (will not encrypt or decrypt anything)
-    // usually you should call this method after other process reKey() the inter-process mmkv
+    // usually you should call this method after other process reKey() the multi-process mmkv
     public native void checkReSetCryptKey(String cryptKey);
 
     // get device's page size
@@ -504,7 +503,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native void clearAll();
 
     // MMKV's size won't reduce after deleting key-values
-    // call this method after lots of deleting f you care about disk usage
+    // call this method after lots of deleting if you care about disk usage
     // note that `clearAll` has the similar effect of `trim`
     public native void trim();
 
@@ -517,7 +516,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native void clearMemoryCache();
 
     // you don't need to call this, really, I mean it
-    // unless you care about out of battery
+    // unless you worry about running out of battery
     public void sync() {
         sync(true);
     }

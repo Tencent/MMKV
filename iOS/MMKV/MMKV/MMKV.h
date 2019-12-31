@@ -47,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @return root dir of MMKV
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel NS_SWIFT_NAME(initialize(rootDir:groupDir:logLevel:));
 
-/// a generic purpose instance
+/// a generic purpose instance (in MMKVSingleProcess mode)
 + (instancetype)defaultMMKV;
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
@@ -75,7 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
 
-// call this on applicationWillTerminate, it is fine if you don't call
+// you can call this on applicationWillTerminate, it's totally fine if you don't call
 + (void)onExit;
 
 + (NSString *)mmkvBasePath;
@@ -84,11 +84,13 @@ NS_ASSUME_NONNULL_BEGIN
 // otherwise the behavior is undefined
 + (void)setMMKVBasePath:(NSString *)basePath __attribute__((deprecated("use +initializeMMKV: instead", "+initializeMMKV:")));
 
+// transform plain text into encrypted text, or vice versa by passing newKey = nil
+// you can change existing crypt key with different key
 - (BOOL)reKey:(nullable NSData *)newKey NS_SWIFT_NAME(reset(cryptKey:));
 - (nullable NSData *)cryptKey;
 
 // just reset cryptKey (will not encrypt or decrypt anything)
-// usually you should call this method after other process reKey() the inter-process mmkv
+// usually you should call this method after other process reKey() the multi-process mmkv
 - (void)checkReSetCryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(checkReSet(cryptKey:));
 
 - (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key NS_SWIFT_NAME(set(_:forKey:));
@@ -171,7 +173,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)clearAll;
 
 // MMKV's size won't reduce after deleting key-values
-// call this method after lots of deleting f you care about disk usage
+// call this method after lots of deleting if you care about disk usage
 // note that `clearAll` has the similar effect of `trim`
 - (void)trim;
 
@@ -184,16 +186,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)clearMemoryCache;
 
 // you don't need to call this, really, I mean it
-// unless you care about out of battery
+// unless you worry about running out of battery
 - (void)sync;
 - (void)async;
 
 // check if content changed by other process
 - (void)checkContentChanged;
-
-// for CrashProtected Only!!
-+ (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
-+ (BOOL)isFileValid:(NSString *)mmapID relativePath:(nullable NSString *)path NS_SWIFT_NAME(isFileValid(for:relativePath:));
 
 + (void)registerHandler:(id<MMKVHandler>)handler;
 + (void)unregiserHandler;
@@ -205,6 +203,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Migrate NSUserDefault data to MMKV
 // return imported count of key-values
 - (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults NS_SWIFT_NAME(migrateFrom(userDefaults:));
+
+// for CrashProtected Only
++ (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
++ (BOOL)isFileValid:(NSString *)mmapID relativePath:(nullable NSString *)path NS_SWIFT_NAME(isFileValid(for:relativePath:));
 
 NS_ASSUME_NONNULL_END
 

@@ -30,22 +30,17 @@
 
 using namespace std;
 
-static NSMutableDictionary *g_instanceDic;
+static NSMutableDictionary *g_instanceDic = nil;
 static mmkv::ThreadLock g_lock;
-id<MMKVHandler> g_callbackHandler;
-bool g_isLogRedirecting = false;
+static id<MMKVHandler> g_callbackHandler = nil;
+static bool g_isLogRedirecting = false;
 static NSString *g_basePath = nil;
 static NSString *g_groupPath = nil;
 
 static NSString *md5(NSString *value);
 static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, const char *function, NSString *message);
-static mmkv::MMKVRecoverStrategic ErrorHandler(const std::string &mmapID, mmkv::MMKVErrorType errorType);
-static void ContentChangeHandler(const std::string &mmapID);
-
-enum : bool {
-    KeepSequence = false,
-    IncreaseSequence = true,
-};
+static mmkv::MMKVRecoverStrategic ErrorHandler(const string &mmapID, mmkv::MMKVErrorType errorType);
+static void ContentChangeHandler(const string &mmapID);
 
 @implementation MMKV {
     NSString *m_mmapID;
@@ -55,13 +50,13 @@ enum : bool {
 
 #pragma mark - init
 
+// protect from some old code that don't call +initializeMMKV:
 + (void)initialize {
     if (self == MMKV.class) {
         g_instanceDic = [[NSMutableDictionary alloc] init];
         g_lock = mmkv::ThreadLock();
         g_lock.initialize();
 
-        // protect from some old code that don't call +initializeMMKV:
         mmkv::MMKV::minimalInit([self mmkvBasePath].UTF8String);
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
@@ -139,6 +134,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey relativePath:relativePath mode:MMKVSingleProcess];
 }
 
+// relatePath and MMKVMultiProcess mode can't be set at the same time, so we hide this method from public
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey relativePath:(nullable NSString *)relativePath mode:(MMKVMode)mode {
     if (!g_hasCalledInitializeMMKV) {
         MMKVError("MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
@@ -253,10 +249,13 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (nullable NSData *)cryptKey {
     auto str = m_mmkv->cryptKey();
-    return [NSData dataWithBytes:str.data() length:str.length()];
+    if (str.length() > 0) {
+        return [NSData dataWithBytes:str.data() length:str.length()];
+    }
+    return nil;
 }
 
-- (BOOL)reKey:(NSData *)newKey {
+- (BOOL)reKey:(nullable NSData *)newKey {
     string key;
     if (newKey.length > 0) {
         key = string((char *) newKey.bytes, newKey.length);
@@ -265,11 +264,12 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (void)checkReSetCryptKey:(nullable NSData *)cryptKey {
-    string key;
     if (cryptKey.length > 0) {
-        key = string((char *) cryptKey.bytes, cryptKey.length);
+        string key = string((char *) cryptKey.bytes, cryptKey.length);
+        m_mmkv->checkReSetCryptKey(&key);
+    } else {
+        m_mmkv->checkReSetCryptKey(nullptr);
     }
-    m_mmkv->checkReSetCryptKey(&key);
 }
 
 #pragma mark - set & get
@@ -413,7 +413,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return valueData;
 }
 
-- (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:)) {
+- (size_t)getValueSizeForKey:(NSString *)key {
     return m_mmkv->getValueSize(key, false);
 }
 
@@ -643,7 +643,7 @@ static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, con
     [g_callbackHandler mmkvLogWithLevel:(MMKVLogLevel) level file:file line:line func:function message:message];
 }
 
-static mmkv::MMKVRecoverStrategic ErrorHandler(const std::string &mmapID, mmkv::MMKVErrorType errorType) {
+static mmkv::MMKVRecoverStrategic ErrorHandler(const string &mmapID, mmkv::MMKVErrorType errorType) {
     if (errorType == mmkv::MMKVCRCCheckFail) {
         if ([g_callbackHandler respondsToSelector:@selector(onMMKVCRCCheckFail:)]) {
             auto ret = [g_callbackHandler onMMKVCRCCheckFail:[NSString stringWithUTF8String:mmapID.c_str()]];
@@ -658,7 +658,7 @@ static mmkv::MMKVRecoverStrategic ErrorHandler(const std::string &mmapID, mmkv::
     return mmkv::OnErrorDiscard;
 }
 
-static void ContentChangeHandler(const std::string &mmapID) {
+static void ContentChangeHandler(const string &mmapID) {
     if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
         [g_callbackHandler onMMKVContentChange:[NSString stringWithUTF8String:mmapID.c_str()]];
     }
