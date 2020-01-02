@@ -83,12 +83,12 @@ void CodedOutputData::writeData(const MMBuffer &value) {
 
 void CodedOutputData::writeString(const string &value) {
     size_t numberOfBytes = value.size();
+    this->writeRawVarint32((int32_t) numberOfBytes);
     if (m_position + numberOfBytes > m_size) {
         auto msg = "m_position: " + to_string(m_position) + ", numberOfBytes: " + to_string(numberOfBytes) +
                    ", m_size: " + to_string(m_size);
         throw out_of_range(msg);
     }
-    this->writeRawVarint32((int32_t) numberOfBytes);
     memcpy(m_ptr + m_position, ((uint8_t *) value.data()), numberOfBytes);
     m_position += numberOfBytes;
 }

@@ -38,6 +38,12 @@ namespace mmkv {
 void CodedOutputData::writeString(__unsafe_unretained NSString *value) {
     NSUInteger numberOfBytes = [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
     this->writeRawVarint32((int32_t) numberOfBytes);
+    if (m_position + numberOfBytes > m_size) {
+        auto msg = "m_position: " + to_string(m_position) + ", numberOfBytes: " + to_string(numberOfBytes) +
+                   ", m_size: " + to_string(m_size);
+        throw out_of_range(msg);
+    }
+
     [value getBytes:m_ptr + m_position
              maxLength:numberOfBytes
             usedLength:0

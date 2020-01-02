@@ -37,9 +37,8 @@ namespace mmkv {
 NSString *CodedInputData::readString() {
     int32_t size = this->readRawVarint32();
     if (size <= (m_size - m_position) && size > 0) {
-        NSString *result =
-            [[[NSString alloc] initWithBytes:(m_ptr + m_position) length:size encoding:NSUTF8StringEncoding]
-                autorelease];
+        auto ptr = m_ptr + m_position;
+        NSString *result = [[[NSString alloc] initWithBytes:ptr length:size encoding:NSUTF8StringEncoding] autorelease];
         m_position += size;
         return result;
     } else if (size == 0) {

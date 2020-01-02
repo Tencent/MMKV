@@ -92,6 +92,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
             MMKVWarning("mmapID[%s] != ashmem[%s]", mmapID.c_str(), ashmemID.c_str());
         }
     }
+    // TODO: call mappedKVPathWithID() ?
     m_path = string(ASHMEM_NAME_DEF) + "/" + m_mmapID;
     m_crcPath = string(ASHMEM_NAME_DEF) + "/" + m_metaFile.getName();
     m_actualSize = 0;
