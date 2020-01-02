@@ -48,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel NS_SWIFT_NAME(initialize(rootDir:groupDir:logLevel:));
 
 /// a generic purpose instance (in MMKVSingleProcess mode)
-+ (instancetype)defaultMMKV;
++ (nullable instancetype)defaultMMKV;
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(init(mmapID:));

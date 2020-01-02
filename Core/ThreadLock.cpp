@@ -75,7 +75,7 @@ void ThreadLock::unlock() {
     }
 }
 
-void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
+void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) {
     pthread_once(onceToken, callback);
 }
 

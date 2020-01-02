@@ -51,10 +51,10 @@ enum MMKVMode : uint32_t {
 
 class MMKV {
 #ifndef MMKV_ANDROID
-    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKV_PATH_TYPE *relativePath);
+    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
     std::string m_mmapKey;
 #else
-    MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKV_PATH_TYPE *relativePath);
+    MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
 
     MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
 #endif
@@ -63,8 +63,8 @@ class MMKV {
 
     mmkv::MMKVMap m_dic;
     std::string m_mmapID;
-    MMKV_PATH_TYPE m_path;
-    MMKV_PATH_TYPE m_crcPath;
+    MMKVPath_t m_path;
+    MMKVPath_t m_crcPath;
 
     mmkv::MemoryFile m_file;
     size_t m_actualSize;
@@ -85,13 +85,11 @@ class MMKV {
     mmkv::InterProcessLock m_exclusiveProcessLock;
 
 #ifdef MMKV_IOS_OR_MAC
-    using MMKV_KEY_TYPE = NSString *__unsafe_unretained;
-    using MMKV_KEY_CLEAN_TYPE = NSString *;
-#    define MMKV_IS_KEY_EMPTY(key) (key.length <= 0)
+    using MMKVKey_t = NSString *__unsafe_unretained;
+    static bool isKeyEmpty(MMKVKey_t key) { return key.length <= 0; }
 #else
-    using MMKV_KEY_TYPE = const std::string &;
-    using MMKV_KEY_CLEAN_TYPE = std::string;
-#    define MMKV_IS_KEY_EMPTY(key) key.empty()
+    using MMKVKey_t = const std::string &;
+    static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
 #endif
 
     void loadFromFile();
@@ -122,13 +120,13 @@ class MMKV {
 
     bool doFullWriteBack(mmkv::MMBuffer &&allData);
 
-    const mmkv::MMBuffer &getDataForKey(MMKV_KEY_TYPE key);
+    const mmkv::MMBuffer &getDataForKey(MMKVKey_t key);
 
-    bool setDataForKey(mmkv::MMBuffer &&data, MMKV_KEY_TYPE key);
+    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key);
 
-    bool removeDataForKey(MMKV_KEY_TYPE key);
+    bool removeDataForKey(MMKVKey_t key);
 
-    bool appendDataWithKey(const mmkv::MMBuffer &data, MMKV_KEY_TYPE key);
+    bool appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key);
 
     void notifyContentChanged();
 
@@ -143,7 +141,7 @@ class MMKV {
 
 public:
     // call this before getting any MMKV instance
-    static void initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
+    static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
 
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
@@ -154,7 +152,7 @@ public:
     static MMKV *mmkvWithID(const std::string &mmapID,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
-                            MMKV_PATH_TYPE *relativePath = nullptr);
+                            MMKVPath_t *relativePath = nullptr);
 #else
     // mmapID: any unique ID (com.tencent.xin.pay, etc)
     // if you want a per-user mmkv, you could merge user-id within mmapID
@@ -162,7 +160,7 @@ public:
                             int size = mmkv::DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
-                            MMKV_PATH_TYPE *relativePath = nullptr);
+                            MMKVPath_t *relativePath = nullptr);
 
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, std::string *cryptKey = nullptr);
 
@@ -187,63 +185,63 @@ public:
     // usually you should call this method after other process reKey() the multi-process mmkv
     void checkReSetCryptKey(const std::string *cryptKey);
 
-    bool set(bool value, MMKV_KEY_TYPE key);
+    bool set(bool value, MMKVKey_t key);
 
-    bool set(int32_t value, MMKV_KEY_TYPE key);
+    bool set(int32_t value, MMKVKey_t key);
 
-    bool set(uint32_t value, MMKV_KEY_TYPE key);
+    bool set(uint32_t value, MMKVKey_t key);
 
-    bool set(int64_t value, MMKV_KEY_TYPE key);
+    bool set(int64_t value, MMKVKey_t key);
 
-    bool set(uint64_t value, MMKV_KEY_TYPE key);
+    bool set(uint64_t value, MMKVKey_t key);
 
-    bool set(float value, MMKV_KEY_TYPE key);
+    bool set(float value, MMKVKey_t key);
 
-    bool set(double value, MMKV_KEY_TYPE key);
+    bool set(double value, MMKVKey_t key);
 
     // avoid unexpected type conversion (pointer to bool, etc)
     template <typename T>
-    bool set(T value, MMKV_KEY_TYPE key) = delete;
+    bool set(T value, MMKVKey_t key) = delete;
 
 #ifdef MMKV_IOS_OR_MAC
-    bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKV_KEY_TYPE key);
+    bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key);
 
-    NSObject *getObject(MMKV_KEY_TYPE key, Class cls);
+    NSObject *getObject(MMKVKey_t key, Class cls);
 #else
-    bool set(const char *value, MMKV_KEY_TYPE key);
+    bool set(const char *value, MMKVKey_t key);
 
-    bool set(const std::string &value, MMKV_KEY_TYPE key);
+    bool set(const std::string &value, MMKVKey_t key);
 
-    bool set(const mmkv::MMBuffer &value, MMKV_KEY_TYPE key);
+    bool set(const mmkv::MMBuffer &value, MMKVKey_t key);
 
-    bool set(const std::vector<std::string> &vector, MMKV_KEY_TYPE key);
+    bool set(const std::vector<std::string> &vector, MMKVKey_t key);
 
-    bool getString(MMKV_KEY_TYPE key, std::string &result);
+    bool getString(MMKVKey_t key, std::string &result);
 
-    mmkv::MMBuffer getBytes(MMKV_KEY_TYPE key);
+    mmkv::MMBuffer getBytes(MMKVKey_t key);
 
-    bool getVector(MMKV_KEY_TYPE key, std::vector<std::string> &result);
+    bool getVector(MMKVKey_t key, std::vector<std::string> &result);
 #endif // MMKV_IOS_OR_MAC
 
-    bool getBool(MMKV_KEY_TYPE key, bool defaultValue = false);
+    bool getBool(MMKVKey_t key, bool defaultValue = false);
 
-    int32_t getInt32(MMKV_KEY_TYPE key, int32_t defaultValue = 0);
+    int32_t getInt32(MMKVKey_t key, int32_t defaultValue = 0);
 
-    uint32_t getUInt32(MMKV_KEY_TYPE key, uint32_t defaultValue = 0);
+    uint32_t getUInt32(MMKVKey_t key, uint32_t defaultValue = 0);
 
-    int64_t getInt64(MMKV_KEY_TYPE key, int64_t defaultValue = 0);
+    int64_t getInt64(MMKVKey_t key, int64_t defaultValue = 0);
 
-    uint64_t getUInt64(MMKV_KEY_TYPE key, uint64_t defaultValue = 0);
+    uint64_t getUInt64(MMKVKey_t key, uint64_t defaultValue = 0);
 
-    float getFloat(MMKV_KEY_TYPE key, float defaultValue = 0);
+    float getFloat(MMKVKey_t key, float defaultValue = 0);
 
-    double getDouble(MMKV_KEY_TYPE key, double defaultValue = 0);
+    double getDouble(MMKVKey_t key, double defaultValue = 0);
 
-    size_t getValueSize(MMKV_KEY_TYPE key, bool actualSize);
+    size_t getValueSize(MMKVKey_t key, bool actualSize);
 
-    int32_t writeValueToBuffer(MMKV_KEY_TYPE key, void *ptr, int32_t size);
+    int32_t writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size);
 
-    bool containsKey(MMKV_KEY_TYPE key);
+    bool containsKey(MMKVKey_t key);
 
     size_t count();
 
@@ -259,18 +257,18 @@ public:
     typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
     void enumerateKeys(EnumerateBlock block);
 
-    static void minimalInit(MMKV_PATH_TYPE defaultRootDir);
+    static void minimalInit(MMKVPath_t defaultRootDir);
 
 #    ifdef MMKV_IOS
     static void setIsInBackground(bool isInBackground);
 #    endif
 #else
-    std::vector<MMKV_KEY_CLEAN_TYPE> allKeys();
+    std::vector<std::string> allKeys();
 
-    void removeValuesForKeys(const std::vector<MMKV_KEY_CLEAN_TYPE> &arrKeys);
+    void removeValuesForKeys(const std::vector<std::string> &arrKeys);
 #endif // MMKV_IOS_OR_MAC
 
-    void removeValueForKey(MMKV_KEY_TYPE key);
+    void removeValueForKey(MMKVKey_t key);
 
     void clearAll();
 
@@ -313,7 +311,7 @@ public:
     static void registerLogHandler(mmkv::LogHandler handler);
     static void unRegisterLogHandler();
 
-    static bool isFileValid(const std::string &mmapID, MMKV_PATH_TYPE *relatePath = nullptr);
+    static bool isFileValid(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
 
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;

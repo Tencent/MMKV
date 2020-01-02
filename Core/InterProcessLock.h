@@ -36,7 +36,7 @@ enum LockType {
 // a recursive POSIX file-lock wrapper
 // handles lock upgrade & downgrade correctly
 class FileLock {
-    MMKV_FILE_HANDLE m_fd;
+    MMKVFileHandle_t m_fd;
     size_t m_sharedLockCount;
     size_t m_exclusiveLockCount;
 
@@ -62,12 +62,12 @@ class FileLock {
 public:
 #ifndef MMKV_WIN32
 #    ifndef MMKV_ANDROID
-    explicit FileLock(MMKV_FILE_HANDLE fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+    explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 #    else
-    explicit FileLock(MMKV_FILE_HANDLE fd, bool isAshmem = false);
+    explicit FileLock(MMKVFileHandle_t fd, bool isAshmem = false);
 #    endif // MMKV_ANDROID
 #else
-    explicit FileLock(MMKV_FILE_HANDLE fd) : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+    explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 #endif // MMKV_WIN32
 
     bool lock(LockType lockType);

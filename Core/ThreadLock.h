@@ -36,11 +36,11 @@
 namespace mmkv {
 
 #if MMKV_USING_PTHREAD
-#    define ThreadOnceToken pthread_once_t
+#    define ThreadOnceToken_t pthread_once_t
 #    define ThreadOnceUninitialized PTHREAD_ONCE_INIT
 #else
 enum ThreadOnceTokenEnum : int32_t { ThreadOnceUninitialized = 0, ThreadOnceInitializing, ThreadOnceInitialized };
-typedef std::atomic<ThreadOnceTokenEnum> ThreadOnceToken;
+using ThreadOnceToken_t = std::atomic<ThreadOnceTokenEnum>;
 #endif
 
 class ThreadLock {
@@ -61,7 +61,7 @@ public:
     bool try_lock();
     void unlock();
 
-    static void ThreadOnce(ThreadOnceToken *onceToken, void (*callback)(void));
+    static void ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)(void));
     static void Sleep(int ms);
 };
 

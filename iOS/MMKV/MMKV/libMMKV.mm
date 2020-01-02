@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making
  * MMKV available.
  *
- * Copyright (C) 2018 THL A29 Limited, a Tencent company.
+ * Copyright (C) 2020 THL A29 Limited, a Tencent company.
  * All rights reserved.
  *
  * Licensed under the BSD 3-Clause License (the "License"); you may not use
@@ -104,7 +104,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 // a generic purpose instance
 + (instancetype)defaultMMKV {
-    return [MMKV mmkvWithID:@"" DEFAULT_MMAP_ID];
+    return [MMKV mmkvWithID:(@"" DEFAULT_MMAP_ID) cryptKey:nil relativePath:nil mode:MMKVSingleProcess];
 }
 
 // any unique ID (com.tencent.xin.pay, etc)

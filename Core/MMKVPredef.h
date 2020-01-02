@@ -59,16 +59,16 @@
 
 constexpr auto MMKV_PATH_SLASH = L"\\";
 #    define MMKV_PATH_FORMAT "%ws"
-using MMKV_FILE_HANDLE = HANDLE;
-using MMKV_PATH_TYPE = std::wstring;
-extern MMKV_PATH_TYPE string2MMKV_PATH_TYPE(const std::string &str);
+using MMKVFileHandle_t = HANDLE;
+using MMKVPath_t = std::wstring;
+extern MMKVPath_t string2MMKVPath_t(const std::string &str);
 #    define MMKV_EMBED_ZLIB 1
 #else
 constexpr auto MMKV_PATH_SLASH = "/";
 #    define MMKV_PATH_FORMAT "%s"
-using MMKV_FILE_HANDLE = int;
-using MMKV_PATH_TYPE = std::string;
-#    define string2MMKV_PATH_TYPE(str) (str)
+using MMKVFileHandle_t = int;
+using MMKVPath_t = std::string;
+#    define string2MMKVPath_t(str) (str)
 #    define MMKV_EMBED_ZLIB 0
 #endif // MMKV_WIN32
 
@@ -77,12 +77,12 @@ using MMKV_PATH_TYPE = std::string;
 #    define MMKV_NAMESPACE_BEGIN namespace mmkv {
 #    define MMKV_NAMESPACE_END }
 #    define MMKV_NAMESPACE_PREFIX mmkv
-using MMKV_LOG_TYPE = NSString *;
+using MMKVLog_t = NSString *;
 #else
 #    define MMKV_NAMESPACE_BEGIN
 #    define MMKV_NAMESPACE_END
 #    define MMKV_NAMESPACE_PREFIX
-using MMKV_LOG_TYPE = const std::string &;
+using MMKVLog_t = const std::string &;
 #endif // MMKV_IOS_OR_MAC
 
 MMKV_NAMESPACE_BEGIN
@@ -109,7 +109,7 @@ MMKV_NAMESPACE_END
 
 namespace mmkv {
 
-typedef void (*LogHandler)(MMKVLogLevel level, const char *file, int line, const char *function, MMKV_LOG_TYPE message);
+typedef void (*LogHandler)(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message);
 
 // by default MMKV will discard all datas on failure
 // return `OnErrorRecover` to recover any data from file

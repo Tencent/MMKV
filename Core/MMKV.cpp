@@ -46,7 +46,7 @@ using namespace mmkv;
 
 unordered_map<std::string, MMKV *> *g_instanceDic;
 ThreadLock g_instanceLock;
-MMKV_PATH_TYPE g_rootDir;
+MMKVPath_t g_rootDir;
 static mmkv::ErrorHandler g_errorHandler;
 size_t mmkv::DEFAULT_MMAP_SIZE;
 
@@ -59,12 +59,11 @@ static string md5(const wstring &value);
 #endif
 constexpr uint32_t Fixed32Size = pbFixed32Size(0);
 
-string mmapedKVKey(const string &mmapID, MMKV_PATH_TYPE *relativePath = nullptr);
-MMKV_PATH_TYPE
-mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath);
-MMKV_PATH_TYPE crcPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath);
+string mmapedKVKey(const string &mmapID, MMKVPath_t *relativePath = nullptr);
+MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath);
+MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath);
 static void mkSpecialCharacterFileDirectory();
-static MMKV_PATH_TYPE encodeFilePath(const string &mmapID);
+static MMKVPath_t encodeFilePath(const string &mmapID);
 
 static MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
 static MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
@@ -77,7 +76,7 @@ enum : bool {
 MMKV_NAMESPACE_BEGIN
 
 #ifndef MMKV_ANDROID
-MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKV_PATH_TYPE *relativePath)
+MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *relativePath)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
@@ -138,9 +137,9 @@ void initialize() {
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
 }
 
-ThreadOnceToken once_control = ThreadOnceUninitialized;
+ThreadOnceToken_t once_control = ThreadOnceUninitialized;
 
-void MMKV::initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel) {
+void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
     g_currentLogLevel = logLevel;
 
     ThreadLock::ThreadOnce(&once_control, initialize);
@@ -152,7 +151,7 @@ void MMKV::initializeMMKV(const MMKV_PATH_TYPE &rootDir, MMKVLogLevel logLevel) 
 }
 
 #ifndef MMKV_ANDROID
-MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKV_PATH_TYPE *relativePath) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *relativePath) {
 
     if (mmapID.empty()) {
         return nullptr;
@@ -167,7 +166,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
     }
 
     if (relativePath) {
-        MMKV_PATH_TYPE specialPath = (*relativePath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+        MMKVPath_t specialPath = (*relativePath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
         if (!isFileExist(specialPath)) {
             mkPath(specialPath);
         }
@@ -692,7 +691,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
     return true;
 }
 
-const MMBuffer &MMKV::getDataForKey(MMKV_KEY_TYPE key) {
+const MMBuffer &MMKV::getDataForKey(MMKVKey_t key) {
     checkLoadData();
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
@@ -702,8 +701,8 @@ const MMBuffer &MMKV::getDataForKey(MMKV_KEY_TYPE key) {
     return nan;
 }
 
-bool MMKV::setDataForKey(MMBuffer &&data, MMKV_KEY_TYPE key) {
-    if (data.length() == 0 || MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key) {
+    if (data.length() == 0 || isKeyEmpty(key)) {
         return false;
     }
     SCOPEDLOCK(m_lock);
@@ -721,8 +720,8 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKV_KEY_TYPE key) {
     return ret;
 }
 
-bool MMKV::removeDataForKey(MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::removeDataForKey(MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
 
@@ -741,7 +740,7 @@ bool MMKV::removeDataForKey(MMKV_KEY_TYPE key) {
     return false;
 }
 
-bool MMKV::appendDataWithKey(const MMBuffer &data, MMKV_KEY_TYPE key) {
+bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
 #ifdef MMKV_IOS_OR_MAC
     size_t keyLength = key.length;
 #else
@@ -979,8 +978,8 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
 
 // set & get
 
-bool MMKV::set(bool value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(bool value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     size_t size = pbBoolSize(value);
@@ -991,8 +990,8 @@ bool MMKV::set(bool value, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(int32_t value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(int32_t value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     size_t size = pbInt32Size(value);
@@ -1003,8 +1002,8 @@ bool MMKV::set(int32_t value, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(uint32_t value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(uint32_t value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     size_t size = pbUInt32Size(value);
@@ -1015,8 +1014,8 @@ bool MMKV::set(uint32_t value, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(int64_t value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(int64_t value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     size_t size = pbInt64Size(value);
@@ -1027,8 +1026,8 @@ bool MMKV::set(int64_t value, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(uint64_t value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(uint64_t value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     size_t size = pbUInt64Size(value);
@@ -1039,8 +1038,8 @@ bool MMKV::set(uint64_t value, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(float value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(float value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     size_t size = pbFloatSize(value);
@@ -1051,8 +1050,8 @@ bool MMKV::set(float value, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(double value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(double value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     size_t size = pbDoubleSize(value);
@@ -1065,7 +1064,7 @@ bool MMKV::set(double value, MMKV_KEY_TYPE key) {
 
 #ifndef MMKV_IOS_OR_MAC
 
-bool MMKV::set(const char *value, MMKV_KEY_TYPE key) {
+bool MMKV::set(const char *value, MMKVKey_t key) {
     if (!value) {
         removeValueForKey(key);
         return true;
@@ -1073,32 +1072,32 @@ bool MMKV::set(const char *value, MMKV_KEY_TYPE key) {
     return set(string(value), key);
 }
 
-bool MMKV::set(const string &value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(const string &value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(value);
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(const MMBuffer &value, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(const MMBuffer &value, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(value);
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::set(const vector<string> &v, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(const vector<string> &v, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(v);
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::getString(MMKV_KEY_TYPE key, string &result) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::getString(MMKVKey_t key, string &result) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     SCOPEDLOCK(m_lock);
@@ -1114,8 +1113,8 @@ bool MMKV::getString(MMKV_KEY_TYPE key, string &result) {
     return false;
 }
 
-MMBuffer MMKV::getBytes(MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+MMBuffer MMKV::getBytes(MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return MMBuffer(0);
     }
     SCOPEDLOCK(m_lock);
@@ -1130,8 +1129,8 @@ MMBuffer MMKV::getBytes(MMKV_KEY_TYPE key) {
     return MMBuffer(0);
 }
 
-bool MMKV::getVector(MMKV_KEY_TYPE key, vector<string> &result) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     SCOPEDLOCK(m_lock);
@@ -1149,8 +1148,8 @@ bool MMKV::getVector(MMKV_KEY_TYPE key, vector<string> &result) {
 
 #endif // MMKV_IOS_OR_MAC
 
-bool MMKV::getBool(MMKV_KEY_TYPE key, bool defaultValue) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::getBool(MMKVKey_t key, bool defaultValue) {
+    if (isKeyEmpty(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1166,8 +1165,8 @@ bool MMKV::getBool(MMKV_KEY_TYPE key, bool defaultValue) {
     return defaultValue;
 }
 
-int32_t MMKV::getInt32(MMKV_KEY_TYPE key, int32_t defaultValue) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+int32_t MMKV::getInt32(MMKVKey_t key, int32_t defaultValue) {
+    if (isKeyEmpty(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1183,8 +1182,8 @@ int32_t MMKV::getInt32(MMKV_KEY_TYPE key, int32_t defaultValue) {
     return defaultValue;
 }
 
-uint32_t MMKV::getUInt32(MMKV_KEY_TYPE key, uint32_t defaultValue) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+uint32_t MMKV::getUInt32(MMKVKey_t key, uint32_t defaultValue) {
+    if (isKeyEmpty(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1200,8 +1199,8 @@ uint32_t MMKV::getUInt32(MMKV_KEY_TYPE key, uint32_t defaultValue) {
     return defaultValue;
 }
 
-int64_t MMKV::getInt64(MMKV_KEY_TYPE key, int64_t defaultValue) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+int64_t MMKV::getInt64(MMKVKey_t key, int64_t defaultValue) {
+    if (isKeyEmpty(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1217,8 +1216,8 @@ int64_t MMKV::getInt64(MMKV_KEY_TYPE key, int64_t defaultValue) {
     return defaultValue;
 }
 
-uint64_t MMKV::getUInt64(MMKV_KEY_TYPE key, uint64_t defaultValue) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+uint64_t MMKV::getUInt64(MMKVKey_t key, uint64_t defaultValue) {
+    if (isKeyEmpty(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1234,8 +1233,8 @@ uint64_t MMKV::getUInt64(MMKV_KEY_TYPE key, uint64_t defaultValue) {
     return defaultValue;
 }
 
-float MMKV::getFloat(MMKV_KEY_TYPE key, float defaultValue) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+float MMKV::getFloat(MMKVKey_t key, float defaultValue) {
+    if (isKeyEmpty(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1251,8 +1250,8 @@ float MMKV::getFloat(MMKV_KEY_TYPE key, float defaultValue) {
     return defaultValue;
 }
 
-double MMKV::getDouble(MMKV_KEY_TYPE key, double defaultValue) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+double MMKV::getDouble(MMKVKey_t key, double defaultValue) {
+    if (isKeyEmpty(key)) {
         return defaultValue;
     }
     SCOPEDLOCK(m_lock);
@@ -1268,8 +1267,8 @@ double MMKV::getDouble(MMKV_KEY_TYPE key, double defaultValue) {
     return defaultValue;
 }
 
-size_t MMKV::getValueSize(MMKV_KEY_TYPE key, bool actualSize) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+size_t MMKV::getValueSize(MMKVKey_t key, bool actualSize) {
+    if (isKeyEmpty(key)) {
         return 0;
     }
     SCOPEDLOCK(m_lock);
@@ -1288,8 +1287,8 @@ size_t MMKV::getValueSize(MMKV_KEY_TYPE key, bool actualSize) {
     return data.length();
 }
 
-int32_t MMKV::writeValueToBuffer(MMKV_KEY_TYPE key, void *ptr, int32_t size) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+int32_t MMKV::writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size) {
+    if (isKeyEmpty(key)) {
         return -1;
     }
     SCOPEDLOCK(m_lock);
@@ -1317,7 +1316,7 @@ int32_t MMKV::writeValueToBuffer(MMKV_KEY_TYPE key, void *ptr, int32_t size) {
 
 // enumerate
 
-bool MMKV::containsKey(MMKV_KEY_TYPE key) {
+bool MMKV::containsKey(MMKVKey_t key) {
     SCOPEDLOCK(m_lock);
     checkLoadData();
     return m_dic.find(key) != m_dic.end();
@@ -1341,8 +1340,8 @@ size_t MMKV::actualSize() {
     return m_actualSize;
 }
 
-void MMKV::removeValueForKey(MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+void MMKV::removeValueForKey(MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return;
     }
     SCOPEDLOCK(m_lock);
@@ -1354,18 +1353,18 @@ void MMKV::removeValueForKey(MMKV_KEY_TYPE key) {
 
 #ifndef MMKV_IOS_OR_MAC
 
-vector<MMKV::MMKV_KEY_CLEAN_TYPE> MMKV::allKeys() {
+vector<string> MMKV::allKeys() {
     SCOPEDLOCK(m_lock);
     checkLoadData();
 
-    vector<MMKV_KEY_CLEAN_TYPE> keys;
+    vector<string> keys;
     for (const auto &itr : m_dic) {
         keys.push_back(itr.first);
     }
     return keys;
 }
 
-void MMKV::removeValuesForKeys(const vector<MMKV_KEY_CLEAN_TYPE> &arrKeys) {
+void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     if (arrKeys.empty()) {
         return;
     }
@@ -1407,13 +1406,13 @@ void MMKV::sync(SyncFlag flag) {
     m_metaFile.msync(flag);
 }
 
-bool MMKV::isFileValid(const string &mmapID, MMKV_PATH_TYPE *relatePath) {
-    MMKV_PATH_TYPE kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
+bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
+    MMKVPath_t kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
     if (!isFileExist(kvPath)) {
         return true;
     }
 
-    MMKV_PATH_TYPE crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
+    MMKVPath_t crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
     if (!isFileExist(crcPath.c_str())) {
         return false;
     }
@@ -1480,7 +1479,7 @@ void MMKV::setLogLevel(MMKVLogLevel level) {
 MMKV_NAMESPACE_END
 
 static void mkSpecialCharacterFileDirectory() {
-    MMKV_PATH_TYPE path = g_rootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+    MMKVPath_t path = g_rootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
     mkPath(path);
 }
 
@@ -1508,7 +1507,7 @@ static string md5(const wstring &value) {
 }
 #endif
 
-static MMKV_PATH_TYPE encodeFilePath(const string &mmapID) {
+static MMKVPath_t encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
     string encodedID;
     bool hasSpecialCharacter = false;
@@ -1520,27 +1519,27 @@ static MMKV_PATH_TYPE encodeFilePath(const string &mmapID) {
         }
     }
     if (hasSpecialCharacter) {
-        static ThreadOnceToken once_control = ThreadOnceUninitialized;
+        static ThreadOnceToken_t once_control = ThreadOnceUninitialized;
         ThreadLock::ThreadOnce(&once_control, mkSpecialCharacterFileDirectory);
-        return MMKV_PATH_TYPE(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKV_PATH_TYPE(encodedID);
+        return MMKVPath_t(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKVPath_t(encodedID);
     } else {
-        return string2MMKV_PATH_TYPE(mmapID);
+        return string2MMKVPath_t(mmapID);
     }
 }
 
-string mmapedKVKey(const string &mmapID, MMKV_PATH_TYPE *relativePath) {
+string mmapedKVKey(const string &mmapID, MMKVPath_t *relativePath) {
     if (relativePath && g_rootDir != (*relativePath)) {
-        return md5(*relativePath + MMKV_PATH_SLASH + string2MMKV_PATH_TYPE(mmapID));
+        return md5(*relativePath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID));
     }
     return mmapID;
 }
 
-MMKV_PATH_TYPE mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath) {
+MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath) {
 #ifndef MMKV_ANDROID
     if (relativePath) {
 #else
     if (mode & MMKV_ASHMEM) {
-        return MMKV_PATH_TYPE(ASHMEM_NAME_DEF) + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+        return MMKVPath_t(ASHMEM_NAME_DEF) + MMKV_PATH_SLASH + encodeFilePath(mmapID);
     } else if (relativePath) {
 #endif
         return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
@@ -1554,7 +1553,7 @@ constexpr auto CRC_SUFFIX = ".crc";
 constexpr auto CRC_SUFFIX = L".crc";
 #endif
 
-MMKV_PATH_TYPE crcPathWithID(const string &mmapID, MMKVMode mode, MMKV_PATH_TYPE *relativePath) {
+MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath) {
 #ifndef MMKV_ANDROID
     if (relativePath) {
 #else

@@ -54,7 +54,7 @@ void ThreadLock::unlock() {
     LeaveCriticalSection(&m_lock);
 }
 
-void ThreadLock::ThreadOnce(ThreadOnceToken *onceToken, void (*callback)()) {
+void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) {
     if (!onceToken || !callback) {
         assert(onceToken);
         assert(callback);

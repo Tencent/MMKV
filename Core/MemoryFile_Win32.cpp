@@ -31,10 +31,10 @@ using namespace std;
 
 namespace mmkv {
 
-static bool getFileSize(MMKV_FILE_HANDLE fd, size_t &size);
-static bool ftruncate(MMKV_FILE_HANDLE file, size_t size);
+static bool getFileSize(MMKVFileHandle_t fd, size_t &size);
+static bool ftruncate(MMKVFileHandle_t file, size_t size);
 
-MemoryFile::MemoryFile(const MMKV_PATH_TYPE &path)
+MemoryFile::MemoryFile(const MMKVPath_t &path)
     : m_name(path), m_fd(INVALID_HANDLE_VALUE), m_fileMapping(nullptr), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
@@ -175,7 +175,7 @@ int getPageSize() {
     return system_info.dwPageSize;
 }
 
-bool isFileExist(const MMKV_PATH_TYPE &nsFilePath) {
+bool isFileExist(const MMKVPath_t &nsFilePath) {
     if (nsFilePath.empty()) {
         return false;
     }
@@ -183,7 +183,7 @@ bool isFileExist(const MMKV_PATH_TYPE &nsFilePath) {
     return (attribute != INVALID_FILE_ATTRIBUTES);
 }
 
-bool mkPath(const MMKV_PATH_TYPE &str) {
+bool mkPath(const MMKVPath_t &str) {
     wchar_t *path = _wcsdup(str.c_str());
 
     bool done = false;
@@ -215,7 +215,7 @@ bool mkPath(const MMKV_PATH_TYPE &str) {
     return true;
 }
 
-MMBuffer *readWholeFile(const MMKV_PATH_TYPE &nsFilePath) {
+MMBuffer *readWholeFile(const MMKVPath_t &nsFilePath) {
     MMBuffer *buffer = nullptr;
     auto fd = CreateFile(nsFilePath.c_str(), GENERIC_READ | GENERIC_WRITE,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
@@ -242,7 +242,7 @@ MMBuffer *readWholeFile(const MMKV_PATH_TYPE &nsFilePath) {
     return buffer;
 }
 
-bool zeroFillFile(MMKV_FILE_HANDLE file, size_t startPos, size_t size) {
+bool zeroFillFile(MMKVFileHandle_t file, size_t startPos, size_t size) {
     if (file == INVALID_HANDLE_VALUE) {
         return false;
     }
@@ -276,7 +276,7 @@ bool zeroFillFile(MMKV_FILE_HANDLE file, size_t startPos, size_t size) {
     return true;
 }
 
-static bool ftruncate(MMKV_FILE_HANDLE file, size_t size) {
+static bool ftruncate(MMKVFileHandle_t file, size_t size) {
     LARGE_INTEGER large;
     large.QuadPart = size;
     if (SetFilePointerEx(file, large, 0, FILE_BEGIN)) {
@@ -291,7 +291,7 @@ static bool ftruncate(MMKV_FILE_HANDLE file, size_t size) {
     }
 }
 
-static bool getFileSize(MMKV_FILE_HANDLE fd, size_t &size) {
+static bool getFileSize(MMKVFileHandle_t fd, size_t &size) {
     LARGE_INTEGER filesize = {0};
     if (GetFileSizeEx(fd, &filesize)) {
         size = static_cast<size_t>(filesize.QuadPart);
@@ -302,7 +302,7 @@ static bool getFileSize(MMKV_FILE_HANDLE fd, size_t &size) {
 
 } // namespace mmkv
 
-std::wstring string2MMKV_PATH_TYPE(const std::string &str) {
+std::wstring string2MMKVPath_t(const std::string &str) {
     auto length = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
     auto buffer = new wchar_t[length];
     MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, buffer, length);

@@ -41,14 +41,14 @@ using namespace std;
 using namespace mmkv;
 
 extern ThreadLock g_instanceLock;
-extern MMKV_PATH_TYPE g_rootDir;
+extern MMKVPath_t g_rootDir;
 
 MMKV_NAMESPACE_BEGIN
 
-extern ThreadOnceToken once_control;
+extern ThreadOnceToken_t once_control;
 extern void initialize();
 
-void MMKV::minimalInit(MMKV_PATH_TYPE defaultRootDir) {
+void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
     ThreadLock::ThreadOnce(&once_control, initialize);
 
     g_rootDir = defaultRootDir;
@@ -107,8 +107,8 @@ bool MMKV::protectFromBackgroundWriting(size_t size, WriteBlock block) {
 
 #    endif // MMKV_IOS
 
-bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKV_KEY_TYPE key) {
-    if (MMKV_IS_KEY_EMPTY(key)) {
+bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
+    if (isKeyEmpty(key)) {
         return false;
     }
     if (!obj) {
@@ -128,8 +128,8 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKV_KEY_TYPE key) {
     return setDataForKey(std::move(data), key);
 }
 
-NSObject *MMKV::getObject(MMKV_KEY_TYPE key, Class cls) {
-    if (MMKV_IS_KEY_EMPTY(key) || !cls) {
+NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
+    if (isKeyEmpty(key) || !cls) {
         return nil;
     }
     SCOPEDLOCK(m_lock);

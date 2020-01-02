@@ -40,8 +40,8 @@ enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
 namespace mmkv {
 
 class MemoryFile {
-    MMKV_PATH_TYPE m_name;
-    MMKV_FILE_HANDLE m_fd;
+    MMKVPath_t m_name;
+    MMKVFileHandle_t m_fd;
 #ifdef MMKV_WIN32
     HANDLE m_fileMapping;
 #endif
@@ -54,10 +54,10 @@ class MemoryFile {
 
 public:
 #ifndef MMKV_ANDROID
-    explicit MemoryFile(const MMKV_PATH_TYPE &path);
+    explicit MemoryFile(const MMKVPath_t &path);
 #else
-    MemoryFile(const MMKV_PATH_TYPE &path, size_t size, FileType fileType);
-    explicit MemoryFile(MMKV_FILE_HANDLE ashmemFD);
+    MemoryFile(const MMKVPath_t &path, size_t size, FileType fileType);
+    explicit MemoryFile(MMKVFileHandle_t ashmemFD);
 
     const FileType m_fileType;
 #endif
@@ -71,9 +71,9 @@ public:
 
     void *getMemory() { return m_ptr; }
 
-    const MMKV_PATH_TYPE &getName() { return m_name; }
+    const MMKVPath_t &getName() { return m_name; }
 
-    MMKV_FILE_HANDLE getFd() { return m_fd; }
+    MMKVFileHandle_t getFd() { return m_fd; }
 
     // the newly expanded file content will be zeroed
     bool truncate(size_t size);
@@ -96,10 +96,10 @@ public:
 
 class MMBuffer;
 
-extern bool mkPath(const MMKV_PATH_TYPE &path);
-extern bool isFileExist(const MMKV_PATH_TYPE &nsFilePath);
-extern MMBuffer *readWholeFile(const MMKV_PATH_TYPE &path);
-extern bool zeroFillFile(MMKV_FILE_HANDLE fd, size_t startPos, size_t size);
+extern bool mkPath(const MMKVPath_t &path);
+extern bool isFileExist(const MMKVPath_t &nsFilePath);
+extern MMBuffer *readWholeFile(const MMKVPath_t &path);
+extern bool zeroFillFile(MMKVFileHandle_t fd, size_t startPos, size_t size);
 extern int getPageSize();
 } // namespace mmkv
 

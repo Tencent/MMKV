@@ -41,7 +41,7 @@ static bool getFileSize(int fd, size_t &size);
 #    ifdef MMKV_ANDROID
 extern size_t ASharedMemory_getSize(int fd);
 #    else
-MemoryFile::MemoryFile(const MMKV_PATH_TYPE &path) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
+MemoryFile::MemoryFile(const MMKVPath_t &path) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
 #    endif
@@ -201,7 +201,7 @@ bool isFileExist(const string &nsFilePath) {
     return lstat(nsFilePath.c_str(), &temp) == 0;
 }
 
-extern bool mkPath(const MMKV_PATH_TYPE &str) {
+extern bool mkPath(const MMKVPath_t &str) {
     char *path = strdup(str.c_str());
 
     struct stat sb = {0};
@@ -234,7 +234,7 @@ extern bool mkPath(const MMKV_PATH_TYPE &str) {
     return true;
 }
 
-MMBuffer *readWholeFile(const MMKV_PATH_TYPE &path) {
+MMBuffer *readWholeFile(const MMKVPath_t &path) {
     MMBuffer *buffer = nullptr;
     int fd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
     if (fd >= 0) {
