@@ -1115,7 +1115,7 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
 
 MMBuffer MMKV::getBytes(MMKVKey_t key) {
     if (isKeyEmpty(key)) {
-        return MMBuffer(0);
+        return MMBuffer();
     }
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
@@ -1126,7 +1126,7 @@ MMBuffer MMKV::getBytes(MMKVKey_t key) {
             MMKVError("%s", exception.what());
         }
     }
-    return MMBuffer(0);
+    return MMBuffer();
 }
 
 bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
