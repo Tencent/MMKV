@@ -511,7 +511,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     } else {
         string = mmapID;
     }
-    MMKVInfo("mmapKey: %@", string);
+    MMKVDebug("mmapKey: %@", string);
     return string;
 }
 

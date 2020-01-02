@@ -83,7 +83,7 @@ public:
             return pbcoder.getEncodeData(obj);
         } catch (const std::exception &exception) {
             MMKVError("%s", exception.what());
-            return MMBuffer(0);
+            return MMBuffer((size_t) 0);
         }
     }
 

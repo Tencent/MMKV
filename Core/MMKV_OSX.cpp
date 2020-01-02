@@ -70,9 +70,9 @@ void MMKV::setIsInBackground(bool isInBackground) {
 
 // @finally in C++ stype
 template <typename F>
-struct FinalAction {
-    FinalAction(F f) : m_func{f} {}
-    ~FinalAction() { m_func(); }
+struct AtExit {
+    AtExit(F f) : m_func{f} {}
+    ~AtExit() { m_func(); }
 
 private:
     F m_func;
@@ -90,7 +90,7 @@ bool MMKV::protectFromBackgroundWriting(size_t size, WriteBlock block) {
             //block(m_output);
             return false;
         } else {
-            FinalAction cleanup([=] { munlock((void *) ptr, lockDownSize); });
+            AtExit cleanup([=] { munlock((void *) ptr, lockDownSize); });
             try {
                 block(m_output);
             } catch (std::exception &exception) {
@@ -121,7 +121,9 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
     } else {
         /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
             auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
-            data = MMBuffer((void *) tmp.bytes, tmp.length);
+            if (tmp.length > 0) {
+                data = MMBuffer(tmp);
+            }
         }
     }
 

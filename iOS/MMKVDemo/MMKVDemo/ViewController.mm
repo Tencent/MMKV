@@ -22,6 +22,35 @@
 #import "MMKVDemo-Swift.h"
 #import <MMKV/MMKV.h>
 
+@interface TestNSArchive : NSObject <NSCoding>
+@property(nonatomic, strong) NSString *m_username;
+@property(nonatomic, assign) int32_t m_age;
+@property(nonatomic, assign) float m_score;
+@end
+
+@implementation TestNSArchive
+
+- (id)initWithCoder:(NSCoder *)decoder {
+    self = [super init];
+    if (!self) {
+        return nil;
+    }
+
+    self.m_username = [decoder decodeObjectForKey:@"m_username"];
+    self.m_age = [decoder decodeInt32ForKey:@"m_age"];
+    self.m_score = [decoder decodeFloatForKey:@"m_score"];
+
+    return self;
+}
+
+- (void)encodeWithCoder:(NSCoder *)encoder {
+    [encoder encodeObject:self.m_username forKey:@"m_username"];
+    [encoder encodeInteger:self.m_age forKey:@"m_age"];
+    [encoder encodeFloat:self.m_score forKey:@"m_score"];
+}
+
+@end
+
 @interface ViewController () <MMKVHandler>
 @end
 
@@ -29,6 +58,8 @@
     NSMutableArray *m_arrStrings;
     NSMutableArray *m_arrStrKeys;
     NSMutableArray *m_arrIntKeys;
+    NSMutableArray *m_arrObjKeys;
+    NSMutableArray *m_arrNSCodingObjs;
 
     int m_loops;
 }
@@ -69,6 +100,8 @@
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
     m_arrStrKeys = [NSMutableArray arrayWithCapacity:m_loops];
     m_arrIntKeys = [NSMutableArray arrayWithCapacity:m_loops];
+    m_arrObjKeys = [NSMutableArray arrayWithCapacity:m_loops];
+    m_arrNSCodingObjs = [NSMutableArray arrayWithCapacity:m_loops];
     for (size_t index = 0; index < m_loops; index++) {
         NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
         [m_arrStrings addObject:str];
@@ -78,6 +111,15 @@
 
         NSString *intKey = [NSString stringWithFormat:@"int-%zu", index];
         [m_arrIntKeys addObject:intKey];
+        /*
+        NSString *objKey = [NSString stringWithFormat:@"obj-%zu", index];
+        [m_arrObjKeys addObject:objKey];
+        
+        TestNSArchive *obj = [[TestNSArchive alloc] init];
+        obj.m_username = str;
+        obj.m_age = rand();
+        obj.m_age = rand() * rand() * 0.5;
+        [m_arrNSCodingObjs addObject:obj];*/
     }
 }
 
@@ -347,6 +389,9 @@
         for (size_t index = 0; index < self->m_loops; index++) {
             NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
             [self->m_arrStrings addObject:str];
+
+            //TestNSArchive *obj = self->m_arrNSCodingObjs[index];
+            //obj.m_username = str;
         }
 
         [self mmkvBaselineTest:self->m_loops];
@@ -365,6 +410,8 @@
     [self mmkvBatchReadInt:loops];
     [self mmkvBatchWriteString:loops];
     [self mmkvBatchReadString:loops];
+    //[self mmkvBatchWriteObject:loops];
+    //[self mmkvBatchReadObject:loops];
 
     //[self mmkvBatchDeleteString:loops];
     //[[MMKV defaultMMKV] trim];
@@ -447,6 +494,37 @@
     }
 }
 
+- (void)mmkvBatchWriteObject:(int)loops {
+    @autoreleasepool {
+        NSDate *startDate = [NSDate date];
+
+        MMKV *mmkv = [MMKV defaultMMKV];
+        for (int index = 0; index < loops; index++) {
+            TestNSArchive *obj = m_arrNSCodingObjs[index];
+            NSString *objKey = m_arrObjKeys[index];
+            [mmkv setObject:obj forKey:objKey];
+        }
+        NSDate *endDate = [NSDate date];
+        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv write object %d times, cost:%d ms", loops, cost);
+    }
+}
+
+- (void)mmkvBatchReadObject:(int)loops {
+    @autoreleasepool {
+        NSDate *startDate = [NSDate date];
+
+        MMKV *mmkv = [MMKV defaultMMKV];
+        for (int index = 0; index < loops; index++) {
+            NSString *objKey = m_arrObjKeys[index];
+            [mmkv getObjectOfClass:TestNSArchive.class forKey:objKey];
+        }
+        NSDate *endDate = [NSDate date];
+        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv read object %d times, cost:%d ms", loops, cost);
+    }
+}
+
 #pragma mark - NSUserDefault baseline test
 
 - (void)userDefaultBaselineTest:(int)loops {
@@ -454,6 +532,8 @@
     [self userDefaultBatchReadInt:loops];
     [self userDefaultBatchWriteString:loops];
     [self userDefaultBatchReadString:loops];
+    //[self userDefaultBatchWriteObject:loops];
+    //[self userDefaultBatchReadObject:loops];
 }
 
 - (void)userDefaultBatchWriteInt:(int)loops {
@@ -465,8 +545,8 @@
             NSInteger tmp = rand();
             NSString *intKey = m_arrIntKeys[index];
             [userdefault setInteger:tmp forKey:intKey];
-            [userdefault synchronize];
         }
+        [userdefault synchronize];
         NSDate *endDate = [NSDate date];
         int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
         NSLog(@"NSUserDefaults write int %d times, cost:%d ms", loops, cost);
@@ -497,8 +577,8 @@
             NSString *str = m_arrStrings[index];
             NSString *strKey = m_arrStrKeys[index];
             [userdefault setObject:str forKey:strKey];
-            [userdefault synchronize];
         }
+        [userdefault synchronize];
         NSDate *endDate = [NSDate date];
         int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
         NSLog(@"NSUserDefaults write string %d times, cost:%d ms", loops, cost);
@@ -517,6 +597,40 @@
         NSDate *endDate = [NSDate date];
         int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
         NSLog(@"NSUserDefaults read string %d times, cost:%d ms", loops, cost);
+    }
+}
+
+- (void)userDefaultBatchWriteObject:(int)loops {
+    @autoreleasepool {
+        NSDate *startDate = [NSDate date];
+
+        NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
+        for (int index = 0; index < loops; index++) {
+            TestNSArchive *obj = m_arrNSCodingObjs[index];
+            NSString *objKey = m_arrObjKeys[index];
+            auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
+            [userdefault setObject:tmp forKey:objKey];
+        }
+        [userdefault synchronize];
+        NSDate *endDate = [NSDate date];
+        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults write object %d times, cost:%d ms", loops, cost);
+    }
+}
+
+- (void)userDefaultBatchReadObject:(int)loops {
+    @autoreleasepool {
+        NSDate *startDate = [NSDate date];
+
+        NSUserDefaults *userdefault = [NSUserDefaults standardUserDefaults];
+        for (int index = 0; index < loops; index++) {
+            NSString *objKey = m_arrObjKeys[index];
+            NSData *tmp = [userdefault objectForKey:objKey];
+            [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
+        }
+        NSDate *endDate = [NSDate date];
+        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults read object %d times, cost:%d ms", loops, cost);
     }
 }
 

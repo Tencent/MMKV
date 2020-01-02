@@ -83,7 +83,7 @@ void MiniPBCoder::writeRootObject() {
                 m_outputData->writeRawVarint32(encodeItem->valueSize);
                 if (encodeItem->valueSize > 0 && encodeItem->value.tmpObjectValue != nullptr) {
                     auto obj = (__bridge NSData *) encodeItem->value.tmpObjectValue;
-                    MMBuffer buffer((void *) obj.bytes, obj.length, MMBufferNoCopy);
+                    MMBuffer buffer(obj, MMBufferNoCopy);
                     m_outputData->writeRawData(buffer);
                 }
                 break;
@@ -92,7 +92,7 @@ void MiniPBCoder::writeRootObject() {
                 m_outputData->writeRawVarint32(encodeItem->valueSize);
                 if (encodeItem->valueSize > 0 && encodeItem->value.objectValue != nullptr) {
                     auto obj = (__bridge NSData *) encodeItem->value.objectValue;
-                    MMBuffer buffer((void *) obj.bytes, obj.length, MMBufferNoCopy);
+                    MMBuffer buffer(obj, MMBufferNoCopy);
                     m_outputData->writeRawData(buffer);
                 }
                 break;

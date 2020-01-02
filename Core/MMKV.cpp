@@ -697,7 +697,7 @@ const MMBuffer &MMKV::getDataForKey(MMKVKey_t key) {
     if (itr != m_dic.end()) {
         return itr->second;
     }
-    static MMBuffer nan(0);
+    static MMBuffer nan((size_t) 0);
     return nan;
 }
 
@@ -733,7 +733,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
         m_dic.erase(itr);
 
         m_hasFullWriteback = false;
-        static MMBuffer nan(0);
+        static MMBuffer nan((size_t) 0);
         return appendDataWithKey(nan, key);
     }
 

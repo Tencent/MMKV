@@ -21,6 +21,8 @@
 #ifndef MMKV_MMBUFFER_H
 #define MMKV_MMBUFFER_H
 
+#include "MMKVPredef.h"
+
 #include <cstdint>
 #include <cstdlib>
 
@@ -36,6 +38,9 @@ private:
     void *ptr;
     size_t size;
     MMBufferCopyFlag isNoCopy;
+#ifdef MMKV_IOS_OR_MAC
+    NSData *m_data = nil;
+#endif
 
 public:
     void *getPtr() const { return ptr; }
@@ -44,6 +49,9 @@ public:
 
     explicit MMBuffer(size_t length = 0);
     MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy = MMBufferCopy);
+#ifdef MMKV_IOS_OR_MAC
+    explicit MMBuffer(NSData *data, MMBufferCopyFlag noCopy = MMBufferCopy);
+#endif
 
     MMBuffer(MMBuffer &&other) noexcept;
     MMBuffer &operator=(MMBuffer &&other) noexcept;
