@@ -34,12 +34,12 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
-    unsigned char m_key[AES_KEY_LEN] = {0};
+    unsigned char m_key[AES_KEY_LEN] = {};
     openssl::AES_KEY *m_aesKey = nullptr;
     int m_number = 0;
 
 public:
-    unsigned char m_vector[AES_KEY_LEN] = {0};
+    unsigned char m_vector[AES_KEY_LEN] = {};
 
 public:
     AESCrypt(const void *key, size_t keyLength, const void *iv = nullptr, size_t ivLength = 0);

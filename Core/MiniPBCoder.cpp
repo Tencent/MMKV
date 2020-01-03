@@ -55,7 +55,7 @@ MiniPBCoder::~MiniPBCoder() {
 
 MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
     m_inputBuffer = inputBuffer;
-    m_inputData = new CodedInputData(m_inputBuffer->getPtr(), static_cast<int32_t>(m_inputBuffer->length()));
+    m_inputData = new CodedInputData(m_inputBuffer->getPtr(), m_inputBuffer->length());
 }
 
 // encode
@@ -70,7 +70,7 @@ void MiniPBCoder::writeRootObject() {
                 break;
             }
             case PBEncodeItemType_Container: {
-                m_outputData->writeRawVarint32(encodeItem->valueSize);
+                m_outputData->writeUInt32(encodeItem->valueSize);
                 break;
             }
 #ifndef MMKV_IOS_OR_MAC
@@ -80,7 +80,7 @@ void MiniPBCoder::writeRootObject() {
             }
 #else
             case PBEncodeItemType_NSString: {
-                m_outputData->writeRawVarint32(encodeItem->valueSize);
+                m_outputData->writeUInt32(encodeItem->valueSize);
                 if (encodeItem->valueSize > 0 && encodeItem->value.tmpObjectValue != nullptr) {
                     auto obj = (__bridge NSData *) encodeItem->value.tmpObjectValue;
                     MMBuffer buffer(obj, MMBufferNoCopy);
@@ -89,7 +89,7 @@ void MiniPBCoder::writeRootObject() {
                 break;
             }
             case PBEncodeItemType_NSData: {
-                m_outputData->writeRawVarint32(encodeItem->valueSize);
+                m_outputData->writeUInt32(encodeItem->valueSize);
                 if (encodeItem->valueSize > 0 && encodeItem->value.objectValue != nullptr) {
                     auto obj = (__bridge NSData *) encodeItem->value.objectValue;
                     MMBuffer buffer(obj, MMBufferNoCopy);
@@ -120,7 +120,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMBuffer &buffer) {
         encodeItem->value.bufferValue = &buffer;
         encodeItem->valueSize = static_cast<uint32_t>(buffer.length());
     }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }
@@ -158,7 +158,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVMap &map) {
 
         encodeItem = &(*m_encodeItems)[index];
     }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }
@@ -188,7 +188,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const string &str) {
         encodeItem->value.strValue = &str;
         encodeItem->valueSize = static_cast<int32_t>(str.size());
     }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }
@@ -210,7 +210,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const vector<string> &v) {
 
         encodeItem = &(*m_encodeItems)[index];
     }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }

@@ -80,7 +80,7 @@ struct PBEncodeItem {
         : type(other.type), compiledSize(other.compiledSize), valueSize(other.valueSize), value(other.value) {
         // omit unnecessary CFRetain() & CFRelease()
         other.type = PBEncodeItemType_None;
-        //other.value = {0};
+        //other.value = {};
     }
 
     // in fact this is never called in MMKV's usage, just provide it to meet std::vector's requirements

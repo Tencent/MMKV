@@ -104,21 +104,21 @@ static inline int64_t logicalRightShift64(int64_t value, int32_t spaces) {
 
 constexpr uint32_t littleEdian32Size = 4;
 
-constexpr uint32_t pbFloatSize(float value) {
+constexpr uint32_t pbFloatSize() {
     return littleEdian32Size;
 }
 
-constexpr uint32_t pbFixed32Size(int32_t value) {
+constexpr uint32_t pbFixed32Size() {
     return littleEdian32Size;
 }
 
 constexpr uint32_t littleEdian64Size = 8;
 
-constexpr uint32_t pbDoubleSize(double value) {
+constexpr uint32_t pbDoubleSize() {
     return littleEdian64Size;
 }
 
-constexpr uint32_t pbBoolSize(bool value) {
+constexpr uint32_t pbBoolSize() {
     return 1;
 }
 
@@ -134,12 +134,12 @@ static inline uint32_t pbInt32Size(int32_t value) {
     }
 }
 
-static inline int32_t pbUInt32Size(uint32_t value) {
-    return pbRawVarint32Size(value);
+static inline uint32_t pbUInt32Size(uint32_t value) {
+    return pbRawVarint32Size(static_cast<int32_t>(value));
 }
 
-static inline int32_t pbUInt64Size(uint64_t value) {
-    return pbInt64Size(value);
+static inline uint32_t pbUInt64Size(uint64_t value) {
+    return pbInt64Size(static_cast<int64_t>(value));
 }
 
 } // namespace mmkv

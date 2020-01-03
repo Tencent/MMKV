@@ -97,7 +97,7 @@ void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) {
 void ThreadLock::Sleep(int ms) {
     constexpr auto MILLI_SECOND_MULTIPLIER = 1000;
     constexpr auto NANO_SECOND_MULTIPLIER = MILLI_SECOND_MULTIPLIER * MILLI_SECOND_MULTIPLIER;
-    timespec duration = {0};
+    struct timespec duration = {};
     if (ms > 999) {
         duration.tv_sec = ms / MILLI_SECOND_MULTIPLIER;
         duration.tv_nsec = (ms % MILLI_SECOND_MULTIPLIER) * NANO_SECOND_MULTIPLIER;

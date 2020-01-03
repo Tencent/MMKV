@@ -84,7 +84,7 @@ void AESCrypt::fillRandomIV(void *vector) {
     }
     srand((unsigned) time(nullptr));
     int *ptr = (int *) vector;
-    for (int i = 0; i < AES_KEY_LEN / sizeof(int); i++) {
+    for (uint32_t i = 0; i < AES_KEY_LEN / sizeof(int); i++) {
         ptr[i] = rand();
     }
 }
@@ -108,8 +108,8 @@ void testAESCrypt() {
 
     unsigned char iv[AES_KEY_LEN];
     srand((unsigned) time(nullptr));
-    for (int i = 0; i < AES_KEY_LEN; i++) {
-        iv[i] = rand();
+    for (uint32_t i = 0; i < AES_KEY_LEN; i++) {
+        iv[i] = (unsigned char) rand();
     }
     AESCrypt crypt1(key, keyLength, iv, sizeof(iv));
     AESCrypt crypt2(key, keyLength, iv, sizeof(iv));
@@ -132,9 +132,9 @@ void testAESCrypt() {
         auto tokenPtr = (const unsigned char *) strchr((const char *) ptr, ' ');
         size_t size = 0;
         if (!tokenPtr) {
-            size = plainText + textLength - ptr;
+            size = static_cast<size_t>(plainText + textLength - ptr);
         } else {
-            size = tokenPtr - ptr + 1;
+            size = static_cast<size_t>(tokenPtr - ptr + 1);
         }
 
         flip = !flip;

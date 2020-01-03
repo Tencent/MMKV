@@ -63,7 +63,7 @@ bool FileLock::doLock(LockType lockType, bool wait) {
 
 #ifndef MMKV_WIN32
 
-static uint32_t LockType2FlockType(LockType lockType) {
+static int32_t LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
             return LOCK_SH;
@@ -80,7 +80,7 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
     }
 #    endif
     auto realLockType = LockType2FlockType(lockType);
-    int cmd = wait ? realLockType : (realLockType | LOCK_NB);
+    auto cmd = wait ? realLockType : (realLockType | LOCK_NB);
     if (unLockFirstIfNeeded) {
         // try lock
         auto ret = flock(m_fd, realLockType | LOCK_NB);

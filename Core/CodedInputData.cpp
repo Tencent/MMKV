@@ -66,7 +66,7 @@ int64_t CodedInputData::readInt64() {
 }
 
 uint64_t CodedInputData::readUInt64() {
-    return readInt64();
+    return static_cast<uint64_t>(readInt64());
 }
 
 int32_t CodedInputData::readInt32() {
@@ -74,7 +74,7 @@ int32_t CodedInputData::readInt32() {
 }
 
 uint32_t CodedInputData::readUInt32() {
-    return this->readRawVarint32();
+    return static_cast<uint32_t>(readRawVarint32());
 }
 
 int32_t CodedInputData::readFixed32() {
@@ -89,7 +89,7 @@ bool CodedInputData::readBool() {
 
 string CodedInputData::readString() {
     int32_t size = this->readRawVarint32();
-    if (size <= (m_size - m_position) && size > 0) {
+    if (size > 0 && static_cast<size_t>(size) <= (m_size - m_position)) {
         string result((char *) (m_ptr + m_position), size);
         m_position += size;
         return result;
@@ -108,9 +108,10 @@ MMBuffer CodedInputData::readData() {
         throw length_error("InvalidProtocolBuffer negativeSize");
     }
 
-    if (size <= m_size - m_position) {
-        MMBuffer data(((int8_t *) m_ptr) + m_position, size);
-        m_position += size;
+    auto s_size = static_cast<size_t>(size);
+    if (s_size <= m_size - m_position) {
+        MMBuffer data(((int8_t *) m_ptr) + m_position, s_size);
+        m_position += s_size;
         return data;
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");

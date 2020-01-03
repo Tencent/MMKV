@@ -626,8 +626,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 @end
 
 static NSString *md5(NSString *value) {
-    unsigned char md[MD5_DIGEST_LENGTH] = {0};
-    char tmp[3] = {0}, buf[33] = {0};
+    unsigned char md[MD5_DIGEST_LENGTH] = {};
+    char tmp[3] = {}, buf[33] = {};
     auto data = [value dataUsingEncoding:NSUTF8StringEncoding];
     openssl::MD5((unsigned char *) data.bytes, data.length, md);
     for (auto ch : md) {

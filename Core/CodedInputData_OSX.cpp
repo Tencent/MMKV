@@ -36,10 +36,12 @@ namespace mmkv {
 
 NSString *CodedInputData::readString() {
     int32_t size = this->readRawVarint32();
-    if (size <= (m_size - m_position) && size > 0) {
+    auto s_size = static_cast<size_t>(size);
+    if (size > 0 && s_size <= (m_size - m_position)) {
         auto ptr = m_ptr + m_position;
-        NSString *result = [[[NSString alloc] initWithBytes:ptr length:size encoding:NSUTF8StringEncoding] autorelease];
-        m_position += size;
+        NSString *result =
+            [[[NSString alloc] initWithBytes:ptr length:s_size encoding:NSUTF8StringEncoding] autorelease];
+        m_position += s_size;
         return result;
     } else if (size == 0) {
         return @"";
@@ -53,9 +55,10 @@ NSString *CodedInputData::readString() {
 
 NSData *CodedInputData::readNSData() {
     int32_t size = this->readRawVarint32();
-    if (size <= m_size - m_position && size > 0) {
-        NSData *result = [NSData dataWithBytes:(m_ptr + m_position) length:size];
-        m_position += size;
+    auto s_size = static_cast<size_t>(size);
+    if (size > 0 && s_size <= m_size - m_position) {
+        NSData *result = [NSData dataWithBytes:(m_ptr + m_position) length:s_size];
+        m_position += s_size;
         return result;
     } else if (size < 0) {
         throw length_error("InvalidProtocolBuffer negativeSize");

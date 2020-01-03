@@ -67,7 +67,7 @@ public:
     explicit FileLock(MMKVFileHandle_t fd, bool isAshmem = false);
 #    endif // MMKV_ANDROID
 #else
-    explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_overLapped{0}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+    explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_overLapped{}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 #endif // MMKV_WIN32
 
     bool lock(LockType lockType);

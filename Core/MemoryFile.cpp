@@ -75,7 +75,7 @@ bool MemoryFile::truncate(size_t size) {
         m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
     }
 
-    if (::ftruncate(m_fd, m_size) != 0) {
+    if (::ftruncate(m_fd, static_cast<off_t>(m_size)) != 0) {
         MMKVError("fail to truncate [%s] to size %zu, %s", m_name.c_str(), m_size, strerror(errno));
         m_size = oldSize;
         return false;
@@ -197,14 +197,14 @@ bool isFileExist(const string &nsFilePath) {
         return false;
     }
 
-    struct stat temp = {0};
+    struct stat temp = {};
     return lstat(nsFilePath.c_str(), &temp) == 0;
 }
 
 extern bool mkPath(const MMKVPath_t &str) {
     char *path = strdup(str.c_str());
 
-    struct stat sb = {0};
+    struct stat sb = {};
     bool done = false;
     char *slash = path;
 
@@ -264,12 +264,12 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
         return false;
     }
 
-    if (lseek(fd, startPos, SEEK_SET) < 0) {
+    if (lseek(fd, static_cast<off_t>(startPos), SEEK_SET) < 0) {
         MMKVError("fail to lseek fd[%d], error:%s", fd, strerror(errno));
         return false;
     }
 
-    static const char zeros[4096] = {0};
+    static const char zeros[4096] = {};
     while (size >= sizeof(zeros)) {
         if (write(fd, zeros, sizeof(zeros)) < 0) {
             MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
@@ -287,7 +287,7 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
 }
 
 static bool getFileSize(int fd, size_t &size) {
-    struct stat st = {0};
+    struct stat st = {};
     if (fstat(fd, &st) != -1) {
         size = (size_t) st.st_size;
         return true;
@@ -295,8 +295,8 @@ static bool getFileSize(int fd, size_t &size) {
     return false;
 }
 
-int getPageSize() {
-    return getpagesize();
+size_t getPageSize() {
+    return static_cast<size_t>(getpagesize());
 }
 
 } // namespace mmkv

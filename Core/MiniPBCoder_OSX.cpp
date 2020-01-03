@@ -51,25 +51,25 @@ size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
         encodeItem->type = PBEncodeItemType_NSString;
         NSData *buffer = [[str dataUsingEncoding:NSUTF8StringEncoding] retain];
         encodeItem->value.tmpObjectValue = (__bridge void *) buffer;
-        encodeItem->valueSize = static_cast<int32_t>(buffer.length);
+        encodeItem->valueSize = static_cast<uint32_t>(buffer.length);
     } else if ([obj isKindOfClass:[NSDate class]]) {
         NSDate *oDate = (NSDate *) obj;
         encodeItem->type = PBEncodeItemType_NSDate;
         encodeItem->value.objectValue = (__bridge void *) oDate;
-        encodeItem->valueSize = pbDoubleSize(oDate.timeIntervalSince1970);
+        encodeItem->valueSize = pbDoubleSize();
         encodeItem->compiledSize = encodeItem->valueSize;
         return index; // double has fixed compilesize
     } else if ([obj isKindOfClass:[NSData class]]) {
         NSData *oData = (NSData *) obj;
         encodeItem->type = PBEncodeItemType_NSData;
         encodeItem->value.objectValue = (__bridge void *) oData;
-        encodeItem->valueSize = static_cast<int32_t>(oData.length);
+        encodeItem->valueSize = static_cast<uint32_t>(oData.length);
     } else {
         m_encodeItems->pop_back();
         MMKVError("%@ not recognized", NSStringFromClass(obj.class));
         return m_encodeItems->size();
     }
-    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }
@@ -136,7 +136,7 @@ NSObject *MiniPBCoder::decodeObject(const MMBuffer &oData, Class cls) {
     if (!cls || oData.length() == 0) {
         return nil;
     }
-    CodedInputData input(oData.getPtr(), static_cast<int32_t>(oData.length()));
+    CodedInputData input(oData.getPtr(), oData.length());
     if (cls == [NSString class]) {
         return input.readString();
     } else if (cls == [NSMutableString class]) {

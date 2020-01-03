@@ -55,7 +55,7 @@ void CodedOutputData::writeInt64(int64_t value) {
 }
 
 void CodedOutputData::writeUInt64(uint64_t value) {
-    this->writeRawVarint64(value);
+    writeRawVarint64(static_cast<int64_t>(value));
 }
 
 void CodedOutputData::writeInt32(int32_t value) {
@@ -67,7 +67,7 @@ void CodedOutputData::writeInt32(int32_t value) {
 }
 
 void CodedOutputData::writeUInt32(uint32_t value) {
-    this->writeRawVarint32(value);
+    writeRawVarint32(static_cast<int32_t>(value));
 }
 
 void CodedOutputData::writeBool(bool value) {
@@ -96,7 +96,10 @@ void CodedOutputData::writeString(const string &value) {
 #endif // MMKV_IOS_OR_MAC
 
 size_t CodedOutputData::spaceLeft() {
-    return int32_t(m_size - m_position);
+    if (m_size <= m_position) {
+        return 0;
+    }
+    return m_size - m_position;
 }
 
 void CodedOutputData::seek(size_t addedSize) {

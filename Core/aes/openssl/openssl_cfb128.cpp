@@ -23,10 +23,8 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                            unsigned char ivec[16], int *num,
                            int enc, block128_f block)
 {
-    unsigned int n;
     size_t l = 0;
-
-    n = *num;
+    auto n = static_cast<unsigned int>(*num);
 
     if (enc) {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
@@ -60,7 +58,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                         ++n;
                     }
                 }
-                *num = n;
+                *num = static_cast<int>(n);
                 return;
             } while (0);
         }
@@ -74,7 +72,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
             ++l;
             n = (n + 1) % 16;
         }
-        *num = n;
+        *num = static_cast<int>(n);
     } else {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
         if (16 % sizeof(size_t) == 0) { /* always true actually */
@@ -112,7 +110,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                         ++n;
                     }
                 }
-                *num = n;
+                *num = static_cast<int>(n);
                 return;
             } while (0);
         }
@@ -128,7 +126,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
             ++l;
             n = (n + 1) % 16;
         }
-        *num = n;
+        *num = static_cast<int>(n);
     }
 }
 
