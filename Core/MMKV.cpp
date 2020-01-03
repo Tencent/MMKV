@@ -1438,7 +1438,7 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
         return false;
     }
 
-    const int offset = pbFixed32Size();
+    constexpr auto offset = pbFixed32Size();
     uint32_t crcDigest = 0;
     MMBuffer *fileData = readWholeFile(kvPath);
     if (fileData) {

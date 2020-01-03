@@ -89,8 +89,9 @@ public:
 #else
     bool isFileValid() { return m_fd != INVALID_HANDLE_VALUE && m_size > 0 && m_fileMapping && m_ptr; }
 #endif
+
     // just forbid it for possibly misuse
-    MemoryFile(const MemoryFile &other) = delete;
+    explicit MemoryFile(const MemoryFile &other) = delete;
     MemoryFile &operator=(const MemoryFile &other) = delete;
 };
 

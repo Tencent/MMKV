@@ -37,15 +37,15 @@ class CodedInputData;
 class CodedOutputData;
 
 class MiniPBCoder {
-    const MMBuffer *m_inputBuffer;
-    CodedInputData *m_inputData;
+    const MMBuffer *m_inputBuffer = nullptr;
+    CodedInputData *m_inputData = nullptr;
 
-    MMBuffer *m_outputBuffer;
-    CodedOutputData *m_outputData;
-    std::vector<PBEncodeItem> *m_encodeItems;
+    MMBuffer *m_outputBuffer = nullptr;
+    CodedOutputData *m_outputData = nullptr;
+    std::vector<PBEncodeItem> *m_encodeItems = nullptr;
 
 private:
-    MiniPBCoder();
+    MiniPBCoder() = default;
     explicit MiniPBCoder(const MMBuffer *inputBuffer);
     ~MiniPBCoder();
 

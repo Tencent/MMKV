@@ -37,7 +37,7 @@ MMBuffer::MMBuffer(size_t length) : ptr(nullptr), size(length), isNoCopy(MMBuffe
     }
 }
 
-MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy) : ptr(source), size(length), isNoCopy(noCopy) {
+MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : ptr(source), size(length), isNoCopy(flag) {
     if (isNoCopy == MMBufferCopy) {
         ptr = malloc(size);
         memcpy(ptr, source, size);
@@ -45,8 +45,7 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy) : ptr(s
 }
 
 #ifdef MMKV_IOS_OR_MAC
-MMBuffer::MMBuffer(NSData *data, MMBufferCopyFlag noCopy)
-    : ptr((void *) data.bytes), size(data.length), isNoCopy(noCopy) {
+MMBuffer::MMBuffer(NSData *data, MMBufferCopyFlag flag) : ptr((void *) data.bytes), size(data.length), isNoCopy(flag) {
     if (isNoCopy == MMBufferCopy) {
         m_data = [data retain];
     } else {

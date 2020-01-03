@@ -169,7 +169,7 @@ size_t MemoryFile::getActualFileSize() {
     return size;
 }
 
-int getPageSize() {
+size_t getPageSize() {
     SYSTEM_INFO system_info;
     GetSystemInfo(&system_info);
     return system_info.dwPageSize;

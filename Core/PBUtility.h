@@ -122,9 +122,17 @@ constexpr uint32_t pbBoolSize() {
     return 1;
 }
 
-extern uint32_t pbRawVarint32Size(int32_t value);
+extern uint32_t pbRawVarint32Size(uint32_t value);
 
-extern uint32_t pbInt64Size(int64_t value);
+static inline uint32_t pbRawVarint32Size(int32_t value) {
+    return pbRawVarint32Size(Int32ToUInt32(value));
+}
+
+extern uint32_t pbUInt64Size(uint64_t value);
+
+static inline uint32_t pbInt64Size(int64_t value) {
+    return pbUInt64Size(Int64ToUInt64(value));
+}
 
 static inline uint32_t pbInt32Size(int32_t value) {
     if (value >= 0) {
@@ -135,11 +143,7 @@ static inline uint32_t pbInt32Size(int32_t value) {
 }
 
 static inline uint32_t pbUInt32Size(uint32_t value) {
-    return pbRawVarint32Size(static_cast<int32_t>(value));
-}
-
-static inline uint32_t pbUInt64Size(uint64_t value) {
-    return pbInt64Size(static_cast<int64_t>(value));
+    return pbRawVarint32Size(value);
 }
 
 } // namespace mmkv

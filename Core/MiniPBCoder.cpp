@@ -37,13 +37,9 @@ using namespace std;
 
 namespace mmkv {
 
-MiniPBCoder::MiniPBCoder() {
-    m_inputBuffer = nullptr;
-    m_inputData = nullptr;
-
-    m_outputBuffer = nullptr;
-    m_outputData = nullptr;
-    m_encodeItems = nullptr;
+MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
+    m_inputBuffer = inputBuffer;
+    m_inputData = new CodedInputData(m_inputBuffer->getPtr(), m_inputBuffer->length());
 }
 
 MiniPBCoder::~MiniPBCoder() {
@@ -51,11 +47,6 @@ MiniPBCoder::~MiniPBCoder() {
     delete m_outputBuffer;
     delete m_outputData;
     delete m_encodeItems;
-}
-
-MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
-    m_inputBuffer = inputBuffer;
-    m_inputData = new CodedInputData(m_inputBuffer->getPtr(), m_inputBuffer->length());
 }
 
 // encode
@@ -120,7 +111,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMBuffer &buffer) {
         encodeItem->value.bufferValue = &buffer;
         encodeItem->valueSize = static_cast<uint32_t>(buffer.length());
     }
-    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }
@@ -158,7 +149,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVMap &map) {
 
         encodeItem = &(*m_encodeItems)[index];
     }
-    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }
@@ -188,7 +179,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const string &str) {
         encodeItem->value.strValue = &str;
         encodeItem->valueSize = static_cast<int32_t>(str.size());
     }
-    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }
@@ -210,7 +201,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const vector<string> &v) {
 
         encodeItem = &(*m_encodeItems)[index];
     }
-    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }

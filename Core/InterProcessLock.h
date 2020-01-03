@@ -77,7 +77,7 @@ public:
     bool unlock(LockType lockType);
 
     // just forbid it for possibly misuse
-    FileLock(const FileLock &other) = delete;
+    explicit FileLock(const FileLock &other) = delete;
     FileLock &operator=(const FileLock &other) = delete;
 };
 

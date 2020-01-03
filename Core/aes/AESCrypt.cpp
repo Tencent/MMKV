@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <stdint.h>
 
 using namespace openssl;
 

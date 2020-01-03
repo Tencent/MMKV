@@ -69,7 +69,7 @@ size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
         MMKVError("%@ not recognized", NSStringFromClass(obj.class));
         return m_encodeItems->size();
     }
-    encodeItem->compiledSize = pbUInt32Size(encodeItem->valueSize) + encodeItem->valueSize;
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
 }

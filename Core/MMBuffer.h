@@ -48,9 +48,9 @@ public:
     size_t length() const { return size; }
 
     explicit MMBuffer(size_t length = 0);
-    MMBuffer(void *source, size_t length, MMBufferCopyFlag noCopy = MMBufferCopy);
+    MMBuffer(void *source, size_t length, MMBufferCopyFlag flag = MMBufferCopy);
 #ifdef MMKV_IOS_OR_MAC
-    explicit MMBuffer(NSData *data, MMBufferCopyFlag noCopy = MMBufferCopy);
+    explicit MMBuffer(NSData *data, MMBufferCopyFlag flag = MMBufferCopy);
 #endif
 
     MMBuffer(MMBuffer &&other) noexcept;
@@ -59,7 +59,7 @@ public:
     ~MMBuffer();
 
     // those are expensive, just forbid it for possibly misuse
-    MMBuffer(const MMBuffer &other) = delete;
+    explicit MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;
 };
 

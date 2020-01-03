@@ -38,10 +38,6 @@ public:
         m_lock = nullptr;
     }
 
-    // just forbid it for possibly misuse
-    ScopedLock(const ScopedLock<T> &other) = delete;
-    ScopedLock &operator=(const ScopedLock<T> &other) = delete;
-
     void lock() {
         if (m_lock) {
             m_lock->lock();
@@ -60,6 +56,10 @@ public:
             m_lock->unlock();
         }
     }
+
+    // just forbid it for possibly misuse
+    explicit ScopedLock(const ScopedLock<T> &other) = delete;
+    ScopedLock &operator=(const ScopedLock<T> &other) = delete;
 };
 
 #define SCOPEDLOCK(lock) _SCOPEDLOCK(lock, __COUNTER__)
