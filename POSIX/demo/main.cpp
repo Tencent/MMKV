@@ -98,6 +98,7 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     mmkv->getString("null string", result);
     cout << "string before set null: " << result << endl;
     mmkv->set((const char *) nullptr, "null string");
+    //mmkv->set("", "null string");
     result.erase();
     mmkv->getString("null string", result);
     cout << "string after set null: " << result << ", containsKey:" << mmkv->containsKey("null string") << endl;

@@ -167,6 +167,12 @@
     NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
     NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data"]);
 
+    [mmkv setObject:[NSData data] forKey:@"data"];
+    NSLog(@"data after set empty data:%@, containsKey:%d",
+          [mmkv getObjectOfClass:NSData.class
+                          forKey:@"data"],
+          [mmkv containsKey:@"data"]);
+
     [mmkv removeValueForKey:@"bool"];
     NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
     [mmkv removeValuesForKeys:@[ @"int32", @"uint64" ]];

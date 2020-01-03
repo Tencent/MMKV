@@ -88,15 +88,18 @@ bool CodedInputData::readBool() {
 #ifndef MMKV_IOS_OR_MAC
 
 string CodedInputData::readString() {
-    int32_t size = this->readRawVarint32();
-    if (size > 0 && static_cast<size_t>(size) <= (m_size - m_position)) {
-        string result((char *) (m_ptr + m_position), size);
-        m_position += size;
+    int32_t size = readRawVarint32();
+    if (size < 0) {
+        throw length_error("InvalidProtocolBuffer negativeSize");
+    }
+
+    auto s_size = static_cast<size_t>(size);
+    if (s_size <= m_size - m_position) {
+        string result((char *) (m_ptr + m_position), s_size);
+        m_position += s_size;
         return result;
-    } else if (size == 0) {
-        return "";
     } else {
-        throw length_error("Invalid Size: " + to_string(size));
+        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }
 }
 
