@@ -25,8 +25,6 @@
 
 #include <string>
 
-enum SyncFlag : bool { MMKV_SYNC = true, MMKV_ASYNC = false };
-
 #ifdef MMKV_ANDROID
 constexpr auto ASHMEM_NAME_DEF = "/dev/ashmem";
 

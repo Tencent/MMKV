@@ -24,6 +24,7 @@
 
 #    include "InterProcessLock.h"
 #    include "MMKVLog.h"
+#    include "MemoryFile.h"
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
 #    include <unistd.h>
@@ -42,11 +43,11 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     : m_mmapID(mmapedKVKey(mmapID, relativePath)) // historically Android mistakenly use mmapKey as mmapID
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
-    , m_file(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE)
-    , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file.m_fileType)
+    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE))
+    , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType))
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile.getFd(), (mode & MMKV_ASHMEM)))
+    , m_fileLock(new FileLock(m_metaFile->getFd(), (mode & MMKV_ASHMEM)))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
     , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 || (mode & CONTEXT_MODE_MULTI_PROCESS) != 0) {
@@ -76,18 +77,18 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     : m_mmapID(mmapID)
     , m_path("")
     , m_crcPath("")
-    , m_file(ashmemFD)
-    , m_metaFile(ashmemMetaFD)
+    , m_file(new MemoryFile(ashmemFD))
+    , m_metaFile(new MemoryFile(ashmemMetaFD))
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile.getFd(), true))
+    , m_fileLock(new FileLock(m_metaFile->getFd(), true))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
     , m_isInterProcess(true) {
 
     // check mmapID with ashmemID
     {
-        auto ashmemID = m_metaFile.getName();
+        auto ashmemID = m_metaFile->getName();
         size_t pos = ashmemID.find_last_of('.');
         if (pos != string::npos) {
             ashmemID.erase(pos, string::npos);
@@ -98,7 +99,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     }
     // TODO: call mappedKVPathWithID() ?
     m_path = string(ASHMEM_NAME_DEF) + "/" + m_mmapID;
-    m_crcPath = string(ASHMEM_NAME_DEF) + "/" + m_metaFile.getName();
+    m_crcPath = string(ASHMEM_NAME_DEF) + "/" + m_metaFile->getName();
     m_actualSize = 0;
     m_output = nullptr;
 
@@ -166,16 +167,24 @@ MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *c
     return kv;
 }
 
+int MMKV::ashmemFD() {
+    return (m_file->m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_file->getFd() : -1;
+}
+
+int MMKV::ashmemMetaFD() {
+    return (m_file->m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile->getFd() : -1;
+}
+
 void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
     SCOPEDLOCK(m_lock);
 
     checkReSetCryptKey(cryptKey);
 
-    if (m_file.m_fileType & MMFILE_TYPE_ASHMEM) {
-        if (m_file.getFd() != fd) {
+    if (m_file->m_fileType & MMFILE_TYPE_ASHMEM) {
+        if (m_file->getFd() != fd) {
             ::close(fd);
         }
-        if (m_metaFile.getFd() != metaFD) {
+        if (m_metaFile->getFd() != metaFD) {
             ::close(metaFD);
         }
     }

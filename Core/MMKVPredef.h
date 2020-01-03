@@ -114,6 +114,8 @@ enum MMKVErrorType : int {
     MMKVFileLength,
 };
 
+enum SyncFlag : bool { MMKV_SYNC = true, MMKV_ASYNC = false };
+
 MMKV_NAMESPACE_END
 
 namespace mmkv {

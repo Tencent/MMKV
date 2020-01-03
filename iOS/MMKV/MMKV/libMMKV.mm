@@ -459,11 +459,11 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 #pragma mark - Boring stuff
 
 - (void)sync {
-    m_mmkv->sync(MMKV_SYNC);
+    m_mmkv->sync(mmkv::MMKV_SYNC);
 }
 
 - (void)async {
-    m_mmkv->sync(MMKV_ASYNC);
+    m_mmkv->sync(mmkv::MMKV_ASYNC);
 }
 
 - (void)checkContentChanged {

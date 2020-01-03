@@ -25,7 +25,6 @@
 
 #include "MMBuffer.h"
 #include "MMKVMetaInfo.hpp"
-#include "MemoryFile.h"
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -34,6 +33,7 @@
 
 namespace mmkv {
 class CodedOutputData;
+class MemoryFile;
 class FileLock;
 class InterProcessLock;
 class ThreadLock;
@@ -67,7 +67,7 @@ class MMKV {
     MMKVPath_t m_path;
     MMKVPath_t m_crcPath;
 
-    mmkv::MemoryFile m_file;
+    mmkv::MemoryFile *m_file;
     size_t m_actualSize;
     mmkv::CodedOutputData *m_output;
 
@@ -75,7 +75,7 @@ class MMKV {
     bool m_hasFullWriteback;
 
     uint32_t m_crcDigest;
-    mmkv::MemoryFile m_metaFile;
+    mmkv::MemoryFile *m_metaFile;
     mmkv::MMKVMetaInfo m_metaInfo;
 
     mmkv::AESCrypt *m_crypter;
@@ -165,9 +165,9 @@ public:
 
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, std::string *cryptKey = nullptr);
 
-    int ashmemFD() { return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_file.getFd() : -1; }
+    int ashmemFD();
 
-    int ashmemMetaFD() { return (m_file.m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile.getFd() : -1; }
+    int ashmemMetaFD();
 #endif // MMKV_ANDROID
 
     static void onExit();
