@@ -23,7 +23,6 @@
 #if MMKV_USING_PTHREAD
 
 #    include "MMKVLog.h"
-#    include <atomic>
 
 #    ifdef MMKV_LINUX
 #        include <sys/syscall.h>

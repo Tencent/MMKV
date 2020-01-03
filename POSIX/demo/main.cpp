@@ -26,7 +26,6 @@
 #include <pthread.h>
 #include <string>
 #include <sys/wait.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 
