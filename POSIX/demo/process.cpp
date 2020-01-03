@@ -23,7 +23,9 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
-#include <zconf.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 using namespace std;
 using namespace mmkv;
@@ -73,3 +75,4 @@ int main() {
 
     cout << processID << ": ended\n";
 }
+

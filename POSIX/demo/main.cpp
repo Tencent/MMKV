@@ -26,7 +26,9 @@
 #include <pthread.h>
 #include <string>
 #include <sys/wait.h>
-#include <zconf.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 using namespace std;
 using namespace mmkv;

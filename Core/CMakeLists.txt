@@ -113,6 +113,9 @@ find_library(zlib
         z
         )
 
-target_link_libraries(core
-        ${zlib}
-        )
+if (NOT zlib)
+    target_compile_definitions(core PUBLIC MMKV_EMBED_ZLIB=1)
+else()
+  target_link_libraries(core ${zlib})
+endif()
+
