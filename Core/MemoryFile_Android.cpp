@@ -22,10 +22,8 @@
 
 #ifdef MMKV_ANDROID
 
-#    include "InterProcessLock.h"
 #    include "MMBuffer.h"
 #    include "MMKVLog.h"
-#    include "ScopedLock.hpp"
 #    include <cerrno>
 #    include <fcntl.h>
 #    include <sys/mman.h>

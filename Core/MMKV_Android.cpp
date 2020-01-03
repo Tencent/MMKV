@@ -22,15 +22,17 @@
 
 #ifdef MMKV_ANDROID
 
+#    include "InterProcessLock.h"
 #    include "MMKVLog.h"
 #    include "ScopedLock.hpp"
+#    include "ThreadLock.h"
 #    include <unistd.h>
 
 using namespace std;
 using namespace mmkv;
 
 extern unordered_map<string, MMKV *> *g_instanceDic;
-extern ThreadLock g_instanceLock;
+extern ThreadLock *g_instanceLock;
 
 extern string mmapedKVKey(const string &mmapID, string *relativePath);
 extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
@@ -43,9 +45,10 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     , m_file(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE)
     , m_metaFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file.m_fileType)
     , m_crypter(nullptr)
-    , m_fileLock(m_metaFile.getFd(), (mode & MMKV_ASHMEM))
-    , m_sharedProcessLock(&m_fileLock, SharedLockType)
-    , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
+    , m_lock(new ThreadLock())
+    , m_fileLock(new FileLock(m_metaFile.getFd(), (mode & MMKV_ASHMEM)))
+    , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
+    , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
     , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 || (mode & CONTEXT_MODE_MULTI_PROCESS) != 0) {
     m_actualSize = 0;
     m_output = nullptr;
@@ -59,8 +62,8 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
 
     m_crcDigest = 0;
 
-    m_sharedProcessLock.m_enable = m_isInterProcess;
-    m_exclusiveProcessLock.m_enable = m_isInterProcess;
+    m_sharedProcessLock->m_enable = m_isInterProcess;
+    m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
     {
@@ -76,9 +79,10 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     , m_file(ashmemFD)
     , m_metaFile(ashmemMetaFD)
     , m_crypter(nullptr)
-    , m_fileLock(m_metaFile.getFd(), true)
-    , m_sharedProcessLock(&m_fileLock, SharedLockType)
-    , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
+    , m_lock(new ThreadLock())
+    , m_fileLock(new FileLock(m_metaFile.getFd(), true))
+    , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
+    , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
     , m_isInterProcess(true) {
 
     // check mmapID with ashmemID
@@ -107,8 +111,8 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 
     m_crcDigest = 0;
 
-    m_sharedProcessLock.m_enable = m_isInterProcess;
-    m_exclusiveProcessLock.m_enable = m_isInterProcess;
+    m_sharedProcessLock->m_enable = m_isInterProcess;
+    m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
     {

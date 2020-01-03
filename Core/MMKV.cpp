@@ -28,6 +28,7 @@
 #include "MiniPBCoder.h"
 #include "PBUtility.h"
 #include "ScopedLock.hpp"
+#include "ThreadLock.h"
 #include "aes/AESCrypt.h"
 #include "aes/openssl/openssl_md5.h"
 #include "crc32/Checksum.h"
@@ -45,7 +46,7 @@ using namespace std;
 using namespace mmkv;
 
 unordered_map<std::string, MMKV *> *g_instanceDic;
-ThreadLock g_instanceLock;
+ThreadLock *g_instanceLock;
 MMKVPath_t g_rootDir;
 static mmkv::ErrorHandler g_errorHandler;
 size_t mmkv::DEFAULT_MMAP_SIZE;
@@ -83,9 +84,10 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
     , m_file(m_path)
     , m_metaFile(m_crcPath)
     , m_crypter(nullptr)
-    , m_fileLock(m_metaFile.getFd())
-    , m_sharedProcessLock(&m_fileLock, SharedLockType)
-    , m_exclusiveProcessLock(&m_fileLock, ExclusiveLockType)
+    , m_lock(new ThreadLock())
+    , m_fileLock(new FileLock(m_metaFile.getFd()))
+    , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
+    , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
     , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0) {
     m_actualSize = 0;
     m_output = nullptr;
@@ -99,9 +101,9 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
 
     m_crcDigest = 0;
 
-    m_lock.initialize();
-    m_sharedProcessLock.m_enable = m_isInterProcess;
-    m_exclusiveProcessLock.m_enable = m_isInterProcess;
+    m_lock->initialize();
+    m_sharedProcessLock->m_enable = m_isInterProcess;
+    m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
     {
@@ -118,6 +120,11 @@ MMKV::~MMKV() {
         delete m_crypter;
         m_crypter = nullptr;
     }
+
+    delete m_lock;
+    delete m_fileLock;
+    delete m_sharedProcessLock;
+    delete m_exclusiveProcessLock;
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
@@ -130,8 +137,8 @@ MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
 
 void initialize() {
     g_instanceDic = new unordered_map<string, MMKV *>;
-    g_instanceLock = ThreadLock();
-    g_instanceLock.initialize();
+    g_instanceLock = new ThreadLock();
+    g_instanceLock->initialize();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
     MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
@@ -1412,6 +1419,16 @@ void MMKV::sync(SyncFlag flag) {
 
     m_file.msync(flag);
     m_metaFile.msync(flag);
+}
+
+void MMKV::lock() {
+    m_exclusiveProcessLock->lock();
+}
+void MMKV::unlock() {
+    m_exclusiveProcessLock->unlock();
+}
+bool MMKV::try_lock() {
+    return m_exclusiveProcessLock->try_lock();
 }
 
 bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {

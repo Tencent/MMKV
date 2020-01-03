@@ -62,12 +62,12 @@ public:
     ScopedLock &operator=(const ScopedLock<T> &other) = delete;
 };
 
+#include <type_traits>
+
 #define SCOPEDLOCK(lock) _SCOPEDLOCK(lock, __COUNTER__)
 #define _SCOPEDLOCK(lock, counter) __SCOPEDLOCK(lock, counter)
-#define __SCOPEDLOCK(lock, counter) mmkv::ScopedLock<decltype(lock)> __scopedLock##counter(&lock)
-
-//#include <type_traits>
-//#define __SCOPEDLOCK(lock, counter) ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
+#define __SCOPEDLOCK(lock, counter)                                                                                    \
+    mmkv::ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
 
 } // namespace mmkv
 

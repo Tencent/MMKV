@@ -22,6 +22,7 @@
 #import <Core/MMKV.h>
 #import <Core/MMKVLog.h>
 #import <Core/ScopedLock.hpp>
+#import <Core/ThreadLock.h>
 #import <Core/aes/openssl/openssl_md5.h>
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
@@ -31,7 +32,7 @@
 using namespace std;
 
 static NSMutableDictionary *g_instanceDic = nil;
-static mmkv::ThreadLock g_lock;
+static mmkv::ThreadLock *g_lock;
 static id<MMKVHandler> g_callbackHandler = nil;
 static bool g_isLogRedirecting = false;
 static NSString *g_basePath = nil;
@@ -54,8 +55,8 @@ static void ContentChangeHandler(const string &mmapID);
 + (void)initialize {
     if (self == MMKV.class) {
         g_instanceDic = [[NSMutableDictionary alloc] init];
-        g_lock = mmkv::ThreadLock();
-        g_lock.initialize();
+        g_lock = new mmkv::ThreadLock();
+        g_lock->initialize();
 
         mmkv::MMKV::minimalInit([self mmkvBasePath].UTF8String);
 

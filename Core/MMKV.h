@@ -23,11 +23,9 @@
 
 #include "MMKVPredef.h"
 
-#include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVMetaInfo.hpp"
 #include "MemoryFile.h"
-#include "ThreadLock.h"
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -36,6 +34,9 @@
 
 namespace mmkv {
 class CodedOutputData;
+class FileLock;
+class InterProcessLock;
+class ThreadLock;
 } // namespace mmkv
 
 MMKV_NAMESPACE_BEGIN
@@ -79,10 +80,10 @@ class MMKV {
 
     mmkv::AESCrypt *m_crypter;
 
-    mmkv::ThreadLock m_lock;
-    mmkv::FileLock m_fileLock;
-    mmkv::InterProcessLock m_sharedProcessLock;
-    mmkv::InterProcessLock m_exclusiveProcessLock;
+    mmkv::ThreadLock *m_lock;
+    mmkv::FileLock *m_fileLock;
+    mmkv::InterProcessLock *m_sharedProcessLock;
+    mmkv::InterProcessLock *m_exclusiveProcessLock;
 
 #ifdef MMKV_IOS_OR_MAC
     using MMKVKey_t = NSString *__unsafe_unretained;
@@ -289,9 +290,9 @@ public:
     // unless you worry about running out of battery
     void sync(SyncFlag flag = MMKV_SYNC);
 
-    void lock() { m_exclusiveProcessLock.lock(); }
-    void unlock() { m_exclusiveProcessLock.unlock(); }
-    bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
+    void lock();
+    void unlock();
+    bool try_lock();
 
     // check if content changed by other process
     void checkContentChanged();

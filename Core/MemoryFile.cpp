@@ -140,7 +140,7 @@ void MemoryFile::reloadFromFile() {
     } else {
         FileLock fileLock(m_fd);
         InterProcessLock lock(&fileLock, ExclusiveLockType);
-        SCOPEDLOCK(lock);
+        SCOPEDLOCK(&lock);
 
         mmkv::getFileSize(m_fd, m_size);
         // round up to (n * pagesize)

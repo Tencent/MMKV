@@ -27,7 +27,7 @@
 
 namespace mmkv {
 
-FileLock::FileLock(MMKV_FILE_HANDLE fd, bool isAshmem)
+FileLock::FileLock(MMKVFileHandle_t fd, bool isAshmem)
     : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_isAshmem(isAshmem) {
     m_lockInfo.l_type = F_WRLCK;
     m_lockInfo.l_start = 0;

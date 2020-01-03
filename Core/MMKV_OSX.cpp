@@ -24,10 +24,12 @@
 
 #    include "CodedInputData.h"
 #    include "CodedOutputData.h"
+#    include "InterProcessLock.h"
 #    include "MMKV.h"
 #    include "MemoryFile.h"
 #    include "MiniPBCoder.h"
 #    include "ScopedLock.hpp"
+#    include "ThreadLock.h"
 
 #    ifdef MMKV_IOS
 #        include <sys/mman.h>
@@ -40,7 +42,7 @@
 using namespace std;
 using namespace mmkv;
 
-extern ThreadLock g_instanceLock;
+extern ThreadLock *g_instanceLock;
 extern MMKVPath_t g_rootDir;
 
 MMKV_NAMESPACE_BEGIN

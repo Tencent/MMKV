@@ -63,6 +63,10 @@ public:
 
     static void ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)(void));
     static void Sleep(int ms);
+
+    // just forbid it for possibly misuse
+    explicit ThreadLock(const ThreadLock &other) = delete;
+    ThreadLock &operator=(const ThreadLock &other) = delete;
 };
 
 } // namespace mmkv

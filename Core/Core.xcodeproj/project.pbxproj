@@ -31,7 +31,6 @@
 		CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641223AB2E9100ACCD39 /* PBUtility.cpp */; };
 		CB95642423AB2F7200ACCD39 /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563ED23AB2E9100ACCD39 /* MMKV.h */; };
 		CB95642523AB2FA800ACCD39 /* MMBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */; };
-		CB95642623AB2FB800ACCD39 /* InterProcessLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */; };
 		CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F623AB2E9100ACCD39 /* PBUtility.h */; };
 		CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640D23AB2E9100ACCD39 /* ThreadLock.h */; };
 		CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */; };
@@ -79,7 +78,6 @@
 				CB95642B23AB2FDC00ACCD39 /* MMKVMetaInfo.hpp in CopyFiles */,
 				CB95642A23AB2FCF00ACCD39 /* MemoryFile.h in CopyFiles */,
 				CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */,
-				CB95642623AB2FB800ACCD39 /* InterProcessLock.h in CopyFiles */,
 				CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */,
 				CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */,
 				CB95642523AB2FA800ACCD39 /* MMBuffer.h in CopyFiles */,

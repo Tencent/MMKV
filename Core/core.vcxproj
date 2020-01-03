@@ -129,7 +129,7 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:X86</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MemoryFile.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MemoryFile.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"
 for %%f in ("$(ProjectDir)aes\AESCrypt.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
@@ -170,7 +170,7 @@ for %%f in ("$(ProjectDir)aes\AESCrypt.h") do xcopy /y /i %%f "$(OutDir)\include
       <AdditionalOptions>%(AdditionalOptions) /machine:X86</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)InterProcessLock.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)ThreadLock.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MemoryFile.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMKVMetaInfo.hpp", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MemoryFile.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"
 for %%f in ("$(ProjectDir)aes\AESCrypt.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\aes\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
