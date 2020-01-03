@@ -24,7 +24,6 @@
 #include "MMKVPredef.h"
 
 #include "MMBuffer.h"
-#include "MMKVMetaInfo.hpp"
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -34,6 +33,8 @@
 namespace mmkv {
 class CodedOutputData;
 class MemoryFile;
+class AESCrypt;
+struct MMKVMetaInfo;
 class FileLock;
 class InterProcessLock;
 class ThreadLock;
@@ -76,7 +77,7 @@ class MMKV {
 
     uint32_t m_crcDigest;
     mmkv::MemoryFile *m_metaFile;
-    mmkv::MMKVMetaInfo m_metaInfo;
+    mmkv::MMKVMetaInfo *m_metaInfo;
 
     mmkv::AESCrypt *m_crypter;
 

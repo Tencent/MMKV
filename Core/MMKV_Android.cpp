@@ -24,6 +24,7 @@
 
 #    include "InterProcessLock.h"
 #    include "MMKVLog.h"
+#    include "MMKVMetaInfo.hpp"
 #    include "MemoryFile.h"
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
@@ -45,6 +46,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
     , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE))
     , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType))
+    , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
     , m_fileLock(new FileLock(m_metaFile->getFd(), (mode & MMKV_ASHMEM)))
@@ -79,6 +81,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     , m_crcPath("")
     , m_file(new MemoryFile(ashmemFD))
     , m_metaFile(new MemoryFile(ashmemMetaFD))
+    , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
     , m_fileLock(new FileLock(m_metaFile->getFd(), true))

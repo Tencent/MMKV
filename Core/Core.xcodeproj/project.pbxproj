@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
-		CB58B40223AB3699002457F1 /* AESCrypt.h in Copy AES Files */ = {isa = PBXBuildFile; fileRef = CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */; };
 		CB58B40423AB36D5002457F1 /* openssl_opensslconf.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
 		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
 		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
@@ -34,8 +33,6 @@
 		CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F623AB2E9100ACCD39 /* PBUtility.h */; };
 		CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640D23AB2E9100ACCD39 /* ThreadLock.h */; };
 		CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */; };
-		CB95642A23AB2FCF00ACCD39 /* MemoryFile.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640E23AB2E9100ACCD39 /* MemoryFile.h */; };
-		CB95642B23AB2FDC00ACCD39 /* MMKVMetaInfo.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */; };
 		CBD723BF23B5C22800D3CDAF /* MMKV_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CBD723F323B5E59800D3CDAF /* MemoryFile_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */; };
 		CBD723F523B5E76200D3CDAF /* MiniPBCoder_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -44,17 +41,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		CB58B40123AB3675002457F1 /* Copy AES Files */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)/aes";
-			dstSubfolderSpec = 16;
-			files = (
-				CB58B40223AB3699002457F1 /* AESCrypt.h in Copy AES Files */,
-			);
-			name = "Copy AES Files";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		CB58B40323AB36A8002457F1 /* Copy OpenSSL Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -75,8 +61,6 @@
 			files = (
 				CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */,
 				CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */,
-				CB95642B23AB2FDC00ACCD39 /* MMKVMetaInfo.hpp in CopyFiles */,
-				CB95642A23AB2FCF00ACCD39 /* MemoryFile.h in CopyFiles */,
 				CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */,
 				CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */,
 				CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */,
@@ -252,7 +236,6 @@
 				CB9563D423AB2D9500ACCD39 /* Sources */,
 				CB9563D523AB2D9500ACCD39 /* Frameworks */,
 				CB9563D623AB2D9500ACCD39 /* CopyFiles */,
-				CB58B40123AB3675002457F1 /* Copy AES Files */,
 				CB58B40323AB36A8002457F1 /* Copy OpenSSL Files */,
 			);
 			buildRules = (

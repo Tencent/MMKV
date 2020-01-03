@@ -24,6 +24,7 @@
 #include "InterProcessLock.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
+#include "MMKVMetaInfo.hpp"
 #include "MemoryFile.h"
 #include "MiniPBCoder.h"
 #include "PBUtility.h"
@@ -83,6 +84,7 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
     , m_file(new MemoryFile(m_path))
     , m_metaFile(new MemoryFile(m_crcPath))
+    , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
     , m_fileLock(new FileLock(m_metaFile->getFd()))
@@ -123,6 +125,7 @@ MMKV::~MMKV() {
 
     delete m_file;
     delete m_metaFile;
+    delete m_metaInfo;
     delete m_lock;
     delete m_fileLock;
     delete m_sharedProcessLock;
@@ -244,11 +247,11 @@ static void clearDictionary(MMKVMap &dic) {
 
 void MMKV::loadFromFile() {
     if (m_metaFile->isFileValid()) {
-        m_metaInfo.read(m_metaFile->getMemory());
+        m_metaInfo->read(m_metaFile->getMemory());
     }
     if (m_crypter) {
-        if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
-            m_crypter->resetIV(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
+            m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
         }
     }
 
@@ -263,12 +266,12 @@ void MMKV::loadFromFile() {
         checkDataValid(loadFromFile, needFullWriteback);
         MMKVInfo("loading [%s] with %zu actual size, file size %zu, InterProcess %d, meta info "
                  "version:%u",
-                 m_mmapID.c_str(), m_actualSize, m_file->getFileSize(), m_isInterProcess, m_metaInfo.m_version);
+                 m_mmapID.c_str(), m_actualSize, m_file->getFileSize(), m_isInterProcess, m_metaInfo->m_version);
         auto ptr = (uint8_t *) m_file->getMemory();
         // loading
         if (loadFromFile && m_actualSize > 0) {
-            MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
-                     m_metaInfo.m_sequence, m_metaInfo.m_version);
+            MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(), m_metaInfo->m_crcDigest,
+                     m_metaInfo->m_sequence, m_metaInfo->m_version);
             MMBuffer inputBuffer(ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
             if (m_crypter) {
                 decryptBuffer(*m_crypter, inputBuffer);
@@ -304,7 +307,7 @@ void MMKV::loadFromFile() {
 
 // read from last m_position
 void MMKV::partialLoadFromFile() {
-    m_metaInfo.read(m_metaFile->getMemory());
+    m_metaInfo->read(m_metaFile->getMemory());
 
     size_t oldActualSize = m_actualSize;
     m_actualSize = readActualSize();
@@ -321,7 +324,7 @@ void MMKV::partialLoadFromFile() {
                 // incremental update crc digest
                 m_crcDigest = (uint32_t) CRC32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
                                                static_cast<uInt>(inputBuffer.length()));
-                if (m_crcDigest == m_metaInfo.m_crcDigest) {
+                if (m_crcDigest == m_metaInfo->m_crcDigest) {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
                     }
@@ -332,7 +335,7 @@ void MMKV::partialLoadFromFile() {
                     MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(), m_dic.size());
                     return;
                 } else {
-                    MMKVError("m_crcDigest[%u] != m_metaInfo.m_crcDigest[%u]", m_crcDigest, m_metaInfo.m_crcDigest);
+                    MMKVError("m_crcDigest[%u] != m_metaInfo->m_crcDigest[%u]", m_crcDigest, m_metaInfo->m_crcDigest);
                 }
             }
         }
@@ -347,24 +350,24 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
     constexpr auto offset = pbFixed32Size();
     auto fileSize = m_file->getFileSize();
     auto checkLastConfirmedInfo = [&] {
-        if (m_metaInfo.m_version >= MMKVVersionActualSize) {
+        if (m_metaInfo->m_version >= MMKVVersionActualSize) {
             // downgrade & upgrade support
             uint32_t oldStyleActualSize = 0;
             memcpy(&oldStyleActualSize, m_file->getMemory(), Fixed32Size);
             if (oldStyleActualSize != m_actualSize) {
                 MMKVWarning("oldStyleActualSize %u not equal to meta actual size %lu", oldStyleActualSize,
                             m_actualSize);
-                if (checkFileCRCValid(oldStyleActualSize, m_metaInfo.m_crcDigest)) {
+                if (checkFileCRCValid(oldStyleActualSize, m_metaInfo->m_crcDigest)) {
                     MMKVInfo("looks like [%s] been downgrade & upgrade again", m_mmapID.c_str());
                     loadFromFile = true;
-                    writeActualSize(oldStyleActualSize, m_metaInfo.m_crcDigest, nullptr, KeepSequence);
+                    writeActualSize(oldStyleActualSize, m_metaInfo->m_crcDigest, nullptr, KeepSequence);
                     return;
                 }
             }
 
-            auto lastActualSize = m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize;
+            auto lastActualSize = m_metaInfo->m_lastConfirmedMetaInfo.lastActualSize;
             if (lastActualSize < fileSize && (lastActualSize + offset) <= fileSize) {
-                auto lastCRCDigest = m_metaInfo.m_lastConfirmedMetaInfo.lastCRCDigest;
+                auto lastCRCDigest = m_metaInfo->m_lastConfirmedMetaInfo.lastCRCDigest;
                 if (checkFileCRCValid(lastActualSize, lastCRCDigest)) {
                     loadFromFile = true;
                     writeActualSize(lastActualSize, lastCRCDigest, nullptr, KeepSequence);
@@ -382,7 +385,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
     m_actualSize = readActualSize();
 
     if (m_actualSize < fileSize && (m_actualSize + offset) <= fileSize) {
-        if (checkFileCRCValid(m_actualSize, m_metaInfo.m_crcDigest)) {
+        if (checkFileCRCValid(m_actualSize, m_metaInfo->m_crcDigest)) {
             loadFromFile = true;
         } else {
             checkLastConfirmedInfo();
@@ -432,15 +435,15 @@ void MMKV::checkLoadData() {
     // TODO: atomic lock m_metaFile?
     MMKVMetaInfo metaInfo;
     metaInfo.read(m_metaFile->getMemory());
-    if (m_metaInfo.m_sequence != metaInfo.m_sequence) {
-        MMKVInfo("[%s] oldSeq %u, newSeq %u", m_mmapID.c_str(), m_metaInfo.m_sequence, metaInfo.m_sequence);
+    if (m_metaInfo->m_sequence != metaInfo.m_sequence) {
+        MMKVInfo("[%s] oldSeq %u, newSeq %u", m_mmapID.c_str(), m_metaInfo->m_sequence, metaInfo.m_sequence);
         SCOPEDLOCK(m_sharedProcessLock);
 
         clearMemoryCache();
         loadFromFile();
         notifyContentChanged();
-    } else if (m_metaInfo.m_crcDigest != metaInfo.m_crcDigest) {
-        MMKVDebug("[%s] oldCrc %u, newCrc %u, new actualSize %u", m_mmapID.c_str(), m_metaInfo.m_crcDigest,
+    } else if (m_metaInfo->m_crcDigest != metaInfo.m_crcDigest) {
+        MMKVDebug("[%s] oldCrc %u, newCrc %u, new actualSize %u", m_mmapID.c_str(), m_metaInfo->m_crcDigest,
                   metaInfo.m_crcDigest, metaInfo.m_actualSize);
         SCOPEDLOCK(m_sharedProcessLock);
 
@@ -517,8 +520,8 @@ void MMKV::clearMemoryCache() {
     m_hasFullWriteback = false;
 
     if (m_crypter) {
-        if (m_metaInfo.m_version >= MMKVVersionRandomIV) {
-            m_crypter->resetIV(m_metaInfo.m_vector, sizeof(m_metaInfo.m_vector));
+        if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
+            m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
         } else {
             m_crypter->resetIV();
         }
@@ -529,7 +532,7 @@ void MMKV::clearMemoryCache() {
 
     m_file->clearMemoryCache();
     m_actualSize = 0;
-    m_metaInfo.m_crcDigest = 0;
+    m_metaInfo->m_crcDigest = 0;
 }
 
 void MMKV::close() {
@@ -640,12 +643,12 @@ size_t MMKV::readActualSize() {
     uint32_t actualSize = 0;
     memcpy(&actualSize, m_file->getMemory(), Fixed32Size);
 
-    if (m_metaInfo.m_version >= MMKVVersionActualSize) {
-        if (m_metaInfo.m_actualSize != actualSize) {
+    if (m_metaInfo->m_version >= MMKVVersionActualSize) {
+        if (m_metaInfo->m_actualSize != actualSize) {
             MMKVWarning("[%s] actual size %u, meta actual size %zu", m_mmapID.c_str(), actualSize,
-                        m_metaInfo.m_actualSize);
+                        m_metaInfo->m_actualSize);
         }
-        return m_metaInfo.m_actualSize;
+        return m_metaInfo->m_actualSize;
     } else {
         return actualSize;
     }
@@ -668,33 +671,33 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
 
     bool needsFullWrite = false;
     m_actualSize = size;
-    m_metaInfo.m_actualSize = size;
+    m_metaInfo->m_actualSize = size;
     m_crcDigest = crcDigest;
-    m_metaInfo.m_crcDigest = crcDigest;
-    if (m_metaInfo.m_version < MMKVVersionSequence) {
-        m_metaInfo.m_version = MMKVVersionSequence;
+    m_metaInfo->m_crcDigest = crcDigest;
+    if (m_metaInfo->m_version < MMKVVersionSequence) {
+        m_metaInfo->m_version = MMKVVersionSequence;
         needsFullWrite = true;
     }
     if (unlikely(iv)) {
-        memcpy(m_metaInfo.m_vector, iv, sizeof(m_metaInfo.m_vector));
-        if (m_metaInfo.m_version < MMKVVersionRandomIV) {
-            m_metaInfo.m_version = MMKVVersionRandomIV;
+        memcpy(m_metaInfo->m_vector, iv, sizeof(m_metaInfo->m_vector));
+        if (m_metaInfo->m_version < MMKVVersionRandomIV) {
+            m_metaInfo->m_version = MMKVVersionRandomIV;
         }
         needsFullWrite = true;
     }
     if (unlikely(increaseSequence)) {
-        m_metaInfo.m_sequence++;
-        m_metaInfo.m_lastConfirmedMetaInfo.lastActualSize = size;
-        m_metaInfo.m_lastConfirmedMetaInfo.lastCRCDigest = crcDigest;
-        if (m_metaInfo.m_version < MMKVVersionActualSize) {
-            m_metaInfo.m_version = MMKVVersionActualSize;
+        m_metaInfo->m_sequence++;
+        m_metaInfo->m_lastConfirmedMetaInfo.lastActualSize = size;
+        m_metaInfo->m_lastConfirmedMetaInfo.lastCRCDigest = crcDigest;
+        if (m_metaInfo->m_version < MMKVVersionActualSize) {
+            m_metaInfo->m_version = MMKVVersionActualSize;
         }
         needsFullWrite = true;
     }
     if (unlikely(needsFullWrite)) {
-        m_metaInfo.write(m_metaFile->getMemory());
+        m_metaInfo->write(m_metaFile->getMemory());
     } else {
-        m_metaInfo.writeCRCAndActualSizeOnly(m_metaFile->getMemory());
+        m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
     }
 
     return true;
