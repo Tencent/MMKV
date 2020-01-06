@@ -56,6 +56,10 @@ public:
     void getKey(void *output) const;
 
     static void fillRandomIV(void *vector);
+
+    // just forbid it for possibly misuse
+    explicit AESCrypt(const AESCrypt &other) = delete;
+    AESCrypt &operator=(const AESCrypt &other) = delete;
 };
 
 #ifndef NDEBUG

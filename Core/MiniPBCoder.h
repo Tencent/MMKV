@@ -106,6 +106,10 @@ public:
     static bool isCompatibleObject(NSObject *obj);
     static bool isCompatibleClass(Class cls);
 #endif
+
+    // just forbid it for possibly misuse
+    explicit MiniPBCoder(const MiniPBCoder &other) = delete;
+    MiniPBCoder &operator=(const MiniPBCoder &other) = delete;
 };
 
 } // namespace mmkv
