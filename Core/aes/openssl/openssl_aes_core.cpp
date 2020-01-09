@@ -44,19 +44,19 @@
 #include "openssl_arm_arch.h"
 
 // TODO: port aes_encrypt() assembly to Android
-#if __ARM_MAX_ARCH__ > 7 && !defined(__ANDROID__)
+#if __ARM_MAX_ARCH__ > 0 && !defined(__ANDROID__)
 
-extern "C" int openssl_aes_v8_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
-extern "C" void openssl_aes_v8_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+extern "C" int openssl_aes_arm_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
+extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out, const void *key);
 
 namespace openssl {
 
 int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key) {
-    return openssl_aes_v8_set_encrypt_key(userKey, bits, key);
+    return openssl_aes_arm_set_encrypt_key(userKey, bits, key);
 }
 
 void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key) {
-    openssl_aes_v8_encrypt(in, out, key);
+    openssl_aes_arm_encrypt(in, out, key);
 }
 
 } // namespace openssl

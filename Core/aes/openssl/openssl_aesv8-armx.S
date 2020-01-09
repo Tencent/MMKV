@@ -9,10 +9,10 @@ Lrcon:
 .long	0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d	// rotate-n-splat
 .long	0x1b,0x1b,0x1b,0x1b
 
-.globl	_openssl_aes_v8_set_encrypt_key
+.globl	_openssl_aes_arm_set_encrypt_key
 
 .align	5
-_openssl_aes_v8_set_encrypt_key:
+_openssl_aes_arm_set_encrypt_key:
 Lenc_key:
 	stp	x29,x30,[sp,#-16]!
 	add	x29,sp,#0
@@ -175,10 +175,10 @@ Lenc_key_abort:
 	ldr	x29,[sp],#16
 	ret
 
-.globl	_openssl_aes_v8_encrypt
+.globl	_openssl_aes_arm_encrypt
 
 .align	5
-_openssl_aes_v8_encrypt:
+_openssl_aes_arm_encrypt:
 	ldr	w3,[x2,#240]
 	ld1	{v0.4s},[x2],#16
 	ld1	{v2.16b},[x0]

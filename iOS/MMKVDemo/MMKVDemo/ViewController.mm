@@ -121,6 +121,7 @@
         obj.m_age = rand() * rand() * 0.5;
         [m_arrNSCodingObjs addObject:obj];*/
     }
+    //getMMKVForBatchTest();
 }
 
 - (void)funcionalTest {
