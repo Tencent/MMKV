@@ -12,7 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aes\AESCrypt.cpp" />
-    <ClCompile Include="aes\openssl\openssl_aes_cfb.cpp" />
     <ClCompile Include="aes\openssl\openssl_aes_core.cpp" />
     <ClCompile Include="aes\openssl\openssl_cfb128.cpp" />
     <ClCompile Include="aes\openssl\openssl_md5_dgst.cpp" />
@@ -34,10 +33,10 @@
     <ClInclude Include="aes\AESCrypt.h" />
     <ClInclude Include="aes\openssl\openssl_aes.h" />
     <ClInclude Include="aes\openssl\openssl_aes_locl.h" />
+    <ClInclude Include="aes\openssl\openssl_arm_arch.h" />
     <ClInclude Include="aes\openssl\openssl_md32_common.h" />
     <ClInclude Include="aes\openssl\openssl_md5.h" />
     <ClInclude Include="aes\openssl\openssl_md5_locl.h" />
-    <ClInclude Include="aes\openssl\openssl_modes.h" />
     <ClInclude Include="aes\openssl\openssl_opensslconf.h" />
     <ClInclude Include="CodedInputData.h" />
     <ClInclude Include="CodedOutputData.h" />

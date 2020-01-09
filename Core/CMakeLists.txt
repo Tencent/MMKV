@@ -82,17 +82,17 @@ add_library(core
         aes/AESCrypt.h
         aes/AESCrypt.cpp
         aes/openssl/openssl_aes.h
-        aes/openssl/openssl_aes_cfb.cpp
         aes/openssl/openssl_aes_core.cpp
         aes/openssl/openssl_aes_locl.h
         aes/openssl/openssl_cfb128.cpp
-        aes/openssl/openssl_modes.h
         aes/openssl/openssl_opensslconf.h
         aes/openssl/openssl_md5_dgst.cpp
         aes/openssl/openssl_md5_locl.h
         aes/openssl/openssl_md5_one.cpp
         aes/openssl/openssl_md5.h
         aes/openssl/openssl_md32_common.h
+        aes/openssl/openssl_aesv8-armx.S
+        aes/openssl/openssl_arm_arch.h
         crc32/Checksum.h
         crc32/zlib/zconf.h
         crc32/zlib/zutil.h

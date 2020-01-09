@@ -33,8 +33,4 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
-
-/* This controls loop-unrolling in aes_core.c */
-# undef FULL_UNROLL
-
 #endif                          /* !HEADER_AES_LOCL_H */

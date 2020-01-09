@@ -48,9 +48,6 @@
     <ClCompile Include="InterProcessLock_Win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="aes\openssl\openssl_aes_cfb.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="aes\openssl\openssl_aes_core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -134,13 +131,13 @@
     <ClInclude Include="aes\openssl\openssl_md5_locl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="aes\openssl\openssl_modes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="aes\openssl\openssl_opensslconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="aes\openssl\openssl_md32_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aes\openssl\openssl_arm_arch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

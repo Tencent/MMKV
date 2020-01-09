@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
         }
         TestParcelable result = kv.decodeParcelable("parcel", TestParcelable.class);
         if (result != null) {
-            Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue);
+            Log.d("MMKV", "parcel: " + result.iValue + ", " + result.sValue + ", " + result.list);
         } else {
             Log.e("MMKV", "fail to decodeParcelable of key:parcel");
         }

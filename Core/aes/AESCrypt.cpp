@@ -67,16 +67,14 @@ void AESCrypt::encrypt(const void *input, void *output, size_t length) {
     if (!input || !output || length == 0) {
         return;
     }
-    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, m_aesKey, m_vector, &m_number,
-                       AES_ENCRYPT);
+    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, m_aesKey, m_vector, &m_number);
 }
 
 void AESCrypt::decrypt(const void *input, void *output, size_t length) {
     if (!input || !output || length == 0) {
         return;
     }
-    AES_cfb128_encrypt((const unsigned char *) input, (unsigned char *) output, length, m_aesKey, m_vector, &m_number,
-                       AES_DECRYPT);
+    AES_cfb128_decrypt((const unsigned char *) input, (unsigned char *) output, length, m_aesKey, m_vector, &m_number);
 }
 
 void AESCrypt::fillRandomIV(void *vector) {

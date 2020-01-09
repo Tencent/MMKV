@@ -8,7 +8,6 @@
  */
 
 #include "openssl_aes.h"
-#include "openssl_modes.h"
 #include <string.h>
 
 namespace openssl {
@@ -18,116 +17,82 @@ namespace openssl {
  * The extra state information to record how much of the 128bit block we have
  * used is contained in *num;
  */
-void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-                           size_t len, const void *key,
-                           unsigned char ivec[16], int *num,
-                           int enc, block128_f block)
+void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
+                        size_t len, const AES_KEY *key,
+                        unsigned char ivec[16], int *num)
 {
-    size_t l = 0;
-    auto n = static_cast<unsigned int>(*num);
+    auto n = *num;
 
-    if (enc) {
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
-        if (16 % sizeof(size_t) == 0) { /* always true actually */
-            do {
-                while (n && len) {
-                    *(out++) = ivec[n] ^= *(in++);
-                    --len;
-                    n = (n + 1) % 16;
-                }
-# if defined(STRICT_ALIGNMENT)
-                if (((size_t)in | (size_t)out | (size_t)ivec) %
-                    sizeof(size_t) != 0)
-                    break;
-# endif
-                while (len >= 16) {
-                    (*block) (ivec, ivec, key);
-                    for (; n < 16; n += sizeof(size_t)) {
-                        *(size_t *)(out + n) =
-                            *(size_t *)(ivec + n) ^= *(size_t *)(in + n);
-                    }
-                    len -= 16;
-                    out += 16;
-                    in += 16;
-                    n = 0;
-                }
-                if (len) {
-                    (*block) (ivec, ivec, key);
-                    while (len--) {
-                        out[n] = ivec[n] ^= in[n];
-                        ++n;
-                    }
-                }
-                *num = static_cast<int>(n);
-                return;
-            } while (0);
-        }
-        /* the rest would be commonly eliminated by x86* compiler */
-#endif
-        while (l < len) {
-            if (n == 0) {
-                (*block) (ivec, ivec, key);
-            }
-            out[l] = ivec[n] ^= in[l];
-            ++l;
-            n = (n + 1) % 16;
-        }
-        *num = static_cast<int>(n);
-    } else {
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
-        if (16 % sizeof(size_t) == 0) { /* always true actually */
-            do {
-                while (n && len) {
-                    unsigned char c;
-                    *(out++) = ivec[n] ^ (c = *(in++));
-                    ivec[n] = c;
-                    --len;
-                    n = (n + 1) % 16;
-                }
-# if defined(STRICT_ALIGNMENT)
-                if (((size_t)in | (size_t)out | (size_t)ivec) %
-                    sizeof(size_t) != 0)
-                    break;
-# endif
-                while (len >= 16) {
-                    (*block) (ivec, ivec, key);
-                    for (; n < 16; n += sizeof(size_t)) {
-                        size_t t = *(size_t *)(in + n);
-                        *(size_t *)(out + n) = *(size_t *)(ivec + n) ^ t;
-                        *(size_t *)(ivec + n) = t;
-                    }
-                    len -= 16;
-                    out += 16;
-                    in += 16;
-                    n = 0;
-                }
-                if (len) {
-                    (*block) (ivec, ivec, key);
-                    while (len--) {
-                        unsigned char c;
-                        out[n] = ivec[n] ^ (c = in[n]);
-                        ivec[n] = c;
-                        ++n;
-                    }
-                }
-                *num = static_cast<int>(n);
-                return;
-            } while (0);
-        }
-        /* the rest would be commonly eliminated by x86* compiler */
-#endif
-        while (l < len) {
-            unsigned char c;
-            if (n == 0) {
-                (*block) (ivec, ivec, key);
-            }
-            out[l] = ivec[n] ^ (c = in[l]);
-            ivec[n] = c;
-            ++l;
-            n = (n + 1) % 16;
-        }
-        *num = static_cast<int>(n);
+    while (n && len) {
+        *(out++) = ivec[n] ^= *(in++);
+        --len;
+        n = (n + 1) % 16;
     }
+    while (len >= 16) {
+        AES_encrypt(ivec, ivec, key);
+        for (; n < 16; n += sizeof(size_t)) {
+            *(size_t *)(out + n) =
+                *(size_t *)(ivec + n) ^= *(size_t *)(in + n);
+        }
+        len -= 16;
+        out += 16;
+        in += 16;
+        n = 0;
+    }
+    if (len) {
+        AES_encrypt(ivec, ivec, key);
+        while (len--) {
+            out[n] = ivec[n] ^= in[n];
+            ++n;
+        }
+    }
+
+    *num = n;
+    return;
+}
+
+/*
+* The input and output encrypted as though 128bit cfb mode is being used.
+* The extra state information to record how much of the 128bit block we have
+* used is contained in *num;
+*/
+void AES_cfb128_decrypt(const unsigned char *in, unsigned char *out,
+                        size_t len, const AES_KEY *key,
+                        unsigned char ivec[16], int *num)
+{
+    auto n = *num;
+
+    while (n && len) {
+        unsigned char c = *(in++);
+        *(out++) = ivec[n] ^ c;
+        ivec[n] = c;
+        --len;
+        n = (n + 1) % 16;
+    }
+    while (len >= 16) {
+        AES_encrypt(ivec, ivec, key);
+        for (; n < 16; n += sizeof(size_t)) {
+            size_t t = *(size_t *)(in + n);
+            *(size_t *)(out + n) = *(size_t *)(ivec + n) ^ t;
+            *(size_t *)(ivec + n) = t;
+        }
+        len -= 16;
+        out += 16;
+        in += 16;
+        n = 0;
+    }
+    if (len) {
+        AES_encrypt(ivec, ivec, key);
+        while (len--) {
+            unsigned char c = in[n];
+            out[n] = ivec[n] ^ c;
+            ivec[n] = c;
+            ++n;
+        }
+    }
+
+    *num = n;
+    return;
 }
 
 } // namespace openssl

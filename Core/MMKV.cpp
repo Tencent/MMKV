@@ -538,7 +538,7 @@ void MMKV::clearMemoryCache() {
 void MMKV::close() {
     MMKVInfo("close [%s]", m_mmapID.c_str());
     SCOPEDLOCK(g_instanceLock);
-    SCOPEDLOCK(m_lock);
+    m_lock->lock();
 
 #ifndef MMKV_ANDROID
     auto itr = g_instanceDic->find(m_mmapKey);

@@ -423,11 +423,18 @@
     //[[MMKV defaultMMKV] trim];
 }
 
+MMKV *getMMKVForBatchTest() {
+    //auto cryptKey = [@"crypt_key" dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *cryptKey = nil;
+    MMKV *mmkv = [MMKV mmkvWithID:@"batchTest" cryptKey:cryptKey];
+    return mmkv;
+}
+
 - (void)mmkvBatchWriteInt:(int)loops {
     @autoreleasepool {
         NSDate *startDate = [NSDate date];
 
-        MMKV *mmkv = [MMKV defaultMMKV];
+        MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             int32_t tmp = rand();
             NSString *intKey = m_arrIntKeys[index];
@@ -443,7 +450,7 @@
     @autoreleasepool {
         NSDate *startDate = [NSDate date];
 
-        MMKV *mmkv = [MMKV defaultMMKV];
+        MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             NSString *intKey = m_arrIntKeys[index];
             [mmkv getInt32ForKey:intKey];
@@ -458,7 +465,7 @@
     @autoreleasepool {
         NSDate *startDate = [NSDate date];
 
-        MMKV *mmkv = [MMKV defaultMMKV];
+        MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             NSString *str = m_arrStrings[index];
             NSString *strKey = m_arrStrKeys[index];
@@ -474,7 +481,7 @@
     @autoreleasepool {
         NSDate *startDate = [NSDate date];
 
-        MMKV *mmkv = [MMKV defaultMMKV];
+        MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             NSString *strKey = m_arrStrKeys[index];
             [mmkv getObjectOfClass:NSString.class forKey:strKey];
@@ -489,7 +496,7 @@
     @autoreleasepool {
         NSDate *startDate = [NSDate date];
 
-        MMKV *mmkv = [MMKV defaultMMKV];
+        MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             NSString *strKey = m_arrStrKeys[index];
             [mmkv removeValueForKey:strKey];
@@ -504,7 +511,7 @@
     @autoreleasepool {
         NSDate *startDate = [NSDate date];
 
-        MMKV *mmkv = [MMKV defaultMMKV];
+        MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             TestNSArchive *obj = m_arrNSCodingObjs[index];
             NSString *objKey = m_arrObjKeys[index];
@@ -520,7 +527,7 @@
     @autoreleasepool {
         NSDate *startDate = [NSDate date];
 
-        MMKV *mmkv = [MMKV defaultMMKV];
+        MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             NSString *objKey = m_arrObjKeys[index];
             [mmkv getObjectOfClass:TestNSArchive.class forKey:objKey];
