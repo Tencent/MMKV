@@ -94,6 +94,7 @@ add_library(core
         aes/openssl/openssl_aesv8-armx.S
         aes/openssl/openssl_arm_arch.h
         crc32/Checksum.h
+        crc32/crc32_armv8.cpp
         crc32/zlib/zconf.h
         crc32/zlib/zutil.h
         crc32/zlib/crc32.h

@@ -33,10 +33,22 @@ uLong crc32(uLong crc, const Bytef *buf, z_size_t len);
 
 #    define CRC32(crc, buf, len) zlib::crc32(crc, buf, len)
 
-#else
+#else // MMKV_EMBED_ZLIB
 
-#    include <zlib.h>
+#    ifdef __aarch64__
 
-#    define CRC32(crc, buf, len) ::crc32(crc, buf, len)
+namespace mmkv {
+uint32_t armv8_crc32(uint32_t crc, const unsigned char *buf, size_t len);
+}
 
-#endif
+#        define CRC32(crc, buf, len) mmkv::armv8_crc32(crc, buf, len)
+
+#    else // __aarch64__
+
+#        include <zlib.h>
+
+#        define CRC32(crc, buf, len) ::crc32(crc, buf, len)
+
+#    endif // __aarch64__
+
+#endif // MMKV_EMBED_ZLIB

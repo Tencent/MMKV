@@ -322,8 +322,8 @@ void MMKV::partialLoadFromFile() {
                 auto ptr = (uint8_t *) m_file->getMemory();
                 MMBuffer inputBuffer(ptr + Fixed32Size + oldActualSize, bufferSize, MMBufferNoCopy);
                 // incremental update crc digest
-                m_crcDigest = (uint32_t) CRC32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(),
-                                               static_cast<uInt>(inputBuffer.length()));
+                m_crcDigest =
+                    (uint32_t) CRC32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(), inputBuffer.length());
                 if (m_crcDigest == m_metaInfo->m_crcDigest) {
                     if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
