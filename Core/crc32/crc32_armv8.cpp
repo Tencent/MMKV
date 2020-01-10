@@ -71,7 +71,7 @@ __attribute__((target("crc"))) uint32_t armv8_crc32(uint32_t crc, const unsigned
         len -= offset;
     }
     if (!len) {
-        return ~crc;
+        return crc ^ 0xffffffffUL;
     }
 
     // unroll to 8 * 8 byte per loop
