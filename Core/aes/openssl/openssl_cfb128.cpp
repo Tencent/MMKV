@@ -48,7 +48,6 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
     }
 
     *num = n;
-    return;
 }
 
 /*
@@ -92,7 +91,6 @@ void AES_cfb128_decrypt(const unsigned char *in, unsigned char *out,
     }
 
     *num = n;
-    return;
 }
 
 } // namespace openssl

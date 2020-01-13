@@ -36,18 +36,15 @@
 /* Note: rewritten a little bit to provide error control and an OpenSSL-
    compatible API */
 
-#include <assert.h>
-
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
 #include "openssl_aes.h"
 #include "openssl_aes_locl.h"
-#include "openssl_arm_arch.h"
 
-// TODO: port aes_encrypt() assembly to Android
-#if __ARM_MAX_ARCH__ > 0 && !defined(__ANDROID__)
+// TODO: migrate to Android
+#if __ARM_MAX_ARCH__ > 0 && !defined(MMKV_ANDROID)
 
-extern "C" int openssl_aes_arm_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
-extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+#ifndef MMKV_ANDROID
 
 namespace openssl {
 
@@ -60,6 +57,13 @@ void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key
 }
 
 } // namespace openssl
+
+#else
+
+aes_set_encrypt_t AES_set_encrypt_key = openssl_aes_arm_set_encrypt_key;
+aes_encrypt_t AES_encrypt = openssl_aes_arm_encrypt;
+
+#endif // MMKV_ANDROID
 
 #else
 

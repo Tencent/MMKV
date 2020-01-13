@@ -28,6 +28,13 @@
 #include <jni.h>
 #include <string>
 
+#ifdef __aarch64__
+#    include "aes/openssl/openssl_aes.h"
+#    include "crc32/Checksum.h"
+#    include <asm/hwcap.h>
+#    include <sys/auxv.h>
+#endif
+
 using namespace std;
 using namespace mmkv;
 
@@ -105,6 +112,21 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     } else {
         MMKVError("fail to get class android.os.Build.VERSION");
     }
+
+    // get CPU status of ARMv8 extensions (CRC32, AES)
+#ifdef __aarch64__
+    auto hwcaps = getauxval(AT_HWCAP);
+    // TODO: tune AES with asm
+    /*if (hwcaps & HWCAP_AES) {
+        AES_set_encrypt_key = openssl_aes_armv8_set_encrypt_key;
+        AES_encrypt = openssl_aes_armv8_encrypt;
+        MMKVInfo("armv8 AES instructions is supported");
+    }*/
+    if (hwcaps & HWCAP_CRC32) {
+        CRC32 = mmkv::armv8_crc32;
+        MMKVInfo("armv8 CRC32 instructions is supported");
+    }
+#endif
 
     return JNI_VERSION_1_6;
 }

@@ -12,6 +12,10 @@ cmake_minimum_required(VERSION 3.8.0)
 
 add_subdirectory(../../../Core Core)
 
+#enable_language(ASM)
+#
+#add_subdirectory(../../../Core/aes/openssl aes)
+
 add_library( mmkv
 
              # Sets the library as a shared library.
@@ -50,4 +54,5 @@ target_link_libraries( mmkv
                        # included in the NDK.
                        ${log-lib}
                        core
+#                       aes
         )

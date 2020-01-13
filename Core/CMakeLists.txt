@@ -92,6 +92,7 @@ add_library(core
         aes/openssl/openssl_md5.h
         aes/openssl/openssl_md32_common.h
         aes/openssl/openssl_aesv8-armx.S
+        aes/openssl/openssl_aes-armv4.S
         aes/openssl/openssl_arm_arch.h
         crc32/Checksum.h
         crc32/crc32_armv8.cpp

@@ -10,9 +10,10 @@
 #ifndef HEADER_AES_H
 # define HEADER_AES_H
 
-# include "openssl_opensslconf.h"
-
-# include <stddef.h>
+#include "openssl_opensslconf.h"
+#include "openssl_arm_arch.h"
+#include <stddef.h>
+#include "../../MMKVPredef.h"
 
 namespace openssl {
 
@@ -33,10 +34,6 @@ struct AES_KEY {
     int rounds;
 };
 
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key);
-
-void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
-
 void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
                         unsigned char *ivec, int *num);
@@ -46,5 +43,43 @@ void AES_cfb128_decrypt(const unsigned char *in, unsigned char *out,
                         unsigned char *ivec, int *num);
 
 } // namespace openssl
+
+#if __ARM_MAX_ARCH__ > 0 && !defined(MMKV_ANDROID)
+
+#ifndef MMKV_ANDROID
+
+extern "C" int openssl_aes_arm_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
+extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+
+#define AES_set_encrypt_key(userKey, bits, key) openssl_aes_arm_set_encrypt_key(userKey, bits, key)
+
+#define AES_encrypt(in, out, key) openssl_aes_arm_encrypt(in, out, key)
+
+#else
+
+extern "C" int openssl_aes_arm_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
+extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+extern "C" int openssl_aes_armv8_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
+extern "C" void openssl_aes_armv8_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+
+typedef int (*aes_set_encrypt_t)(const unsigned char *userKey, const int bits, void *key);
+typedef void (*aes_encrypt_t)(const unsigned char *in, unsigned char *out, const void *key);
+
+extern aes_set_encrypt_t AES_set_encrypt_key;
+extern aes_encrypt_t AES_encrypt;
+
+#endif // MMKV_ANDROID
+
+#else // __ARM_MAX_ARCH__
+
+namespace openssl {
+
+int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key);
+
+void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
+
+} // namespace openssl
+
+#endif // __ARM_MAX_ARCH__
 
 #endif

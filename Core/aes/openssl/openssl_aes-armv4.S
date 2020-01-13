@@ -41,7 +41,7 @@
 
 #include "openssl_arm_arch.h"
 
-#if (__ARM_MAX_ARCH__ <= 7) && (__ARM_MAX_ARCH__ > 0)
+#if (__ARM_MAX_ARCH__ <= 7 || defined(__ANDROID__)) && (__ARM_MAX_ARCH__ > 0)
 
 .text
 #if defined(__thumb2__) && !defined(__APPLE__)

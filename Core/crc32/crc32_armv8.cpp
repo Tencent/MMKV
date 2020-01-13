@@ -22,6 +22,18 @@
 
 #ifdef __aarch64__
 
+#    ifdef MMKV_ANDROID
+
+#        include <zlib.h>
+
+static inline uint32_t _crc32Wrap(uint32_t crc, const unsigned char *buf, size_t len) {
+    return static_cast<uint32_t>(::crc32(crc, buf, static_cast<uInt>(len)));
+}
+
+CRC32_Func_t CRC32 = _crc32Wrap;
+
+#    endif // MMKV_ANDROID
+
 __attribute__((target("crc"))) static inline uint32_t __crc32b(uint32_t a, uint8_t b) {
     return __builtin_arm_crc32b(a, b);
 }

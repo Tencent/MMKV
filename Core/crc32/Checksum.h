@@ -41,7 +41,16 @@ namespace mmkv {
 uint32_t armv8_crc32(uint32_t crc, const unsigned char *buf, size_t len);
 }
 
-#        define CRC32(crc, buf, len) mmkv::armv8_crc32(crc, buf, len)
+#        ifndef MMKV_ANDROID
+
+#            define CRC32(crc, buf, len) mmkv::armv8_crc32(crc, buf, len)
+
+#        else // Android runs on too many devices, have to check CPU's instruction set dynamically
+
+typedef uint32_t (*CRC32_Func_t)(uint32_t crc, const unsigned char *buf, size_t len);
+extern CRC32_Func_t CRC32;
+
+#        endif // MMKV_ANDROID
 
 #    else // __aarch64__
 
