@@ -22,12 +22,8 @@
 #define MMKV_MMKV_H
 
 #include "MMKVPredef.h"
-
 #include "MMBuffer.h"
 #include <cstdint>
-#include <functional>
-#include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace mmkv {
