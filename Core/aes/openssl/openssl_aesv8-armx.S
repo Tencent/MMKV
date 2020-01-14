@@ -15,10 +15,10 @@ Lrcon:
 .align	5
 _openssl_aes_arm_set_encrypt_key:
 #else
-.globl	_openssl_aes_armv8_set_encrypt_key
+.globl	openssl_aes_armv8_set_encrypt_key
 
 .align	5
-_openssl_aes_arm_setv8_encrypt_key:
+openssl_aes_armv8_set_encrypt_key:
 #endif // __ANDROID__
 
 Lenc_key:
@@ -189,10 +189,10 @@ Lenc_key_abort:
 .align	5
 _openssl_aes_arm_encrypt:
 #else
-.globl	_openssl_aes_armv8_encrypt
+.globl	openssl_aes_armv8_encrypt
 
 .align	5
-_openssl_aes_armv8_encrypt:
+openssl_aes_armv8_encrypt:
 #endif // __ANDROID__
 
 	ldr	w3,[x2,#240]

@@ -41,7 +41,7 @@
 
 #include "openssl_arm_arch.h"
 
-#if (__ARM_MAX_ARCH__ <= 7 || defined(__ANDROID__)) && (__ARM_MAX_ARCH__ > 0)
+#if (__ARM_MAX_ARCH__ <= 7) && (__ARM_MAX_ARCH__ > 0)
 
 .text
 #if defined(__thumb2__) && !defined(__APPLE__)
@@ -161,12 +161,21 @@ AES_Te:
 /* void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out,
 * 		 const AES_KEY *key) {
 */
+#ifndef __ANDROID__
 .globl	_openssl_aes_arm_encrypt
 #ifdef __thumb2__
 .thumb_func	_openssl_aes_arm_encrypt
 #endif
 .align	5
 _openssl_aes_arm_encrypt:
+#else
+.globl	openssl_aes_arm_encrypt
+#ifdef __thumb2__
+.thumb_func	openssl_aes_arm_encrypt
+#endif
+.align	5
+openssl_aes_arm_encrypt:
+#endif
 #ifndef	__thumb2__
 	sub	r3,pc,#8		// _AES_encrypt
 #else
@@ -175,8 +184,10 @@ _openssl_aes_arm_encrypt:
 	stmdb	sp!,{r1,r4-r12,lr}
 #if defined(__thumb2__) || defined(__APPLE__)
 	adr	r10,AES_Te
+#elif defined(__ANDROID__)
+	sub	r10,r3,#openssl_aes_arm_encrypt-AES_Te	// Te
 #else
-	sub	r10,r3,#_AES_encrypt-AES_Te	// Te
+	sub	r10,r3,#_openssl_aes_arm_encrypt-AES_Te	// Te
 #endif
 	mov	r12,r0		// inp
 	mov	r11,r2
@@ -414,12 +425,21 @@ Lenc_loop:
 	ldr	pc,[sp],#4		// pop and return
 
 
+#ifndef __ANDROID__
 .globl	_openssl_aes_arm_set_encrypt_key
 #ifdef __thumb2__
 .thumb_func	_openssl_aes_arm_set_encrypt_key
 #endif
 .align	5
 _openssl_aes_arm_set_encrypt_key:
+#else
+.globl	openssl_aes_arm_set_encrypt_key
+#ifdef __thumb2__
+.thumb_func	openssl_aes_arm_set_encrypt_key
+#endif
+.align	5
+openssl_aes_arm_set_encrypt_key:
+#endif
 _armv4_AES_set_encrypt_key:
 #ifndef	__thumb2__
 	sub	r3,pc,#8		// _AES_set_encrypt_key

@@ -41,9 +41,6 @@
 #include "openssl_aes.h"
 #include "openssl_aes_locl.h"
 
-// TODO: migrate to Android
-#if __ARM_MAX_ARCH__ > 0 && !defined(MMKV_ANDROID)
-
 #ifndef MMKV_ANDROID
 
 namespace openssl {
@@ -58,14 +55,15 @@ void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key
 
 } // namespace openssl
 
-#else
+#elif (__ARM_MAX_ARCH__ > 7)
 
-aes_set_encrypt_t AES_set_encrypt_key = openssl_aes_arm_set_encrypt_key;
-aes_encrypt_t AES_encrypt = openssl_aes_arm_encrypt;
-
+aes_set_encrypt_t AES_set_encrypt_key = openssl::AES_C_set_encrypt_key;
+aes_encrypt_t AES_encrypt = openssl::AES_C_encrypt;
+//aes_set_encrypt_t AES_set_encrypt_key = openssl_aes_arm_set_encrypt_key;
+//aes_encrypt_t AES_encrypt = openssl_aes_arm_encrypt;
 #endif // MMKV_ANDROID
 
-#else
+#if (__ARM_MAX_ARCH__ <= 0) || (__ARM_MAX_ARCH__ > 7 && defined(MMKV_ANDROID))
 
 namespace openssl {
 
@@ -356,8 +354,14 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
+#if (__ARM_MAX_ARCH__ <= 0)
 int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
+#else
+int AES_C_set_encrypt_key(const unsigned char *userKey, const int bits, void *k)
+{
+    auto key = (AES_KEY*) k;
+#endif
 
     u32 *rk;
     int i = 0;
@@ -458,8 +462,12 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *k
  * Encrypt a single block
  * in and out can overlap
  */
+#if (__ARM_MAX_ARCH__ <= 0)
 void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key) {
-
+#else
+void AES_C_encrypt(const unsigned char *in, unsigned char *out, const void *k) {
+    auto key = (const AES_KEY*) k;
+#endif
     const u32 *rk;
     u32 s0, s1, s2, s3, t0, t1, t2, t3;
     int r;
@@ -572,4 +580,5 @@ void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key
 
 } // namespace openssl
 
-#endif // __ARM_MAX_ARCH__ <= 7
+#endif // (__ARM_MAX_ARCH__ < 0) || (__ARM_MAX_ARCH__ > 7 && defined(MMKV_ANDROID))
+

@@ -33,6 +33,19 @@ IF(APPLE)
     add_compile_definitions(FORCE_POSIX)
 ENDIF()
 
+set(can_use_assembler TRUE)
+enable_language(ASM)
+IF(${ANDROID_ABI} STREQUAL "arm64-v8a")
+    SET(ASM_OPTIONS "-x assembler-with-cpp")
+    SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8+crypto -D__ANDROID__")
+ELSEIF(${ANDROID_ABI} STREQUAL "armeabi-v7a")
+    SET(ASM_OPTIONS "-x assembler-with-cpp")
+    SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv7a -D__ANDROID__")
+ELSEIF(${ANDROID_ABI} STREQUAL "armeabi")
+    SET(ASM_OPTIONS "-x assembler-with-cpp")
+    SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv5 -D__ANDROID__")
+ENDIF()
+
 project(core)
 
 # Creates and names a library, sets it as either STATIC
