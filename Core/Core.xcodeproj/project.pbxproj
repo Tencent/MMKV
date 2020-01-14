@@ -97,9 +97,9 @@
 		CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
 		CB9563FF23AB2E9100ACCD39 /* openssl_md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md32_common.h; sourceTree = "<group>"; };
 		CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_opensslconf.h; sourceTree = "<group>"; };
-		CB95640123AB2E9100ACCD39 /* openssl_cfb128.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_cfb128.cpp; sourceTree = "<group>"; };
+		CB95640123AB2E9100ACCD39 /* openssl_cfb128.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = openssl_cfb128.cpp; sourceTree = "<group>"; };
 		CB95640223AB2E9100ACCD39 /* openssl_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5.h; sourceTree = "<group>"; };
-		CB95640323AB2E9100ACCD39 /* openssl_aes_core.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_aes_core.cpp; sourceTree = "<group>"; };
+		CB95640323AB2E9100ACCD39 /* openssl_aes_core.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = openssl_aes_core.cpp; sourceTree = "<group>"; };
 		CB95640523AB2E9100ACCD39 /* openssl_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_aes.h; sourceTree = "<group>"; };
 		CB95640623AB2E9100ACCD39 /* openssl_md5_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5_locl.h; sourceTree = "<group>"; };
 		CB95640723AB2E9100ACCD39 /* openssl_md5_one.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_md5_one.cpp; sourceTree = "<group>"; };

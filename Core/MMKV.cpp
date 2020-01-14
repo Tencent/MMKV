@@ -671,7 +671,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
 
     bool needsFullWrite = false;
     m_actualSize = size;
-    m_metaInfo->m_actualSize = size;
+    m_metaInfo->m_actualSize = static_cast<uint32_t>(size);
     m_crcDigest = crcDigest;
     m_metaInfo->m_crcDigest = crcDigest;
     if (m_metaInfo->m_version < MMKVVersionSequence) {
@@ -687,7 +687,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
     }
     if (unlikely(increaseSequence)) {
         m_metaInfo->m_sequence++;
-        m_metaInfo->m_lastConfirmedMetaInfo.lastActualSize = size;
+        m_metaInfo->m_lastConfirmedMetaInfo.lastActualSize = static_cast<uint32_t>(size);
         m_metaInfo->m_lastConfirmedMetaInfo.lastCRCDigest = crcDigest;
         if (m_metaInfo->m_version < MMKVVersionActualSize) {
             m_metaInfo->m_version = MMKVVersionActualSize;

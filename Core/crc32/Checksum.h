@@ -56,7 +56,7 @@ extern CRC32_Func_t CRC32;
 
 #        include <zlib.h>
 
-#        define CRC32(crc, buf, len) ::crc32(crc, buf, len)
+#        define CRC32(crc, buf, len) ::crc32(crc, buf, static_cast<uInt>(len))
 
 #    endif // __aarch64__
 

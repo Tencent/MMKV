@@ -41,27 +41,12 @@
 #include "openssl_aes.h"
 #include "openssl_aes_locl.h"
 
-#ifndef MMKV_ANDROID
-
-namespace openssl {
-
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key) {
-    return openssl_aes_arm_set_encrypt_key(userKey, bits, key);
-}
-
-void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key) {
-    openssl_aes_arm_encrypt(in, out, key);
-}
-
-} // namespace openssl
-
-#elif (__ARM_MAX_ARCH__ > 7)
+#if (__ARM_MAX_ARCH__ > 7) && defined(MMKV_ANDROID)
 
 aes_set_encrypt_t AES_set_encrypt_key = openssl::AES_C_set_encrypt_key;
 aes_encrypt_t AES_encrypt = openssl::AES_C_encrypt;
-//aes_set_encrypt_t AES_set_encrypt_key = openssl_aes_arm_set_encrypt_key;
-//aes_encrypt_t AES_encrypt = openssl_aes_arm_encrypt;
-#endif // MMKV_ANDROID
+
+#endif // (__ARM_MAX_ARCH__ > 7 && defined(MMKV_ANDROID)
 
 #if (__ARM_MAX_ARCH__ <= 0) || (__ARM_MAX_ARCH__ > 7 && defined(MMKV_ANDROID))
 
@@ -355,14 +340,11 @@ static const u32 rcon[] = {
  * Expand the cipher key into the encryption key schedule.
  */
 #if (__ARM_MAX_ARCH__ <= 0)
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
-{
+int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key) {
 #else
-int AES_C_set_encrypt_key(const unsigned char *userKey, const int bits, void *k)
-{
+int AES_C_set_encrypt_key(const unsigned char *userKey, const int bits, void *k) {
     auto key = (AES_KEY*) k;
 #endif
-
     u32 *rk;
     int i = 0;
     u32 temp;
