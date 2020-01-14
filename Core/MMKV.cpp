@@ -160,21 +160,6 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
     mkPath(g_rootDir);
 
     MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
-
-    MemoryFile metaFile(g_rootDir + MMKV_PATH_SLASH + "checkOldFileSize.crc");
-    MMKVMetaInfo metaInfo;
-    metaInfo.m_crcDigest = 1355761036;
-    metaInfo.m_actualSize = 77;
-    metaInfo.m_version = MMKVVersionActualSize;
-    metaInfo.write(metaFile.getMemory());
-    metaFile.msync(MMKV_SYNC);
-
-    MemoryFile file(g_rootDir + MMKV_PATH_SLASH + "checkOldFileSize");
-    uint32_t actualSize = 197397;
-    memcpy(file.getMemory(), &actualSize, Fixed32Size);
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-      MMKV::mmkvWithID("checkOldFileSize");
-    });
 }
 
 #ifndef MMKV_ANDROID
@@ -391,11 +376,11 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
                     loadFromFile = true;
                     writeActualSize(lastActualSize, lastCRCDigest, nullptr, KeepSequence);
                 } else {
-                    MMKVError("check [%s] error: lastActualSize %zu, lastActualCRC %zu", m_mmapID.c_str(),
-                              lastActualSize, lastCRCDigest);
+                    MMKVError("check [%s] error: lastActualSize %u, lastActualCRC %u", m_mmapID.c_str(), lastActualSize,
+                              lastCRCDigest);
                 }
             } else {
-                MMKVError("check [%s] error: lastActualSize %zu, file size is %zu", m_mmapID.c_str(), lastActualSize,
+                MMKVError("check [%s] error: lastActualSize %u, file size is %u", m_mmapID.c_str(), lastActualSize,
                           fileSize);
             }
         }
