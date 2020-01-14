@@ -26,7 +26,7 @@
 #include <string>
 
 #ifdef MMKV_ANDROID
-constexpr auto ASHMEM_NAME_DEF = "/dev/ashmem";
+MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
 
 namespace mmkv {
 extern int g_android_api;

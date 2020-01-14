@@ -1569,7 +1569,7 @@ MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *r
     if (relativePath) {
 #else
     if (mode & MMKV_ASHMEM) {
-        return MMKVPath_t(ASHMEM_NAME_DEF) + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+        return ashmemMMKVPathWithID(encodeFilePath(mmapID));
     } else if (relativePath) {
 #endif
         return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
@@ -1588,7 +1588,7 @@ MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relati
     if (relativePath) {
 #else
     if (mode & MMKV_ASHMEM) {
-        return encodeFilePath(mmapID) + CRC_SUFFIX;
+        return ashmemMMKVPathWithID(encodeFilePath(mmapID)) + CRC_SUFFIX;
     } else if (relativePath) {
 #endif
         return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;

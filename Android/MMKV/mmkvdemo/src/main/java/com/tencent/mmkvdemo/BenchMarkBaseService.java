@@ -42,7 +42,7 @@ public abstract class BenchMarkBaseService extends Service {
 
     // 1M, ashmem cannot change size after opened
     public static final int AshmemMMKV_Size = 1024 * 1024;
-    public static final String AshmemMMKV_ID = "tetAshmemMMKVByCP";
+    public static final String AshmemMMKV_ID = "testAshmemMMKVByCP";
 
     private String[] m_arrStrings;
     private String[] m_arrKeys;

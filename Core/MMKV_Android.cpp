@@ -77,8 +77,8 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
 
 MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
     : m_mmapID(mmapID)
-    , m_path("")
-    , m_crcPath("")
+    , m_path(mappedKVPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
+    , m_crcPath(crcPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
     , m_file(new MemoryFile(ashmemFD))
     , m_metaFile(new MemoryFile(ashmemMetaFD))
     , m_metaInfo(new MMKVMetaInfo())
@@ -89,20 +89,6 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
     , m_isInterProcess(true) {
 
-    // check mmapID with ashmemID
-    {
-        auto ashmemID = m_metaFile->getName();
-        size_t pos = ashmemID.find_last_of('.');
-        if (pos != string::npos) {
-            ashmemID.erase(pos, string::npos);
-        }
-        if (mmapID != ashmemID) {
-            MMKVWarning("mmapID[%s] != ashmem[%s]", mmapID.c_str(), ashmemID.c_str());
-        }
-    }
-    // TODO: call mappedKVPathWithID() ?
-    m_path = string(ASHMEM_NAME_DEF) + "/" + m_mmapID;
-    m_crcPath = string(ASHMEM_NAME_DEF) + "/" + m_metaFile->getName();
     m_actualSize = 0;
     m_output = nullptr;
 

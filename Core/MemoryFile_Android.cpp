@@ -32,6 +32,8 @@
 
 using namespace std;
 
+constexpr char ASHMEM_NAME_DEF[] = "/dev/ashmem";
+
 namespace mmkv {
 
 // for Android Q limiting ashmem access
@@ -48,7 +50,12 @@ MemoryFile::MemoryFile(const string &path, size_t size, FileType fileType)
         if (size < DEFAULT_MMAP_SIZE || (size % DEFAULT_MMAP_SIZE != 0)) {
             size = ((size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
         }
-        m_fd = ASharedMemory_create(m_name.c_str(), size);
+        auto filename = m_name.c_str();
+        auto ptr = strstr(filename, ASHMEM_NAME_DEF);
+        if (ptr && ptr[sizeof(ASHMEM_NAME_DEF) - 1] == '/') {
+            filename = ptr + sizeof(ASHMEM_NAME_DEF);
+        }
+        m_fd = ASharedMemory_create(filename, size);
         if (m_fd >= 0) {
             m_size = size;
             auto ret = mmap();
@@ -76,9 +83,6 @@ MemoryFile::MemoryFile(int ashmemFD)
 
 } // namespace mmkv
 
-#endif
-
-#ifdef MMKV_ANDROID
 #    pragma mark - ashmem
 #    include <dlfcn.h>
 #    include <sys/ioctl.h>
@@ -180,5 +184,9 @@ string ASharedMemory_getName(int fd) {
 }
 
 } // namespace mmkv
+
+MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID) {
+    return MMKVPath_t(ASHMEM_NAME_DEF) + MMKV_PATH_SLASH + mmapID;
+}
 
 #endif // MMKV_ANDROID

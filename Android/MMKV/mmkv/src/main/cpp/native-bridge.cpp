@@ -116,7 +116,6 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     // get CPU status of ARMv8 extensions (CRC32, AES)
 #ifdef __aarch64__
     auto hwcaps = getauxval(AT_HWCAP);
-    // TODO: tune AES with asm
     if (hwcaps & HWCAP_AES) {
         AES_set_encrypt_key = openssl_aes_armv8_set_encrypt_key;
         AES_encrypt = openssl_aes_armv8_encrypt;
