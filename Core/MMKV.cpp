@@ -160,6 +160,21 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
     mkPath(g_rootDir);
 
     MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
+
+    MemoryFile metaFile(g_rootDir + MMKV_PATH_SLASH + "checkOldFileSize.crc");
+    MMKVMetaInfo metaInfo;
+    metaInfo.m_crcDigest = 1355761036;
+    metaInfo.m_actualSize = 77;
+    metaInfo.m_version = MMKVVersionActualSize;
+    metaInfo.write(metaFile.getMemory());
+    metaFile.msync(MMKV_SYNC);
+
+    MemoryFile file(g_rootDir + MMKV_PATH_SLASH + "checkOldFileSize");
+    uint32_t actualSize = 197397;
+    memcpy(file.getMemory(), &actualSize, Fixed32Size);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+      MMKV::mmkvWithID("checkOldFileSize");
+    });
 }
 
 #ifndef MMKV_ANDROID
@@ -357,11 +372,15 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             if (oldStyleActualSize != m_actualSize) {
                 MMKVWarning("oldStyleActualSize %u not equal to meta actual size %lu", oldStyleActualSize,
                             m_actualSize);
-                if (checkFileCRCValid(oldStyleActualSize, m_metaInfo->m_crcDigest)) {
-                    MMKVInfo("looks like [%s] been downgrade & upgrade again", m_mmapID.c_str());
-                    loadFromFile = true;
-                    writeActualSize(oldStyleActualSize, m_metaInfo->m_crcDigest, nullptr, KeepSequence);
-                    return;
+                if (oldStyleActualSize < fileSize && (oldStyleActualSize + Fixed32Size) <= fileSize) {
+                    if (checkFileCRCValid(oldStyleActualSize, m_metaInfo->m_crcDigest)) {
+                        MMKVInfo("looks like [%s] been downgrade & upgrade again", m_mmapID.c_str());
+                        loadFromFile = true;
+                        writeActualSize(oldStyleActualSize, m_metaInfo->m_crcDigest, nullptr, KeepSequence);
+                        return;
+                    }
+                } else {
+                    MMKVWarning("oldStyleActualSize %u greater than file size %lu", oldStyleActualSize, fileSize);
                 }
             }
 
@@ -645,7 +664,7 @@ size_t MMKV::readActualSize() {
 
     if (m_metaInfo->m_version >= MMKVVersionActualSize) {
         if (m_metaInfo->m_actualSize != actualSize) {
-            MMKVWarning("[%s] actual size %u, meta actual size %zu", m_mmapID.c_str(), actualSize,
+            MMKVWarning("[%s] actual size %u, meta actual size %u", m_mmapID.c_str(), actualSize,
                         m_metaInfo->m_actualSize);
         }
         return m_metaInfo->m_actualSize;
