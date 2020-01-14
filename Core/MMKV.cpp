@@ -1443,7 +1443,7 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
     }
 
     MMKVPath_t crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
-    if (!isFileExist(crcPath.c_str())) {
+    if (!isFileExist(crcPath)) {
         return false;
     }
 
