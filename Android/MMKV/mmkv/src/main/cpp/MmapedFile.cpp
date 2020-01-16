@@ -42,7 +42,7 @@ MmapedFile::MmapedFile(const std::string &path, size_t size, bool fileType)
         if (m_fd < 0) {
             MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
         } else {
-            FileLock fileLock(m_fd);
+            FileLock fileLock(m_fd, false);
             InterProcessLock lock(&fileLock, ExclusiveLockType);
             SCOPEDLOCK(lock);
 
