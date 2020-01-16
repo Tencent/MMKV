@@ -126,19 +126,19 @@ enum : bool {
 		return nil;
 	}
 
-	NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
-	if (!isFileExist(kvPath)) {
-		if (!createFile(kvPath)) {
-			MMKVError(@"fail to create file at %@", kvPath);
-			return nil;
-		}
-	}
 	NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];
 
 	CScopedLock lock(g_instanceLock);
 
 	MMKV *kv = [g_instanceDic objectForKey:kvKey];
 	if (kv == nil) {
+        NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
+        if (!isFileExist(kvPath)) {
+            if (!createFile(kvPath)) {
+                MMKVError(@"fail to create file at %@", kvPath);
+                return nil;
+            }
+        }
 		kv = [[MMKV alloc] initWithMMapID:kvKey cryptKey:cryptKey path:kvPath];
 		[g_instanceDic setObject:kv forKey:kvKey];
 	}
