@@ -103,6 +103,24 @@ enum : bool {
 	}
 }
 
+static BOOL g_hasCalledInitializeMMKV = NO;
+static NSString *g_basePath = nil;
+
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir {
+#ifdef DEBUG
+	assert([NSThread isMainThread]);
+#endif
+	if (g_hasCalledInitializeMMKV) {
+		MMKVWarning(@"already called +initializeMMKV before, ignore this request");
+		return [self mmkvBasePath];
+	}
+	g_hasCalledInitializeMMKV = YES;
+
+	g_basePath = (rootDir != nil) ? rootDir : [self mmkvBasePath];
+
+	return [self mmkvBasePath];
+}
+
 // a generic purpose instance
 + (instancetype)defaultMMKV {
 	return [MMKV mmkvWithID:DEFAULT_MMAP_ID];
@@ -132,13 +150,13 @@ enum : bool {
 
 	MMKV *kv = [g_instanceDic objectForKey:kvKey];
 	if (kv == nil) {
-        NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
-        if (!isFileExist(kvPath)) {
-            if (!createFile(kvPath)) {
-                MMKVError(@"fail to create file at %@", kvPath);
-                return nil;
-            }
-        }
+		NSString *kvPath = [MMKV mappedKVPathWithID:mmapID relativePath:relativePath];
+		if (!isFileExist(kvPath)) {
+			if (!createFile(kvPath)) {
+				MMKVError(@"fail to create file at %@", kvPath);
+				return nil;
+			}
+		}
 		kv = [[MMKV alloc] initWithMMapID:kvKey cryptKey:cryptKey path:kvPath];
 		[g_instanceDic setObject:kv forKey:kvKey];
 	}
@@ -1363,7 +1381,6 @@ NSData *decryptBuffer(AESCrypt &crypter, NSData *inputBuffer) {
 	}
 }
 
-static NSString *g_basePath = nil;
 + (NSString *)mmkvBasePath {
 	if (g_basePath.length > 0) {
 		return g_basePath;

@@ -19,6 +19,7 @@
  */
 
 #import "AppDelegate.h"
+#import <MMKV/MMKV.h>
 
 @interface AppDelegate ()
 
@@ -28,6 +29,10 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 	// Override point for customization after application launch.
+
+	// init MMKV in the main thread
+	[MMKV initializeMMKV:nil];
+
 	return YES;
 }
 

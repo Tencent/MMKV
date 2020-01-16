@@ -24,6 +24,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// call this in main thread, before calling any other MMKV methods
+/// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
+/// @return root dir of MMKV
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir NS_SWIFT_NAME(initialize(rootDir:));
+
 // a generic purpose instance
 + (instancetype)defaultMMKV;
 
