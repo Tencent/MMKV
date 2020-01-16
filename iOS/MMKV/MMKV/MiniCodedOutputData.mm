@@ -69,6 +69,9 @@ void MiniCodedOutputData::writeBool(BOOL value) {
 void MiniCodedOutputData::writeString(NSString *value) {
 	NSUInteger numberOfBytes = [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
 	this->writeRawVarint32((int32_t) numberOfBytes);
+	if (m_position + numberOfBytes > m_size) {
+		@throw [NSException exceptionWithName:@"OutOfSpace" reason:@"" userInfo:nil];
+	}
 	[value getBytes:m_ptr + m_position
 	         maxLength:numberOfBytes
 	        usedLength:0
