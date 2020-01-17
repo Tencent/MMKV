@@ -35,11 +35,11 @@ MMKV 的使用非常简单，无需任何配置，所有变更立马生效，无
 
 ```objective-c
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-	// init MMKV in the main thread
-	[MMKV initializeMMKV:nil];
+    // init MMKV in the main thread
+    [MMKV initializeMMKV:nil];
 
-	//...
-	return YES;
+    //...
+    return YES;
 }
 ```
 
