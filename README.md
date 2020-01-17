@@ -37,11 +37,11 @@ Setup MMKV on App startup, in your `-[MyApp application: didFinishLaunchingWithO
 
 ```objective-c
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-	// init MMKV in the main thread
-	[MMKV initializeMMKV:nil];
+    // init MMKV in the main thread
+    [MMKV initializeMMKV:nil];
 
-	//...
-	return YES;
+    //...
+    return YES;
 }
 ```
 
