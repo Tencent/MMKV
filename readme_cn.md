@@ -31,7 +31,19 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 更多安装指引参考 [iOS/macOS Setup](https://github.com/Tencent/MMKV/wiki/iOS_setup_cn)。
 
 ### 快速上手
-MMKV 的使用非常简单，无需任何配置，所有变更立马生效，无需调用 `synchronize`:
+MMKV 的使用非常简单，无需任何配置，所有变更立马生效，无需调用 `synchronize`。在 App 启动时初始化 MMKV（设定 MMKV 的根目录），例如在`-[MyApp application: didFinishLaunchingWithOptions:]`里：
+
+```objective-c
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+	// init MMKV in the main thread
+	[MMKV initializeMMKV:nil];
+
+	//...
+	return YES;
+}
+```
+
+MMKV 提供一个全局的实例，可以直接使用：
 
 ```objective-c
 MMKV *mmkv = [MMKV defaultMMKV];
@@ -59,8 +71,8 @@ NSString *str = [mmkv getStringForKey:@"string"];
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.23'
-    // replace "1.0.23" with any available version
+    implementation 'com.tencent:mmkv-static:1.0.24'
+    // replace "1.0.24" with any available version
 }
 ```
 

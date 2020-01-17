@@ -1,5 +1,26 @@
 # MMKV Change Log
 
+## v1.0.24 / 2020-01-16
+
+### iOS / macOS
+What's new  
+
+* Fix a bug that MMKV will fail to save any key-values after calling `-[MMKV clearMemoryCache]` and then `-[MMKV clearAll]`.
+* Add -[MMKV initializeMMKV:] for users to init MMKV in the main thread, to avoid an iOS 13 potential crash when accessing `UIApplicationState` in child threads.
+* Fix a potential crash when writing a uniquely constructed string.
+* Fix a performance slow down when acquiring MMKV instances too often.
+* Make the baseline test in MMKVDemo more robust to NSUserDefaults' caches.
+
+### Android
+What's new  
+
+* Fix flock() bug on ashmem files in Android.
+* Fix a potential crash when writing a uniquely constructed string.
+* Fix a bug that the MMKVDemo might crash when running in a simulator.
+
+### Win32
+* Fix a potential crash when writing a uniquely constructed string or data.
+
 ## v1.0.23 / 2019-09-03
 
 ### iOS / macOS
