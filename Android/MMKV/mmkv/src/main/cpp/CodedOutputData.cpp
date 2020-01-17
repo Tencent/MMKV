@@ -60,12 +60,12 @@ void CodedOutputData::writeBool(bool value) {
 
 void CodedOutputData::writeString(const string &value) {
     size_t numberOfBytes = value.size();
+    this->writeRawVarint32((int32_t) numberOfBytes);
     if (m_position + numberOfBytes > m_size) {
         MMKVError("m_position: %d, numberOfBytes: %zd, m_size: %zd", m_position, numberOfBytes,
                   m_size);
         return;
     }
-    this->writeRawVarint32((int32_t) numberOfBytes);
     memcpy(m_ptr + m_position, ((uint8_t *) value.data()), numberOfBytes);
     m_position += numberOfBytes;
 }

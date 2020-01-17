@@ -37,8 +37,15 @@ class FileLock {
     size_t m_exclusiveLockCount;
 
     bool doLock(LockType lockType, bool wait);
+    bool platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded);
+    bool platformUnLock(bool unLockFirstIfNeeded);
 
     bool isFileLockValid() { return m_fd >= 0; }
+
+    const bool m_isAshmem;
+    struct flock m_lockInfo;
+    bool ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded);
+    bool ashmemUnLock(bool unLockFirstIfNeeded);
 
     // just forbid it for possibly misuse
     FileLock(const FileLock &other) = delete;
@@ -46,7 +53,7 @@ class FileLock {
     FileLock &operator=(const FileLock &other) = delete;
 
 public:
-    FileLock(int fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+    explicit FileLock(int fd, bool isAshmem = false);
 
     bool lock(LockType lockType);
 

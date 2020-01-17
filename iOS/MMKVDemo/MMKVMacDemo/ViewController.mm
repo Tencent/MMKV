@@ -21,6 +21,7 @@
 	[super viewDidLoad];
 
 	[self funcionalTest];
+	[self testNeedLoadFromFile];
 
 	m_loops = 10000;
 	m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -86,6 +87,13 @@
 	[super setRepresentedObject:representedObject];
 
 	// Update the view, if already loaded.
+}
+
+- (void)testNeedLoadFromFile {
+	auto mmkv = [MMKV mmkvWithID:@"testNeedLoadFromFile"];
+	[mmkv clearMemoryCache]; // or may be triggered by Memory Warning
+	[mmkv clearAll];
+	NSAssert([mmkv setString:@"value" forKey:@"key"], @"Fail to save");
 }
 
 @end

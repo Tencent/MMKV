@@ -23,6 +23,15 @@
 #include <sys/file.h>
 #include <unistd.h>
 
+FileLock::FileLock(int fd, bool isAshmem)
+    : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_isAshmem(isAshmem) {
+    m_lockInfo.l_type = F_WRLCK;
+    m_lockInfo.l_start = 0;
+    m_lockInfo.l_whence = SEEK_SET;
+    m_lockInfo.l_len = 0;
+    m_lockInfo.l_pid = 0;
+}
+
 static int LockType2FlockType(LockType lockType) {
     switch (lockType) {
         case SharedLockType:
@@ -31,6 +40,98 @@ static int LockType2FlockType(LockType lockType) {
             return LOCK_EX;
     }
     return LOCK_EX;
+}
+
+bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded) {
+    if (m_isAshmem) {
+        return ashmemLock(lockType, wait, unLockFirstIfNeeded);
+    }
+    auto realLockType = LockType2FlockType(lockType);
+    auto cmd = wait ? realLockType : (realLockType | LOCK_NB);
+    if (unLockFirstIfNeeded) {
+        // try lock
+        auto ret = flock(m_fd, realLockType | LOCK_NB);
+        if (ret == 0) {
+            return true;
+        }
+        // lets be gentleman: unlock my shared-lock to prevent deadlock
+        ret = flock(m_fd, LOCK_UN);
+        if (ret != 0) {
+            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret,
+                      strerror(errno));
+        }
+    }
+
+    auto ret = flock(m_fd, cmd);
+    if (ret != 0) {
+        MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool FileLock::platformUnLock(bool unlockToSharedLock) {
+    if (m_isAshmem) {
+        return ashmemUnLock(unlockToSharedLock);
+    }
+    int cmd = unlockToSharedLock ? LOCK_SH : LOCK_UN;
+    auto ret = flock(m_fd, cmd);
+    if (ret != 0) {
+        MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        return false;
+    } else {
+        return true;
+    }
+}
+
+static short LockType2FlockType2(LockType lockType) {
+    switch (lockType) {
+        case SharedLockType:
+            return F_RDLCK;
+        case ExclusiveLockType:
+            return F_WRLCK;
+    }
+}
+
+bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded) {
+    m_lockInfo.l_type = LockType2FlockType2(lockType);
+    if (unLockFirstIfNeeded) {
+        // try lock
+        auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        if (ret == 0) {
+            return true;
+        }
+        // lets be gentleman: unlock my shared-lock to prevent deadlock
+        auto type = m_lockInfo.l_type;
+        m_lockInfo.l_type = F_UNLCK;
+        ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        if (ret != 0) {
+            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret,
+                      strerror(errno));
+        }
+        m_lockInfo.l_type = type;
+    }
+
+    int cmd = wait ? F_SETLKW : F_SETLK;
+    auto ret = fcntl(m_fd, cmd, &m_lockInfo);
+    if (ret != 0) {
+        MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        return false;
+    } else {
+        return true;
+    }
+}
+
+bool FileLock::ashmemUnLock(bool unlockToSharedLock) {
+    m_lockInfo.l_type = static_cast<short>(unlockToSharedLock ? F_RDLCK : F_UNLCK);
+    auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+    if (ret != 0) {
+        MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        return false;
+    } else {
+        return true;
+    }
 }
 
 bool FileLock::doLock(LockType lockType, bool wait) {
@@ -56,30 +157,7 @@ bool FileLock::doLock(LockType lockType, bool wait) {
             unLockFirstIfNeeded = true;
         }
     }
-
-    int realLockType = LockType2FlockType(lockType);
-    int cmd = wait ? realLockType : (realLockType | LOCK_NB);
-    if (unLockFirstIfNeeded) {
-        // try lock
-        auto ret = flock(m_fd, realLockType | LOCK_NB);
-        if (ret == 0) {
-            return true;
-        }
-        // lets be gentleman: unlock my shared-lock to prevent deadlock
-        ret = flock(m_fd, LOCK_UN);
-        if (ret != 0) {
-            MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret,
-                      strerror(errno));
-        }
-    }
-
-    auto ret = flock(m_fd, cmd);
-    if (ret != 0) {
-        MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
-        return false;
-    } else {
-        return true;
-    }
+    return platformLock(lockType, wait, unLockFirstIfNeeded);
 }
 
 bool FileLock::lock(LockType lockType) {
@@ -118,13 +196,5 @@ bool FileLock::unlock(LockType lockType) {
             unlockToSharedLock = true;
         }
     }
-
-    int cmd = unlockToSharedLock ? LOCK_SH : LOCK_UN;
-    auto ret = flock(m_fd, cmd);
-    if (ret != 0) {
-        MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
-        return false;
-    } else {
-        return true;
-    }
+    return platformUnLock(unlockToSharedLock);
 }
