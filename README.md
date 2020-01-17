@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.0.23-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-1.0.24-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./readme_cn.md)
@@ -33,6 +33,19 @@ For other installation options, see [iOS/macOS Setup](https://github.com/Tencent
 
 ### Quick Tutorial
 You can use MMKV as you go, no configurations needed. All changes are saved immediately, no `synchronize` calls needed.
+Setup MMKV on App startup, in your `-[MyApp application: didFinishLaunchingWithOptions:]`, add these lines:
+
+```objective-c
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+	// init MMKV in the main thread
+	[MMKV initializeMMKV:nil];
+
+	//...
+	return YES;
+}
+```
+
+MMKV has a global instance, that can be used directly:
 
 ```objective-c
 MMKV *mmkv = [MMKV defaultMMKV];
@@ -75,8 +88,8 @@ Add the following lines to `build.gradle` on your app module:
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.0.23'
-    // replace "1.0.23" with any available version
+    implementation 'com.tencent:mmkv-static:1.0.24'
+    // replace "1.0.24" with any available version
 }
 ```
 
