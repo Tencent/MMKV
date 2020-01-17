@@ -6,7 +6,7 @@
 What's new  
 
 * Fix a bug that MMKV will fail to save any key-values after calling `-[MMKV clearMemoryCache]` and then `-[MMKV clearAll]`.
-* Add -[MMKV initializeMMKV:] for users to init MMKV in the main thread, to avoid an iOS 13 potential crash when accessing `UIApplicationState` in child threads.
+* Add `-[MMKV initializeMMKV:]` for users to init MMKV in the main thread, to avoid an iOS 13 potential crash when accessing `UIApplicationState` in child threads.
 * Fix a potential crash when writing a uniquely constructed string.
 * Fix a performance slow down when acquiring MMKV instances too often.
 * Make the baseline test in MMKVDemo more robust to NSUserDefaults' caches.
