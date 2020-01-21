@@ -77,8 +77,7 @@ size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
 void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
     auto block = [size, this](MMKVMap &dictionary) {
         if (size == 0) {
-            auto length = m_inputData->readInt32();
-            unused(length);
+            [[maybe_unused]] auto length = m_inputData->readInt32();
         }
         while (!m_inputData->isAtEnd()) {
             const auto &key = m_inputData->readString();
