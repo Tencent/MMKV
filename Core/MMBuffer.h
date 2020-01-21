@@ -43,10 +43,6 @@ private:
 #endif
 
 public:
-    void *getPtr() const { return ptr; }
-
-    size_t length() const { return size; }
-
     explicit MMBuffer(size_t length = 0);
     MMBuffer(void *source, size_t length, MMBufferCopyFlag flag = MMBufferCopy);
 #ifdef MMKV_IOS_OR_MAC
@@ -57,6 +53,10 @@ public:
     MMBuffer &operator=(MMBuffer &&other) noexcept;
 
     ~MMBuffer();
+
+    void *getPtr() const { return ptr; }
+
+    size_t length() const { return size; }
 
     // those are expensive, just forbid it for possibly misuse
     explicit MMBuffer(const MMBuffer &other) = delete;

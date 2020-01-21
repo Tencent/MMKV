@@ -44,7 +44,6 @@ class MiniPBCoder {
     CodedOutputData *m_outputData = nullptr;
     std::vector<PBEncodeItem> *m_encodeItems = nullptr;
 
-private:
     MiniPBCoder() = default;
     explicit MiniPBCoder(const MMBuffer *inputBuffer);
     ~MiniPBCoder();

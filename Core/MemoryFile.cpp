@@ -44,7 +44,7 @@ extern size_t ASharedMemory_getSize(int fd);
 MemoryFile::MemoryFile(const MMKVPath_t &path) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
-#    endif
+#    endif // MMKV_ANDROID
 
 #    ifdef MMKV_IOS
 void tryResetFileProtection(const string &path);
@@ -66,7 +66,7 @@ bool MemoryFile::truncate(size_t size) {
         }
         return false;
     }
-#    endif
+#    endif // MMKV_ANDROID
 
     auto oldSize = m_size;
     m_size = size;
@@ -140,7 +140,7 @@ void MemoryFile::reloadFromFile() {
     } else {
         FileLock fileLock(m_fd);
         InterProcessLock lock(&fileLock, ExclusiveLockType);
-        SCOPEDLOCK(&lock);
+        SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_fd, m_size);
         // round up to (n * pagesize)

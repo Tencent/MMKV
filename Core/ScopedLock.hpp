@@ -27,6 +27,18 @@ template <typename T>
 class ScopedLock {
     T *m_lock;
 
+    void lock() {
+        if (m_lock) {
+            m_lock->lock();
+        }
+    }
+
+    void unlock() {
+        if (m_lock) {
+            m_lock->unlock();
+        }
+    }
+
 public:
     explicit ScopedLock(T *oLock) : m_lock(oLock) {
         MMKV_ASSERT(m_lock);
@@ -38,37 +50,18 @@ public:
         m_lock = nullptr;
     }
 
-    void lock() {
-        if (m_lock) {
-            m_lock->lock();
-        }
-    }
-
-    bool try_lock() {
-        if (m_lock) {
-            return m_lock->try_lock();
-        }
-        return false;
-    }
-
-    void unlock() {
-        if (m_lock) {
-            m_lock->unlock();
-        }
-    }
-
     // just forbid it for possibly misuse
     explicit ScopedLock(const ScopedLock<T> &other) = delete;
     ScopedLock &operator=(const ScopedLock<T> &other) = delete;
 };
 
+} // namespace mmkv
+
 #include <type_traits>
 
-#define SCOPEDLOCK(lock) _SCOPEDLOCK(lock, __COUNTER__)
+#define SCOPED_LOCK(lock) _SCOPEDLOCK(lock, __COUNTER__)
 #define _SCOPEDLOCK(lock, counter) __SCOPEDLOCK(lock, counter)
 #define __SCOPEDLOCK(lock, counter)                                                                                    \
     mmkv::ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
-
-} // namespace mmkv
 
 #endif //MMKV_SCOPEDLOCK_HPP

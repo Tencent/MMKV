@@ -58,11 +58,13 @@ public:
     void initialize();
 
     void lock();
-    bool try_lock();
     void unlock();
 
     static void ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)(void));
+
+#ifdef MMKV_WIN32
     static void Sleep(int ms);
+#endif
 
     // just forbid it for possibly misuse
     explicit ThreadLock(const ThreadLock &other) = delete;

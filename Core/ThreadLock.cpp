@@ -19,18 +19,9 @@
  */
 
 #include "ThreadLock.h"
+#include "MMKVLog.h"
 
 #if MMKV_USING_PTHREAD
-
-#    include "MMKVLog.h"
-
-#    ifdef MMKV_LINUX
-#        include <sys/syscall.h>
-#        include <unistd.h>
-static pid_t gettid() {
-    return syscall(SYS_gettid);
-}
-#    endif
 
 using namespace std;
 
@@ -50,21 +41,15 @@ ThreadLock::~ThreadLock() {
     pthread_mutex_destroy(&m_lock);
 }
 
-void ThreadLock::initialize() {}
+void ThreadLock::initialize() {
+    return;
+}
 
 void ThreadLock::lock() {
     auto ret = pthread_mutex_lock(&m_lock);
     if (ret != 0) {
         MMKVError("fail to lock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
     }
-}
-
-bool ThreadLock::try_lock() {
-    auto ret = pthread_mutex_trylock(&m_lock);
-    if (ret != 0) {
-        MMKVError("fail to try lock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
-    }
-    return (ret == 0);
 }
 
 void ThreadLock::unlock() {
@@ -76,19 +61,6 @@ void ThreadLock::unlock() {
 
 void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) {
     pthread_once(onceToken, callback);
-}
-
-void ThreadLock::Sleep(int ms) {
-    constexpr auto MILLI_SECOND_MULTIPLIER = 1000;
-    constexpr auto NANO_SECOND_MULTIPLIER = MILLI_SECOND_MULTIPLIER * MILLI_SECOND_MULTIPLIER;
-    struct timespec duration = {};
-    if (ms > 999) {
-        duration.tv_sec = ms / MILLI_SECOND_MULTIPLIER;
-        duration.tv_nsec = (ms % MILLI_SECOND_MULTIPLIER) * NANO_SECOND_MULTIPLIER;
-    } else {
-        duration.tv_nsec = ms * NANO_SECOND_MULTIPLIER;
-    }
-    nanosleep(&duration, nullptr);
 }
 
 } // namespace mmkv

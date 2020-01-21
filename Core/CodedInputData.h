@@ -30,7 +30,7 @@
 namespace mmkv {
 
 class CodedInputData {
-    uint8_t *m_ptr;
+    uint8_t *const m_ptr;
     size_t m_size;
     size_t m_position;
 
@@ -44,8 +44,6 @@ class CodedInputData {
 
 public:
     CodedInputData(const void *oData, size_t length);
-
-    ~CodedInputData();
 
     bool isAtEnd() { return m_position == m_size; };
 

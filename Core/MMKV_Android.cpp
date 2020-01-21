@@ -70,7 +70,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
 
     // sensitive zone
     {
-        SCOPEDLOCK(m_sharedProcessLock);
+        SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
     }
 }
@@ -106,7 +106,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 
     // sensitive zone
     {
-        SCOPEDLOCK(m_sharedProcessLock);
+        SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
     }
 }
@@ -116,7 +116,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
     if (mmapID.empty()) {
         return nullptr;
     }
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
 
     auto mmapKey = mmapedKVKey(mmapID, relativePath);
     auto itr = g_instanceDic->find(mmapKey);
@@ -143,7 +143,7 @@ MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *c
     if (fd < 0) {
         return nullptr;
     }
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
 
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
@@ -165,7 +165,7 @@ int MMKV::ashmemMetaFD() {
 }
 
 void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
 
     checkReSetCryptKey(cryptKey);
 

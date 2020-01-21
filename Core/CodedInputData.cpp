@@ -37,11 +37,6 @@ CodedInputData::CodedInputData(const void *oData, size_t length)
     MMKV_ASSERT(m_ptr);
 }
 
-CodedInputData::~CodedInputData() {
-    m_ptr = nullptr;
-    m_size = 0;
-}
-
 double CodedInputData::readDouble() {
     return Int64ToFloat64(this->readRawLittleEndian64());
 }

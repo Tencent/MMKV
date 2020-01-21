@@ -107,7 +107,7 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
 
     // sensitive zone
     {
-        SCOPEDLOCK(m_sharedProcessLock);
+        SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
     }
 }
@@ -166,7 +166,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
     if (mmapID.empty()) {
         return nullptr;
     }
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
 
     auto mmapKey = mmapedKVKey(mmapID, relativePath);
     auto itr = g_instanceDic->find(mmapKey);
@@ -192,7 +192,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
 #endif
 
 void MMKV::onExit() {
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
 
     for (auto &pair : *g_instanceDic) {
         MMKV *kv = pair.second;
@@ -211,7 +211,7 @@ const string &MMKV::mmapID() {
 }
 
 string MMKV::cryptKey() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
 
     if (m_crypter) {
         char key[AES_KEY_LEN];
@@ -287,7 +287,7 @@ void MMKV::loadFromFile() {
             }
         } else {
             // file not valid or empty, discard everything
-            SCOPEDLOCK(m_exclusiveProcessLock);
+            SCOPED_LOCK(m_exclusiveProcessLock);
 
             m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
             if (m_actualSize > 0) {
@@ -421,7 +421,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
 
 void MMKV::checkLoadData() {
     if (m_needLoadFromFile) {
-        SCOPEDLOCK(m_sharedProcessLock);
+        SCOPED_LOCK(m_sharedProcessLock);
 
         m_needLoadFromFile = false;
         loadFromFile();
@@ -439,7 +439,7 @@ void MMKV::checkLoadData() {
     metaInfo.read(m_metaFile->getMemory());
     if (m_metaInfo->m_sequence != metaInfo.m_sequence) {
         MMKVInfo("[%s] oldSeq %u, newSeq %u", m_mmapID.c_str(), m_metaInfo->m_sequence, metaInfo.m_sequence);
-        SCOPEDLOCK(m_sharedProcessLock);
+        SCOPED_LOCK(m_sharedProcessLock);
 
         clearMemoryCache();
         loadFromFile();
@@ -447,7 +447,7 @@ void MMKV::checkLoadData() {
     } else if (m_metaInfo->m_crcDigest != metaInfo.m_crcDigest) {
         MMKVDebug("[%s] oldCrc %u, newCrc %u, new actualSize %u", m_mmapID.c_str(), m_metaInfo->m_crcDigest,
                   metaInfo.m_crcDigest, metaInfo.m_actualSize);
-        SCOPEDLOCK(m_sharedProcessLock);
+        SCOPED_LOCK(m_sharedProcessLock);
 
         size_t fileSize = m_file->getActualFileSize();
         if (m_file->getFileSize() != fileSize) {
@@ -470,7 +470,7 @@ void MMKV::notifyContentChanged() {
 }
 
 void MMKV::checkContentChanged() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
 }
 
@@ -484,8 +484,8 @@ void MMKV::unRegisterContentChangeHandler() {
 
 void MMKV::clearAll() {
     MMKVInfo("cleaning all key-values from [%s]", m_mmapID.c_str());
-    SCOPEDLOCK(m_lock);
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
 
     if (m_needLoadFromFile) {
         m_file->reloadFromFile();
@@ -512,7 +512,7 @@ void MMKV::clearAll() {
 
 void MMKV::clearMemoryCache() {
     MMKVInfo("clearMemoryCache [%s]", m_mmapID.c_str());
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     if (m_needLoadFromFile) {
         return;
     }
@@ -539,7 +539,7 @@ void MMKV::clearMemoryCache() {
 
 void MMKV::close() {
     MMKVInfo("close [%s]", m_mmapID.c_str());
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
     m_lock->lock();
 
 #ifndef MMKV_ANDROID
@@ -554,7 +554,7 @@ void MMKV::close() {
 }
 
 void MMKV::trim() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     MMKVInfo("prepare to trim %s", m_mmapID.c_str());
 
     checkLoadData();
@@ -565,7 +565,7 @@ void MMKV::trim() {
     } else if (m_file->getFileSize() <= DEFAULT_MMAP_SIZE) {
         return;
     }
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
 
     fullWriteback();
     auto oldSize = m_file->getFileSize();
@@ -719,8 +719,8 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key) {
     if (data.length() == 0 || isKeyEmpty(key)) {
         return false;
     }
-    SCOPEDLOCK(m_lock);
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
 
     auto ret = appendDataWithKey(data, key);
@@ -765,7 +765,7 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
     // size needed to encode the value
     size += data.length() + pbRawVarint32Size((int32_t) data.length());
 
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
 
     bool hasEnoughSize = ensureMemorySize(size);
     if (!hasEnoughSize || !isFileValid()) {
@@ -813,7 +813,7 @@ bool MMKV::fullWriteback() {
     }
 
     auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
     if (allData.length() > 0) {
         auto fileSize = m_file->getFileSize();
         if (allData.length() + Fixed32Size <= fileSize) {
@@ -877,7 +877,7 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
 }
 
 bool MMKV::reKey(const string &cryptKey) {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
 
     if (m_crypter) {
@@ -915,7 +915,7 @@ bool MMKV::reKey(const string &cryptKey) {
 }
 
 void MMKV::checkReSetCryptKey(const string *cryptKey) {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
 
     if (m_crypter) {
         if (cryptKey && cryptKey->length() > 0) {
@@ -1114,7 +1114,7 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1131,7 +1131,7 @@ MMBuffer MMKV::getBytes(MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return MMBuffer();
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1147,7 +1147,7 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1166,7 +1166,7 @@ bool MMKV::getBool(MMKVKey_t key, bool defaultValue) {
     if (isKeyEmpty(key)) {
         return defaultValue;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1183,7 +1183,7 @@ int32_t MMKV::getInt32(MMKVKey_t key, int32_t defaultValue) {
     if (isKeyEmpty(key)) {
         return defaultValue;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1200,7 +1200,7 @@ uint32_t MMKV::getUInt32(MMKVKey_t key, uint32_t defaultValue) {
     if (isKeyEmpty(key)) {
         return defaultValue;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1217,7 +1217,7 @@ int64_t MMKV::getInt64(MMKVKey_t key, int64_t defaultValue) {
     if (isKeyEmpty(key)) {
         return defaultValue;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1234,7 +1234,7 @@ uint64_t MMKV::getUInt64(MMKVKey_t key, uint64_t defaultValue) {
     if (isKeyEmpty(key)) {
         return defaultValue;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1251,7 +1251,7 @@ float MMKV::getFloat(MMKVKey_t key, float defaultValue) {
     if (isKeyEmpty(key)) {
         return defaultValue;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1268,7 +1268,7 @@ double MMKV::getDouble(MMKVKey_t key, double defaultValue) {
     if (isKeyEmpty(key)) {
         return defaultValue;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -1285,7 +1285,7 @@ size_t MMKV::getValueSize(MMKVKey_t key, bool actualSize) {
     if (isKeyEmpty(key)) {
         return 0;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (actualSize) {
         try {
@@ -1310,7 +1310,7 @@ int32_t MMKV::writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size) {
     }
     auto s_size = static_cast<size_t>(size);
 
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     try {
         CodedInputData input(data.getPtr(), data.length());
@@ -1339,25 +1339,25 @@ int32_t MMKV::writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size) {
 // enumerate
 
 bool MMKV::containsKey(MMKVKey_t key) {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
     return m_dic.find(key) != m_dic.end();
 }
 
 size_t MMKV::count() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
     return m_dic.size();
 }
 
 size_t MMKV::totalSize() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
     return m_file->getFileSize();
 }
 
 size_t MMKV::actualSize() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
     return m_actualSize;
 }
@@ -1366,8 +1366,8 @@ void MMKV::removeValueForKey(MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return;
     }
-    SCOPEDLOCK(m_lock);
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
 
     removeDataForKey(key);
@@ -1376,7 +1376,7 @@ void MMKV::removeValueForKey(MMKVKey_t key) {
 #ifndef MMKV_IOS_OR_MAC
 
 vector<string> MMKV::allKeys() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
 
     vector<string> keys;
@@ -1394,8 +1394,8 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
         return removeValueForKey(arrKeys[0]);
     }
 
-    SCOPEDLOCK(m_lock);
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
 
     size_t deleteCount = 0;
@@ -1418,11 +1418,11 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
 // file
 
 void MMKV::sync(SyncFlag flag) {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     if (m_needLoadFromFile || !isFileValid()) {
         return;
     }
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
 
     m_file->msync(flag);
     m_metaFile->msync(flag);
@@ -1484,27 +1484,27 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
 }
 
 void MMKV::registerErrorHandler(ErrorHandler handler) {
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
     g_errorHandler = handler;
 }
 
 void MMKV::unRegisterErrorHandler() {
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
     g_errorHandler = nullptr;
 }
 
 void MMKV::registerLogHandler(LogHandler handler) {
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
     g_logHandler = handler;
 }
 
 void MMKV::unRegisterLogHandler() {
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
     g_logHandler = nullptr;
 }
 
 void MMKV::setLogLevel(MMKVLogLevel level) {
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
     g_currentLogLevel = level;
 }
 

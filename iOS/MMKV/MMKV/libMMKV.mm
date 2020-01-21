@@ -143,7 +143,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         return nil;
     }
 
-    SCOPEDLOCK(g_lock);
+    SCOPED_LOCK(g_lock);
 
     if (mode == MMKVMultiProcess) {
         if (!relativePath) {
@@ -232,7 +232,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (void)close {
-    SCOPEDLOCK(g_lock);
+    SCOPED_LOCK(g_lock);
     MMKVInfo("closing %@", m_mmapID);
 
     m_mmkv->close();
@@ -470,7 +470,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 + (void)onExit {
-    SCOPEDLOCK(g_lock);
+    SCOPED_LOCK(g_lock);
 
     [g_instanceDic removeAllObjects];
 
@@ -544,7 +544,7 @@ static NSString *md5(NSString *value) {
 }
 
 + (void)registerHandler:(id<MMKVHandler>)handler {
-    SCOPEDLOCK(g_lock);
+    SCOPED_LOCK(g_lock);
     g_callbackHandler = handler;
 
     if ([g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
@@ -561,7 +561,7 @@ static NSString *md5(NSString *value) {
 }
 
 + (void)unregiserHandler {
-    SCOPEDLOCK(g_lock);
+    SCOPED_LOCK(g_lock);
 
     g_isLogRedirecting = false;
     g_callbackHandler = nil;

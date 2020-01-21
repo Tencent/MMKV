@@ -149,7 +149,7 @@ struct KeyEqualer {
     }
 };
 
-using MMKVMap = std::unordered_map<NSString *, MMBuffer, KeyHasher, KeyEqualer>;
+using MMKVMap = std::unordered_map<NSString *, mmkv::MMBuffer, KeyHasher, KeyEqualer>;
 #else
 using MMKVMap = std::unordered_map<std::string, mmkv::MMBuffer>;
 #endif // MMKV_IOS_OR_MAC

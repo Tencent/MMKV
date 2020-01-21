@@ -45,11 +45,6 @@ void ThreadLock::lock() {
     EnterCriticalSection(&m_lock);
 }
 
-bool ThreadLock::try_lock() {
-    auto ret = TryEnterCriticalSection(&m_lock);
-    return ret != 0;
-}
-
 void ThreadLock::unlock() {
     LeaveCriticalSection(&m_lock);
 }

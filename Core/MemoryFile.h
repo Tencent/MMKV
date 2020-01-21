@@ -33,7 +33,7 @@ extern int g_android_api;
 
 enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
 } // namespace mmkv
-#endif
+#endif // MMKV_ANDROID
 
 namespace mmkv {
 
@@ -58,7 +58,7 @@ public:
     explicit MemoryFile(MMKVFileHandle_t ashmemFD);
 
     const FileType m_fileType;
-#endif
+#endif // MMKV_ANDROID
 
     ~MemoryFile() { doCleanMemoryCache(true); }
 
@@ -82,6 +82,7 @@ public:
     void reloadFromFile();
 
     void clearMemoryCache() { doCleanMemoryCache(false); }
+
 #ifndef MMKV_WIN32
     bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
 #else

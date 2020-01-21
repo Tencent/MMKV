@@ -64,7 +64,7 @@ void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
 static bool g_isInBackground = false;
 
 void MMKV::setIsInBackground(bool isInBackground) {
-    SCOPEDLOCK(g_instanceLock);
+    SCOPED_LOCK(g_instanceLock);
 
     g_isInBackground = isInBackground;
     MMKVInfo("g_isInBackground:%d", g_isInBackground);
@@ -136,7 +136,7 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
     if (isKeyEmpty(key) || !cls) {
         return nil;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         if (MiniPBCoder::isCompatibleClass(cls)) {
@@ -157,7 +157,7 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
 }
 
 NSArray *MMKV::allKeys() {
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
 
     NSMutableArray *keys = [NSMutableArray array];
@@ -175,8 +175,8 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
         return removeValueForKey(arrKeys[0]);
     }
 
-    SCOPEDLOCK(m_lock);
-    SCOPEDLOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
 
     size_t deleteCount = 0;
@@ -199,7 +199,7 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     if (block == nil) {
         return;
     }
-    SCOPEDLOCK(m_lock);
+    SCOPED_LOCK(m_lock);
     checkLoadData();
 
     MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
