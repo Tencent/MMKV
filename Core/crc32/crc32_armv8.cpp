@@ -34,26 +34,26 @@ CRC32_Func_t CRC32 = _crc32Wrap;
 
 #    endif // MMKV_ANDROID
 
-__attribute__((target("crc"))) static inline uint32_t __crc32b(uint32_t a, uint8_t b) {
+// targeting armv8 with crc instruction extension
+#    define TARGET_ARM_CRC __attribute__((target("crc")))
+
+TARGET_ARM_CRC static inline uint32_t __crc32b(uint32_t a, uint8_t b) {
     return __builtin_arm_crc32b(a, b);
 }
 
-__attribute__((target("crc"))) static inline uint32_t __crc32h(uint32_t a, uint16_t b) {
+TARGET_ARM_CRC static inline uint32_t __crc32h(uint32_t a, uint16_t b) {
     return __builtin_arm_crc32h(a, b);
 }
 
-__attribute__((target("crc"))) static inline uint32_t __crc32w(uint32_t a, uint32_t b) {
+TARGET_ARM_CRC static inline uint32_t __crc32w(uint32_t a, uint32_t b) {
     return __builtin_arm_crc32w(a, b);
 }
 
-__attribute__((target("crc"))) static inline uint32_t __crc32d(uint32_t a, uint64_t b) {
+TARGET_ARM_CRC static inline uint32_t __crc32d(uint32_t a, uint64_t b) {
     return __builtin_arm_crc32d(a, b);
 }
 
-namespace mmkv {
-
-__attribute__((target("crc"))) static inline uint32_t
-armv8_crc32_small(uint32_t crc, const unsigned char *buf, size_t len) {
+TARGET_ARM_CRC static inline uint32_t armv8_crc32_small(uint32_t crc, const unsigned char *buf, size_t len) {
     if (len >= sizeof(uint32_t)) {
         crc = __crc32w(crc, *(const uint32_t *) buf);
         buf += sizeof(uint32_t);
@@ -71,7 +71,9 @@ armv8_crc32_small(uint32_t crc, const unsigned char *buf, size_t len) {
     return crc;
 }
 
-__attribute__((target("crc"))) uint32_t armv8_crc32(uint32_t crc, const unsigned char *buf, size_t len) {
+namespace mmkv {
+
+TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const unsigned char *buf, size_t len) {
 
     crc = crc ^ 0xffffffffUL;
 
