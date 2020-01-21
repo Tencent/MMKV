@@ -47,42 +47,50 @@ union Converter {
 };
 
 static inline int64_t Float64ToInt64(double v) {
-    Converter<double, int64_t> converter = {.first = v};
+    Converter<double, int64_t> converter;
+    converter.first = v;
     return converter.second;
 }
 
 static inline int32_t Float32ToInt32(float v) {
-    Converter<float, int32_t> converter = {.first = v};
+    Converter<float, int32_t> converter;
+    converter.first = v;
     return converter.second;
 }
 
 static inline double Int64ToFloat64(int64_t v) {
-    Converter<double, int64_t> converter = {.second = v};
+    Converter<double, int64_t> converter;
+    converter.second = v;
     return converter.first;
 }
 
 static inline float Int32ToFloat32(int32_t v) {
-    Converter<float, int32_t> converter = {.second = v};
+    Converter<float, int32_t> converter;
+    converter.second = v;
     return converter.first;
 }
 
 static inline uint64_t Int64ToUInt64(int64_t v) {
-    Converter<int64_t, uint64_t> converter = {.first = v};
+    Converter<int64_t, uint64_t> converter;
+    converter.first = v;
     return converter.second;
 }
 
 static inline int64_t UInt64ToInt64(uint64_t v) {
-    Converter<int64_t, uint64_t> converter = {.second = v};
+    Converter<int64_t, uint64_t> converter;
+    converter.second = v;
     return converter.first;
 }
 
 static inline uint32_t Int32ToUInt32(int32_t v) {
-    Converter<int32_t, uint32_t> converter = {.first = v};
+    Converter<int32_t, uint32_t> converter;
+    converter.first = v;
     return converter.second;
 }
 
 static inline int32_t UInt32ToInt32(uint32_t v) {
-    Converter<int32_t, uint32_t> converter = {.second = v};
+    Converter<int32_t, uint32_t> converter;
+    converter.second = v;
     return converter.first;
 }
 
