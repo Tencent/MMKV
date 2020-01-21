@@ -21,6 +21,7 @@
 #ifndef MMKV_SRC_MMKVPREDEF_H
 #define MMKV_SRC_MMKVPREDEF_H
 
+#include <cassert>
 #include <string>
 #include <unordered_map>
 
@@ -156,6 +157,12 @@ using MMKVMap = std::unordered_map<std::string, mmkv::MMBuffer>;
 
 template <typename T>
 void unused(const T &) {}
+
+#ifndef NDEBUG
+#    define MMKV_ASSERT(var) ::assert(var)
+#else
+#    define MMKV_ASSERT(var) mmkv::unused(var)
+#endif
 
 } // namespace mmkv
 

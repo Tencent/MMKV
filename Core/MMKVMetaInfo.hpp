@@ -22,7 +22,6 @@
 #define MMKV_MMKVMETAINFO_H
 
 #include "aes/AESCrypt.h"
-#include <cassert>
 #include <cstdint>
 #include <cstring>
 
@@ -56,19 +55,19 @@ struct MMKVMetaInfo {
     } m_lastConfirmedMetaInfo;
 
     void write(void *ptr) {
-        assert(ptr);
+        MMKV_ASSERT(ptr);
         memcpy(ptr, this, sizeof(MMKVMetaInfo));
     }
 
     void writeCRCAndActualSizeOnly(void *ptr) {
-        assert(ptr);
+        MMKV_ASSERT(ptr);
         auto other = (MMKVMetaInfo *) ptr;
         other->m_crcDigest = m_crcDigest;
         other->m_actualSize = m_actualSize;
     }
 
     void read(const void *ptr) {
-        assert(ptr);
+        MMKV_ASSERT(ptr);
         memcpy(this, ptr, sizeof(MMKVMetaInfo));
     }
 };

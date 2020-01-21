@@ -23,7 +23,6 @@
 #ifdef MMKV_IOS_OR_MAC
 
 #    include "PBUtility.h"
-#    include <cassert>
 #    include <stdexcept>
 
 #    if __has_feature(objc_arc)

@@ -29,7 +29,7 @@ class ScopedLock {
 
 public:
     explicit ScopedLock(T *oLock) : m_lock(oLock) {
-        assert(m_lock);
+        MMKV_ASSERT(m_lock);
         lock();
     }
 

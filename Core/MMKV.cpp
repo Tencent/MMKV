@@ -641,8 +641,8 @@ bool MMKV::ensureMemorySize(size_t newSize) {
 }
 
 size_t MMKV::readActualSize() {
-    assert(m_file->getMemory());
-    assert(m_metaFile->isFileValid());
+    MMKV_ASSERT(m_file->getMemory());
+    MMKV_ASSERT(m_metaFile->isFileValid());
 
     uint32_t actualSize = 0;
     memcpy(&actualSize, m_file->getMemory(), Fixed32Size);
@@ -659,7 +659,7 @@ size_t MMKV::readActualSize() {
 }
 
 void MMKV::oldStyleWriteActualSize(size_t actualSize) {
-    assert(m_file->getMemory());
+    MMKV_ASSERT(m_file->getMemory());
 
     m_actualSize = actualSize;
     memcpy(m_file->getMemory(), &actualSize, Fixed32Size);

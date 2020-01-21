@@ -152,7 +152,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         }
         if (!relativePath) {
             MMKVError("Getting a multi-process MMKV [%@] without setting groupDir makes no sense", mmapID);
-            assert(0);
+            MMKV_ASSERT(0);
         }
     }
     NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID relativePath:relativePath];

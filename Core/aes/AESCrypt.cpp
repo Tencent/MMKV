@@ -20,7 +20,6 @@
 
 #include "AESCrypt.h"
 #include "openssl/openssl_aes.h"
-#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -39,7 +38,7 @@ AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivL
         m_aesKey = new AES_KEY;
         memset(m_aesKey, 0, sizeof(AES_KEY));
         int ret = AES_set_encrypt_key(m_key, AES_KEY_BITSET_LEN, m_aesKey);
-        assert(ret == 0);
+        MMKV_ASSERT(ret == 0);
     }
 }
 

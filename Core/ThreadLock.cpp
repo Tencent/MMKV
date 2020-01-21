@@ -78,21 +78,6 @@ void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) {
     pthread_once(onceToken, callback);
 }
 
-//#    ifndef NDEBUG
-//static uint64_t gettid() {
-//#        ifdef MMKV_MAC
-//    uint64_t tid = 0;
-//    pthread_threadid_np(nullptr, &tid);
-//    return tid;
-//#        elif defined MMKV_LINUX
-//    return ::gettid();
-//#        else
-//    assert(0);
-//    return 0;
-//#        endif
-//}
-//#    endif
-
 void ThreadLock::Sleep(int ms) {
     constexpr auto MILLI_SECOND_MULTIPLIER = 1000;
     constexpr auto NANO_SECOND_MULTIPLIER = MILLI_SECOND_MULTIPLIER * MILLI_SECOND_MULTIPLIER;

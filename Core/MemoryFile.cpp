@@ -130,7 +130,7 @@ void MemoryFile::reloadFromFile() {
 #    endif
     if (isFileValid()) {
         MMKVWarning("calling reloadFromFile while the cache [%s] is still valid", m_name.c_str());
-        assert(0);
+        MMKV_ASSERT(0);
         clearMemoryCache();
     }
 

@@ -23,7 +23,6 @@
 
 #include "MMKVPredef.h"
 
-#include <cassert>
 #include <fcntl.h>
 
 namespace mmkv {
@@ -88,7 +87,7 @@ class InterProcessLock {
 public:
     InterProcessLock(FileLock *fileLock, LockType lockType)
         : m_fileLock(fileLock), m_lockType(lockType), m_enable(true) {
-        assert(m_fileLock);
+        MMKV_ASSERT(m_fileLock);
     }
 
     bool m_enable;

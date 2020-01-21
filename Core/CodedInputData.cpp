@@ -20,7 +20,6 @@
 
 #include "CodedInputData.h"
 #include "PBUtility.h"
-#include <cassert>
 #include <stdexcept>
 
 #ifdef MMKV_IOS_OR_MAC
@@ -35,7 +34,7 @@ namespace mmkv {
 
 CodedInputData::CodedInputData(const void *oData, size_t length)
     : m_ptr((uint8_t *) oData), m_size(length), m_position(0) {
-    assert(m_ptr);
+    MMKV_ASSERT(m_ptr);
 }
 
 CodedInputData::~CodedInputData() {

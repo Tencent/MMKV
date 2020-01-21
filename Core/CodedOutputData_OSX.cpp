@@ -23,7 +23,6 @@
 #ifdef MMKV_IOS_OR_MAC
 
 #    include "PBUtility.h"
-#    include <cassert>
 #    include <cstring>
 #    include <stdexcept>
 
