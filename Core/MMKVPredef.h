@@ -161,7 +161,7 @@ void unused(const T &) {}
 
 #ifndef NDEBUG
 #    include <cassert>
-#    define MMKV_ASSERT(var) ::assert(var)
+#    define MMKV_ASSERT(var) assert(var)
 #else
 #    define MMKV_ASSERT(var) mmkv::unused(var)
 #endif
