@@ -38,7 +38,6 @@ static bool g_isLogRedirecting = false;
 static NSString *g_basePath = nil;
 static NSString *g_groupPath = nil;
 
-static NSString *md5(NSString *value);
 static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, const char *function, NSString *message);
 static mmkv::MMKVRecoverStrategic ErrorHandler(const string &mmapID, mmkv::MMKVErrorType errorType);
 static void ContentChangeHandler(const string &mmapID);
@@ -505,6 +504,18 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     }
 }
 
+static NSString *md5(NSString *value) {
+    unsigned char md[MD5_DIGEST_LENGTH] = {};
+    char tmp[3] = {}, buf[33] = {};
+    auto data = [value dataUsingEncoding:NSUTF8StringEncoding];
+    openssl::MD5((unsigned char *) data.bytes, data.length, md);
+    for (auto ch : md) {
+        snprintf(tmp, sizeof(tmp), "%2.2x", ch);
+        strcat(buf, tmp);
+    }
+    return [NSString stringWithCString:buf encoding:NSASCIIStringEncoding];
+}
+
 + (NSString *)mmapKeyWithMMapID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
     NSString *string = nil;
     if ([relativePath length] > 0 && [relativePath isEqualToString:[MMKV mmkvBasePath]] == NO) {
@@ -625,18 +636,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 @end
-
-static NSString *md5(NSString *value) {
-    unsigned char md[MD5_DIGEST_LENGTH] = {};
-    char tmp[3] = {}, buf[33] = {};
-    auto data = [value dataUsingEncoding:NSUTF8StringEncoding];
-    openssl::MD5((unsigned char *) data.bytes, data.length, md);
-    for (auto ch : md) {
-        sprintf(tmp, "%2.2x", ch);
-        strcat(buf, tmp);
-    }
-    return [NSString stringWithCString:buf encoding:NSASCIIStringEncoding];
-}
 
 #pragma makr - callbacks
 

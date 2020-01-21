@@ -55,7 +55,7 @@ extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *
 
 #define AES_encrypt(in, out, key) openssl_aes_arm_encrypt(in, out, key)
 
-#else
+#else // MMKV_ANDROID
 
 #if __ARM_MAX_ARCH__ <= 7
 
@@ -65,7 +65,7 @@ extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *
 #define AES_set_encrypt_key(userKey, bits, key) openssl_aes_arm_set_encrypt_key(userKey, bits, key)
 #define AES_encrypt(in, out, key) openssl_aes_arm_encrypt(in, out, key)
 
-#else
+#else // __ARM_MAX_ARCH__ > 7
 
 extern "C" int openssl_aes_armv8_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
 extern "C" void openssl_aes_armv8_encrypt(const unsigned char *in, unsigned char *out, const void *key);
@@ -84,11 +84,11 @@ void AES_C_encrypt(const unsigned char *in, unsigned char *out, const void *key)
 extern aes_set_encrypt_t AES_set_encrypt_key;
 extern aes_encrypt_t AES_encrypt;
 
-#endif // __ARM_MAX_ARCH__
+#endif // __ARM_MAX_ARCH__ <= 7
 
 #endif // MMKV_ANDROID
 
-#else // __ARM_MAX_ARCH__
+#else // __ARM_MAX_ARCH__ <= 0
 
 namespace openssl {
 
@@ -98,6 +98,6 @@ void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key
 
 } // namespace openssl
 
-#endif // __ARM_MAX_ARCH__
+#endif // __ARM_MAX_ARCH__ > 0
 
 #endif

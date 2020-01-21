@@ -51,7 +51,7 @@ class MMKV {
 #ifndef MMKV_ANDROID
     MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
     std::string m_mmapKey;
-#else
+#else // defined(MMKV_ANDROID)
     MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
 
     MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
@@ -141,19 +141,29 @@ public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
 
+#ifdef MMKV_IOS_OR_MAC
+    // protect from some old code that don't call initializeMMKV()
+    static void minimalInit(MMKVPath_t defaultRootDir);
+#endif
+
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
 
 #ifndef MMKV_ANDROID
+
     // mmapID: any unique ID (com.tencent.xin.pay, etc)
     // if you want a per-user mmkv, you could merge user-id within mmapID
+    // cryptKey: 16 bytes at most
     static MMKV *mmkvWithID(const std::string &mmapID,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
                             MMKVPath_t *relativePath = nullptr);
-#else
+
+#else // defined(MMKV_ANDROID)
+
     // mmapID: any unique ID (com.tencent.xin.pay, etc)
     // if you want a per-user mmkv, you could merge user-id within mmapID
+    // cryptKey: 16 bytes at most
     static MMKV *mmkvWithID(const std::string &mmapID,
                             int size = mmkv::DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
@@ -165,8 +175,10 @@ public:
     int ashmemFD();
 
     int ashmemMetaFD();
+
 #endif // MMKV_ANDROID
 
+    // you can call this on application termination, it's totally fine if you don't call
     static void onExit();
 
     const std::string &mmapID();
@@ -205,7 +217,7 @@ public:
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key);
 
     NSObject *getObject(MMKVKey_t key, Class cls);
-#else
+#else  // !defined(MMKV_IOS_OR_MAC)
     bool set(const char *value, MMKVKey_t key);
 
     bool set(const std::string &value, MMKVKey_t key);
@@ -235,8 +247,12 @@ public:
 
     double getDouble(MMKVKey_t key, double defaultValue = 0);
 
+    // return the actual size consumption of the key's value
+    // pass actualSize = true to get value's length
     size_t getValueSize(MMKVKey_t key, bool actualSize);
 
+    // return size written into buffer
+    // return -1 on any error
     int32_t writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size);
 
     bool containsKey(MMKVKey_t key);
@@ -255,12 +271,10 @@ public:
     typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
     void enumerateKeys(EnumerateBlock block);
 
-    static void minimalInit(MMKVPath_t defaultRootDir);
-
 #    ifdef MMKV_IOS
     static void setIsInBackground(bool isInBackground);
 #    endif
-#else
+#else  // !defined(MMKV_IOS_OR_MAC)
     std::vector<std::string> allKeys();
 
     void removeValuesForKeys(const std::vector<std::string> &arrKeys);
@@ -287,6 +301,7 @@ public:
     // unless you worry about running out of battery
     void sync(SyncFlag flag = MMKV_SYNC);
 
+    // get exclusive access
     void lock();
     void unlock();
     bool try_lock();
@@ -304,8 +319,12 @@ public:
     static void registerErrorHandler(mmkv::ErrorHandler handler);
     static void unRegisterErrorHandler();
 
+    // MMKVLogInfo by default
+    // pass MMKVLogNone to disable all logging
     static void setLogLevel(MMKVLogLevel level);
 
+    // by default MMKV will print log to the console
+    // implement this method to redirect MMKV's log
     static void registerLogHandler(mmkv::LogHandler handler);
     static void unRegisterLogHandler();
 

@@ -54,10 +54,8 @@ size_t mmkv::DEFAULT_MMAP_SIZE;
 
 #ifndef MMKV_WIN32
 constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = "specialCharacter";
-static string md5(const string &value);
 #else
 constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = L"specialCharacter";
-static string md5(const wstring &value);
 #endif
 constexpr uint32_t Fixed32Size = pbFixed32Size();
 
@@ -1517,29 +1515,17 @@ static void mkSpecialCharacterFileDirectory() {
     mkPath(path);
 }
 
-static string md5(const string &value) {
+template <typename T>
+static string md5(const basic_string<T> &value) {
     unsigned char md[MD5_DIGEST_LENGTH] = {};
     char tmp[3] = {}, buf[33] = {};
-    openssl::MD5((const unsigned char *) value.c_str(), value.size(), md);
+    openssl::MD5((const unsigned char *) value.c_str(), value.size() * (sizeof(T) / sizeof(unsigned char)), md);
     for (auto ch : md) {
         snprintf(tmp, sizeof(tmp), "%2.2x", ch);
         strcat(buf, tmp);
     }
     return string(buf);
 }
-
-#ifdef MMKV_WIN32
-static string md5(const wstring &value) {
-    unsigned char md[MD5_DIGEST_LENGTH] = {};
-    char tmp[3] = {}, buf[33] = {};
-    openssl::MD5((const unsigned char *) value.c_str(), value.size() * (sizeof(wchar_t) / sizeof(unsigned char)), md);
-    for (auto ch : md) {
-        snprintf(tmp, sizeof(tmp), "%2.2x", ch);
-        strcat(buf, tmp);
-    }
-    return string(buf);
-}
-#endif
 
 static MMKVPath_t encodeFilePath(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
