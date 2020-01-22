@@ -1,0 +1,340 @@
+/*
+ * Tencent is pleased to support the open source community by making
+ * MMKV available.
+ *
+ * Copyright (C) 2018 THL A29 Limited, a Tencent company.
+ * All rights reserved.
+ *
+ * Licensed under the BSD 3-Clause License (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *       https://opensource.org/licenses/BSD-3-Clause
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MMKV_MMKV_H
+#define MMKV_MMKV_H
+
+#include "MMBuffer.h"
+#include "MMKVPredef.h"
+#include <cstdint>
+#include <vector>
+
+namespace mmkv {
+class CodedOutputData;
+class MemoryFile;
+class AESCrypt;
+struct MMKVMetaInfo;
+class FileLock;
+class InterProcessLock;
+class ThreadLock;
+} // namespace mmkv
+
+MMKV_NAMESPACE_BEGIN
+
+enum MMKVMode : uint32_t {
+    MMKV_SINGLE_PROCESS = 0x1,
+    MMKV_MULTI_PROCESS = 0x2,
+#ifdef MMKV_ANDROID
+    CONTEXT_MODE_MULTI_PROCESS = 0x4, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    MMKV_ASHMEM = 0x8,
+#endif
+};
+
+class MMKV {
+#ifndef MMKV_ANDROID
+    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
+    std::string m_mmapKey;
+#else // defined(MMKV_ANDROID)
+    MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
+
+    MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
+#endif
+
+    ~MMKV();
+
+    mmkv::MMKVMap m_dic;
+    std::string m_mmapID;
+    MMKVPath_t m_path;
+    MMKVPath_t m_crcPath;
+
+    mmkv::MemoryFile *m_file;
+    size_t m_actualSize;
+    mmkv::CodedOutputData *m_output;
+
+    bool m_needLoadFromFile;
+    bool m_hasFullWriteback;
+
+    uint32_t m_crcDigest;
+    mmkv::MemoryFile *m_metaFile;
+    mmkv::MMKVMetaInfo *m_metaInfo;
+
+    mmkv::AESCrypt *m_crypter;
+
+    mmkv::ThreadLock *m_lock;
+    mmkv::FileLock *m_fileLock;
+    mmkv::InterProcessLock *m_sharedProcessLock;
+    mmkv::InterProcessLock *m_exclusiveProcessLock;
+
+#ifdef MMKV_IOS_OR_MAC
+    using MMKVKey_t = NSString *__unsafe_unretained;
+    static bool isKeyEmpty(MMKVKey_t key) { return key.length <= 0; }
+#else
+    using MMKVKey_t = const std::string &;
+    static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
+#endif
+
+    void loadFromFile();
+
+    void partialLoadFromFile();
+
+    void checkDataValid(bool &loadFromFile, bool &needFullWriteback);
+
+    void checkLoadData();
+
+    bool isFileValid();
+
+    bool checkFileCRCValid(size_t actualSize, uint32_t crcDigest);
+
+    void recaculateCRCDigestWithIV(const void *iv);
+
+    void updateCRCDigest(const uint8_t *ptr, size_t length);
+
+    size_t readActualSize();
+
+    void oldStyleWriteActualSize(size_t actualSize);
+
+    bool writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool increaseSequence);
+
+    bool ensureMemorySize(size_t newSize);
+
+    bool fullWriteback();
+
+    bool doFullWriteBack(mmkv::MMBuffer &&allData);
+
+    const mmkv::MMBuffer &getDataForKey(MMKVKey_t key);
+
+    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key);
+
+    bool removeDataForKey(MMKVKey_t key);
+
+    bool appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key);
+
+    void notifyContentChanged();
+
+#ifdef MMKV_ANDROID
+    void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
+#endif
+
+#ifdef MMKV_IOS
+    typedef void (^WriteBlock)(mmkv::CodedOutputData *output);
+    bool protectFromBackgroundWriting(size_t size, WriteBlock block);
+#endif
+
+public:
+    // call this before getting any MMKV instance
+    static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
+
+#ifdef MMKV_IOS_OR_MAC
+    // protect from some old code that don't call initializeMMKV()
+    static void minimalInit(MMKVPath_t defaultRootDir);
+#endif
+
+    // a generic purpose instance
+    static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
+
+#ifndef MMKV_ANDROID
+
+    // mmapID: any unique ID (com.tencent.xin.pay, etc)
+    // if you want a per-user mmkv, you could merge user-id within mmapID
+    // cryptKey: 16 bytes at most
+    static MMKV *mmkvWithID(const std::string &mmapID,
+                            MMKVMode mode = MMKV_SINGLE_PROCESS,
+                            std::string *cryptKey = nullptr,
+                            MMKVPath_t *relativePath = nullptr);
+
+#else // defined(MMKV_ANDROID)
+
+    // mmapID: any unique ID (com.tencent.xin.pay, etc)
+    // if you want a per-user mmkv, you could merge user-id within mmapID
+    // cryptKey: 16 bytes at most
+    static MMKV *mmkvWithID(const std::string &mmapID,
+                            int size = mmkv::DEFAULT_MMAP_SIZE,
+                            MMKVMode mode = MMKV_SINGLE_PROCESS,
+                            std::string *cryptKey = nullptr,
+                            MMKVPath_t *relativePath = nullptr);
+
+    static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, std::string *cryptKey = nullptr);
+
+    int ashmemFD();
+
+    int ashmemMetaFD();
+
+#endif // MMKV_ANDROID
+
+    // you can call this on application termination, it's totally fine if you don't call
+    static void onExit();
+
+    const std::string &mmapID();
+
+    const bool m_isInterProcess;
+
+    std::string cryptKey();
+
+    // transform plain text into encrypted text, or vice versa with empty cryptKey
+    // you can change existing crypt key with different cryptKey
+    bool reKey(const std::string &cryptKey);
+
+    // just reset cryptKey (will not encrypt or decrypt anything)
+    // usually you should call this method after other process reKey() the multi-process mmkv
+    void checkReSetCryptKey(const std::string *cryptKey);
+
+    bool set(bool value, MMKVKey_t key);
+
+    bool set(int32_t value, MMKVKey_t key);
+
+    bool set(uint32_t value, MMKVKey_t key);
+
+    bool set(int64_t value, MMKVKey_t key);
+
+    bool set(uint64_t value, MMKVKey_t key);
+
+    bool set(float value, MMKVKey_t key);
+
+    bool set(double value, MMKVKey_t key);
+
+    // avoid unexpected type conversion (pointer to bool, etc)
+    template <typename T>
+    bool set(T value, MMKVKey_t key) = delete;
+
+#ifdef MMKV_IOS_OR_MAC
+    bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key);
+
+    NSObject *getObject(MMKVKey_t key, Class cls);
+#else  // !defined(MMKV_IOS_OR_MAC)
+    bool set(const char *value, MMKVKey_t key);
+
+    bool set(const std::string &value, MMKVKey_t key);
+
+    bool set(const mmkv::MMBuffer &value, MMKVKey_t key);
+
+    bool set(const std::vector<std::string> &vector, MMKVKey_t key);
+
+    bool getString(MMKVKey_t key, std::string &result);
+
+    mmkv::MMBuffer getBytes(MMKVKey_t key);
+
+    bool getVector(MMKVKey_t key, std::vector<std::string> &result);
+#endif // MMKV_IOS_OR_MAC
+
+    bool getBool(MMKVKey_t key, bool defaultValue = false);
+
+    int32_t getInt32(MMKVKey_t key, int32_t defaultValue = 0);
+
+    uint32_t getUInt32(MMKVKey_t key, uint32_t defaultValue = 0);
+
+    int64_t getInt64(MMKVKey_t key, int64_t defaultValue = 0);
+
+    uint64_t getUInt64(MMKVKey_t key, uint64_t defaultValue = 0);
+
+    float getFloat(MMKVKey_t key, float defaultValue = 0);
+
+    double getDouble(MMKVKey_t key, double defaultValue = 0);
+
+    // return the actual size consumption of the key's value
+    // pass actualSize = true to get value's length
+    size_t getValueSize(MMKVKey_t key, bool actualSize);
+
+    // return size written into buffer
+    // return -1 on any error
+    int32_t writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size);
+
+    bool containsKey(MMKVKey_t key);
+
+    size_t count();
+
+    size_t totalSize();
+
+    size_t actualSize();
+
+#ifdef MMKV_IOS_OR_MAC
+    NSArray *allKeys();
+
+    void removeValuesForKeys(NSArray *arrKeys);
+
+    typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
+    void enumerateKeys(EnumerateBlock block);
+
+#    ifdef MMKV_IOS
+    static void setIsInBackground(bool isInBackground);
+#    endif
+#else  // !defined(MMKV_IOS_OR_MAC)
+    std::vector<std::string> allKeys();
+
+    void removeValuesForKeys(const std::vector<std::string> &arrKeys);
+#endif // MMKV_IOS_OR_MAC
+
+    void removeValueForKey(MMKVKey_t key);
+
+    void clearAll();
+
+    // MMKV's size won't reduce after deleting key-values
+    // call this method after lots of deleting if you care about disk usage
+    // note that `clearAll` has the similar effect of `trim`
+    void trim();
+
+    // call this method if the instance is no longer needed in the near future
+    // any subsequent call to the instance is undefined behavior
+    void close();
+
+    // call this method if you are facing memory-warning
+    // any subsequent call to the instance will load all key-values from file again
+    void clearMemoryCache();
+
+    // you don't need to call this, really, I mean it
+    // unless you worry about running out of battery
+    void sync(SyncFlag flag = MMKV_SYNC);
+
+    // get exclusive access
+    void lock();
+    void unlock();
+    bool try_lock();
+
+    // check if content changed by other process
+    void checkContentChanged();
+
+    // called when content is changed by other process
+    // doesn't guarantee real-time notification
+    static void registerContentChangeHandler(mmkv::ContentChangeHandler handler);
+    static void unRegisterContentChangeHandler();
+
+    // by default MMKV will discard all datas on failure
+    // return `OnErrorRecover` to recover any data from file
+    static void registerErrorHandler(mmkv::ErrorHandler handler);
+    static void unRegisterErrorHandler();
+
+    // MMKVLogInfo by default
+    // pass MMKVLogNone to disable all logging
+    static void setLogLevel(MMKVLogLevel level);
+
+    // by default MMKV will print log to the console
+    // implement this method to redirect MMKV's log
+    static void registerLogHandler(mmkv::LogHandler handler);
+    static void unRegisterLogHandler();
+
+    static bool isFileValid(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+
+    // just forbid it for possibly misuse
+    explicit MMKV(const MMKV &other) = delete;
+    MMKV &operator=(const MMKV &other) = delete;
+};
+
+MMKV_NAMESPACE_END
+
+#endif // MMKV_MMKV_H

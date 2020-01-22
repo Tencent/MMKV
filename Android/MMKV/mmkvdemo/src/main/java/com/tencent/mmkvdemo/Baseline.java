@@ -60,15 +60,20 @@ public final class Baseline {
         mmkvBatchReadString();
 
         //mmkvBatchDeleteString();
-        //MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        //MMKV mmkv = mmkvForTest();
         //mmkv.trim();
+    }
+
+    private MMKV mmkvForTest() {
+        return MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        //return MMKV.mmkvWithAshmemID(m_context, MMKV_ID, 65536, MMKV.SINGLE_PROCESS_MODE, CryptKey);
     }
 
     private void mmkvBatchWriteInt() {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        MMKV mmkv = mmkvForTest();
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
@@ -81,7 +86,7 @@ public final class Baseline {
     private void mmkvBatchReadInt() {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        MMKV mmkv = mmkvForTest();
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = mmkv.decodeInt(key);
@@ -93,7 +98,7 @@ public final class Baseline {
     private void mmkvBatchWriteString() {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        MMKV mmkv = mmkvForTest();
         for (int index = 0; index < m_loops; index++) {
             final String valueStr = m_arrStrings[index];
             final String strKey = m_arrKeys[index];
@@ -106,7 +111,7 @@ public final class Baseline {
     private void mmkvBatchReadString() {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        MMKV mmkv = mmkvForTest();
         for (int index = 0; index < m_loops; index++) {
             String strKey = m_arrKeys[index];
             String tmpStr = mmkv.decodeString(strKey);
@@ -118,14 +123,13 @@ public final class Baseline {
     private void mmkvBatchDeleteString() {
         long startTime = System.currentTimeMillis();
 
-        MMKV mmkv = MMKV.mmkvWithID(MMKV_ID, MMKV.SINGLE_PROCESS_MODE, CryptKey);
+        MMKV mmkv = mmkvForTest();
         for (int index = 0; index < m_loops; index++) {
             String strKey = m_arrKeys[index];
             mmkv.removeValueForKey(strKey);
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV",
-              "MMKV delete String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", "MMKV delete String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     public void sharedPreferencesBaselineTest() {
@@ -149,8 +153,7 @@ public final class Baseline {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", "SharedPreferences write int: loop[" + m_loops + "]: " + (endTime - startTime)
-                          + " ms");
+        Log.i("MMKV", "SharedPreferences write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadInt() {
@@ -162,8 +165,7 @@ public final class Baseline {
             int tmp = preferences.getInt(key, 0);
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", "SharedPreferences read int: loop[" + m_loops + "]: " + (endTime - startTime)
-                          + " ms");
+        Log.i("MMKV", "SharedPreferences read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchWrieString() {
@@ -179,8 +181,7 @@ public final class Baseline {
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", "SharedPreferences write String: loop[" + m_loops
-                          + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", "SharedPreferences write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void spBatchReadStrinfg() {
@@ -192,8 +193,7 @@ public final class Baseline {
             final String tmp = preferences.getString(key, null);
         }
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV", "SharedPreferences read String: loop[" + m_loops
-                          + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", "SharedPreferences read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     public void sqliteBaselineTest() {
@@ -245,8 +245,7 @@ public final class Baseline {
         }
         sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV",
-              "sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", "sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
     private void sqliteReadString() {
@@ -260,7 +259,6 @@ public final class Baseline {
         }
         sqlIteKV.endTransaction();
         long endTime = System.currentTimeMillis();
-        Log.i("MMKV",
-              "sqlite read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
+        Log.i("MMKV", "sqlite read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 }

@@ -178,8 +178,7 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
         try {
             PackageManager mgr = context.getPackageManager();
             if (mgr != null) {
-                packageInfos =
-                    mgr.getPackageInfo(context.getPackageName(), PackageManager.GET_PROVIDERS);
+                packageInfos = mgr.getPackageInfo(context.getPackageName(), PackageManager.GET_PROVIDERS);
             }
         } catch (NameNotFoundException e) {
             if (DEBUG) {
@@ -280,14 +279,12 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
     }
 
     @Override
-    public void
-    registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+    public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
         synchronized (this) {
             if (mListeners == null) {
                 mListeners = new ArrayList<SoftReference<OnSharedPreferenceChangeListener>>();
             }
-            Boolean result =
-                (Boolean) getValue(PATH_REGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER, null, false);
+            Boolean result = (Boolean) getValue(PATH_REGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER, null, false);
             if (result != null && result) {
                 mListeners.add(new SoftReference<OnSharedPreferenceChangeListener>(listener));
                 if (mReceiver == null) {
@@ -296,25 +293,20 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
                         public void onReceive(Context context, Intent intent) {
                             String name = intent.getStringExtra(KEY_NAME);
                             @SuppressWarnings("unchecked")
-                            List<String> keysModified =
-                                (List<String>) intent.getSerializableExtra(KEY);
+                            List<String> keysModified = (List<String>) intent.getSerializableExtra(KEY);
                             if (mName.equals(name) && keysModified != null) {
                                 List arrayListeners;
                                 synchronized (MultiProcessSharedPreferences.this) {
                                     arrayListeners = mListeners;
                                 }
                                 List<SoftReference<OnSharedPreferenceChangeListener>> listeners =
-                                    new ArrayList<SoftReference<OnSharedPreferenceChangeListener>>(
-                                        arrayListeners);
+                                    new ArrayList<SoftReference<OnSharedPreferenceChangeListener>>(arrayListeners);
                                 for (int i = keysModified.size() - 1; i >= 0; i--) {
                                     final String key = keysModified.get(i);
-                                    for (SoftReference<OnSharedPreferenceChangeListener>
-                                             srlistener : listeners) {
-                                        OnSharedPreferenceChangeListener listener =
-                                            srlistener.get();
+                                    for (SoftReference<OnSharedPreferenceChangeListener> srlistener : listeners) {
+                                        OnSharedPreferenceChangeListener listener = srlistener.get();
                                         if (listener != null) {
-                                            listener.onSharedPreferenceChanged(
-                                                MultiProcessSharedPreferences.this, key);
+                                            listener.onSharedPreferenceChanged(MultiProcessSharedPreferences.this, key);
                                         }
                                     }
                                 }
@@ -328,8 +320,7 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
     }
 
     @Override
-    public void
-    unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+    public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
         synchronized (this) {
             getValue(PATH_UNREGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER, null, false);
             if (mListeners != null) {
@@ -436,16 +427,12 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
             } else {
                 synchronized (MultiProcessSharedPreferences.this) {
                     checkInitAuthority(mContext);
-                    String[] selectionArgs =
-                        new String[] {String.valueOf(mMode), String.valueOf(mClear)};
+                    String[] selectionArgs = new String[] {String.valueOf(mMode), String.valueOf(mClear)};
                     synchronized (this) {
-                        Uri uri = Uri.withAppendedPath(Uri.withAppendedPath(AUTHORITY_URI, mName),
-                                                       pathSegment);
-                        ContentValues values = ReflectionUtil.contentValuesNewInstance(
-                            (HashMap<String, Object>) mModified);
-                        return mContext.getContentResolver().update(uri, values, null,
-                                                                    selectionArgs)
-                            > 0;
+                        Uri uri = Uri.withAppendedPath(Uri.withAppendedPath(AUTHORITY_URI, mName), pathSegment);
+                        ContentValues values =
+                            ReflectionUtil.contentValuesNewInstance((HashMap<String, Object>) mModified);
+                        return mContext.getContentResolver().update(uri, values, null, selectionArgs) > 0;
                     }
                 }
             }
@@ -459,10 +446,9 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
             checkInitAuthority(mContext);
             Object v = null;
             Uri uri = Uri.withAppendedPath(Uri.withAppendedPath(AUTHORITY_URI, mName), pathSegment);
-            String[] selectionArgs = new String[] {
-                String.valueOf(mMode), key, defValue == null ? null : String.valueOf(defValue)};
-            Cursor cursor =
-                mContext.getContentResolver().query(uri, null, null, selectionArgs, null);
+            String[] selectionArgs =
+                new String[] {String.valueOf(mMode), key, defValue == null ? null : String.valueOf(defValue)};
+            Cursor cursor = mContext.getContentResolver().query(uri, null, null, selectionArgs, null);
             if (cursor != null) {
                 try {
                     Bundle bundle = cursor.getExtras();
@@ -495,18 +481,15 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
         mUriMatcher.addURI(AUTHORITY, PATH_WILDCARD + PATH_CONTAINS, CONTAINS);
         mUriMatcher.addURI(AUTHORITY, PATH_WILDCARD + PATH_APPLY, APPLY);
         mUriMatcher.addURI(AUTHORITY, PATH_WILDCARD + PATH_COMMIT, COMMIT);
-        mUriMatcher.addURI(AUTHORITY,
-                           PATH_WILDCARD + PATH_REGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER,
+        mUriMatcher.addURI(AUTHORITY, PATH_WILDCARD + PATH_REGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER,
                            REGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER);
-        mUriMatcher.addURI(AUTHORITY,
-                           PATH_WILDCARD + PATH_UNREGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER,
+        mUriMatcher.addURI(AUTHORITY, PATH_WILDCARD + PATH_UNREGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER,
                            UNREGISTER_ON_SHARED_PREFERENCE_CHANGE_LISTENER);
         return true;
     }
 
     @Override
-    public Cursor query(
-        Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         String name = uri.getPathSegments().get(0);
         int mode = Integer.parseInt(selectionArgs[0]);
         String key = selectionArgs[1];
@@ -514,33 +497,27 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
         Bundle bundle = new Bundle();
         switch (mUriMatcher.match(uri)) {
             case GET_ALL:
-                bundle.putSerializable(
-                    KEY,
-                    (HashMap<String, ?>) getContext().getSharedPreferences(name, mode).getAll());
+                bundle.putSerializable(KEY,
+                                       (HashMap<String, ?>) getContext().getSharedPreferences(name, mode).getAll());
                 break;
             case GET_STRING:
-                bundle.putString(
-                    KEY, getContext().getSharedPreferences(name, mode).getString(key, defValue));
+                bundle.putString(KEY, getContext().getSharedPreferences(name, mode).getString(key, defValue));
                 break;
             case GET_INT:
-                bundle.putInt(KEY, getContext()
-                                       .getSharedPreferences(name, mode)
-                                       .getInt(key, Integer.parseInt(defValue)));
+                bundle.putInt(KEY,
+                              getContext().getSharedPreferences(name, mode).getInt(key, Integer.parseInt(defValue)));
                 break;
             case GET_LONG:
-                bundle.putLong(KEY, getContext()
-                                        .getSharedPreferences(name, mode)
-                                        .getLong(key, Long.parseLong(defValue)));
+                bundle.putLong(KEY,
+                               getContext().getSharedPreferences(name, mode).getLong(key, Long.parseLong(defValue)));
                 break;
             case GET_FLOAT:
-                bundle.putFloat(KEY, getContext()
-                                         .getSharedPreferences(name, mode)
-                                         .getFloat(key, Float.parseFloat(defValue)));
+                bundle.putFloat(
+                    KEY, getContext().getSharedPreferences(name, mode).getFloat(key, Float.parseFloat(defValue)));
                 break;
             case GET_BOOLEAN:
-                bundle.putBoolean(KEY, getContext()
-                                           .getSharedPreferences(name, mode)
-                                           .getBoolean(key, Boolean.parseBoolean(defValue)));
+                bundle.putBoolean(
+                    KEY, getContext().getSharedPreferences(name, mode).getBoolean(key, Boolean.parseBoolean(defValue)));
                 break;
             case CONTAINS:
                 bundle.putBoolean(KEY, getContext().getSharedPreferences(name, mode).contains(key));
@@ -598,8 +575,8 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
         switch (match) {
             case APPLY:
             case COMMIT:
-                boolean hasListeners = mListenersCount != null && mListenersCount.get(name) != null
-                                       && mListenersCount.get(name) > 0;
+                boolean hasListeners =
+                    mListenersCount != null && mListenersCount.get(name) != null && mListenersCount.get(name) > 0;
                 ArrayList<String> keysModified = null;
                 Map<String, Object> map = new HashMap();
                 if (hasListeners) {
@@ -629,8 +606,7 @@ public class MultiProcessSharedPreferences extends ContentProvider implements Sh
                         }
                     } else {
                         if (hasListeners && map != null
-                            && (!map.containsKey(k)
-                                || (map.containsKey(k) && !v.equals(map.get(k))))) {
+                            && (!map.containsKey(k) || (map.containsKey(k) && !v.equals(map.get(k))))) {
                             keysModified.add(k);
                         }
                     }

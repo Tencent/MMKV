@@ -13,10 +13,13 @@
 		CB1FD42D20455E2D00931B5F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42C20455E2D00931B5F /* Assets.xcassets */; };
 		CB1FD43020455E2D00931B5F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */; };
 		CB1FD43320455E2D00931B5F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD43220455E2D00931B5F /* main.m */; };
-		CB1FD4B82046995E00931B5F /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
 		CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
+		CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6D44CB23B3A44400F369AA /* NotificationCenter.framework */; };
+		CB6D44D023B3A44400F369AA /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB6D44CF23B3A44400F369AA /* TodayViewController.m */; };
+		CB6D44D323B3A44400F369AA /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB6D44D123B3A44400F369AA /* MainInterface.storyboard */; };
+		CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CB9C2731215E5DF000448B6C /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
 		CB9C2733215E5ECC00448B6C /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB9C2732215E5ECC00448B6C /* libz.tbd */; };
 		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
@@ -25,6 +28,10 @@
 		CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C827215CDB9600487192 /* Assets.xcassets */; };
 		CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C829215CDB9600487192 /* Main.storyboard */; };
 		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
+		CBD5359023B46E8500D3A404 /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
+		CBD5359323B46E9400D3A404 /* libMMKV For App Extension.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD5358D23B46E7400D3A404 /* libMMKV For App Extension.a */; };
+		CBD5359923B4718200D3A404 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD5359823B4718200D3A404 /* libc++.tbd */; };
+		CBF3450623B4BB1A00168AC7 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,13 +40,6 @@
 			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = CB1FD4912046984F00931B5F;
-			remoteInfo = MMKV;
-		};
-		CB1FD4B62046995B00931B5F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = CB1FD4902046984F00931B5F;
 			remoteInfo = MMKV;
 		};
 		CB36F24E20F8A20C009AF46F /* PBXContainerItemProxy */ = {
@@ -56,6 +56,13 @@
 			remoteGlobalIDString = CBC1A8F620DA946200AD5087;
 			remoteInfo = MMKV;
 		};
+		CB6D44D523B3A44400F369AA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD41820455E2D00931B5F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CB6D44C923B3A44400F369AA;
+			remoteInfo = MMKVTodayExtensionDemo;
+		};
 		CB9C272F215E5D2400448B6C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
@@ -63,7 +70,42 @@
 			remoteGlobalIDString = CB1FD4902046984F00931B5F;
 			remoteInfo = "MMKV Static";
 		};
+		CBD5358C23B46E7400D3A404 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CBD5357F23B46CE500D3A404;
+			remoteInfo = "MMKV For App Extension";
+		};
+		CBD5358E23B46E7C00D3A404 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1FD4902046984F00931B5F;
+			remoteInfo = "MMKV Static";
+		};
+		CBD5359123B46E8F00D3A404 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CBD5357E23B46CE500D3A404;
+			remoteInfo = "MMKV For App Extension";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CB6D44DB23B3A44400F369AA /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		CB1FD42020455E2D00931B5F /* MMKVDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MMKVDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -82,6 +124,14 @@
 		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
 		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVPerformanceTest.mm; sourceTree = "<group>"; };
+		CB6D44C423B3924E00F369AA /* MMKVDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MMKVDemo.entitlements; sourceTree = "<group>"; };
+		CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MMKVTodayExtensionDemo.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB6D44CB23B3A44400F369AA /* NotificationCenter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = NotificationCenter.framework; path = System/Library/Frameworks/NotificationCenter.framework; sourceTree = SDKROOT; };
+		CB6D44CE23B3A44400F369AA /* TodayViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TodayViewController.h; sourceTree = "<group>"; };
+		CB6D44CF23B3A44400F369AA /* TodayViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TodayViewController.m; sourceTree = "<group>"; };
+		CB6D44D223B3A44400F369AA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
+		CB6D44D423B3A44400F369AA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CB6D44DC23B3A45A00F369AA /* MMKVTodayExtensionDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MMKVTodayExtensionDemo.entitlements; sourceTree = "<group>"; };
 		CB9C2732215E5ECC00448B6C /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
 		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
@@ -95,6 +145,7 @@
 		CBB6C82C215CDB9600487192 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CBB6C82D215CDB9600487192 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		CBB6C82F215CDB9600487192 /* MMKVMacDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MMKVMacDemo.entitlements; sourceTree = "<group>"; };
+		CBD5359823B4718200D3A404 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,8 +153,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CBD5359023B46E8500D3A404 /* libMMKV Static.a in Frameworks */,
 				CB1FD4D22046AF2400931B5F /* libz.tbd in Frameworks */,
-				CB1FD4B82046995E00931B5F /* libMMKV Static.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -111,6 +162,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB6D44C723B3A44400F369AA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBF3450623B4BB1A00168AC7 /* libz.tbd in Frameworks */,
+				CBD5359923B4718200D3A404 /* libc++.tbd in Frameworks */,
+				CBD5359323B46E9400D3A404 /* libMMKV For App Extension.a in Frameworks */,
+				CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +195,7 @@
 				CB1FD42220455E2D00931B5F /* MMKVDemo */,
 				CB36F24A20F8A20C009AF46F /* MMKVDemoTests */,
 				CBB6C820215CDB9500487192 /* MMKVMacDemo */,
+				CB6D44CD23B3A44400F369AA /* MMKVTodayExtensionDemo */,
 				CB1FD42120455E2D00931B5F /* Products */,
 				CB1FD45720455F3500931B5F /* Frameworks */,
 			);
@@ -144,6 +207,7 @@
 				CB1FD42020455E2D00931B5F /* MMKVDemo.app */,
 				CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */,
 				CBB6C81F215CDB9500487192 /* MMKVMacDemo.app */,
+				CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -151,6 +215,7 @@
 		CB1FD42220455E2D00931B5F /* MMKVDemo */ = {
 			isa = PBXGroup;
 			children = (
+				CB6D44C423B3924E00F369AA /* MMKVDemo.entitlements */,
 				CB1FD42320455E2D00931B5F /* AppDelegate.h */,
 				CB1FD42420455E2D00931B5F /* AppDelegate.m */,
 				CB1FD42C20455E2D00931B5F /* Assets.xcassets */,
@@ -169,8 +234,10 @@
 		CB1FD45720455F3500931B5F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CBD5359823B4718200D3A404 /* libc++.tbd */,
 				CB9C2732215E5ECC00448B6C /* libz.tbd */,
 				CB1FD4D12046AF2300931B5F /* libz.tbd */,
+				CB6D44CB23B3A44400F369AA /* NotificationCenter.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -180,6 +247,7 @@
 			children = (
 				CB1FD4B52046994D00931B5F /* libMMKV Static.a */,
 				CB36F25420F8A20C009AF46F /* MMKV.framework */,
+				CBD5358D23B46E7400D3A404 /* libMMKV For App Extension.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -192,6 +260,18 @@
 				CB36F24D20F8A20C009AF46F /* Info.plist */,
 			);
 			path = MMKVDemoTests;
+			sourceTree = "<group>";
+		};
+		CB6D44CD23B3A44400F369AA /* MMKVTodayExtensionDemo */ = {
+			isa = PBXGroup;
+			children = (
+				CB6D44DC23B3A45A00F369AA /* MMKVTodayExtensionDemo.entitlements */,
+				CB6D44CE23B3A44400F369AA /* TodayViewController.h */,
+				CB6D44CF23B3A44400F369AA /* TodayViewController.m */,
+				CB6D44D123B3A44400F369AA /* MainInterface.storyboard */,
+				CB6D44D423B3A44400F369AA /* Info.plist */,
+			);
+			path = MMKVTodayExtensionDemo;
 			sourceTree = "<group>";
 		};
 		CBB6C820215CDB9500487192 /* MMKVMacDemo */ = {
@@ -220,11 +300,13 @@
 				CB1FD41C20455E2D00931B5F /* Sources */,
 				CB1FD41D20455E2D00931B5F /* Frameworks */,
 				CB1FD41E20455E2D00931B5F /* Resources */,
+				CB6D44DB23B3A44400F369AA /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				CB1FD4B72046995B00931B5F /* PBXTargetDependency */,
+				CBD5358F23B46E7C00D3A404 /* PBXTargetDependency */,
+				CB6D44D623B3A44400F369AA /* PBXTargetDependency */,
 			);
 			name = MMKVDemo;
 			productName = MMKVDemo;
@@ -248,6 +330,24 @@
 			productName = MMKVDemoTests;
 			productReference = CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CB6D44C923B3A44400F369AA /* MMKVTodayExtensionDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB6D44D823B3A44400F369AA /* Build configuration list for PBXNativeTarget "MMKVTodayExtensionDemo" */;
+			buildPhases = (
+				CB6D44C623B3A44400F369AA /* Sources */,
+				CB6D44C723B3A44400F369AA /* Frameworks */,
+				CB6D44C823B3A44400F369AA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CBD5359223B46E8F00D3A404 /* PBXTargetDependency */,
+			);
+			name = MMKVTodayExtensionDemo;
+			productName = MMKVTodayExtensionDemo;
+			productReference = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		CBB6C81E215CDB9500487192 /* MMKVMacDemo */ = {
 			isa = PBXNativeTarget;
@@ -273,7 +373,7 @@
 		CB1FD41820455E2D00931B5F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1130;
+				LastUpgradeCheck = 1120;
 				ORGANIZATIONNAME = Lingol;
 				TargetAttributes = {
 					CB1FD41F20455E2D00931B5F = {
@@ -290,6 +390,10 @@
 						CreatedOnToolsVersion = 9.4.1;
 						ProvisioningStyle = Automatic;
 						TestTargetID = CB1FD41F20455E2D00931B5F;
+					};
+					CB6D44C923B3A44400F369AA = {
+						CreatedOnToolsVersion = 11.3;
+						ProvisioningStyle = Automatic;
 					};
 					CBB6C81E215CDB9500487192 = {
 						CreatedOnToolsVersion = 10.0;
@@ -319,6 +423,7 @@
 				CB1FD41F20455E2D00931B5F /* MMKVDemo */,
 				CB36F24820F8A20C009AF46F /* MMKVDemoTests */,
 				CBB6C81E215CDB9500487192 /* MMKVMacDemo */,
+				CB6D44C923B3A44400F369AA /* MMKVTodayExtensionDemo */,
 			);
 		};
 /* End PBXProject section */
@@ -338,6 +443,13 @@
 			remoteRef = CB36F25320F8A20C009AF46F /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		CBD5358D23B46E7400D3A404 /* libMMKV For App Extension.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = "libMMKV For App Extension.a";
+			remoteRef = CBD5358C23B46E7400D3A404 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -355,6 +467,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB6D44C823B3A44400F369AA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB6D44D323B3A44400F369AA /* MainInterface.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -390,6 +510,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB6D44C623B3A44400F369AA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB6D44D023B3A44400F369AA /* TodayViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CBB6C81B215CDB9500487192 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -403,20 +531,30 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		CB1FD4B72046995B00931B5F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = MMKV;
-			targetProxy = CB1FD4B62046995B00931B5F /* PBXContainerItemProxy */;
-		};
 		CB36F24F20F8A20C009AF46F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = CB1FD41F20455E2D00931B5F /* MMKVDemo */;
 			targetProxy = CB36F24E20F8A20C009AF46F /* PBXContainerItemProxy */;
 		};
+		CB6D44D623B3A44400F369AA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CB6D44C923B3A44400F369AA /* MMKVTodayExtensionDemo */;
+			targetProxy = CB6D44D523B3A44400F369AA /* PBXContainerItemProxy */;
+		};
 		CB9C2730215E5D2400448B6C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "MMKV Static";
 			targetProxy = CB9C272F215E5D2400448B6C /* PBXContainerItemProxy */;
+		};
+		CBD5358F23B46E7C00D3A404 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "MMKV Static";
+			targetProxy = CBD5358E23B46E7C00D3A404 /* PBXContainerItemProxy */;
+		};
+		CBD5359223B46E8F00D3A404 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "MMKV For App Extension";
+			targetProxy = CBD5359123B46E8F00D3A404 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -435,6 +573,14 @@
 				CB1FD42F20455E2D00931B5F /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		CB6D44D123B3A44400F369AA /* MainInterface.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CB6D44D223B3A44400F369AA /* Base */,
+			);
+			name = MainInterface.storyboard;
 			sourceTree = "<group>";
 		};
 		CBB6C829215CDB9600487192 /* Main.storyboard */ = {
@@ -562,6 +708,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LP4KGRS5XZ;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
@@ -573,7 +720,9 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = arm64;
+				VALID_ARCHS = "arm64 armv7";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7";
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 			};
 			name = Debug;
 		};
@@ -582,6 +731,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LP4KGRS5XZ;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
@@ -593,7 +743,9 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = arm64;
+				VALID_ARCHS = "arm64 armv7";
+				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7";
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x64_64;
 			};
 			name = Release;
 		};
@@ -634,6 +786,53 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MMKVDemo.app/MMKVDemo";
+			};
+			name = Release;
+		};
+		CB6D44D923B3A44400F369AA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVTodayExtensionDemo/MMKVTodayExtensionDemo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				INFOPLIST_FILE = MMKVTodayExtensionDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.MMKVTodayExtensionDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+				"VALID_ARCHS[sdk=iphoneos*]" = arm64;
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
+			};
+			name = Debug;
+		};
+		CB6D44DA23B3A44400F369AA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVTodayExtensionDemo/MMKVTodayExtensionDemo.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				INFOPLIST_FILE = MMKVTodayExtensionDemo/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.MMKVTodayExtensionDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
 			};
 			name = Release;
 		};
@@ -706,6 +905,15 @@
 			buildConfigurations = (
 				CB36F25020F8A20C009AF46F /* Debug */,
 				CB36F25120F8A20C009AF46F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CB6D44D823B3A44400F369AA /* Build configuration list for PBXNativeTarget "MMKVTodayExtensionDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB6D44D923B3A44400F369AA /* Debug */,
+				CB6D44DA23B3A44400F369AA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

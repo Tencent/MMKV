@@ -14,7 +14,7 @@ What's new
 ### Android
 What's new  
 
-* Fix flock() bug on ashmem files in Android.
+* Fix `flock()` bug on ashmem files in Android.
 * Fix a potential crash when writing a uniquely constructed string.
 * Fix a bug that the MMKVDemo might crash when running in a simulator.
 

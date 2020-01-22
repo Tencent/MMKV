@@ -1,13 +1,12 @@
 apply from: rootProject.file('gradle/build_library.gradle')
 
 android {
-    defaultPublishConfig "StaticCppRelease"
-//    defaultPublishConfig "SharedCppRelease"
+//    defaultPublishConfig "StaticCppRelease"
+    defaultPublishConfig "SharedCppRelease"
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++1z -fno-exceptions"
                 abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
@@ -33,6 +32,7 @@ android {
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
+            version "3.8.0+"
         }
     }
 

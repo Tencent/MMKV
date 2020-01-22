@@ -3,55 +3,62 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 48;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CB1FD4962046984F00931B5F /* MMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* MMKV.mm */; };
+		CB1FD4962046984F00931B5F /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
 		CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; };
-		CB1FD4C320469B8800931B5F /* MiniCodedOutputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */; };
-		CB1FD4C420469B8800931B5F /* MiniCodedInputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */; };
-		CB1FD4C520469B8800931B5F /* MiniPBUtility.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */; };
-		CB1FD4C620469B8800931B5F /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; };
 		CB1FD4CD2046ACBC00931B5F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
-		CB45DE3422CE215400781B27 /* MMKVMetaInfo.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB45DE3322CE215400781B27 /* MMKVMetaInfo.hpp */; };
-		CB6DEFA9212E6F010024F0E8 /* AESCrypt.h in Headers */ = {isa = PBXBuildFile; fileRef = CB6DEF9F212E6F010024F0E8 /* AESCrypt.h */; };
-		CB6DEFB4212E6F010024F0E8 /* AESCrypt.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6DEFA8212E6F010024F0E8 /* AESCrypt.mm */; };
-		CB6DEFB5212E6F010024F0E8 /* AESCrypt.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB6DEFA8212E6F010024F0E8 /* AESCrypt.mm */; };
-		CB865F5620FF33F600427B9D /* MemoryFile.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB865F5420FF33F600427B9D /* MemoryFile.mm */; };
-		CB865F5720FF33F600427B9D /* MemoryFile.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB865F5420FF33F600427B9D /* MemoryFile.mm */; };
-		CB865F5820FF33F600427B9D /* MemoryFile.h in Headers */ = {isa = PBXBuildFile; fileRef = CB865F5520FF33F600427B9D /* MemoryFile.h */; };
-		CB8FB92E2100C52F00CC523D /* LRUCache.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB8FB92D2100C52F00CC523D /* LRUCache.hpp */; };
-		CB8FD91C21F1B8C10005EE8F /* MMKVLog.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */; };
-		CB8FD91D21F1B8C10005EE8F /* MMKVLog.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */; };
-		CBC1A8FE20DA948A00AD5087 /* MiniCodedInputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */; };
-		CBC1A8FF20DA948A00AD5087 /* MiniCodedOutputData.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */; };
-		CBC1A90020DA948A00AD5087 /* MiniPBCoder.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */; };
-		CBC1A90120DA948A00AD5087 /* MiniPBUtility.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */; };
-		CBC1A90220DA948A00AD5087 /* MMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* MMKV.mm */; };
-		CBC1A90420DA94A000AD5087 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
+		CB6F6C0223ACCF53000351EA /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6F6C0123ACCF47000351EA /* libCore.a */; };
+		CB6F6C0523ACCF62000351EA /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6F6C0123ACCF47000351EA /* libCore.a */; };
+		CBC1A90220DA948A00AD5087 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
 		CBC1A90620DA94B900AD5087 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CBD1A8F72244CE6B00BCC0F3 /* openssl_aes_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8EB2244CE6B00BCC0F3 /* openssl_aes_core.cpp */; };
-		CBD1A8F82244CE6B00BCC0F3 /* openssl_aes_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8EB2244CE6B00BCC0F3 /* openssl_aes_core.cpp */; };
-		CBD1A8F92244CE6B00BCC0F3 /* openssl_aes_cfb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8EC2244CE6B00BCC0F3 /* openssl_aes_cfb.cpp */; };
-		CBD1A8FA2244CE6B00BCC0F3 /* openssl_aes_cfb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8EC2244CE6B00BCC0F3 /* openssl_aes_cfb.cpp */; };
-		CBD1A8FB2244CE6B00BCC0F3 /* openssl_md5_one.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8ED2244CE6B00BCC0F3 /* openssl_md5_one.cpp */; };
-		CBD1A8FC2244CE6B00BCC0F3 /* openssl_md5_one.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8ED2244CE6B00BCC0F3 /* openssl_md5_one.cpp */; };
-		CBD1A8FD2244CE6B00BCC0F3 /* openssl_opensslconf.h in Headers */ = {isa = PBXBuildFile; fileRef = CBD1A8EE2244CE6B00BCC0F3 /* openssl_opensslconf.h */; };
-		CBD1A8FE2244CE6B00BCC0F3 /* openssl_cfb128.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8EF2244CE6B00BCC0F3 /* openssl_cfb128.cpp */; };
-		CBD1A8FF2244CE6B00BCC0F3 /* openssl_cfb128.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8EF2244CE6B00BCC0F3 /* openssl_cfb128.cpp */; };
-		CBD1A9002244CE6B00BCC0F3 /* openssl_modes.h in Headers */ = {isa = PBXBuildFile; fileRef = CBD1A8F02244CE6B00BCC0F3 /* openssl_modes.h */; };
-		CBD1A9012244CE6B00BCC0F3 /* openssl_aes_locl.h in Headers */ = {isa = PBXBuildFile; fileRef = CBD1A8F12244CE6B00BCC0F3 /* openssl_aes_locl.h */; };
-		CBD1A9022244CE6B00BCC0F3 /* openssl_md5.h in Headers */ = {isa = PBXBuildFile; fileRef = CBD1A8F22244CE6B00BCC0F3 /* openssl_md5.h */; };
-		CBD1A9032244CE6B00BCC0F3 /* openssl_md5_dgst.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8F32244CE6B00BCC0F3 /* openssl_md5_dgst.cpp */; };
-		CBD1A9042244CE6B00BCC0F3 /* openssl_md5_dgst.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD1A8F32244CE6B00BCC0F3 /* openssl_md5_dgst.cpp */; };
-		CBD1A9052244CE6B00BCC0F3 /* openssl_md5_locl.h in Headers */ = {isa = PBXBuildFile; fileRef = CBD1A8F42244CE6B00BCC0F3 /* openssl_md5_locl.h */; };
-		CBD1A9062244CE6B00BCC0F3 /* openssl_md32_common.h in Headers */ = {isa = PBXBuildFile; fileRef = CBD1A8F52244CE6B00BCC0F3 /* openssl_md32_common.h */; };
-		CBD1A9072244CE6B00BCC0F3 /* openssl_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = CBD1A8F62244CE6B00BCC0F3 /* openssl_aes.h */; };
+		CBD5358823B46D0D00D3A404 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; platformFilter = ios; };
+		CBD5358923B46D3400D3A404 /* libCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6F6C0123ACCF47000351EA /* libCore.a */; };
+		CBD5358A23B46D3F00D3A404 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CBDF32902192C0000028DB4D /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CBDF32912192C0340028DB4D /* MMKVHandler.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CB6F6C0023ACCF47000351EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CB9563D823AB2D9500ACCD39;
+			remoteInfo = Core;
+		};
+		CB6F6C0323ACCF58000351EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB9563D723AB2D9500ACCD39;
+			remoteInfo = Core;
+		};
+		CB6F6C0623ACCF65000351EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB9563D723AB2D9500ACCD39;
+			remoteInfo = Core;
+		};
+		CBD5359423B46EB300D3A404 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB9563D723AB2D9500ACCD39;
+			remoteInfo = Core;
+		};
+		CBF344FD23B4A3E300168AC7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4892046984F00931B5F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1FD4902046984F00931B5F;
+			remoteInfo = "MMKV Static";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		CB1FD48F2046984F00931B5F /* CopyFiles */ = {
@@ -65,47 +72,29 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CBD5357D23B46CE500D3A404 /* Copy Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = include/MMKV;
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			name = "Copy Files";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		CB1FD4912046984F00931B5F /* libMMKV Static.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libMMKV Static.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1FD4942046984F00931B5F /* MMKV.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
-		CB1FD4952046984F00931B5F /* MMKV.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKV.mm; sourceTree = "<group>"; };
-		CB1FD4BA20469B8800931B5F /* MiniPBUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniPBUtility.h; sourceTree = "<group>"; };
-		CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MiniCodedOutputData.mm; sourceTree = "<group>"; };
-		CB1FD4BC20469B8800931B5F /* MiniPBCoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniPBCoder.h; sourceTree = "<group>"; };
-		CB1FD4BD20469B8800931B5F /* MiniCodedInputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniCodedInputData.h; sourceTree = "<group>"; };
-		CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MiniCodedInputData.mm; sourceTree = "<group>"; };
-		CB1FD4BF20469B8800931B5F /* MiniCodedOutputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniCodedOutputData.h; sourceTree = "<group>"; };
-		CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MiniPBUtility.mm; sourceTree = "<group>"; };
-		CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MiniPBCoder.mm; sourceTree = "<group>"; };
-		CB1FD4C82046AA0500931B5F /* MiniPBEncodeItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniPBEncodeItem.h; sourceTree = "<group>"; };
+		CB1FD4952046984F00931B5F /* libMMKV.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = libMMKV.mm; sourceTree = "<group>"; };
 		CB1FD4CC2046ACBC00931B5F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		CB1FD4CE2046ACC100931B5F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		CB1FD5152049382F00931B5F /* ScopedLock.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ScopedLock.hpp; sourceTree = "<group>"; };
-		CB45DE3322CE215400781B27 /* MMKVMetaInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MMKVMetaInfo.hpp; sourceTree = "<group>"; };
-		CB6DEF9F212E6F010024F0E8 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
-		CB6DEFA8212E6F010024F0E8 /* AESCrypt.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AESCrypt.mm; sourceTree = "<group>"; };
-		CB865F5420FF33F600427B9D /* MemoryFile.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MemoryFile.mm; sourceTree = "<group>"; };
-		CB865F5520FF33F600427B9D /* MemoryFile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MemoryFile.h; sourceTree = "<group>"; };
-		CB8FB92D2100C52F00CC523D /* LRUCache.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LRUCache.hpp; sourceTree = "<group>"; };
-		CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVLog.mm; sourceTree = "<group>"; };
-		CBC1A8A620DA080800AD5087 /* MMKVLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKVLog.h; sourceTree = "<group>"; };
+		CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Core.xcodeproj; path = ../../Core/Core.xcodeproj; sourceTree = "<group>"; };
 		CBC1A8F620DA946200AD5087 /* MMKV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBC1A90320DA94A000AD5087 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		CBC1A90A20DA95E100AD5087 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CBD1A8EB2244CE6B00BCC0F3 /* openssl_aes_core.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_aes_core.cpp; sourceTree = "<group>"; };
-		CBD1A8EC2244CE6B00BCC0F3 /* openssl_aes_cfb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_aes_cfb.cpp; sourceTree = "<group>"; };
-		CBD1A8ED2244CE6B00BCC0F3 /* openssl_md5_one.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_md5_one.cpp; sourceTree = "<group>"; };
-		CBD1A8EE2244CE6B00BCC0F3 /* openssl_opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_opensslconf.h; sourceTree = "<group>"; };
-		CBD1A8EF2244CE6B00BCC0F3 /* openssl_cfb128.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_cfb128.cpp; sourceTree = "<group>"; };
-		CBD1A8F02244CE6B00BCC0F3 /* openssl_modes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_modes.h; sourceTree = "<group>"; };
-		CBD1A8F12244CE6B00BCC0F3 /* openssl_aes_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_aes_locl.h; sourceTree = "<group>"; };
-		CBD1A8F22244CE6B00BCC0F3 /* openssl_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5.h; sourceTree = "<group>"; };
-		CBD1A8F32244CE6B00BCC0F3 /* openssl_md5_dgst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = openssl_md5_dgst.cpp; sourceTree = "<group>"; };
-		CBD1A8F42244CE6B00BCC0F3 /* openssl_md5_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5_locl.h; sourceTree = "<group>"; };
-		CBD1A8F52244CE6B00BCC0F3 /* openssl_md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md32_common.h; sourceTree = "<group>"; };
-		CBD1A8F62244CE6B00BCC0F3 /* openssl_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_aes.h; sourceTree = "<group>"; };
+		CBD5357F23B46CE500D3A404 /* libMMKV For App Extension.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libMMKV For App Extension.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBDF328F2192C0000028DB4D /* MMKVHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKVHandler.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -114,6 +103,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB6F6C0223ACCF53000351EA /* libCore.a in Frameworks */,
 				CB1FD4CD2046ACBC00931B5F /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -122,8 +112,17 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB6F6C0523ACCF62000351EA /* libCore.a in Frameworks */,
 				CBC1A90620DA94B900AD5087 /* Foundation.framework in Frameworks */,
-				CBC1A90420DA94A000AD5087 /* libz.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CBD5357C23B46CE500D3A404 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBD5358A23B46D3F00D3A404 /* Foundation.framework in Frameworks */,
+				CBD5358923B46D3400D3A404 /* libCore.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +132,7 @@
 		CB1FD4882046984F00931B5F = {
 			isa = PBXGroup;
 			children = (
+				CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */,
 				CB1FD4932046984F00931B5F /* MMKV */,
 				CB1FD4922046984F00931B5F /* Products */,
 				CB1FD4C92046ACB200931B5F /* Frameworks */,
@@ -144,6 +144,7 @@
 			children = (
 				CB1FD4912046984F00931B5F /* libMMKV Static.a */,
 				CBC1A8F620DA946200AD5087 /* MMKV.framework */,
+				CBD5357F23B46CE500D3A404 /* libMMKV For App Extension.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -151,27 +152,10 @@
 		CB1FD4932046984F00931B5F /* MMKV */ = {
 			isa = PBXGroup;
 			children = (
-				CB6DEF9E212E6F010024F0E8 /* aes */,
-				CB8FB92D2100C52F00CC523D /* LRUCache.hpp */,
-				CB865F5520FF33F600427B9D /* MemoryFile.h */,
-				CB865F5420FF33F600427B9D /* MemoryFile.mm */,
-				CB1FD4BD20469B8800931B5F /* MiniCodedInputData.h */,
-				CB1FD4BE20469B8800931B5F /* MiniCodedInputData.mm */,
-				CB1FD4BF20469B8800931B5F /* MiniCodedOutputData.h */,
-				CB1FD4BB20469B8800931B5F /* MiniCodedOutputData.mm */,
-				CB1FD4BC20469B8800931B5F /* MiniPBCoder.h */,
-				CB1FD4C220469B8800931B5F /* MiniPBCoder.mm */,
-				CB1FD4C82046AA0500931B5F /* MiniPBEncodeItem.h */,
-				CB1FD4BA20469B8800931B5F /* MiniPBUtility.h */,
-				CB1FD4C020469B8800931B5F /* MiniPBUtility.mm */,
 				CB1FD4942046984F00931B5F /* MMKV.h */,
-				CB1FD4952046984F00931B5F /* MMKV.mm */,
+				CB1FD4952046984F00931B5F /* libMMKV.mm */,
 				CBDF328F2192C0000028DB4D /* MMKVHandler.h */,
-				CBC1A8A620DA080800AD5087 /* MMKVLog.h */,
-				CB8FD91B21F1B8C10005EE8F /* MMKVLog.mm */,
-				CB45DE3322CE215400781B27 /* MMKVMetaInfo.hpp */,
 				CBC1A90720DA959400AD5087 /* Resources */,
-				CB1FD5152049382F00931B5F /* ScopedLock.hpp */,
 			);
 			path = MMKV;
 			sourceTree = "<group>";
@@ -186,33 +170,12 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		CB6DEF9E212E6F010024F0E8 /* aes */ = {
+		CB6F6BFD23ACCF47000351EA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CB6DEF9F212E6F010024F0E8 /* AESCrypt.h */,
-				CB6DEFA8212E6F010024F0E8 /* AESCrypt.mm */,
-				CB6DEFA0212E6F010024F0E8 /* openssl */,
+				CB6F6C0123ACCF47000351EA /* libCore.a */,
 			);
-			path = aes;
-			sourceTree = "<group>";
-		};
-		CB6DEFA0212E6F010024F0E8 /* openssl */ = {
-			isa = PBXGroup;
-			children = (
-				CBD1A8EC2244CE6B00BCC0F3 /* openssl_aes_cfb.cpp */,
-				CBD1A8EB2244CE6B00BCC0F3 /* openssl_aes_core.cpp */,
-				CBD1A8F12244CE6B00BCC0F3 /* openssl_aes_locl.h */,
-				CBD1A8F62244CE6B00BCC0F3 /* openssl_aes.h */,
-				CBD1A8EF2244CE6B00BCC0F3 /* openssl_cfb128.cpp */,
-				CBD1A8F32244CE6B00BCC0F3 /* openssl_md5_dgst.cpp */,
-				CBD1A8F42244CE6B00BCC0F3 /* openssl_md5_locl.h */,
-				CBD1A8ED2244CE6B00BCC0F3 /* openssl_md5_one.cpp */,
-				CBD1A8F22244CE6B00BCC0F3 /* openssl_md5.h */,
-				CBD1A8F52244CE6B00BCC0F3 /* openssl_md32_common.h */,
-				CBD1A8F02244CE6B00BCC0F3 /* openssl_modes.h */,
-				CBD1A8EE2244CE6B00BCC0F3 /* openssl_opensslconf.h */,
-			);
-			path = openssl;
+			name = Products;
 			sourceTree = "<group>";
 		};
 		CBC1A90720DA959400AD5087 /* Resources */ = {
@@ -230,19 +193,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CBD1A9052244CE6B00BCC0F3 /* openssl_md5_locl.h in Headers */,
 				CBDF32902192C0000028DB4D /* MMKVHandler.h in Headers */,
-				CB8FB92E2100C52F00CC523D /* LRUCache.hpp in Headers */,
-				CBD1A9022244CE6B00BCC0F3 /* openssl_md5.h in Headers */,
-				CBD1A8FD2244CE6B00BCC0F3 /* openssl_opensslconf.h in Headers */,
 				CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */,
-				CB865F5820FF33F600427B9D /* MemoryFile.h in Headers */,
-				CBD1A9012244CE6B00BCC0F3 /* openssl_aes_locl.h in Headers */,
-				CB6DEFA9212E6F010024F0E8 /* AESCrypt.h in Headers */,
-				CBD1A9062244CE6B00BCC0F3 /* openssl_md32_common.h in Headers */,
-				CB45DE3422CE215400781B27 /* MMKVMetaInfo.hpp in Headers */,
-				CBD1A9002244CE6B00BCC0F3 /* openssl_modes.h in Headers */,
-				CBD1A9072244CE6B00BCC0F3 /* openssl_aes.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,6 +212,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				CB6F6C0423ACCF58000351EA /* PBXTargetDependency */,
 			);
 			name = "MMKV Static";
 			productName = MMKV;
@@ -278,11 +231,31 @@
 			buildRules = (
 			);
 			dependencies = (
+				CB6F6C0723ACCF65000351EA /* PBXTargetDependency */,
 			);
 			name = MMKV;
 			productName = MMKV;
 			productReference = CBC1A8F620DA946200AD5087 /* MMKV.framework */;
 			productType = "com.apple.product-type.framework";
+		};
+		CBD5357E23B46CE500D3A404 /* MMKV For App Extension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CBD5358723B46CE500D3A404 /* Build configuration list for PBXNativeTarget "MMKV For App Extension" */;
+			buildPhases = (
+				CBD5357B23B46CE500D3A404 /* Sources */,
+				CBD5357C23B46CE500D3A404 /* Frameworks */,
+				CBD5357D23B46CE500D3A404 /* Copy Files */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CBF344FE23B4A3E300168AC7 /* PBXTargetDependency */,
+				CBD5359523B46EB300D3A404 /* PBXTargetDependency */,
+			);
+			name = "MMKV For App Extension";
+			productName = "MMKV For App Extension";
+			productReference = CBD5357F23B46CE500D3A404 /* libMMKV For App Extension.a */;
+			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
 
@@ -301,6 +274,9 @@
 						CreatedOnToolsVersion = 9.4.1;
 						ProvisioningStyle = Automatic;
 					};
+					CBD5357E23B46CE500D3A404 = {
+						CreatedOnToolsVersion = 11.3;
+					};
 				};
 			};
 			buildConfigurationList = CB1FD48C2046984F00931B5F /* Build configuration list for PBXProject "MMKV" */;
@@ -314,13 +290,30 @@
 			mainGroup = CB1FD4882046984F00931B5F;
 			productRefGroup = CB1FD4922046984F00931B5F /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = CB6F6BFD23ACCF47000351EA /* Products */;
+					ProjectRef = CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				CB1FD4902046984F00931B5F /* MMKV Static */,
 				CBC1A8F520DA946200AD5087 /* MMKV */,
+				CBD5357E23B46CE500D3A404 /* MMKV For App Extension */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		CB6F6C0123ACCF47000351EA /* libCore.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libCore.a;
+			remoteRef = CB6F6C0023ACCF47000351EA /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CBC1A8F420DA946200AD5087 /* Resources */ = {
@@ -337,19 +330,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CBD1A8FE2244CE6B00BCC0F3 /* openssl_cfb128.cpp in Sources */,
-				CB1FD4C320469B8800931B5F /* MiniCodedOutputData.mm in Sources */,
-				CB8FD91C21F1B8C10005EE8F /* MMKVLog.mm in Sources */,
-				CB1FD4962046984F00931B5F /* MMKV.mm in Sources */,
-				CB1FD4C520469B8800931B5F /* MiniPBUtility.mm in Sources */,
-				CBD1A8F92244CE6B00BCC0F3 /* openssl_aes_cfb.cpp in Sources */,
-				CB1FD4C420469B8800931B5F /* MiniCodedInputData.mm in Sources */,
-				CBD1A9032244CE6B00BCC0F3 /* openssl_md5_dgst.cpp in Sources */,
-				CB865F5620FF33F600427B9D /* MemoryFile.mm in Sources */,
-				CBD1A8FB2244CE6B00BCC0F3 /* openssl_md5_one.cpp in Sources */,
-				CB6DEFB4212E6F010024F0E8 /* AESCrypt.mm in Sources */,
-				CBD1A8F72244CE6B00BCC0F3 /* openssl_aes_core.cpp in Sources */,
-				CB1FD4C620469B8800931B5F /* MiniPBCoder.mm in Sources */,
+				CB1FD4962046984F00931B5F /* libMMKV.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -357,23 +338,42 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CBD1A8FF2244CE6B00BCC0F3 /* openssl_cfb128.cpp in Sources */,
-				CBC1A8FE20DA948A00AD5087 /* MiniCodedInputData.mm in Sources */,
-				CB8FD91D21F1B8C10005EE8F /* MMKVLog.mm in Sources */,
-				CBC1A8FF20DA948A00AD5087 /* MiniCodedOutputData.mm in Sources */,
-				CBC1A90020DA948A00AD5087 /* MiniPBCoder.mm in Sources */,
-				CBD1A8FA2244CE6B00BCC0F3 /* openssl_aes_cfb.cpp in Sources */,
-				CBC1A90120DA948A00AD5087 /* MiniPBUtility.mm in Sources */,
-				CBD1A9042244CE6B00BCC0F3 /* openssl_md5_dgst.cpp in Sources */,
-				CB865F5720FF33F600427B9D /* MemoryFile.mm in Sources */,
-				CBD1A8FC2244CE6B00BCC0F3 /* openssl_md5_one.cpp in Sources */,
-				CB6DEFB5212E6F010024F0E8 /* AESCrypt.mm in Sources */,
-				CBD1A8F82244CE6B00BCC0F3 /* openssl_aes_core.cpp in Sources */,
-				CBC1A90220DA948A00AD5087 /* MMKV.mm in Sources */,
+				CBC1A90220DA948A00AD5087 /* libMMKV.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CBD5357B23B46CE500D3A404 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CBD5358823B46D0D00D3A404 /* libMMKV.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CB6F6C0423ACCF58000351EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Core;
+			targetProxy = CB6F6C0323ACCF58000351EA /* PBXContainerItemProxy */;
+		};
+		CB6F6C0723ACCF65000351EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Core;
+			targetProxy = CB6F6C0623ACCF65000351EA /* PBXContainerItemProxy */;
+		};
+		CBD5359523B46EB300D3A404 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Core;
+			targetProxy = CBD5359423B46EB300D3A404 /* PBXContainerItemProxy */;
+		};
+		CBF344FE23B4A3E300168AC7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CB1FD4902046984F00931B5F /* MMKV Static */;
+			targetProxy = CBF344FD23B4A3E300168AC7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		CB1FD4982046984F00931B5F /* Debug */ = {
@@ -382,7 +382,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -426,7 +426,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
@@ -442,7 +443,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -480,7 +481,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
 				VALIDATE_PRODUCT = YES;
@@ -510,6 +512,7 @@
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64 armv7";
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 			};
 			name = Debug;
@@ -518,6 +521,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = "NDEBUG=1";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "-ObjC";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
@@ -556,7 +560,11 @@
 				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MARKETING_VERSION = 1.0.24;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
@@ -592,11 +600,16 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GENERATE_MASTER_OBJECT_FILE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MARKETING_VERSION = 1.0.24;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
@@ -615,6 +628,55 @@
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		CBD5358523B46CE500D3A404 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					MMKV_IOS_EXTENSION,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 x86_64";
+				"VALID_ARCHS[sdk=iphoneos*]" = arm64;
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
+			};
+			name = Debug;
+		};
+		CBD5358623B46CE500D3A404 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					MMKV_IOS_EXTENSION,
+					NDEBUG,
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_FAST_MATH = YES;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "";
+				"VALID_ARCHS[sdk=iphoneos*]" = arm64;
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 			};
 			name = Release;
 		};
@@ -644,6 +706,15 @@
 			buildConfigurations = (
 				CBC1A8FC20DA946200AD5087 /* Debug */,
 				CBC1A8FD20DA946200AD5087 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CBD5358723B46CE500D3A404 /* Build configuration list for PBXNativeTarget "MMKV For App Extension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CBD5358523B46CE500D3A404 /* Debug */,
+				CBD5358623B46CE500D3A404 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
