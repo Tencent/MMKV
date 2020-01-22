@@ -21,19 +21,71 @@
 #import "AppDelegate.h"
 #import <MMKV/MMKV.h>
 
-@interface AppDelegate ()
+@interface AppDelegate () <MMKVHandler>
 
 @end
 
 @implementation AppDelegate
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Override point for customization after application launch.
+#pragma mark - init MMKV in the main thread
 
-    // init MMKV in the main thread
-    [MMKV initializeMMKV:nil];
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+    // usally you can just init MMKV with default root dir like this
+    //[MMKV initializeMMKV:nil];
+
+    // or you can customize MMKV's root dir & group dir
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+    NSString *libraryPath = (NSString *) [paths firstObject];
+    if ([libraryPath length] > 0) {
+        NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
+        NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.lingol.mmkv"].path;
+
+        // you can turn off logging by passing MMKVLogNone
+        [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:MMKVLogInfo];
+    }
+
+    // register handler
+    [MMKV registerHandler:self];
 
     return YES;
+}
+
+#pragma mark - MMKVHandler
+
+- (MMKVRecoverStrategic)onMMKVCRCCheckFail:(NSString *)mmapID {
+    return MMKVOnErrorRecover;
+}
+
+- (MMKVRecoverStrategic)onMMKVFileLengthError:(NSString *)mmapID {
+    return MMKVOnErrorRecover;
+}
+
+- (void)onMMKVContentChange:(NSString *)mmapID {
+    NSLog(@"onMMKVContentChange: %@", mmapID);
+}
+
+- (void)mmkvLogWithLevel:(MMKVLogLevel)level file:(const char *)file line:(int)line func:(const char *)funcname message:(NSString *)message {
+    const char *levelDesc = NULL;
+    switch (level) {
+        case MMKVLogDebug:
+            levelDesc = "D";
+            break;
+        case MMKVLogInfo:
+            levelDesc = "I";
+            break;
+        case MMKVLogWarning:
+            levelDesc = "W";
+            break;
+        case MMKVLogError:
+            levelDesc = "E";
+            break;
+        default:
+            levelDesc = "N";
+            break;
+    }
+
+    NSLog(@"redirect logging [%s] <%s:%d::%s> %@", levelDesc, file, line, funcname, message);
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {

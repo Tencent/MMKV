@@ -82,13 +82,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         MMKVWarning("already called +initializeMMKV before, ignore this request");
         return [self mmkvBasePath];
     }
+    g_hasCalledInitializeMMKV = YES;
 
     g_basePath = (rootDir != nil) ? rootDir : [self mmkvBasePath];
     mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
-
-    MMKVInfo("pagesize:%zu", mmkv::DEFAULT_MMAP_SIZE);
-
-    g_hasCalledInitializeMMKV = YES;
 
     return [self mmkvBasePath];
 }
