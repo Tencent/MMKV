@@ -41,3 +41,6 @@ cmake-build-release/
 
 #CLion
 .idea
+
+#Android Studio
+.cxx
