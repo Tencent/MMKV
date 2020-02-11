@@ -1,11 +1,11 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
 [![Release Version](https://img.shields.io/badge/release-1.1.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20iOS%20%7C%20Android-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Win32%20%7C%20POSIX-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./readme_cn.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows** and **POSIX**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Win32** and **POSIX**.
 
 # MMKV for Android
 
@@ -134,7 +134,7 @@ Writing random `int` for 10000 times, we get this chart:
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
 
 
-# MMKV for Windows
+# MMKV for Win32
 
 ## Features
 
@@ -170,7 +170,7 @@ note:
 1. MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or vise versa.
 2. MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
 
-For other installation options, see [Windows Setup](https://github.com/Tencent/MMKV/wiki/windows_setup).
+For other installation options, see [Win32 Setup](https://github.com/Tencent/MMKV/wiki/windows_setup).
 
 ### Quick Tutorial
 You can use MMKV as you go. All changes are saved immediately, no `sync`, no `save` calls needed.  
@@ -203,20 +203,20 @@ mmkv->getString("string", result);
 std::cout << "string = " << result << std::endl;
 ```
 
-MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Windows Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial).
+MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Win32 Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial).
 
 # MMKV for POSIX
 
 ## Features
 
-* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of Windows to achieve best performance.
+* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of POSIX to achieve best performance.
   * **Multi-Process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
 
 * **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `save`, no `sync` calls needed.
 
 * **Small**.
   * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
-  * **About 10K in binary size**: MMKV adds about 10K on application size, and much less when zipped.
+  * **About 7K in binary size**: MMKV adds about 7K on application size, and much less when zipped.
 
 
 ## Getting Started
@@ -227,12 +227,24 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found here [W
    ```
    git clone https://github.com/Tencent/MMKV.git
    ```
-2. CMake.
-3. Add `#include <MMKV/MMKV.h>` to your source file and we are done.
+2. Edit your `CMakeList.txt`, add those lines:
 
-note:  
+	```cmake
+	add_subdirectory(mmkv/POSIX/src mmkv)
+	target_link_libraries(MyApp
+        mmkv)
+	```
+	You can test MMKV by building & running the demo project:
 
-1. zlib.
+	```bash
+	cd mmkv/POSIX
+	mkdir cmake-build-release
+	cd cmake-build-release
+	cmake -DCMAKE_BUILD_TYPE=Release ..
+	make
+	cd demo && ./demo
+	```
+3. Add `#include "MMKV.h"` to your source file and we are done.
 
 For other installation options, see [POSIX Setup](https://github.com/Tencent/MMKV/wiki/posix_setup).
 
@@ -241,7 +253,7 @@ You can use MMKV as you go. All changes are saved immediately, no `sync`, no `sa
 Setup MMKV on App startup, say in your `main()`, add these lines:
 
 ```C++
-#include <MMKV/MMKV.h>
+#include "MMKV.h"
 
 int main() {
     std::string rootDir = getYourAppDocumentDir();
