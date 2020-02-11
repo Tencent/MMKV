@@ -182,7 +182,7 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Win32 Tutorial](https
      git clone https://github.com/Tencent/MMKV.git
      ```
   
-  2. 打开你项目的 `CMakeList.txt`, 添加这几行:
+  2. 打开你项目的 `CMakeLists.txt`, 添加这几行:
 
 	```cmake
 	add_subdirectory(mmkv/POSIX/src mmkv)

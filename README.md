@@ -227,7 +227,7 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found here [W
    ```
    git clone https://github.com/Tencent/MMKV.git
    ```
-2. Edit your `CMakeList.txt`, add those lines:
+2. Edit your `CMakeLists.txt`, add those lines:
 
 	```cmake
 	add_subdirectory(mmkv/POSIX/src mmkv)
