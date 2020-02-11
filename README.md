@@ -221,7 +221,7 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found here [W
 
 ## Getting Started
 
-### Installation Via Source
+### Installation Via CMake
 1. Getting source code from git repository:
   
    ```
@@ -238,8 +238,8 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found here [W
 
 	```bash
 	cd mmkv/POSIX
-	mkdir cmake-build-release
-	cd cmake-build-release
+	mkdir build
+	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 	cd demo && ./demo

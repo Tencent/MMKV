@@ -176,6 +176,8 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Win32 Tutorial](https
 
 ## POSIX 指南
 ### 安装引入
+推荐使用 CMake：
+
   1. 获取 MMKV 源码：
   
      ```
@@ -194,8 +196,8 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Win32 Tutorial](https
 
 	```bash
 	cd mmkv/POSIX
-	mkdir cmake-build-release
-	cd cmake-build-release
+	mkdir build
+	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 	cd demo && ./demo

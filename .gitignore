@@ -38,6 +38,7 @@ cmake_install.cmake
 Linux/Makefile
 cmake-build-debug/
 cmake-build-release/
+build/
 
 #CLion
 .idea
