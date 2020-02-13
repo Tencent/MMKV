@@ -165,7 +165,7 @@ MMBuffer MiniPBCoder::getEncodeData(const MMKVMap &map) {
         writeRootObject();
     }
 
-    return std::move(*m_outputBuffer);
+    return move(*m_outputBuffer);
 }
 
 #ifndef MMKV_IOS_OR_MAC
