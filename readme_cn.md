@@ -203,7 +203,7 @@ MMKV 的使用非常简单，所有变更立马生效，无需调用 `save`、`s
 #include "MMKV.h"
 
 int main() {
-    std::wstring rootDir = getYourAppDocumentDir();
+    std::string rootDir = getYourAppDocumentDir();
     MMKV::initializeMMKV(rootDir);
     //...
 }
