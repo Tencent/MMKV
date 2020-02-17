@@ -229,21 +229,11 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found here [W
    ```
 2. Edit your `CMakeLists.txt`, add those lines:
 
-	```cmake
-	add_subdirectory(mmkv/POSIX/src mmkv)
-	target_link_libraries(MyApp
+    ```cmake
+    add_subdirectory(mmkv/POSIX/src mmkv)
+    target_link_libraries(MyApp
         mmkv)
-	```
-	You can test MMKV by building & running the demo project:
-
-	```bash
-	cd mmkv/POSIX
-	mkdir build
-	cd build
-	cmake -DCMAKE_BUILD_TYPE=Release ..
-	make
-	cd demo && ./demo
-	```
+    ```
 3. Add `#include "MMKV.h"` to your source file and we are done.
 
 For other installation options, see [POSIX Setup](https://github.com/Tencent/MMKV/wiki/posix_setup).

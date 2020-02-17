@@ -185,22 +185,11 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Win32 Tutorial](https
   
   2. 打开你项目的 `CMakeLists.txt`, 添加这几行:
 
-	```cmake
-	add_subdirectory(mmkv/POSIX/src mmkv)
-	target_link_libraries(MyApp
+    ```cmake
+    add_subdirectory(mmkv/POSIX/src mmkv)
+    target_link_libraries(MyApp
         mmkv)
-	```
-
-	你也可以编译运行 demo 工程来测试 MMKV：
-
-	```bash
-	cd mmkv/POSIX
-	mkdir build
-	cd build
-	cmake -DCMAKE_BUILD_TYPE=Release ..
-	make
-	cd demo && ./demo
-	```
+    ```
  3. 添加头文件 `#include "MMKV.h"`，就可以愉快地开始你的 MMKV 之旅了。
 
 更多安装指引参考 [POSIX Setup](https://github.com/Tencent/MMKV/wiki/posix_setup_cn)。
