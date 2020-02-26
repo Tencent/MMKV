@@ -1,6 +1,6 @@
 # MMKV Change Log
 
-## v1.1.0 / 2020-02-xx
+## v1.1.0 / 2020-03-xx
 This is the first **major breaking version** ever since MMKV was made public in September 2018, introducing bunches of improvement.  
 
 * **Improved File Recovery Strategic**. We store the CRC checksum & actual file size on each sync operation & full write back, plus storing the actual file size in the same file(aka the .crc meta file) as the CRC checksum. Base on our usage inside WeChat on iOS platform, it cuts the file **corruption rate down by almost half**.
