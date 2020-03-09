@@ -84,6 +84,26 @@ enum : bool {
 
 #pragma mark - init
 
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
++ (BOOL)isAppExtension {
+    static BOOL isAppExtension = NO;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class cls = NSClassFromString(@"UIApplication");
+        if(!cls || ![cls respondsToSelector:@selector(sharedApplication)]) isAppExtension = YES;
+        if ([[[NSBundle mainBundle] bundlePath] hasSuffix:@".appex"]) isAppExtension = YES;
+    });
+    return isAppExtension;
+}
+
++ (UIApplication *)sharedExtensionApplication {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+    return [self isAppExtension] ? nil : [UIApplication performSelector:@selector(sharedApplication)];
+#pragma clang diagnostic pop
+}
+#endif
+
 + (void)initialize {
 	if (self == MMKV.class) {
 		g_instanceDic = [NSMutableDictionary dictionary];
@@ -93,7 +113,7 @@ enum : bool {
 		MMKVInfo(@"pagesize:%d", DEFAULT_MMAP_SIZE);
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-		auto appState = [UIApplication sharedApplication].applicationState;
+		auto appState = [self sharedExtensionApplication].applicationState;
 		g_isInBackground = (appState == UIApplicationStateBackground);
 		MMKVInfo(@"g_isInBackground:%d, appState:%ld", g_isInBackground, appState);
 
