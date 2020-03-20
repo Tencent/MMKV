@@ -67,6 +67,15 @@ bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded
     auto ret = fcntl(m_fd, cmd, &m_lockInfo);
     if (ret != 0) {
         MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        // try recover my shared-lock
+        if (unLockFirstIfNeeded) {
+            m_lockInfo.l_type = LockType2FlockType(SharedLockType);
+            ret = fcntl(m_fd, cmd, &m_lockInfo);
+            if (ret != 0) {
+                // let's hope this never happen
+                MMKVError("fail to recover shared-lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+            }
+        }
         return false;
     } else {
         return true;

@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include "InterProcessLock.h"
 #include "MMKV.h"
 #include <iostream>
 #include <pthread.h>
@@ -32,6 +33,7 @@ using namespace mmkv;
 
 sem_t *semEnded = nullptr;
 int threadIndex = 0;
+FileLock *flockPtr = nullptr;
 
 void *threadFunction(void *lpParam) {
     auto sem = (sem_t *) lpParam;
@@ -39,9 +41,11 @@ void *threadFunction(void *lpParam) {
     auto index = threadIndex;
     cout << "Thread " << index << " started" << endl;
 
-    auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
+    //auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
     // this should hold forever
-    mmkv->count();
+    //mmkv->count();
+    flockPtr->lock(SharedLockType);
+    //flockPtr->unlock(SharedLockType);
 
     // something is wrong with inter-process lock
     sem_post(semEnded);
@@ -52,7 +56,9 @@ void *threadFunction(void *lpParam) {
 bool threadTest() {
     sem_t *semParent = sem_open("mmkv_main", O_CREAT, 0644, 0);
 
-    auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
+    //auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
+    auto fd = open("/tmp/mmkv/TestInterProcessLock.file", O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+    flockPtr = new FileLock(fd);
 
     sem_post(semParent);
     cout << "Waiting for parent..." << endl;
@@ -72,8 +78,16 @@ bool threadTest() {
     }
     sem_close(semStarted);
 
+    cout << "Waiting for any child exit..." << endl;
+    usleep(1000);
     auto ret = sem_trywait(semEnded);
     sem_close(semEnded);
+    cout << "Any child exit: " << (ret == 0) << endl;
+
+    delete flockPtr;
+    flockPtr = nullptr;
+    //close(fd);
+
     return (ret != 0);
 }
 
@@ -85,9 +99,10 @@ int main() {
     MMKV::initializeMMKV(rootDir);
 
     auto processID = getpid();
-    cout << "TestInterProcessLock:" << processID << ": started\n";
+    cout << "TestInterProcessLock:" << processID << " started\n";
     auto ret = threadTest();
-    cout << "TestInterProcessLock:" << processID << ": ended\n";
+    cout << "TestInterProcessLock: " << (ret ? "pass" : "failed") << endl;
+    cout << "TestInterProcessLock:" << processID << " ended\n";
 
-    return ret ? 0 : -1;
+    return 0;
 }

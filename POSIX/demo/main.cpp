@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+#include "InterProcessLock.h"
 #include "MMKV.h"
 #include <chrono>
 #include <cstdio>
@@ -195,6 +196,9 @@ void testInterProcessLock() {
     auto mmkv = MMKV::mmkvWithID("TestInterProcessLock", MMKV_MULTI_PROCESS);
     mmkv->set(true, "bool");
 
+    auto fd = open("/tmp/mmkv/TestInterProcessLock.file", O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+    FileLock flock(fd);
+
     auto pid = fork();
     // this is child
     if (pid <= 0) {
@@ -207,21 +211,20 @@ void testInterProcessLock() {
     sem_wait(sem);
     printf("Child %d to started\n", pid);
 
-    mmkv->clearAll();
-    mmkv->lock();
+    //mmkv->clearAll();
+    //mmkv->lock();
+    flock.lock(ExclusiveLockType);
 
     sem_post(sem);
     sem_close(sem);
 
     printf("Waiting for child %d to finish...\n", pid);
-    int status = 0;
-    waitpid(pid, &status, 0);
-    if (WIFEXITED(status)) {
-        const int es = WEXITSTATUS(status);
-        printf("child %d exit with %d\n", pid, es);
-    }
+    waitpid(pid, nullptr, 0);
+    printf("Child %d to finished\n", pid);
 
     mmkv->unlock();
+    flock.unlock(ExclusiveLockType);
+    close(fd);
 }
 
 void cornetSizeTest() {

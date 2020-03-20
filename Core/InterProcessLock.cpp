@@ -42,15 +42,15 @@ bool FileLock::doLock(LockType lockType, bool wait) {
     bool unLockFirstIfNeeded = false;
 
     if (lockType == SharedLockType) {
-        m_sharedLockCount++;
         // don't want shared-lock to break any existing locks
-        if (m_sharedLockCount > 1 || m_exclusiveLockCount > 0) {
+        if (m_sharedLockCount > 0 || m_exclusiveLockCount > 0) {
+            m_sharedLockCount++;
             return true;
         }
     } else {
-        m_exclusiveLockCount++;
         // don't want exclusive-lock to break existing exclusive-locks
-        if (m_exclusiveLockCount > 1) {
+        if (m_exclusiveLockCount > 0) {
+            m_exclusiveLockCount++;
             return true;
         }
         // prevent deadlock
@@ -58,7 +58,16 @@ bool FileLock::doLock(LockType lockType, bool wait) {
             unLockFirstIfNeeded = true;
         }
     }
-    return platformLock(lockType, wait, unLockFirstIfNeeded);
+
+    auto ret = platformLock(lockType, wait, unLockFirstIfNeeded);
+    if (ret) {
+        if (lockType == SharedLockType) {
+            m_sharedLockCount++;
+        } else {
+            m_exclusiveLockCount++;
+        }
+    }
+    return ret;
 }
 
 #ifndef MMKV_WIN32
@@ -87,7 +96,7 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
         if (ret == 0) {
             return true;
         }
-        // lets be gentleman: unlock my shared-lock to prevent deadlock
+        // let's be gentleman: unlock my shared-lock to prevent deadlock
         ret = flock(m_fd, LOCK_UN);
         if (ret != 0) {
             MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
@@ -97,6 +106,14 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
     auto ret = flock(m_fd, cmd);
     if (ret != 0) {
         MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        // try recover my shared-lock
+        if (unLockFirstIfNeeded) {
+            ret = flock(m_fd, LockType2FlockType(SharedLockType));
+            if (ret != 0) {
+                // let's hope this never happen
+                MMKVError("fail to recover shared-lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+            }
+        }
         return false;
     } else {
         return true;
@@ -131,17 +148,17 @@ bool FileLock::unlock(LockType lockType) {
         if (m_sharedLockCount == 0) {
             return false;
         }
-        m_sharedLockCount--;
         // don't want shared-lock to break any existing locks
-        if (m_sharedLockCount > 0 || m_exclusiveLockCount > 0) {
+        if (m_sharedLockCount > 1 || m_exclusiveLockCount > 0) {
+            m_sharedLockCount--;
             return true;
         }
     } else {
         if (m_exclusiveLockCount == 0) {
             return false;
         }
-        m_exclusiveLockCount--;
-        if (m_exclusiveLockCount > 0) {
+        if (m_exclusiveLockCount > 1) {
+            m_exclusiveLockCount--;
             return true;
         }
         // restore shared-lock when all exclusive-locks are done
@@ -149,7 +166,16 @@ bool FileLock::unlock(LockType lockType) {
             unlockToSharedLock = true;
         }
     }
-    return platformUnLock(unlockToSharedLock);
+
+    auto ret = platformUnLock(unlockToSharedLock);
+    if (ret) {
+        if (lockType == SharedLockType) {
+            m_sharedLockCount--;
+        } else {
+            m_exclusiveLockCount--;
+        }
+    }
+    return ret;
 }
 
 } // namespace mmkv
