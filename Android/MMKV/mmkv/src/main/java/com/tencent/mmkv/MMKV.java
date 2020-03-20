@@ -576,8 +576,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @Override
     public Map<String, ?> getAll() {
-        throw new java.lang.UnsupportedOperationException(
-            "use allKeys() instead, getAll() not implement because type-erasure inside mmkv");
+         Map<String, ?> map = getAllN();
+        if(map == null){
+            map = new HashMap<>();
+        }
+        return  map;
     }
 
     @Nullable
@@ -897,4 +900,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static native void destroyNB(long pointer, int size);
 
     private native int writeValueToNB(long handle, String key, long pointer, int size);
+
+    private native Map<String, ?> getAllN();
 }

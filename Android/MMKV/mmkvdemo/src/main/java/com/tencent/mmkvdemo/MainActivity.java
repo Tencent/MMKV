@@ -40,8 +40,12 @@ import com.tencent.mmkv.MMKVLogLevel;
 import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.NativeBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.jetbrains.annotations.Nullable;
 
 public class MainActivity
@@ -98,14 +102,36 @@ public class MainActivity
         final Button button_read_int = findViewById(R.id.button_read_int);
         button_read_int.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                interProcessBaselineTest(BenchMarkBaseService.CMD_READ_INT);
+//                interProcessBaselineTest(BenchMarkBaseService.CMD_READ_INT);
+//                final int testInt = MMKV.defaultMMKV().decodeInt("testInt", -1);
+//                final String testInt = MMKV.defaultMMKV().decodeString("testString", "null");
+//                final byte[] testInt = MMKV.defaultMMKV().decodeBytes("testbyte", new byte[0]);
+//                final boolean testInt = MMKV.defaultMMKV().decodeBool("testBool", false);
+//                final double testInt = MMKV.defaultMMKV().decodeDouble("testDouble", 0);
+//                final float testInt = MMKV.defaultMMKV().decodeFloat("testFloat", 0.1f);
+//                final float testInt = MMKV.defaultMMKV().decodeLong("testLong", 1l);
+//                final Set<String> testInt = MMKV.defaultMMKV().decodeStringSet("testSet", new HashSet<String>());
+
+                final TestParcelable all = MMKV.defaultMMKV().decodeParcelable("testParcel", TestParcelable.class);
+//                final Map<String, ?> all = MMKV.defaultMMKV().getAll();
+
+                System.out.println("====>"+all);
             }
         });
 
         final Button button_write_int = findViewById(R.id.button_write_int);
         button_write_int.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                interProcessBaselineTest(BenchMarkBaseService.CMD_WRITE_INT);
+//                interProcessBaselineTest(BenchMarkBaseService.CMD_WRITE_INT);
+                final HashSet<String> strings = new HashSet<>();
+                strings.add("1");
+                strings.add("sire");
+                strings.add("test");
+//                MMKV.defaultMMKV().encode("testbyte",new byte[]{1,23,4});
+//                MMKV.defaultMMKV().encode("testInt",32);
+//                MMKV.defaultMMKV().encode("testSet",strings);
+//                MMKV.defaultMMKV().encode("testBool",false);
+                MMKV.defaultMMKV().encode("testParcel",new TestParcelable(30,"ff"));
             }
         });
 
@@ -123,20 +149,20 @@ public class MainActivity
             }
         });
 
-        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
-        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false, otherDir);
-        if (kv != null) {
-            kv.checkContentChangedByOuterProcess();
-            kv.close();
-        }
+//        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
+//        MMKV kv = testMMKV("test/AES", "Tencent MMKV", false, otherDir);
+//        if (kv != null) {
+//            kv.checkContentChangedByOuterProcess();
+//            kv.close();
+//        }
 
-        testAshmem();
-        testReKey();
-
-        KotlinUsecaseKt.kotlinFunctionalTest();
-
-        testInterProcessLogic();
-        testImportSharedPreferences();
+//        testAshmem();
+//        testReKey();
+//
+//        KotlinUsecaseKt.kotlinFunctionalTest();
+//
+//        testInterProcessLogic();
+//        testImportSharedPreferences();
         //testInterProcessLockPhase1();
         //testCornerSize();
         //testFastRemoveCornerSize();

@@ -35,7 +35,7 @@ class CodedOutputData;
 class MiniPBCoder {
     const MMBuffer *m_inputBuffer;
     CodedInputData *m_inputData;
-
+    uint8_t m_explain = 0;
     MMBuffer *m_outputBuffer;
     CodedOutputData *m_outputData;
     std::vector<PBEncodeItem> *m_encodeItems;
@@ -48,6 +48,7 @@ private:
     void writeRootObject();
     size_t prepareObjectForEncode(const std::string &str);
     size_t prepareObjectForEncode(const MMBuffer &buffer);
+    size_t prepareObjectForEncodeBytes(const MMBuffer &buffer);
     size_t prepareObjectForEncode(const std::vector<std::string> &vector);
     size_t prepareObjectForEncode(const std::unordered_map<std::string, MMBuffer> &map);
 
@@ -63,17 +64,18 @@ private:
 
 public:
     template <typename T>
-    static MMBuffer encodeDataWithObject(const T &obj) {
+    static MMBuffer encodeDataWithObject(const T &obj,const uint8_t m_explain = 0) {
         MiniPBCoder pbcoder;
+        pbcoder.m_explain = m_explain;
         return pbcoder.getEncodeData(obj);
     }
 
-    static std::string decodeString(const MMBuffer &oData);
-    static MMBuffer decodeBytes(const MMBuffer &oData);
-    static std::vector<std::string> decodeSet(const MMBuffer &oData);
+    static std::string decodeString(const MMBuffer &oData,const uint8_t m_explain = 0);
+    static MMBuffer decodeBytes(const MMBuffer &oData,const uint8_t m_explain = 0);
+    static std::vector<std::string> decodeSet(const MMBuffer &oData,const uint8_t m_explain = 0);
     static void decodeMap(std::unordered_map<std::string, MMBuffer> &dic,
                           const MMBuffer &oData,
-                          size_t size = 0);
+                          size_t size = 0,const uint8_t m_explain = 0);
 };
 
 #endif //MMKV_MINIPBCODER_H

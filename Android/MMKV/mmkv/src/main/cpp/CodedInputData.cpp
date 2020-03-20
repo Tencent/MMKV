@@ -22,7 +22,8 @@
 #include "MMKVLog.h"
 #include "PBUtility.h"
 #include <limits.h>
-
+#include <iostream>
+#include "ValueType.h"
 using namespace std;
 
 CodedInputData::CodedInputData(const void *oData, int32_t length)
@@ -38,9 +39,19 @@ CodedInputData::~CodedInputData() {
 double CodedInputData::readDouble() {
     return Int64ToFloat64(this->readRawLittleEndian64());
 }
+double CodedInputData::readValueDouble() {
+    ValueType  type = static_cast<ValueType>(this->readRawByte());
+    cout << "int type "<< type;
+    return readDouble();
+}
 
 float CodedInputData::readFloat() {
     return Int32ToFloat32(this->readRawLittleEndian32());
+}
+float CodedInputData::readValueFloat() {
+    ValueType  type = static_cast<ValueType>(this->readRawByte());
+    cout << "int type "<< type;
+    return readFloat();
 }
 
 int64_t CodedInputData::readInt64() {
@@ -57,6 +68,17 @@ int64_t CodedInputData::readInt64() {
     MMKVError("InvalidProtocolBuffer malformedInt64");
     return 0;
 }
+int64_t CodedInputData::readValueInt64() {
+    ValueType  type = static_cast<ValueType>(this->readRawByte());
+    cout << "int type "<< type;
+    return readInt64();
+}
+
+int32_t CodedInputData::readValueInt32() {
+    ValueType  type = static_cast<ValueType>(this->readRawByte());
+    cout << "int type "<< type;
+    return this->readInt32();
+}
 
 int32_t CodedInputData::readInt32() {
     return this->readRawVarint32();
@@ -68,6 +90,16 @@ int32_t CodedInputData::readFixed32() {
 
 bool CodedInputData::readBool() {
     return this->readRawVarint32() != 0;
+}
+bool CodedInputData::readValueBool() {
+    ValueType  type = static_cast<ValueType>(this->readRawByte());
+    cout << "int type "<< type;
+    return readBool();
+}
+string CodedInputData::readValueString() {
+    ValueType  type = static_cast<ValueType>(this->readRawByte());
+    cout << "int type "<< type;
+    return readString();
 }
 
 string CodedInputData::readString() {
@@ -99,6 +131,11 @@ MMBuffer CodedInputData::readData() {
         MMKVError("InvalidProtocolBuffer truncatedMessage");
         return MMBuffer(0);
     }
+}
+MMBuffer CodedInputData::readValueData() {
+    ValueType  type = static_cast<ValueType>(this->readRawByte());
+    cout << "int type "<< type;
+    return readData();
 }
 
 int32_t CodedInputData::readRawVarint32() {

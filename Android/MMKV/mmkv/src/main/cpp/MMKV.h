@@ -25,11 +25,13 @@
 #include "MMKVMetaInfo.hpp"
 #include "MmapedFile.h"
 #include "ThreadLock.h"
+#include "ValueType.h"
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <jni.h>
 
 class CodedOutputData;
 class MMBuffer;
@@ -239,6 +241,12 @@ public:
     void lock() { m_exclusiveProcessLock.lock(); }
     void unlock() { m_exclusiveProcessLock.unlock(); }
     bool try_lock() { return m_exclusiveProcessLock.try_lock(); }
+
+    jobject getAll(JNIEnv *env);
+
+    ValueType valueType(const MMBuffer &buffer);
+
+    jobject decodeWithType(JNIEnv *env,ValueType &valueType,std::string &key);
 };
 
 #endif // MMKV_MMKV_H

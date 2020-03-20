@@ -31,6 +31,7 @@ struct MMKVMetaInfo {
     uint32_t m_version = 1;
     uint32_t m_sequence = 0; // full write-back count
     unsigned char m_vector[AES_KEY_LEN] = {0};
+    uint8_t m_explain = 0;
 
     void write(void *ptr) {
         assert(ptr);
@@ -40,6 +41,11 @@ struct MMKVMetaInfo {
     void read(const void *ptr) {
         assert(ptr);
         memcpy(this, ptr, sizeof(MMKVMetaInfo));
+        if(m_crcDigest == 0 && m_version == 0 && m_sequence == 0){
+            //new file
+            m_explain = 1;
+        }
+
     }
 };
 

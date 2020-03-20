@@ -21,6 +21,7 @@
 #include "CodedOutputData.h"
 #include "MMKVLog.h"
 #include "PBUtility.h"
+#include "ValueType.h"
 
 using namespace std;
 
@@ -37,13 +38,25 @@ CodedOutputData::~CodedOutputData() {
 void CodedOutputData::writeDouble(double value) {
     this->writeRawLittleEndian64(Float64ToInt64(value));
 }
+void CodedOutputData::writeValueDouble(double value) {
+    this->writeRawByte(Double);
+    this->writeDouble(value);
+}
 
 void CodedOutputData::writeFloat(float value) {
     this->writeRawLittleEndian32(Float32ToInt32(value));
 }
+void CodedOutputData::writeValueFloat(float value) {
+    this->writeRawByte(Float);
+    writeFloat(value);
+}
 
 void CodedOutputData::writeInt64(int64_t value) {
     this->writeRawVarint64(value);
+}
+void CodedOutputData::writeValueInt64(int64_t value) {
+    this->writeRawByte(Long);
+    writeInt64(value);
 }
 
 void CodedOutputData::writeInt32(int32_t value) {
@@ -53,9 +66,22 @@ void CodedOutputData::writeInt32(int32_t value) {
         this->writeRawVarint64(value);
     }
 }
+void CodedOutputData::writeValueInt32(int32_t value) {
+    this->writeRawByte(Integer);
+    writeInt32(value);
+}
 
 void CodedOutputData::writeBool(bool value) {
     this->writeRawByte(static_cast<uint8_t>(value ? 1 : 0));
+}
+void CodedOutputData::writeValueBool(bool value) {
+    this->writeRawByte(Boolean);
+    writeBool(value);
+}
+
+void CodedOutputData::writeValueString(const string &value) {
+    this->writeRawByte(String);
+    writeString(value);
 }
 
 void CodedOutputData::writeString(const string &value) {
@@ -68,6 +94,11 @@ void CodedOutputData::writeString(const string &value) {
     }
     memcpy(m_ptr + m_position, ((uint8_t *) value.data()), numberOfBytes);
     m_position += numberOfBytes;
+}
+
+void CodedOutputData::writeValueData(const MMBuffer &value) {
+    this->writeRawByte(Bytes);
+    writeData(value);
 }
 
 void CodedOutputData::writeData(const MMBuffer &value) {

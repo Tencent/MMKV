@@ -30,8 +30,6 @@ class CodedInputData {
     int32_t m_size;
     int32_t m_position;
 
-    int8_t readRawByte();
-
     int32_t readRawVarint32();
 
     int32_t readRawLittleEndian32();
@@ -46,20 +44,29 @@ public:
     bool isAtEnd() { return m_position == m_size; };
 
     bool readBool();
+    bool readValueBool();
 
     double readDouble();
+    double readValueDouble();
 
     float readFloat();
+    float readValueFloat();
 
     int64_t readInt64();
+    int64_t readValueInt64();
 
     int32_t readInt32();
+    int32_t readValueInt32();
 
     int32_t readFixed32();
 
     std::string readString();
+    std::string readValueString();
 
     MMBuffer readData();
+    MMBuffer readValueData();
+
+    int8_t readRawByte();
 };
 
 #endif //MMKV_CODEDINPUTDATA_H

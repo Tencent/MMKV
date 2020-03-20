@@ -52,18 +52,25 @@ public:
     void writeRawData(const MMBuffer &data);
 
     void writeDouble(double value);
+    void writeValueDouble(double value);
 
     void writeFloat(float value);
+    void writeValueFloat(float value);
 
     void writeInt64(int64_t value);
+    void writeValueInt64(int64_t value);
 
     void writeInt32(int32_t value);
+    void writeValueInt32(int32_t value);
 
     void writeBool(bool value);
+    void writeValueBool(bool value);
 
     void writeString(const std::string &value);
+    void writeValueString(const std::string &value);
 
     void writeData(const MMBuffer &value);
+    void writeValueData(const MMBuffer &value);
 };
 
 #endif //MMKV_CODEDOUTPUTDATA_H

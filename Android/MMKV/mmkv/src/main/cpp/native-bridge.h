@@ -22,6 +22,10 @@
 #define MMKV_NATIVE_BRIDGE_H
 
 #include <string>
+#include <jni.h>
+#include <__locale>
+#include <locale>
+#include "MMBuffer.h"
 
 enum MMKVRecoverStrategic : int {
     OnErrorDiscard = 0,
@@ -41,6 +45,15 @@ void mmkvLog(int level,
              const std::string &message);
 
 void onContentChangedByOuterProcess(const std::string &mmapID);
+
+jobject cInt2JavaInteger(JNIEnv *env,const int &value);
+jobject cFloat2JavaFloat(JNIEnv *env,const float &value);
+jobject cDouble2JavaDouble(JNIEnv *env,const double &value);
+jobject cBool2JavaBool(JNIEnv *env,const bool &value);
+jobject cLong2JavaLong(JNIEnv *env,const long &value);
+jobject vector2javaSet(JNIEnv *env, const std::vector<std::string> &arr);
+jstring string2jstring(JNIEnv *env, const std::string &str);
+jbyteArray buffer2byteArray(JNIEnv *env, const MMBuffer &buffer);
 } // namespace mmkv
 
 extern int g_android_api;

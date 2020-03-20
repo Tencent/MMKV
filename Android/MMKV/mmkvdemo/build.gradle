@@ -29,7 +29,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.config
 //            debuggable true
-//            jniDebuggable true
+            jniDebuggable true
         }
         debug {
             signingConfig signingConfigs.config
@@ -62,8 +62,8 @@ repositories {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-//    implementation project(':mmkv')
-    implementation 'com.tencent:mmkv:1.0.24'
+    implementation project(':mmkv')
+//    implementation 'com.tencent:mmkv:1.0.24'
 //    implementation 'com.tencent:mmkv-static:1.0.24'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'

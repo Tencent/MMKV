@@ -31,6 +31,7 @@
 #include "aes/AESCrypt.h"
 #include "aes/openssl/md5.h"
 #include "native-bridge.h"
+#include "ValueType.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
@@ -42,6 +43,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <zlib.h>
+#include <jni.h>
 
 using namespace std;
 
@@ -712,7 +714,13 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     if (newSize >= m_output->spaceLeft() || m_dic.empty()) {
         // try a full rewrite to make space
         static const int offset = pbFixed32Size(0);
-        MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
+        MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic,m_metaInfo.m_explain);
+//        MMBuffer data;
+//        if(m_metaInfo.m_explain){
+//             data = std::move(MiniPBCoder::encodeValueDataWithObject(m_dic));
+//        } else{
+//            data = std::move(MiniPBCoder::encodeDataWithObject(m_dic));
+//        }
         size_t lenNeeded = data.length() + offset + newSize;
         if (m_isAshmem) {
             if (lenNeeded > m_size) {
@@ -876,7 +884,7 @@ bool MMKV::fullWriteback() {
         return true;
     }
 
-    auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
+    auto allData = MiniPBCoder::encodeDataWithObject(m_dic,m_metaInfo.m_explain);
     SCOPEDLOCK(m_exclusiveProcessLock);
     if (allData.length() > 0) {
         if (allData.length() + Fixed32Size <= m_size) {
@@ -1066,7 +1074,7 @@ bool MMKV::setStringForKey(const std::string &value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
-    auto data = MiniPBCoder::encodeDataWithObject(value);
+    auto data = MiniPBCoder::encodeDataWithObject(value,m_metaInfo.m_explain);
     return setDataForKey(std::move(data), key);
 }
 
@@ -1074,7 +1082,7 @@ bool MMKV::setBytesForKey(const MMBuffer &value, const std::string &key) {
     if (key.empty()) {
         return false;
     }
-    auto data = MiniPBCoder::encodeDataWithObject(value);
+    auto data = MiniPBCoder::encodeDataWithObject(value,m_metaInfo.m_explain);
     return setDataForKey(std::move(data), key);
 }
 
@@ -1083,9 +1091,16 @@ bool MMKV::setBool(bool value, const std::string &key) {
         return false;
     }
     size_t size = pbBoolSize(value);
+    if(m_metaInfo.m_explain){
+        size+=1;
+    }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
-    output.writeBool(value);
+    if(m_metaInfo.m_explain){
+        output.writeValueBool(value);
+    } else{
+        output.writeBool(value);
+    }
 
     return setDataForKey(std::move(data), key);
 }
@@ -1095,10 +1110,18 @@ bool MMKV::setInt32(int32_t value, const std::string &key) {
         return false;
     }
     size_t size = pbInt32Size(value);
+
+    if(m_metaInfo.m_explain){
+        size+=1;
+    }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
-    output.writeInt32(value);
 
+    if(m_metaInfo.m_explain){
+        output.writeValueInt32(value);
+    } else{
+        output.writeInt32(value);
+    }
     return setDataForKey(std::move(data), key);
 }
 
@@ -1107,9 +1130,16 @@ bool MMKV::setInt64(int64_t value, const std::string &key) {
         return false;
     }
     size_t size = pbInt64Size(value);
+    if(m_metaInfo.m_explain){
+        size+=1;
+    }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
-    output.writeInt64(value);
+    if(m_metaInfo.m_explain){
+        output.writeValueInt64(value);
+    } else{
+        output.writeInt64(value);
+    }
 
     return setDataForKey(std::move(data), key);
 }
@@ -1119,10 +1149,16 @@ bool MMKV::setFloat(float value, const std::string &key) {
         return false;
     }
     size_t size = pbFloatSize(value);
+    if(m_metaInfo.m_explain){
+        size+=1;
+    }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
-    output.writeFloat(value);
-
+    if(m_metaInfo.m_explain){
+        output.writeValueFloat(value);
+    } else{
+        output.writeFloat(value);
+    }
     return setDataForKey(std::move(data), key);
 }
 
@@ -1131,9 +1167,16 @@ bool MMKV::setDouble(double value, const std::string &key) {
         return false;
     }
     size_t size = pbDoubleSize(value);
+    if(m_metaInfo.m_explain){
+        size+=1;
+    }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
-    output.writeDouble(value);
+    if(m_metaInfo.m_explain){
+        output.writeValueDouble(value);
+    } else{
+        output.writeDouble(value);
+    }
 
     return setDataForKey(std::move(data), key);
 }
@@ -1142,7 +1185,7 @@ bool MMKV::setVectorForKey(const std::vector<std::string> &v, const std::string 
     if (key.empty()) {
         return false;
     }
-    auto data = MiniPBCoder::encodeDataWithObject(v);
+    auto data = MiniPBCoder::encodeDataWithObject(v,m_metaInfo.m_explain);
     return setDataForKey(std::move(data), key);
 }
 
@@ -1153,7 +1196,7 @@ bool MMKV::getStringForKey(const std::string &key, std::string &result) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        result = MiniPBCoder::decodeString(data);
+        result = MiniPBCoder::decodeString(data,m_metaInfo.m_explain);
         return true;
     }
     return false;
@@ -1166,7 +1209,7 @@ MMBuffer MMKV::getBytesForKey(const std::string &key) {
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        return MiniPBCoder::decodeBytes(data);
+        return MiniPBCoder::decodeBytes(data,m_metaInfo.m_explain);
     }
     return MMBuffer(0);
 }
@@ -1179,7 +1222,11 @@ bool MMKV::getBoolForKey(const std::string &key, bool defaultValue) {
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
-        return input.readBool();
+        if(m_metaInfo.m_explain){
+            return input.readValueBool();
+        } else{
+            return input.readBool();
+        }
     }
     return defaultValue;
 }
@@ -1192,7 +1239,12 @@ int32_t MMKV::getInt32ForKey(const std::string &key, int32_t defaultValue) {
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
-        return input.readInt32();
+        if(m_metaInfo.m_explain){
+            return input.readValueInt32();
+        } else{
+            return input.readInt32();
+
+        }
     }
     return defaultValue;
 }
@@ -1205,7 +1257,12 @@ int64_t MMKV::getInt64ForKey(const std::string &key, int64_t defaultValue) {
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
-        return input.readInt64();
+        if(m_metaInfo.m_explain){
+            return input.readValueInt64();
+        } else{
+            return input.readInt64();
+        }
+
     }
     return defaultValue;
 }
@@ -1218,7 +1275,11 @@ float MMKV::getFloatForKey(const std::string &key, float defaultValue) {
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
-        return input.readFloat();
+        if(m_metaInfo.m_explain){
+            return input.readValueFloat();
+        } else{
+            return input.readFloat();
+        }
     }
     return defaultValue;
 }
@@ -1231,7 +1292,11 @@ double MMKV::getDoubleForKey(const std::string &key, double defaultValue) {
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
         CodedInputData input(data.getPtr(), data.length());
-        return input.readDouble();
+        if(m_metaInfo.m_explain){
+            return input.readValueDouble();
+        } else{
+            return input.readDouble();
+        }
     }
     return defaultValue;
 }
@@ -1243,7 +1308,7 @@ bool MMKV::getVectorForKey(const std::string &key, std::vector<std::string> &res
     SCOPEDLOCK(m_lock);
     auto &data = getDataForKey(key);
     if (data.length() > 0) {
-        result = MiniPBCoder::decodeSet(data);
+        result = MiniPBCoder::decodeSet(data,m_metaInfo.m_explain);
         return true;
     }
     return false;
@@ -1348,6 +1413,88 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
 
     fullWriteback();
 }
+jobject MMKV::getAll(JNIEnv *env) {
+    jobject map = nullptr;
+    if(m_metaInfo.m_explain){
+        jclass map_cls = env->FindClass("java/util/HashMap");
+        jmethodID map_costruct = env->GetMethodID(map_cls, "<init>", "()V");
+        map = env->NewObject(map_cls, map_costruct);
+        jmethodID map_put = env->GetMethodID(map_cls, "put",
+                                             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+        //collect
+        for (const auto &itr : m_dic) {
+            auto key = itr.first;
+            auto type = valueType(itr.second);
+            auto typeValue = decodeWithType(env,type,key);
+            env->CallObjectMethod(map, map_put, mmkv::string2jstring(env, key), typeValue);
+        };
+        env->DeleteLocalRef(map_cls);
+    }
+    return map;
+}
+ValueType MMKV::valueType(const MMBuffer &buffer){
+   return  static_cast<ValueType>(*(uint8_t *) buffer.getPtr());
+}
+
+jobject MMKV::decodeWithType(JNIEnv *env,ValueType &valueType,std::string &key) {
+    jobject obj = nullptr ;
+    switch (valueType){
+        case ValueType::Integer:{
+            jobject intObject = mmkv::cInt2JavaInteger(env,getInt32ForKey(key));
+            obj = intObject;
+            break;
+        }
+        case ValueType::Boolean:
+        {
+            jobject boolObject = mmkv::cBool2JavaBool(env,getBoolForKey(key));
+            obj = boolObject;
+            break;
+        }
+        case ValueType::Long:
+        {
+            jobject longObject = mmkv::cLong2JavaLong(env,getInt64ForKey(key));
+            obj = longObject;
+            break;
+        }
+        case ValueType::Float:
+        {
+            jobject floatObject = mmkv::cFloat2JavaFloat(env,getFloatForKey(key));
+            obj = floatObject;
+            break;
+        }
+        case ValueType::Double:
+        {
+            jobject doubleObject = mmkv::cDouble2JavaDouble(env,getDoubleForKey(key));
+            obj = doubleObject;
+            break;
+        }
+        case ValueType::String:
+        { string value;
+            getStringForKey(key,value);
+            jobject stringObject = mmkv::string2jstring(env,value);
+            obj = stringObject;
+            break;
+
+        }
+        case ValueType::Set:
+        {
+            vector<std::string> result;
+            getVectorForKey(key,result);
+            jobject setObject = mmkv::vector2javaSet(env,result);
+            obj = setObject;
+            break;
+        }
+        case ValueType::Bytes:
+        {
+            auto buffer = getBytesForKey(key);
+            jobject byteArrayObject = mmkv::buffer2byteArray(env,getBytesForKey(key));
+            obj = byteArrayObject;
+            break;
+        }
+    }
+    return obj;
+}
+
 
 #pragma mark - file
 
@@ -1408,6 +1555,9 @@ bool MMKV::isFileValid(const std::string &mmapID) {
         return false;
     }
 }
+
+
+
 
 static void mkSpecialCharacterFileDirectory() {
     char *path = strdup((g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());
