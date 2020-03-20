@@ -193,8 +193,8 @@ void processTest() {
 }
 
 void testInterProcessLock() {
-    auto mmkv = MMKV::mmkvWithID("TestInterProcessLock", MMKV_MULTI_PROCESS);
-    mmkv->set(true, "bool");
+    //auto mmkv = MMKV::mmkvWithID("TestInterProcessLock", MMKV_MULTI_PROCESS);
+    //mmkv->set(true, "bool");
 
     auto fd = open("/tmp/mmkv/TestInterProcessLock.file", O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
     FileLock flock(fd);
@@ -222,7 +222,7 @@ void testInterProcessLock() {
     waitpid(pid, nullptr, 0);
     printf("Child %d to finished\n", pid);
 
-    mmkv->unlock();
+    //mmkv->unlock();
     flock.unlock(ExclusiveLockType);
     close(fd);
 }
@@ -299,18 +299,18 @@ int main() {
 
     //auto mmkv = MMKV::defaultMMKV();
     string aesKey = "cryptKey";
-    //    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &aesKey);
-    //    functionalTest(mmkv, false);
+    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &aesKey);
+    functionalTest(mmkv, false);
 
-    //    for (size_t index = 0; index < keyCount; index++) {
-    //        arrIntKeys.push_back("int-" + to_string(index));
-    //        arrStringKeys.push_back("string-" + to_string(index));
-    //    }
+    for (size_t index = 0; index < keyCount; index++) {
+        arrIntKeys.push_back("int-" + to_string(index));
+        arrStringKeys.push_back("string-" + to_string(index));
+    }
 
     //fastRemoveCornetSizeTest();
     //cornetSizeTest();
-    //    brutleTest();
-    //    threadTest();
-    //    processTest();
+    brutleTest();
+    threadTest();
+    processTest();
     testInterProcessLock();
 }
