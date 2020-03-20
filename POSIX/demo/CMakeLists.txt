@@ -42,5 +42,14 @@ set_target_properties(process PROPERTIES
         CXX_STANDARD 11
         )
 
+add_executable(TestInterProcessLock
+        TestInterProcessLock.cpp)
+target_link_libraries(TestInterProcessLock
+        mmkv)
+set_target_properties(TestInterProcessLock PROPERTIES
+        CXX_STANDARD 11
+        )
+
 add_dependencies(demo
-        process)
+        process
+        TestInterProcessLock)

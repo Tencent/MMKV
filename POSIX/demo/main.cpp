@@ -24,6 +24,7 @@
 #include <iostream>
 #include <limits>
 #include <pthread.h>
+#include <semaphore.h>
 #include <string>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -190,6 +191,39 @@ void processTest() {
     cout << "total count of process_test: " << mmkv->count() << endl;
 }
 
+void testInterProcessLock() {
+    auto mmkv = MMKV::mmkvWithID("TestInterProcessLock", MMKV_MULTI_PROCESS);
+    mmkv->set(true, "bool");
+
+    auto pid = fork();
+    // this is child
+    if (pid <= 0) {
+        execl("TestInterProcessLock", "TestInterProcessLock", nullptr);
+        perror("execl"); // execl doesn't return unless there is a problem
+        exit(1);
+    }
+    printf("Waiting for child %d to start ...\n", pid);
+    sem_t *sem = sem_open("mmkv_main", O_CREAT, 0644, 0);
+    sem_wait(sem);
+    printf("Child %d to started\n", pid);
+
+    mmkv->clearAll();
+    mmkv->lock();
+
+    sem_post(sem);
+    sem_close(sem);
+
+    printf("Waiting for child %d to finish...\n", pid);
+    int status = 0;
+    waitpid(pid, &status, 0);
+    if (WIFEXITED(status)) {
+        const int es = WEXITSTATUS(status);
+        printf("child %d exit with %d\n", pid, es);
+    }
+
+    mmkv->unlock();
+}
+
 void cornetSizeTest() {
     string aesKey = "aes";
     auto mmkv = MMKV::mmkvWithID("cornerSize", MMKV_MULTI_PROCESS, &aesKey);
@@ -262,17 +296,18 @@ int main() {
 
     //auto mmkv = MMKV::defaultMMKV();
     string aesKey = "cryptKey";
-    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &aesKey);
-    functionalTest(mmkv, false);
+    //    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &aesKey);
+    //    functionalTest(mmkv, false);
 
-    for (size_t index = 0; index < keyCount; index++) {
-        arrIntKeys.push_back("int-" + to_string(index));
-        arrStringKeys.push_back("string-" + to_string(index));
-    }
+    //    for (size_t index = 0; index < keyCount; index++) {
+    //        arrIntKeys.push_back("int-" + to_string(index));
+    //        arrStringKeys.push_back("string-" + to_string(index));
+    //    }
 
     //fastRemoveCornetSizeTest();
     //cornetSizeTest();
-    brutleTest();
-    threadTest();
-    processTest();
+    //    brutleTest();
+    //    threadTest();
+    //    processTest();
+    testInterProcessLock();
 }
