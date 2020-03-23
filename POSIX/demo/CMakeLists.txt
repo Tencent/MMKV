@@ -53,3 +53,11 @@ set_target_properties(TestInterProcessLock PROPERTIES
 add_dependencies(demo
         process
         TestInterProcessLock)
+
+add_executable(UnitTest
+        UnitTest.cpp)
+target_link_libraries(UnitTest
+        mmkv)
+set_target_properties(UnitTest PROPERTIES
+        CXX_STANDARD 11
+        )
