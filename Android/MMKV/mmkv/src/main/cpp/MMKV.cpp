@@ -714,13 +714,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     if (newSize >= m_output->spaceLeft() || m_dic.empty()) {
         // try a full rewrite to make space
         static const int offset = pbFixed32Size(0);
-        MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic,m_metaInfo.m_explain);
-//        MMBuffer data;
-//        if(m_metaInfo.m_explain){
-//             data = std::move(MiniPBCoder::encodeValueDataWithObject(m_dic));
-//        } else{
-//            data = std::move(MiniPBCoder::encodeDataWithObject(m_dic));
-//        }
+        MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
         size_t lenNeeded = data.length() + offset + newSize;
         if (m_isAshmem) {
             if (lenNeeded > m_size) {
@@ -884,7 +878,7 @@ bool MMKV::fullWriteback() {
         return true;
     }
 
-    auto allData = MiniPBCoder::encodeDataWithObject(m_dic,m_metaInfo.m_explain);
+    auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
     SCOPEDLOCK(m_exclusiveProcessLock);
     if (allData.length() > 0) {
         if (allData.length() + Fixed32Size <= m_size) {
@@ -1426,7 +1420,9 @@ jobject MMKV::getAll(JNIEnv *env) {
             auto key = itr.first;
             auto type = valueType(itr.second);
             auto typeValue = decodeWithType(env,type,key);
-            env->CallObjectMethod(map, map_put, mmkv::string2jstring(env, key), typeValue);
+            if(typeValue != nullptr){
+                env->CallObjectMethod(map, map_put, mmkv::string2jstring(env, key), typeValue);
+            }
         };
         env->DeleteLocalRef(map_cls);
     }

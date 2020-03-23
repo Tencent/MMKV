@@ -103,18 +103,19 @@ public class MainActivity
         button_read_int.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 //                interProcessBaselineTest(BenchMarkBaseService.CMD_READ_INT);
-//                final int testInt = MMKV.defaultMMKV().decodeInt("testInt", -1);
-//                final String testInt = MMKV.defaultMMKV().decodeString("testString", "null");
-//                final byte[] testInt = MMKV.defaultMMKV().decodeBytes("testbyte", new byte[0]);
-//                final boolean testInt = MMKV.defaultMMKV().decodeBool("testBool", false);
-//                final double testInt = MMKV.defaultMMKV().decodeDouble("testDouble", 0);
-//                final float testInt = MMKV.defaultMMKV().decodeFloat("testFloat", 0.1f);
-//                final float testInt = MMKV.defaultMMKV().decodeLong("testLong", 1l);
-//                final Set<String> testInt = MMKV.defaultMMKV().decodeStringSet("testSet", new HashSet<String>());
-
-                final TestParcelable all = MMKV.defaultMMKV().decodeParcelable("testParcel", TestParcelable.class);
-//                final Map<String, ?> all = MMKV.defaultMMKV().getAll();
-
+//                MMKV.defaultMMKV().removeValuesForKeys(new String[]{"testInt","testString","testBool","testDouble","testFloat","testLong","testSet"});
+                MMKV.defaultMMKV().removeValueForKey("testDouble");
+                MMKV.defaultMMKV().removeValueForKey("testbyte");
+                final int testInt = MMKV.defaultMMKV().decodeInt("testInt", -1);
+                final String testString = MMKV.defaultMMKV().decodeString("testString", "null");
+                final byte[] testbyte = MMKV.defaultMMKV().decodeBytes("testbyte", new byte[0]);
+                final boolean testBool = MMKV.defaultMMKV().decodeBool("testBool", false);
+                final double testDouble = MMKV.defaultMMKV().decodeDouble("testDouble", 0);
+                final float testFloat = MMKV.defaultMMKV().decodeFloat("testFloat", 0.1f);
+                final float testLong = MMKV.defaultMMKV().decodeLong("testLong", 1l);
+                final Set<String> testSet = MMKV.defaultMMKV().decodeStringSet("testSet", new HashSet<String>());
+                final TestParcelable testParcel = MMKV.defaultMMKV().decodeParcelable("testParcel", TestParcelable.class);
+                final Map<String, ?> all = MMKV.defaultMMKV().getAll();
                 System.out.println("====>"+all);
             }
         });
@@ -123,15 +124,33 @@ public class MainActivity
         button_write_int.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 //                interProcessBaselineTest(BenchMarkBaseService.CMD_WRITE_INT);
+                MMKV.defaultMMKV().encode("testInt",32);
+                MMKV.defaultMMKV().encode("testString","testString");
+                MMKV.defaultMMKV().encode("testbyte",new byte[]{1,23,4});
+                MMKV.defaultMMKV().encode("testBool",false);
+                MMKV.defaultMMKV().encode("testDouble",34.5222);
+                MMKV.defaultMMKV().encode("testFloat",343.2f);
+                MMKV.defaultMMKV().encode("testLong",42324243);
                 final HashSet<String> strings = new HashSet<>();
                 strings.add("1");
                 strings.add("sire");
                 strings.add("test");
-//                MMKV.defaultMMKV().encode("testbyte",new byte[]{1,23,4});
-//                MMKV.defaultMMKV().encode("testInt",32);
-//                MMKV.defaultMMKV().encode("testSet",strings);
-//                MMKV.defaultMMKV().encode("testBool",false);
+                MMKV.defaultMMKV().encode("testSet",strings);
                 MMKV.defaultMMKV().encode("testParcel",new TestParcelable(30,"ff"));
+
+//                MMKV.defaultMMKV().encode("testInt",321);
+//                MMKV.defaultMMKV().encode("testString","testString1");
+//                MMKV.defaultMMKV().encode("testbyte",new byte[]{1,23,4,1});
+//                MMKV.defaultMMKV().encode("testBool",true);
+//                MMKV.defaultMMKV().encode("testDouble",34.52221);
+//                MMKV.defaultMMKV().encode("testFloat",343.21f);
+//                MMKV.defaultMMKV().encode("testLong",423242431);
+//                final HashSet<String> strings = new HashSet<>();
+//                strings.add("11");
+//                strings.add("sire1");
+//                strings.add("test1");
+//                MMKV.defaultMMKV().encode("testSet",strings);
+//                MMKV.defaultMMKV().encode("testParcel",new TestParcelable(30,"ff1"));
             }
         });
 
