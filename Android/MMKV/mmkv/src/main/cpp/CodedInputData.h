@@ -24,11 +24,14 @@
 #include "MMBuffer.h"
 #include <cstdint>
 #include <string>
+#include "ValueType.h"
 
 class CodedInputData {
     uint8_t *m_ptr;
     int32_t m_size;
     int32_t m_position;
+
+    int8_t readRawByte();
 
     int32_t readRawVarint32();
 
@@ -66,7 +69,7 @@ public:
     MMBuffer readData();
     MMBuffer readValueData();
 
-    int8_t readRawByte();
+    ValueType readValueType();
 };
 
 #endif //MMKV_CODEDINPUTDATA_H

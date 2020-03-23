@@ -22,6 +22,7 @@
 #define MMKV_CODEDOUTPUTDATA_H
 
 #include "MMBuffer.h"
+#include "ValueType.h"
 #include <cstdint>
 #include <string>
 
@@ -71,6 +72,8 @@ public:
 
     void writeData(const MMBuffer &value);
     void writeValueData(const MMBuffer &value);
+
+    void writeValueType(ValueType type);
 };
 
 #endif //MMKV_CODEDOUTPUTDATA_H

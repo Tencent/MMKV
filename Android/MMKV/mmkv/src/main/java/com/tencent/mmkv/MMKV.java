@@ -576,8 +576,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @Override
     public Map<String, ?> getAll() {
-         Map<String, ?> map = getAllN();
+         Map<String, ?> map = getAllNative();
         if(map == null){
+            // current verion does not support
             map = new HashMap<>();
         }
         return  map;
@@ -901,5 +902,5 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private native int writeValueToNB(long handle, String key, long pointer, int size);
 
-    private native Map<String, ?> getAllN();
+    private native Map<String, ?> getAllNative();
 }

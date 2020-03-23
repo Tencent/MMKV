@@ -40,8 +40,7 @@ double CodedInputData::readDouble() {
     return Int64ToFloat64(this->readRawLittleEndian64());
 }
 double CodedInputData::readValueDouble() {
-    ValueType  type = static_cast<ValueType>(this->readRawByte());
-    cout << "int type "<< type;
+    this->readValueType();
     return readDouble();
 }
 
@@ -49,8 +48,7 @@ float CodedInputData::readFloat() {
     return Int32ToFloat32(this->readRawLittleEndian32());
 }
 float CodedInputData::readValueFloat() {
-    ValueType  type = static_cast<ValueType>(this->readRawByte());
-    cout << "int type "<< type;
+    this->readValueType();
     return readFloat();
 }
 
@@ -69,14 +67,12 @@ int64_t CodedInputData::readInt64() {
     return 0;
 }
 int64_t CodedInputData::readValueInt64() {
-    ValueType  type = static_cast<ValueType>(this->readRawByte());
-    cout << "int type "<< type;
+    this->readValueType();
     return readInt64();
 }
 
 int32_t CodedInputData::readValueInt32() {
-    ValueType  type = static_cast<ValueType>(this->readRawByte());
-    cout << "int type "<< type;
+    this->readValueType();
     return this->readInt32();
 }
 
@@ -92,13 +88,11 @@ bool CodedInputData::readBool() {
     return this->readRawVarint32() != 0;
 }
 bool CodedInputData::readValueBool() {
-    ValueType  type = static_cast<ValueType>(this->readRawByte());
-    cout << "int type "<< type;
+    this->readValueType();
     return readBool();
 }
 string CodedInputData::readValueString() {
-    ValueType  type = static_cast<ValueType>(this->readRawByte());
-    cout << "int type "<< type;
+    this->readValueType();
     return readString();
 }
 
@@ -133,8 +127,7 @@ MMBuffer CodedInputData::readData() {
     }
 }
 MMBuffer CodedInputData::readValueData() {
-    ValueType  type = static_cast<ValueType>(this->readRawByte());
-    cout << "int type "<< type;
+    this->readValueType();
     return readData();
 }
 
@@ -203,4 +196,8 @@ int8_t CodedInputData::readRawByte() {
     }
     int8_t *bytes = (int8_t *) m_ptr;
     return bytes[m_position++];
+}
+
+inline ValueType CodedInputData::readValueType() {
+    return static_cast<ValueType>(this->readRawByte());
 }

@@ -39,7 +39,7 @@ void CodedOutputData::writeDouble(double value) {
     this->writeRawLittleEndian64(Float64ToInt64(value));
 }
 void CodedOutputData::writeValueDouble(double value) {
-    this->writeRawByte(Double);
+    this->writeValueType(Double);
     this->writeDouble(value);
 }
 
@@ -47,7 +47,7 @@ void CodedOutputData::writeFloat(float value) {
     this->writeRawLittleEndian32(Float32ToInt32(value));
 }
 void CodedOutputData::writeValueFloat(float value) {
-    this->writeRawByte(Float);
+    this->writeValueType(Float);
     writeFloat(value);
 }
 
@@ -55,7 +55,7 @@ void CodedOutputData::writeInt64(int64_t value) {
     this->writeRawVarint64(value);
 }
 void CodedOutputData::writeValueInt64(int64_t value) {
-    this->writeRawByte(Long);
+    this->writeValueType(Long);
     writeInt64(value);
 }
 
@@ -67,7 +67,7 @@ void CodedOutputData::writeInt32(int32_t value) {
     }
 }
 void CodedOutputData::writeValueInt32(int32_t value) {
-    this->writeRawByte(Integer);
+    this->writeValueType(Integer);
     writeInt32(value);
 }
 
@@ -75,12 +75,12 @@ void CodedOutputData::writeBool(bool value) {
     this->writeRawByte(static_cast<uint8_t>(value ? 1 : 0));
 }
 void CodedOutputData::writeValueBool(bool value) {
-    this->writeRawByte(Boolean);
+    this->writeValueType(Boolean);
     writeBool(value);
 }
 
 void CodedOutputData::writeValueString(const string &value) {
-    this->writeRawByte(String);
+    this->writeValueType(String);
     writeString(value);
 }
 
@@ -97,7 +97,7 @@ void CodedOutputData::writeString(const string &value) {
 }
 
 void CodedOutputData::writeValueData(const MMBuffer &value) {
-    this->writeRawByte(Bytes);
+    this->writeValueType(Bytes);
     writeData(value);
 }
 
@@ -178,4 +178,8 @@ void CodedOutputData::writeRawLittleEndian64(int64_t value) {
     this->writeRawByte(static_cast<uint8_t>((value >> 40) & 0xff));
     this->writeRawByte(static_cast<uint8_t>((value >> 48) & 0xff));
     this->writeRawByte(static_cast<uint8_t>((value >> 56) & 0xff));
+}
+
+inline void CodedOutputData::writeValueType(ValueType type) {
+    this->writeRawByte(type);
 }

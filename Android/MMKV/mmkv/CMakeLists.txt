@@ -41,8 +41,6 @@ add_library( # Sets the name of the library.
         src/main/cpp/MMKVMetaInfo.hpp
         src/main/cpp/ValueType.h
         src/main/cpp/ValueType.cpp
-        src/main/cpp/ValueInfo.cpp
-        src/main/cpp/ValueInfo.h
         src/main/cpp/aes/AESCrypt.h
         src/main/cpp/aes/AESCrypt.cpp
         src/main/cpp/aes/openssl/aes.h

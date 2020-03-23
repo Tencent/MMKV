@@ -1086,7 +1086,7 @@ bool MMKV::setBool(bool value, const std::string &key) {
     }
     size_t size = pbBoolSize(value);
     if(m_metaInfo.m_explain){
-        size+=1;
+        size+=TYPE_POSITION;
     }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -1106,7 +1106,7 @@ bool MMKV::setInt32(int32_t value, const std::string &key) {
     size_t size = pbInt32Size(value);
 
     if(m_metaInfo.m_explain){
-        size+=1;
+        size+=TYPE_POSITION;
     }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -1125,7 +1125,7 @@ bool MMKV::setInt64(int64_t value, const std::string &key) {
     }
     size_t size = pbInt64Size(value);
     if(m_metaInfo.m_explain){
-        size+=1;
+        size+=TYPE_POSITION;
     }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -1144,7 +1144,7 @@ bool MMKV::setFloat(float value, const std::string &key) {
     }
     size_t size = pbFloatSize(value);
     if(m_metaInfo.m_explain){
-        size+=1;
+        size+=TYPE_POSITION;
     }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -1162,7 +1162,7 @@ bool MMKV::setDouble(double value, const std::string &key) {
     }
     size_t size = pbDoubleSize(value);
     if(m_metaInfo.m_explain){
-        size+=1;
+        size+=TYPE_POSITION;
     }
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -1410,14 +1410,16 @@ void MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
 jobject MMKV::getAll(JNIEnv *env) {
     jobject map = nullptr;
     if(m_metaInfo.m_explain){
+        //create java HashMap
         jclass map_cls = env->FindClass("java/util/HashMap");
         jmethodID map_costruct = env->GetMethodID(map_cls, "<init>", "()V");
         map = env->NewObject(map_cls, map_costruct);
         jmethodID map_put = env->GetMethodID(map_cls, "put",
                                              "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-        //collect
+        //translate data
         for (const auto &itr : m_dic) {
             auto key = itr.first;
+
             auto type = valueType(itr.second);
             auto typeValue = decodeWithType(env,type,key);
             if(typeValue != nullptr){
@@ -1436,39 +1438,33 @@ jobject MMKV::decodeWithType(JNIEnv *env,ValueType &valueType,std::string &key) 
     jobject obj = nullptr ;
     switch (valueType){
         case ValueType::Integer:{
-            jobject intObject = mmkv::cInt2JavaInteger(env,getInt32ForKey(key));
-            obj = intObject;
+            obj = mmkv::cInt2JavaInteger(env,getInt32ForKey(key));
             break;
         }
         case ValueType::Boolean:
         {
-            jobject boolObject = mmkv::cBool2JavaBool(env,getBoolForKey(key));
-            obj = boolObject;
+            obj = mmkv::cBool2JavaBool(env,getBoolForKey(key));
             break;
         }
         case ValueType::Long:
         {
-            jobject longObject = mmkv::cLong2JavaLong(env,getInt64ForKey(key));
-            obj = longObject;
+            obj = mmkv::cLong2JavaLong(env,getInt64ForKey(key));
             break;
         }
         case ValueType::Float:
         {
-            jobject floatObject = mmkv::cFloat2JavaFloat(env,getFloatForKey(key));
-            obj = floatObject;
+            obj = mmkv::cFloat2JavaFloat(env,getFloatForKey(key));
             break;
         }
         case ValueType::Double:
         {
-            jobject doubleObject = mmkv::cDouble2JavaDouble(env,getDoubleForKey(key));
-            obj = doubleObject;
+            obj = mmkv::cDouble2JavaDouble(env,getDoubleForKey(key));
             break;
         }
         case ValueType::String:
         { string value;
             getStringForKey(key,value);
-            jobject stringObject = mmkv::string2jstring(env,value);
-            obj = stringObject;
+            obj = mmkv::string2jstring(env,value);
             break;
 
         }
@@ -1476,15 +1472,13 @@ jobject MMKV::decodeWithType(JNIEnv *env,ValueType &valueType,std::string &key) 
         {
             vector<std::string> result;
             getVectorForKey(key,result);
-            jobject setObject = mmkv::vector2javaSet(env,result);
-            obj = setObject;
+            obj = mmkv::vector2javaSet(env,result);
             break;
         }
         case ValueType::Bytes:
         {
             auto buffer = getBytesForKey(key);
-            jobject byteArrayObject = mmkv::buffer2byteArray(env,getBytesForKey(key));
-            obj = byteArrayObject;
+            obj = mmkv::buffer2byteArray(env,getBytesForKey(key));
             break;
         }
     }
@@ -1551,9 +1545,6 @@ bool MMKV::isFileValid(const std::string &mmapID) {
         return false;
     }
 }
-
-
-
 
 static void mkSpecialCharacterFileDirectory() {
     char *path = strdup((g_rootDir + "/" + SPECIAL_CHARACTER_DIRECTORY_NAME).c_str());

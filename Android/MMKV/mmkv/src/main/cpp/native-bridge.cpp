@@ -22,7 +22,6 @@
 #include "MMBuffer.h"
 #include "MMKV.h"
 #include "MMKVLog.h"
-#include "ValueInfo.h"
 #include "ValueType.h"
 #include <cstdint>
 #include <jni.h>
@@ -257,23 +256,6 @@ namespace mmkv {
 
         env->DeleteLocalRef(set_cls);
         return set_obj;
-    }
-
-    static jobject
-    cMap2JavaMap(JNIEnv *env, std::shared_ptr<std::unordered_map<std::string, jobject>> &cmap) {
-        jclass map_cls = env->FindClass("java/util/HashMap");
-        jmethodID map_costruct = env->GetMethodID(map_cls, "<init>", "()V");
-        jobject map_obj = env->NewObject(map_cls, map_costruct);
-        jmethodID map_put = env->GetMethodID(map_cls, "put",
-                                             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-        auto it = cmap->begin();
-        while (it != cmap->end()) {
-            //type converter
-            env->CallObjectMethod(map_obj, map_put, string2jstring(env, it->first), it->second);
-            ++it;
-        }
-        env->DeleteLocalRef(map_cls);
-        return map_obj;
     }
 
     static JNIEnv *getCurrentEnv() {
@@ -925,7 +907,7 @@ static JNINativeMethod g_methods[] = {
         {"writeValueToNB",                    "(JLjava/lang/String;JI)I",                  (void *) mmkv::writeValueToNB},
         {"setWantsContentChangeNotify",       "(Z)V",                                      (void *) mmkv::setWantsContentChangeNotify},
         {"checkContentChangedByOuterProcess", "()V",                                       (void *) mmkv::checkContentChanged},
-        {"getAllN",                           "()Ljava/util/Map;",                         (void *) mmkv::getAll}
+        {"getAllNative",                           "()Ljava/util/Map;",                         (void *) mmkv::getAll}
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

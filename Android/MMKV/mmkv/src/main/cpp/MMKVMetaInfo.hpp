@@ -25,7 +25,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-
+#define TYPE_EXPLAIN 1
 struct MMKVMetaInfo {
     uint32_t m_crcDigest = 0;
     uint32_t m_version = 1;
@@ -43,7 +43,7 @@ struct MMKVMetaInfo {
         memcpy(this, ptr, sizeof(MMKVMetaInfo));
         if(m_crcDigest == 0 && m_version == 0 && m_sequence == 0){
             //new file
-            m_explain = 1;
+            m_explain = TYPE_EXPLAIN;
         }
 
     }

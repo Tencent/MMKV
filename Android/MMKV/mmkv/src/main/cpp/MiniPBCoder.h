@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <vector>
 
+#define TYPE_POSITION 1
 class CodedInputData;
 class CodedOutputData;
 
@@ -48,7 +49,6 @@ private:
     void writeRootObject();
     size_t prepareObjectForEncode(const std::string &str);
     size_t prepareObjectForEncode(const MMBuffer &buffer);
-    size_t prepareObjectForEncodeBytes(const MMBuffer &buffer);
     size_t prepareObjectForEncode(const std::vector<std::string> &vector);
     size_t prepareObjectForEncode(const std::unordered_map<std::string, MMBuffer> &map);
 

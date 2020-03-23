@@ -32,8 +32,6 @@
 
 using namespace std;
 
-
-
 MiniPBCoder::MiniPBCoder() {
     m_inputBuffer = nullptr;
     m_inputData = nullptr;
@@ -140,9 +138,9 @@ size_t MiniPBCoder::prepareObjectForEncode(const vector<string> &v) {
             size_t itemIndex = prepareObjectForEncode(str);
             if (itemIndex < m_encodeItems->size()) {
                 if(m_explain){
-                    (*m_encodeItems)[index].valueSize += (*m_encodeItems)[itemIndex].compiledSize + 1;
+                    (*m_encodeItems)[index].valueSize += TYPE_POSITION+(*m_encodeItems)[itemIndex].compiledSize ;
                 } else{
-                    (*m_encodeItems)[index].valueSize += (*m_encodeItems)[itemIndex].compiledSize;
+                    (*m_encodeItems)[index].valueSize += TYPE_POSITION+(*m_encodeItems)[itemIndex].compiledSize;
                 }
             }
         }
@@ -195,7 +193,7 @@ MMBuffer MiniPBCoder::getEncodeData(const string &str) {
     if (oItem && oItem->compiledSize > 0) {
         size_t size = oItem->compiledSize;
         if(m_explain){
-            size+=1;
+            size+=TYPE_POSITION;
         }
         m_outputBuffer = new MMBuffer(size);
         m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
@@ -213,7 +211,7 @@ MMBuffer MiniPBCoder::getEncodeData(const MMBuffer &buffer) {
     if (oItem && oItem->compiledSize > 0) {
         size_t size = oItem->compiledSize;
         if(m_explain){
-            size+=1;
+            size+=TYPE_POSITION;
         }
         m_outputBuffer = new MMBuffer(size);
         m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
@@ -232,11 +230,11 @@ MMBuffer MiniPBCoder::getEncodeData(const vector<string> &v) {
     if (oItem && oItem->compiledSize > 0) {
         size_t size = oItem->compiledSize;
         if(m_explain){
-            size+=1;
+            size+=TYPE_POSITION;
         }
         m_outputBuffer = new MMBuffer(size);
         m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
-        m_outputData->writeRawByte(Set);
+        m_outputData->writeValueType(Set);
         writeRootObject();
     }
 
@@ -270,32 +268,22 @@ string MiniPBCoder::decodeOneString() {
 MMBuffer MiniPBCoder::decodeOneBytes() {
     if(m_explain){
         return m_inputData->readValueData();
-
     } else{
         return m_inputData->readData();
     }
 }
 
 vector<string> MiniPBCoder::decodeOneSet() {
+    vector<string> v;
     if(m_explain){
-        vector<string> v;
-        ValueType  type = static_cast<ValueType>(m_inputData->readRawByte());
-        cout << "int type "<< type;
-        auto length = m_inputData->readInt32();
-        while (!m_inputData->isAtEnd()) {
-            const auto &value = m_inputData->readValueString();
-            v.push_back(move(value));
-        }
-        return v;
-    } else{
-        vector<string> v;
-        auto length = m_inputData->readInt32();
-        while (!m_inputData->isAtEnd()) {
-            const auto &value = m_inputData->readString();
-            v.push_back(move(value));
-        }
-        return v;
+        m_inputData->readValueType();
     }
+    auto length = m_inputData->readInt32();
+    while (!m_inputData->isAtEnd()) {
+        const auto &value = m_inputData->readValueString();
+        v.push_back(move(value));
+    }
+    return v;
 }
 
 void MiniPBCoder::decodeOneMap(unordered_map<string, MMBuffer> &dic, size_t size) {
