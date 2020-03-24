@@ -149,7 +149,7 @@ public final class Baseline {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
             editor.putInt(key, tmp);
-            //            editor.commit();
+            // editor.commit();
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
@@ -177,7 +177,7 @@ public final class Baseline {
             final String str = m_arrStrings[index];
             final String key = m_arrKeys[index];
             editor.putString(key, str);
-            //            editor.commit();
+            // editor.commit();
             editor.apply();
         }
         long endTime = System.currentTimeMillis();
@@ -196,68 +196,84 @@ public final class Baseline {
         Log.i("MMKV", "SharedPreferences read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
-    public void sqliteBaselineTest() {
-        sqliteWriteInt();
-        sqliteReadInt();
-        sqliteWriteString();
-        sqliteReadString();
+    public void sqliteBaselineTest(boolean useTransaction) {
+        sqliteWriteInt(useTransaction);
+        sqliteReadInt(useTransaction);
+        sqliteWriteString(useTransaction);
+        sqliteReadString(useTransaction);
     }
 
-    private void sqliteWriteInt() {
+    private void sqliteWriteInt(boolean useTransaction) {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-        sqlIteKV.beginTransaction();
+        if (useTransaction) {
+            sqlIteKV.beginTransaction();
+        }
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
             sqlIteKV.putInt(key, tmp);
         }
-        sqlIteKV.endTransaction();
+        if (useTransaction) {
+            sqlIteKV.endTransaction();
+        }
         long endTime = System.currentTimeMillis();
         Log.i("MMKV", "sqlite write int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
-    private void sqliteReadInt() {
+    private void sqliteReadInt(boolean useTransaction) {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-        sqlIteKV.beginTransaction();
+        if (useTransaction) {
+            sqlIteKV.beginTransaction();
+        }
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
             int tmp = sqlIteKV.getInt(key);
         }
-        sqlIteKV.endTransaction();
+        if (useTransaction) {
+            sqlIteKV.endTransaction();
+        }
         long endTime = System.currentTimeMillis();
         Log.i("MMKV", "sqlite read int: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
-    private void sqliteWriteString() {
+    private void sqliteWriteString(boolean useTransaction) {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-        sqlIteKV.beginTransaction();
+        if (useTransaction) {
+            sqlIteKV.beginTransaction();
+        }
         for (int index = 0; index < m_loops; index++) {
             final String value = m_arrStrings[index];
             final String key = m_arrKeys[index];
             sqlIteKV.putString(key, value);
         }
-        sqlIteKV.endTransaction();
+        if (useTransaction) {
+            sqlIteKV.endTransaction();
+        }
         long endTime = System.currentTimeMillis();
         Log.i("MMKV", "sqlite write String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
 
-    private void sqliteReadString() {
+    private void sqliteReadString(boolean useTransaction) {
         long startTime = System.currentTimeMillis();
 
         SQLIteKV sqlIteKV = new SQLIteKV(m_context);
-        sqlIteKV.beginTransaction();
+        if (useTransaction) {
+            sqlIteKV.beginTransaction();
+        }
         for (int index = 0; index < m_loops; index++) {
             final String key = m_arrKeys[index];
             final String tmp = sqlIteKV.getString(key);
         }
-        sqlIteKV.endTransaction();
+        if (useTransaction) {
+            sqlIteKV.endTransaction();
+        }
         long endTime = System.currentTimeMillis();
         Log.i("MMKV", "sqlite read String: loop[" + m_loops + "]: " + (endTime - startTime) + " ms");
     }
