@@ -20,6 +20,7 @@
 
 #ifndef MMKV_MMKVMETAINFO_H
 #define MMKV_MMKVMETAINFO_H
+#ifdef  __cplusplus
 
 #include "aes/AESCrypt.h"
 #include <cstdint>
@@ -76,4 +77,5 @@ static_assert(sizeof(MMKVMetaInfo) <= (4 * 1024), "MMKVMetaInfo lager than one p
 
 } // namespace mmkv
 
+#endif
 #endif //MMKV_MMKVMETAINFO_H

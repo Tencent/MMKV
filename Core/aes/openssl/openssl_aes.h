@@ -9,6 +9,7 @@
 
 #ifndef HEADER_AES_H
 # define HEADER_AES_H
+#ifdef  __cplusplus
 
 #include "openssl_opensslconf.h"
 #include "openssl_arm_arch.h"
@@ -100,4 +101,5 @@ void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key
 
 #endif // __ARM_MAX_ARCH__ > 0
 
+#endif
 #endif

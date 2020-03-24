@@ -19,6 +19,8 @@
  */
 
 #pragma once
+#ifdef  __cplusplus
+
 #include "../MMKVPredef.h"
 
 #if MMKV_EMBED_ZLIB
@@ -61,3 +63,5 @@ extern CRC32_Func_t CRC32;
 #    endif // __aarch64__
 
 #endif // MMKV_EMBED_ZLIB
+
+#endif
