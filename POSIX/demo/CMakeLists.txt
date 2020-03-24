@@ -27,7 +27,7 @@ IF(APPLE)
 ENDIF()
 
 add_executable(demo
-        main.cpp)
+        demo.cpp)
 target_link_libraries(demo
         mmkv)
 set_target_properties(demo PROPERTIES
@@ -50,10 +50,6 @@ set_target_properties(TestInterProcessLock PROPERTIES
         CXX_STANDARD 11
         )
 
-add_dependencies(demo
-        process
-        TestInterProcessLock)
-
 add_executable(UnitTest
         UnitTest.cpp)
 target_link_libraries(UnitTest
@@ -61,3 +57,9 @@ target_link_libraries(UnitTest
 set_target_properties(UnitTest PROPERTIES
         CXX_STANDARD 11
         )
+
+add_dependencies(demo
+        process
+        TestInterProcessLock
+        UnitTest)
+
