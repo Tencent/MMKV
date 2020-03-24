@@ -7,7 +7,9 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import <MMKV/MMKV.h>
 
 int main(int argc, const char *argv[]) {
-	return NSApplicationMain(argc, argv);
+    [MMKV initializeMMKV:nil];
+    return NSApplicationMain(argc, argv);
 }

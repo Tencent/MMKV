@@ -1,12 +1,46 @@
 # MMKV Change Log
 
+## v1.1.0 / 2020-03-24
+This is the first **major breaking version** ever since MMKV was made public in September 2018, introducing bunches of improvement. Due to the Covid-19, it has been delayed for about a month. Now it's finally here! 
+
+* **Improved File Recovery Strategic**. We store the CRC checksum & actual file size on each sync operation & full write back, plus storing the actual file size in the same file(aka the .crc meta file) as the CRC checksum. Base on our usage inside WeChat on the iOS platform, it cuts the file **corruption rate down by almost half**.
+* **Unified Core Library**. We refactor the whole MMKV project and unify the cross-platform Core library. From now on, MMKV on iOS/macOS, Android, Win32 all **share the same core logic code**. It brings many benefits such as reducing the work to fix common bugs, improvements on one platform are available to other platforms immediately, and much more.
+* **Supports POSIX Platforms**. Thanks to the unified Core library, we port MMKV to POSIX platforms easily.
+* **Multi-Process Access on iOS/macOS**. Thanks to the unified Core library, we add multi-process access to iOS/macOS platforms easily.
+* **Efficiency Improvement**. We make the most of armv8 ability including the AES & CRC32 instructions to tune **encryption & error checking speed up by one order higher** than before on armv8 devices. There are bunches of other speed tuning all around the whole project.
+
+Here are the old-style change logs of each platform.
+
+### iOS / macOS
+* Adds **multi-process access** support. You should initialize MMKV by calling `+[MMKV initializeMMKV: groupDir: logLevel:]`, passing your **app group id**. Then you can get a multi-process instance by calling `+[MMKV mmkvWithID: mode:]` or `+[MMKV mmkvWithID: cryptKey: mode:]`, accessing it cross your app & your app extensions.
+* Add **inter-process content change notification**. You can get MMKV changes notification of other processes by implementing `- onMMKVContentChange:` of `<MMKVHandler>` protocol.
+* **Improved File Recovery Strategic**. Cuts the file corruption rate down by almost half. Details are above.
+* **Efficiency Improvement**. Encryption & error checking speed are up by one order higher on armv8 devices(aka iDevice including iPhone 5S and above). Encryption on armv7 devices is improved as well. Details are ahead.
+* Other speed improvements. Refactor core logic using **MRC**, improve std::vector `push_back()` speed by using **move constructors** & move assignments.
+* `+[MMKV setMMKVBasePath:]` & `+[MMKV setLogLevel:]` are marked **deprecated**. You should use `+[MMKV initializeMMKV:]` or `+[MMKV initializeMMKV: logLevel:]` instead.
+* The `MMKVLogLevel` enum has been improved in Swift. It can be used like `MMKVLogLevel.info` and so on.
+
+### Android
+* **Improved File Recovery Strategic**. Cuts the file corruption rate down by almost half. Details are above.
+* **Efficiency Improvement**. Encryption & error checking speed are up by one order higher on armv8 devices with the `arm64-v8a` abi. Encryption on `armeabi` & `armeabi-v7a` is improved as well. Details are ahead.
+* Add exception inside core encode & decode logic, making MMKV much more robust.
+* Other speed improvements. Improve std::vector `push_back()` speed by using **move constructors** & move assignments.
+
+### Win32
+* **Improved File Recovery Strategic**. Cuts the file corruption rate down by almost half. Details are above.
+* Add exception inside core encode & decode logic, making MMKV much more robust.
+* Other speed improvements. Improve std::vector `push_back()` speed by using **move constructors** & move assignments.
+
+### POSIX
+* Most things actually work! We have tested MMKV on the latest version of Linux(Ubuntu, Arch Linux, CentOS, Gentoo), and Unix(macOS, FreeBSD, OpenBSD) on the time v1.1.0 is released.
+
 ## v1.0.24 / 2020-01-16
 
 ### iOS / macOS
 What's new  
 
 * Fix a bug that MMKV will fail to save any key-values after calling `-[MMKV clearMemoryCache]` and then `-[MMKV clearAll]`.
-* Add `-[MMKV initializeMMKV:]` for users to init MMKV in the main thread, to avoid an iOS 13 potential crash when accessing `UIApplicationState` in child threads.
+* Add `+[MMKV initializeMMKV:]` for users to init MMKV in the main thread, to avoid an iOS 13 potential crash when accessing `UIApplicationState` in child threads.
 * Fix a potential crash when writing a uniquely constructed string.
 * Fix a performance slow down when acquiring MMKV instances too often.
 * Make the baseline test in MMKVDemo more robust to NSUserDefaults' caches.
@@ -14,7 +48,7 @@ What's new
 ### Android
 What's new  
 
-* Fix flock() bug on ashmem files in Android.
+* Fix `flock()` bug on ashmem files in Android.
 * Fix a potential crash when writing a uniquely constructed string.
 * Fix a bug that the MMKVDemo might crash when running in a simulator.
 

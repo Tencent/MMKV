@@ -39,11 +39,10 @@ public final class SQLIteKV {
 
         @Override
         public void onCreate(SQLiteDatabase sqLiteDatabase) {
-            String sql = "create table if not exists " + TABLE_NAME_STR
-                         + " (k text UNIQUE on conflict replace, v text)";
+            String sql =
+                "create table if not exists " + TABLE_NAME_STR + " (k text UNIQUE on conflict replace, v text)";
             sqLiteDatabase.execSQL(sql);
-            sql = "create table if not exists " + TABLE_NAME_INT
-                  + " (k text UNIQUE on conflict replace, v integer)";
+            sql = "create table if not exists " + TABLE_NAME_INT + " (k text UNIQUE on conflict replace, v integer)";
             sqLiteDatabase.execSQL(sql);
         }
 

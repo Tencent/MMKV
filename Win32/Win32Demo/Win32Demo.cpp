@@ -146,8 +146,7 @@ void processTest() {
 
     HANDLE processHandles[processCount] = {0};
     for (auto index = 0; index < processCount; index++) {
-        if (!CreateProcess(path, nullptr, nullptr, nullptr, false, 0, nullptr, nullptr, &si[index],
-                           &pi[index])) {
+        if (!CreateProcess(path, nullptr, nullptr, nullptr, false, 0, nullptr, nullptr, &si[index], &pi[index])) {
             cout << "CreateProcess failed: " << GetLastError() << endl;
             continue;
         }
@@ -209,11 +208,8 @@ void fastRemoveCornetSizeTest() {
     }
 }
 
-static void LogHandler(MMKVLogLevel level,
-                       const std::string &file,
-                       int line,
-                       const std::string &function,
-                       const std::string &message) {
+static void
+LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
     auto desc = [level] {
         switch (level) {
@@ -229,8 +225,7 @@ static void LogHandler(MMKVLogLevel level,
                 return "N";
         }
     }();
-    printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file.c_str(), line, function.c_str(),
-           message.c_str());
+    printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
 }
 
 int main() {
@@ -241,7 +236,7 @@ int main() {
     wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-MMKV");
     MMKV::initializeMMKV(rootDir);
     //MMKV::setLogLevel(MMKVLogNone);
-    MMKV::regiserLogHandler(LogHandler);
+    MMKV::registerLogHandler(LogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
     auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &string("cryptKey"));

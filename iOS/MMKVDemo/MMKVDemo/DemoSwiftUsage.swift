@@ -24,7 +24,7 @@ import Foundation
 class DemoSwiftUsage : NSObject {
 	@objc func testSwiftFunctionality() {
 
-        guard let mmkv = MMKV(mmapID: "testSwift") else {
+        guard let mmkv = MMKV(mmapID: "testSwift", mode: MMKVMode.singleProcess) else {
             return
         }
 

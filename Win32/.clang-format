@@ -21,11 +21,12 @@ BinPackParameters: false
 ReflowComments: false
 ---
 Language: Cpp
-ColumnLimit: 100
+ColumnLimit: 120
+IndentPPDirectives: AfterHash
 ---
 Language: ObjC
 ColumnLimit: 0
-UseTab: ForIndentation
+#UseTab: ForIndentation
 ObjCBlockIndentWidth: 4
 ---
 Language: Java
