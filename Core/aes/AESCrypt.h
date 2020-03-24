@@ -20,6 +20,7 @@
 
 #ifndef AES_CRYPT_H_
 #define AES_CRYPT_H_
+#ifdef  __cplusplus
 
 #include <cstddef>
 
@@ -71,4 +72,5 @@ void testAESCrypt();
 
 } // namespace mmkv
 
+#endif
 #endif /* AES_CRYPT_H_ */

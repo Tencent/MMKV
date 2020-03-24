@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#ifdef  __cplusplus
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,3 +71,5 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
         a+=b; };
 
 } // namespace openssl
+
+#endif

@@ -9,6 +9,7 @@
 
 #ifndef HEADER_AES_LOCL_H
 # define HEADER_AES_LOCL_H
+#ifdef  __cplusplus
 
 # include "openssl_opensslconf.h"
 # include <stdio.h>
@@ -33,4 +34,5 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 
+#endif
 #endif                          /* !HEADER_AES_LOCL_H */

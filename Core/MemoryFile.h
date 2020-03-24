@@ -20,6 +20,7 @@
 
 #ifndef MMKV_MAMERYFILE_H
 #define MMKV_MAMERYFILE_H
+#ifdef  __cplusplus
 
 #include "MMKVPredef.h"
 
@@ -103,4 +104,5 @@ extern bool zeroFillFile(MMKVFileHandle_t fd, size_t startPos, size_t size);
 extern size_t getPageSize();
 } // namespace mmkv
 
+#endif
 #endif //MMKV_MAMERYFILE_H

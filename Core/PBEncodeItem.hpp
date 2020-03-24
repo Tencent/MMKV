@@ -20,6 +20,7 @@
 
 #ifndef MMKV_PBENCODEITEM_HPP
 #define MMKV_PBENCODEITEM_HPP
+#ifdef  __cplusplus
 
 #include "MMKVPredef.h"
 
@@ -114,4 +115,5 @@ struct PBEncodeItem {
 
 } // namespace mmkv
 
+#endif
 #endif //MMKV_PBENCODEITEM_HPP
