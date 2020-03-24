@@ -21,6 +21,8 @@
 #ifndef MMKV_SRC_MMKVPREDEF_H
 #define MMKV_SRC_MMKVPREDEF_H
 
+#ifdef __cplusplus
+
 #include <string>
 #include <unordered_map>
 
@@ -165,5 +167,7 @@ void unused(const T &) {}
 #else
 #    define MMKV_ASSERT(var) mmkv::unused(var)
 #endif
+
+#endif //cplus-plus
 
 #endif //MMKV_SRC_MMKVPREDEF_H
