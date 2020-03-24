@@ -20,6 +20,7 @@
 
 #ifndef MMKV_MMKV_H
 #define MMKV_MMKV_H
+#ifdef  __cplusplus
 
 #include "MMBuffer.h"
 #include "MMKVPredef.h"
@@ -337,4 +338,5 @@ public:
 
 MMKV_NAMESPACE_END
 
+#endif
 #endif // MMKV_MMKV_H

@@ -9,6 +9,7 @@
 
 #ifndef HEADER_MD5_H
 # define HEADER_MD5_H
+#ifdef  __cplusplus
 
 # include "openssl_opensslconf.h"
 
@@ -44,4 +45,5 @@ unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md);
 } // namespace openssl
 # endif
 
+#endif
 #endif
