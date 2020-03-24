@@ -20,6 +20,7 @@
 
 #ifndef MMKV_MMKVLOG_H
 #define MMKV_MMKVLOG_H
+#ifdef  __cplusplus
 
 #include "MMKVPredef.h"
 
@@ -70,4 +71,5 @@ extern mmkv::LogHandler g_logHandler;
 
 MMKV_NAMESPACE_END
 
+#endif
 #endif //MMKV_MMKVLOG_H

@@ -20,6 +20,7 @@
 
 #ifndef MMKV_SCOPEDLOCK_HPP
 #define MMKV_SCOPEDLOCK_HPP
+#ifdef  __cplusplus
 
 namespace mmkv {
 
@@ -64,4 +65,5 @@ public:
 #define __SCOPEDLOCK(lock, counter)                                                                                    \
     mmkv::ScopedLock<std::remove_pointer<decltype(lock)>::type> __scopedLock##counter(lock)
 
+#endif
 #endif //MMKV_SCOPEDLOCK_HPP

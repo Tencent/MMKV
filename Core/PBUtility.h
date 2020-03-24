@@ -20,6 +20,7 @@
 
 #ifndef MMKV_PBUTILITY_H
 #define MMKV_PBUTILITY_H
+#ifdef  __cplusplus
 
 #include "MMKVPredef.h"
 
@@ -148,4 +149,5 @@ static inline uint32_t pbUInt32Size(uint32_t value) {
 
 } // namespace mmkv
 
+#endif
 #endif //MMKV_PBUTILITY_H

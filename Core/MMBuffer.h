@@ -20,6 +20,7 @@
 
 #ifndef MMKV_MMBUFFER_H
 #define MMKV_MMBUFFER_H
+#ifdef  __cplusplus
 
 #include "MMKVPredef.h"
 
@@ -65,4 +66,5 @@ public:
 
 } // namespace mmkv
 
+#endif
 #endif //MMKV_MMBUFFER_H
