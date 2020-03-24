@@ -64,7 +64,7 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Android Tutorial](htt
 
 ### 性能对比
 循环写入随机的`int` 1k 次，我们有如下性能对比：  
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.png)  
 更详细的性能对比参考 [Android Benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark_cn)。
 
 ## iOS/macOS 指南
@@ -112,7 +112,7 @@ MMKV 支持**多进程访问**，更详细的用法参考 [iOS/macOS Tutorial](h
 
 ### 性能对比
 循环写入随机的`int` 1w 次，我们有如下性能对比：  
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.png)  
 更详细的性能对比参考 [iOS/macOS Benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark_cn)。
 
 ## Win32 指南

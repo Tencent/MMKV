@@ -70,7 +70,7 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found here [A
 
 ## Performance
 Writing random `int` for 1000 times, we get this chart:  
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.jpg)  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.png)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
 
 # MMKV for iOS/macOS
@@ -130,7 +130,7 @@ MMKV also supports **Multi-Process Access**. Full tutorials can be found [here](
 
 ## Performance
 Writing random `int` for 10000 times, we get this chart:  
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.jpg)  
+![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.png)  
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
 
 
