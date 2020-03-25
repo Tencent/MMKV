@@ -31,7 +31,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
-    // usally you can just init MMKV with default root dir like this
+    // usally you can just init MMKV with the default root dir like this
     //[MMKV initializeMMKV:nil];
 
     // or you can customize MMKV's root dir & group dir

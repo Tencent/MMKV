@@ -445,8 +445,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
-				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7";
+				VALID_ARCHS = "arm64 armv7 arm64e";
 				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 			};
@@ -476,8 +475,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
-				"VALID_ARCHS[sdk=iphoneos*]" = "arm64 armv7";
+				VALID_ARCHS = "arm64 armv7 arm64e";
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 			};
 			name = Release;
