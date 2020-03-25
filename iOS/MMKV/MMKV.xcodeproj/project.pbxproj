@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		CB0DCC78242B5AAF009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
+		CB1E0645242B84D800F2FD42 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
+		CB1E0647242B84D800F2FD42 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
+		CB1E0648242B84D800F2FD42 /* libMMKVCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6F6C0123ACCF47000351EA /* libMMKVCore.a */; };
+		CB1E0649242B84D800F2FD42 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
+		CB1E064B242B84D800F2FD42 /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		CB1E064C242B84D800F2FD42 /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CB1FD4962046984F00931B5F /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
 		CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; };
 		CB1FD4CD2046ACBC00931B5F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
@@ -21,6 +27,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		CB1E0643242B84D800F2FD42 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB9563D723AB2D9500ACCD39;
+			remoteInfo = Core;
+		};
 		CB6F6C0023ACCF47000351EA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CB6F6BFC23ACCF47000351EA /* Core.xcodeproj */;
@@ -59,6 +72,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKVAppExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "MMKV copy-Info.plist"; path = "/Users/lingol/Developer/mmkv/iOS/MMKV/MMKV copy-Info.plist"; sourceTree = "<absolute>"; };
 		CB1FD4912046984F00931B5F /* libMMKV Static.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libMMKV Static.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1FD4942046984F00931B5F /* MMKV.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
 		CB1FD4952046984F00931B5F /* libMMKV.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = libMMKV.mm; sourceTree = "<group>"; };
@@ -72,6 +87,16 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		CB1E0646242B84D800F2FD42 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB1E0647242B84D800F2FD42 /* libz.tbd in Frameworks */,
+				CB1E0648242B84D800F2FD42 /* libMMKVCore.a in Frameworks */,
+				CB1E0649242B84D800F2FD42 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CB1FD48E2046984F00931B5F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -101,6 +126,7 @@
 				CB1FD4932046984F00931B5F /* MMKV */,
 				CB1FD4922046984F00931B5F /* Products */,
 				CB1FD4C92046ACB200931B5F /* Frameworks */,
+				CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +135,7 @@
 			children = (
 				CB1FD4912046984F00931B5F /* libMMKV Static.a */,
 				CBC1A8F620DA946200AD5087 /* MMKV.framework */,
+				CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -153,6 +180,15 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
+		CB1E064A242B84D800F2FD42 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB1E064B242B84D800F2FD42 /* MMKVHandler.h in Headers */,
+				CB1E064C242B84D800F2FD42 /* MMKV.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CBC1A8F320DA946200AD5087 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -165,6 +201,25 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		CB1E0641242B84D800F2FD42 /* MMKVAppExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB1E064E242B84D800F2FD42 /* Build configuration list for PBXNativeTarget "MMKVAppExtension" */;
+			buildPhases = (
+				CB1E0644242B84D800F2FD42 /* Sources */,
+				CB1E0646242B84D800F2FD42 /* Frameworks */,
+				CB1E064A242B84D800F2FD42 /* Headers */,
+				CB1E064D242B84D800F2FD42 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CB1E0642242B84D800F2FD42 /* PBXTargetDependency */,
+			);
+			name = MMKVAppExtension;
+			productName = MMKV;
+			productReference = CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 		CB1FD4902046984F00931B5F /* MMKV Static */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CB1FD49A2046984F00931B5F /* Build configuration list for PBXNativeTarget "MMKV Static" */;
@@ -211,6 +266,9 @@
 				LastUpgradeCheck = 0940;
 				ORGANIZATIONNAME = Lingol;
 				TargetAttributes = {
+					CB1E0641242B84D800F2FD42 = {
+						ProvisioningStyle = Automatic;
+					};
 					CB1FD4902046984F00931B5F = {
 						CreatedOnToolsVersion = 9.2;
 						ProvisioningStyle = Automatic;
@@ -242,6 +300,7 @@
 			targets = (
 				CB1FD4902046984F00931B5F /* MMKV Static */,
 				CBC1A8F520DA946200AD5087 /* MMKV */,
+				CB1E0641242B84D800F2FD42 /* MMKVAppExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -257,6 +316,13 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
+		CB1E064D242B84D800F2FD42 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CBC1A8F420DA946200AD5087 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -267,6 +333,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		CB1E0644242B84D800F2FD42 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB1E0645242B84D800F2FD42 /* libMMKV.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CB1FD48D2046984F00931B5F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -286,6 +360,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		CB1E0642242B84D800F2FD42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Core;
+			targetProxy = CB1E0643242B84D800F2FD42 /* PBXContainerItemProxy */;
+		};
 		CB6F6C0423ACCF58000351EA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = Core;
@@ -299,6 +378,90 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		CB1E064F242B84D800F2FD42 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_MASTER_OBJECT_FILE = NO;
+				INFOPLIST_FILE = "MMKV copy-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MARKETING_VERSION = 1.1.0;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"-framework",
+					UIKit,
+				);
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
+					"-framework",
+					UIKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
+				PRODUCT_MODULE_NAME = MMKV;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 armv7 arm64e";
+				"VALID_ARCHS[sdk=macosx*]" = x86_64;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		CB1E0650242B84D800F2FD42 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_MASTER_OBJECT_FILE = NO;
+				INFOPLIST_FILE = "MMKV copy-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MARKETING_VERSION = 1.1.0;
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"-framework",
+					UIKit,
+				);
+				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
+					"-framework",
+					UIKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
+				PRODUCT_MODULE_NAME = MMKV;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 armv7 arm64e";
+				"VALID_ARCHS[sdk=macosx*]" = x86_64;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
 		CB1FD4982046984F00931B5F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -498,7 +661,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
+				VALID_ARCHS = "arm64 armv7 arm64e";
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -538,7 +701,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
+				VALID_ARCHS = "arm64 armv7 arm64e";
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -548,6 +711,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		CB1E064E242B84D800F2FD42 /* Build configuration list for PBXNativeTarget "MMKVAppExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB1E064F242B84D800F2FD42 /* Debug */,
+				CB1E0650242B84D800F2FD42 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		CB1FD48C2046984F00931B5F /* Build configuration list for PBXProject "MMKV" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
