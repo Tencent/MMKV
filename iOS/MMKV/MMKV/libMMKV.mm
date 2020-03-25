@@ -23,7 +23,7 @@
 #import <Core/MMKVLog.h>
 #import <Core/ScopedLock.hpp>
 #import <Core/ThreadLock.h>
-#import <Core/aes/openssl/openssl_md5.h>
+#import <Core/openssl_md5.h>
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
 #import <UIKit/UIKit.h>
