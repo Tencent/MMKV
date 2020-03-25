@@ -19,11 +19,11 @@
  */
 
 #import "MMKV.h"
-#import <Core/MMKV.h>
-#import <Core/MMKVLog.h>
-#import <Core/ScopedLock.hpp>
-#import <Core/ThreadLock.h>
-#import <Core/openssl_md5.h>
+#import <MMKVCore/MMKV.h>
+#import <MMKVCore/MMKVLog.h>
+#import <MMKVCore/ScopedLock.hpp>
+#import <MMKVCore/ThreadLock.h>
+#import <MMKVCore/openssl_md5.h>
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
 #import <UIKit/UIKit.h>
