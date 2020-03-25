@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
   s.public_header_files = "iOS/MMKV/MMKV/MMKV.h", "iOS/MMKV/MMKV/MMKVHandler.h"
 
-  s.framework    = "CoreFoundation"
+  s.framework    = "CoreFoundation", "Core"
   s.ios.frameworks = "UIKit"
   s.libraries    = "z", "c++"
   s.requires_arc = true
