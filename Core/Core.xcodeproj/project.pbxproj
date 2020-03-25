@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
+		CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
 		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
-		CB58B40423AB36D5002457F1 /* openssl_opensslconf.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
 		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
 		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
-		CB6F6C0923ACD031000351EA /* openssl_md5.h in Copy OpenSSL Files */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
 		CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */; };
 		CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F223AB2E9100ACCD39 /* MMKV.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -43,24 +43,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		CB58B40323AB36A8002457F1 /* Copy OpenSSL Files */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "include/$(PRODUCT_NAME)/aes/openssl";
-			dstSubfolderSpec = 16;
-			files = (
-				CB6F6C0923ACD031000351EA /* openssl_md5.h in Copy OpenSSL Files */,
-				CB58B40423AB36D5002457F1 /* openssl_opensslconf.h in Copy OpenSSL Files */,
-			);
-			name = "Copy OpenSSL Files";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		CB9563D623AB2D9500ACCD39 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */,
+				CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */,
 				CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */,
 				CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */,
 				CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */,
@@ -242,7 +232,6 @@
 				CB9563D423AB2D9500ACCD39 /* Sources */,
 				CB9563D523AB2D9500ACCD39 /* Frameworks */,
 				CB9563D623AB2D9500ACCD39 /* CopyFiles */,
-				CB58B40323AB36A8002457F1 /* Copy OpenSSL Files */,
 			);
 			buildRules = (
 			);
