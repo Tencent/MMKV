@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
 		CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
+		CB0DCC6D242B5786009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF3450323B4BABA00168AC7 /* libz.tbd */; };
 		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
 		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
 		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
@@ -64,6 +65,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CB0DCC70242B57E5009AFE59 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
 		CB58B3FF23AB3035002457F1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		CB9563D823AB2D9500ACCD39 /* libMMKVCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMMKVCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB9563E423AB2E9100ACCD39 /* CodedInputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedInputData.h; sourceTree = "<group>"; };
@@ -120,6 +122,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB0DCC6D242B5786009AFE59 /* libz.tbd in Frameworks */,
 				CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -130,6 +133,7 @@
 		CB58B3FE23AB3035002457F1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CB0DCC70242B57E5009AFE59 /* libc++.tbd */,
 				CBF3450323B4BABA00168AC7 /* libz.tbd */,
 				CB58B3FF23AB3035002457F1 /* Foundation.framework */,
 			);
