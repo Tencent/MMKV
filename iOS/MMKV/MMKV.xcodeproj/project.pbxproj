@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB0DCC78242B5AAF009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
 		CB1FD4962046984F00931B5F /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
 		CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; };
 		CB1FD4CD2046ACBC00931B5F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
@@ -84,6 +85,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB0DCC78242B5AAF009AFE59 /* libz.tbd in Frameworks */,
 				CB6F6C0523ACCF62000351EA /* libMMKVCore.a in Frameworks */,
 				CBC1A90620DA94B900AD5087 /* Foundation.framework in Frameworks */,
 			);
