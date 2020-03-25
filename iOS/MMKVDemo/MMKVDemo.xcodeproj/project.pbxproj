@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB0DCC67242B52F3009AFE59 /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
 		CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD42420455E2D00931B5F /* AppDelegate.m */; };
 		CB1FD42820455E2D00931B5F /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD42720455E2D00931B5F /* ViewController.mm */; };
 		CB1FD42B20455E2D00931B5F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42920455E2D00931B5F /* Main.storyboard */; };
@@ -29,12 +30,18 @@
 		CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C829215CDB9600487192 /* Main.storyboard */; };
 		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
 		CBD5359023B46E8500D3A404 /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
-		CBD5359323B46E9400D3A404 /* libMMKV For App Extension.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD5358D23B46E7400D3A404 /* libMMKV For App Extension.a */; };
 		CBD5359923B4718200D3A404 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD5359823B4718200D3A404 /* libc++.tbd */; };
 		CBF3450623B4BB1A00168AC7 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4D12046AF2300931B5F /* libz.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		CB0DCC65242B52E4009AFE59 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1FD4902046984F00931B5F;
+			remoteInfo = "MMKV Static";
+		};
 		CB1FD4B42046994D00931B5F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
@@ -70,26 +77,12 @@
 			remoteGlobalIDString = CB1FD4902046984F00931B5F;
 			remoteInfo = "MMKV Static";
 		};
-		CBD5358C23B46E7400D3A404 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = CBD5357F23B46CE500D3A404;
-			remoteInfo = "MMKV For App Extension";
-		};
 		CBD5358E23B46E7C00D3A404 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
 			proxyType = 1;
 			remoteGlobalIDString = CB1FD4902046984F00931B5F;
 			remoteInfo = "MMKV Static";
-		};
-		CBD5359123B46E8F00D3A404 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = CBD5357E23B46CE500D3A404;
-			remoteInfo = "MMKV For App Extension";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -169,9 +162,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB0DCC67242B52F3009AFE59 /* libMMKV Static.a in Frameworks */,
 				CBF3450623B4BB1A00168AC7 /* libz.tbd in Frameworks */,
 				CBD5359923B4718200D3A404 /* libc++.tbd in Frameworks */,
-				CBD5359323B46E9400D3A404 /* libMMKV For App Extension.a in Frameworks */,
 				CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -247,7 +240,6 @@
 			children = (
 				CB1FD4B52046994D00931B5F /* libMMKV Static.a */,
 				CB36F25420F8A20C009AF46F /* MMKV.framework */,
-				CBD5358D23B46E7400D3A404 /* libMMKV For App Extension.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -342,7 +334,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				CBD5359223B46E8F00D3A404 /* PBXTargetDependency */,
+				CB0DCC66242B52E4009AFE59 /* PBXTargetDependency */,
 			);
 			name = MMKVTodayExtensionDemo;
 			productName = MMKVTodayExtensionDemo;
@@ -443,13 +435,6 @@
 			remoteRef = CB36F25320F8A20C009AF46F /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		CBD5358D23B46E7400D3A404 /* libMMKV For App Extension.a */ = {
-			isa = PBXReferenceProxy;
-			fileType = archive.ar;
-			path = "libMMKV For App Extension.a";
-			remoteRef = CBD5358C23B46E7400D3A404 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -531,6 +516,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		CB0DCC66242B52E4009AFE59 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "MMKV Static";
+			targetProxy = CB0DCC65242B52E4009AFE59 /* PBXContainerItemProxy */;
+		};
 		CB36F24F20F8A20C009AF46F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = CB1FD41F20455E2D00931B5F /* MMKVDemo */;
@@ -550,11 +540,6 @@
 			isa = PBXTargetDependency;
 			name = "MMKV Static";
 			targetProxy = CBD5358E23B46E7C00D3A404 /* PBXContainerItemProxy */;
-		};
-		CBD5359223B46E8F00D3A404 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "MMKV For App Extension";
-			targetProxy = CBD5359123B46E8F00D3A404 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

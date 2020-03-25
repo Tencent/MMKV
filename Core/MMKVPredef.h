@@ -35,6 +35,9 @@
 #        define MMKV_IOS_OR_MAC
 #        ifdef __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
 #            define MMKV_IOS
+#           if __has_feature(attribute_availability_app_extension)
+#               define MMKV_IOS_EXTENSION
+#           endif
 #        else
 #            define MMKV_MAC
 #        endif
