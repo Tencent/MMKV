@@ -1,4 +1,0 @@
-
-core.public_header_files = "Core/MMBuffer.h", "Core/MMKV.h", "Core/MMKVLog.h", "Core/MMKVPredef.h", "Core/PBUtility.h", "Core/ScopedLock.hpp", "Core/ThreadLock.h", "Core/aes/openssl/openssl_md5.h", "Core/aes/openssl/openssl_opensslconf.h"
-
-mmkv.public_header_files = "iOS/MMKV/MMKV.h", "iOS/MMKV/MMKVHandler.h"
