@@ -65,7 +65,7 @@
 
 /* Begin PBXFileReference section */
 		CB58B3FF23AB3035002457F1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		CB9563D823AB2D9500ACCD39 /* libCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB9563D823AB2D9500ACCD39 /* libMMKVCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMMKVCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB9563E423AB2E9100ACCD39 /* CodedInputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedInputData.h; sourceTree = "<group>"; };
 		CB9563EB23AB2E9100ACCD39 /* Checksum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Checksum.h; sourceTree = "<group>"; };
 		CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MMKVMetaInfo.hpp; sourceTree = "<group>"; };
@@ -178,7 +178,7 @@
 		CB9563D923AB2D9500ACCD39 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CB9563D823AB2D9500ACCD39 /* libCore.a */,
+				CB9563D823AB2D9500ACCD39 /* libMMKVCore.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -225,9 +225,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CB9563D723AB2D9500ACCD39 /* Core */ = {
+		CB9563D723AB2D9500ACCD39 /* MMKVCore */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CB9563E123AB2D9500ACCD39 /* Build configuration list for PBXNativeTarget "Core" */;
+			buildConfigurationList = CB9563E123AB2D9500ACCD39 /* Build configuration list for PBXNativeTarget "MMKVCore" */;
 			buildPhases = (
 				CB9563D423AB2D9500ACCD39 /* Sources */,
 				CB9563D523AB2D9500ACCD39 /* Frameworks */,
@@ -237,9 +237,9 @@
 			);
 			dependencies = (
 			);
-			name = Core;
+			name = MMKVCore;
 			productName = Core;
-			productReference = CB9563D823AB2D9500ACCD39 /* libCore.a */;
+			productReference = CB9563D823AB2D9500ACCD39 /* libMMKVCore.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -269,7 +269,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CB9563D723AB2D9500ACCD39 /* Core */,
+				CB9563D723AB2D9500ACCD39 /* MMKVCore */,
 			);
 		};
 /* End PBXProject section */
@@ -490,7 +490,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CB9563E123AB2D9500ACCD39 /* Build configuration list for PBXNativeTarget "Core" */ = {
+		CB9563E123AB2D9500ACCD39 /* Build configuration list for PBXNativeTarget "MMKVCore" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CB9563E223AB2D9500ACCD39 /* Debug */,
