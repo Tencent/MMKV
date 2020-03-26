@@ -30,11 +30,11 @@
 #    include "MiniPBCoder.h"
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
+#    include <sys/utsname.h>
 
 #    ifdef MMKV_IOS
 #        include "Checksum.h"
 #        include <sys/mman.h>
-#        include <sys/utsname.h>
 #    endif
 
 #    if __has_feature(objc_arc)
