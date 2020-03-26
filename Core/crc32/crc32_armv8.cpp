@@ -22,17 +22,13 @@
 
 #ifdef __aarch64__
 
-#    ifdef MMKV_ANDROID
-
-#        include <zlib.h>
+#    include <zlib.h>
 
 static inline uint32_t _crc32Wrap(uint32_t crc, const unsigned char *buf, size_t len) {
     return static_cast<uint32_t>(::crc32(crc, buf, static_cast<uInt>(len)));
 }
 
 CRC32_Func_t CRC32 = _crc32Wrap;
-
-#    endif // MMKV_ANDROID
 
 // targeting armv8 with crc instruction extension
 #    define TARGET_ARM_CRC __attribute__((target("crc")))

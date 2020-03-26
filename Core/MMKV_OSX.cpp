@@ -32,7 +32,9 @@
 #    include "ThreadLock.h"
 
 #    ifdef MMKV_IOS
+#        include "Checksum.h"
 #        include <sys/mman.h>
+#        include <sys/utsname.h>
 #    endif
 
 #    if __has_feature(objc_arc)
@@ -45,6 +47,9 @@ using namespace mmkv;
 extern ThreadLock *g_instanceLock;
 extern MMKVPath_t g_rootDir;
 
+enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
+static void GetAppleMachineInfo(int &device, int &version);
+
 MMKV_NAMESPACE_BEGIN
 
 extern ThreadOnceToken_t once_control;
@@ -52,6 +57,16 @@ extern void initialize();
 
 void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
     ThreadLock::ThreadOnce(&once_control, initialize);
+
+    // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
+    int device = 0, version = 0;
+    GetAppleMachineInfo(device, version);
+#    ifdef __aarch64__
+    if ((device == iPhone && version >= 9) || (device == iPad && version >= 7)) {
+        CRC32 = mmkv::armv8_crc32;
+    }
+#    endif
+    MMKVInfo("Apple Device:%d, version:%d", device, version);
 
     g_rootDir = defaultRootDir;
     mkPath(g_rootDir);
@@ -214,5 +229,34 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
 }
 
 MMKV_NAMESPACE_END
+
+static void GetAppleMachineInfo(int &device, int &version) {
+    device = UnKnown;
+    version = 0;
+
+    struct utsname systemInfo = {};
+    uname(&systemInfo);
+
+    std::string machine(systemInfo.machine);
+    if (machine.find("PowerMac") != std::string::npos || machine.find("Power Macintosh") != std::string::npos) {
+        device = PowerMac;
+    } else if (machine.find("Mac") != std::string::npos || machine.find("Macintosh") != std::string::npos) {
+        device = Mac;
+    } else if (machine.find("iPhone") != std::string::npos) {
+        device = iPhone;
+    } else if (machine.find("iPod") != std::string::npos) {
+        device = iPod;
+    } else if (machine.find("iPad") != std::string::npos) {
+        device = iPad;
+    } else if (machine.find("AppleTV") != std::string::npos) {
+        device = AppleTV;
+    } else if (machine.find("AppleWatch") != std::string::npos) {
+        device = AppleWatch;
+    }
+    auto pos = machine.find_first_of("0123456789");
+    if (pos != std::string::npos) {
+        version = std::atoi(machine.substr(pos).c_str());
+    }
+}
 
 #endif // MMKV_IOS_OR_MAC
