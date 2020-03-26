@@ -116,6 +116,7 @@ android.libraryVariants.all { variant ->
         ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
         classpath += files(ext.androidJar)
         classpath += files(configurations.compile)
+        classpath += files(configurations.javadocDeps)
         exclude '**/BuildConfig.java'
         exclude '**/R.java'
         failOnError false
@@ -143,7 +144,7 @@ android.libraryVariants.all { variant ->
 
         if (hasFlavors) {
             variant.productFlavors.each { flavor ->
-                from file("build/intermediates/cmake/${flavor.name}/release/obj/")
+                from file("build/intermediates/cmake/${flavor.name}Release/obj/")
             }
         } else {
             from file("build/intermediates/cmake/release/obj/")
