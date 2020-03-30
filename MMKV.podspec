@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = "10.9"
 
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
-  s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}", "iOS/MMKV/MMKV/aes/*", "iOS/MMKV/MMKV/aes/openssl/*"
+  s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
   s.public_header_files = "iOS/MMKV/MMKV/MMKV.h", "iOS/MMKV/MMKV/MMKVHandler.h"
 
   s.framework    = "CoreFoundation"
@@ -31,4 +31,7 @@ Pod::Spec.new do |s|
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
   }
 
+  s.dependency 'MMKVCore', '~> 1.1.0'
+
 end
+
