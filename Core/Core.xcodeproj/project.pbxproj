@@ -66,6 +66,7 @@
 
 /* Begin PBXFileReference section */
 		CB0DCC70242B57E5009AFE59 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
+		CB467F862431D3ED00FD7421 /* MMKV_OSX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKV_OSX.h; sourceTree = "<group>"; };
 		CB58B3FF23AB3035002457F1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		CB9563D823AB2D9500ACCD39 /* libMMKVCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMMKVCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB9563E423AB2E9100ACCD39 /* CodedInputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedInputData.h; sourceTree = "<group>"; };
@@ -162,6 +163,7 @@
 				CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */,
 				CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */,
 				CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */,
+				CB467F862431D3ED00FD7421 /* MMKV_OSX.h */,
 				CB9563F223AB2E9100ACCD39 /* MMKV.cpp */,
 				CB9563ED23AB2E9100ACCD39 /* MMKV.h */,
 				CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */,

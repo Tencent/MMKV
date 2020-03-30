@@ -133,9 +133,9 @@ class MMKV {
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 #endif
 
-#ifdef MMKV_IOS
-    typedef void (^WriteBlock)(mmkv::CodedOutputData *output);
-    bool protectFromBackgroundWriting(size_t size, WriteBlock block);
+#if defined(MMKV_IOS)
+    typedef void (^WriteBlock)(void);
+    bool protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block);
 #endif
 
 public:

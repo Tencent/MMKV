@@ -654,8 +654,13 @@ void MMKV::oldStyleWriteActualSize(size_t actualSize) {
     MMKV_ASSERT(m_file->getMemory());
 
     m_actualSize = actualSize;
-    // TODO: background protection
+#ifdef MMKV_IOS
+    protectFromBackgroundWriting(m_file->getMemory(), Fixed32Size, ^{
+      memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
+    });
+#else
     memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
+#endif
 }
 
 bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool increaseSequence) {
@@ -666,7 +671,6 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         return false;
     }
 
-    // TODO: background protection
     bool needsFullWrite = false;
     m_actualSize = size;
     m_metaInfo->m_actualSize = static_cast<uint32_t>(size);
@@ -692,13 +696,22 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         }
         needsFullWrite = true;
     }
+#ifdef MMKV_IOS
+    return protectFromBackgroundWriting(m_metaFile->getMemory(), sizeof(MMKVMetaInfo), ^{
+      if (unlikely(needsFullWrite)) {
+          m_metaInfo->write(m_metaFile->getMemory());
+      } else {
+          m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
+      }
+    });
+#else
     if (unlikely(needsFullWrite)) {
         m_metaInfo->write(m_metaFile->getMemory());
     } else {
         m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
     }
-
     return true;
+#endif
 }
 
 const MMBuffer &MMKV::getDataForKey(MMKVKey_t key) {
@@ -769,9 +782,9 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
     }
 
 #ifdef MMKV_IOS
-    auto ret = protectFromBackgroundWriting(size, ^(CodedOutputData *output) {
-      output->writeString(key);
-      output->writeData(data); // note: write size of data
+    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), size, ^{
+      m_output->writeString(key);
+      m_output->writeData(data); // note: write size of data
     });
     if (!ret) {
         return false;
@@ -842,8 +855,8 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
     delete m_output;
     m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
 #ifdef MMKV_IOS
-    auto ret = protectFromBackgroundWriting(allData.length(), ^(CodedOutputData *output) {
-      output->writeRawData(allData); // note: don't write size of data
+    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), allData.length(), ^{
+      m_output->writeRawData(allData); // note: don't write size of data
     });
     if (!ret) {
         // revert everything
