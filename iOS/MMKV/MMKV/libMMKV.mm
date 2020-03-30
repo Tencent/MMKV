@@ -466,7 +466,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->checkContentChanged();
 }
 
-+ (void)onExit {
++ (void)onAppTerminate {
     SCOPED_LOCK(g_lock);
 
     [g_instanceDic removeAllObjects];
