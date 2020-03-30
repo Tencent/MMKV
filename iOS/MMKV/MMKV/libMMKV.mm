@@ -64,10 +64,11 @@ static void ContentChangeHandler(const string &mmapID);
         mmkv::MMKV::minimalInit([self mmkvBasePath].UTF8String);
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
+        // just in case someone forget to set the MMKV_IOS_EXTENSION macro
         if ([[[NSBundle mainBundle] bundlePath] hasSuffix:@".appex"]) {
             g_isRunningInAppExtension = YES;
         }
-        if (g_isRunningInAppExtension) {
+        if (!g_isRunningInAppExtension) {
             auto appState = [UIApplication sharedApplication].applicationState;
             auto isInBackground = (appState == UIApplicationStateBackground);
             mmkv::MMKV::setIsInBackground(isInBackground);
@@ -192,7 +193,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         m_mmapID = [NSString stringWithUTF8String:m_mmkv->mmapID().c_str()];
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
-        if (g_isRunningInAppExtension) {
+        if (!g_isRunningInAppExtension) {
             [[NSNotificationCenter defaultCenter] addObserver:self
                                                      selector:@selector(onMemoryWarning)
                                                          name:UIApplicationDidReceiveMemoryWarningNotification
