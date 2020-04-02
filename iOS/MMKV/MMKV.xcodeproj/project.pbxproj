@@ -414,7 +414,6 @@
 					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
-				PRODUCT_MODULE_NAME = MMKV;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -460,7 +459,6 @@
 					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
-				PRODUCT_MODULE_NAME = MMKV;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";

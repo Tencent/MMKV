@@ -74,8 +74,6 @@ public:
 
 #ifndef MMKV_IOS_OR_MAC
     void writeString(const std::string &value);
-#else
-    void writeString(__unsafe_unretained NSString *value);
 #endif
 };
 

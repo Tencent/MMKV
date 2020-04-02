@@ -40,7 +40,6 @@
 		CBD723F323B5E59800D3CDAF /* MemoryFile_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */; };
 		CBD723F523B5E76200D3CDAF /* MiniPBCoder_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CBD723F723B5FD9E00D3CDAF /* CodedInputData_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
-		CBD723F923B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F823B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -114,7 +113,6 @@
 		CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = MemoryFile_OSX.cpp; sourceTree = "<group>"; };
 		CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = MiniPBCoder_OSX.cpp; sourceTree = "<group>"; };
 		CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = CodedInputData_OSX.cpp; sourceTree = "<group>"; };
-		CBD723F823B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = CodedOutputData_OSX.cpp; sourceTree = "<group>"; };
 		CBF3450323B4BABA00168AC7 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
@@ -149,7 +147,6 @@
 				CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */,
 				CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */,
 				CB9563E423AB2E9100ACCD39 /* CodedInputData.h */,
-				CBD723F823B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp */,
 				CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */,
 				CB95640C23AB2E9100ACCD39 /* CodedOutputData.h */,
 				CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */,
@@ -297,7 +294,6 @@
 				CBC7A0C323C8B2C900CCC492 /* crc32_armv8.cpp in Sources */,
 				CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */,
 				CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */,
-				CBD723F923B5FDBF00D3CDAF /* CodedOutputData_OSX.cpp in Sources */,
 				CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */,
 				CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */,
 				CB95641723AB2E9100ACCD39 /* MiniPBCoder.cpp in Sources */,

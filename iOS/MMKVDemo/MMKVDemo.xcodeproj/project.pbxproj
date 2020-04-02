@@ -77,6 +77,13 @@
 			remoteGlobalIDString = CB1FD4902046984F00931B5F;
 			remoteInfo = "MMKV Static";
 		};
+		CBB306642435EC6000CB593E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CB1E0641242B84D800F2FD42;
+			remoteInfo = MMKVAppExtension;
+		};
 		CBD5358E23B46E7C00D3A404 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
@@ -340,6 +347,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				CBB306652435EC6000CB593E /* PBXTargetDependency */,
 			);
 			name = MMKVTodayExtensionDemo;
 			productName = MMKVTodayExtensionDemo;
@@ -543,6 +551,11 @@
 			isa = PBXTargetDependency;
 			name = "MMKV Static";
 			targetProxy = CB9C272F215E5D2400448B6C /* PBXContainerItemProxy */;
+		};
+		CBB306652435EC6000CB593E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MMKVAppExtension;
+			targetProxy = CBB306642435EC6000CB593E /* PBXContainerItemProxy */;
 		};
 		CBD5358F23B46E7C00D3A404 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
