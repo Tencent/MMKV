@@ -25,6 +25,7 @@
 		CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CB9C2731215E5DF000448B6C /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
 		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
+		CBB306612435E8F200CB593E /* ViewController+TestCaseBad.mm in Sources */ = {isa = PBXBuildFile; fileRef = CBB306602435E8F200CB593E /* ViewController+TestCaseBad.mm */; };
 		CBB6C823215CDB9500487192 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C822215CDB9500487192 /* AppDelegate.m */; };
 		CBB6C826215CDB9500487192 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C825215CDB9500487192 /* ViewController.mm */; };
 		CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C827215CDB9600487192 /* Assets.xcassets */; };
@@ -128,6 +129,8 @@
 		CB9C2732215E5ECC00448B6C /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
 		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
+		CBB3065F2435E8F200CB593E /* ViewController+TestCaseBad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ViewController+TestCaseBad.h"; sourceTree = "<group>"; };
+		CBB306602435E8F200CB593E /* ViewController+TestCaseBad.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "ViewController+TestCaseBad.mm"; sourceTree = "<group>"; };
 		CBB6C81F215CDB9500487192 /* MMKVMacDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MMKVMacDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBB6C821215CDB9500487192 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		CBB6C822215CDB9500487192 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -219,6 +222,8 @@
 				CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */,
 				CB1FD42620455E2D00931B5F /* ViewController.h */,
 				CB1FD42720455E2D00931B5F /* ViewController.mm */,
+				CBB3065F2435E8F200CB593E /* ViewController+TestCaseBad.h */,
+				CBB306602435E8F200CB593E /* ViewController+TestCaseBad.mm */,
 			);
 			path = MMKVDemo;
 			sourceTree = "<group>";
@@ -487,6 +492,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB1FD42820455E2D00931B5F /* ViewController.mm in Sources */,
+				CBB306612435E8F200CB593E /* ViewController+TestCaseBad.mm in Sources */,
 				CB1FD43320455E2D00931B5F /* main.m in Sources */,
 				CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */,
 				CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */,

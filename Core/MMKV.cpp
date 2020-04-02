@@ -765,7 +765,8 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
 bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
 #ifdef MMKV_IOS_OR_MAC
-    size_t keyLength = key.length;
+    auto keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
+    size_t keyLength = keyData.length;
 #else
     size_t keyLength = key.length();
 #endif
@@ -783,7 +784,7 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
 
 #ifdef MMKV_IOS
     auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), size, ^{
-      m_output->writeString(key);
+      m_output->writeData(MMBuffer(keyData, MMBufferNoCopy));
       m_output->writeData(data); // note: write size of data
     });
     if (!ret) {
