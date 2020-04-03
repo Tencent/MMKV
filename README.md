@@ -37,11 +37,11 @@ For other installation options, see [Android Setup](https://github.com/Tencent/M
 
 ### Quick Tutorial
 You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.  
-Setup MMKV on App startup, say your `MainActivity`, add these lines:
+Setup MMKV on App startup, say your `Application` class, add these lines:
 
 ```Java
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+protected void onCreate()() {
+    super.onCreate();
 
     String rootDir = MMKV.initialize(this);
     System.out.println("mmkv root: " + rootDir);

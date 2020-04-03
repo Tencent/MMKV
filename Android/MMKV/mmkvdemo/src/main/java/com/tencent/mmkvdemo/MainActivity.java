@@ -32,19 +32,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import com.getkeepsafe.relinker.ReLinker;
 import com.tencent.mmkv.MMKV;
-import com.tencent.mmkv.MMKVContentChangeNotification;
-import com.tencent.mmkv.MMKVHandler;
-import com.tencent.mmkv.MMKVLogLevel;
-import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.NativeBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import org.jetbrains.annotations.Nullable;
 
-public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKVContentChangeNotification {
+public class MainActivity extends AppCompatActivity {
     static private final String KEY_1 = "Ashmem_Key_1";
     static private final String KEY_2 = "Ashmem_Key_2";
     @Override
@@ -52,27 +47,8 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // set root dir
-        //String rootDir = MMKV.initialize(this);
-        String dir = getFilesDir().getAbsolutePath() + "/mmkv";
-        String rootDir = MMKV.initialize(dir, new MMKV.LibLoader() {
-            @Override
-            public void loadLibrary(String libName) {
-                ReLinker.loadLibrary(MainActivity.this, libName);
-            }
-        }, MMKVLogLevel.LevelInfo);
-        Log.i("MMKV", "mmkv root: " + rootDir);
-
-        // set log level
-        MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
-
-        // you can turn off logging
-        //MMKV.setLogLevel(MMKVLogLevel.LevelNone);
-
-        MMKV.registerHandler(this);
-        MMKV.registerContentChangeNotify(this);
-
         TextView tv = (TextView) findViewById(R.id.sample_text);
+        String rootDir = MMKV.getRootDir();
         tv.setText(rootDir);
 
         final Button button = findViewById(R.id.button);
@@ -139,12 +115,6 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
         //testInterProcessLockPhase1();
         //testCornerSize();
         //testFastRemoveCornerSize();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        MMKV.onExit();
     }
 
     private void testInterProcessLogic() {
@@ -455,45 +425,5 @@ public class MainActivity extends AppCompatActivity implements MMKVHandler, MMKV
             mmkv.encode(key, value); // when a full write back is occur, here's corruption happens
             mmkv.removeValueForKey(key);
         }
-    }
-
-    @Override
-    public MMKVRecoverStrategic onMMKVCRCCheckFail(String mmapID) {
-        return MMKVRecoverStrategic.OnErrorRecover;
-    }
-
-    @Override
-    public MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
-        return MMKVRecoverStrategic.OnErrorRecover;
-    }
-
-    @Override
-    public boolean wantLogRedirecting() {
-        return true;
-    }
-
-    @Override
-    public void mmkvLog(MMKVLogLevel level, String file, int line, String func, String message) {
-        String log = "<" + file + ":" + line + "::" + func + "> " + message;
-        switch (level) {
-            case LevelDebug:
-                Log.d("redirect logging MMKV", log);
-                break;
-            case LevelNone:
-            case LevelInfo:
-                Log.i("redirect logging MMKV", log);
-                break;
-            case LevelWarning:
-                Log.w("redirect logging MMKV", log);
-                break;
-            case LevelError:
-                Log.e("redirect logging MMKV", log);
-                break;
-        }
-    }
-
-    @Override
-    public void onContentChangedByOuterProcess(String mmapID) {
-        Log.i("content changed", mmapID);
     }
 }
