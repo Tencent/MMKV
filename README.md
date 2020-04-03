@@ -40,7 +40,7 @@ You can use MMKV as you go. All changes are saved immediately, no `sync`, no `ap
 Setup MMKV on App startup, say your `Application` class, add these lines:
 
 ```Java
-public void onCreate()() {
+public void onCreate() {
     super.onCreate();
 
     String rootDir = MMKV.initialize(this);
