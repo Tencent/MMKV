@@ -37,11 +37,11 @@
 #include <cstdio>
 #include <cstring>
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
 #    endif
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 using namespace std;
 using namespace mmkv;
@@ -231,7 +231,7 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
 }
 
 static void clearDictionary(MMKVMap &dic) {
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     for (auto &pair : dic) {
         [pair.first release];
     }
@@ -736,7 +736,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key) {
     if (ret) {
         m_dic[key] = std::move(data);
         m_hasFullWriteback = false;
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
         [key retain];
 #endif
     }
@@ -750,7 +750,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
         [itr->first release];
 #endif
         m_dic.erase(itr);
@@ -764,7 +764,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 }
 
 bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     auto keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
     size_t keyLength = keyData.length;
 #else
@@ -791,7 +791,11 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
         return false;
     }
 #else
+#ifdef MMKV_APPLE
+    m_output->writeData(MMBuffer(keyData, MMBufferNoCopy));
+#else
     m_output->writeString(key);
+#endif
     m_output->writeData(data); // note: write size of data
 #endif
 
@@ -1083,7 +1087,7 @@ bool MMKV::set(double value, MMKVKey_t key) {
     return setDataForKey(std::move(data), key);
 }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
 bool MMKV::set(const char *value, MMKVKey_t key) {
     if (!value) {
@@ -1167,7 +1171,7 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
     return false;
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 bool MMKV::getBool(MMKVKey_t key, bool defaultValue) {
     if (isKeyEmpty(key)) {
@@ -1380,7 +1384,7 @@ void MMKV::removeValueForKey(MMKVKey_t key) {
     removeDataForKey(key);
 }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
 vector<string> MMKV::allKeys() {
     SCOPED_LOCK(m_lock);
@@ -1420,7 +1424,7 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     }
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 // file
 

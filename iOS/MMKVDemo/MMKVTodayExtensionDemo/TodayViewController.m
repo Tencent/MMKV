@@ -19,7 +19,7 @@
 */
 
 #import "TodayViewController.h"
-#import <MMKVAppExtension/MMKV.h>
+#import <MMKV/MMKV.h>
 #import <NotificationCenter/NotificationCenter.h>
 
 @interface TodayViewController () <NCWidgetProviding>

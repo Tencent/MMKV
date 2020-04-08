@@ -35,7 +35,7 @@ enum PBEncodeItemType {
     PBEncodeItemType_None,
     PBEncodeItemType_Data,
     PBEncodeItemType_Container,
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
     PBEncodeItemType_String,
 #else
     PBEncodeItemType_NSString,
@@ -50,7 +50,7 @@ struct PBEncodeItem {
     uint32_t valueSize;
     union {
         const MMBuffer *bufferValue;
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
         const std::string *strValue;
 #else
         void *objectValue;
@@ -60,7 +60,7 @@ struct PBEncodeItem {
 
     PBEncodeItem() : type(PBEncodeItemType_None), compiledSize(0), valueSize(0) { memset(&value, 0, sizeof(value)); }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
     // opt std::vector.push_back() on slow_path
     PBEncodeItem(PBEncodeItem &&other) = default;
@@ -110,7 +110,7 @@ struct PBEncodeItem {
         }
     }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 };
 
 } // namespace mmkv

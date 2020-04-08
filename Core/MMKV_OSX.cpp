@@ -20,7 +20,7 @@
 
 #include "MMKVPredef.h"
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 
 #    include "CodedInputData.h"
 #    include "CodedOutputData.h"
@@ -33,10 +33,13 @@
 #    include <sys/utsname.h>
 
 #    ifdef MMKV_IOS
-#        include "Checksum.h"
 #        include "MMKV_OSX.h"
 #        include <sys/mman.h>
 #    endif
+
+#    ifdef __aarch64__
+#        include "Checksum.h"
+#   endif
 
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
@@ -273,4 +276,4 @@ static void GetAppleMachineInfo(int &device, int &version) {
     }
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE

@@ -58,7 +58,7 @@ class MiniPBCoder {
 
     void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
     size_t prepareObjectForEncode(const std::string &str);
     size_t prepareObjectForEncode(const std::vector<std::string> &vector);
 
@@ -93,7 +93,7 @@ public:
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
     static std::string decodeString(const MMBuffer &oData);
 
     static MMBuffer decodeBytes(const MMBuffer &oData);

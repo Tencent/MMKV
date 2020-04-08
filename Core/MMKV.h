@@ -83,7 +83,7 @@ class MMKV {
     mmkv::InterProcessLock *m_sharedProcessLock;
     mmkv::InterProcessLock *m_exclusiveProcessLock;
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     using MMKVKey_t = NSString *__unsafe_unretained;
     static bool isKeyEmpty(MMKVKey_t key) { return key.length <= 0; }
 #else
@@ -142,7 +142,7 @@ public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     // protect from some old code that don't call initializeMMKV()
     static void minimalInit(MMKVPath_t defaultRootDir);
 #endif
@@ -214,11 +214,11 @@ public:
     template <typename T>
     bool set(T value, MMKVKey_t key) = delete;
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key);
 
     NSObject *getObject(MMKVKey_t key, Class cls);
-#else  // !defined(MMKV_IOS_OR_MAC)
+#else  // !defined(MMKV_APPLE)
     bool set(const char *value, MMKVKey_t key);
 
     bool set(const std::string &value, MMKVKey_t key);
@@ -232,7 +232,7 @@ public:
     mmkv::MMBuffer getBytes(MMKVKey_t key);
 
     bool getVector(MMKVKey_t key, std::vector<std::string> &result);
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
     bool getBool(MMKVKey_t key, bool defaultValue = false);
 
@@ -264,7 +264,7 @@ public:
 
     size_t actualSize();
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     NSArray *allKeys();
 
     void removeValuesForKeys(NSArray *arrKeys);
@@ -275,11 +275,11 @@ public:
 #    ifdef MMKV_IOS
     static void setIsInBackground(bool isInBackground);
 #    endif
-#else  // !defined(MMKV_IOS_OR_MAC)
+#else  // !defined(MMKV_APPLE)
     std::vector<std::string> allKeys();
 
     void removeValuesForKeys(const std::vector<std::string> &arrKeys);
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
     void removeValueForKey(MMKVKey_t key);
 

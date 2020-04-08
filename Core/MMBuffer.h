@@ -39,14 +39,14 @@ private:
     void *ptr;
     size_t size;
     MMBufferCopyFlag isNoCopy;
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     NSData *m_data = nil;
 #endif
 
 public:
     explicit MMBuffer(size_t length = 0);
     MMBuffer(void *source, size_t length, MMBufferCopyFlag flag = MMBufferCopy);
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     explicit MMBuffer(NSData *data, MMBufferCopyFlag flag = MMBufferCopy);
 #endif
 

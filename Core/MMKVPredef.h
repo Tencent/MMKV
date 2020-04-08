@@ -32,9 +32,11 @@
 #    ifdef FORCE_POSIX
 #        define MMKV_POSIX
 #    else
-#        define MMKV_IOS_OR_MAC
+#        define MMKV_APPLE
 #        ifdef __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__
 #            define MMKV_IOS
+#        elif __ENVIRONMENT_WATCH_OS_VERSION_MIN_REQUIRED__
+#            define MMKV_WATCH
 #        else
 #            define MMKV_MAC
 #        endif
@@ -83,7 +85,7 @@ using MMKVPath_t = std::string;
 
 #endif // MMKV_WIN32
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 #    import <Foundation/Foundation.h>
 #    define MMKV_NAMESPACE_BEGIN namespace mmkv {
 #    define MMKV_NAMESPACE_END }
@@ -94,7 +96,7 @@ using MMKVLog_t = NSString *;
 #    define MMKV_NAMESPACE_END
 #    define MMKV_NAMESPACE_PREFIX
 using MMKVLog_t = const std::string &;
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 MMKV_NAMESPACE_BEGIN
 
@@ -137,7 +139,7 @@ extern size_t DEFAULT_MMAP_SIZE;
 
 class MMBuffer;
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 struct KeyHasher {
     size_t operator()(NSString *key) const { return key.hash; }
 };
@@ -154,7 +156,7 @@ struct KeyEqualer {
 using MMKVMap = std::unordered_map<NSString *, mmkv::MMBuffer, KeyHasher, KeyEqualer>;
 #else
 using MMKVMap = std::unordered_map<std::string, mmkv::MMBuffer>;
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 template <typename T>
 void unused(const T &) {}

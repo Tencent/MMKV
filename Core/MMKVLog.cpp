@@ -67,7 +67,7 @@ static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
     }
 }
 
-#        ifdef MMKV_IOS_OR_MAC
+#        ifdef MMKV_APPLE
 
 void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
@@ -121,7 +121,7 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
     }
 }
 
-#        endif // MMKV_IOS_OR_MAC
+#        endif // MMKV_APPLE
 
 #    endif // MMKV_ANDROID
 

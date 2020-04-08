@@ -23,11 +23,11 @@
 #include <cstring>
 #include <stdexcept>
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
 #    endif
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 using namespace std;
 
@@ -78,7 +78,7 @@ void CodedOutputData::writeData(const MMBuffer &value) {
     this->writeRawData(value);
 }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
 void CodedOutputData::writeString(const string &value) {
     size_t numberOfBytes = value.size();
@@ -92,7 +92,7 @@ void CodedOutputData::writeString(const string &value) {
     m_position += numberOfBytes;
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 size_t CodedOutputData::spaceLeft() {
     if (m_size <= m_position) {

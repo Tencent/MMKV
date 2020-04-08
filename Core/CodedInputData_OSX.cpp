@@ -20,7 +20,7 @@
 
 #include "CodedInputData.h"
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 
 #    include "PBUtility.h"
 #    include <stdexcept>
@@ -68,4 +68,4 @@ NSData *CodedInputData::readNSData() {
 
 } // namespace mmkv
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
