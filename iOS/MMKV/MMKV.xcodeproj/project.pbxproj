@@ -87,7 +87,7 @@
 /* Begin PBXFileReference section */
 		CB1E0651242B84D800F2FD42 /* MMKV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "MMKV copy-Info.plist"; path = "/Users/lingol/Developer/mmkv/iOS/MMKV/MMKV copy-Info.plist"; sourceTree = "<absolute>"; };
-		CB1FD4912046984F00931B5F /* libMMKV Static.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libMMKV Static.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB1FD4912046984F00931B5F /* libMMKV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMMKV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1FD4942046984F00931B5F /* MMKV.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
 		CB1FD4952046984F00931B5F /* libMMKV.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = libMMKV.mm; sourceTree = "<group>"; };
 		CB1FD4CC2046ACBC00931B5F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -159,7 +159,7 @@
 		CB1FD4922046984F00931B5F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CB1FD4912046984F00931B5F /* libMMKV Static.a */,
+				CB1FD4912046984F00931B5F /* libMMKV.a */,
 				CBC1A8F620DA946200AD5087 /* MMKV.framework */,
 				CB1E0651242B84D800F2FD42 /* MMKV.framework */,
 				CBF1904C243D706D001C82ED /* MMKV.framework */,
@@ -272,7 +272,7 @@
 			);
 			name = "MMKV Static";
 			productName = MMKV;
-			productReference = CB1FD4912046984F00931B5F /* libMMKV Static.a */;
+			productReference = CB1FD4912046984F00931B5F /* libMMKV.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 		CBC1A8F520DA946200AD5087 /* MMKV */ = {
@@ -683,7 +683,7 @@
 					"-framework",
 					UIKit,
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = MMKV;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64 armv7";
@@ -708,7 +708,7 @@
 					"-framework",
 					UIKit,
 				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = MMKV;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64 armv7";
