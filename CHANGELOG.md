@@ -1,5 +1,22 @@
 # MMKV Change Log
 
+## v1.1.1 / 2020-04-13
+
+### iOS / macOS
+
+* Support WatchOS.
+* Rename `+[MMKV onExit]` to `+[MMKV onAppTerminate]`, to avoid naming conflict with some other OpenSource projects.
+* Make background write protection much more robust, fix a potential crash when writing meta info in background.
+* Fix a potential data corruption bug when writing a UTF-8 (non-ASCII) key.
+
+### Android
+
+* Fix a crash in the demo project when the App is hot reloaded.
+* Improve wiki & readme to recommend users to init & destruct MMKV in the `Application` class instead of on the `MainActivity` class.
+
+### POSIX
+* Fix two compile errors with some compilers.
+
 ## v1.1.0 / 2020-03-24
 This is the first **major breaking version** ever since MMKV was made public in September 2018, introducing bunches of improvement. Due to the Covid-19, it has been delayed for about a month. Now it's finally here! 
 

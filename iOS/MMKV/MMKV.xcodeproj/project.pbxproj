@@ -29,7 +29,7 @@
 		CBF19044243D706D001C82ED /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CBF19046243D706D001C82ED /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CBF19047243D706D001C82ED /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CBF1907F243D7627001C82ED /* libMMKVWatchCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF19079243D70FD001C82ED /* libMMKVWatchCore.a */; };
+		CBF1907F243D7627001C82ED /* libMMKVCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF19079243D70FD001C82ED /* libMMKVCore.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -135,7 +135,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CBF1907F243D7627001C82ED /* libMMKVWatchCore.a in Frameworks */,
+				CBF1907F243D7627001C82ED /* libMMKVCore.a in Frameworks */,
 				CBF19042243D706D001C82ED /* libz.tbd in Frameworks */,
 				CBF19044243D706D001C82ED /* Foundation.framework in Frameworks */,
 			);
@@ -192,7 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				CB6F6C0123ACCF47000351EA /* libMMKVCore.a */,
-				CBF19079243D70FD001C82ED /* libMMKVWatchCore.a */,
+				CBF19079243D70FD001C82ED /* libMMKVCore.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -372,10 +372,10 @@
 			remoteRef = CB6F6C0023ACCF47000351EA /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		CBF19079243D70FD001C82ED /* libMMKVWatchCore.a */ = {
+		CBF19079243D70FD001C82ED /* libMMKVCore.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			path = libMMKVWatchCore.a;
+			path = libMMKVCore.a;
 			remoteRef = CBF19078243D70FD001C82ED /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -485,7 +485,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -530,7 +530,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -736,7 +736,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -776,7 +776,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -822,7 +822,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -831,7 +831,7 @@
 					"-framework",
 					UIKit,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVWatchExtension;
 				PRODUCT_NAME = MMKV;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -869,7 +869,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.1.1;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -878,7 +878,7 @@
 					"-framework",
 					UIKit,
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVWatchExtension;
 				PRODUCT_NAME = MMKV;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
