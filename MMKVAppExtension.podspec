@@ -16,7 +16,6 @@ Pod::Spec.new do |s|
   s.author       = { "guoling" => "guoling@tencent.com" }
 
   s.ios.deployment_target = "8.0"
-  s.osx.deployment_target = "10.9"
 
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
