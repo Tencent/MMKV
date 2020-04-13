@@ -22,7 +22,6 @@ Pod::Spec.new do |s|
   s.public_header_files = "iOS/MMKV/MMKV/MMKV.h", "iOS/MMKV/MMKV/MMKVHandler.h"
 
   s.framework    = "CoreFoundation"
-  s.ios.frameworks = "UIKit"
   s.libraries    = "z", "c++"
   s.requires_arc = true
   s.pod_target_xcconfig = {
