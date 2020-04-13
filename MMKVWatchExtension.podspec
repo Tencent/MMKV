@@ -1,12 +1,12 @@
 Pod::Spec.new do |s|
 
-  s.name         = "MMKVAppExtension"
+  s.name         = "MMKVWatchExtension"
   s.version      = "1.1.0"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
-  s.module_name  = "MMKVAppExtension"
+  s.module_name  = "MMKVWatchExtension"
 
   s.description  = <<-DESC
-                      The MMKV for iOS App Extensions.
+                      The MMKV for WatchOS App Extensions.
                       MMKV is an efficient, complete, easy-to-use mobile key-value storage framework used in the WeChat application.
                       It can be a replacement for NSUserDefaults & SQLite.
                    DESC
