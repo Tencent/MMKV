@@ -71,7 +71,6 @@ add_library(core
         CodedInputData_OSX.cpp
         CodedOutputData.h
         CodedOutputData.cpp
-        CodedOutputData_OSX.cpp
         PBUtility.h
         PBUtility.cpp
         MiniPBCoder.h

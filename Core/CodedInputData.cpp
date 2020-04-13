@@ -22,11 +22,11 @@
 #include "PBUtility.h"
 #include <stdexcept>
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
 #    endif
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 using namespace std;
 
@@ -79,7 +79,7 @@ bool CodedInputData::readBool() {
     return this->readRawVarint32() != 0;
 }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
 string CodedInputData::readString() {
     int32_t size = readRawVarint32();
@@ -181,7 +181,7 @@ int8_t CodedInputData::readRawByte() {
     return bytes[m_position++];
 }
 
-#ifdef MMKV_IOS_OR_MAC
-#endif // MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
+#endif // MMKV_APPLE
 
 } // namespace mmkv

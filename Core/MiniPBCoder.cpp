@@ -27,11 +27,11 @@
 #include <string>
 #include <vector>
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
 #    endif
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 using namespace std;
 
@@ -64,7 +64,7 @@ void MiniPBCoder::writeRootObject() {
                 m_outputData->writeUInt32(encodeItem->valueSize);
                 break;
             }
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
             case PBEncodeItemType_String: {
                 m_outputData->writeString(*(encodeItem->value.strValue));
                 break;
@@ -93,7 +93,7 @@ void MiniPBCoder::writeRootObject() {
                 m_outputData->writeDouble(oDate.timeIntervalSince1970);
                 break;
             }
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
             case PBEncodeItemType_None: {
                 MMKVError("%d", encodeItem->type);
                 break;
@@ -127,7 +127,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVMap &map) {
         for (const auto &itr : map) {
             const auto &key = itr.first;
             const auto &value = itr.second;
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
             if (key.length <= 0) {
 #else
             if (key.length() <= 0) {
@@ -168,7 +168,7 @@ MMBuffer MiniPBCoder::getEncodeData(const MMKVMap &map) {
     return move(*m_outputBuffer);
 }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
 size_t MiniPBCoder::prepareObjectForEncode(const string &str) {
     m_encodeItems->push_back(PBEncodeItem());
@@ -319,7 +319,7 @@ vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
     return oCoder.decodeOneSet();
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 void MiniPBCoder::decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size) {
     MiniPBCoder oCoder(&oData);

@@ -23,7 +23,7 @@
 #include <cstring>
 #include <utility>
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
 #    endif
@@ -44,7 +44,7 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : ptr(sou
     }
 }
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 MMBuffer::MMBuffer(NSData *data, MMBufferCopyFlag flag) : ptr((void *) data.bytes), size(data.length), isNoCopy(flag) {
     if (isNoCopy == MMBufferCopy) {
         m_data = [data retain];
@@ -59,7 +59,7 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : ptr(other.ptr), size(other.size)
     other.size = 0;
     other.isNoCopy = MMBufferCopy;
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     m_data = other.m_data;
     other.m_data = nil;
 #endif
@@ -70,7 +70,7 @@ MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
     std::swap(size, other.size);
     std::swap(isNoCopy, other.isNoCopy);
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     std::swap(m_data, other.m_data);
 #endif
 
@@ -78,7 +78,7 @@ MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
 }
 
 MMBuffer::~MMBuffer() {
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     if (m_data) {
         if (isNoCopy == MMBufferCopy) {
             [m_data release];

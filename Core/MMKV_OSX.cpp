@@ -20,7 +20,7 @@
 
 #include "MMKVPredef.h"
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 
 #    include "CodedInputData.h"
 #    include "CodedOutputData.h"
@@ -33,9 +33,13 @@
 #    include <sys/utsname.h>
 
 #    ifdef MMKV_IOS
-#        include "Checksum.h"
+#        include "MMKV_OSX.h"
 #        include <sys/mman.h>
 #    endif
+
+#    ifdef __aarch64__
+#        include "Checksum.h"
+#   endif
 
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
@@ -49,6 +53,29 @@ extern MMKVPath_t g_rootDir;
 
 enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
 static void GetAppleMachineInfo(int &device, int &version);
+
+#    ifdef MMKV_IOS
+MLockPtr::MLockPtr(void *ptr, size_t size) : m_lockDownSize(0), m_lockedPtr(nullptr) {
+    // calc ptr to be mlock()
+    auto writePtr = (size_t) ptr;
+    auto lockPtr = (writePtr / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
+    auto lockDownSize = writePtr - lockPtr + size;
+    if (mlock((void *) lockPtr, lockDownSize) == 0) {
+        m_lockedPtr = (uint8_t *) lockPtr;
+        m_lockDownSize = lockDownSize;
+    } else {
+        MMKVError("fail to mlock [%p], %s", m_lockedPtr, strerror(errno));
+        // just fail on this condition, otherwise app will crash anyway
+    }
+}
+
+MLockPtr::~MLockPtr() {
+    if (m_lockedPtr) {
+        munlock(m_lockedPtr, m_lockDownSize);
+    }
+}
+
+#    endif
 
 MMKV_NAMESPACE_BEGIN
 
@@ -85,38 +112,28 @@ void MMKV::setIsInBackground(bool isInBackground) {
     MMKVInfo("g_isInBackground:%d", g_isInBackground);
 }
 
-// @finally in C++ stype
-template <typename F>
-struct AtExit {
-    AtExit(F f) : m_func{f} {}
-    ~AtExit() { m_func(); }
-
-private:
-    F m_func;
-};
-
-bool MMKV::protectFromBackgroundWriting(size_t size, WriteBlock block) {
+bool MMKV::protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block) {
     if (g_isInBackground) {
-        // calc ptr to be mlock()
-        auto writePtr = (size_t) m_output->curWritePointer();
-        auto ptr = (writePtr / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
-        size_t lockDownSize = writePtr - ptr + size;
-        if (mlock((void *) ptr, lockDownSize) != 0) {
-            MMKVError("fail to mlock [%s], %s", m_mmapID.c_str(), strerror(errno));
-            // just fail on this condition, otherwise app will crash anyway
-            //block(m_output);
-            return false;
-        } else {
-            AtExit cleanup([=] { munlock((void *) ptr, lockDownSize); });
+        MLockPtr mlockPtr(ptr, size);
+        if (mlockPtr.isLocked()) {
             try {
-                block(m_output);
+                block();
             } catch (std::exception &exception) {
                 MMKVError("%s", exception.what());
                 return false;
             }
+        } else {
+            // just fail on this condition, otherwise app will crash anyway
+            //block(m_output);
+            return false;
         }
     } else {
-        block(m_output);
+        try {
+            block();
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+            return false;
+        }
     }
 
     return true;
@@ -259,4 +276,4 @@ static void GetAppleMachineInfo(int &device, int &version) {
     }
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE

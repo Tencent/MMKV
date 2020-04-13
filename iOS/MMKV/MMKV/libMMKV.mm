@@ -38,6 +38,10 @@ static bool g_isLogRedirecting = false;
 static NSString *g_basePath = nil;
 static NSString *g_groupPath = nil;
 
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
+static BOOL g_isRunningInAppExtension = NO;
+#endif
+
 static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, const char *function, NSString *message);
 static mmkv::MMKVRecoverStrategic ErrorHandler(const string &mmapID, mmkv::MMKVErrorType errorType);
 static void ContentChangeHandler(const string &mmapID);
@@ -60,13 +64,19 @@ static void ContentChangeHandler(const string &mmapID);
         mmkv::MMKV::minimalInit([self mmkvBasePath].UTF8String);
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
-        auto appState = [UIApplication sharedApplication].applicationState;
-        auto isInBackground = (appState == UIApplicationStateBackground);
-        mmkv::MMKV::setIsInBackground(isInBackground);
-        MMKVInfo("appState:%ld", (long) appState);
+        // just in case someone forget to set the MMKV_IOS_EXTENSION macro
+        if ([[[NSBundle mainBundle] bundlePath] hasSuffix:@".appex"]) {
+            g_isRunningInAppExtension = YES;
+        }
+        if (!g_isRunningInAppExtension) {
+            auto appState = [UIApplication sharedApplication].applicationState;
+            auto isInBackground = (appState == UIApplicationStateBackground);
+            mmkv::MMKV::setIsInBackground(isInBackground);
+            MMKVInfo("appState:%ld", (long) appState);
 
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+        }
 #endif
     }
 }
@@ -183,10 +193,12 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         m_mmapID = [NSString stringWithUTF8String:m_mmkv->mmapID().c_str()];
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(onMemoryWarning)
-                                                     name:UIApplicationDidReceiveMemoryWarningNotification
-                                                   object:nil];
+        if (!g_isRunningInAppExtension) {
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(onMemoryWarning)
+                                                         name:UIApplicationDidReceiveMemoryWarningNotification
+                                                       object:nil];
+        }
 #endif
     }
     return self;
@@ -466,7 +478,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->checkContentChanged();
 }
 
-+ (void)onExit {
++ (void)onAppTerminate {
     SCOPED_LOCK(g_lock);
 
     [g_instanceDic removeAllObjects];

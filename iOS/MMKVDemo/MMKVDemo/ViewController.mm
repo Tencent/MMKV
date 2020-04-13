@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#import "ViewController.h"
 #import "MMKVDemo-Swift.h"
+#import "ViewController+TestCaseBad.h"
 #import <MMKV/MMKV.h>
 
 @interface TestNSArchive : NSObject <NSCoding>
@@ -69,6 +69,7 @@
     [self testImportFromUserDefault];
     //[self testCornerSize];
     //[self testFastRemoveCornerSize];
+    //[self testChineseCharKey];
 
     DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
     [swiftUsageDemo testSwiftFunctionality];
@@ -160,43 +161,6 @@
     NSLog(@"allKeys %@", [mmkv allKeys]);
 
     [mmkv close];
-}
-
-- (void)testCornerSize {
-    auto mmkv = [MMKV mmkvWithID:@"test/cornerSize" cryptKey:[@"crypt" dataUsingEncoding:NSUTF8StringEncoding]];
-    [mmkv clearAll];
-    auto size = getpagesize() - 2;
-    size -= 4;
-    NSString *key = @"key";
-    auto keySize = 3 + 1;
-    size -= keySize;
-    auto valueSize = 3;
-    size -= valueSize;
-    NSData *value = [NSMutableData dataWithLength:size];
-    [mmkv setObject:value forKey:key];
-}
-
-- (void)testFastRemoveCornerSize {
-    auto mmkv = [MMKV mmkvWithID:@"test/FastRemoveCornerSize" cryptKey:[@"crypt" dataUsingEncoding:NSUTF8StringEncoding]];
-    [mmkv clearAll];
-    auto size = getpagesize() - 4;
-    size -= 4;
-    NSString *key = @"key";
-    auto keySize = 3 + 1;
-    size -= keySize;
-    auto valueSize = 3;
-    size -= valueSize;
-    size -= (keySize + 1); // total size of fast remove
-    size /= 16;
-    NSMutableData *value = [NSMutableData dataWithLength:size];
-    auto ptr = (char *) value.mutableBytes;
-    for (int i = 0; i < value.length; i++) {
-        ptr[i] = 'A';
-    }
-    for (int i = 0; i < 16; i++) {
-        [mmkv setObject:value forKey:key]; // when a full write back is occur, here's corruption happens
-        [mmkv removeValueForKey:key];
-    }
 }
 
 - (void)testMMKV:(NSString *)mmapID withCryptKey:(NSData *)cryptKey decodeOnly:(BOOL)decodeOnly {

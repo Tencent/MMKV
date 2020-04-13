@@ -37,11 +37,11 @@
 #include <cstdio>
 #include <cstring>
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
 #    endif
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 using namespace std;
 using namespace mmkv;
@@ -116,11 +116,7 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
 MMKV::~MMKV() {
     clearMemoryCache();
 
-    if (m_crypter) {
-        delete m_crypter;
-        m_crypter = nullptr;
-    }
-
+    delete m_crypter;
     delete m_file;
     delete m_metaFile;
     delete m_metaInfo;
@@ -235,7 +231,7 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
 }
 
 static void clearDictionary(MMKVMap &dic) {
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
     for (auto &pair : dic) {
         [pair.first release];
     }
@@ -345,7 +341,6 @@ void MMKV::partialLoadFromFile() {
 
 void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
     // try auto recover from last confirmed location
-    constexpr auto offset = pbFixed32Size();
     auto fileSize = m_file->getFileSize();
     auto checkLastConfirmedInfo = [&] {
         if (m_metaInfo->m_version >= MMKVVersionActualSize) {
@@ -368,7 +363,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             }
 
             auto lastActualSize = m_metaInfo->m_lastConfirmedMetaInfo.lastActualSize;
-            if (lastActualSize < fileSize && (lastActualSize + offset) <= fileSize) {
+            if (lastActualSize < fileSize && (lastActualSize + Fixed32Size) <= fileSize) {
                 auto lastCRCDigest = m_metaInfo->m_lastConfirmedMetaInfo.lastCRCDigest;
                 if (checkFileCRCValid(lastActualSize, lastCRCDigest)) {
                     loadFromFile = true;
@@ -386,7 +381,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
 
     m_actualSize = readActualSize();
 
-    if (m_actualSize < fileSize && (m_actualSize + offset) <= fileSize) {
+    if (m_actualSize < fileSize && (m_actualSize + Fixed32Size) <= fileSize) {
         if (checkFileCRCValid(m_actualSize, m_metaInfo->m_crcDigest)) {
             loadFromFile = true;
         } else {
@@ -410,7 +405,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             auto strategic = onMMKVFileLengthError(m_mmapID);
             if (strategic == OnErrorRecover) {
                 // make sure we don't over read the file
-                m_actualSize = fileSize - offset;
+                m_actualSize = fileSize - Fixed32Size;
                 loadFromFile = true;
                 needFullWriteback = true;
             }
@@ -585,7 +580,7 @@ void MMKV::trim() {
     }
     auto ptr = (uint8_t *) m_file->getMemory();
     delete m_output;
-    m_output = new CodedOutputData(ptr + pbFixed32Size(), fileSize - pbFixed32Size());
+    m_output = new CodedOutputData(ptr + pbFixed32Size(), fileSize - Fixed32Size);
     m_output->seek(m_actualSize);
 
     MMKVInfo("finish trim %s from %zu to %zu", m_mmapID.c_str(), oldSize, fileSize);
@@ -606,10 +601,9 @@ bool MMKV::ensureMemorySize(size_t newSize) {
     }
     if (newSize >= m_output->spaceLeft() || m_dic.empty()) {
         // try a full rewrite to make space
-        static const int offset = pbFixed32Size();
         auto fileSize = m_file->getFileSize();
         MMBuffer data = MiniPBCoder::encodeDataWithObject(m_dic);
-        size_t lenNeeded = data.length() + offset + newSize;
+        size_t lenNeeded = data.length() + Fixed32Size + newSize;
         size_t avgItemSize = lenNeeded / std::max<size_t>(1, m_dic.size());
         size_t futureUsage = avgItemSize * std::max<size_t>(8, (m_dic.size() + 1) / 2);
         // 1. no space for a full rewrite, double it
@@ -660,7 +654,13 @@ void MMKV::oldStyleWriteActualSize(size_t actualSize) {
     MMKV_ASSERT(m_file->getMemory());
 
     m_actualSize = actualSize;
+#ifdef MMKV_IOS
+    protectFromBackgroundWriting(m_file->getMemory(), Fixed32Size, ^{
+      memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
+    });
+#else
     memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
+#endif
 }
 
 bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool increaseSequence) {
@@ -696,13 +696,22 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         }
         needsFullWrite = true;
     }
+#ifdef MMKV_IOS
+    return protectFromBackgroundWriting(m_metaFile->getMemory(), sizeof(MMKVMetaInfo), ^{
+      if (unlikely(needsFullWrite)) {
+          m_metaInfo->write(m_metaFile->getMemory());
+      } else {
+          m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
+      }
+    });
+#else
     if (unlikely(needsFullWrite)) {
         m_metaInfo->write(m_metaFile->getMemory());
     } else {
         m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
     }
-
     return true;
+#endif
 }
 
 const MMBuffer &MMKV::getDataForKey(MMKVKey_t key) {
@@ -727,7 +736,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key) {
     if (ret) {
         m_dic[key] = std::move(data);
         m_hasFullWriteback = false;
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
         [key retain];
 #endif
     }
@@ -741,7 +750,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
     auto itr = m_dic.find(key);
     if (itr != m_dic.end()) {
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
         [itr->first release];
 #endif
         m_dic.erase(itr);
@@ -755,8 +764,9 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 }
 
 bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
-#ifdef MMKV_IOS_OR_MAC
-    size_t keyLength = key.length;
+#ifdef MMKV_APPLE
+    auto keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
+    size_t keyLength = keyData.length;
 #else
     size_t keyLength = key.length();
 #endif
@@ -773,15 +783,19 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
     }
 
 #ifdef MMKV_IOS
-    auto ret = protectFromBackgroundWriting(size, ^(CodedOutputData *output) {
-      output->writeString(key);
-      output->writeData(data); // note: write size of data
+    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), size, ^{
+      m_output->writeData(MMBuffer(keyData, MMBufferNoCopy));
+      m_output->writeData(data); // note: write size of data
     });
     if (!ret) {
         return false;
     }
 #else
+#ifdef MMKV_APPLE
+    m_output->writeData(MMBuffer(keyData, MMBufferNoCopy));
+#else
     m_output->writeString(key);
+#endif
     m_output->writeData(data); // note: write size of data
 #endif
 
@@ -842,13 +856,12 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
         m_crypter->encrypt(ptr, ptr, allData.length());
     }
 
-    constexpr auto offset = pbFixed32Size();
     auto ptr = (uint8_t *) m_file->getMemory();
     delete m_output;
-    m_output = new CodedOutputData(ptr + offset, m_file->getFileSize() - offset);
+    m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
 #ifdef MMKV_IOS
-    auto ret = protectFromBackgroundWriting(allData.length(), ^(CodedOutputData *output) {
-      output->writeRawData(allData); // note: don't write size of data
+    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), allData.length(), ^{
+      m_output->writeRawData(allData); // note: don't write size of data
     });
     if (!ret) {
         // revert everything
@@ -856,7 +869,7 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
             m_crypter->resetIV(oldIV);
         }
         delete m_output;
-        m_output = new CodedOutputData(ptr + offset, m_file->getFileSize() - offset);
+        m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
         m_output->seek(m_actualSize);
         return false;
     }
@@ -960,8 +973,7 @@ bool MMKV::isFileValid() {
 bool MMKV::checkFileCRCValid(size_t actualSize, uint32_t crcDigest) {
     auto ptr = (uint8_t *) m_file->getMemory();
     if (ptr) {
-        constexpr auto offset = pbFixed32Size();
-        m_crcDigest = (uint32_t) CRC32(0, (const uint8_t *) ptr + offset, (uint32_t) actualSize);
+        m_crcDigest = (uint32_t) CRC32(0, (const uint8_t *) ptr + Fixed32Size, (uint32_t) actualSize);
 
         if (m_crcDigest == crcDigest) {
             return true;
@@ -974,9 +986,8 @@ bool MMKV::checkFileCRCValid(size_t actualSize, uint32_t crcDigest) {
 void MMKV::recaculateCRCDigestWithIV(const void *iv) {
     auto ptr = (const uint8_t *) m_file->getMemory();
     if (ptr) {
-        constexpr auto offset = pbFixed32Size();
         m_crcDigest = 0;
-        m_crcDigest = (uint32_t) CRC32(0, ptr + offset, (uint32_t) m_actualSize);
+        m_crcDigest = (uint32_t) CRC32(0, ptr + Fixed32Size, (uint32_t) m_actualSize);
         writeActualSize(m_actualSize, m_crcDigest, iv, IncreaseSequence);
     }
 }
@@ -1076,7 +1087,7 @@ bool MMKV::set(double value, MMKVKey_t key) {
     return setDataForKey(std::move(data), key);
 }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
 bool MMKV::set(const char *value, MMKVKey_t key) {
     if (!value) {
@@ -1160,7 +1171,7 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
     return false;
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 bool MMKV::getBool(MMKVKey_t key, bool defaultValue) {
     if (isKeyEmpty(key)) {
@@ -1373,7 +1384,7 @@ void MMKV::removeValueForKey(MMKVKey_t key) {
     removeDataForKey(key);
 }
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
 
 vector<string> MMKV::allKeys() {
     SCOPED_LOCK(m_lock);
@@ -1413,7 +1424,7 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     }
 }
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
 
 // file
 
@@ -1462,19 +1473,18 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
         return false;
     }
 
-    constexpr auto offset = pbFixed32Size();
     uint32_t crcDigest = 0;
     MMBuffer *fileData = readWholeFile(kvPath);
     if (fileData) {
-        if (fileData->getPtr() && fileData->length() >= Fixed32Size) {
+        if (fileData->getPtr() && (fileData->length() >= Fixed32Size)) {
             uint32_t actualSize = 0;
             memcpy(&actualSize, fileData->getPtr(), Fixed32Size);
-            if (actualSize > fileData->length() - offset) {
+            if (actualSize > (fileData->length() - Fixed32Size)) {
                 delete fileData;
                 return false;
             }
 
-            crcDigest = (uint32_t) CRC32(0, (const uint8_t *) fileData->getPtr() + offset, (uint32_t) actualSize);
+            crcDigest = (uint32_t) CRC32(0, (const uint8_t *) fileData->getPtr() + Fixed32Size, (uint32_t) actualSize);
         }
         delete fileData;
         return crcFile == crcDigest;

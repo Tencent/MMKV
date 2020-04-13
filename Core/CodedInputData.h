@@ -66,7 +66,7 @@ public:
 
     MMBuffer readData();
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
     std::string readString();
 #else
     NSString *readString();

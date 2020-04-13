@@ -20,7 +20,9 @@
 
 #include "MMKV.h"
 #include <chrono>
+#include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <numeric>
 #include <unistd.h>
@@ -125,7 +127,7 @@ void testUInt64(MMKV *mmkv) {
 
 template <typename T>
 bool EqualWithAccuracy(T value1, T value2, T accuracy) {
-    return abs(value1 - value2) <= accuracy;
+    return fabs(value1 - value2) <= accuracy;
 }
 
 void testFloat(MMKV *mmkv) {

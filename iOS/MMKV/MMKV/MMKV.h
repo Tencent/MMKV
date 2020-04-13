@@ -76,7 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:));
 
 // you can call this on applicationWillTerminate, it's totally fine if you don't call
-+ (void)onExit;
++ (void)onAppTerminate;
 
 + (NSString *)mmkvBasePath;
 

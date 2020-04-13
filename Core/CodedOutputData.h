@@ -72,10 +72,8 @@ public:
 
     void writeData(const MMBuffer &value);
 
-#ifndef MMKV_IOS_OR_MAC
+#ifndef MMKV_APPLE
     void writeString(const std::string &value);
-#else
-    void writeString(__unsafe_unretained NSString *value);
 #endif
 };
 

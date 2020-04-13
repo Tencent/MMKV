@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-               BuildableName = "libMMKV Static.a"
+               BuildableName = "libMMKV.a"
                BlueprintName = "MMKV Static"
                ReferencedContainer = "container:MMKV.xcodeproj">
             </BuildableReference>
@@ -44,7 +44,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV Static.a"
+            BuildableName = "libMMKV.a"
             BlueprintName = "MMKV Static"
             ReferencedContainer = "container:MMKV.xcodeproj">
          </BuildableReference>
@@ -60,7 +60,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV Static.a"
+            BuildableName = "libMMKV.a"
             BlueprintName = "MMKV Static"
             ReferencedContainer = "container:MMKV.xcodeproj">
          </BuildableReference>

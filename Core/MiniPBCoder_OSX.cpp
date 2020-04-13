@@ -20,7 +20,7 @@
 
 #include "MiniPBCoder.h"
 
-#ifdef MMKV_IOS_OR_MAC
+#ifdef MMKV_APPLE
 
 #    include "CodedInputData.h"
 #    include "CodedOutputData.h"
@@ -189,4 +189,4 @@ bool MiniPBCoder::isCompatibleClass(Class cls) {
 
 } // namespace mmkv
 
-#endif // MMKV_IOS_OR_MAC
+#endif // MMKV_APPLE
