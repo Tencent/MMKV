@@ -12,7 +12,7 @@
 ### Android
 
 * Fix a crash in the demo project when the App is hot reloaded.
-* Improve wiki & readme to recommend users to init & destruct MMKV in the `Application` class instead of on the `MainActivity` class.
+* Improve wiki & readme to recommend users to init & destruct MMKV in the `Application` class instead of the `MainActivity` class.
 
 ### POSIX
 * Fix two compile errors with some compilers.
