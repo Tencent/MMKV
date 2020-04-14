@@ -486,12 +486,11 @@ void MMKV::clearAll() {
         m_file->reloadFromFile();
     }
 
-    m_file->truncate(DEFAULT_MMAP_SIZE);
-    auto ptr = m_file->getMemory();
-    if (ptr) {
-        memset(ptr, 0, m_file->getFileSize());
+    if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
+        MMKVInfo("nothing to clear for [%s]", m_mmapID.c_str());
+        return;
     }
-    m_file->msync(MMKV_SYNC);
+    m_file->truncate(DEFAULT_MMAP_SIZE);
 
     unsigned char newIV[AES_KEY_LEN];
     AESCrypt::fillRandomIV(newIV);
@@ -791,11 +790,11 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
         return false;
     }
 #else
-#ifdef MMKV_APPLE
+#    ifdef MMKV_APPLE
     m_output->writeData(MMBuffer(keyData, MMBufferNoCopy));
-#else
+#    else
     m_output->writeString(key);
-#endif
+#    endif
     m_output->writeData(data); // note: write size of data
 #endif
 

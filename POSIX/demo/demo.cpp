@@ -267,6 +267,13 @@ void fastRemoveCornetSizeTest() {
     }
 }
 
+void testClearEmptyMMKV() {
+    auto mmkv = MMKV::mmkvWithID("emptyMMKV");
+    mmkv->set(true, "bool");
+    mmkv->clearAll();
+    mmkv->clearAll();
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -309,6 +316,7 @@ int main() {
 
     //fastRemoveCornetSizeTest();
     //cornetSizeTest();
+    //testClearEmptyMMKV();
     brutleTest();
     threadTest();
     processTest();
