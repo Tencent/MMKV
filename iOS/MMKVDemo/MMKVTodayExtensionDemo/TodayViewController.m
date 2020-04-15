@@ -32,7 +32,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
 
-    NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.lingol.mmkv"].path;
+    NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.tencent.mmkv"].path;
     [MMKV initializeMMKV:nil groupDir:groupDir logLevel:MMKVLogInfo];
 
     [self testMultiProcess];
