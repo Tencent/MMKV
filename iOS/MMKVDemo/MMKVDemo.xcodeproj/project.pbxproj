@@ -18,12 +18,12 @@
 		CB1FD43320455E2D00931B5F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD43220455E2D00931B5F /* main.m */; };
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
-		CB467FBC2431EE3000FD7421 /* MMKVAppExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; };
+		CB467FBC2431EE3000FD7421 /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKV.framework */; };
 		CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6D44CB23B3A44400F369AA /* NotificationCenter.framework */; };
 		CB6D44D023B3A44400F369AA /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB6D44CF23B3A44400F369AA /* TodayViewController.m */; };
 		CB6D44D323B3A44400F369AA /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB6D44D123B3A44400F369AA /* MainInterface.storyboard */; };
 		CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		CB9C2731215E5DF000448B6C /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
+		CB9C2731215E5DF000448B6C /* libMMKV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV.a */; };
 		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
 		CBB306612435E8F200CB593E /* ViewController+TestCaseBad.mm in Sources */ = {isa = PBXBuildFile; fileRef = CBB306602435E8F200CB593E /* ViewController+TestCaseBad.mm */; };
 		CBB6C823215CDB9500487192 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C822215CDB9500487192 /* AppDelegate.m */; };
@@ -31,7 +31,7 @@
 		CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C827215CDB9600487192 /* Assets.xcassets */; };
 		CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C829215CDB9600487192 /* Main.storyboard */; };
 		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
-		CBD5359023B46E8500D3A404 /* libMMKV Static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV Static.a */; };
+		CBD5359023B46E8500D3A404 /* libMMKV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV.a */; };
 		CBF19016243D6F59001C82ED /* Interface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBF19014243D6F59001C82ED /* Interface.storyboard */; };
 		CBF19018243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF19017243D6F5A001C82ED /* Assets.xcassets */; };
 		CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -40,9 +40,9 @@
 		CBF1902B243D6F5A001C82ED /* NotificationController.m in Sources */ = {isa = PBXBuildFile; fileRef = CBF1902A243D6F5A001C82ED /* NotificationController.m */; };
 		CBF1902D243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF1902C243D6F5A001C82ED /* Assets.xcassets */; };
 		CBF19032243D6F5A001C82ED /* WatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = CBF19012243D6F59001C82ED /* WatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		CBF1907E243D71E8001C82ED /* MMKVWatchExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */; };
-		CBF190AD243D7869001C82ED /* MMKVAppExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		CBF190AF243D78F3001C82ED /* MMKVWatchExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CBF1907E243D71E8001C82ED /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF1907C243D7116001C82ED /* MMKV.framework */; };
+		CBF190AD243D7869001C82ED /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKV.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CBF190AF243D78F3001C82ED /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF1907C243D7116001C82ED /* MMKV.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -165,7 +165,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				CBF190AD243D7869001C82ED /* MMKVAppExtension.framework in Frameworks */,
+				CBF190AD243D7869001C82ED /* MMKV.framework in Frameworks */,
 			);
 			name = Frameworks;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -176,7 +176,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				CBF190AF243D78F3001C82ED /* MMKVWatchExtension.framework in Frameworks */,
+				CBF190AF243D78F3001C82ED /* MMKV.framework in Frameworks */,
 			);
 			name = Frameworks;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -247,7 +247,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB1E0659242B8E3F00F2FD42 /* libz.tbd in Frameworks */,
-				CBD5359023B46E8500D3A404 /* libMMKV Static.a in Frameworks */,
+				CBD5359023B46E8500D3A404 /* libMMKV.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,7 +262,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CB467FBC2431EE3000FD7421 /* MMKVAppExtension.framework in Frameworks */,
+				CB467FBC2431EE3000FD7421 /* MMKV.framework in Frameworks */,
 				CB0DCC72242B57FC009AFE59 /* libc++.tbd in Frameworks */,
 				CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */,
 			);
@@ -273,7 +273,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB1E065F242B8E4A00F2FD42 /* libz.tbd in Frameworks */,
-				CB9C2731215E5DF000448B6C /* libMMKV Static.a in Frameworks */,
+				CB9C2731215E5DF000448B6C /* libMMKV.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,7 +281,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CBF1907E243D71E8001C82ED /* MMKVWatchExtension.framework in Frameworks */,
+				CBF1907E243D71E8001C82ED /* MMKV.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,10 +352,10 @@
 		CB1FD4B12046994C00931B5F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CB1FD4B52046994D00931B5F /* libMMKV Static.a */,
+				CB1FD4B52046994D00931B5F /* libMMKV.a */,
 				CB36F25420F8A20C009AF46F /* MMKV.framework */,
-				CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */,
-				CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */,
+				CB467FBB2431EE2D00FD7421 /* MMKV.framework */,
+				CBF1907C243D7116001C82ED /* MMKV.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -551,7 +551,7 @@
 					CB1FD41F20455E2D00931B5F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1020;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -565,19 +565,19 @@
 					};
 					CB6D44C923B3A44400F369AA = {
 						CreatedOnToolsVersion = 11.3;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 					};
 					CBB6C81E215CDB9500487192 = {
 						CreatedOnToolsVersion = 10.0;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 					};
 					CBF19011243D6F59001C82ED = {
 						CreatedOnToolsVersion = 11.4;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 					};
 					CBF1901D243D6F5A001C82ED = {
 						CreatedOnToolsVersion = 11.4;
-						ProvisioningStyle = Automatic;
+						ProvisioningStyle = Manual;
 					};
 				};
 			};
@@ -611,10 +611,10 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		CB1FD4B52046994D00931B5F /* libMMKV Static.a */ = {
+		CB1FD4B52046994D00931B5F /* libMMKV.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
-			path = "libMMKV Static.a";
+			path = libMMKV.a;
 			remoteRef = CB1FD4B42046994D00931B5F /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -625,17 +625,17 @@
 			remoteRef = CB36F25320F8A20C009AF46F /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */ = {
+		CB467FBB2431EE2D00FD7421 /* MMKV.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = MMKVAppExtension.framework;
+			path = MMKV.framework;
 			remoteRef = CB467FBA2431EE2D00FD7421 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */ = {
+		CBF1907C243D7116001C82ED /* MMKV.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = MMKVWatchExtension.framework;
+			path = MMKV.framework;
 			remoteRef = CBF1907B243D7116001C82ED /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -944,13 +944,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVDemo;
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -966,14 +967,15 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVDemo;
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1028,8 +1030,8 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVTodayExtensionDemo/MMKVTodayExtensionDemo.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVTodayExtensionDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
@@ -1037,8 +1039,9 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.MMKVTodayExtensionDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.MMKVTodayExtensionDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVTodayExtension;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
@@ -1053,16 +1056,17 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVTodayExtensionDemo/MMKVTodayExtensionDemo.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVTodayExtensionDemo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.MMKVTodayExtensionDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.MMKVTodayExtensionDemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVTodayExtension;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
@@ -1076,17 +1080,18 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVMacDemo/MMKVMacDemo.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 52LMU3A345;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVMacDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvmacdemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVMacDemo;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -1098,16 +1103,17 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVMacDemo/MMKVMacDemo.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 52LMU3A345;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVMacDemo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvmacdemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVMacDemo;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -1117,14 +1123,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				IBSC_MODULE = WatchApp_Extension;
 				INFOPLIST_FILE = WatchApp/Info.plist;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVWatchApp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
@@ -1137,13 +1144,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				IBSC_MODULE = WatchApp_Extension;
 				INFOPLIST_FILE = WatchApp/Info.plist;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVWatchApp;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
@@ -1156,14 +1164,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_COMPLICATION_NAME = Complication;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = "WatchApp Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.watchkitapp.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.watchkitapp.watchkitextension;
 				PRODUCT_NAME = "${TARGET_NAME}";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVWatchExtension;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
@@ -1176,13 +1185,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_COMPLICATION_NAME = Complication;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LP4KGRS5XZ;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = "WatchApp Extension/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lingol.MMKVDemo1.watchkitapp.watchkitextension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.watchkitapp.watchkitextension;
 				PRODUCT_NAME = "${TARGET_NAME}";
+				PROVISIONING_PROFILE_SPECIFIER = MMKVWatchExtension;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
