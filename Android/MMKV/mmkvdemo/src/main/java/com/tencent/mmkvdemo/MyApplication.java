@@ -2,7 +2,6 @@ package com.tencent.mmkvdemo;
 
 import android.app.Application;
 import android.util.Log;
-
 import com.getkeepsafe.relinker.ReLinker;
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.MMKVContentChangeNotification;
