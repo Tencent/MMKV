@@ -39,7 +39,7 @@
 
 #    ifdef __aarch64__
 #        include "Checksum.h"
-#   endif
+#    endif
 
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.

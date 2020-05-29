@@ -31,6 +31,7 @@ public class MyService extends BenchMarkBaseService {
     public static final String CMD_LOCK = "cmd_lock";
     public static final String LOCK_PHASE_1 = "lock_phase_1";
     public static final String LOCK_PHASE_2 = "lock_phase_2";
+    public static final String CMD_TRIM_FINISH = "trim_finish";
 
     @Override
     public void onCreate() {
@@ -64,6 +65,8 @@ public class MyService extends BenchMarkBaseService {
                     testRemove();
                 } else if (cmd.equals(CMD_LOCK)) {
                     testLock();
+                } else if (cmd.equals(CMD_TRIM_FINISH)) {
+                    testTrimNonEmpty();
                 }
             }
         }
@@ -92,5 +95,11 @@ public class MyService extends BenchMarkBaseService {
         };
         // wait infinitely
         new Thread(waiter).start();
+    }
+
+    private void testTrimNonEmpty() {
+        MMKV mmkv = MMKV.mmkvWithID("trimNonEmptyInterProcess", MMKV.MULTI_PROCESS_MODE);
+        byte[] value = new byte[64];
+        mmkv.encode("SomeKey", value);
     }
 }

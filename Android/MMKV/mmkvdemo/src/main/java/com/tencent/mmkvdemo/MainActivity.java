@@ -115,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
         //testInterProcessLockPhase1();
         //testCornerSize();
         //testFastRemoveCornerSize();
+        //testTrimNonEmptyInterProcess();
     }
 
     private void testInterProcessLogic() {
@@ -425,5 +426,22 @@ public class MainActivity extends AppCompatActivity {
             mmkv.encode(key, value); // when a full write back is occur, here's corruption happens
             mmkv.removeValueForKey(key);
         }
+    }
+
+    private void testTrimNonEmptyInterProcess() {
+        MMKV mmkv = MMKV.mmkvWithID("trimNonEmptyInterProcess", MMKV.MULTI_PROCESS_MODE);
+        mmkv.clearAll();
+        mmkv.encode("NonEmptyKey", "Hello, world!");
+        byte[] value = new byte[MMKV.pageSize()];
+        mmkv.encode("largeKV", value);
+        mmkv.removeValueForKey("largeKV");
+        mmkv.trim();
+
+        Intent intent = new Intent(this, MyService.class);
+        intent.putExtra(BenchMarkBaseService.CMD_ID, MyService.CMD_TRIM_FINISH);
+        startService(intent);
+
+        SystemClock.sleep(1000 * 3);
+        Log.i("MMKV", "NonEmptyKey: " + mmkv.decodeString("NonEmptyKey"));
     }
 }

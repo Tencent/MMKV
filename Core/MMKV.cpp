@@ -140,7 +140,7 @@ void initialize() {
     g_instanceLock->initialize();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
-    MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
+    MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
 }
 
 ThreadOnceToken_t once_control = ThreadOnceUninitialized;
@@ -486,12 +486,11 @@ void MMKV::clearAll() {
         m_file->reloadFromFile();
     }
 
-    m_file->truncate(DEFAULT_MMAP_SIZE);
-    auto ptr = m_file->getMemory();
-    if (ptr) {
-        memset(ptr, 0, m_file->getFileSize());
+    if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
+        MMKVInfo("nothing to clear for [%s]", m_mmapID.c_str());
+        return;
     }
-    m_file->msync(MMKV_SYNC);
+    m_file->truncate(DEFAULT_MMAP_SIZE);
 
     unsigned char newIV[AES_KEY_LEN];
     AESCrypt::fillRandomIV(newIV);
@@ -568,6 +567,7 @@ void MMKV::trim() {
     while (fileSize > (m_actualSize + Fixed32Size) * 2) {
         fileSize /= 2;
     }
+    fileSize = std::max(fileSize, DEFAULT_MMAP_SIZE);
     if (oldSize == fileSize) {
         MMKVInfo("there's no need to trim %s with size %zu, actualSize %zu", m_mmapID.c_str(), fileSize, m_actualSize);
         return;
@@ -578,6 +578,7 @@ void MMKV::trim() {
     if (!m_file->truncate(fileSize)) {
         return;
     }
+    fileSize = m_file->getFileSize();
     auto ptr = (uint8_t *) m_file->getMemory();
     delete m_output;
     m_output = new CodedOutputData(ptr + pbFixed32Size(), fileSize - Fixed32Size);
@@ -791,11 +792,11 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
         return false;
     }
 #else
-#ifdef MMKV_APPLE
+#    ifdef MMKV_APPLE
     m_output->writeData(MMBuffer(keyData, MMBufferNoCopy));
-#else
+#    else
     m_output->writeString(key);
-#endif
+#    endif
     m_output->writeData(data); // note: write size of data
 #endif
 

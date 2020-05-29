@@ -39,7 +39,7 @@
     NSString *libraryPath = (NSString *) [paths firstObject];
     if ([libraryPath length] > 0) {
         NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv"];
-        NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.lingol.mmkv"].path;
+        NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.tencent.mmkv"].path;
 
         // you can turn off logging by passing MMKVLogNone
         [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:MMKVLogInfo];
