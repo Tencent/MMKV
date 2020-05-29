@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         //testInterProcessLockPhase1();
         //testCornerSize();
         //testFastRemoveCornerSize();
-        testTrimNonEmptyInterProcess();
+        //testTrimNonEmptyInterProcess();
     }
 
     private void testInterProcessLogic() {

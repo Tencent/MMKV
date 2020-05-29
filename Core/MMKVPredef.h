@@ -26,6 +26,8 @@
 #include <string>
 #include <unordered_map>
 
+constexpr auto MMKV_VERSION = "v1.1.2";
+
 #ifdef __ANDROID__
 #    define MMKV_ANDROID
 #elif __APPLE__

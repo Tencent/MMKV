@@ -140,7 +140,7 @@ void initialize() {
     g_instanceLock->initialize();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
-    MMKVInfo("page size:%d", DEFAULT_MMAP_SIZE);
+    MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
 }
 
 ThreadOnceToken_t once_control = ThreadOnceUninitialized;

@@ -1,5 +1,12 @@
 # MMKV Change Log
 
+## v1.1.2 / 2020-05-29
+
+### Android / iOS & macOS / Win32 / POSIX
+
+* Fix a potential crash after `trim()` a multi-process MMKV instance.
+* Improve `clearAll()` a bit.
+
 ## v1.1.1 / 2020-04-13
 
 ### iOS / macOS
