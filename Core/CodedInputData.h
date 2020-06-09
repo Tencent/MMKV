@@ -25,6 +25,7 @@
 #include "MMKVPredef.h"
 
 #include "MMBuffer.h"
+#include "KeyValueHolder.h"
 #include <cstdint>
 #include <string>
 
@@ -65,11 +66,13 @@ public:
     int32_t readFixed32();
 
     MMBuffer readData();
+    void readData(KeyValueHolder &kvHolder);
 
 #ifndef MMKV_APPLE
     std::string readString();
 #else
     NSString *readString();
+    NSString *readString(KeyValueHolder &kvHolder);
     NSData *readNSData();
 #endif
 };

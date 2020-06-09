@@ -26,6 +26,7 @@
 #include "MMKVPredef.h"
 #include <cstdint>
 #include <vector>
+#include "KeyValueHolder.h"
 
 namespace mmkv {
 class CodedOutputData;
@@ -61,6 +62,7 @@ class MMKV {
     ~MMKV();
 
     mmkv::MMKVMap m_dic;
+    mmkv::MMKVMap1 m_dic1;
     std::string m_mmapID;
     MMKVPath_t m_path;
     MMKVPath_t m_crcPath;
@@ -118,14 +120,18 @@ class MMKV {
     bool fullWriteback();
 
     bool doFullWriteBack(mmkv::MMBuffer &&allData);
+    bool doFullWriteBack(size_t totalSize);
 
     const mmkv::MMBuffer &getDataForKey(MMKVKey_t key);
+    mmkv::MMBuffer getDataForKey1(MMKVKey_t key);
 
     bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key);
+    bool setDataForKey1(mmkv::MMBuffer &&data, MMKVKey_t key);
 
     bool removeDataForKey(MMKVKey_t key);
 
     bool appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key);
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, MMKVKey_t key);
 
     void notifyContentChanged();
 

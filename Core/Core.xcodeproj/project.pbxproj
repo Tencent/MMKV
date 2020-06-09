@@ -15,6 +15,8 @@
 		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
 		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
 		CB7589D3248E68F100A546B4 /* KeyValueHolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB550CCA2488E3F20042CD20 /* KeyValueHolder.cpp */; };
+		CB8A3700248F7989003051A1 /* KeyValueHolder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB550CCB2488E3F20042CD20 /* KeyValueHolder.h */; };
+		CB8A3701248F7990003051A1 /* KeyValueHolder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB550CCB2488E3F20042CD20 /* KeyValueHolder.h */; };
 		CB95641423AB2E9100ACCD39 /* CodedOutputData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */; };
 		CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F223AB2E9100ACCD39 /* MMKV.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -84,6 +86,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CB8A3700248F7989003051A1 /* KeyValueHolder.h in CopyFiles */,
 				CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */,
 				CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */,
 				CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */,
@@ -102,6 +105,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CB8A3701248F7990003051A1 /* KeyValueHolder.h in CopyFiles */,
 				CBF1906A243D70BA001C82ED /* openssl_opensslconf.h in CopyFiles */,
 				CBF1906B243D70BA001C82ED /* openssl_md5.h in CopyFiles */,
 				CBF1906C243D70BA001C82ED /* MMKVLog.h in CopyFiles */,

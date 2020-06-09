@@ -23,15 +23,13 @@
 #ifdef  __cplusplus
 
 #include <cstddef>
+#include "MMKVPredef.h"
 
 namespace openssl {
 struct AES_KEY;
 }
 
 namespace mmkv {
-
-constexpr size_t AES_KEY_LEN = 16;
-constexpr size_t AES_KEY_BITSET_LEN = 128;
 
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {

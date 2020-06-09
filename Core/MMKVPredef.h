@@ -140,6 +140,8 @@ extern size_t DEFAULT_MMAP_SIZE;
 #define DEFAULT_MMAP_ID "mmkv.default"
 
 class MMBuffer;
+class KeyValueHolder;
+class KeyValueHolderCrypt;
 
 #ifdef MMKV_APPLE
 struct KeyHasher {
@@ -156,12 +158,17 @@ struct KeyEqualer {
 };
 
 using MMKVMap = std::unordered_map<NSString *, mmkv::MMBuffer, KeyHasher, KeyEqualer>;
+using MMKVMap1 = std::unordered_map<NSString *, mmkv::KeyValueHolder, KeyHasher, KeyEqualer>;
+using MMKVMapCrypt = std::unordered_map<NSString *, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
 #else
 using MMKVMap = std::unordered_map<std::string, mmkv::MMBuffer>;
 #endif // MMKV_APPLE
 
 template <typename T>
 void unused(const T &) {}
+
+constexpr size_t AES_KEY_LEN = 16;
+constexpr size_t AES_KEY_BITSET_LEN = 128;
 
 } // namespace mmkv
 

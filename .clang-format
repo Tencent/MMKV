@@ -19,6 +19,7 @@ BreakConstructorInitializersBeforeComma: true
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 BinPackParameters: false
 ReflowComments: false
+ObjCBlockIndentWidth: 4
 ---
 Language: Cpp
 ColumnLimit: 120
@@ -27,7 +28,6 @@ IndentPPDirectives: AfterHash
 Language: ObjC
 ColumnLimit: 0
 #UseTab: ForIndentation
-ObjCBlockIndentWidth: 4
 ---
 Language: Java
 ColumnLimit: 120

@@ -31,6 +31,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "KeyValueHolder.h"
 
 namespace mmkv {
 
@@ -57,6 +58,7 @@ class MiniPBCoder {
     MMBuffer getEncodeData(const MMKVMap &map);
 
     void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
+    void decodeOneMap(MMKVMap1 &dic, size_t size, bool greedy);
 
 #ifndef MMKV_APPLE
     size_t prepareObjectForEncode(const std::string &str);
@@ -92,6 +94,12 @@ public:
 
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
+
+    // return empty result if there's any error
+    static void decodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size = 0);
+
+    // decode as much data as possible before any error happens
+    static void greedyDecodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size = 0);
 
 #ifndef MMKV_APPLE
     static std::string decodeString(const MMBuffer &oData);

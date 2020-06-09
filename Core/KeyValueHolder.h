@@ -20,28 +20,35 @@
 
 #ifndef KeyValueHolder_hpp
 #define KeyValueHolder_hpp
+#ifdef  __cplusplus
 
 #include "MMBuffer.h"
-#include "aes/AESCrypt.h"
 
 namespace mmkv {
-
-enum KeyValueHolderType : uint8_t {
-    KeyValueHolderType_Direct, // store value directly
-    KeyValueHolderType_Offset, // store value by offset
-};
 
 #pragma pack(push, 1)
 
 struct KeyValueHolder {
-    uint16_t computedKVSize;
+    uint16_t computedKVSize; // internal use only
     uint16_t keySize;
     uint32_t valueSize;
     uint32_t offset;
 
+    KeyValueHolder() = default;
     KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_t offset);
 
+    static uint16_t computKVSize(uint32_t keySize, uint32_t valueSize);
+
     MMBuffer toMMBuffer(const void *basePtr) const;
+
+    inline size_t end() const { return offset + computedKVSize + valueSize; }
+
+    inline bool operator<(const KeyValueHolder &other) const { return (offset < other.offset); }
+};
+
+enum KeyValueHolderType : uint8_t {
+    KeyValueHolderType_Direct, // store value directly
+    KeyValueHolderType_Offset, // store value by offset
 };
 
 // kv holder for encrypted mmkv
@@ -65,10 +72,15 @@ struct KeyValueHolderCrypt {
     KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t offset, unsigned char *iv = nullptr);
 
     MMBuffer toMMBuffer(const void *basePtr) const;
+
+    size_t end() const;
+    
+    inline bool operator<(const KeyValueHolderCrypt &other) const { return (offset < other.offset); }
 };
 
 #pragma pack(pop)
 
 } // namespace mmkv
 
+#endif
 #endif /* KeyValueHolder_hpp */

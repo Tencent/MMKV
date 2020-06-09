@@ -115,6 +115,23 @@ MMBuffer CodedInputData::readData() {
     }
 }
 
+void CodedInputData::readData(KeyValueHolder &kvHolder) {
+    int32_t size = this->readRawVarint32();
+    if (size < 0) {
+        throw length_error("InvalidProtocolBuffer negativeSize");
+    }
+
+    auto s_size = static_cast<size_t>(size);
+    if (s_size <= m_size - m_position) {
+        kvHolder.computedKVSize = static_cast<uint16_t>(m_position - kvHolder.offset);
+        kvHolder.valueSize = static_cast<uint32_t>(s_size);
+
+        m_position += s_size;
+    } else {
+        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
+    }
+}
+
 int32_t CodedInputData::readRawVarint32() {
     int8_t tmp = this->readRawByte();
     if (tmp >= 0) {

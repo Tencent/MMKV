@@ -331,4 +331,14 @@ void MiniPBCoder::greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t si
     oCoder.decodeOneMap(dic, size, true);
 }
 
+void MiniPBCoder::decodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size) {
+    MiniPBCoder oCoder(&oData);
+    oCoder.decodeOneMap(dic, size, false);
+}
+
+void MiniPBCoder::greedyDecodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size) {
+    MiniPBCoder oCoder(&oData);
+    oCoder.decodeOneMap(dic, size, true);
+}
+
 } // namespace mmkv
