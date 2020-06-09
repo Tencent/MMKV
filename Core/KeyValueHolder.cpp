@@ -22,34 +22,52 @@
 #include "PBUtility.h"
 
 extern void foo() {
-    mmkv::KeyValueHolder holder(nullptr, 0);
+    mmkv::KeyValueHolderCrypt holder(nullptr, 0);
     NSLog(@"KeyValueHolder.aesVector:%zu", sizeof(holder.aesVector));
     NSLog(@"KeyValueHolder.value:%zu", sizeof(holder.value));
 
-    NSLog(@"KeyValueHolder:%zu, MMBuffer:%zu", sizeof(mmkv::KeyValueHolder), sizeof(mmkv::MMBuffer));
+    NSLog(@"KeyValueHolder:%zu, KeyValueHolderCrypt:%zu, MMBuffer:%zu", sizeof(mmkv::KeyValueHolder),
+          sizeof(mmkv::KeyValueHolderCrypt), sizeof(mmkv::MMBuffer));
 }
 
 namespace mmkv {
 
-KeyValueHolder::KeyValueHolder(const void *src, size_t length)
+KeyValueHolder::KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_t off)
+    : keySize(static_cast<uint16_t>(keyLength)), valueSize(valueLength), offset(off) {
+    computedKVSize = static_cast<uint16_t>(pbRawVarint32Size(keySize) + keySize);
+    computedKVSize += pbRawVarint32Size(valueLength);
+}
+
+MMBuffer KeyValueHolder::toMMBuffer(const void *basePtr) const {
+    auto realPtr = (uint8_t *) basePtr + computedKVSize;
+    return MMBuffer(realPtr, valueSize, MMBufferNoCopy);
+}
+
+KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length)
     : flag(KeyValueHolderType_Direct), paddedValueSize(static_cast<uint8_t>(length)) {
+    assert(length <= KeyValueHolder_ValueSize);
     memcpy(value, src, length);
 }
 
-KeyValueHolder::KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_t off, unsigned char *iv)
-: flag(KeyValueHolderType_Offset), paddedValueSize(0), keySize(static_cast<uint16_t>(keyLength)), valueSize(valueLength), offset(off) {
+KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t off, unsigned char *iv)
+    : flag(KeyValueHolderType_Offset)
+    , paddedValueSize(0)
+    , keySize(static_cast<uint16_t>(keyLength))
+    , valueSize(valueLength)
+    , offset(off) {
     if (iv) {
         memcpy(aesVector, iv, sizeof(aesVector));
     }
 }
 
-MMBuffer KeyValueHolder::toMMBuffer(const void *basePtr) const {
+MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr) const {
     if (flag == KeyValueHolderType_Direct) {
         return MMBuffer((void *) value, paddedValueSize, MMBufferNoCopy);
     } else {
         auto realPtr = (uint8_t *) basePtr + offset;
         // TODO: compact these two into one member variable
         realPtr += pbRawVarint32Size(keySize) + keySize;
+        realPtr += pbRawVarint32Size(valueSize);
         return MMBuffer(realPtr, valueSize, MMBufferNoCopy);
     }
 }

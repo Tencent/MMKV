@@ -34,9 +34,21 @@ enum KeyValueHolderType : uint8_t {
 #pragma pack(push, 1)
 
 struct KeyValueHolder {
+    uint16_t computedKVSize;
+    uint16_t keySize;
+    uint32_t valueSize;
+    uint32_t offset;
+
+    KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_t offset);
+
+    MMBuffer toMMBuffer(const void *basePtr) const;
+};
+
+// kv holder for encrypted mmkv
+struct KeyValueHolderCrypt {
     KeyValueHolderType flag;
     uint8_t paddedValueSize;
-    
+
     union {
         struct {
             uint16_t keySize;
@@ -47,10 +59,10 @@ struct KeyValueHolder {
 #define KeyValueHolder_ValueSize (sizeof(keySize) + sizeof(valueSize) + sizeof(offset) + sizeof(aesVector))
         uint8_t value[KeyValueHolder_ValueSize];
     };
-    
-    KeyValueHolder(const void *valuePtr, size_t valueLength);
-    
-    KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_t offset, unsigned char *iv = nullptr);
+
+    KeyValueHolderCrypt(const void *valuePtr, size_t valueLength);
+
+    KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t offset, unsigned char *iv = nullptr);
 
     MMBuffer toMMBuffer(const void *basePtr) const;
 };
