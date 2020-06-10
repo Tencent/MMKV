@@ -149,19 +149,20 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
         removeValueForKey(key);
         return true;
     }
-    MMBuffer data;
+
     if (MiniPBCoder::isCompatibleObject(obj)) {
-        data = MiniPBCoder::encodeDataWithObject(obj);
+        auto data = MiniPBCoder::encodeDataWithObject(obj);
+        return setDataForKey1(std::move(data), key);
     } else {
         /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
             auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
             if (tmp.length > 0) {
-                data = MMBuffer(tmp);
+                auto data = MMBuffer(tmp);
+                return setDataForKey1(std::move(data), key);
             }
         }
     }
-
-    return setDataForKey1(std::move(data), key);
+    return false;
 }
 
 NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {

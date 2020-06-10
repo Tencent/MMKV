@@ -20,7 +20,7 @@
 
 #ifndef MMKV_MMBUFFER_H
 #define MMKV_MMBUFFER_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 
@@ -34,14 +34,33 @@ enum MMBufferCopyFlag : bool {
     MMBufferNoCopy = true,
 };
 
+#pragma pack(push, 1)
+
 class MMBuffer {
-private:
-    void *ptr;
-    size_t size;
-    MMBufferCopyFlag isNoCopy;
+    enum MMBufferType : uint8_t {
+        MMBufferType_Small,  // store small buffer in stack memory
+        MMBufferType_Normal, // store in heap memory
+    };
+    MMBufferType type;
+
+    union {
+        struct {
+            MMBufferCopyFlag isNoCopy;
+            size_t size;
+            void *ptr;
 #ifdef MMKV_APPLE
-    NSData *m_data = nil;
+            NSData *m_data;
 #endif
+        };
+        struct {
+            uint8_t paddedSize;
+            uint8_t smallBuffer[0];
+        };
+    };
+
+    static constexpr size_t SmallBufferSize() {
+        return sizeof(MMBuffer) - offsetof(MMBuffer, smallBuffer);
+    }
 
 public:
     explicit MMBuffer(size_t length = 0);
@@ -55,14 +74,16 @@ public:
 
     ~MMBuffer();
 
-    void *getPtr() const { return ptr; }
+    void *getPtr() const { return (type == MMBufferType_Small) ? (void *) smallBuffer : ptr; }
 
-    size_t length() const { return size; }
+    size_t length() const { return (type == MMBufferType_Small) ? paddedSize : size; }
 
     // those are expensive, just forbid it for possibly misuse
     explicit MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;
 };
+
+#pragma pack(pop)
 
 } // namespace mmkv
 
