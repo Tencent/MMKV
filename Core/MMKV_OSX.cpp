@@ -28,6 +28,7 @@
 #    include "MMKV.h"
 #    include "MemoryFile.h"
 #    include "MiniPBCoder.h"
+#    include "PBUtility.h"
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
 #    include <sys/utsname.h>
@@ -150,9 +151,28 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
         return true;
     }
 
-    if (MiniPBCoder::isCompatibleObject(obj)) {
-        auto data = MiniPBCoder::encodeDataWithObject(obj);
+    // if (MiniPBCoder::isCompatibleObject(obj)) {
+    // auto data = MiniPBCoder::encodeDataWithObject(obj);
+    NSData *tmpData = nil;
+    if ([obj isKindOfClass:NSString.class]) {
+        auto str = (NSString *) obj;
+        tmpData = [str dataUsingEncoding:NSUTF8StringEncoding];
+    } else if ([obj isKindOfClass:NSData.class]) {
+        tmpData = (NSData *) obj;
+    }
+    if (tmpData) {
+        auto size = static_cast<uint32_t>(tmpData.length);
+        size += pbRawVarint32Size(size);
+        MMBuffer data = MMBuffer(size);
+        CodedOutputData output(data.getPtr(), data.length());
+        output.writeData(MMBuffer(tmpData, MMBufferNoCopy));
+
         return setDataForKey1(std::move(data), key);
+    } else if ([obj isKindOfClass:NSDate.class]) {
+        NSDate *oDate = (NSDate *) obj;
+        double time = oDate.timeIntervalSince1970;
+
+        return set(time, key);
     } else {
         /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
             auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
