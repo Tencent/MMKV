@@ -788,15 +788,25 @@ bool MMKV::setDataForKey1(MMBuffer &&data, MMKVKey_t key) {
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
 
-    auto ret = appendDataWithKey1(data, key);
-    if (ret.first) {
-        m_dic1[key] = std::move(ret.second);
-        m_hasFullWriteback = false;
-#ifdef MMKV_APPLE
-        [key retain];
-#endif
+    auto itr = m_dic1.find(key);
+    if (itr != m_dic1.end()) {
+        auto ret = appendDataWithKey1(data, itr->second);
+        if (!ret.first) {
+            return false;
+        }
+        itr->second = std::move(ret.second);
+    } else {
+        auto ret = appendDataWithKey1(data, key);
+        if (!ret.first) {
+            return false;
+        }
+        m_dic1.emplace(key, std::move(ret.second));
     }
-    return ret.first;
+    m_hasFullWriteback = false;
+#ifdef MMKV_APPLE
+    [key retain];
+#endif
+    return true;
 }
 
 bool MMKV::removeDataForKey(MMKVKey_t key) {
@@ -806,14 +816,15 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
     auto itr = m_dic1.find(key);
     if (itr != m_dic1.end()) {
-#ifdef MMKV_APPLE
-        [itr->first release];
-#endif
-        m_dic1.erase(itr);
-
         m_hasFullWriteback = false;
         static MMBuffer nan;
-        auto ret = appendDataWithKey1(nan, key);
+        auto ret = appendDataWithKey1(nan, itr->second);
+        if (ret.first) {
+#ifdef MMKV_APPLE
+            [itr->first release];
+#endif
+            m_dic1.erase(itr);
+        }
         return ret.first;
     }
 
@@ -899,6 +910,54 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, MMKVKe
 #    else
     m_output->writeString(key);
 #    endif
+    m_output->writeData(data); // note: write size of data
+#endif
+
+    // TODO: check first & only kv
+    auto offset = static_cast<uint32_t>(m_actualSize);
+    auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size + m_actualSize;
+    if (m_crypter) {
+        m_crypter->encrypt(ptr, ptr, size);
+    }
+    m_actualSize += size;
+    updateCRCDigest(ptr, size);
+
+    auto keySize = static_cast<uint32_t>(keyLength);
+    auto valueSize = static_cast<uint32_t>(data.length());
+    return make_pair(true, KeyValueHolder(keySize, valueSize, offset));
+}
+
+pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, const KeyValueHolder &kvHolder) {
+    SCOPED_LOCK(m_exclusiveProcessLock);
+
+    size_t keyLength = kvHolder.keySize;
+    // size needed to encode the key
+    size_t rawKeySize = keyLength + pbRawVarint32Size((int32_t) keyLength);
+    // size needed to encode the value
+    size_t size = rawKeySize + data.length() + pbRawVarint32Size((int32_t) data.length());
+
+    bool hasEnoughSize = ensureMemorySize(size);
+    if (!hasEnoughSize || !isFileValid()) {
+        return make_pair(false, KeyValueHolder());
+    }
+
+    auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+#ifdef MMKV_IOS
+    __block MMBuffer keyData(basePtr + kvHolder.offset, rawKeySize, MMBufferNoCopy);
+#else
+    MMBuffer keyData(basePtr + kvHolder.offset, rawKeySize, MMBufferNoCopy);
+#endif
+
+#ifdef MMKV_IOS
+    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), size, ^{
+        m_output->writeRawData(keyData);
+        m_output->writeData(data); // note: write size of data
+    });
+    if (!ret) {
+        return make_pair(false, KeyValueHolder());
+    }
+#else
+    m_output->writeRawData(keyData);
     m_output->writeData(data); // note: write size of data
 #endif
 

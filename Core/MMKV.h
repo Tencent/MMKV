@@ -132,6 +132,7 @@ class MMKV {
 
     bool appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key);
     std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, MMKVKey_t key);
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder);
 
     void notifyContentChanged();
 
