@@ -653,7 +653,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 return false;
             }
         }
-        // return doFullWriteBack(std::move(data));
+        return doFullWriteBack(sizeOfDic);
     }
     return true;
 }
@@ -933,16 +933,15 @@ bool MMKV::fullWriteback() {
         return true;
     }
 
-    // TODO:
-    auto allData = MiniPBCoder::encodeDataWithObject(m_dic);
+    auto sizeOfDic = encodeDataSizeWithObject(m_dic1);
     SCOPED_LOCK(m_exclusiveProcessLock);
-    if (allData.length() > 0) {
+    if (sizeOfDic > 0) {
         auto fileSize = m_file->getFileSize();
-        if (allData.length() + Fixed32Size <= fileSize) {
-            return doFullWriteBack(std::move(allData));
+        if (sizeOfDic + Fixed32Size <= fileSize) {
+            return doFullWriteBack(sizeOfDic);
         } else {
             // ensureMemorySize will extend file & full rewrite, no need to write back again
-            return ensureMemorySize(allData.length() + Fixed32Size - fileSize);
+            return ensureMemorySize(sizeOfDic + Fixed32Size - fileSize);
         }
     }
     return false;
@@ -1015,26 +1014,25 @@ bool MMKV::doFullWriteBack(size_t totalSize) {
     auto ptr = (uint8_t *) m_file->getMemory();
     delete m_output;
     m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
-    auto block = ^{
+    auto block = [&] {
         m_output->writeRawVarint32(ItemSizeHolder);
         auto writePtr = m_output->curWritePointer();
         auto basePtr = ptr + Fixed32Size;
-        auto offset = writePtr - ptr;
 
-        vector<KeyValueHolder> vec;
+        vector<KeyValueHolder *> vec;
         vec.reserve(m_dic1.size());
         for (auto &itr : m_dic1) {
-            vec.push_back(itr.second);
+            vec.push_back(&itr.second);
         }
-        sort(vec.begin(), vec.end());
+        sort(vec.begin(), vec.end(),
+             [](KeyValueHolder *left, KeyValueHolder *right) { return left->offset < right->offset; });
 
         // TODO: merge nearby items
-        for (auto &kvHolder : vec) {
-            auto size = kvHolder.computedKVSize + kvHolder.valueSize;
+        for (auto kvHolder : vec) {
+            auto size = kvHolder->computedKVSize + kvHolder->valueSize;
             // TODO: decrypt
-            memmove(writePtr, basePtr + kvHolder.offset, size);
-            kvHolder.offset = static_cast<uint32_t>(offset);
-            offset += size;
+            memmove(writePtr, basePtr + kvHolder->offset, size);
+            kvHolder->offset = static_cast<uint32_t>(writePtr - basePtr);
             writePtr += size;
         }
         auto writtenSize = static_cast<size_t>(writePtr - m_output->curWritePointer());
@@ -1042,7 +1040,9 @@ bool MMKV::doFullWriteBack(size_t totalSize) {
         m_output->seek(writtenSize);
     };
 #ifdef MMKV_IOS
-    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), totalSize, block);
+    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), totalSize, ^{
+        block();
+    });
     if (!ret) {
         // revert everything
         if (m_crypter) {

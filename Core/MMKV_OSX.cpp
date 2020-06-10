@@ -161,7 +161,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
         }
     }
 
-    return setDataForKey(std::move(data), key);
+    return setDataForKey1(std::move(data), key);
 }
 
 NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
@@ -194,7 +194,7 @@ NSArray *MMKV::allKeys() {
     checkLoadData();
 
     NSMutableArray *keys = [NSMutableArray array];
-    for (const auto &pair : m_dic) {
+    for (const auto &pair : m_dic1) {
         [keys addObject:pair.first];
     }
     return keys;
@@ -214,10 +214,10 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
 
     size_t deleteCount = 0;
     for (NSString *key in arrKeys) {
-        auto itr = m_dic.find(key);
-        if (itr != m_dic.end()) {
+        auto itr = m_dic1.find(key);
+        if (itr != m_dic1.end()) {
             [itr->first release];
-            m_dic.erase(itr);
+            m_dic1.erase(itr);
             deleteCount++;
         }
     }
@@ -236,7 +236,7 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     checkLoadData();
 
     MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-    for (const auto &pair : m_dic) {
+    for (const auto &pair : m_dic1) {
         BOOL stop = NO;
         block(pair.first, &stop);
         if (stop) {
