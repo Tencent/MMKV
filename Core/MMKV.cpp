@@ -996,6 +996,52 @@ bool MMKV::doFullWriteBack(MMBuffer &&allData) {
     return true;
 }
 
+// we don't need to really serialize the dictionary, just reuse what's already in the file
+static void memmoveDictionary(MMKVMap1 &dic, CodedOutputData *output, uint8_t *ptr, size_t totalSize) {
+    // hold the fake size of dictionay's serialization result
+    output->writeRawVarint32(ItemSizeHolder);
+    auto writePtr = output->curWritePointer();
+    // reuse what's already in the file
+    if (!dic.empty()) {
+        // sort by offset
+        vector<KeyValueHolder *> vec;
+        vec.reserve(dic.size());
+        for (auto &itr : dic) {
+            vec.push_back(&itr.second);
+        }
+        sort(vec.begin(), vec.end(), [](auto left, auto right) { return left->offset < right->offset; });
+
+        // merge nearby items to make memmove quicker
+        vector<pair<uint32_t, uint32_t>> dataSections; // pair(offset, size)
+        dataSections.push_back(make_pair(vec.front()->offset, vec.front()->computedKVSize + vec.front()->valueSize));
+        for (size_t index = 1, total = vec.size(); index < total; index++) {
+            auto kvHolder = vec[index];
+            auto &lastSection = dataSections.back();
+            if (kvHolder->offset == lastSection.first + lastSection.second) {
+                lastSection.second += kvHolder->computedKVSize + kvHolder->valueSize;
+            } else {
+                dataSections.push_back(make_pair(kvHolder->offset, kvHolder->computedKVSize + kvHolder->valueSize));
+            }
+        }
+        // do the move
+        auto basePtr = ptr + Fixed32Size;
+        for (auto &section : dataSections) {
+            // TODO: decrypt
+            memmove(writePtr, basePtr + section.first, section.second);
+            writePtr += section.second;
+        }
+        // update offset
+        auto offset = static_cast<uint32_t>(output->curWritePointer() - basePtr);
+        for (auto kvHolder : vec) {
+            kvHolder->offset = offset;
+            offset += kvHolder->computedKVSize + kvHolder->valueSize;
+        }
+    }
+    auto writtenSize = static_cast<size_t>(writePtr - output->curWritePointer());
+    assert(writtenSize + ItemSizeHolderSize == totalSize);
+    output->seek(writtenSize);
+}
+
 bool MMKV::doFullWriteBack(size_t totalSize) {
     unsigned char newIV[AES_KEY_LEN];
 #ifdef MMKV_IOS
@@ -1014,34 +1060,9 @@ bool MMKV::doFullWriteBack(size_t totalSize) {
     auto ptr = (uint8_t *) m_file->getMemory();
     delete m_output;
     m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
-    auto block = [&] {
-        m_output->writeRawVarint32(ItemSizeHolder);
-        auto writePtr = m_output->curWritePointer();
-        auto basePtr = ptr + Fixed32Size;
-
-        vector<KeyValueHolder *> vec;
-        vec.reserve(m_dic1.size());
-        for (auto &itr : m_dic1) {
-            vec.push_back(&itr.second);
-        }
-        sort(vec.begin(), vec.end(),
-             [](KeyValueHolder *left, KeyValueHolder *right) { return left->offset < right->offset; });
-
-        // TODO: merge nearby items
-        for (auto kvHolder : vec) {
-            auto size = kvHolder->computedKVSize + kvHolder->valueSize;
-            // TODO: decrypt
-            memmove(writePtr, basePtr + kvHolder->offset, size);
-            kvHolder->offset = static_cast<uint32_t>(writePtr - basePtr);
-            writePtr += size;
-        }
-        auto writtenSize = static_cast<size_t>(writePtr - m_output->curWritePointer());
-        assert(writtenSize + ItemSizeHolderSize == totalSize);
-        m_output->seek(writtenSize);
-    };
 #ifdef MMKV_IOS
     auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), totalSize, ^{
-        block();
+        memmoveDictionary(m_dic1, m_output, ptr, totalSize);
     });
     if (!ret) {
         // revert everything
@@ -1054,7 +1075,7 @@ bool MMKV::doFullWriteBack(size_t totalSize) {
         return false;
     }
 #else
-    block();
+    memmoveDictionary(m_dic1, m_output, ptr, totalSize);
 #endif
 
     m_actualSize = totalSize;

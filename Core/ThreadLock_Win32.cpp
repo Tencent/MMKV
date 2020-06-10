@@ -28,7 +28,8 @@
 
 namespace mmkv {
 
-ThreadLock::ThreadLock() : m_lock{0} {}
+ThreadLock::ThreadLock() : m_lock{0} {
+}
 
 ThreadLock::~ThreadLock() {
     DeleteCriticalSection(&m_lock);

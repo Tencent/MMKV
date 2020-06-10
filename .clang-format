@@ -3,7 +3,8 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 4
 AlwaysBreakTemplateDeclarations: true
-AllowShortFunctionsOnASingleLine: Inline
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortLambdasOnASingleLine: Inline
 BreakAfterJavaFieldAnnotations: true
 BreakBeforeBraces: Linux
 SpaceAfterCStyleCast: true

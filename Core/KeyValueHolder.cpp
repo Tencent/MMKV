@@ -58,7 +58,7 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLengt
 }
 
 size_t KeyValueHolderCrypt::end() const {
-    assert (flag == KeyValueHolderType_Offset);
+    assert(flag == KeyValueHolderType_Offset);
 
     auto size = offset;
     size += pbRawVarint32Size(keySize) + keySize;
