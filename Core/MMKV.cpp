@@ -633,7 +633,6 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         size_t futureUsage = avgItemSize * std::max<size_t>(8, (m_dic1.size() + 1) / 2);
         // 1. no space for a full rewrite, double it
         // 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
-        // TODO: do fullwriteback before extending files?
         if (lenNeeded >= fileSize || (lenNeeded + futureUsage) >= fileSize) {
             size_t oldSize = fileSize;
             do {
@@ -781,7 +780,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key) {
 }
 
 bool MMKV::setDataForKey1(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
-    if (data.length() == 0 || isKeyEmpty(key)) {
+    if ((!isDataHolder && data.length() == 0) || isKeyEmpty(key)) {
         return false;
     }
     SCOPED_LOCK(m_lock);
@@ -1386,6 +1385,8 @@ bool MMKV::set(const MMBuffer &value, MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    // delay write the size needed for encoding value
+    // avoid memory copying
     return setDataForKey1(value, key, true);
 }
 
