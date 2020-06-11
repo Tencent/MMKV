@@ -161,24 +161,19 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
         tmpData = (NSData *) obj;
     }
     if (tmpData) {
-        auto size = static_cast<uint32_t>(tmpData.length);
-        size += pbRawVarint32Size(size);
-        MMBuffer data = MMBuffer(size);
-        CodedOutputData output(data.getPtr(), data.length());
-        output.writeData(MMBuffer(tmpData, MMBufferNoCopy));
-
-        return setDataForKey1(std::move(data), key);
+        // delay write the size needed for encoding tmpData
+        // avoid memory copying
+        return setDataForKey1(MMBuffer(tmpData, MMBufferNoCopy), key, true);
     } else if ([obj isKindOfClass:NSDate.class]) {
         NSDate *oDate = (NSDate *) obj;
         double time = oDate.timeIntervalSince1970;
-
         return set(time, key);
     } else {
         /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
             auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
             if (tmp.length > 0) {
                 auto data = MMBuffer(tmp);
-                return setDataForKey1(std::move(data), key);
+                return setDataForKey1(data, key);
             }
         }
     }

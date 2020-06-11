@@ -89,8 +89,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
                 } else {
                     auto itr = dictionary.find(key);
                     if (itr != dictionary.end()) {
-                        dictionary.erase(itr);
                         [itr->first release];
+                        dictionary.erase(itr);
                     }
                 }
             }

@@ -780,7 +780,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key) {
     return ret;
 }
 
-bool MMKV::setDataForKey1(MMBuffer &&data, MMKVKey_t key) {
+bool MMKV::setDataForKey1(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
     if (data.length() == 0 || isKeyEmpty(key)) {
         return false;
     }
@@ -790,13 +790,13 @@ bool MMKV::setDataForKey1(MMBuffer &&data, MMKVKey_t key) {
 
     auto itr = m_dic1.find(key);
     if (itr != m_dic1.end()) {
-        auto ret = appendDataWithKey1(data, itr->second);
+        auto ret = appendDataWithKey1(data, itr->second, isDataHolder);
         if (!ret.first) {
             return false;
         }
         itr->second = std::move(ret.second);
     } else {
-        auto ret = appendDataWithKey1(data, key);
+        auto ret = appendDataWithKey1(data, key, isDataHolder);
         if (!ret.first) {
             return false;
         }
@@ -877,17 +877,21 @@ bool MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key) {
     return true;
 }
 
-pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, MMKVKey_t key) {
+pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
 #ifdef MMKV_APPLE
     auto keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
-    size_t keyLength = keyData.length;
+    uint32_t keyLength = static_cast<uint32_t>(keyData.length);
 #else
-    size_t keyLength = key.length();
+    size_t keyLength = static_cast<uint32_t>(key.length();
 #endif
+    uint32_t valueLength = static_cast<uint32_t>(data.length());
+    if (isDataHolder) {
+        valueLength += pbRawVarint32Size(valueLength);
+    }
     // size needed to encode the key
-    size_t size = keyLength + pbRawVarint32Size((int32_t) keyLength);
+    size_t size = keyLength + pbRawVarint32Size(keyLength);
     // size needed to encode the value
-    size += data.length() + pbRawVarint32Size((int32_t) data.length());
+    size += valueLength + pbRawVarint32Size(valueLength);
 
     SCOPED_LOCK(m_exclusiveProcessLock);
 
@@ -899,6 +903,9 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, MMKVKe
 #ifdef MMKV_IOS
     auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), size, ^{
         m_output->writeData(MMBuffer(keyData, MMBufferNoCopy));
+        if (isDataHolder) {
+            m_output->writeRawVarint32((int32_t) valueLength);
+        }
         m_output->writeData(data); // note: write size of data
     });
     if (!ret) {
@@ -910,6 +917,9 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, MMKVKe
 #    else
     m_output->writeString(key);
 #    endif
+    if (isDataHolder) {
+        m_output->writeRawVarint32((int32_t) valueLength);
+    }
     m_output->writeData(data); // note: write size of data
 #endif
 
@@ -922,19 +932,22 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, MMKVKe
     m_actualSize += size;
     updateCRCDigest(ptr, size);
 
-    auto keySize = static_cast<uint32_t>(keyLength);
-    auto valueSize = static_cast<uint32_t>(data.length());
-    return make_pair(true, KeyValueHolder(keySize, valueSize, offset));
+    return make_pair(true, KeyValueHolder(keyLength, valueLength, offset));
 }
 
-pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, const KeyValueHolder &kvHolder) {
+pair<bool, KeyValueHolder>
+MMKV::appendDataWithKey1(const MMBuffer &data, const KeyValueHolder &kvHolder, bool isDataHolder) {
     SCOPED_LOCK(m_exclusiveProcessLock);
 
-    size_t keyLength = kvHolder.keySize;
+    uint32_t keyLength = kvHolder.keySize;
+    uint32_t valueLength = static_cast<uint32_t>(data.length());
+    if (isDataHolder) {
+        valueLength += pbRawVarint32Size(valueLength);
+    }
     // size needed to encode the key
-    size_t rawKeySize = keyLength + pbRawVarint32Size((int32_t) keyLength);
+    size_t rawKeySize = keyLength + pbRawVarint32Size(keyLength);
     // size needed to encode the value
-    size_t size = rawKeySize + data.length() + pbRawVarint32Size((int32_t) data.length());
+    size_t size = rawKeySize + valueLength + pbRawVarint32Size(valueLength);
 
     bool hasEnoughSize = ensureMemorySize(size);
     if (!hasEnoughSize || !isFileValid()) {
@@ -951,14 +964,20 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, const 
 #ifdef MMKV_IOS
     auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), size, ^{
         m_output->writeRawData(keyData);
-        m_output->writeData(data); // note: write size of data
+        if (isDataHolder) {
+            m_output->writeRawVarint32((int32_t) valueLength);
+        }
+        m_output->writeData(data);
     });
     if (!ret) {
         return make_pair(false, KeyValueHolder());
     }
 #else
     m_output->writeRawData(keyData);
-    m_output->writeData(data); // note: write size of data
+    if (isDataHolder) {
+        m_output->writeRawVarint32((int32_t) valueLength);
+    }
+    m_output->writeData(data);
 #endif
 
     // TODO: check first & only kv
@@ -970,9 +989,7 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey1(const MMBuffer &data, const 
     m_actualSize += size;
     updateCRCDigest(ptr, size);
 
-    auto keySize = static_cast<uint32_t>(keyLength);
-    auto valueSize = static_cast<uint32_t>(data.length());
-    return make_pair(true, KeyValueHolder(keySize, valueSize, offset));
+    return make_pair(true, KeyValueHolder(keyLength, valueLength, offset));
 }
 
 bool MMKV::fullWriteback() {
@@ -1273,7 +1290,7 @@ bool MMKV::set(bool value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeBool(value);
 
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 bool MMKV::set(int32_t value, MMKVKey_t key) {
@@ -1285,7 +1302,7 @@ bool MMKV::set(int32_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeInt32(value);
 
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 bool MMKV::set(uint32_t value, MMKVKey_t key) {
@@ -1297,7 +1314,7 @@ bool MMKV::set(uint32_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt32(value);
 
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 bool MMKV::set(int64_t value, MMKVKey_t key) {
@@ -1309,7 +1326,7 @@ bool MMKV::set(int64_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeInt64(value);
 
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 bool MMKV::set(uint64_t value, MMKVKey_t key) {
@@ -1321,7 +1338,7 @@ bool MMKV::set(uint64_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt64(value);
 
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 bool MMKV::set(float value, MMKVKey_t key) {
@@ -1333,7 +1350,7 @@ bool MMKV::set(float value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeFloat(value);
 
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 bool MMKV::set(double value, MMKVKey_t key) {
@@ -1345,7 +1362,7 @@ bool MMKV::set(double value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeDouble(value);
 
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 #ifndef MMKV_APPLE
@@ -1355,23 +1372,21 @@ bool MMKV::set(const char *value, MMKVKey_t key) {
         removeValueForKey(key);
         return true;
     }
-    return set(string(value), key);
+    return set(MMBuffer(value, strlen(value), MMBufferNoCopy), key);
 }
 
 bool MMKV::set(const string &value, MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    auto data = MiniPBCoder::encodeDataWithObject(value);
-    return setDataForKey1(std::move(data), key);
+    return set(MMBuffer(value.data(), value.length(), MMBufferNoCopy), key);
 }
 
 bool MMKV::set(const MMBuffer &value, MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    auto data = MiniPBCoder::encodeDataWithObject(value);
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(value, key, true);
 }
 
 bool MMKV::set(const vector<string> &v, MMKVKey_t key) {
@@ -1379,7 +1394,7 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(v);
-    return setDataForKey1(std::move(data), key);
+    return setDataForKey1(data, key);
 }
 
 bool MMKV::getString(MMKVKey_t key, string &result) {

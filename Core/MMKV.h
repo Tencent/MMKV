@@ -126,13 +126,15 @@ class MMKV {
     mmkv::MMBuffer getDataForKey1(MMKVKey_t key);
 
     bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key);
-    bool setDataForKey1(mmkv::MMBuffer &&data, MMKVKey_t key);
+    // isDataHolder: avoid memory copying
+    bool setDataForKey1(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
 
     bool removeDataForKey(MMKVKey_t key);
 
     bool appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key);
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, MMKVKey_t key);
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder);
+    // isDataHolder: avoid memory copying
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
 
     void notifyContentChanged();
 
