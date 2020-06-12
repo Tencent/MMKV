@@ -44,7 +44,7 @@ AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivL
 
 AESCrypt::~AESCrypt() {
     delete m_aesKey;
-    m_aesKey = nullptr;
+    delete m_aesRollbackKey;
 }
 
 void AESCrypt::resetIV(const void *iv, size_t ivLength) {
