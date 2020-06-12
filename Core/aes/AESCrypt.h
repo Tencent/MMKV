@@ -31,11 +31,17 @@ struct AES_KEY;
 
 namespace mmkv {
 
+struct AESCryptStatus {
+    int m_number;
+    unsigned char m_vector[AES_KEY_LEN];
+};
+
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
-    unsigned char m_key[AES_KEY_LEN] = {};
-    openssl::AES_KEY *m_aesKey = nullptr;
     int m_number = 0;
+    openssl::AES_KEY *m_aesKey = nullptr;
+    openssl::AES_KEY *m_aesRollbackKey = nullptr;
+    unsigned char m_key[AES_KEY_LEN] = {};
 
 public:
     unsigned char m_vector[AES_KEY_LEN] = {};
@@ -49,6 +55,10 @@ public:
 
     void decrypt(const void *input, void *output, size_t length);
 
+    void statusBeforeDecrypt(const void *input, const void *output, size_t length, AESCryptStatus &status);
+
+    void resetStatus(const AESCryptStatus &status);
+
     void resetIV(const void *iv = nullptr, size_t ivLength = 0);
 
     // output must have [AES_KEY_LEN] space
@@ -59,14 +69,12 @@ public:
     // just forbid it for possibly misuse
     explicit AESCrypt(const AESCrypt &other) = delete;
     AESCrypt &operator=(const AESCrypt &other) = delete;
-};
 
 #ifndef NDEBUG
-
-// check if AESCrypt is encrypt-decrypt full-duplex
-void testAESCrypt();
-
+    // check if AESCrypt is encrypt-decrypt full-duplex
+    static void testAESCrypt();
 #endif
+};
 
 } // namespace mmkv
 

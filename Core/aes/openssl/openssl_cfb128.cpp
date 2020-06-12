@@ -17,9 +17,7 @@ namespace openssl {
  * The extra state information to record how much of the 128bit block we have
  * used is contained in *num;
  */
-void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-                        size_t len, const AES_KEY *key,
-                        unsigned char ivec[16], int *num)
+void AES_cfb128_encrypt(const uint8_t *in, uint8_t *out, size_t len, const AES_KEY *key, unsigned char ivec[16], int *num)
 {
     auto n = *num;
 
@@ -55,9 +53,7 @@ void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 * The extra state information to record how much of the 128bit block we have
 * used is contained in *num;
 */
-void AES_cfb128_decrypt(const unsigned char *in, unsigned char *out,
-                        size_t len, const AES_KEY *key,
-                        unsigned char ivec[16], int *num)
+void AES_cfb128_decrypt(const uint8_t *in, uint8_t *out, size_t len, const AES_KEY *key, unsigned char ivec[16], int *num)
 {
     auto n = *num;
 

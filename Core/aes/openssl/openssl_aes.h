@@ -35,13 +35,8 @@ struct AES_KEY {
     int rounds;
 };
 
-void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-                        size_t length, const AES_KEY *key,
-                        unsigned char *ivec, int *num);
-
-void AES_cfb128_decrypt(const unsigned char *in, unsigned char *out,
-                        size_t length, const AES_KEY *key,
-                        unsigned char *ivec, int *num);
+void AES_cfb128_encrypt(const uint8_t *in, uint8_t *out, size_t length, const AES_KEY *key, uint8_t *ivec, int *num);
+void AES_cfb128_decrypt(const uint8_t *in, uint8_t *out, size_t length, const AES_KEY *key, uint8_t *ivec, int *num);
 
 } // namespace openssl
 
@@ -49,41 +44,55 @@ void AES_cfb128_decrypt(const unsigned char *in, unsigned char *out,
 
 #ifndef MMKV_ANDROID
 
-extern "C" int openssl_aes_arm_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
-extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+extern "C" int openssl_aes_arm_set_encrypt_key(const uint8_t *userKey, const int bits, void *key);
+extern "C" int openssl_aes_arm_set_decrypt_key(const uint8_t *userKey, const int bits, void *key);
+extern "C" void openssl_aes_arm_encrypt(const uint8_t *in, uint8_t *out, const void *key);
+extern "C" void openssl_aes_arm_decrypt(const uint8_t *in, uint8_t *out, const void *key);
 
 #define AES_set_encrypt_key(userKey, bits, key) openssl_aes_arm_set_encrypt_key(userKey, bits, key)
-
+#define AES_set_decrypt_key(userKey, bits, key) openssl_aes_arm_set_decrypt_key(userKey, bits, key)
 #define AES_encrypt(in, out, key) openssl_aes_arm_encrypt(in, out, key)
+#define AES_decrypt(in, out, key) openssl_aes_arm_decrypt(in, out, key)
 
 #else // MMKV_ANDROID
 
 #if __ARM_MAX_ARCH__ <= 7
 
-extern "C" int openssl_aes_arm_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
-extern "C" void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+extern "C" int openssl_aes_arm_set_encrypt_key(const uint8_t *userKey, const int bits, void *key);
+extern "C" int openssl_aes_arm_set_decrypt_key(const uint8_t *userKey, const int bits, void *key);
+extern "C" void openssl_aes_arm_encrypt(const uint8_t *in, uint8_t *out, const void *key);
+extern "C" void openssl_aes_arm_decrypt(const uint8_t *in, uint8_t *out, const void *key);
 
 #define AES_set_encrypt_key(userKey, bits, key) openssl_aes_arm_set_encrypt_key(userKey, bits, key)
+#define AES_set_decrypt_key(userKey, bits, key) openssl_aes_arm_set_decrypt_key(userKey, bits, key)
 #define AES_encrypt(in, out, key) openssl_aes_arm_encrypt(in, out, key)
+#define AES_decrypt(in, out, key) openssl_aes_arm_decrypt(in, out, key)
 
 #else // __ARM_MAX_ARCH__ > 7
 
-extern "C" int openssl_aes_armv8_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
-extern "C" void openssl_aes_armv8_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+extern "C" int openssl_aes_armv8_set_encrypt_key(const uint8_t *userKey, const int bits, void *key);
+extern "C" int openssl_aes_armv8_set_decrypt_key(const uint8_t *userKey, const int bits, void *key);
+extern "C" void openssl_aes_armv8_encrypt(const uint8_t *in, uint8_t *out, const void *key);
+extern "C" void openssl_aes_armv8_decrypt(const uint8_t *in, uint8_t *out, const void *key);
 
-typedef int (*aes_set_encrypt_t)(const unsigned char *userKey, const int bits, void *key);
-typedef void (*aes_encrypt_t)(const unsigned char *in, unsigned char *out, const void *key);
+typedef int (*aes_set_encrypt_t)(const uint8_t *userKey, const int bits, void *key);
+typedef int (*aes_set_decrypt_t)(const uint8_t *userKey, const int bits, void *key);
+typedef void (*aes_encrypt_t)(const uint8_t *in, uint8_t *out, const void *key);
+typedef void (*aes_decrypt_t)(const uint8_t *in, uint8_t *out, const void *key);
 
 namespace openssl {
 
-int AES_C_set_encrypt_key(const unsigned char *userKey, const int bits, void *key);
-
-void AES_C_encrypt(const unsigned char *in, unsigned char *out, const void *key);
+int AES_C_set_encrypt_key(const uint8_t *userKey, const int bits, void *key);
+int AES_C_set_decrypt_key(const uint8_t *userKey, const int bits, void *key);
+void AES_C_encrypt(const uint8_t *in, uint8_t *out, const void *key);
+void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *key);
 
 } // namespace openssl
 
 extern aes_set_encrypt_t AES_set_encrypt_key;
+extern aes_set_decrypt_t AES_set_decrypt_key;
 extern aes_encrypt_t AES_encrypt;
+extern aes_decrypt_t AES_decrypt;
 
 #endif // __ARM_MAX_ARCH__ <= 7
 
@@ -93,9 +102,8 @@ extern aes_encrypt_t AES_encrypt;
 
 namespace openssl {
 
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key);
-
-void AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
+int AES_set_encrypt_key(const uint8_t *userKey, const int bits, AES_KEY *key);
+void AES_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key);
 
 } // namespace openssl
 

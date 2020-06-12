@@ -31,6 +31,7 @@
 #include "ScopedLock.hpp"
 #include "ThreadLock.h"
 #include "aes/AESCrypt.h"
+#include "aes/openssl/openssl_aes.h"
 #include "aes/openssl/openssl_md5.h"
 #include "crc32/Checksum.h"
 #include <algorithm>
@@ -154,6 +155,11 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
     mkPath(g_rootDir);
 
     MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
+    // TODO: remove those after it's done
+    MMKVInfo("AESCrypt: %zu, openssl::AES_KEY %zu, KeyValueHolder: %zu, KeyValueHolderCrypt: %zu, MMBuffer: %zu",
+             sizeof(AESCrypt), sizeof(openssl::AES_KEY), sizeof(KeyValueHolder), sizeof(KeyValueHolderCrypt),
+             sizeof(MMBuffer));
+    AESCrypt::testAESCrypt();
 }
 
 #ifndef MMKV_ANDROID

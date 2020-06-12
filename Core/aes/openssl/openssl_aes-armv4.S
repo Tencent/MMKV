@@ -741,4 +741,504 @@ Labrt:
 .word	0xe12fff1e			// interoperable with Thumb ISA:-)
 #endif
 
+#ifndef __ANDROID__
+.globl    _openssl_aes_arm_set_decrypt_key
+#ifdef __thumb2__
+.thumb_func    _openssl_aes_arm_set_decrypt_key
+#endif
+.align    5
+_openssl_aes_arm_set_decrypt_key:
+#else // __ANDROID__
+.globl    openssl_aes_arm_set_decrypt_key
+#ifdef __thumb2__
+.thumb_func    openssl_aes_arm_set_decrypt_key
+#endif
+.align    5
+openssl_aes_arm_set_decrypt_key:
+#endif // __ANDROID__
+    str    lr,[sp,#-4]!            // push lr
+    bl    _armv4_AES_set_encrypt_key
+    teq    r0,#0
+    ldr    lr,[sp],#4              // pop lr
+    bne    Labrt
+
+    mov    r0,r2            // _AES_set_encrypt_key preserves r2,
+    mov    r1,r2            // which is AES_KEY *key
+    b    _armv4_AES_set_enc2dec_key
+
+#ifdef __thumb2__
+.thumb_func    _armv4_AES_set_enc2dec_key
+#endif
+.align    5
+_armv4_AES_set_enc2dec_key:
+    stmdb    sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
+
+    ldr    r12,[r0,#240]
+    mov    r7,r0            // input
+    add    r8,r0,r12,lsl#4
+    mov    r11,r1            // output
+    add    r10,r1,r12,lsl#4
+    str    r12,[r1,#240]
+
+Linv:    ldr    r0,[r7],#16
+    ldr    r1,[r7,#-12]
+    ldr    r2,[r7,#-8]
+    ldr    r3,[r7,#-4]
+    ldr    r4,[r8],#-16
+    ldr    r5,[r8,#16+4]
+    ldr    r6,[r8,#16+8]
+    ldr    r9,[r8,#16+12]
+    str    r0,[r10],#-16
+    str    r1,[r10,#16+4]
+    str    r2,[r10,#16+8]
+    str    r3,[r10,#16+12]
+    str    r4,[r11],#16
+    str    r5,[r11,#-12]
+    str    r6,[r11,#-8]
+    str    r9,[r11,#-4]
+    teq    r7,r8
+    bne    Linv
+
+    ldr    r0,[r7]
+    ldr    r1,[r7,#4]
+    ldr    r2,[r7,#8]
+    ldr    r3,[r7,#12]
+    str    r0,[r11]
+    str    r1,[r11,#4]
+    str    r2,[r11,#8]
+    str    r3,[r11,#12]
+    sub    r11,r11,r12,lsl#3
+    ldr    r0,[r11,#16]!        // prefetch tp1
+    mov    r7,#0x80
+    mov    r8,#0x1b
+    orr    r7,r7,#0x8000
+    orr    r8,r8,#0x1b00
+    orr    r7,r7,r7,lsl#16
+    orr    r8,r8,r8,lsl#16
+    sub    r12,r12,#1
+    mvn    r9,r7
+    mov    r12,r12,lsl#2    // (rounds-1)*4
+
+Lmix:    and    r4,r0,r7
+    and    r1,r0,r9
+    sub    r4,r4,r4,lsr#7
+    and    r4,r4,r8
+    eor    r1,r4,r1,lsl#1    // tp2
+
+    and    r4,r1,r7
+    and    r2,r1,r9
+    sub    r4,r4,r4,lsr#7
+    and    r4,r4,r8
+    eor    r2,r4,r2,lsl#1    // tp4
+
+    and    r4,r2,r7
+    and    r3,r2,r9
+    sub    r4,r4,r4,lsr#7
+    and    r4,r4,r8
+    eor    r3,r4,r3,lsl#1    // tp8
+
+    eor    r4,r1,r2
+    eor    r5,r0,r3        // tp9
+    eor    r4,r4,r3        // tpe
+    eor    r4,r4,r1,ror#24
+    eor    r4,r4,r5,ror#24    // ^= ROTATE(tpb=tp9^tp2,8)
+    eor    r4,r4,r2,ror#16
+    eor    r4,r4,r5,ror#16    // ^= ROTATE(tpd=tp9^tp4,16)
+    eor    r4,r4,r5,ror#8    // ^= ROTATE(tp9,24)
+
+    ldr    r0,[r11,#4]        // prefetch tp1
+    str    r4,[r11],#4
+    subs    r12,r12,#1
+    bne    Lmix
+
+    mov    r0,#0
+#if __ARM_ARCH__>=5
+    ldmia    sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
+#else
+    ldmia    sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
+    tst    lr,#1
+    moveq    pc,lr            // be binary compatible with V4, yet
+.word    0xe12fff1e            // interoperable with Thumb ISA:-)
+#endif
+
+
+.align    5
+AES_Td:
+.word    0x51f4a750, 0x7e416553, 0x1a17a4c3, 0x3a275e96
+.word    0x3bab6bcb, 0x1f9d45f1, 0xacfa58ab, 0x4be30393
+.word    0x2030fa55, 0xad766df6, 0x88cc7691, 0xf5024c25
+.word    0x4fe5d7fc, 0xc52acbd7, 0x26354480, 0xb562a38f
+.word    0xdeb15a49, 0x25ba1b67, 0x45ea0e98, 0x5dfec0e1
+.word    0xc32f7502, 0x814cf012, 0x8d4697a3, 0x6bd3f9c6
+.word    0x038f5fe7, 0x15929c95, 0xbf6d7aeb, 0x955259da
+.word    0xd4be832d, 0x587421d3, 0x49e06929, 0x8ec9c844
+.word    0x75c2896a, 0xf48e7978, 0x99583e6b, 0x27b971dd
+.word    0xbee14fb6, 0xf088ad17, 0xc920ac66, 0x7dce3ab4
+.word    0x63df4a18, 0xe51a3182, 0x97513360, 0x62537f45
+.word    0xb16477e0, 0xbb6bae84, 0xfe81a01c, 0xf9082b94
+.word    0x70486858, 0x8f45fd19, 0x94de6c87, 0x527bf8b7
+.word    0xab73d323, 0x724b02e2, 0xe31f8f57, 0x6655ab2a
+.word    0xb2eb2807, 0x2fb5c203, 0x86c57b9a, 0xd33708a5
+.word    0x302887f2, 0x23bfa5b2, 0x02036aba, 0xed16825c
+.word    0x8acf1c2b, 0xa779b492, 0xf307f2f0, 0x4e69e2a1
+.word    0x65daf4cd, 0x0605bed5, 0xd134621f, 0xc4a6fe8a
+.word    0x342e539d, 0xa2f355a0, 0x058ae132, 0xa4f6eb75
+.word    0x0b83ec39, 0x4060efaa, 0x5e719f06, 0xbd6e1051
+.word    0x3e218af9, 0x96dd063d, 0xdd3e05ae, 0x4de6bd46
+.word    0x91548db5, 0x71c45d05, 0x0406d46f, 0x605015ff
+.word    0x1998fb24, 0xd6bde997, 0x894043cc, 0x67d99e77
+.word    0xb0e842bd, 0x07898b88, 0xe7195b38, 0x79c8eedb
+.word    0xa17c0a47, 0x7c420fe9, 0xf8841ec9, 0x00000000
+.word    0x09808683, 0x322bed48, 0x1e1170ac, 0x6c5a724e
+.word    0xfd0efffb, 0x0f853856, 0x3daed51e, 0x362d3927
+.word    0x0a0fd964, 0x685ca621, 0x9b5b54d1, 0x24362e3a
+.word    0x0c0a67b1, 0x9357e70f, 0xb4ee96d2, 0x1b9b919e
+.word    0x80c0c54f, 0x61dc20a2, 0x5a774b69, 0x1c121a16
+.word    0xe293ba0a, 0xc0a02ae5, 0x3c22e043, 0x121b171d
+.word    0x0e090d0b, 0xf28bc7ad, 0x2db6a8b9, 0x141ea9c8
+.word    0x57f11985, 0xaf75074c, 0xee99ddbb, 0xa37f60fd
+.word    0xf701269f, 0x5c72f5bc, 0x44663bc5, 0x5bfb7e34
+.word    0x8b432976, 0xcb23c6dc, 0xb6edfc68, 0xb8e4f163
+.word    0xd731dcca, 0x42638510, 0x13972240, 0x84c61120
+.word    0x854a247d, 0xd2bb3df8, 0xaef93211, 0xc729a16d
+.word    0x1d9e2f4b, 0xdcb230f3, 0x0d8652ec, 0x77c1e3d0
+.word    0x2bb3166c, 0xa970b999, 0x119448fa, 0x47e96422
+.word    0xa8fc8cc4, 0xa0f03f1a, 0x567d2cd8, 0x223390ef
+.word    0x87494ec7, 0xd938d1c1, 0x8ccaa2fe, 0x98d40b36
+.word    0xa6f581cf, 0xa57ade28, 0xdab78e26, 0x3fadbfa4
+.word    0x2c3a9de4, 0x5078920d, 0x6a5fcc9b, 0x547e4662
+.word    0xf68d13c2, 0x90d8b8e8, 0x2e39f75e, 0x82c3aff5
+.word    0x9f5d80be, 0x69d0937c, 0x6fd52da9, 0xcf2512b3
+.word    0xc8ac993b, 0x10187da7, 0xe89c636e, 0xdb3bbb7b
+.word    0xcd267809, 0x6e5918f4, 0xec9ab701, 0x834f9aa8
+.word    0xe6956e65, 0xaaffe67e, 0x21bccf08, 0xef15e8e6
+.word    0xbae79bd9, 0x4a6f36ce, 0xea9f09d4, 0x29b07cd6
+.word    0x31a4b2af, 0x2a3f2331, 0xc6a59430, 0x35a266c0
+.word    0x744ebc37, 0xfc82caa6, 0xe090d0b0, 0x33a7d815
+.word    0xf104984a, 0x41ecdaf7, 0x7fcd500e, 0x1791f62f
+.word    0x764dd68d, 0x43efb04d, 0xccaa4d54, 0xe49604df
+.word    0x9ed1b5e3, 0x4c6a881b, 0xc12c1fb8, 0x4665517f
+.word    0x9d5eea04, 0x018c355d, 0xfa877473, 0xfb0b412e
+.word    0xb3671d5a, 0x92dbd252, 0xe9105633, 0x6dd64713
+.word    0x9ad7618c, 0x37a10c7a, 0x59f8148e, 0xeb133c89
+.word    0xcea927ee, 0xb761c935, 0xe11ce5ed, 0x7a47b13c
+.word    0x9cd2df59, 0x55f2733f, 0x1814ce79, 0x73c737bf
+.word    0x53f7cdea, 0x5ffdaa5b, 0xdf3d6f14, 0x7844db86
+.word    0xcaaff381, 0xb968c43e, 0x3824342c, 0xc2a3405f
+.word    0x161dc372, 0xbce2250c, 0x283c498b, 0xff0d9541
+.word    0x39a80171, 0x080cb3de, 0xd8b4e49c, 0x6456c190
+.word    0x7bcb8461, 0xd532b670, 0x486c5c74, 0xd0b85742
+// Td4[256]
+.byte    0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38
+.byte    0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb
+.byte    0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87
+.byte    0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb
+.byte    0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d
+.byte    0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e
+.byte    0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2
+.byte    0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25
+.byte    0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16
+.byte    0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92
+.byte    0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda
+.byte    0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84
+.byte    0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a
+.byte    0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06
+.byte    0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02
+.byte    0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b
+.byte    0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea
+.byte    0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73
+.byte    0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85
+.byte    0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e
+.byte    0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89
+.byte    0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b
+.byte    0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20
+.byte    0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4
+.byte    0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31
+.byte    0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f
+.byte    0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d
+.byte    0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef
+.byte    0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0
+.byte    0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61
+.byte    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26
+.byte    0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
+
+
+// void AES_decrypt(const unsigned char *in, unsigned char *out,
+//          const AES_KEY *key) {
+#ifndef __ANDROID__
+.globl    _openssl_aes_arm_decrypt
+#ifdef __thumb2__
+.thumb_func    _openssl_aes_arm_decrypt
+#endif
+.align    5
+_openssl_aes_arm_decrypt:
+#else // __ANDROID__
+.globl    openssl_aes_arm_decrypt
+#ifdef __thumb2__
+.thumb_func    openssl_aes_arm_decrypt
+#endif
+.align    5
+openssl_aes_arm_decrypt:
+#endif // __ANDROID__
+#ifndef    __thumb2__
+    sub    r3,pc,#8        // _AES_decrypt
+#else
+    adr    r3,.
+#endif
+    stmdb    sp!,{r1,r4-r12,lr}
+#if defined(__thumb2__) || defined(__APPLE__)
+    adr    r10,AES_Td
+#elif __ANDROID__
+    sub    r10,r3,#openssl_aes_arm_decrypt-AES_Td    // Td
+#else
+    sub    r10,r3,#_openssl_aes_arm_decrypt-AES_Td    // Td
+#endif
+    mov    r12,r0        // inp
+    mov    r11,r2
+#if __ARM_ARCH__<7
+    ldrb    r0,[r12,#3]    // load input data in endian-neutral
+    ldrb    r4,[r12,#2]    // manner...
+    ldrb    r5,[r12,#1]
+    ldrb    r6,[r12,#0]
+    orr    r0,r0,r4,lsl#8
+    ldrb    r1,[r12,#7]
+    orr    r0,r0,r5,lsl#16
+    ldrb    r4,[r12,#6]
+    orr    r0,r0,r6,lsl#24
+    ldrb    r5,[r12,#5]
+    ldrb    r6,[r12,#4]
+    orr    r1,r1,r4,lsl#8
+    ldrb    r2,[r12,#11]
+    orr    r1,r1,r5,lsl#16
+    ldrb    r4,[r12,#10]
+    orr    r1,r1,r6,lsl#24
+    ldrb    r5,[r12,#9]
+    ldrb    r6,[r12,#8]
+    orr    r2,r2,r4,lsl#8
+    ldrb    r3,[r12,#15]
+    orr    r2,r2,r5,lsl#16
+    ldrb    r4,[r12,#14]
+    orr    r2,r2,r6,lsl#24
+    ldrb    r5,[r12,#13]
+    ldrb    r6,[r12,#12]
+    orr    r3,r3,r4,lsl#8
+    orr    r3,r3,r5,lsl#16
+    orr    r3,r3,r6,lsl#24
+#else
+    ldr    r0,[r12,#0]
+    ldr    r1,[r12,#4]
+    ldr    r2,[r12,#8]
+    ldr    r3,[r12,#12]
+#ifdef __ARMEL__
+    rev    r0,r0
+    rev    r1,r1
+    rev    r2,r2
+    rev    r3,r3
+#endif
+#endif
+    bl    _armv4_AES_decrypt
+
+    ldr    r12,[sp],#4        // pop out
+#if __ARM_ARCH__>=7
+#ifdef __ARMEL__
+    rev    r0,r0
+    rev    r1,r1
+    rev    r2,r2
+    rev    r3,r3
+#endif
+    str    r0,[r12,#0]
+    str    r1,[r12,#4]
+    str    r2,[r12,#8]
+    str    r3,[r12,#12]
+#else
+    mov    r4,r0,lsr#24        // write output in endian-neutral
+    mov    r5,r0,lsr#16        // manner...
+    mov    r6,r0,lsr#8
+    strb    r4,[r12,#0]
+    strb    r5,[r12,#1]
+    mov    r4,r1,lsr#24
+    strb    r6,[r12,#2]
+    mov    r5,r1,lsr#16
+    strb    r0,[r12,#3]
+    mov    r6,r1,lsr#8
+    strb    r4,[r12,#4]
+    strb    r5,[r12,#5]
+    mov    r4,r2,lsr#24
+    strb    r6,[r12,#6]
+    mov    r5,r2,lsr#16
+    strb    r1,[r12,#7]
+    mov    r6,r2,lsr#8
+    strb    r4,[r12,#8]
+    strb    r5,[r12,#9]
+    mov    r4,r3,lsr#24
+    strb    r6,[r12,#10]
+    mov    r5,r3,lsr#16
+    strb    r2,[r12,#11]
+    mov    r6,r3,lsr#8
+    strb    r4,[r12,#12]
+    strb    r5,[r12,#13]
+    strb    r6,[r12,#14]
+    strb    r3,[r12,#15]
+#endif
+#if __ARM_ARCH__>=5
+    ldmia    sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
+#else
+    ldmia    sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
+    tst    lr,#1
+    moveq    pc,lr            // be binary compatible with V4, yet
+.word    0xe12fff1e            // interoperable with Thumb ISA:-)
+#endif
+
+
+#ifdef __thumb2__
+.thumb_func    _armv4_AES_decrypt
+#endif
+.align    2
+_armv4_AES_decrypt:
+    str    lr,[sp,#-4]!        // push lr
+    ldmia    r11!,{r4,r5,r6,r7}
+    eor    r0,r0,r4
+    ldr    r12,[r11,#240-16]
+    eor    r1,r1,r5
+    eor    r2,r2,r6
+    eor    r3,r3,r7
+    sub    r12,r12,#1
+    mov    lr,#255
+
+    and    r7,lr,r0,lsr#16
+    and    r8,lr,r0,lsr#8
+    and    r9,lr,r0
+    mov    r0,r0,lsr#24
+Ldec_loop:
+    ldr    r4,[r10,r7,lsl#2]    // Td1[s0>>16]
+    and    r7,lr,r1        // i0
+    ldr    r5,[r10,r8,lsl#2]    // Td2[s0>>8]
+    and    r8,lr,r1,lsr#16
+    ldr    r6,[r10,r9,lsl#2]    // Td3[s0>>0]
+    and    r9,lr,r1,lsr#8
+    ldr    r0,[r10,r0,lsl#2]    // Td0[s0>>24]
+    mov    r1,r1,lsr#24
+
+    ldr    r7,[r10,r7,lsl#2]    // Td3[s1>>0]
+    ldr    r8,[r10,r8,lsl#2]    // Td1[s1>>16]
+    ldr    r9,[r10,r9,lsl#2]    // Td2[s1>>8]
+    eor    r0,r0,r7,ror#24
+    ldr    r1,[r10,r1,lsl#2]    // Td0[s1>>24]
+    and    r7,lr,r2,lsr#8    // i0
+    eor    r5,r8,r5,ror#8
+    and    r8,lr,r2        // i1
+    eor    r6,r9,r6,ror#8
+    and    r9,lr,r2,lsr#16
+    ldr    r7,[r10,r7,lsl#2]    // Td2[s2>>8]
+    eor    r1,r1,r4,ror#8
+    ldr    r8,[r10,r8,lsl#2]    // Td3[s2>>0]
+    mov    r2,r2,lsr#24
+
+    ldr    r9,[r10,r9,lsl#2]    // Td1[s2>>16]
+    eor    r0,r0,r7,ror#16
+    ldr    r2,[r10,r2,lsl#2]    // Td0[s2>>24]
+    and    r7,lr,r3,lsr#16    // i0
+    eor    r1,r1,r8,ror#24
+    and    r8,lr,r3,lsr#8    // i1
+    eor    r6,r9,r6,ror#8
+    and    r9,lr,r3        // i2
+    ldr    r7,[r10,r7,lsl#2]    // Td1[s3>>16]
+    eor    r2,r2,r5,ror#8
+    ldr    r8,[r10,r8,lsl#2]    // Td2[s3>>8]
+    mov    r3,r3,lsr#24
+
+    ldr    r9,[r10,r9,lsl#2]    // Td3[s3>>0]
+    eor    r0,r0,r7,ror#8
+    ldr    r7,[r11],#16
+    eor    r1,r1,r8,ror#16
+    ldr    r3,[r10,r3,lsl#2]    // Td0[s3>>24]
+    eor    r2,r2,r9,ror#24
+
+    ldr    r4,[r11,#-12]
+    eor    r0,r0,r7
+    ldr    r5,[r11,#-8]
+    eor    r3,r3,r6,ror#8
+    ldr    r6,[r11,#-4]
+    and    r7,lr,r0,lsr#16
+    eor    r1,r1,r4
+    and    r8,lr,r0,lsr#8
+    eor    r2,r2,r5
+    and    r9,lr,r0
+    eor    r3,r3,r6
+    mov    r0,r0,lsr#24
+
+    subs    r12,r12,#1
+    bne    Ldec_loop
+
+    add    r10,r10,#1024
+
+    ldr    r5,[r10,#0]        // prefetch Td4
+    ldr    r6,[r10,#32]
+    ldr    r4,[r10,#64]
+    ldr    r5,[r10,#96]
+    ldr    r6,[r10,#128]
+    ldr    r4,[r10,#160]
+    ldr    r5,[r10,#192]
+    ldr    r6,[r10,#224]
+
+    ldrb    r0,[r10,r0]        // Td4[s0>>24]
+    ldrb    r4,[r10,r7]        // Td4[s0>>16]
+    and    r7,lr,r1        // i0
+    ldrb    r5,[r10,r8]        // Td4[s0>>8]
+    and    r8,lr,r1,lsr#16
+    ldrb    r6,[r10,r9]        // Td4[s0>>0]
+    and    r9,lr,r1,lsr#8
+
+    add    r1,r10,r1,lsr#24
+    ldrb    r7,[r10,r7]        // Td4[s1>>0]
+    ldrb    r1,[r1]        // Td4[s1>>24]
+    ldrb    r8,[r10,r8]        // Td4[s1>>16]
+    eor    r0,r7,r0,lsl#24
+    ldrb    r9,[r10,r9]        // Td4[s1>>8]
+    eor    r1,r4,r1,lsl#8
+    and    r7,lr,r2,lsr#8    // i0
+    eor    r5,r5,r8,lsl#8
+    and    r8,lr,r2        // i1
+    ldrb    r7,[r10,r7]        // Td4[s2>>8]
+    eor    r6,r6,r9,lsl#8
+    ldrb    r8,[r10,r8]        // Td4[s2>>0]
+    and    r9,lr,r2,lsr#16
+
+    add    r2,r10,r2,lsr#24
+    ldrb    r2,[r2]        // Td4[s2>>24]
+    eor    r0,r0,r7,lsl#8
+    ldrb    r9,[r10,r9]        // Td4[s2>>16]
+    eor    r1,r8,r1,lsl#16
+    and    r7,lr,r3,lsr#16    // i0
+    eor    r2,r5,r2,lsl#16
+    and    r8,lr,r3,lsr#8    // i1
+    ldrb    r7,[r10,r7]        // Td4[s3>>16]
+    eor    r6,r6,r9,lsl#16
+    ldrb    r8,[r10,r8]        // Td4[s3>>8]
+    and    r9,lr,r3        // i2
+
+    add    r3,r10,r3,lsr#24
+    ldrb    r9,[r10,r9]        // Td4[s3>>0]
+    ldrb    r3,[r3]        // Td4[s3>>24]
+    eor    r0,r0,r7,lsl#16
+    ldr    r7,[r11,#0]
+    eor    r1,r1,r8,lsl#8
+    ldr    r4,[r11,#4]
+    eor    r2,r9,r2,lsl#8
+    ldr    r5,[r11,#8]
+    eor    r3,r6,r3,lsl#24
+    ldr    r6,[r11,#12]
+
+    eor    r0,r0,r7
+    eor    r1,r1,r4
+    eor    r2,r2,r5
+    eor    r3,r3,r6
+
+    sub    r10,r10,#1024
+    ldr    pc,[sp],#4        // pop and return
+
+.byte    65,69,83,32,102,111,114,32,65,82,77,118,52,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
+.align    2
+.align    2
+
 #endif
