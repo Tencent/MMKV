@@ -20,6 +20,7 @@
 
 #include "MiniPBCoder.h"
 #include "CodedInputData.h"
+#include "CodedInputDataCrypt.h"
 #include "CodedOutputData.h"
 #include "MMBuffer.h"
 #include "PBEncodeItem.hpp"
@@ -37,13 +38,18 @@ using namespace std;
 
 namespace mmkv {
 
-MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer) : MiniPBCoder() {
+MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer, AESCrypt *crypter) : MiniPBCoder() {
     m_inputBuffer = inputBuffer;
-    m_inputData = new CodedInputData(m_inputBuffer->getPtr(), m_inputBuffer->length());
+    if (crypter) {
+        m_inputDataDecrpt = new CodedInputDataCrypt(m_inputBuffer->getPtr(), m_inputBuffer->length(), *crypter);
+    } else {
+        m_inputData = new CodedInputData(m_inputBuffer->getPtr(), m_inputBuffer->length());
+    }
 }
 
 MiniPBCoder::~MiniPBCoder() {
     delete m_inputData;
+    delete m_inputDataDecrpt;
     delete m_outputBuffer;
     delete m_outputData;
     delete m_encodeItems;
@@ -338,6 +344,16 @@ void MiniPBCoder::decodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size) {
 
 void MiniPBCoder::greedyDecodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size) {
     MiniPBCoder oCoder(&oData);
+    oCoder.decodeOneMap(dic, size, true);
+}
+
+void MiniPBCoder::decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size) {
+    MiniPBCoder oCoder(&oData, crypter);
+    oCoder.decodeOneMap(dic, size, false);
+}
+
+void MiniPBCoder::greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size) {
+    MiniPBCoder oCoder(&oData, crypter);
     oCoder.decodeOneMap(dic, size, true);
 }
 

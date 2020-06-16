@@ -31,20 +31,28 @@ struct AES_KEY;
 
 namespace mmkv {
 
+#pragma pack(push, 1)
+
 struct AESCryptStatus {
-    int m_number;
-    unsigned char m_vector[AES_KEY_LEN];
+    uint8_t m_number;
+    uint8_t m_vector[AES_KEY_LEN];
 };
+
+#pragma pack(pop)
 
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
+    bool m_isClone = false;
     int m_number = 0;
     openssl::AES_KEY *m_aesKey = nullptr;
     openssl::AES_KEY *m_aesRollbackKey = nullptr;
-    unsigned char m_key[AES_KEY_LEN] = {};
+    uint8_t m_key[AES_KEY_LEN] = {};
 
 public:
-    unsigned char m_vector[AES_KEY_LEN] = {};
+    uint8_t m_vector[AES_KEY_LEN] = {};
+
+private:
+    AESCrypt(const AESCrypt &other, const AESCryptStatus &status);
 
 public:
     AESCrypt(const void *key, size_t keyLength, const void *iv = nullptr, size_t ivLength = 0);
@@ -57,7 +65,7 @@ public:
 
     void statusBeforeDecrypt(const void *input, const void *output, size_t length, AESCryptStatus &status);
 
-    void resetStatus(const AESCryptStatus &status);
+    AESCrypt cloneWithStatus(const AESCryptStatus &status) const;
 
     void resetIV(const void *iv = nullptr, size_t ivLength = 0);
 

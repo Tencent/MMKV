@@ -41,22 +41,39 @@ MMBuffer KeyValueHolder::toMMBuffer(const void *basePtr) const {
     return MMBuffer(realPtr, valueSize, MMBufferNoCopy);
 }
 
-KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length)
-    : flag(KeyValueHolderType_Direct), paddedSize(static_cast<uint8_t>(length)) {
-    assert(length <= SmallBufferSize());
-    memcpy(value, src, length);
-}
-
-KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t off, unsigned char *iv)
-    : flag(KeyValueHolderType_Offset), keySize(static_cast<uint16_t>(keyLength)), valueSize(valueLength), offset(off) {
-    pbKeyValueSize = static_cast<uint8_t>(pbRawVarint32Size(keySize) + pbRawVarint32Size(valueSize));
-    if (iv) {
-        memcpy(aesVector, iv, sizeof(aesVector));
+KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length) {
+    if (length <= SmallBufferSize()) {
+        type = KeyValueHolderType_Direct;
+        paddedSize = static_cast<uint8_t>(length);
+        memcpy(value, src, length);
+    } else {
+        type = KeyValueHolderType_Memory;
+        memSize = static_cast<uint32_t>(length);
+        memPtr = malloc(length);
+        memcpy(memPtr, src, memSize);
     }
 }
 
+KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t off)
+    : type(KeyValueHolderType_Offset), keySize(static_cast<uint16_t>(keyLength)), valueSize(valueLength), offset(off) {
+
+    pbKeyValueSize = static_cast<uint8_t>(pbRawVarint32Size(keySize) + pbRawVarint32Size(valueSize));
+    // assert(iv);
+    // memcpy(aesVector, iv, sizeof(aesVector));
+}
+
+KeyValueHolderCrypt::~KeyValueHolderCrypt() {
+    if (type == KeyValueHolderType_Memory && memPtr) {
+        free(memPtr);
+    }
+}
+
+AESCryptStatus *KeyValueHolderCrypt::cryptStatus() {
+    return reinterpret_cast<AESCryptStatus *>(&aesNumber);
+}
+
 size_t KeyValueHolderCrypt::end() const {
-    assert(flag == KeyValueHolderType_Offset);
+    assert(type == KeyValueHolderType_Offset);
 
     size_t size = offset;
     size += pbKeyValueSize + keySize + valueSize;
@@ -65,24 +82,99 @@ size_t KeyValueHolderCrypt::end() const {
 
 // get decrypt data with [position, -1)
 MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
-    size_t length = inputBuffer.length();
+    static uint8_t smallBuffer[16];
+    auto basePtr = (uint8_t *) inputBuffer.getPtr();
+    auto ptr = basePtr;
+    for (size_t index = sizeof(smallBuffer); index < position; index += sizeof(smallBuffer)) {
+        crypter.decrypt(ptr, smallBuffer, sizeof(smallBuffer));
+        ptr += sizeof(smallBuffer);
+    }
+    if (ptr < basePtr + position) {
+        crypter.decrypt(ptr, smallBuffer, static_cast<size_t>(basePtr + position - ptr));
+        ptr = basePtr + position;
+    }
+    size_t length = inputBuffer.length() - position;
     MMBuffer tmp(length);
 
-    auto input = inputBuffer.getPtr();
+    auto input = ptr;
     auto output = tmp.getPtr();
     crypter.decrypt(input, output, length);
 
     return tmp;
 }
 
-MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr) const {
-    if (flag == KeyValueHolderType_Direct) {
+MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr, const AESCrypt *crypter) const {
+    if (type == KeyValueHolderType_Direct) {
         return MMBuffer((void *) value, paddedSize, MMBufferNoCopy);
-    } else {
+    } else if (type == KeyValueHolderType_Memory) {
+        return MMBuffer(memPtr, memSize, MMBufferNoCopy);
+    } else if (crypter) {
         auto realPtr = (uint8_t *) basePtr + offset;
-        realPtr += pbKeyValueSize + keySize + valueSize;
-        return MMBuffer(realPtr, valueSize, MMBufferNoCopy);
+        auto position = static_cast<uint32_t>(pbKeyValueSize + keySize);
+        auto realSize = position + valueSize;
+        auto kvBuffer = MMBuffer(realPtr, realSize, MMBufferNoCopy);
+        auto realCrypter = crypter->cloneWithStatus(*(AESCryptStatus *) &aesNumber);
+        return decryptBuffer(realCrypter, kvBuffer, position);
+    } else {
+        assert(0);
+        return MMBuffer();
     }
 }
 
 } // namespace mmkv
+
+#ifndef NDEBUG
+#    include "CodedInputData.h"
+#    include "CodedOutputData.h"
+#    include "MMKVLog.h"
+
+using namespace std;
+
+namespace mmkv {
+
+void KeyValueHolderCrypt::testAESToMMBuffer() {
+    const uint8_t plainText[] = "Hello, OpenSSL-mmkv::KeyValueHolderCrypt::testAESToMMBuffer() with AES CFB 128.";
+    constexpr size_t textLength = sizeof(plainText) - 1;
+
+    const uint8_t key[] = "TheAESKey";
+    constexpr size_t keyLength = sizeof(key) - 1;
+
+    uint8_t iv[AES_KEY_LEN];
+    srand((unsigned) time(nullptr));
+    for (uint32_t i = 0; i < AES_KEY_LEN; i++) {
+        iv[i] = (uint8_t) rand();
+    }
+    AESCrypt crypt1(key, keyLength, iv, sizeof(iv));
+
+    auto encryptText = new uint8_t[DEFAULT_MMAP_SIZE];
+    memset(encryptText, 0, DEFAULT_MMAP_SIZE);
+    CodedOutputData output(encryptText, DEFAULT_MMAP_SIZE);
+    output.writeData(MMBuffer((void *) key, keyLength, MMBufferNoCopy));
+    auto lengthOfValue = textLength + pbRawVarint32Size((uint32_t) textLength);
+    output.writeRawVarint32((int32_t) lengthOfValue);
+    output.writeData(MMBuffer((void *) plainText, textLength, MMBufferNoCopy));
+    crypt1.encrypt(encryptText, encryptText, (size_t)(output.curWritePointer() - encryptText));
+
+    AESCrypt decrypt(key, keyLength, iv, sizeof(iv));
+    uint8_t smallBuffer[32];
+    decrypt.decrypt(encryptText, smallBuffer, 5);
+    auto keySize = CodedInputData(smallBuffer, 5).readUInt32();
+    auto sizeOfKeySize = pbRawVarint32Size(keySize);
+    auto position = sizeOfKeySize;
+    decrypt.decrypt(encryptText + 5, smallBuffer + 5, static_cast<size_t>(sizeOfKeySize + keySize - 5));
+    position += keySize;
+    decrypt.decrypt(encryptText + position, smallBuffer + position, 5);
+    auto valueSize = CodedInputData(smallBuffer + position, 5).readUInt32();
+    // auto sizeOfValueSize = pbRawVarint32Size(valueSize);
+    KeyValueHolderCrypt kvHolder(keySize, valueSize, 0);
+    auto rollbackSize = position + 5;
+    decrypt.statusBeforeDecrypt(encryptText + rollbackSize, smallBuffer + rollbackSize, rollbackSize,
+                                *kvHolder.cryptStatus());
+    auto value = kvHolder.toMMBuffer(encryptText, &decrypt);
+
+    MMKVInfo("testAESToMMBuffer: %@", CodedInputData((char *) value.getPtr(), value.length()).readString());
+}
+
+} // namespace mmkv
+
+#endif

@@ -10,6 +10,10 @@
 		CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
 		CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
 		CB0DCC6D242B5786009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF3450323B4BABA00168AC7 /* libz.tbd */; };
+		CB30A3EE24987C32007171B1 /* CodedInputDataCrypt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB30A3EC24987C32007171B1 /* CodedInputDataCrypt.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB30A3EF24987C32007171B1 /* CodedInputDataCrypt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB30A3EC24987C32007171B1 /* CodedInputDataCrypt.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB30A41F2498CFB7007171B1 /* CodedInputDataCrypt_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB30A41E2498CFB6007171B1 /* CodedInputDataCrypt_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CB30A4202498CFB7007171B1 /* CodedInputDataCrypt_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB30A41E2498CFB6007171B1 /* CodedInputDataCrypt_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB550CCC2488E3F20042CD20 /* KeyValueHolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB550CCA2488E3F20042CD20 /* KeyValueHolder.cpp */; };
 		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
 		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
@@ -122,6 +126,9 @@
 
 /* Begin PBXFileReference section */
 		CB0DCC70242B57E5009AFE59 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
+		CB30A3EC24987C32007171B1 /* CodedInputDataCrypt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = CodedInputDataCrypt.cpp; sourceTree = "<group>"; };
+		CB30A3ED24987C32007171B1 /* CodedInputDataCrypt.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodedInputDataCrypt.h; sourceTree = "<group>"; };
+		CB30A41E2498CFB6007171B1 /* CodedInputDataCrypt_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = CodedInputDataCrypt_OSX.cpp; sourceTree = "<group>"; };
 		CB467F862431D3ED00FD7421 /* MMKV_OSX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKV_OSX.h; sourceTree = "<group>"; };
 		CB550CCA2488E3F20042CD20 /* KeyValueHolder.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = KeyValueHolder.cpp; sourceTree = "<group>"; };
 		CB550CCB2488E3F20042CD20 /* KeyValueHolder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KeyValueHolder.h; sourceTree = "<group>"; };
@@ -213,6 +220,9 @@
 			children = (
 				CB9563FC23AB2E9100ACCD39 /* aes */,
 				CB9563E523AB2E9100ACCD39 /* crc32 */,
+				CB30A41E2498CFB6007171B1 /* CodedInputDataCrypt_OSX.cpp */,
+				CB30A3EC24987C32007171B1 /* CodedInputDataCrypt.cpp */,
+				CB30A3ED24987C32007171B1 /* CodedInputDataCrypt.h */,
 				CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */,
 				CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */,
 				CB9563E423AB2E9100ACCD39 /* CodedInputData.h */,
@@ -376,6 +386,7 @@
 				CBD723F323B5E59800D3CDAF /* MemoryFile_OSX.cpp in Sources */,
 				CB550CCC2488E3F20042CD20 /* KeyValueHolder.cpp in Sources */,
 				CB95641623AB2E9100ACCD39 /* MMKV.cpp in Sources */,
+				CB30A41F2498CFB7007171B1 /* CodedInputDataCrypt_OSX.cpp in Sources */,
 				CBD723F523B5E76200D3CDAF /* MiniPBCoder_OSX.cpp in Sources */,
 				CB95642023AB2E9100ACCD39 /* AESCrypt.cpp in Sources */,
 				CB95641B23AB2E9100ACCD39 /* openssl_cfb128.cpp in Sources */,
@@ -383,6 +394,7 @@
 				CB95641F23AB2E9100ACCD39 /* openssl_md5_dgst.cpp in Sources */,
 				CBC7A07F23C7516700CCC492 /* openssl_aes-armv4.S in Sources */,
 				CBC7A0C323C8B2C900CCC492 /* crc32_armv8.cpp in Sources */,
+				CB30A3EE24987C32007171B1 /* CodedInputDataCrypt.cpp in Sources */,
 				CB95641523AB2E9100ACCD39 /* MemoryFile.cpp in Sources */,
 				CB95641A23AB2E9100ACCD39 /* CodedInputData.cpp in Sources */,
 				CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */,
@@ -406,6 +418,7 @@
 				CBF19051243D70BA001C82ED /* MemoryFile_OSX.cpp in Sources */,
 				CB7589D3248E68F100A546B4 /* KeyValueHolder.cpp in Sources */,
 				CBF19052243D70BA001C82ED /* MMKV.cpp in Sources */,
+				CB30A4202498CFB7007171B1 /* CodedInputDataCrypt_OSX.cpp in Sources */,
 				CBF19053243D70BA001C82ED /* MiniPBCoder_OSX.cpp in Sources */,
 				CBF19054243D70BA001C82ED /* AESCrypt.cpp in Sources */,
 				CBF19055243D70BA001C82ED /* openssl_cfb128.cpp in Sources */,
@@ -413,6 +426,7 @@
 				CBF19057243D70BA001C82ED /* openssl_md5_dgst.cpp in Sources */,
 				CBF19058243D70BA001C82ED /* openssl_aes-armv4.S in Sources */,
 				CBF19059243D70BA001C82ED /* crc32_armv8.cpp in Sources */,
+				CB30A3EF24987C32007171B1 /* CodedInputDataCrypt.cpp in Sources */,
 				CBF1905A243D70BA001C82ED /* MemoryFile.cpp in Sources */,
 				CBF1905B243D70BA001C82ED /* CodedInputData.cpp in Sources */,
 				CBF1905C243D70BA001C82ED /* MMKVLog.cpp in Sources */,

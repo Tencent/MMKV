@@ -42,9 +42,17 @@ AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivL
     }
 }
 
+AESCrypt::AESCrypt(const AESCrypt &other, const AESCryptStatus &status) : m_isClone(true), m_number(status.m_number) {
+    //memcpy(m_key, other.m_key, sizeof(m_key));
+    memcpy(m_vector, status.m_vector, sizeof(m_vector));
+    m_aesKey = other.m_aesKey;
+}
+
 AESCrypt::~AESCrypt() {
-    delete m_aesKey;
-    delete m_aesRollbackKey;
+    if (!m_isClone) {
+        delete m_aesKey;
+        delete m_aesRollbackKey;
+    }
 }
 
 void AESCrypt::resetIV(const void *iv, size_t ivLength) {
@@ -90,8 +98,6 @@ void AESCrypt::fillRandomIV(void *vector) {
 void Rollback_cfb_decrypt(const uint8_t *in, const uint8_t *out, size_t len, AES_KEY *key, AESCryptStatus &status) {
     auto ivec = status.m_vector;
     auto n = status.m_number;
-    in += len;
-    out += len;
 
     while (n && len) {
         auto c = *(--out);
@@ -134,14 +140,13 @@ void AESCrypt::statusBeforeDecrypt(const void *input, const void *output, size_t
         int ret = AES_set_decrypt_key(m_key, AES_KEY_BITSET_LEN, m_aesRollbackKey);
         MMKV_ASSERT(ret == 0);
     }
-    status.m_number = m_number;
+    status.m_number = static_cast<uint8_t>(m_number);
     memcpy(status.m_vector, m_vector, sizeof(m_vector));
     Rollback_cfb_decrypt((const uint8_t *) input, (const uint8_t *) output, length, m_aesRollbackKey, status);
 }
 
-void AESCrypt::resetStatus(const AESCryptStatus &status) {
-    m_number = status.m_number;
-    memcpy(m_vector, status.m_vector, sizeof(m_vector));
+AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
+    return AESCrypt(*this, status);
 }
 
 } // namespace mmkv
@@ -220,7 +225,7 @@ void AESCrypt::testAESCrypt() {
 
         // how rollback works
         AESCryptStatus status;
-        decrypter->statusBeforeDecrypt(encryptText + actualSize, decryptText + actualSize, size, status);
+        decrypter->statusBeforeDecrypt(encryptText + actualSize + size, decryptText + actualSize + size, size, status);
         assert(oldNum == status.m_number);
         assert(0 == memcmp(oldVector, status.m_vector, sizeof(oldVector)));
 

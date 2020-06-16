@@ -48,24 +48,36 @@ struct KeyValueHolder {
 
 enum KeyValueHolderType : uint8_t {
     KeyValueHolderType_Direct, // store value directly
+    KeyValueHolderType_Memory, // store value in the heap memory
     KeyValueHolderType_Offset, // store value by offset
 };
 
+class AESCrypt;
+class AESCryptStatus;
+
 // kv holder for encrypted mmkv
 struct KeyValueHolderCrypt {
-    KeyValueHolderType flag;
+    KeyValueHolderType type;
 
     union {
+        // store value by offset
         struct {
             uint8_t pbKeyValueSize; // size needed to encode keySize & valueSize
             uint16_t keySize;
             uint32_t valueSize;
             uint32_t offset;
-            unsigned char aesVector[AES_KEY_LEN];
+            uint8_t aesNumber;
+            uint8_t aesVector[AES_KEY_LEN];
         };
+        // store value directly
         struct {
             uint8_t paddedSize;
             uint8_t value[0];
+        };
+        // store value in the heap memory
+        struct {
+            uint32_t memSize;
+            void *memPtr;
         };
     };
 
@@ -73,15 +85,23 @@ struct KeyValueHolderCrypt {
         return sizeof(KeyValueHolderCrypt) - offsetof(KeyValueHolderCrypt, value);
     }
 
+    KeyValueHolderCrypt() = default;
     KeyValueHolderCrypt(const void *valuePtr, size_t valueLength);
+    KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t offset);
 
-    KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t offset, unsigned char *iv = nullptr);
-
-    MMBuffer toMMBuffer(const void *basePtr) const;
+    ~KeyValueHolderCrypt();
+    
+    AESCryptStatus *cryptStatus();
+    
+    MMBuffer toMMBuffer(const void *basePtr, const AESCrypt *crypter = nullptr) const;
 
     size_t end() const;
 
     bool operator<(const KeyValueHolderCrypt &other) const;
+
+#ifndef NDEBUG
+        static void testAESToMMBuffer();
+#endif
 };
 
 #pragma pack(pop)

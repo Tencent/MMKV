@@ -63,6 +63,7 @@ class MMKV {
 
     mmkv::MMKVMap m_dic;
     mmkv::MMKVMap1 m_dic1;
+    mmkv::MMKVMapCrypt m_dic2;
     std::string m_mmapID;
     MMKVPath_t m_path;
     MMKVPath_t m_crcPath;

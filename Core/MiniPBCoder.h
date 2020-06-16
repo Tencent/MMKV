@@ -37,17 +37,20 @@ namespace mmkv {
 
 class CodedInputData;
 class CodedOutputData;
+class AESCrypt;
+class CodedInputDataCrypt;
 
 class MiniPBCoder {
     const MMBuffer *m_inputBuffer = nullptr;
     CodedInputData *m_inputData = nullptr;
+    CodedInputDataCrypt *m_inputDataDecrpt = nullptr;
 
     MMBuffer *m_outputBuffer = nullptr;
     CodedOutputData *m_outputData = nullptr;
     std::vector<PBEncodeItem> *m_encodeItems = nullptr;
 
     MiniPBCoder() = default;
-    explicit MiniPBCoder(const MMBuffer *inputBuffer);
+    explicit MiniPBCoder(const MMBuffer *inputBuffer, AESCrypt *crypter = nullptr);
     ~MiniPBCoder();
 
     void writeRootObject();
@@ -59,6 +62,7 @@ class MiniPBCoder {
 
     void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
     void decodeOneMap(MMKVMap1 &dic, size_t size, bool greedy);
+    void decodeOneMap(MMKVMapCrypt &dic, size_t size, bool greedy);
 
 #ifndef MMKV_APPLE
     size_t prepareObjectForEncode(const std::string &str);
@@ -100,6 +104,12 @@ public:
 
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size = 0);
+    
+    // return empty result if there's any error
+    static void decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size = 0);
+
+    // decode as much data as possible before any error happens
+    static void greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size = 0);
 
 #ifndef MMKV_APPLE
     static std::string decodeString(const MMBuffer &oData);

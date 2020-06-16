@@ -160,6 +160,7 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
              sizeof(AESCrypt), sizeof(openssl::AES_KEY), sizeof(KeyValueHolder), sizeof(KeyValueHolderCrypt),
              sizeof(MMBuffer));
     AESCrypt::testAESCrypt();
+    KeyValueHolderCrypt::testAESToMMBuffer();
 }
 
 #ifndef MMKV_ANDROID
@@ -236,16 +237,8 @@ void decryptBuffer(AESCrypt &crypter, MMBuffer &inputBuffer) {
     inputBuffer = std::move(tmp);
 }
 
-static void clearDictionary(MMKVMap &dic) {
-#ifdef MMKV_APPLE
-    for (auto &pair : dic) {
-        [pair.first release];
-    }
-#endif
-    dic.clear();
-}
-
-static void clearDictionary(MMKVMap1 &dic) {
+template <typename T>
+void clearDictionary(T &dic) {
 #ifdef MMKV_APPLE
     for (auto &pair : dic) {
         [pair.first release];
@@ -282,17 +275,26 @@ void MMKV::loadFromFile() {
             MMKVInfo("loading [%s] with crc %u sequence %u version %u", m_mmapID.c_str(), m_metaInfo->m_crcDigest,
                      m_metaInfo->m_sequence, m_metaInfo->m_version);
             MMBuffer inputBuffer(ptr + Fixed32Size, m_actualSize, MMBufferNoCopy);
-            if (m_crypter) {
+            /*if (m_crypter) {
                 decryptBuffer(*m_crypter, inputBuffer);
-            }
-            // clearDictionary(m_dic);
-            clearDictionary(m_dic1);
-            if (needFullWriteback) {
-                //MiniPBCoder::greedyDecodeMap(m_dic, inputBuffer);
-                MiniPBCoder::greedyDecodeMap(m_dic1, inputBuffer);
+            }*/
+            if (m_crypter) {
+                clearDictionary(m_dic2);
             } else {
-                // MiniPBCoder::decodeMap(m_dic, inputBuffer);
-                MiniPBCoder::decodeMap(m_dic1, inputBuffer);
+                clearDictionary(m_dic1);
+            }
+            if (needFullWriteback) {
+                if (m_crypter) {
+                    MiniPBCoder::greedyDecodeMap(m_dic2, inputBuffer, m_crypter);
+                } else {
+                    MiniPBCoder::greedyDecodeMap(m_dic1, inputBuffer);
+                }
+            } else {
+                if (m_crypter) {
+                    MiniPBCoder::decodeMap(m_dic2, inputBuffer, m_crypter);
+                } else {
+                    MiniPBCoder::decodeMap(m_dic1, inputBuffer);
+                }
             }
             m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
             m_output->seek(m_actualSize);
@@ -311,7 +313,11 @@ void MMKV::loadFromFile() {
                 writeActualSize(0, 0, nullptr, KeepSequence);
             }
         }
-        MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic1.size());
+        if (m_crypter) {
+            MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic2.size());
+        } else {
+            MMKVInfo("loaded [%s] with %zu values", m_mmapID.c_str(), m_dic1.size());
+        }
     }
 
     m_needLoadFromFile = false;
@@ -337,15 +343,23 @@ void MMKV::partialLoadFromFile() {
                 m_crcDigest =
                     (uint32_t) CRC32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(), inputBuffer.length());
                 if (m_crcDigest == m_metaInfo->m_crcDigest) {
-                    if (m_crypter) {
+                    /*if (m_crypter) {
                         decryptBuffer(*m_crypter, inputBuffer);
+                    }*/
+                    // TODO: offset of inputBuffer
+                    if (m_crypter) {
+                        MiniPBCoder::greedyDecodeMap(m_dic2, inputBuffer, m_crypter, bufferSize);
+                    } else {
+                        MiniPBCoder::greedyDecodeMap(m_dic1, inputBuffer, bufferSize);
                     }
-                    // MiniPBCoder::greedyDecodeMap(m_dic, inputBuffer, bufferSize);
-                    MiniPBCoder::greedyDecodeMap(m_dic1, inputBuffer, bufferSize);
                     m_output->seek(bufferSize);
                     m_hasFullWriteback = false;
 
-                    MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(), m_dic1.size());
+                    if (m_crypter) {
+                        MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(), m_dic2.size());
+                    } else {
+                        MMKVDebug("partial loaded [%s] with %zu values", m_mmapID.c_str(), m_dic1.size());
+                    }
                     return;
                 } else {
                     MMKVError("m_crcDigest[%u] != m_metaInfo->m_crcDigest[%u]", m_crcDigest, m_metaInfo->m_crcDigest);
@@ -532,8 +546,11 @@ void MMKV::clearMemoryCache() {
     }
     m_needLoadFromFile = true;
 
-    // clearDictionary(m_dic);
-    clearDictionary(m_dic1);
+    if (m_crypter) {
+        clearDictionary(m_dic2);
+    } else {
+        clearDictionary(m_dic1);
+    }
     m_hasFullWriteback = false;
 
     if (m_crypter) {
@@ -757,10 +774,18 @@ const MMBuffer &MMKV::getDataForKey(MMKVKey_t key) {
 
 MMBuffer MMKV::getDataForKey1(MMKVKey_t key) {
     checkLoadData();
-    auto itr = m_dic1.find(key);
-    if (itr != m_dic1.end()) {
-        auto basePtr = (uint8_t *) (m_file->getMemory()) + Fixed32Size;
-        return itr->second.toMMBuffer(basePtr);
+    if (m_crypter) {
+        auto itr = m_dic2.find(key);
+        if (itr != m_dic2.end()) {
+            auto basePtr = (uint8_t *) (m_file->getMemory()) + Fixed32Size;
+            return itr->second.toMMBuffer(basePtr, m_crypter);
+        }
+    } else {
+        auto itr = m_dic1.find(key);
+        if (itr != m_dic1.end()) {
+            auto basePtr = (uint8_t *) (m_file->getMemory()) + Fixed32Size;
+            return itr->second.toMMBuffer(basePtr);
+        }
     }
     MMBuffer nan;
     return nan;
@@ -1644,15 +1669,22 @@ int32_t MMKV::writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size) {
 bool MMKV::containsKey(MMKVKey_t key) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
-    // return m_dic.find(key) != m_dic.end();
-    return m_dic1.find(key) != m_dic1.end();
+
+    if (m_crypter) {
+        return m_dic2.find(key) != m_dic2.end();
+    } else {
+        return m_dic1.find(key) != m_dic1.end();
+    }
 }
 
 size_t MMKV::count() {
     SCOPED_LOCK(m_lock);
     checkLoadData();
-    // return m_dic.size();
-    return m_dic1.size();
+    if (m_crypter) {
+        return m_dic2.size();
+    } else {
+        return m_dic1.size();
+    }
 }
 
 size_t MMKV::totalSize() {
@@ -1685,9 +1717,14 @@ vector<string> MMKV::allKeys() {
     checkLoadData();
 
     vector<string> keys;
-    // for (const auto &itr : m_dic) {
-    for (const auto &itr : m_dic1) {
-        keys.push_back(itr.first);
+    if (m_crypter) {
+        for (const auto &itr : m_dic2) {
+            keys.push_back(itr.first);
+        }
+    } else {
+        for (const auto &itr : m_dic1) {
+            keys.push_back(itr.first);
+        }
     }
     return keys;
 }
@@ -1705,11 +1742,21 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     checkLoadData();
 
     size_t deleteCount = 0;
-    for (const auto &key : arrKeys) {
-        auto itr = m_dic1.find(key);
-        if (itr != m_dic1.end()) {
-            m_dic1.erase(itr);
-            deleteCount++;
+    if (m_crypter) {
+        for (const auto &key : arrKeys) {
+            auto itr = m_dic2.find(key);
+            if (itr != m_dic2.end()) {
+                m_dic2.erase(itr);
+                deleteCount++;
+            }
+        }
+    } else {
+        for (const auto &key : arrKeys) {
+            auto itr = m_dic1.find(key);
+            if (itr != m_dic1.end()) {
+                m_dic1.erase(itr);
+                deleteCount++;
+            }
         }
     }
     if (deleteCount > 0) {

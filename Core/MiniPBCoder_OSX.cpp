@@ -23,6 +23,7 @@
 #ifdef MMKV_APPLE
 
 #    include "CodedInputData.h"
+#    include "CodedInputDataCrypt.h"
 #    include "CodedOutputData.h"
 #    include "MMBuffer.h"
 #    include "PBEncodeItem.hpp"
@@ -150,6 +151,50 @@ void MiniPBCoder::decodeOneMap(MMKVMap1 &dic, size_t size, bool greedy) {
     } else {
         try {
             MMKVMap1 tmpDic;
+            block(tmpDic);
+            dic.swap(tmpDic);
+            for (auto &pair : tmpDic) {
+                [pair.first release];
+            }
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    }
+}
+
+void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t size, bool greedy) {
+    auto block = [size, this](MMKVMapCrypt &dictionary) {
+        if (size == 0) {
+            [[maybe_unused]] auto length = m_inputDataDecrpt->readInt32();
+        }
+        while (!m_inputDataDecrpt->isAtEnd()) {
+            KeyValueHolderCrypt kvHolder;
+            const auto &key = m_inputDataDecrpt->readString(kvHolder);
+            if (key.length > 0) {
+                m_inputDataDecrpt->readData(kvHolder);
+                if (kvHolder.valueSize > 0) {
+                    dictionary[key] = move(kvHolder);
+                    [key retain];
+                } else {
+                    auto itr = dictionary.find(key);
+                    if (itr != dictionary.end()) {
+                        dictionary.erase(itr);
+                        [itr->first release];
+                    }
+                }
+            }
+        }
+    };
+
+    if (greedy) {
+        try {
+            block(dic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    } else {
+        try {
+            MMKVMapCrypt tmpDic;
             block(tmpDic);
             dic.swap(tmpDic);
             for (auto &pair : tmpDic) {
