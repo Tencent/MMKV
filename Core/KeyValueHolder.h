@@ -89,15 +89,22 @@ struct KeyValueHolderCrypt {
     KeyValueHolderCrypt(const void *valuePtr, size_t valueLength);
     KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t offset);
 
+    KeyValueHolderCrypt(KeyValueHolderCrypt &&other) noexcept;
+    KeyValueHolderCrypt &operator=(KeyValueHolderCrypt &&other) noexcept;
+
     ~KeyValueHolderCrypt();
-    
+
     AESCryptStatus *cryptStatus();
-    
+
     MMBuffer toMMBuffer(const void *basePtr, const AESCrypt *crypter = nullptr) const;
 
     size_t end() const;
 
     bool operator<(const KeyValueHolderCrypt &other) const;
+
+    // those are expensive, just forbid it for possibly misuse
+    explicit KeyValueHolderCrypt(const KeyValueHolderCrypt &other) = delete;
+    KeyValueHolderCrypt &operator=(const KeyValueHolderCrypt &other) = delete;
 
 #ifndef NDEBUG
         static void testAESToMMBuffer();

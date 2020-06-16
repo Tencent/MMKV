@@ -62,6 +62,32 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLengt
     // memcpy(aesVector, iv, sizeof(aesVector));
 }
 
+KeyValueHolderCrypt::KeyValueHolderCrypt(KeyValueHolderCrypt &&other) noexcept {
+    if (other.type == KeyValueHolderType_Direct || other.type == KeyValueHolderType_Offset) {
+        memcpy(this, &other, sizeof(other));
+    } else if (other.type == KeyValueHolderType_Memory) {
+        type = KeyValueHolderType_Memory;
+        memSize = other.memSize;
+        memPtr = other.memPtr;
+        other.type = KeyValueHolderType_Direct;
+    }
+}
+
+KeyValueHolderCrypt &KeyValueHolderCrypt::operator=(KeyValueHolderCrypt &&other) noexcept {
+    if (type == KeyValueHolderType_Memory && memPtr) {
+        free(memPtr);
+    }
+    if (other.type == KeyValueHolderType_Direct || other.type == KeyValueHolderType_Offset) {
+        memcpy(this, &other, sizeof(other));
+    } else if (other.type == KeyValueHolderType_Memory) {
+        type = KeyValueHolderType_Memory;
+        memSize = other.memSize;
+        memPtr = other.memPtr;
+        other.memPtr = nullptr;
+    }
+    return *this;
+}
+
 KeyValueHolderCrypt::~KeyValueHolderCrypt() {
     if (type == KeyValueHolderType_Memory && memPtr) {
         free(memPtr);

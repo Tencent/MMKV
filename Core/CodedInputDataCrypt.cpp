@@ -283,16 +283,25 @@ void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
 
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
-        kvHolder.type = KeyValueHolderType_Offset;
-        kvHolder.valueSize = static_cast<uint32_t>(s_size);
-        kvHolder.pbKeyValueSize =
-            static_cast<uint8_t>(pbRawVarint32Size(kvHolder.valueSize) + pbRawVarint32Size(kvHolder.keySize));
+        if (s_size > sizeof(kvHolder) * 2) {
+            kvHolder.type = KeyValueHolderType_Offset;
+            kvHolder.valueSize = static_cast<uint32_t>(s_size);
+            kvHolder.pbKeyValueSize =
+                static_cast<uint8_t>(pbRawVarint32Size(kvHolder.valueSize) + pbRawVarint32Size(kvHolder.keySize));
 
-        size_t rollbackSize = kvHolder.pbKeyValueSize + kvHolder.keySize;
-        statusBeforeDecrypt(rollbackSize, *kvHolder.cryptStatus());
+            size_t rollbackSize = kvHolder.pbKeyValueSize + kvHolder.keySize;
+            statusBeforeDecrypt(rollbackSize, *kvHolder.cryptStatus());
 
-        skipBytes(s_size);
-        m_position += s_size;
+            skipBytes(s_size);
+            m_position += s_size;
+        } else {
+            consumeBytes(s_size);
+
+            kvHolder.type = KeyValueHolderType_Direct;
+            kvHolder = KeyValueHolderCrypt(m_decryptBuffer + m_decryptBufferPosition, s_size);
+            m_position += s_size;
+            m_decryptBufferPosition += s_size;
+        }
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }
