@@ -54,6 +54,25 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length) {
     }
 }
 
+KeyValueHolderCrypt::KeyValueHolderCrypt(MMBuffer &&data) {
+    if (data.type == MMBuffer::MMBufferType_Small) {
+        static_assert(SmallBufferSize() >= MMBuffer::SmallBufferSize(), "KeyValueHolderCrypt can't hold MMBuffer");
+
+        type = KeyValueHolderType_Direct;
+        paddedSize = static_cast<uint8_t>(data.length());
+        memcpy(value, data.getPtr(), data.length());
+    } else {
+#ifdef MMKV_APPLE
+        assert(data.m_data == nil);
+#endif
+        type = KeyValueHolderType_Memory;
+        memSize = static_cast<uint32_t>(data.length());
+        memPtr = data.getPtr();
+
+        data.detach();
+    }
+}
+
 KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t off)
     : type(KeyValueHolderType_Offset), keySize(static_cast<uint16_t>(keyLength)), valueSize(valueLength), offset(off) {
 
@@ -94,8 +113,8 @@ KeyValueHolderCrypt::~KeyValueHolderCrypt() {
     }
 }
 
-AESCryptStatus *KeyValueHolderCrypt::cryptStatus() {
-    return reinterpret_cast<AESCryptStatus *>(&aesNumber);
+AESCryptStatus *KeyValueHolderCrypt::cryptStatus() const {
+    return (AESCryptStatus *) (&aesNumber);
 }
 
 size_t KeyValueHolderCrypt::end() const {

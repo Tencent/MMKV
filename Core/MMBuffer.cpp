@@ -83,11 +83,7 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
         size = other.size;
         ptr = other.ptr;
         isNoCopy = other.isNoCopy;
-        other.ptr = nullptr;
-#ifdef MMKV_APPLE
-        m_data = other.m_data;
-        other.m_data = nil;
-#endif
+        other.detach();
     } else {
         paddedSize = other.paddedSize;
         memcpy(smallBuffer, other.smallBuffer, paddedSize);
@@ -124,8 +120,7 @@ MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
 #ifdef MMKV_APPLE
             m_data = other.m_data;
 #endif
-            other.type = MMBufferType_Small;
-            other.paddedSize = 0;
+            other.detach();
         } else {
             uint8_t tmp[SmallBufferSize()];
             memcpy(tmp, other.smallBuffer, other.paddedSize);
@@ -155,6 +150,11 @@ MMBuffer::~MMBuffer() {
     if (isNoCopy == MMBufferCopy && ptr) {
         free(ptr);
     }
+}
+
+void MMBuffer::detach() {
+    type = MMBufferType_Small;
+    paddedSize = 0;
 }
 
 } // namespace mmkv

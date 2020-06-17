@@ -63,6 +63,7 @@ public:
 
     void decrypt(const void *input, void *output, size_t length);
 
+    void getCurStatus(AESCryptStatus &status);
     void statusBeforeDecrypt(const void *input, const void *output, size_t length, AESCryptStatus &status);
 
     AESCrypt cloneWithStatus(const AESCryptStatus &status) const;

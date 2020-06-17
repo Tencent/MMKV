@@ -36,6 +36,8 @@ enum MMBufferCopyFlag : bool {
 
 #pragma pack(push, 1)
 
+class KeyValueHolderCrypt;
+
 class MMBuffer {
     enum MMBufferType : uint8_t {
         MMBufferType_Small,  // store small buffer in stack memory
@@ -78,9 +80,13 @@ public:
 
     size_t length() const { return (type == MMBufferType_Small) ? paddedSize : size; }
 
+    void detach();
+
     // those are expensive, just forbid it for possibly misuse
     explicit MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;
+    
+    friend KeyValueHolderCrypt;
 };
 
 #pragma pack(pop)

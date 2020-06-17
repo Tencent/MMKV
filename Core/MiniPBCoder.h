@@ -55,13 +55,14 @@ class MiniPBCoder {
 
     void writeRootObject();
 
-    size_t prepareObjectForEncode(const MMKVMap &map);
+    size_t prepareObjectForEncode(const MMKVMapPureData &map);
     size_t prepareObjectForEncode(const MMBuffer &buffer);
 
-    MMBuffer getEncodeData(const MMKVMap &map);
+    MMBuffer getEncodeData(const MMKVMapPureData &map);
+    MMBuffer getEncodeData(const MMBuffer &buffer);
 
+    void decodeOneMap(MMKVMapPureData &dic, size_t size, bool greedy);
     void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
-    void decodeOneMap(MMKVMap1 &dic, size_t size, bool greedy);
     void decodeOneMap(MMKVMapCrypt &dic, size_t size, bool greedy);
 
 #ifndef MMKV_APPLE
@@ -69,7 +70,6 @@ class MiniPBCoder {
     size_t prepareObjectForEncode(const std::vector<std::string> &vector);
 
     MMBuffer getEncodeData(const std::string &str);
-    MMBuffer getEncodeData(const MMBuffer &buffer);
     MMBuffer getEncodeData(const std::vector<std::string> &vector);
 
     std::string decodeOneString();
@@ -94,16 +94,16 @@ public:
     }
 
     // return empty result if there's any error
+    static void decodeMap(MMKVMapPureData &dic, const MMBuffer &oData, size_t size = 0);
+
+    // decode as much data as possible before any error happens
+    static void greedyDecodeMap(MMKVMapPureData &dic, const MMBuffer &oData, size_t size = 0);
+
+    // return empty result if there's any error
     static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
 
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
-
-    // return empty result if there's any error
-    static void decodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size = 0);
-
-    // decode as much data as possible before any error happens
-    static void greedyDecodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size = 0);
     
     // return empty result if there's any error
     static void decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size = 0);

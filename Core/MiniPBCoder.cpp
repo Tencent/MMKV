@@ -122,7 +122,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMBuffer &buffer) {
     return index;
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const MMKVMap &map) {
+size_t MiniPBCoder::prepareObjectForEncode(const MMKVMapPureData &map) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
     size_t index = m_encodeItems->size() - 1;
@@ -160,9 +160,23 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVMap &map) {
     return index;
 }
 
-MMBuffer MiniPBCoder::getEncodeData(const MMKVMap &map) {
+MMBuffer MiniPBCoder::getEncodeData(const MMKVMapPureData &map) {
     m_encodeItems = new vector<PBEncodeItem>();
     size_t index = prepareObjectForEncode(map);
+    PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
+    if (oItem && oItem->compiledSize > 0) {
+        m_outputBuffer = new MMBuffer(oItem->compiledSize);
+        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
+
+        writeRootObject();
+    }
+
+    return move(*m_outputBuffer);
+}
+
+MMBuffer MiniPBCoder::getEncodeData(const MMBuffer &buffer) {
+    m_encodeItems = new vector<PBEncodeItem>();
+    size_t index = prepareObjectForEncode(buffer);
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
     if (oItem && oItem->compiledSize > 0) {
         m_outputBuffer = new MMBuffer(oItem->compiledSize);
@@ -226,20 +240,6 @@ MMBuffer MiniPBCoder::getEncodeData(const string &str) {
     return move(*m_outputBuffer);
 }
 
-MMBuffer MiniPBCoder::getEncodeData(const MMBuffer &buffer) {
-    m_encodeItems = new vector<PBEncodeItem>();
-    size_t index = prepareObjectForEncode(buffer);
-    PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
-    if (oItem && oItem->compiledSize > 0) {
-        m_outputBuffer = new MMBuffer(oItem->compiledSize);
-        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
-
-        writeRootObject();
-    }
-
-    return move(*m_outputBuffer);
-}
-
 MMBuffer MiniPBCoder::getEncodeData(const vector<string> &v) {
     m_encodeItems = new vector<PBEncodeItem>();
     size_t index = prepareObjectForEncode(v);
@@ -275,8 +275,8 @@ vector<string> MiniPBCoder::decodeOneSet() {
     return v;
 }
 
-void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
-    auto block = [size, this](MMKVMap &dictionary) {
+void MiniPBCoder::decodeOneMap(MMKVMapPureData &dic, size_t size, bool greedy) {
+    auto block = [size, this](MMKVMapPureData &dictionary) {
         if (size == 0) {
             [[maybe_unused]] auto length = m_inputData->readInt32();
         }
@@ -301,7 +301,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
         }
     } else {
         try {
-            MMKVMap tmpDic;
+            MMKVMapPureData tmpDic;
             block(tmpDic);
             dic.swap(tmpDic);
         } catch (std::exception &exception) {
@@ -327,22 +327,22 @@ vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
 
 #endif // MMKV_APPLE
 
+void MiniPBCoder::decodeMap(MMKVMapPureData &dic, const MMBuffer &oData, size_t size) {
+    MiniPBCoder oCoder(&oData);
+    oCoder.decodeOneMap(dic, size, false);
+}
+
+void MiniPBCoder::greedyDecodeMap(MMKVMapPureData &dic, const MMBuffer &oData, size_t size) {
+    MiniPBCoder oCoder(&oData);
+    oCoder.decodeOneMap(dic, size, true);
+}
+
 void MiniPBCoder::decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size) {
     MiniPBCoder oCoder(&oData);
     oCoder.decodeOneMap(dic, size, false);
 }
 
 void MiniPBCoder::greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size) {
-    MiniPBCoder oCoder(&oData);
-    oCoder.decodeOneMap(dic, size, true);
-}
-
-void MiniPBCoder::decodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size) {
-    MiniPBCoder oCoder(&oData);
-    oCoder.decodeOneMap(dic, size, false);
-}
-
-void MiniPBCoder::greedyDecodeMap(MMKVMap1 &dic, const MMBuffer &oData, size_t size) {
     MiniPBCoder oCoder(&oData);
     oCoder.decodeOneMap(dic, size, true);
 }

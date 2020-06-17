@@ -130,6 +130,11 @@ void Rollback_cfb_decrypt(const uint8_t *in, const uint8_t *out, size_t len, AES
     status.m_number = n;
 }
 
+void AESCrypt::getCurStatus(AESCryptStatus &status) {
+    status.m_number = static_cast<uint8_t>(m_number);
+    memcpy(status.m_vector, m_vector, sizeof(m_vector));
+}
+
 void AESCrypt::statusBeforeDecrypt(const void *input, const void *output, size_t length, AESCryptStatus &status) {
     if (length == 0) {
         return;
@@ -140,8 +145,7 @@ void AESCrypt::statusBeforeDecrypt(const void *input, const void *output, size_t
         int ret = AES_set_decrypt_key(m_key, AES_KEY_BITSET_LEN, m_aesRollbackKey);
         MMKV_ASSERT(ret == 0);
     }
-    status.m_number = static_cast<uint8_t>(m_number);
-    memcpy(status.m_vector, m_vector, sizeof(m_vector));
+    getCurStatus(status);
     Rollback_cfb_decrypt((const uint8_t *) input, (const uint8_t *) output, length, m_aesRollbackKey, status);
 }
 

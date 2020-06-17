@@ -57,7 +57,7 @@ class AESCryptStatus;
 
 // kv holder for encrypted mmkv
 struct KeyValueHolderCrypt {
-    KeyValueHolderType type;
+    KeyValueHolderType type = KeyValueHolderType_Direct;
 
     union {
         // store value by offset
@@ -87,6 +87,7 @@ struct KeyValueHolderCrypt {
 
     KeyValueHolderCrypt() = default;
     KeyValueHolderCrypt(const void *valuePtr, size_t valueLength);
+    explicit KeyValueHolderCrypt(MMBuffer &&data);
     KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLength, uint32_t offset);
 
     KeyValueHolderCrypt(KeyValueHolderCrypt &&other) noexcept;
@@ -94,9 +95,13 @@ struct KeyValueHolderCrypt {
 
     ~KeyValueHolderCrypt();
 
-    AESCryptStatus *cryptStatus();
+    AESCryptStatus *cryptStatus() const;
 
     MMBuffer toMMBuffer(const void *basePtr, const AESCrypt *crypter = nullptr) const;
+
+    std::tuple<uint32_t, uint32_t, AESCryptStatus *> toTuple() const {
+        return std::make_tuple(offset, pbKeyValueSize + keySize + valueSize, cryptStatus());
+    }
 
     size_t end() const;
 

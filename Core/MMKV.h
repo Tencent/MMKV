@@ -62,8 +62,7 @@ class MMKV {
     ~MMKV();
 
     mmkv::MMKVMap m_dic;
-    mmkv::MMKVMap1 m_dic1;
-    mmkv::MMKVMapCrypt m_dic2;
+    mmkv::MMKVMapCrypt m_dicCrypt;
     std::string m_mmapID;
     MMKVPath_t m_path;
     MMKVPath_t m_crcPath;
@@ -121,21 +120,20 @@ class MMKV {
     bool fullWriteback();
 
     bool doFullWriteBack(mmkv::MMBuffer &&allData);
-    bool doFullWriteBack(size_t totalSize);
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData);
 
-    const mmkv::MMBuffer &getDataForKey(MMKVKey_t key);
-    mmkv::MMBuffer getDataForKey1(MMKVKey_t key);
+    mmkv::MMBuffer getDataForKey(MMKVKey_t key);
 
-    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key);
     // isDataHolder: avoid memory copying
-    bool setDataForKey1(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
+    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, bool isDataHolder = false);
 
     bool removeDataForKey(MMKVKey_t key);
 
-    bool appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key);
     // isDataHolder: avoid memory copying
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey1(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder = false);
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
+    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, const mmkv::KeyValueHolderCrypt &kvHolder, bool isDataHolder = false);
 
     void notifyContentChanged();
 

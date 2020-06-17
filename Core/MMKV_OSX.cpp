@@ -163,7 +163,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
     if (tmpData) {
         // delay write the size needed for encoding tmpData
         // avoid memory copying
-        return setDataForKey1(MMBuffer(tmpData, MMBufferNoCopy), key, true);
+        return setDataForKey(MMBuffer(tmpData, MMBufferNoCopy), key, true);
     } else if ([obj isKindOfClass:NSDate.class]) {
         NSDate *oDate = (NSDate *) obj;
         double time = oDate.timeIntervalSince1970;
@@ -172,8 +172,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
         /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
             auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
             if (tmp.length > 0) {
-                auto data = MMBuffer(tmp);
-                return setDataForKey1(data, key);
+                return setDataForKey(MMBuffer(tmp, MMBufferNoCopy), key);
             }
         }
     }
@@ -185,8 +184,7 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
         return nil;
     }
     SCOPED_LOCK(m_lock);
-    // auto &data = getDataForKey(key);
-    auto data = getDataForKey1(key);
+    auto data = getDataForKey(key);
     if (data.length() > 0) {
         if (MiniPBCoder::isCompatibleClass(cls)) {
             try {
@@ -210,8 +208,14 @@ NSArray *MMKV::allKeys() {
     checkLoadData();
 
     NSMutableArray *keys = [NSMutableArray array];
-    for (const auto &pair : m_dic1) {
-        [keys addObject:pair.first];
+    if (m_crypter) {
+        for (const auto &pair : m_dicCrypt) {
+            [keys addObject:pair.first];
+        }
+    } else {
+        for (const auto &pair : m_dic) {
+            [keys addObject:pair.first];
+        }
     }
     return keys;
 }
@@ -229,12 +233,23 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
     checkLoadData();
 
     size_t deleteCount = 0;
-    for (NSString *key in arrKeys) {
-        auto itr = m_dic1.find(key);
-        if (itr != m_dic1.end()) {
-            [itr->first release];
-            m_dic1.erase(itr);
-            deleteCount++;
+    if (m_crypter) {
+        for (NSString *key in arrKeys) {
+            auto itr = m_dicCrypt.find(key);
+            if (itr != m_dicCrypt.end()) {
+                [itr->first release];
+                m_dicCrypt.erase(itr);
+                deleteCount++;
+            }
+        }
+    } else {
+        for (NSString *key in arrKeys) {
+            auto itr = m_dic.find(key);
+            if (itr != m_dic.end()) {
+                [itr->first release];
+                m_dic.erase(itr);
+                deleteCount++;
+            }
         }
     }
     if (deleteCount > 0) {
@@ -252,11 +267,21 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     checkLoadData();
 
     MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-    for (const auto &pair : m_dic1) {
-        BOOL stop = NO;
-        block(pair.first, &stop);
-        if (stop) {
-            break;
+    if (m_crypter) {
+        for (const auto &pair : m_dicCrypt) {
+            BOOL stop = NO;
+            block(pair.first, &stop);
+            if (stop) {
+                break;
+            }
+        }
+    } else {
+        for (const auto &pair : m_dic) {
+            BOOL stop = NO;
+            block(pair.first, &stop);
+            if (stop) {
+                break;
+            }
         }
     }
     MMKVInfo("enumerate [%s] finish", m_mmapID.c_str());

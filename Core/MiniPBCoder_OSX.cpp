@@ -75,8 +75,8 @@ size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
     return index;
 }
 
-void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
-    auto block = [size, this](MMKVMap &dictionary) {
+void MiniPBCoder::decodeOneMap(MMKVMapPureData &dic, size_t size, bool greedy) {
+    auto block = [size, this](MMKVMapPureData &dictionary) {
         if (size == 0) {
             [[maybe_unused]] auto length = m_inputData->readInt32();
         }
@@ -106,7 +106,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
         }
     } else {
         try {
-            MMKVMap tmpDic;
+            MMKVMapPureData tmpDic;
             block(tmpDic);
             dic.swap(tmpDic);
             for (auto &pair : tmpDic) {
@@ -118,8 +118,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
     }
 }
 
-void MiniPBCoder::decodeOneMap(MMKVMap1 &dic, size_t size, bool greedy) {
-    auto block = [size, this](MMKVMap1 &dictionary) {
+void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
+    auto block = [size, this](MMKVMap &dictionary) {
         if (size == 0) {
             [[maybe_unused]] auto length = m_inputData->readInt32();
         }
@@ -150,7 +150,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap1 &dic, size_t size, bool greedy) {
         }
     } else {
         try {
-            MMKVMap1 tmpDic;
+            MMKVMap tmpDic;
             block(tmpDic);
             dic.swap(tmpDic);
             for (auto &pair : tmpDic) {
