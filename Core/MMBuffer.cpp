@@ -83,6 +83,7 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
         size = other.size;
         ptr = other.ptr;
         isNoCopy = other.isNoCopy;
+        m_data = other.m_data;
         other.detach();
     } else {
         paddedSize = other.paddedSize;

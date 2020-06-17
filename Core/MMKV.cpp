@@ -543,11 +543,9 @@ void MMKV::clearMemoryCache() {
     }
     m_needLoadFromFile = true;
 
-    if (m_crypter) {
-        clearDictionary(m_dicCrypt);
-    } else {
-        clearDictionary(m_dic);
-    }
+    clearDictionary(m_dicCrypt);
+    clearDictionary(m_dic);
+
     m_hasFullWriteback = false;
 
     if (m_crypter) {
@@ -696,7 +694,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 return false;
             }
         }
-        return doFullWriteBack(move(preparedData));
+        return doFullWriteBack(move(preparedData), nullptr);
     }
     return true;
 }
@@ -1006,7 +1004,7 @@ MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolde
 #endif
 }
 
-bool MMKV::fullWriteback() {
+bool MMKV::fullWriteback(AESCrypt *newCrypter) {
     if (m_hasFullWriteback) {
         return true;
     }
@@ -1029,9 +1027,10 @@ bool MMKV::fullWriteback() {
     if (sizeOfDic > 0) {
         auto fileSize = m_file->getFileSize();
         if (sizeOfDic + Fixed32Size <= fileSize) {
-            return doFullWriteBack(move(preparedData));
+            return doFullWriteBack(move(preparedData), newCrypter);
         } else {
             assert(0);
+            assert(newCrypter == nullptr);
             // ensureMemorySize will extend file & full rewrite, no need to write back again
             return ensureMemorySize(sizeOfDic + Fixed32Size - fileSize);
         }
@@ -1039,58 +1038,11 @@ bool MMKV::fullWriteback() {
     return false;
 }
 
-bool MMKV::doFullWriteBack(MMBuffer &&allData) {
-#ifdef MMKV_IOS
-    uint8_t oldIV[AES_KEY_LEN];
-    uint8_t newIV[AES_KEY_LEN];
-    if (m_crypter) {
-        memcpy(oldIV, m_crypter->m_vector, sizeof(oldIV));
-#else
-    uint8_t newIV[AES_KEY_LEN];
-    if (m_crypter) {
-#endif
-        AESCrypt::fillRandomIV(newIV);
-        m_crypter->resetIV(newIV, sizeof(newIV));
-        auto ptr = allData.getPtr();
-        m_crypter->encrypt(ptr, ptr, allData.length());
-    }
-
-    auto ptr = (uint8_t *) m_file->getMemory();
-    delete m_output;
-    m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
-#ifdef MMKV_IOS
-    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), allData.length(), ^{
-        m_output->writeRawData(allData); // note: don't write size of data
-    });
-    if (!ret) {
-        // revert everything
-        if (m_crypter) {
-            m_crypter->resetIV(oldIV);
-        }
-        delete m_output;
-        m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
-        m_output->seek(m_actualSize);
-        return false;
-    }
-#else
-    m_output->writeRawData(allData); // note: don't write size of data
-#endif
-
-    m_actualSize = allData.length();
-    if (m_crypter) {
-        recaculateCRCDigestWithIV(newIV);
-    } else {
-        recaculateCRCDigestWithIV(nullptr);
-    }
-    m_hasFullWriteback = true;
-    // make sure lastConfirmedMetaInfo is saved
-    sync(MMKV_SYNC);
-    return true;
-}
-
 // we don't need to really serialize the dictionary, just reuse what's already in the file
-static void memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, size_t totalSize) {
+static void
+memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt *encrypter, size_t totalSize) {
     // hold the fake size of dictionay's serialization result
+    auto originOutputPtr = output->curWritePointer();
     output->writeRawVarint32(ItemSizeHolder);
     auto writePtr = output->curWritePointer();
     // reuse what's already in the file
@@ -1122,23 +1074,34 @@ static void memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *pt
             writePtr += section.second;
         }
         // update offset
-        auto offset = static_cast<uint32_t>(output->curWritePointer() - basePtr);
-        for (auto kvHolder : vec) {
-            kvHolder->offset = offset;
-            offset += kvHolder->computedKVSize + kvHolder->valueSize;
+        if (!encrypter) {
+            auto offset = static_cast<uint32_t>(output->curWritePointer() - basePtr);
+            for (auto kvHolder : vec) {
+                kvHolder->offset = offset;
+                offset += kvHolder->computedKVSize + kvHolder->valueSize;
+            }
         }
     }
-    auto writtenSize = static_cast<size_t>(writePtr - output->curWritePointer());
-    assert(writtenSize + ItemSizeHolderSize == totalSize);
-    output->seek(writtenSize);
+    auto writtenSize = static_cast<size_t>(writePtr - originOutputPtr);
+    if (encrypter) {
+        encrypter->encrypt(originOutputPtr, originOutputPtr, writtenSize);
+    }
+    assert(writtenSize == totalSize);
+    output->seek(writtenSize - ItemSizeHolderSize);
 }
 
-static void memmoveDictionary(
-    MMKVMapCrypt &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt *crypter, pair<MMBuffer, size_t> &preparedData) {
+static void memmoveDictionary(MMKVMapCrypt &dic,
+                              CodedOutputData *output,
+                              uint8_t *ptr,
+                              AESCrypt *decrypter,
+                              AESCrypt *encrypter,
+                              pair<MMBuffer, size_t> &preparedData) {
     // hold the fake size of dictionay's serialization result
     output->writeRawVarint32(ItemSizeHolder);
     auto writePtr = output->curWritePointer();
-    crypter->encrypt(writePtr - ItemSizeHolderSize, writePtr - ItemSizeHolderSize, ItemSizeHolderSize);
+    if (encrypter) {
+        encrypter->encrypt(writePtr - ItemSizeHolderSize, writePtr - ItemSizeHolderSize, ItemSizeHolderSize);
+    }
     // reuse what's already in the file
     if (!dic.empty()) {
         // sort by offset
@@ -1169,26 +1132,33 @@ static void memmoveDictionary(
         // do the move
         auto basePtr = ptr + Fixed32Size;
         for (auto &section : dataSections) {
-            auto decrypter = crypter->cloneWithStatus(*get<2>(section));
-            decrypter.decrypt(basePtr + get<0>(section), writePtr, get<1>(section));
+            auto crypter = decrypter->cloneWithStatus(*get<2>(section));
+            crypter.decrypt(basePtr + get<0>(section), writePtr, get<1>(section));
             writePtr += get<1>(section);
         }
         // update offset & AESCryptStatus
-        auto offset = static_cast<uint32_t>(output->curWritePointer() - basePtr);
-        for (auto kvHolder : vec) {
-            kvHolder->offset = offset;
-            auto size = kvHolder->pbKeyValueSize + kvHolder->keySize + kvHolder->valueSize;
-            crypter->getCurStatus(*kvHolder->cryptStatus());
-            crypter->encrypt(basePtr + offset, basePtr + offset, size);
-            offset += size;
+        if (encrypter) {
+            auto offset = static_cast<uint32_t>(output->curWritePointer() - basePtr);
+            for (auto kvHolder : vec) {
+                kvHolder->offset = offset;
+                auto size = kvHolder->pbKeyValueSize + kvHolder->keySize + kvHolder->valueSize;
+                encrypter->getCurStatus(*kvHolder->cryptStatus());
+                encrypter->encrypt(basePtr + offset, basePtr + offset, size);
+                offset += size;
+            }
         }
     }
 WRITE_DATA:
     auto &data = preparedData.first;
     if (data.length() > 0) {
-        auto dataSize = CodedInputData(data.getPtr(), data.length()).readInt32();
+        auto dataSize = CodedInputData(data.getPtr(), data.length()).readUInt32();
         if (dataSize > 0) {
-            crypter->encrypt((uint8_t *) data.getPtr() + dataSize, writePtr, static_cast<size_t>(dataSize));
+            auto dataPtr = (uint8_t *) data.getPtr() + pbRawVarint32Size(dataSize);
+            if (encrypter) {
+                encrypter->encrypt(dataPtr, writePtr, dataSize);
+            } else {
+                memcpy(writePtr, dataPtr, dataSize);
+            }
             writePtr += dataSize;
         }
     }
@@ -1198,14 +1168,20 @@ WRITE_DATA:
     output->seek(writtenSize);
 }
 
-bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> preparedData) {
+#define InvalidCryptPtr ((AESCrypt *) (void *) (1))
+
+bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> preparedData, AESCrypt *newCrypter) {
     auto totalSize = preparedData.second;
     uint8_t newIV[AES_KEY_LEN];
     uint8_t oldIV[AES_KEY_LEN];
-    if (m_crypter) {
-        memcpy(oldIV, m_crypter->m_vector, sizeof(oldIV));
+    auto encrypter = (newCrypter == InvalidCryptPtr) ? nullptr : (newCrypter ? newCrypter : m_crypter);
+    auto decrypter = m_crypter;
+    if (encrypter) {
         AESCrypt::fillRandomIV(newIV);
-        m_crypter->resetIV(newIV, sizeof(newIV));
+        if (m_crypter) {
+            memcpy(oldIV, m_crypter->m_vector, sizeof(oldIV));
+        }
+        encrypter->resetIV(newIV, sizeof(newIV));
     }
     auto ptr = (uint8_t *) m_file->getMemory();
     delete m_output;
@@ -1214,9 +1190,9 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> preparedData) {
     pair<MMBuffer, size_t> *preparedDataPtr = &preparedData;
     auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), totalSize, ^{
         if (m_crypter) {
-            memmoveDictionary(m_dicCrypt, m_output, ptr, m_crypter, *preparedDataPtr);
+            memmoveDictionary(m_dicCrypt, m_output, ptr, decrypter, encrypter, *preparedDataPtr);
         } else {
-            memmoveDictionary(m_dic, m_output, ptr, totalSize);
+            memmoveDictionary(m_dic, m_output, ptr, encrypter, totalSize);
         }
     });
     if (!ret) {
@@ -1231,14 +1207,14 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> preparedData) {
     }
 #else
     if (m_crypter) {
-        memmoveDictionary(m_dicCrypt, m_output, ptr, m_crypter, preparedData);
+        memmoveDictionary(m_dicCrypt, m_output, ptr, decrypter, encrypter, preparedData);
     } else {
-        memmoveDictionary(m_dic, m_output, ptr, totalSize);
+        memmoveDictionary(m_dic, m_output, ptr, encrypter, totalSize);
     }
 #endif
 
     m_actualSize = totalSize;
-    if (m_crypter) {
+    if (encrypter) {
         recaculateCRCDigestWithIV(newIV);
     } else {
         recaculateCRCDigestWithIV(nullptr);
@@ -1253,6 +1229,7 @@ bool MMKV::reKey(const string &cryptKey) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
 
+    bool ret = false;
     if (m_crypter) {
         if (cryptKey.length() > 0) {
             string oldKey = this->cryptKey();
@@ -1261,30 +1238,40 @@ bool MMKV::reKey(const string &cryptKey) {
             } else {
                 // change encryption key
                 MMKVInfo("reKey with new aes key");
-                delete m_crypter;
-                auto ptr = cryptKey.data();
-                m_crypter = new AESCrypt(ptr, cryptKey.length());
-                return fullWriteback();
+                auto newCrypt = new AESCrypt(cryptKey.data(), cryptKey.length());
+                ret = fullWriteback(newCrypt);
+                if (ret) {
+                    delete m_crypter;
+                    m_crypter = newCrypt;
+                }
             }
         } else {
             // decryption to plain text
-            MMKVInfo("reKey with no aes key");
-            delete m_crypter;
-            m_crypter = nullptr;
-            return fullWriteback();
+            MMKVInfo("reKey to no aes key");
+            ret = fullWriteback(InvalidCryptPtr);
+            if (ret) {
+                delete m_crypter;
+                m_crypter = nullptr;
+            }
         }
     } else {
         if (cryptKey.length() > 0) {
             // transform plain text to encrypted text
-            MMKVInfo("reKey with aes key");
-            auto ptr = cryptKey.data();
-            m_crypter = new AESCrypt(ptr, cryptKey.length());
-            return fullWriteback();
+            MMKVInfo("reKey to a aes key");
+            auto newCrypt = new AESCrypt(cryptKey.data(), cryptKey.length());
+            ret = fullWriteback(newCrypt);
+            if (ret) {
+                m_crypter = newCrypt;
+            }
         } else {
             return true;
         }
     }
-    return false;
+    // m_dic or m_dicCrypt is not valid after reKey
+    if (ret) {
+        clearMemoryCache();
+    }
+    return ret;
 }
 
 void MMKV::checkReSetCryptKey(const string *cryptKey) {

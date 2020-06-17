@@ -117,10 +117,9 @@ class MMKV {
 
     bool ensureMemorySize(size_t newSize);
 
-    bool fullWriteback();
+    bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr);
 
-    bool doFullWriteBack(mmkv::MMBuffer &&allData);
-    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData);
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter);
 
     mmkv::MMBuffer getDataForKey(MMKVKey_t key);
 
