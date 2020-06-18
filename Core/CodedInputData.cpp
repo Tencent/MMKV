@@ -37,6 +37,14 @@ CodedInputData::CodedInputData(const void *oData, size_t length)
     MMKV_ASSERT(m_ptr);
 }
 
+void CodedInputData::seek(size_t addedSize) {
+    m_position += addedSize;
+
+    if (m_position > m_size) {
+        throw out_of_range("OutOfSpace");
+    }
+}
+
 double CodedInputData::readDouble() {
     return Int64ToFloat64(this->readRawLittleEndian64());
 }

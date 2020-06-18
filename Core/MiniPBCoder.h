@@ -61,8 +61,8 @@ class MiniPBCoder {
     MMBuffer getEncodeData(const MMKVVector &vec);
     MMBuffer getEncodeData(const MMBuffer &buffer);
 
-    void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
-    void decodeOneMap(MMKVMapCrypt &dic, size_t size, bool greedy);
+    void decodeOneMap(MMKVMap &dic, size_t position, bool greedy);
+    void decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy);
 
 #ifndef MMKV_APPLE
     size_t prepareObjectForEncode(const std::string &str);
@@ -93,16 +93,16 @@ public:
     }
 
     // return empty result if there's any error
-    static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
+    static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position = 0);
 
     // decode as much data as possible before any error happens
-    static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);
+    static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position = 0);
     
     // return empty result if there's any error
-    static void decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size = 0);
+    static void decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position = 0);
 
     // decode as much data as possible before any error happens
-    static void greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size = 0);
+    static void greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position = 0);
 
 #ifndef MMKV_APPLE
     static std::string decodeString(const MMBuffer &oData);

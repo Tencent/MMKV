@@ -64,6 +64,8 @@ public:
 
     bool isAtEnd() { return m_position == m_size; };
 
+    void seek(size_t addedSize);
+
     bool readBool();
 
     double readDouble();

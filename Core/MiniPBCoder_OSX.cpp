@@ -75,10 +75,12 @@ size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
     return index;
 }
 
-void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
-    auto block = [size, this](MMKVMap &dictionary) {
-        if (size == 0) {
-            [[maybe_unused]] auto length = m_inputData->readInt32();
+void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
+    auto block = [position, this](MMKVMap &dictionary) {
+        if (position) {
+            m_inputData->seek(position);
+        } else {
+            m_inputData->readInt32();
         }
         while (!m_inputData->isAtEnd()) {
             KeyValueHolder kvHolder;
@@ -119,10 +121,12 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
     }
 }
 
-void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t size, bool greedy) {
-    auto block = [size, this](MMKVMapCrypt &dictionary) {
-        if (size == 0) {
-            [[maybe_unused]] auto length = m_inputDataDecrpt->readInt32();
+void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) {
+    auto block = [position, this](MMKVMapCrypt &dictionary) {
+        if (position) {
+            m_inputDataDecrpt->seek(position);
+        } else {
+            m_inputDataDecrpt->readInt32();
         }
         while (!m_inputDataDecrpt->isAtEnd()) {
             KeyValueHolderCrypt kvHolder;

@@ -327,20 +327,19 @@ void MMKV::partialLoadFromFile() {
     if (m_actualSize > 0) {
         if (m_actualSize < fileSize && m_actualSize + Fixed32Size <= fileSize) {
             if (m_actualSize > oldActualSize) {
-                size_t bufferSize = m_actualSize - oldActualSize;
-                auto ptr = (uint8_t *) m_file->getMemory();
-                MMBuffer inputBuffer(ptr + Fixed32Size + oldActualSize, bufferSize, MMBufferNoCopy);
+                auto position = oldActualSize;
+                size_t addedSize = m_actualSize - position;
+                auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
                 // incremental update crc digest
-                m_crcDigest =
-                    (uint32_t) CRC32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(), inputBuffer.length());
+                m_crcDigest = (uint32_t) CRC32(m_crcDigest, basePtr + position, addedSize);
                 if (m_crcDigest == m_metaInfo->m_crcDigest) {
-                    // TODO: offset of inputBuffer
+                    MMBuffer inputBuffer(basePtr, m_actualSize, MMBufferNoCopy);
                     if (m_crypter) {
-                        MiniPBCoder::greedyDecodeMap(m_dicCrypt, inputBuffer, m_crypter, bufferSize);
+                        MiniPBCoder::greedyDecodeMap(m_dicCrypt, inputBuffer, m_crypter, position);
                     } else {
-                        MiniPBCoder::greedyDecodeMap(m_dic, inputBuffer, bufferSize);
+                        MiniPBCoder::greedyDecodeMap(m_dic, inputBuffer, position);
                     }
-                    m_output->seek(bufferSize);
+                    m_output->seek(addedSize);
                     m_hasFullWriteback = false;
 
                     if (m_crypter) {

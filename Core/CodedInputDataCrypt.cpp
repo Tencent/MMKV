@@ -50,6 +50,14 @@ CodedInputDataCrypt::~CodedInputDataCrypt() {
     }
 }
 
+void CodedInputDataCrypt::seek(size_t addedSize) {
+    m_position += addedSize;
+
+    if (m_position > m_size) {
+        throw out_of_range("OutOfSpace");
+    }
+}
+
 void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
     if (discardPreData) {
         m_decryptBufferDiscardPosition = m_decryptBufferPosition;

@@ -292,24 +292,24 @@ vector<string> MiniPBCoder::decodeSet(const MMBuffer &oData) {
 
 #endif // MMKV_APPLE
 
-void MiniPBCoder::decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size) {
+void MiniPBCoder::decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position) {
     MiniPBCoder oCoder(&oData);
-    oCoder.decodeOneMap(dic, size, false);
+    oCoder.decodeOneMap(dic, position, false);
 }
 
-void MiniPBCoder::greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size) {
+void MiniPBCoder::greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position) {
     MiniPBCoder oCoder(&oData);
-    oCoder.decodeOneMap(dic, size, true);
+    oCoder.decodeOneMap(dic, position, true);
 }
 
-void MiniPBCoder::decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size) {
+void MiniPBCoder::decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position) {
     MiniPBCoder oCoder(&oData, crypter);
-    oCoder.decodeOneMap(dic, size, false);
+    oCoder.decodeOneMap(dic, position, false);
 }
 
-void MiniPBCoder::greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t size) {
+void MiniPBCoder::greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position) {
     MiniPBCoder oCoder(&oData, crypter);
-    oCoder.decodeOneMap(dic, size, true);
+    oCoder.decodeOneMap(dic, position, true);
 }
 
 } // namespace mmkv
