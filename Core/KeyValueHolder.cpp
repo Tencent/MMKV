@@ -216,8 +216,11 @@ void KeyValueHolderCrypt::testAESToMMBuffer() {
     decrypt.statusBeforeDecrypt(encryptText + rollbackSize, smallBuffer + rollbackSize, rollbackSize,
                                 *kvHolder.cryptStatus());
     auto value = kvHolder.toMMBuffer(encryptText, &decrypt);
-
+#    ifdef MMKV_APPLE
     MMKVInfo("testAESToMMBuffer: %@", CodedInputData((char *) value.getPtr(), value.length()).readString());
+#    else
+    MMKVInfo("testAESToMMBuffer: %s", CodedInputData((char *) value.getPtr(), value.length()).readString().c_str());
+#    endif
 }
 
 } // namespace mmkv

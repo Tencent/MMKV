@@ -72,6 +72,7 @@ public:
 
 #ifndef MMKV_APPLE
     std::string readString();
+    std::string readString(KeyValueHolder &kvHolder);
 #else
     NSString *readString();
     NSString *readString(KeyValueHolder &kvHolder);

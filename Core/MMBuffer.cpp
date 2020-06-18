@@ -39,7 +39,9 @@ MMBuffer::MMBuffer(size_t length) {
         isNoCopy = MMBufferCopy;
         size = length;
         ptr = malloc(size);
+#ifdef MMKV_APPLE
         m_data = nil;
+#endif
     } else {
         type = MMBufferType_Small;
         paddedSize = static_cast<uint8_t>(length);
@@ -53,7 +55,9 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : isNoCop
             size = length;
             ptr = malloc(size);
             memcpy(ptr, source, size);
+#ifdef MMKV_APPLE
             m_data = nil;
+#endif
         } else {
             type = MMBufferType_Small;
             paddedSize = static_cast<uint8_t>(size);
@@ -63,7 +67,9 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : isNoCop
         type = MMBufferType_Normal;
         size = length;
         ptr = source;
+#ifdef MMKV_APPLE
         m_data = nil;
+#endif
     }
 }
 
@@ -83,7 +89,9 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
         size = other.size;
         ptr = other.ptr;
         isNoCopy = other.isNoCopy;
+#ifdef MMKV_APPLE
         m_data = other.m_data;
+#endif
         other.detach();
     } else {
         paddedSize = other.paddedSize;
@@ -103,11 +111,17 @@ MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
         } else {
             type = MMBufferType_Small;
             if (isNoCopy == MMBufferCopy) {
+#ifdef MMKV_APPLE
                 if (m_data) {
                     [m_data release];
                 } else if (ptr) {
                     free(ptr);
                 }
+#else
+                if (ptr) {
+                    free(ptr);
+                }
+#endif
             }
             paddedSize = other.paddedSize;
             memcpy(smallBuffer, other.smallBuffer, paddedSize);

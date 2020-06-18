@@ -20,6 +20,7 @@
 
 #include "CodedInputDataCrypt.h"
 #include "PBUtility.h"
+#include <cerrno>
 #include <stdexcept>
 
 #ifdef MMKV_APPLE
@@ -252,6 +253,29 @@ string CodedInputDataCrypt::readString() {
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         consumeBytes(s_size);
+
+        string result((char *) (m_decryptBuffer + m_decryptBufferPosition), s_size);
+        m_position += s_size;
+        m_decryptBufferPosition += s_size;
+        return result;
+    } else {
+        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
+    }
+}
+
+string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
+    kvHolder.offset = static_cast<uint32_t>(m_position);
+
+    int32_t size = this->readRawVarint32(true);
+    if (size < 0) {
+        throw length_error("InvalidProtocolBuffer negativeSize");
+    }
+
+    auto s_size = static_cast<size_t>(size);
+    if (s_size <= m_size - m_position) {
+        consumeBytes(s_size);
+
+        kvHolder.keySize = static_cast<uint16_t>(s_size);
 
         string result((char *) (m_decryptBuffer + m_decryptBufferPosition), s_size);
         m_position += s_size;

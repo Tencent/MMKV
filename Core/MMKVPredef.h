@@ -162,6 +162,8 @@ using MMKVMap = std::unordered_map<NSString *, mmkv::KeyValueHolder, KeyHasher, 
 using MMKVMapCrypt = std::unordered_map<NSString *, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
 #else
 using MMKVVector = std::vector<std::pair<std::string, mmkv::MMBuffer>>;
+using MMKVMap = std::unordered_map<std::string, mmkv::KeyValueHolder>;
+using MMKVMapCrypt = std::unordered_map<std::string, mmkv::KeyValueHolderCrypt>;
 #endif // MMKV_APPLE
 
 template <typename T>

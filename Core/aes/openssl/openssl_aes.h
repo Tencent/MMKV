@@ -103,7 +103,9 @@ extern aes_decrypt_t AES_decrypt;
 namespace openssl {
 
 int AES_set_encrypt_key(const uint8_t *userKey, const int bits, AES_KEY *key);
+int AES_set_decrypt_key(const uint8_t *userKey, const int bits, AES_KEY *key);
 void AES_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key);
+void AES_decrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key);
 
 } // namespace openssl
 

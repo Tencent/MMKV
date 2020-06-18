@@ -898,9 +898,9 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
 pair<bool, KeyValueHolder>
 MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
-    bool isKeyEncoded = (originKeyLength < keyData.length());
-    uint32_t keyLength = static_cast<uint32_t>(keyData.length());
-    uint32_t valueLength = static_cast<uint32_t>(data.length());
+    auto isKeyEncoded = (originKeyLength < keyData.length());
+    auto keyLength = static_cast<uint32_t>(keyData.length());
+    auto valueLength = static_cast<uint32_t>(data.length());
     if (isDataHolder) {
         valueLength += pbRawVarint32Size(valueLength);
     }
@@ -965,7 +965,7 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey
     auto oData = [key dataUsingEncoding:NSUTF8StringEncoding];
     auto keyData = MMBuffer(oData, MMBufferNoCopy);
 #else
-    auto keyData = MMBuffer(key.data(), key.size(), MMBufferNoCopy);
+    auto keyData = MMBuffer((void *) key.data(), key.size(), MMBufferNoCopy);
 #endif
     return doAppendDataWithKey(data, keyData, isDataHolder, static_cast<uint32_t>(keyData.length()));
 }
@@ -980,7 +980,7 @@ MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bo
 
     // ensureMemorySize() might change kvHolder.offset, so have to do it early
     {
-        uint32_t valueLength = static_cast<uint32_t>(data.length());
+        auto valueLength = static_cast<uint32_t>(data.length());
         if (isDataHolder) {
             valueLength += pbRawVarint32Size(valueLength);
         }
@@ -999,7 +999,7 @@ MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bo
 pair<bool, KeyValueHolder>
 MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {
 #ifndef MMKV_APPLE
-    return appendDataWithKey(data, key, isDataHolder, static_cast<uint32_t>(key.size()));
+    return appendDataWithKey(data, key, isDataHolder);
 #else
     if (kvHolder.type != KeyValueHolderType_Offset) {
         return appendDataWithKey(data, key, isDataHolder);
@@ -1072,14 +1072,14 @@ memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt 
 
         // merge nearby items to make memmove quicker
         vector<pair<uint32_t, uint32_t>> dataSections; // pair(offset, size)
-        dataSections.push_back(make_pair(vec.front()->offset, vec.front()->computedKVSize + vec.front()->valueSize));
+        dataSections.emplace_back(vec.front()->offset, vec.front()->computedKVSize + vec.front()->valueSize);
         for (size_t index = 1, total = vec.size(); index < total; index++) {
             auto kvHolder = vec[index];
             auto &lastSection = dataSections.back();
             if (kvHolder->offset == lastSection.first + lastSection.second) {
                 lastSection.second += kvHolder->computedKVSize + kvHolder->valueSize;
             } else {
-                dataSections.push_back(make_pair(kvHolder->offset, kvHolder->computedKVSize + kvHolder->valueSize));
+                dataSections.emplace_back(kvHolder->offset, kvHolder->computedKVSize + kvHolder->valueSize);
             }
         }
         // do the move
@@ -1459,14 +1459,14 @@ bool MMKV::set(const char *value, MMKVKey_t key) {
         removeValueForKey(key);
         return true;
     }
-    return set(MMBuffer(value, strlen(value), MMBufferNoCopy), key);
+    return setDataForKey(MMBuffer((void *) value, strlen(value), MMBufferNoCopy), key, true);
 }
 
 bool MMKV::set(const string &value, MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    return set(MMBuffer(value.data(), value.length(), MMBufferNoCopy), key);
+    return setDataForKey(MMBuffer((void *) value.data(), value.length(), MMBufferNoCopy), key, true);
 }
 
 bool MMKV::set(const MMBuffer &value, MMKVKey_t key) {
@@ -1491,7 +1491,7 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
         return false;
     }
     SCOPED_LOCK(m_lock);
-    auto &data = getDataForKey(key);
+    auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
             result = MiniPBCoder::decodeString(data);
@@ -1508,7 +1508,7 @@ MMBuffer MMKV::getBytes(MMKVKey_t key) {
         return MMBuffer();
     }
     SCOPED_LOCK(m_lock);
-    auto &data = getDataForKey(key);
+    auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
             return MiniPBCoder::decodeBytes(data);
@@ -1524,7 +1524,7 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
         return false;
     }
     SCOPED_LOCK(m_lock);
-    auto &data = getDataForKey(key);
+    auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
             result = MiniPBCoder::decodeSet(data);

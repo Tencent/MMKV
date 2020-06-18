@@ -275,6 +275,88 @@ vector<string> MiniPBCoder::decodeOneSet() {
     return v;
 }
 
+void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
+    auto block = [position, this](MMKVMap &dictionary) {
+        if (position) {
+            m_inputData->seek(position);
+        } else {
+            m_inputData->readInt32();
+        }
+        while (!m_inputData->isAtEnd()) {
+            KeyValueHolder kvHolder;
+            const auto &key = m_inputData->readString(kvHolder);
+            if (key.length() > 0) {
+                m_inputData->readData(kvHolder);
+                if (kvHolder.valueSize > 0) {
+                    dictionary[key] = move(kvHolder);
+                } else {
+                    auto itr = dictionary.find(key);
+                    if (itr != dictionary.end()) {
+                        dictionary.erase(itr);
+                    }
+                }
+            }
+        }
+    };
+
+    if (greedy) {
+        try {
+            block(dic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    } else {
+        try {
+            MMKVMap tmpDic;
+            block(tmpDic);
+            dic.swap(tmpDic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    }
+}
+
+void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) {
+    auto block = [position, this](MMKVMapCrypt &dictionary) {
+        if (position) {
+            m_inputDataDecrpt->seek(position);
+        } else {
+            m_inputDataDecrpt->readInt32();
+        }
+        while (!m_inputDataDecrpt->isAtEnd()) {
+            KeyValueHolderCrypt kvHolder;
+            const auto &key = m_inputDataDecrpt->readString(kvHolder);
+            if (key.length() > 0) {
+                m_inputDataDecrpt->readData(kvHolder);
+                if (kvHolder.valueSize > 0) {
+                    dictionary[key] = move(kvHolder);
+                } else {
+                    auto itr = dictionary.find(key);
+                    if (itr != dictionary.end()) {
+                        dictionary.erase(itr);
+                    }
+                }
+            }
+        }
+    };
+
+    if (greedy) {
+        try {
+            block(dic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    } else {
+        try {
+            MMKVMapCrypt tmpDic;
+            block(tmpDic);
+            dic.swap(tmpDic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    }
+}
+
 string MiniPBCoder::decodeString(const MMBuffer &oData) {
     MiniPBCoder oCoder(&oData);
     return oCoder.decodeOneString();
