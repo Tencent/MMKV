@@ -56,9 +56,11 @@ class MiniPBCoder {
     void writeRootObject();
 
     size_t prepareObjectForEncode(const MMKVMapPureData &map);
+    size_t prepareObjectForEncode(const MMKVVectorPureData &vec);
     size_t prepareObjectForEncode(const MMBuffer &buffer);
 
     MMBuffer getEncodeData(const MMKVMapPureData &map);
+    MMBuffer getEncodeData(const MMKVVectorPureData &vec);
     MMBuffer getEncodeData(const MMBuffer &buffer);
 
     void decodeOneMap(MMKVMapPureData &dic, size_t size, bool greedy);

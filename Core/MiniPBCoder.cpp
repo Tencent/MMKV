@@ -160,9 +160,61 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVMapPureData &map) {
     return index;
 }
 
+size_t MiniPBCoder::prepareObjectForEncode(const MMKVVectorPureData &vec) {
+    m_encodeItems->push_back(PBEncodeItem());
+    PBEncodeItem *encodeItem = &(m_encodeItems->back());
+    size_t index = m_encodeItems->size() - 1;
+    {
+        encodeItem->type = PBEncodeItemType_Container;
+        encodeItem->value.bufferValue = nullptr;
+
+        for (const auto &itr : vec) {
+            const auto &key = itr.first;
+            const auto &value = itr.second;
+#ifdef MMKV_APPLE
+            if (key.length <= 0) {
+#else
+            if (key.length() <= 0) {
+#endif
+                continue;
+            }
+
+            size_t keyIndex = prepareObjectForEncode(key);
+            if (keyIndex < m_encodeItems->size()) {
+                size_t valueIndex = prepareObjectForEncode(value);
+                if (valueIndex < m_encodeItems->size()) {
+                    (*m_encodeItems)[index].valueSize += (*m_encodeItems)[keyIndex].compiledSize;
+                    (*m_encodeItems)[index].valueSize += (*m_encodeItems)[valueIndex].compiledSize;
+                } else {
+                    m_encodeItems->pop_back(); // pop key
+                }
+            }
+        }
+
+        encodeItem = &(*m_encodeItems)[index];
+    }
+    encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
+
+    return index;
+}
+
 MMBuffer MiniPBCoder::getEncodeData(const MMKVMapPureData &map) {
     m_encodeItems = new vector<PBEncodeItem>();
     size_t index = prepareObjectForEncode(map);
+    PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
+    if (oItem && oItem->compiledSize > 0) {
+        m_outputBuffer = new MMBuffer(oItem->compiledSize);
+        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
+
+        writeRootObject();
+    }
+
+    return move(*m_outputBuffer);
+}
+
+MMBuffer MiniPBCoder::getEncodeData(const MMKVVectorPureData &vec) {
+    m_encodeItems = new vector<PBEncodeItem>();
+    size_t index = prepareObjectForEncode(vec);
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
     if (oItem && oItem->compiledSize > 0) {
         m_outputBuffer = new MMBuffer(oItem->compiledSize);

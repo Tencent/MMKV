@@ -69,6 +69,7 @@ public:
     AESCrypt cloneWithStatus(const AESCryptStatus &status) const;
 
     void resetIV(const void *iv = nullptr, size_t ivLength = 0);
+    void resetStatus(const AESCryptStatus &status);
 
     // output must have [AES_KEY_LEN] space
     void getKey(void *output) const;

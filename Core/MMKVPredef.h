@@ -158,10 +158,12 @@ struct KeyEqualer {
 };
 
 using MMKVMapPureData = std::unordered_map<NSString *, mmkv::MMBuffer, KeyHasher, KeyEqualer>;
+using MMKVVectorPureData = std::vector<std::pair<NSString *, mmkv::MMBuffer>>;
 using MMKVMap = std::unordered_map<NSString *, mmkv::KeyValueHolder, KeyHasher, KeyEqualer>;
 using MMKVMapCrypt = std::unordered_map<NSString *, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
 #else
 using MMKVMapPureData = std::unordered_map<std::string, mmkv::MMBuffer>;
+using MMKVVectorPureData = std::vector<std::pair<std::string, mmkv::MMBuffer>>;
 #endif // MMKV_APPLE
 
 template <typename T>

@@ -64,6 +64,11 @@ void AESCrypt::resetIV(const void *iv, size_t ivLength) {
     }
 }
 
+void AESCrypt::resetStatus(const AESCryptStatus &status) {
+    m_number = status.m_number;
+    memcpy(m_vector, status.m_vector, AES_KEY_LEN);
+}
+
 void AESCrypt::getKey(void *output) const {
     if (output) {
         memcpy(output, m_key, AES_KEY_LEN);

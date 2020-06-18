@@ -129,7 +129,7 @@ class MMKV {
     bool removeDataForKey(MMKVKey_t key);
 
     // isDataHolder: avoid memory copying
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder = false);
+    std::pair<bool, mmkv::KeyValueHolder> doAppendDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder, uint32_t keyLength);
     std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
     std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
     std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, const mmkv::KeyValueHolderCrypt &kvHolder, bool isDataHolder = false);
