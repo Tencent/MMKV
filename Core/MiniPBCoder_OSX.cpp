@@ -75,49 +75,6 @@ size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
     return index;
 }
 
-void MiniPBCoder::decodeOneMap(MMKVMapPureData &dic, size_t size, bool greedy) {
-    auto block = [size, this](MMKVMapPureData &dictionary) {
-        if (size == 0) {
-            [[maybe_unused]] auto length = m_inputData->readInt32();
-        }
-        while (!m_inputData->isAtEnd()) {
-            const auto &key = m_inputData->readString();
-            if (key.length > 0) {
-                auto value = m_inputData->readData();
-                if (value.length() > 0) {
-                    dictionary[key] = move(value);
-                    [key retain];
-                } else {
-                    auto itr = dictionary.find(key);
-                    if (itr != dictionary.end()) {
-                        [itr->first release];
-                        dictionary.erase(itr);
-                    }
-                }
-            }
-        }
-    };
-
-    if (greedy) {
-        try {
-            block(dic);
-        } catch (std::exception &exception) {
-            MMKVError("%s", exception.what());
-        }
-    } else {
-        try {
-            MMKVMapPureData tmpDic;
-            block(tmpDic);
-            dic.swap(tmpDic);
-            for (auto &pair : tmpDic) {
-                [pair.first release];
-            }
-        } catch (std::exception &exception) {
-            MMKVError("%s", exception.what());
-        }
-    }
-}
-
 void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
     auto block = [size, this](MMKVMap &dictionary) {
         if (size == 0) {

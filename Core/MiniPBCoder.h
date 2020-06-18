@@ -55,15 +55,12 @@ class MiniPBCoder {
 
     void writeRootObject();
 
-    size_t prepareObjectForEncode(const MMKVMapPureData &map);
-    size_t prepareObjectForEncode(const MMKVVectorPureData &vec);
+    size_t prepareObjectForEncode(const MMKVVector &vec);
     size_t prepareObjectForEncode(const MMBuffer &buffer);
 
-    MMBuffer getEncodeData(const MMKVMapPureData &map);
-    MMBuffer getEncodeData(const MMKVVectorPureData &vec);
+    MMBuffer getEncodeData(const MMKVVector &vec);
     MMBuffer getEncodeData(const MMBuffer &buffer);
 
-    void decodeOneMap(MMKVMapPureData &dic, size_t size, bool greedy);
     void decodeOneMap(MMKVMap &dic, size_t size, bool greedy);
     void decodeOneMap(MMKVMapCrypt &dic, size_t size, bool greedy);
 
@@ -94,12 +91,6 @@ public:
             return MMBuffer();
         }
     }
-
-    // return empty result if there's any error
-    static void decodeMap(MMKVMapPureData &dic, const MMBuffer &oData, size_t size = 0);
-
-    // decode as much data as possible before any error happens
-    static void greedyDecodeMap(MMKVMapPureData &dic, const MMBuffer &oData, size_t size = 0);
 
     // return empty result if there's any error
     static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t size = 0);

@@ -155,14 +155,6 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
     mkPath(g_rootDir);
 
     MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
-    // TODO: remove those after it's done
-#ifndef NDEBUG
-    MMKVInfo("AESCrypt: %zu, openssl::AES_KEY %zu, KeyValueHolder: %zu, KeyValueHolderCrypt: %zu, MMBuffer: %zu",
-             sizeof(AESCrypt), sizeof(openssl::AES_KEY), sizeof(KeyValueHolder), sizeof(KeyValueHolderCrypt),
-             sizeof(MMBuffer));
-    AESCrypt::testAESCrypt();
-    KeyValueHolderCrypt::testAESToMMBuffer();
-#endif
 }
 
 #ifndef MMKV_ANDROID
@@ -342,9 +334,6 @@ void MMKV::partialLoadFromFile() {
                 m_crcDigest =
                     (uint32_t) CRC32(m_crcDigest, (const uint8_t *) inputBuffer.getPtr(), inputBuffer.length());
                 if (m_crcDigest == m_metaInfo->m_crcDigest) {
-                    /*if (m_crypter) {
-                        decryptBuffer(*m_crypter, inputBuffer);
-                    }*/
                     // TODO: offset of inputBuffer
                     if (m_crypter) {
                         MiniPBCoder::greedyDecodeMap(m_dicCrypt, inputBuffer, m_crypter, bufferSize);
@@ -638,7 +627,7 @@ static pair<MMBuffer, size_t> prepareEncode(const mmkv::MMKVMap &dic) {
 static pair<MMBuffer, size_t> prepareEncode(const mmkv::MMKVMapCrypt &dic) {
     // make some room for placeholder
     size_t totalSize = ItemSizeHolderSize;
-    MMKVVectorPureData vec;
+    MMKVVector vec;
     for (auto &itr : dic) {
         auto &kvHolder = itr.second;
         if (kvHolder.type == KeyValueHolderType_Offset) {
@@ -665,7 +654,6 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         return false;
     }
 
-    // TODO: check make some room for placeholder
     if (newSize >= m_output->spaceLeft() || (m_crypter ? m_dicCrypt.empty() : m_dic.empty())) {
         // try a full rewrite to make space
         auto fileSize = m_file->getFileSize();
@@ -962,7 +950,6 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
     m_output->writeData(data); // note: write size of data
 #endif
 
-    // TODO: check first & only kv
     auto offset = static_cast<uint32_t>(m_actualSize);
     auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size + m_actualSize;
     if (m_crypter) {
@@ -1020,7 +1007,6 @@ MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolde
     }
     SCOPED_LOCK(m_exclusiveProcessLock);
 
-    // TODO: non-Apple platform don't need these
     uint32_t keyLength = kvHolder.keySize;
     // size needed to encode the key
     size_t rawKeySize = keyLength + pbRawVarint32Size(keyLength);
