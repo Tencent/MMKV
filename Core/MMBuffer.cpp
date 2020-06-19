@@ -39,6 +39,9 @@ MMBuffer::MMBuffer(size_t length) {
         isNoCopy = MMBufferCopy;
         size = length;
         ptr = malloc(size);
+        if (!ptr) {
+            throw std::runtime_error(strerror(errno));
+        }
 #ifdef MMKV_APPLE
         m_data = nil;
 #endif
@@ -54,6 +57,9 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : isNoCop
             type = MMBufferType_Normal;
             size = length;
             ptr = malloc(size);
+            if (!ptr) {
+                throw std::runtime_error(strerror(errno));
+            }
             memcpy(ptr, source, size);
 #ifdef MMKV_APPLE
             m_data = nil;

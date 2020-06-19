@@ -22,6 +22,7 @@
 #include "PBUtility.h"
 #include "aes/AESCrypt.h"
 #include <cstring>
+#include <stdexcept>
 
 namespace mmkv {
 
@@ -51,6 +52,9 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length) {
         type = KeyValueHolderType_Memory;
         memSize = static_cast<uint32_t>(length);
         memPtr = malloc(length);
+        if (!memPtr) {
+            throw std::runtime_error(strerror(errno));
+        }
         memcpy(memPtr, src, memSize);
     }
 }

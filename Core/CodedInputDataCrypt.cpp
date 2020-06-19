@@ -40,6 +40,7 @@ CodedInputDataCrypt::CodedInputDataCrypt(const void *oData, size_t length, AESCr
     m_decryptBufferPosition = static_cast<size_t>(crypt.m_number);
     m_decryptBufferDiscardPosition = m_decryptBufferPosition;
     m_decryptBufferDecryptPosition = m_decryptBufferPosition;
+
     m_decryptBuffer = (uint8_t *) malloc(m_decryptBufferSize);
     if (!m_decryptBuffer) {
         throw runtime_error(strerror(errno));
@@ -331,7 +332,7 @@ void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
 
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
-        if (s_size > sizeof(kvHolder) * 2) {
+        if (KeyValueHolderCrypt::isValueStoredAsOffset(s_size)) {
             kvHolder.type = KeyValueHolderType_Offset;
             kvHolder.valueSize = static_cast<uint32_t>(s_size);
             kvHolder.pbKeyValueSize =
