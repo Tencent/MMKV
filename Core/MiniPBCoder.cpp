@@ -265,7 +265,7 @@ MMBuffer MiniPBCoder::decodeOneBytes() {
 vector<string> MiniPBCoder::decodeOneSet() {
     vector<string> v;
 
-    [[maybe_unused]] auto length = m_inputData->readInt32();
+    m_inputData->readInt32();
 
     while (!m_inputData->isAtEnd()) {
         auto value = m_inputData->readString();

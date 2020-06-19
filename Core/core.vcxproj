@@ -17,10 +17,12 @@
     <ClCompile Include="aes\openssl\openssl_md5_dgst.cpp" />
     <ClCompile Include="aes\openssl\openssl_md5_one.cpp" />
     <ClCompile Include="CodedInputData.cpp" />
+    <ClCompile Include="CodedInputDataCrypt.cpp" />
     <ClCompile Include="CodedOutputData.cpp" />
     <ClCompile Include="crc32\zlib\crc32.cpp" />
     <ClCompile Include="InterProcessLock.cpp" />
     <ClCompile Include="InterProcessLock_Win32.cpp" />
+    <ClCompile Include="KeyValueHolder.cpp" />
     <ClCompile Include="MemoryFile_Win32.cpp" />
     <ClCompile Include="MiniPBCoder.cpp" />
     <ClCompile Include="MMBuffer.cpp" />
@@ -39,12 +41,14 @@
     <ClInclude Include="aes\openssl\openssl_md5_locl.h" />
     <ClInclude Include="aes\openssl\openssl_opensslconf.h" />
     <ClInclude Include="CodedInputData.h" />
+    <ClInclude Include="CodedInputDataCrypt.h" />
     <ClInclude Include="CodedOutputData.h" />
     <ClInclude Include="crc32\Checksum.h" />
     <ClInclude Include="crc32\zlib\crc32.h" />
     <ClInclude Include="crc32\zlib\zconf.h" />
     <ClInclude Include="crc32\zlib\zutil.h" />
     <ClInclude Include="InterProcessLock.h" />
+    <ClInclude Include="KeyValueHolder.h" />
     <ClInclude Include="MemoryFile.h" />
     <ClInclude Include="MiniPBCoder.h" />
     <ClInclude Include="MMBuffer.h" />
@@ -128,7 +132,7 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:X86</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)KeyValueHolder.h", "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>
@@ -168,7 +172,7 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:X86</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h", "$(ProjectDir)KeyValueHolder.h", "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>

@@ -590,7 +590,7 @@ void MMKV::trim() {
     while (fileSize > (m_actualSize + Fixed32Size) * 2) {
         fileSize /= 2;
     }
-    fileSize = std::max(fileSize, DEFAULT_MMAP_SIZE);
+    fileSize = std::max<size_t>(fileSize, DEFAULT_MMAP_SIZE);
     if (oldSize == fileSize) {
         MMKVInfo("there's no need to trim %s with size %zu, actualSize %zu", m_mmapID.c_str(), fileSize, m_actualSize);
         return;

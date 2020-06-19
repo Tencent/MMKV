@@ -56,6 +56,7 @@ private:
 
 public:
     AESCrypt(const void *key, size_t keyLength, const void *iv = nullptr, size_t ivLength = 0);
+    AESCrypt(AESCrypt &&other) = default;
 
     ~AESCrypt();
 

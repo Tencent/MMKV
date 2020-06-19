@@ -42,8 +42,6 @@ struct KeyValueHolder {
     MMBuffer toMMBuffer(const void *basePtr) const;
 
     inline size_t end() const { return offset + computedKVSize + valueSize; }
-
-    inline bool operator<(const KeyValueHolder &other) const { return (offset < other.offset); }
 };
 
 enum KeyValueHolderType : uint8_t {
@@ -53,7 +51,7 @@ enum KeyValueHolderType : uint8_t {
 };
 
 class AESCrypt;
-class AESCryptStatus;
+struct AESCryptStatus;
 
 // kv holder for encrypted mmkv
 struct KeyValueHolderCrypt {
@@ -72,7 +70,7 @@ struct KeyValueHolderCrypt {
         // store value directly
         struct {
             uint8_t paddedSize;
-            uint8_t value[0];
+            uint8_t value[1];
         };
         // store value in the heap memory
         struct {
@@ -104,8 +102,6 @@ struct KeyValueHolderCrypt {
     }
 
     size_t end() const;
-
-    bool operator<(const KeyValueHolderCrypt &other) const;
 
     // those are expensive, just forbid it for possibly misuse
     explicit KeyValueHolderCrypt(const KeyValueHolderCrypt &other) = delete;

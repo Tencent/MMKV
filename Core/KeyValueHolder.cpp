@@ -30,7 +30,7 @@ KeyValueHolder::KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_
 }
 
 uint16_t KeyValueHolder::computKVSize(uint32_t keySize, uint32_t valueSize) {
-    uint16_t computedKVSize = static_cast<uint16_t>(keySize + pbRawVarint32Size(keySize));
+    auto computedKVSize = static_cast<uint16_t>(keySize + pbRawVarint32Size(keySize));
     computedKVSize += static_cast<uint16_t>(pbRawVarint32Size(valueSize));
     return computedKVSize;
 }
@@ -172,6 +172,7 @@ MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr, const AESCrypt *cr
 #    include "CodedInputData.h"
 #    include "CodedOutputData.h"
 #    include "MMKVLog.h"
+#    include <ctime>
 
 using namespace std;
 

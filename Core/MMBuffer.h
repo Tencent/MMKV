@@ -36,7 +36,7 @@ enum MMBufferCopyFlag : bool {
 
 #pragma pack(push, 1)
 
-class KeyValueHolderCrypt;
+struct KeyValueHolderCrypt;
 
 class MMBuffer {
     enum MMBufferType : uint8_t {
@@ -56,7 +56,7 @@ class MMBuffer {
         };
         struct {
             uint8_t paddedSize;
-            uint8_t smallBuffer[0];
+            uint8_t smallBuffer[1];
         };
     };
 

@@ -140,8 +140,8 @@ extern size_t DEFAULT_MMAP_SIZE;
 #define DEFAULT_MMAP_ID "mmkv.default"
 
 class MMBuffer;
-class KeyValueHolder;
-class KeyValueHolderCrypt;
+struct KeyValueHolder;
+struct KeyValueHolderCrypt;
 
 #ifdef MMKV_APPLE
 struct KeyHasher {
