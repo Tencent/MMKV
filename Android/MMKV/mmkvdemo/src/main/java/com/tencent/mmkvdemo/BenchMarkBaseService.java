@@ -50,6 +50,7 @@ public abstract class BenchMarkBaseService extends Service {
 
     private static final int m_loops = 1000;
     public static final String MMKV_ID = "benchmark_interprocess";
+    //public static final String MMKV_ID = "benchmark_interprocess_crypt1";
     private static final String SP_ID = "benchmark_interprocess_sp";
     public static final String CryptKey = null;
     //public static final String CryptKey = "Tencent MMKV";

@@ -60,8 +60,8 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : isNoCop
 #endif
         } else {
             type = MMBufferType_Small;
-            paddedSize = static_cast<uint8_t>(size);
-            memcpy(smallBuffer, source, size);
+            paddedSize = static_cast<uint8_t>(length);
+            memcpy(smallBuffer, source, length);
         }
     } else {
         type = MMBufferType_Normal;

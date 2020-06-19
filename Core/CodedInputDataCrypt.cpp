@@ -53,6 +53,7 @@ CodedInputDataCrypt::~CodedInputDataCrypt() {
 
 void CodedInputDataCrypt::seek(size_t addedSize) {
     m_position += addedSize;
+    m_decryptPosition += addedSize;
 
     if (m_position > m_size) {
         throw out_of_range("OutOfSpace");

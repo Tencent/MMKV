@@ -44,6 +44,7 @@
 #if (__ARM_MAX_ARCH__ > 7) && defined(MMKV_ANDROID)
 
 aes_set_encrypt_t AES_set_encrypt_key = openssl::AES_C_set_encrypt_key;
+aes_set_decrypt_t AES_set_decrypt_key = openssl::AES_C_set_decrypt_key;
 aes_encrypt_t AES_encrypt = openssl::AES_C_encrypt;
 aes_encrypt_t AES_decrypt = openssl::AES_C_decrypt;
 
@@ -744,7 +745,8 @@ int AES_C_set_encrypt_key(const uint8_t *userKey, const int bits, void *k) {
 #if (__ARM_MAX_ARCH__ <= 0)
 int AES_set_decrypt_key(const uint8_t *userKey, const int bits, AES_KEY *key) {
 #else
-int AES_C_set_decrypt_key(const uint8_t *userKey, const int bits, AES_KEY *key) {
+int AES_C_set_decrypt_key(const uint8_t *userKey, const int bits, void *k) {
+    auto key = (AES_KEY*) k;
 #endif
     u32 *rk;
     int i, j, status;
@@ -919,7 +921,8 @@ void AES_C_encrypt(const uint8_t *in, uint8_t *out, const void *k) {
 #if (__ARM_MAX_ARCH__ <= 0)
 void AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key) {
 #else
-void AES_C_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key) {
+void AES_C_decrypt(const unsigned char *in, unsigned char *out, const void *k) {
+    auto key = (AES_KEY*) k;
 #endif
     const u32 *rk;
     u32 s0, s1, s2, s3, t0, t1, t2, t3;
