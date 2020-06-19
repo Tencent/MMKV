@@ -21,6 +21,7 @@
 #include "CodedInputDataCrypt.h"
 #include "PBUtility.h"
 #include <cerrno>
+#include <cstring>
 #include <stdexcept>
 
 #ifdef MMKV_APPLE

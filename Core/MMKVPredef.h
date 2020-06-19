@@ -24,6 +24,7 @@
 #ifdef __cplusplus
 
 #include <string>
+#include <vector>
 #include <unordered_map>
 
 constexpr auto MMKV_VERSION = "v1.1.2";
