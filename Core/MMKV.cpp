@@ -809,7 +809,11 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
         }
         auto itr = m_dicCrypt.find(key);
         if (itr != m_dicCrypt.end()) {
+#ifdef MMKV_APPLE
             auto ret = appendDataWithKey(data, key, itr->second, isDataHolder);
+#else
+            auto ret = appendDataWithKey(data, key, isDataHolder);
+#endif
             if (!ret.first) {
                 return false;
             }
@@ -868,7 +872,11 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
         if (itr != m_dicCrypt.end()) {
             m_hasFullWriteback = false;
             static MMBuffer nan;
+#ifdef MMKV_APPLE
             auto ret = appendDataWithKey(nan, key, itr->second);
+#else
+            auto ret = appendDataWithKey(nan, key);
+#endif
             if (ret.first) {
 #ifdef MMKV_APPLE
                 [itr->first release];
@@ -994,29 +1002,6 @@ MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bo
     MMBuffer keyData(basePtr + kvHolder.offset, rawKeySize, MMBufferNoCopy);
 
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
-}
-
-pair<bool, KeyValueHolder>
-MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {
-#ifndef MMKV_APPLE
-    return appendDataWithKey(data, key, isDataHolder);
-#else
-    if (kvHolder.type != KeyValueHolderType_Offset) {
-        return appendDataWithKey(data, key, isDataHolder);
-    }
-    SCOPED_LOCK(m_exclusiveProcessLock);
-
-    uint32_t keyLength = kvHolder.keySize;
-    // size needed to encode the key
-    size_t rawKeySize = keyLength + pbRawVarint32Size(keyLength);
-
-    auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
-    MMBuffer keyData(rawKeySize);
-    AESCrypt decrypter = m_crypter->cloneWithStatus(*kvHolder.cryptStatus());
-    decrypter.decrypt(basePtr + kvHolder.offset, keyData.getPtr(), rawKeySize);
-
-    return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
-#endif
 }
 
 bool MMKV::fullWriteback(AESCrypt *newCrypter) {

@@ -72,13 +72,14 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
     length -= decryptedBytesLeft;
 
     if (m_decrypter.m_number != 0) {
-        auto alignCrypter = AES_KEY_LEN - m_decrypter.m_number;
+        constexpr auto S_AES_KEY_LEN = static_cast<int32_t>(AES_KEY_LEN);
+        auto alignCrypter = S_AES_KEY_LEN - m_decrypter.m_number;
         auto s_length = static_cast<int32_t>(length);
         s_length -= alignCrypter; // might be negative
-        s_length = ((s_length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
+        s_length = ((s_length + S_AES_KEY_LEN - 1) / S_AES_KEY_LEN) * S_AES_KEY_LEN;
         s_length += alignCrypter;
-        assert(s_length >= length);
-        length = s_length;
+        assert(static_cast<size_t>(s_length) >= length);
+        length = static_cast<size_t>(s_length);
     } else {
         length = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
     }
@@ -121,6 +122,8 @@ void CodedInputDataCrypt::skipBytes(size_t length) {
         return;
     }
     length -= decryptedBytesLeft;
+    // if this happens, we need a optimization like the alignCrypter above
+    assert(m_decrypter.m_number == 0);
 
     for (size_t round = 0, total = (length + AES_KEY_LEN - 1) / AES_KEY_LEN; round < total; round++) {
         m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer, AES_KEY_LEN);

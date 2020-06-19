@@ -31,6 +31,7 @@
 #    include "PBUtility.h"
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
+#    include "aes/AESCrypt.h"
 #    include <sys/utsname.h>
 
 #    ifdef MMKV_IOS
@@ -51,6 +52,7 @@ using namespace mmkv;
 
 extern ThreadLock *g_instanceLock;
 extern MMKVPath_t g_rootDir;
+constexpr uint32_t Fixed32Size = pbFixed32Size();
 
 enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
 static void GetAppleMachineInfo(int &device, int &version);
@@ -201,6 +203,25 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
         }
     }
     return nil;
+}
+
+pair<bool, KeyValueHolder>
+MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {
+    if (kvHolder.type != KeyValueHolderType_Offset) {
+        return appendDataWithKey(data, key, isDataHolder);
+    }
+    SCOPED_LOCK(m_exclusiveProcessLock);
+
+    uint32_t keyLength = kvHolder.keySize;
+    // size needed to encode the key
+    size_t rawKeySize = keyLength + pbRawVarint32Size(keyLength);
+
+    auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+    MMBuffer keyData(rawKeySize);
+    AESCrypt decrypter = m_crypter->cloneWithStatus(*kvHolder.cryptStatus());
+    decrypter.decrypt(basePtr + kvHolder.offset, keyData.getPtr(), rawKeySize);
+
+    return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
 }
 
 NSArray *MMKV::allKeys() {
