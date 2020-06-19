@@ -142,11 +142,6 @@ class MMKV {
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 #endif
 
-#if defined(MMKV_IOS)
-    typedef void (^WriteBlock)(void);
-    bool protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block);
-#endif
-
 public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);

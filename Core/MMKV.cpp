@@ -38,6 +38,10 @@
 #include <cstdio>
 #include <cstring>
 
+#ifdef MMKV_IOS
+#    include "MMKV_OSX.h"
+#endif
+
 #ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
@@ -1130,6 +1134,7 @@ static void memmoveDictionary(MMKVMapCrypt &dic,
             }
         }
         // do the move
+        // TODO: opt first section when (section.offset == ItemSizeHolderSize && encrypter == decrypter), usually occurs on continuous insertion
         auto basePtr = ptr + Fixed32Size;
         for (auto &section : dataSections) {
             auto crypter = decrypter->cloneWithStatus(*get<2>(section));

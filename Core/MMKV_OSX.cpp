@@ -57,6 +57,8 @@ constexpr uint32_t Fixed32Size = pbFixed32Size();
 enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
 static void GetAppleMachineInfo(int &device, int &version);
 
+MMKV_NAMESPACE_BEGIN
+
 #    ifdef MMKV_IOS
 MLockPtr::MLockPtr(void *ptr, size_t size) : m_lockDownSize(0), m_lockedPtr(nullptr) {
     // calc ptr to be mlock()
@@ -79,8 +81,6 @@ MLockPtr::~MLockPtr() {
 }
 
 #    endif
-
-MMKV_NAMESPACE_BEGIN
 
 extern ThreadOnceToken_t once_control;
 extern void initialize();
@@ -115,7 +115,7 @@ void MMKV::setIsInBackground(bool isInBackground) {
     MMKVInfo("g_isInBackground:%d", g_isInBackground);
 }
 
-bool MMKV::protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block) {
+bool protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block) {
     if (g_isInBackground) {
         MLockPtr mlockPtr(ptr, size);
         if (mlockPtr.isLocked()) {
