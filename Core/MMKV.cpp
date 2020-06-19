@@ -806,7 +806,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     if (m_crypter) {
         if (isDataHolder) {
             auto sizeNeededForData = pbRawVarint32Size((uint32_t) data.length()) + data.length();
-            if (sizeNeededForData <= sizeof(KeyValueHolderCrypt) * 2) {
+            if (!KeyValueHolderCrypt::isValueStoredAsOffset(sizeNeededForData)) {
                 data = MiniPBCoder::encodeDataWithObject(data);
                 isDataHolder = false;
             }
@@ -821,7 +821,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
             if (!ret.first) {
                 return false;
             }
-            if (ret.second.valueSize > sizeof(KeyValueHolderCrypt) * 2) {
+            if (KeyValueHolderCrypt::isValueStoredAsOffset(ret.second.valueSize)) {
                 KeyValueHolderCrypt kvHolder(ret.second.keySize, ret.second.valueSize, ret.second.offset);
                 memcpy(kvHolder.cryptStatus(), &t_status, sizeof(t_status));
                 itr->second = move(kvHolder);
@@ -833,7 +833,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
             if (!ret.first) {
                 return false;
             }
-            if (ret.second.valueSize > sizeof(KeyValueHolderCrypt) * 2) {
+            if (KeyValueHolderCrypt::isValueStoredAsOffset(ret.second.valueSize)) {
                 auto r = m_dicCrypt.emplace(
                     key, KeyValueHolderCrypt(ret.second.keySize, ret.second.valueSize, ret.second.offset));
                 if (r.second) {
@@ -929,7 +929,7 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
     }
 
     if (m_crypter) {
-        if (valueLength > sizeof(KeyValueHolderCrypt) * 2) {
+        if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
             m_crypter->getCurStatus(t_status);
         }
     }

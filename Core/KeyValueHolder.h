@@ -82,6 +82,10 @@ struct KeyValueHolderCrypt {
     static constexpr size_t SmallBufferSize() {
         return sizeof(KeyValueHolderCrypt) - offsetof(KeyValueHolderCrypt, value);
     }
+    
+    static bool isValueStoredAsOffset(size_t valueSize) {
+        return valueSize > (sizeof(KeyValueHolderCrypt) * 2);
+    }
 
     KeyValueHolderCrypt() = default;
     KeyValueHolderCrypt(const void *valuePtr, size_t valueLength);
