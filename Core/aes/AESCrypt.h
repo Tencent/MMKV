@@ -40,6 +40,8 @@ struct AESCryptStatus {
 
 #pragma pack(pop)
 
+struct CodedInputDataCrypt;
+
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
     bool m_isClone = false;
@@ -80,6 +82,8 @@ public:
     // just forbid it for possibly misuse
     explicit AESCrypt(const AESCrypt &other) = delete;
     AESCrypt &operator=(const AESCrypt &other) = delete;
+
+    friend CodedInputDataCrypt;
 
 #ifndef NDEBUG
     // check if AESCrypt is encrypt-decrypt full-duplex

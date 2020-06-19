@@ -37,9 +37,9 @@ namespace mmkv {
 CodedInputDataCrypt::CodedInputDataCrypt(const void *oData, size_t length, AESCrypt &crypt)
     : m_ptr((uint8_t *) oData), m_size(length), m_position(0), m_decryptPosition(0), m_decrypter(crypt) {
     m_decryptBufferSize = AES_KEY_LEN * 2;
-    m_decryptBufferPosition = 0;
-    m_decryptBufferDiscardPosition = 0;
-    m_decryptBufferDecryptPosition = 0;
+    m_decryptBufferPosition = static_cast<size_t>(crypt.m_number);
+    m_decryptBufferDiscardPosition = m_decryptBufferPosition;
+    m_decryptBufferDecryptPosition = m_decryptBufferPosition;
     m_decryptBuffer = (uint8_t *) malloc(m_decryptBufferSize);
     if (!m_decryptBuffer) {
         throw runtime_error(strerror(errno));
@@ -71,7 +71,17 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
     }
     length -= decryptedBytesLeft;
 
-    length = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
+    if (m_decrypter.m_number != 0) {
+        auto alignCrypter = AES_KEY_LEN - m_decrypter.m_number;
+        auto s_length = static_cast<int32_t>(length);
+        s_length -= alignCrypter; // might be negative
+        s_length = ((s_length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
+        s_length += alignCrypter;
+        assert(s_length >= length);
+        length = s_length;
+    } else {
+        length = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
+    }
     auto bytesLeftInSrc = m_size - m_decryptPosition;
     length = min(bytesLeftInSrc, length);
 
@@ -101,6 +111,7 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
     m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer + m_decryptBufferDecryptPosition, length);
     m_decryptPosition += length;
     m_decryptBufferDecryptPosition += length;
+    assert(m_decryptPosition == m_size || m_decrypter.m_number == 0);
 }
 
 void CodedInputDataCrypt::skipBytes(size_t length) {

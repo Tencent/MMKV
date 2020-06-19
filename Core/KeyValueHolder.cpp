@@ -78,8 +78,6 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLengt
     : type(KeyValueHolderType_Offset), keySize(static_cast<uint16_t>(keyLength)), valueSize(valueLength), offset(off) {
 
     pbKeyValueSize = static_cast<uint8_t>(pbRawVarint32Size(keySize) + pbRawVarint32Size(valueSize));
-    // assert(iv);
-    // memcpy(aesVector, iv, sizeof(aesVector));
 }
 
 KeyValueHolderCrypt::KeyValueHolderCrypt(KeyValueHolderCrypt &&other) noexcept {

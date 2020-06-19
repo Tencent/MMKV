@@ -108,7 +108,7 @@ struct KeyValueHolderCrypt {
     KeyValueHolderCrypt &operator=(const KeyValueHolderCrypt &other) = delete;
 
 #ifndef NDEBUG
-        static void testAESToMMBuffer();
+    static void testAESToMMBuffer();
 #endif
 };
 
