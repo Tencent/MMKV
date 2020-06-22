@@ -19,6 +19,7 @@
  */
 
 #include "MMBuffer.h"
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <utility>

@@ -28,6 +28,7 @@
     <ClCompile Include="MMBuffer.cpp" />
     <ClCompile Include="MMKV.cpp" />
     <ClCompile Include="MMKVLog.cpp" />
+    <ClCompile Include="MMKV_IO.cpp" />
     <ClCompile Include="PBUtility.cpp" />
     <ClCompile Include="ThreadLock_Win32.cpp" />
   </ItemGroup>
@@ -56,6 +57,7 @@
     <ClInclude Include="MMKVLog.h" />
     <ClInclude Include="MMKVMetaInfo.hpp" />
     <ClInclude Include="MMKVPredef.h" />
+    <ClInclude Include="MMKV_IO.h" />
     <ClInclude Include="PBEncodeItem.hpp" />
     <ClInclude Include="PBUtility.h" />
     <ClInclude Include="ScopedLock.hpp" />

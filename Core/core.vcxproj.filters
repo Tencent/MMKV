@@ -62,6 +62,7 @@
     </ClCompile>
     <ClCompile Include="KeyValueHolder.cpp" />
     <ClCompile Include="CodedInputDataCrypt.cpp" />
+    <ClCompile Include="MMKV_IO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodedInputData.h">
@@ -144,5 +145,6 @@
     </ClInclude>
     <ClInclude Include="KeyValueHolder.h" />
     <ClInclude Include="CodedInputDataCrypt.h" />
+    <ClInclude Include="MMKV_IO.h" />
   </ItemGroup>
 </Project>

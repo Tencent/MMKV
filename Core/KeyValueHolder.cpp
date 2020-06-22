@@ -21,6 +21,7 @@
 #include "KeyValueHolder.h"
 #include "PBUtility.h"
 #include "aes/AESCrypt.h"
+#include <cerrno>
 #include <cstring>
 #include <stdexcept>
 

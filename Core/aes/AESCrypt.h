@@ -40,7 +40,7 @@ struct AESCryptStatus {
 
 #pragma pack(pop)
 
-struct CodedInputDataCrypt;
+class CodedInputDataCrypt;
 
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {

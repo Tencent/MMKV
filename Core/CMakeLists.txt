@@ -62,6 +62,8 @@ add_library(core
         MMKV.h
         MMKV.cpp
         MMKV_Android.cpp
+        MMKV_IO.h
+        MMKV_IO.cpp
         MMKV_OSX.cpp
         MMKVLog.h
         MMKVLog.cpp
