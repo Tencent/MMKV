@@ -1074,6 +1074,7 @@ memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt 
         // do the move
         auto basePtr = ptr + Fixed32Size;
         for (auto &section : dataSections) {
+            // memmove() should handle this well: src == dst
             memmove(writePtr, basePtr + section.first, section.second);
             writePtr += section.second;
         }
@@ -1134,7 +1135,6 @@ static void memmoveDictionary(MMKVMapCrypt &dic,
             }
         }
         // do the move
-        // TODO: opt first section when (section.offset == ItemSizeHolderSize && encrypter == decrypter), usually occurs on continuous insertion
         auto basePtr = ptr + Fixed32Size;
         for (auto &section : dataSections) {
             auto crypter = decrypter->cloneWithStatus(*get<2>(section));

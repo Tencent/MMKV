@@ -66,6 +66,8 @@ public:
 
     void decrypt(const void *input, void *output, size_t length);
 
+    // void skipDecrypt(const void *input, size_t length);
+
     void getCurStatus(AESCryptStatus &status);
     void statusBeforeDecrypt(const void *input, const void *output, size_t length, AESCryptStatus &status);
 

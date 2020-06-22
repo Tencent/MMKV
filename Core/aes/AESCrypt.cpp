@@ -89,6 +89,28 @@ void AESCrypt::decrypt(const void *input, void *output, size_t length) {
     AES_cfb128_decrypt((const uint8_t *) input, (uint8_t *) output, length, m_aesKey, m_vector, &m_number);
 }
 
+/*void AESCrypt::skipDecrypt(const void *input, size_t length) {
+    if (!input || length == 0) {
+        return;
+    }
+    auto readPtr = (const uint8_t*) input;
+    uint8_t buffer[AES_KEY_LEN];
+    if (m_number) {
+        auto size = std::min(static_cast<size_t>(m_number), length);
+        AES_cfb128_decrypt(readPtr, buffer, size, m_aesKey, m_vector, &m_number);
+        readPtr += size;
+        length -= size;
+    }
+    while (length >= AES_KEY_LEN) {
+        AES_cfb128_decrypt(readPtr, buffer, AES_KEY_LEN, m_aesKey, m_vector, &m_number);
+        readPtr += AES_KEY_LEN;
+        length -= AES_KEY_LEN;
+    }
+    if (length) {
+        AES_cfb128_decrypt(readPtr, buffer, length, m_aesKey, m_vector, &m_number);
+    }
+}*/
+
 void AESCrypt::fillRandomIV(void *vector) {
     if (!vector) {
         return;

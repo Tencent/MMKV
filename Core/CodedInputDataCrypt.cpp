@@ -100,7 +100,7 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
             bytesLeftInBuffer = m_decryptBufferSize - m_decryptBufferDecryptPosition;
         }
     }
-    // still not enough sapce, try realloc
+    // still no enough sapce, try realloc()
     if (bytesLeftInBuffer < length) {
         auto newSize = m_decryptBufferSize + length;
         auto newBuffer = realloc(m_decryptBuffer, newSize);
@@ -126,12 +126,22 @@ void CodedInputDataCrypt::skipBytes(size_t length) {
     // if this happens, we need a optimization like the alignCrypter above
     assert(m_decrypter.m_number == 0);
 
-    for (size_t round = 0, total = (length + AES_KEY_LEN - 1) / AES_KEY_LEN; round < total; round++) {
+    size_t alignSize = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
+    auto bytesLeftInSrc = m_size - m_decryptPosition;
+    auto size = min(alignSize, bytesLeftInSrc);
+    for (size_t index = 0, round = size / AES_KEY_LEN; index < round; index++) {
         m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer, AES_KEY_LEN);
         m_decryptPosition += AES_KEY_LEN;
+        size -= AES_KEY_LEN;
+    }
+    if (size) {
+        m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer, size);
+        m_decryptPosition += size;
+        m_decryptBufferDecryptPosition = size;
+    } else {
+        m_decryptBufferDecryptPosition = AES_KEY_LEN;
     }
     m_decryptBufferPosition = length % AES_KEY_LEN;
-    m_decryptBufferDecryptPosition = AES_KEY_LEN;
 }
 
 inline void CodedInputDataCrypt::statusBeforeDecrypt(size_t rollbackSize, AESCryptStatus &status) {
