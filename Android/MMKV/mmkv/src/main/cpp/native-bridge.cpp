@@ -118,7 +118,9 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     auto hwcaps = getauxval(AT_HWCAP);
     if (hwcaps & HWCAP_AES) {
         AES_set_encrypt_key = openssl_aes_armv8_set_encrypt_key;
+        AES_set_decrypt_key = openssl_aes_armv8_set_decrypt_key;
         AES_encrypt = openssl_aes_armv8_encrypt;
+        AES_decrypt = openssl_aes_armv8_decrypt;
         MMKVInfo("armv8 AES instructions is supported");
     }
     if (hwcaps & HWCAP_CRC32) {
