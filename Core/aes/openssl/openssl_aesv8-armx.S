@@ -189,10 +189,10 @@ Lenc_key_abort:
 .align    5
 _openssl_aes_arm_set_decrypt_key:
 #else // __ANDROID__
-.globl    openssl_aes_arm_set_decrypt_key
+.globl    openssl_aes_armv8_set_decrypt_key
 
 .align    5
-openssl_aes_arm_set_decrypt_key:
+openssl_aes_armv8_set_decrypt_key:
 #endif // __ANDROID__
     stp    x29,x30,[sp,#-16]!
     add    x29,sp,#0

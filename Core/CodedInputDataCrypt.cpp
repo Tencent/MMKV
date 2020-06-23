@@ -60,6 +60,7 @@ void CodedInputDataCrypt::seek(size_t addedSize) {
     if (m_position > m_size) {
         throw out_of_range("OutOfSpace");
     }
+    assert(m_position % AES_KEY_LEN == m_decrypter.m_number);
 }
 
 void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
@@ -117,6 +118,8 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
 }
 
 void CodedInputDataCrypt::skipBytes(size_t length) {
+    m_position += length;
+
     auto decryptedBytesLeft = m_decryptBufferDecryptPosition - m_decryptBufferPosition;
     if (decryptedBytesLeft >= length) {
         m_decryptBufferPosition += length;
@@ -129,6 +132,7 @@ void CodedInputDataCrypt::skipBytes(size_t length) {
     size_t alignSize = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
     auto bytesLeftInSrc = m_size - m_decryptPosition;
     auto size = min(alignSize, bytesLeftInSrc);
+    decryptedBytesLeft = size - length;
     for (size_t index = 0, round = size / AES_KEY_LEN; index < round; index++) {
         m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer, AES_KEY_LEN);
         m_decryptPosition += AES_KEY_LEN;
@@ -137,11 +141,14 @@ void CodedInputDataCrypt::skipBytes(size_t length) {
     if (size) {
         m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer, size);
         m_decryptPosition += size;
+        m_decryptBufferPosition = size - decryptedBytesLeft;
         m_decryptBufferDecryptPosition = size;
     } else {
+        m_decryptBufferPosition = AES_KEY_LEN - decryptedBytesLeft;
         m_decryptBufferDecryptPosition = AES_KEY_LEN;
     }
-    m_decryptBufferPosition = length % AES_KEY_LEN;
+    assert(m_decryptBufferPosition <= m_decryptBufferDecryptPosition);
+    assert(m_decryptPosition - m_decryptBufferDecryptPosition + m_decryptBufferPosition == m_position);
 }
 
 inline void CodedInputDataCrypt::statusBeforeDecrypt(size_t rollbackSize, AESCryptStatus &status) {
@@ -151,6 +158,7 @@ inline void CodedInputDataCrypt::statusBeforeDecrypt(size_t rollbackSize, AESCry
 }
 
 int8_t CodedInputDataCrypt::readRawByte() {
+    assert(m_position <= m_decryptPosition);
     if (m_position == m_size) {
         auto msg = "reach end, m_position: " + to_string(m_position) + ", m_size: " + to_string(m_size);
         throw out_of_range(msg);
@@ -352,14 +360,13 @@ void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
             statusBeforeDecrypt(rollbackSize, *kvHolder.cryptStatus());
 
             skipBytes(s_size);
-            m_position += s_size;
         } else {
             consumeBytes(s_size);
 
             kvHolder.type = KeyValueHolderType_Direct;
             kvHolder = KeyValueHolderCrypt(m_decryptBuffer + m_decryptBufferPosition, s_size);
-            m_position += s_size;
             m_decryptBufferPosition += s_size;
+            m_position += s_size;
         }
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");

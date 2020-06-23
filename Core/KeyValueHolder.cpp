@@ -86,20 +86,18 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(uint32_t keyLength, uint32_t valueLengt
 }
 
 KeyValueHolderCrypt::KeyValueHolderCrypt(KeyValueHolderCrypt &&other) noexcept {
-    if (other.type == KeyValueHolderType_Direct || other.type == KeyValueHolderType_Offset) {
-        memcpy(this, &other, sizeof(other));
-    } else if (other.type == KeyValueHolderType_Memory) {
-        type = KeyValueHolderType_Memory;
-        memSize = other.memSize;
-        memPtr = other.memPtr;
-        other.type = KeyValueHolderType_Direct;
-    }
+    this->move(std::move(other));
 }
 
 KeyValueHolderCrypt &KeyValueHolderCrypt::operator=(KeyValueHolderCrypt &&other) noexcept {
     if (type == KeyValueHolderType_Memory && memPtr) {
         free(memPtr);
     }
+    this->move(std::move(other));
+    return *this;
+}
+
+void KeyValueHolderCrypt::move(KeyValueHolderCrypt &&other) noexcept {
     if (other.type == KeyValueHolderType_Direct || other.type == KeyValueHolderType_Offset) {
         memcpy(this, &other, sizeof(other));
     } else if (other.type == KeyValueHolderType_Memory) {
@@ -108,7 +106,6 @@ KeyValueHolderCrypt &KeyValueHolderCrypt::operator=(KeyValueHolderCrypt &&other)
         memPtr = other.memPtr;
         other.memPtr = nullptr;
     }
-    return *this;
 }
 
 KeyValueHolderCrypt::~KeyValueHolderCrypt() {
@@ -121,16 +118,8 @@ AESCryptStatus *KeyValueHolderCrypt::cryptStatus() const {
     return (AESCryptStatus *) (&aesNumber);
 }
 
-size_t KeyValueHolderCrypt::end() const {
-    assert(type == KeyValueHolderType_Offset);
-
-    size_t size = offset;
-    size += pbKeyValueSize + keySize + valueSize;
-    return size;
-}
-
 // get decrypt data with [position, -1)
-MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
+static MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
     static uint8_t smallBuffer[16];
     auto basePtr = (uint8_t *) inputBuffer.getPtr();
     auto ptr = basePtr;
@@ -157,16 +146,13 @@ MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr, const AESCrypt *cr
         return MMBuffer((void *) value, paddedSize, MMBufferNoCopy);
     } else if (type == KeyValueHolderType_Memory) {
         return MMBuffer(memPtr, memSize, MMBufferNoCopy);
-    } else if (crypter) {
+    } else {
         auto realPtr = (uint8_t *) basePtr + offset;
         auto position = static_cast<uint32_t>(pbKeyValueSize + keySize);
         auto realSize = position + valueSize;
         auto kvBuffer = MMBuffer(realPtr, realSize, MMBufferNoCopy);
-        auto realCrypter = crypter->cloneWithStatus(*(AESCryptStatus *) &aesNumber);
-        return decryptBuffer(realCrypter, kvBuffer, position);
-    } else {
-        assert(0);
-        return MMBuffer();
+        auto decrypter = crypter->cloneWithStatus(*cryptStatus());
+        return decryptBuffer(decrypter, kvBuffer, position);
     }
 }
 

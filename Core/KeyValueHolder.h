@@ -40,8 +40,6 @@ struct KeyValueHolder {
     static uint16_t computKVSize(uint32_t keySize, uint32_t valueSize);
 
     MMBuffer toMMBuffer(const void *basePtr) const;
-
-    inline size_t end() const { return offset + computedKVSize + valueSize; }
 };
 
 enum KeyValueHolderType : uint8_t {
@@ -95,18 +93,17 @@ struct KeyValueHolderCrypt {
 
     KeyValueHolderCrypt(KeyValueHolderCrypt &&other) noexcept;
     KeyValueHolderCrypt &operator=(KeyValueHolderCrypt &&other) noexcept;
+    void move(KeyValueHolderCrypt &&other) noexcept;
 
     ~KeyValueHolderCrypt();
 
     AESCryptStatus *cryptStatus() const;
 
-    MMBuffer toMMBuffer(const void *basePtr, const AESCrypt *crypter = nullptr) const;
+    MMBuffer toMMBuffer(const void *basePtr, const AESCrypt *crypter) const;
 
     std::tuple<uint32_t, uint32_t, AESCryptStatus *> toTuple() const {
         return std::make_tuple(offset, pbKeyValueSize + keySize + valueSize, cryptStatus());
     }
-
-    size_t end() const;
 
     // those are expensive, just forbid it for possibly misuse
     explicit KeyValueHolderCrypt(const KeyValueHolderCrypt &other) = delete;

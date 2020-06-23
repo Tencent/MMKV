@@ -128,6 +128,10 @@ void initialize() {
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
     MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
+#ifndef NDEBUG
+    AESCrypt::testAESCrypt();
+    KeyValueHolderCrypt::testAESToMMBuffer();
+#endif
 }
 
 ThreadOnceToken_t once_control = ThreadOnceUninitialized;
