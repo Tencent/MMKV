@@ -22,7 +22,7 @@
 #import "ViewController+TestCaseBad.h"
 #import <MMKV/MMKV.h>
 
-@interface TestNSArchive : NSObject <NSCoding>
+@interface TestNSArchive : NSObject <NSSecureCoding>
 @property(nonatomic, strong) NSString *m_username;
 @property(nonatomic, assign) int32_t m_age;
 @property(nonatomic, assign) float m_score;
@@ -47,6 +47,10 @@
     [encoder encodeObject:self.m_username forKey:@"m_username"];
     [encoder encodeInteger:self.m_age forKey:@"m_age"];
     [encoder encodeFloat:self.m_score forKey:@"m_score"];
+}
+
++ (BOOL)supportsSecureCoding {
+    return YES;
 }
 
 @end
@@ -339,7 +343,7 @@
     NSLog(@"string = %@", [mmkv getStringForKey:@"string"]);
     NSLog(@"date = %@", [mmkv getDateForKey:@"date"]);
     NSLog(@"data = %@", [[NSString alloc] initWithData:[mmkv getDataForKey:@"data"] encoding:NSUTF8StringEncoding]);
-    NSLog(@"url = %@", [NSKeyedUnarchiver unarchiveObjectWithData:[mmkv getDataForKey:@"url"]]);
+    NSLog(@"url = %@", [NSKeyedUnarchiver unarchivedObjectOfClass:NSURL.class fromData:[mmkv getDataForKey:@"url"] error:nil]);
     NSLog(@"number_bool = %d", [mmkv getBoolForKey:@"number_bool"]);
     NSLog(@"number_char = %d", [mmkv getInt32ForKey:@"number_char"]);
     NSLog(@"number_unsigned_char = %d", [mmkv getInt32ForKey:@"number_unsigned_char"]);
@@ -621,7 +625,7 @@ MMKV *getMMKVForBatchTest() {
         for (int index = 0; index < loops; index++) {
             TestNSArchive *obj = m_arrNSCodingObjs[index];
             NSString *objKey = m_arrObjKeys[index];
-            auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
+            auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj requiringSecureCoding:YES error:nil];
             [userdefault setObject:tmp forKey:objKey];
         }
         [userdefault synchronize];
@@ -639,7 +643,7 @@ MMKV *getMMKVForBatchTest() {
         for (int index = 0; index < loops; index++) {
             NSString *objKey = m_arrObjKeys[index];
             NSData *tmp = [userdefault objectForKey:objKey];
-            [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
+            [NSKeyedUnarchiver unarchivedObjectOfClass:TestNSArchive.class fromData:tmp error:nil];
         }
         NSDate *endDate = [NSDate date];
         int cost = [endDate timeIntervalSinceDate:startDate] * 1000;

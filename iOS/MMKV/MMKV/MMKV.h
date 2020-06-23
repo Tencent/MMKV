@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#import "MMKVHandler.h"
+#import <MMKV/MMKVHandler.h>
 
 typedef NS_ENUM(NSUInteger, MMKVMode) {
     MMKVSingleProcess = 0x1,
