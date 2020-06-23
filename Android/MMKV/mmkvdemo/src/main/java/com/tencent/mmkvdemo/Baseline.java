@@ -47,6 +47,8 @@ public final class Baseline {
         m_arrIntKeys = new String[loops];
         Random r = new Random();
         for (int index = 0; index < loops; index++) {
+            //String str = "[MMKV] [Info]<MemoryFile_OSX.cpp:36>: protection on [/var/mobile/Containers/Data/Application/B93F2BD3-E0DB-49B3-9BB0-C662E2FC11D9/Documents/mmkv/cips_commoncache] is NSFileProtectionCompleteUntilFirstUserAuthentication";
+            //m_arrStrings[index] = str + "_" + r.nextInt();
             m_arrStrings[index] = "MMKV-" + r.nextInt();
             m_arrKeys[index] = "str_" + index;
             m_arrIntKeys[index] = "int_" + index;
