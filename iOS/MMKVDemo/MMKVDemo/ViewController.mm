@@ -410,7 +410,7 @@ MMKV *getMMKVForBatchTest() {
     NSData *cryptKey = nil;
     // static auto key = [NSString stringWithFormat:@"batchTest_%d", rand()];
     // auto key = @"batchTest_crypt1";
-    static auto key = @"batchTest";
+    static auto key = @"batchTest1";
     MMKV *mmkv = [MMKV mmkvWithID:key cryptKey:cryptKey];
     return mmkv;
 }

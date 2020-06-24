@@ -735,7 +735,7 @@ memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt 
         for (auto &itr : dic) {
             vec.push_back(&itr.second);
         }
-        sort(vec.begin(), vec.end(), [](auto left, auto right) { return left->offset < right->offset; });
+        sort(vec.begin(), vec.end(), [](const auto &left, const auto &right) { return left->offset < right->offset; });
 
         // merge nearby items to make memmove quicker
         vector<pair<uint32_t, uint32_t>> dataSections; // pair(offset, size)

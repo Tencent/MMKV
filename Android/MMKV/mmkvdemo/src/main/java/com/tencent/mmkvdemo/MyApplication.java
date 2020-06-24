@@ -31,7 +31,10 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
         // you can turn off logging
         //MMKV.setLogLevel(MMKVLogLevel.LevelNone);
 
+        // log redirecting & recover logic
         MMKV.registerHandler(this);
+
+        // content change notification
         MMKV.registerContentChangeNotify(this);
     }
 
@@ -79,6 +82,6 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
 
     @Override
     public void onContentChangedByOuterProcess(String mmapID) {
-        Log.i("content changed", mmapID);
+        Log.i("MMKV", "other process has changed content of : " + mmapID);
     }
 }

@@ -61,7 +61,8 @@ public abstract class BenchMarkBaseService extends Service {
         Log.i("MMKV", "onCreate BenchMarkBaseService");
 
         MMKV.initialize(this);
-        //MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
+        MMKV.unregisterHandler();
+        MMKV.unregisterContentChangeNotify();
         {
             long startTime = System.currentTimeMillis();
 
