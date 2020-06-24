@@ -80,10 +80,9 @@ struct KeyValueHolderCrypt {
     static constexpr size_t SmallBufferSize() {
         return sizeof(KeyValueHolderCrypt) - offsetof(KeyValueHolderCrypt, value);
     }
-    
-    // TODO: tune this judge
+
     static bool isValueStoredAsOffset(size_t valueSize) {
-        return valueSize > (sizeof(KeyValueHolderCrypt) * 2);
+        return valueSize >= 256;
     }
 
     KeyValueHolderCrypt() = default;
