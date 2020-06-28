@@ -20,7 +20,7 @@
 
 #ifndef MMKV_CODEDOUTPUTDATA_H
 #define MMKV_CODEDOUTPUTDATA_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 

@@ -20,7 +20,7 @@
 
 #ifndef KeyValueHolder_hpp
 #define KeyValueHolder_hpp
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMBuffer.h"
 
@@ -81,9 +81,7 @@ struct KeyValueHolderCrypt {
         return sizeof(KeyValueHolderCrypt) - offsetof(KeyValueHolderCrypt, value);
     }
 
-    static bool isValueStoredAsOffset(size_t valueSize) {
-        return valueSize >= 256;
-    }
+    static bool isValueStoredAsOffset(size_t valueSize) { return valueSize >= 256; }
 
     KeyValueHolderCrypt() = default;
     KeyValueHolderCrypt(const void *valuePtr, size_t valueLength);

@@ -20,7 +20,7 @@
 
 #ifndef MMKV_MAMERYFILE_H
 #define MMKV_MAMERYFILE_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 

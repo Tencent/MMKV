@@ -49,6 +49,7 @@
 
 using namespace std;
 using namespace mmkv;
+using KVHolderRet_t = std::pair<bool, KeyValueHolder>;
 
 constexpr uint32_t Fixed32Size = pbFixed32Size();
 
@@ -586,8 +587,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
     return false;
 }
 
-pair<bool, KeyValueHolder>
-MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
+KVHolderRet_t MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
     auto isKeyEncoded = (originKeyLength < keyData.length());
     auto keyLength = static_cast<uint32_t>(keyData.length());
     auto valueLength = static_cast<uint32_t>(data.length());
@@ -650,7 +650,7 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
     return make_pair(true, KeyValueHolder(originKeyLength, valueLength, offset));
 }
 
-pair<bool, KeyValueHolder> MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
+KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
 #ifdef MMKV_APPLE
     auto oData = [key dataUsingEncoding:NSUTF8StringEncoding];
     auto keyData = MMBuffer(oData, MMBufferNoCopy);
@@ -660,8 +660,7 @@ pair<bool, KeyValueHolder> MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey
     return doAppendDataWithKey(data, keyData, isDataHolder, static_cast<uint32_t>(keyData.length()));
 }
 
-pair<bool, KeyValueHolder>
-MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bool isDataHolder) {
+KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bool isDataHolder) {
     SCOPED_LOCK(m_exclusiveProcessLock);
 
     uint32_t keyLength = kvHolder.keySize;

@@ -20,12 +20,12 @@
 
 #ifndef CodedInputDataCrypt_h
 #define CodedInputDataCrypt_h
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 
-#include "MMBuffer.h"
 #include "KeyValueHolder.h"
+#include "MMBuffer.h"
 #include "aes/AESCrypt.h"
 #include <cstdint>
 #include <string>

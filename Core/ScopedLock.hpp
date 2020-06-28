@@ -20,7 +20,7 @@
 
 #ifndef MMKV_SCOPEDLOCK_HPP
 #define MMKV_SCOPEDLOCK_HPP
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 namespace mmkv {
 

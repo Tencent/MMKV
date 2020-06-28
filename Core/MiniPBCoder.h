@@ -20,10 +20,11 @@
 
 #ifndef MMKV_MINIPBCODER_H
 #define MMKV_MINIPBCODER_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 
+#include "KeyValueHolder.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
 #include "PBEncodeItem.hpp"
@@ -31,7 +32,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "KeyValueHolder.h"
 
 namespace mmkv {
 
@@ -97,7 +97,7 @@ public:
 
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position = 0);
-    
+
     // return empty result if there's any error
     static void decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position = 0);
 

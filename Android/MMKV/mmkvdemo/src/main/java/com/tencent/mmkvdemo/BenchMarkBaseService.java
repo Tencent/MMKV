@@ -75,7 +75,8 @@ public abstract class BenchMarkBaseService extends Service {
         m_arrKeys = new String[m_loops];
         m_arrIntKeys = new String[m_loops];
         Random r = new Random();
-        final String filename = "mmkv/Android/MMKV/mmkvdemo/src/main/java/com/tencent/mmkvdemo/BenchMarkBaseService.java_";
+        final String filename =
+            "mmkv/Android/MMKV/mmkvdemo/src/main/java/com/tencent/mmkvdemo/BenchMarkBaseService.java_";
         for (int index = 0; index < m_loops; index++) {
             //String str = "[MMKV] [Info]<MemoryFile_OSX.cpp:36>: protection on [/var/mobile/Containers/Data/Application/B93F2BD3-E0DB-49B3-9BB0-C662E2FC11D9/Documents/mmkv/cips_commoncache] is NSFileProtectionCompleteUntilFirstUserAuthentication_";
             //m_arrStrings[index] = str + r.nextInt();

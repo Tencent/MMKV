@@ -20,7 +20,7 @@
 
 #ifndef MMKV_MMKVMETAINFO_H
 #define MMKV_MMKVMETAINFO_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "aes/AESCrypt.h"
 #include <cstdint>

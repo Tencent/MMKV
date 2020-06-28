@@ -20,10 +20,10 @@
 
 #ifndef AES_CRYPT_H_
 #define AES_CRYPT_H_
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
-#include <cstddef>
 #include "MMKVPredef.h"
+#include <cstddef>
 
 namespace openssl {
 struct AES_KEY;

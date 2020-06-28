@@ -20,12 +20,12 @@
 
 #ifndef MMKV_CODEDINPUTDATA_H
 #define MMKV_CODEDINPUTDATA_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 
-#include "MMBuffer.h"
 #include "KeyValueHolder.h"
+#include "MMBuffer.h"
 #include <cstdint>
 #include <string>
 

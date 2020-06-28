@@ -22,11 +22,11 @@
 #define MMKV_MMKV_H
 #ifdef  __cplusplus
 
+#include "KeyValueHolder.h"
 #include "MMBuffer.h"
 #include "MMKVPredef.h"
 #include <cstdint>
 #include <vector>
-#include "KeyValueHolder.h"
 
 namespace mmkv {
 class CodedOutputData;
@@ -128,12 +128,16 @@ class MMKV {
 
     bool removeDataForKey(MMKVKey_t key);
 
+    using KVHolderRet_t = std::pair<bool, mmkv::KeyValueHolder>;
     // isDataHolder: avoid memory copying
-    std::pair<bool, mmkv::KeyValueHolder> doAppendDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder, uint32_t keyLength);
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
+    KVHolderRet_t doAppendDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder, uint32_t keyLength);
+    KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
+    KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
 #ifdef MMKV_APPLE
-    std::pair<bool, mmkv::KeyValueHolder> appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, const mmkv::KeyValueHolderCrypt &kvHolder, bool isDataHolder = false);
+    KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data,
+                                    MMKVKey_t key,
+                                    const mmkv::KeyValueHolderCrypt &kvHolder,
+                                    bool isDataHolder = false);
 #endif
 
     void notifyContentChanged();

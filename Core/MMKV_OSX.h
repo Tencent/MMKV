@@ -31,13 +31,13 @@ class MLockPtr {
 
 public:
     MLockPtr(void *ptr, size_t size);
-    
+
     ~MLockPtr();
 
     bool isLocked() const {
         return (m_lockedPtr != nullptr);
     }
-    
+
     // just forbid it for possibly misuse
     explicit MLockPtr(const MLockPtr &other) = delete;
     MLockPtr &operator=(const MLockPtr &other) = delete;

@@ -20,7 +20,7 @@
 
 #ifndef MMKV_IO_h
 #define MMKV_IO_h
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKV.h"
 #include <string>
