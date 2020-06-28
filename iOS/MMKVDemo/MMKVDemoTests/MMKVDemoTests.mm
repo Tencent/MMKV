@@ -487,7 +487,7 @@ using namespace std;
     XCTAssertEqualObjects([mmkv getStringForKey:@"string"], [userDefault stringForKey:@"string"]);
     [self compareDate:[mmkv getDateForKey:@"date"] withDate:[userDefault objectForKey:@"date"]];
     XCTAssertEqualObjects([mmkv getDataForKey:@"data"], [userDefault dataForKey:@"data"]);
-    XCTAssertEqualObjects([NSKeyedUnarchiver unarchiveObjectWithData:[mmkv getDataForKey:@"url"]], [userDefault URLForKey:@"url"]);
+    XCTAssertEqualObjects([NSKeyedUnarchiver unarchivedObjectOfClass:NSURL.class fromData:[mmkv getDataForKey:@"url"] error:nil], [userDefault URLForKey:@"url"]);
 
     number = [userDefault objectForKey:@"number_bool"];
     XCTAssertEqual([mmkv getBoolForKey:@"number_bool"], number.boolValue);

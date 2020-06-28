@@ -45,7 +45,7 @@ struct MMKVMetaInfo {
     uint32_t m_crcDigest = 0;
     uint32_t m_version = MMKVVersionSequence;
     uint32_t m_sequence = 0; // full write-back count
-    unsigned char m_vector[AES_KEY_LEN] = {};
+    uint8_t m_vector[AES_KEY_LEN] = {};
     uint32_t m_actualSize = 0;
 
     // confirmed info: it's been synced to file

@@ -158,8 +158,7 @@ AES_Te:
 .word	0x1B000000, 0x36000000, 0, 0, 0, 0, 0, 0
 
 
-/* void openssl_aes_arm_encrypt(const unsigned char *in, unsigned char *out,
-* 		 const AES_KEY *key) {
+/* void openssl_aes_arm_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
 */
 #ifndef __ANDROID__
 .globl	_openssl_aes_arm_encrypt
@@ -963,8 +962,7 @@ AES_Td:
 .byte    0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 
 
-// void AES_decrypt(const unsigned char *in, unsigned char *out,
-//          const AES_KEY *key) {
+// void AES_decrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
 #ifndef __ANDROID__
 .globl    _openssl_aes_arm_decrypt
 #ifdef __thumb2__

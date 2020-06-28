@@ -40,11 +40,11 @@ uLong crc32(uLong crc, const Bytef *buf, z_size_t len);
 #    ifdef __aarch64__
 
 namespace mmkv {
-uint32_t armv8_crc32(uint32_t crc, const unsigned char *buf, size_t len);
+uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len);
 }
 
 // have to check CPU's instruction set dynamically
-typedef uint32_t (*CRC32_Func_t)(uint32_t crc, const unsigned char *buf, size_t len);
+typedef uint32_t (*CRC32_Func_t)(uint32_t crc, const uint8_t *buf, size_t len);
 extern CRC32_Func_t CRC32;
 
 #    else // __aarch64__

@@ -24,7 +24,7 @@
 
 #    include <zlib.h>
 
-static inline uint32_t _crc32Wrap(uint32_t crc, const unsigned char *buf, size_t len) {
+static inline uint32_t _crc32Wrap(uint32_t crc, const uint8_t *buf, size_t len) {
     return static_cast<uint32_t>(::crc32(crc, buf, static_cast<uInt>(len)));
 }
 
@@ -49,7 +49,7 @@ TARGET_ARM_CRC static inline uint32_t __crc32d(uint32_t a, uint64_t b) {
     return __builtin_arm_crc32d(a, b);
 }
 
-TARGET_ARM_CRC static inline uint32_t armv8_crc32_small(uint32_t crc, const unsigned char *buf, size_t len) {
+TARGET_ARM_CRC static inline uint32_t armv8_crc32_small(uint32_t crc, const uint8_t *buf, size_t len) {
     if (len >= sizeof(uint32_t)) {
         crc = __crc32w(crc, *(const uint32_t *) buf);
         buf += sizeof(uint32_t);
@@ -69,7 +69,7 @@ TARGET_ARM_CRC static inline uint32_t armv8_crc32_small(uint32_t crc, const unsi
 
 namespace mmkv {
 
-TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const unsigned char *buf, size_t len) {
+TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len) {
 
     crc = crc ^ 0xffffffffUL;
 
@@ -102,7 +102,7 @@ TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const unsigned char *buf, size
     }
 
     if (len) {
-        crc = armv8_crc32_small(crc, (const unsigned char *) ptr64, len);
+        crc = armv8_crc32_small(crc, (const uint8_t *) ptr64, len);
     }
 
     return crc ^ 0xffffffffUL;

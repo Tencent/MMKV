@@ -919,9 +919,9 @@ void AES_C_encrypt(const uint8_t *in, uint8_t *out, const void *k) {
  * in and out can overlap
  */
 #if (__ARM_MAX_ARCH__ <= 0)
-void AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key) {
+void AES_decrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
 #else
-void AES_C_decrypt(const unsigned char *in, unsigned char *out, const void *k) {
+void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *k) {
     auto key = (AES_KEY*) k;
 #endif
     const u32 *rk;
