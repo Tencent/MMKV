@@ -37,8 +37,6 @@ struct KeyValueHolder {
     KeyValueHolder() = default;
     KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_t offset);
 
-    static uint16_t computKVSize(uint32_t keySize, uint32_t valueSize);
-
     MMBuffer toMMBuffer(const void *basePtr) const;
 };
 

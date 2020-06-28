@@ -29,13 +29,8 @@ namespace mmkv {
 
 KeyValueHolder::KeyValueHolder(uint32_t keyLength, uint32_t valueLength, uint32_t off)
     : keySize(static_cast<uint16_t>(keyLength)), valueSize(valueLength), offset(off) {
-    computedKVSize = computKVSize(keyLength, valueLength);
-}
-
-uint16_t KeyValueHolder::computKVSize(uint32_t keySize, uint32_t valueSize) {
-    auto computedKVSize = static_cast<uint16_t>(keySize + pbRawVarint32Size(keySize));
+    computedKVSize = keySize + static_cast<uint16_t>(pbRawVarint32Size(keySize));
     computedKVSize += static_cast<uint16_t>(pbRawVarint32Size(valueSize));
-    return computedKVSize;
 }
 
 MMBuffer KeyValueHolder::toMMBuffer(const void *basePtr) const {
