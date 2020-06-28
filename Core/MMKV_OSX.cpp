@@ -61,7 +61,10 @@ MMKV_NAMESPACE_BEGIN
 
 #    ifdef MMKV_IOS
 MLockPtr::MLockPtr(void *ptr, size_t size) : m_lockDownSize(0), m_lockedPtr(nullptr) {
-    // calc ptr to be mlock()
+    if (!ptr || size == 0) {
+        return;
+    }
+    // calc ptr to mlock()
     auto writePtr = (size_t) ptr;
     auto lockPtr = (writePtr / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
     auto lockDownSize = writePtr - lockPtr + size;
@@ -72,6 +75,10 @@ MLockPtr::MLockPtr(void *ptr, size_t size) : m_lockDownSize(0), m_lockedPtr(null
         MMKVError("fail to mlock [%p], %s", m_lockedPtr, strerror(errno));
         // just fail on this condition, otherwise app will crash anyway
     }
+}
+
+MLockPtr::MLockPtr(MLockPtr &&other) : m_lockDownSize(other.m_lockDownSize), m_lockedPtr(other.m_lockedPtr) {
+    other.m_lockedPtr = nullptr;
 }
 
 MLockPtr::~MLockPtr() {
@@ -115,31 +122,13 @@ void MMKV::setIsInBackground(bool isInBackground) {
     MMKVInfo("g_isInBackground:%d", g_isInBackground);
 }
 
-bool protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block) {
+pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
     if (g_isInBackground) {
         MLockPtr mlockPtr(ptr, size);
-        if (mlockPtr.isLocked()) {
-            try {
-                block();
-            } catch (std::exception &exception) {
-                MMKVError("%s", exception.what());
-                return false;
-            }
-        } else {
-            // just fail on this condition, otherwise app will crash anyway
-            //block(m_output);
-            return false;
-        }
+        return make_pair(mlockPtr.isLocked(), move(mlockPtr));
     } else {
-        try {
-            block();
-        } catch (std::exception &exception) {
-            MMKVError("%s", exception.what());
-            return false;
-        }
+        return make_pair(true, MLockPtr(nullptr, 0));
     }
-
-    return true;
 }
 
 #    endif // MMKV_IOS

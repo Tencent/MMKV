@@ -394,12 +394,12 @@ void MMKV::oldStyleWriteActualSize(size_t actualSize) {
 
     m_actualSize = actualSize;
 #ifdef MMKV_IOS
-    protectFromBackgroundWriting(m_file->getMemory(), Fixed32Size, ^{
-        memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
-    });
-#else
-    memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
+    auto ret = guardForBackgroundWriting(m_file->getMemory(), Fixed32Size);
+    if (!ret.first) {
+        return;
+    }
 #endif
+    memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
 }
 
 bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool increaseSequence) {
@@ -436,21 +436,17 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         needsFullWrite = true;
     }
 #ifdef MMKV_IOS
-    return protectFromBackgroundWriting(m_metaFile->getMemory(), sizeof(MMKVMetaInfo), ^{
-        if (unlikely(needsFullWrite)) {
-            m_metaInfo->write(m_metaFile->getMemory());
-        } else {
-            m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
-        }
-    });
-#else
+    auto ret = guardForBackgroundWriting(m_metaFile->getMemory(), sizeof(MMKVMetaInfo));
+    if (!ret.first) {
+        return false;
+    }
+#endif
     if (unlikely(needsFullWrite)) {
         m_metaInfo->write(m_metaFile->getMemory());
     } else {
         m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
     }
     return true;
-#endif
 }
 
 MMBuffer MMKV::getDataForKey(MMKVKey_t key) {
@@ -587,7 +583,8 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
     return false;
 }
 
-KVHolderRet_t MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
+KVHolderRet_t
+MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
     auto isKeyEncoded = (originKeyLength < keyData.length());
     auto keyLength = static_cast<uint32_t>(keyData.length());
     auto valueLength = static_cast<uint32_t>(data.length());
@@ -613,7 +610,12 @@ KVHolderRet_t MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &ke
     }
 
 #ifdef MMKV_IOS
-    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), size, ^{
+    auto ret = guardForBackgroundWriting(m_output->curWritePointer(), size);
+    if (!ret.first) {
+        return make_pair(false, KeyValueHolder());
+    }
+#endif
+    try {
         if (isKeyEncoded) {
             m_output->writeRawData(keyData);
         } else {
@@ -623,21 +625,10 @@ KVHolderRet_t MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &ke
             m_output->writeRawVarint32((int32_t) valueLength);
         }
         m_output->writeData(data); // note: write size of data
-    });
-    if (!ret) {
+    } catch (std::exception &e) {
+        MMKVError("%s", e.what());
         return make_pair(false, KeyValueHolder());
     }
-#else
-    if (isKeyEncoded) {
-        m_output->writeRawData(keyData);
-    } else {
-        m_output->writeData(keyData);
-    }
-    if (isDataHolder) {
-        m_output->writeRawVarint32((int32_t) valueLength);
-    }
-    m_output->writeData(data); // note: write size of data
-#endif
 
     auto offset = static_cast<uint32_t>(m_actualSize);
     auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size + m_actualSize;
@@ -853,12 +844,15 @@ WRITE_DATA:
 #define InvalidCryptPtr ((AESCrypt *) (void *) (1))
 
 bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> preparedData, AESCrypt *newCrypter) {
+    auto ptr = (uint8_t *) m_file->getMemory();
+    auto totalSize = preparedData.second;
 #ifdef MMKV_IOS
-    AESCryptStatus oldStatus;
-    if (m_crypter) {
-        m_crypter->getCurStatus(oldStatus);
+    auto ret = guardForBackgroundWriting(ptr + Fixed32Size, totalSize);
+    if (!ret.first) {
+        return false;
     }
 #endif
+
     uint8_t newIV[AES_KEY_LEN];
     auto decrypter = m_crypter;
     auto encrypter = (newCrypter == InvalidCryptPtr) ? nullptr : (newCrypter ? newCrypter : m_crypter);
@@ -867,36 +861,13 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> preparedData, AESCrypt *newCry
         encrypter->resetIV(newIV, sizeof(newIV));
     }
 
-    auto totalSize = preparedData.second;
-    auto ptr = (uint8_t *) m_file->getMemory();
     delete m_output;
     m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
-#ifdef MMKV_IOS
-    pair<MMBuffer, size_t> *preparedDataPtr = &preparedData;
-    auto ret = protectFromBackgroundWriting(m_output->curWritePointer(), totalSize, ^{
-        if (m_crypter) {
-            memmoveDictionary(m_dicCrypt, m_output, ptr, decrypter, encrypter, *preparedDataPtr);
-        } else {
-            memmoveDictionary(m_dic, m_output, ptr, encrypter, totalSize);
-        }
-    });
-    if (!ret) {
-        // revert everything
-        if (m_crypter) {
-            m_crypter->resetStatus(oldStatus);
-        }
-        delete m_output;
-        m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
-        m_output->seek(m_actualSize);
-        return false;
-    }
-#else
     if (m_crypter) {
         memmoveDictionary(m_dicCrypt, m_output, ptr, decrypter, encrypter, preparedData);
     } else {
         memmoveDictionary(m_dic, m_output, ptr, encrypter, totalSize);
     }
-#endif
 
     m_actualSize = totalSize;
     if (encrypter) {

@@ -31,6 +31,7 @@ class MLockPtr {
 
 public:
     MLockPtr(void *ptr, size_t size);
+    MLockPtr(MLockPtr &&other);
 
     ~MLockPtr();
 
@@ -43,8 +44,7 @@ public:
     MLockPtr &operator=(const MLockPtr &other) = delete;
 };
 
-typedef void (^WriteBlock)(void);
-bool protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block);
+std::pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size);
 
 MMKV_NAMESPACE_END
 
