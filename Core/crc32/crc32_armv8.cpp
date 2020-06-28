@@ -20,7 +20,7 @@
 
 #include "Checksum.h"
 
-#ifdef __aarch64__
+#ifdef MMKV_USE_ARMV8_CRC32
 
 #    include <zlib.h>
 
@@ -110,4 +110,4 @@ TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len
 
 } // namespace mmkv
 
-#endif // __aarch64__
+#endif // MMKV_USE_ARMV8_CRC32

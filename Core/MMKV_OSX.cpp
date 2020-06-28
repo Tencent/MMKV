@@ -91,7 +91,7 @@ void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
     // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
     int device = 0, version = 0;
     GetAppleMachineInfo(device, version);
-#    ifdef __aarch64__
+#    ifdef MMKV_USE_ARMV8_CRC32
     if ((device == iPhone && version >= 9) || (device == iPad && version >= 7)) {
         CRC32 = mmkv::armv8_crc32;
     }
