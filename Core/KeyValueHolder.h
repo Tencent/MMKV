@@ -68,7 +68,7 @@ struct KeyValueHolderCrypt {
         // store value directly
         struct {
             uint8_t paddedSize;
-            uint8_t value[1];
+            uint8_t paddedValue[1];
         };
         // store value in the heap memory
         struct {
@@ -78,7 +78,7 @@ struct KeyValueHolderCrypt {
     };
 
     static constexpr size_t SmallBufferSize() {
-        return sizeof(KeyValueHolderCrypt) - offsetof(KeyValueHolderCrypt, value);
+        return sizeof(KeyValueHolderCrypt) - offsetof(KeyValueHolderCrypt, paddedValue);
     }
 
     static bool isValueStoredAsOffset(size_t valueSize) { return valueSize >= 256; }

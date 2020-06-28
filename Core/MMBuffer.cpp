@@ -68,7 +68,7 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : isNoCop
         } else {
             type = MMBufferType_Small;
             paddedSize = static_cast<uint8_t>(length);
-            memcpy(smallBuffer, source, length);
+            memcpy(paddedBuffer, source, length);
         }
     } else {
         type = MMBufferType_Normal;
@@ -102,7 +102,7 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
         other.detach();
     } else {
         paddedSize = other.paddedSize;
-        memcpy(smallBuffer, other.smallBuffer, paddedSize);
+        memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
     }
 }
 
@@ -131,7 +131,7 @@ MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
 #endif
             }
             paddedSize = other.paddedSize;
-            memcpy(smallBuffer, other.smallBuffer, paddedSize);
+            memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
         }
     } else {
         if (other.type == MMBufferType_Normal) {
@@ -145,9 +145,9 @@ MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
             other.detach();
         } else {
             uint8_t tmp[SmallBufferSize()];
-            memcpy(tmp, other.smallBuffer, other.paddedSize);
-            memcpy(other.smallBuffer, smallBuffer, paddedSize);
-            memcpy(smallBuffer, tmp, other.paddedSize);
+            memcpy(tmp, other.paddedBuffer, other.paddedSize);
+            memcpy(other.paddedBuffer, paddedBuffer, paddedSize);
+            memcpy(paddedBuffer, tmp, other.paddedSize);
             std::swap(paddedSize, other.paddedSize);
         }
     }

@@ -56,12 +56,12 @@ class MMBuffer {
         };
         struct {
             uint8_t paddedSize;
-            uint8_t smallBuffer[1];
+            uint8_t paddedBuffer[1];
         };
     };
 
     static constexpr size_t SmallBufferSize() {
-        return sizeof(MMBuffer) - offsetof(MMBuffer, smallBuffer);
+        return sizeof(MMBuffer) - offsetof(MMBuffer, paddedBuffer);
     }
 
 public:
@@ -76,7 +76,7 @@ public:
 
     ~MMBuffer();
 
-    void *getPtr() const { return (type == MMBufferType_Small) ? (void *) smallBuffer : ptr; }
+    void *getPtr() const { return (type == MMBufferType_Small) ? (void *) paddedBuffer : ptr; }
 
     size_t length() const { return (type == MMBufferType_Small) ? paddedSize : size; }
 

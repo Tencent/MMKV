@@ -48,7 +48,7 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length) {
     if (length <= SmallBufferSize()) {
         type = KeyValueHolderType_Direct;
         paddedSize = static_cast<uint8_t>(length);
-        memcpy(value, src, length);
+        memcpy(paddedValue, src, length);
     } else {
         type = KeyValueHolderType_Memory;
         memSize = static_cast<uint32_t>(length);
@@ -66,7 +66,7 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(MMBuffer &&data) {
 
         type = KeyValueHolderType_Direct;
         paddedSize = static_cast<uint8_t>(data.length());
-        memcpy(value, data.getPtr(), data.length());
+        memcpy(paddedValue, data.getPtr(), data.length());
     } else {
 #ifdef MMKV_APPLE
         assert(data.m_data == nil);
@@ -143,7 +143,7 @@ static MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, si
 
 MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr, const AESCrypt *crypter) const {
     if (type == KeyValueHolderType_Direct) {
-        return MMBuffer((void *) value, paddedSize, MMBufferNoCopy);
+        return MMBuffer((void *) paddedValue, paddedSize, MMBufferNoCopy);
     } else if (type == KeyValueHolderType_Memory) {
         return MMBuffer(memPtr, memSize, MMBufferNoCopy);
     } else {
@@ -212,6 +212,8 @@ void KeyValueHolderCrypt::testAESToMMBuffer() {
 #    else
     MMKVInfo("testAESToMMBuffer: %s", CodedInputData((char *) value.getPtr(), value.length()).readString().c_str());
 #    endif
+    MMKVInfo("MMBuffer::SmallBufferSize() = %u, KeyValueHolderCrypt::SmallBufferSize() = %u",
+             MMBuffer::SmallBufferSize(), KeyValueHolderCrypt::SmallBufferSize());
 }
 
 } // namespace mmkv
