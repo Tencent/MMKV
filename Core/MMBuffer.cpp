@@ -175,8 +175,10 @@ MMBuffer::~MMBuffer() {
 }
 
 void MMBuffer::detach() {
-    type = MMBufferType_Small;
-    paddedSize = 0;
+    // type = MMBufferType_Small;
+    // paddedSize = 0;
+    auto memsetPtr = (size_t *) &type;
+    *memsetPtr = 0;
 }
 
 } // namespace mmkv

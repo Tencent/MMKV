@@ -56,7 +56,9 @@ class MMBuffer {
         };
         struct {
             uint8_t paddedSize;
-            uint8_t paddedBuffer[1];
+            // make at least 10 bytes to hold all primitive types (negative int32, int64, double etc) on 32 bit device
+            // on 64 bit device it's guaranteed larger than 10 bytes
+            uint8_t paddedBuffer[10];
         };
     };
 
@@ -80,6 +82,7 @@ public:
 
     size_t length() const { return (type == MMBufferType_Small) ? paddedSize : size; }
 
+    // transfer ownership to others
     void detach();
 
     // those are expensive, just forbid it for possibly misuse
