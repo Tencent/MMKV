@@ -53,10 +53,6 @@ class CodedInputDataCrypt {
 
     int32_t readRawVarint32(bool discardPreData = false);
 
-    int32_t readRawLittleEndian32();
-
-    int64_t readRawLittleEndian64();
-
 public:
     CodedInputDataCrypt(const void *oData, size_t length, AESCrypt &crypt);
 
@@ -66,32 +62,14 @@ public:
 
     void seek(size_t addedSize);
 
-    bool readBool();
-
-    double readDouble();
-
-    float readFloat();
-
-    int64_t readInt64();
-
-    uint64_t readUInt64();
-
     int32_t readInt32();
 
-    uint32_t readUInt32();
-
-    int32_t readFixed32();
-
-    MMBuffer readData();
     void readData(KeyValueHolderCrypt &kvHolder);
 
 #ifndef MMKV_APPLE
-    std::string readString();
     std::string readString(KeyValueHolderCrypt &kvHolder);
 #else
-    NSString *readString();
     NSString *readString(KeyValueHolderCrypt &kvHolder);
-    NSData *readNSData();
 #endif
 };
 

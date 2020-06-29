@@ -142,8 +142,6 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
         return true;
     }
 
-    // if (MiniPBCoder::isCompatibleObject(obj)) {
-    // auto data = MiniPBCoder::encodeDataWithObject(obj);
     NSData *tmpData = nil;
     if ([obj isKindOfClass:NSString.class]) {
         auto str = (NSString *) obj;

@@ -476,7 +476,8 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
-            result = MiniPBCoder::decodeString(data);
+            CodedInputData input(data.getPtr(), data.length());
+            result = input.readString();
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
@@ -493,7 +494,8 @@ MMBuffer MMKV::getBytes(MMKVKey_t key) {
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
-            return MiniPBCoder::decodeBytes(data);
+            CodedInputData input(data.getPtr(), data.length());
+            return input.readData();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
@@ -509,7 +511,7 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
-            result = MiniPBCoder::decodeSet(data);
+            result = MiniPBCoder::decodeVector(data);
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());

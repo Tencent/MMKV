@@ -603,18 +603,18 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
         return make_pair(false, KeyValueHolder());
     }
 
-    if (m_crypter) {
-        if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
-            m_crypter->getCurStatus(t_status);
-        }
-    }
-
 #ifdef MMKV_IOS
     auto ret = guardForBackgroundWriting(m_output->curWritePointer(), size);
     if (!ret.first) {
         return make_pair(false, KeyValueHolder());
     }
 #endif
+
+    if (m_crypter) {
+        if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
+            m_crypter->getCurStatus(t_status);
+        }
+    }
     try {
         if (isKeyEncoded) {
             m_output->writeRawData(keyData);

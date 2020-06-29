@@ -52,15 +52,15 @@ struct MMKVMetaInfo {
     struct {
         uint32_t lastActualSize = 0;
         uint32_t lastCRCDigest = 0;
-        uint32_t __reserved__[16] = {};
+        uint32_t _reserved[16] = {};
     } m_lastConfirmedMetaInfo;
 
-    void write(void *ptr) {
+    void write(void *ptr) const {
         MMKV_ASSERT(ptr);
         memcpy(ptr, this, sizeof(MMKVMetaInfo));
     }
 
-    void writeCRCAndActualSizeOnly(void *ptr) {
+    void writeCRCAndActualSizeOnly(void *ptr) const {
         MMKV_ASSERT(ptr);
         auto other = (MMKVMetaInfo *) ptr;
         other->m_crcDigest = m_crcDigest;

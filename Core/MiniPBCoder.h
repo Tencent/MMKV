@@ -24,10 +24,13 @@
 
 #include "MMKVPredef.h"
 
+#include "CodedOutputData.h"
 #include "KeyValueHolder.h"
+#include "MMBuffer.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
 #include "PBEncodeItem.hpp"
+#include "PBUtility.h"
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -58,8 +61,20 @@ class MiniPBCoder {
     size_t prepareObjectForEncode(const MMKVVector &vec);
     size_t prepareObjectForEncode(const MMBuffer &buffer);
 
-    MMBuffer getEncodeData(const MMKVVector &vec);
-    MMBuffer getEncodeData(const MMBuffer &buffer);
+    template <typename T>
+    MMBuffer getEncodeData(const T &vec) {
+        m_encodeItems = new std::vector<PBEncodeItem>();
+        size_t index = prepareObjectForEncode(vec);
+        PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
+        if (oItem && oItem->compiledSize > 0) {
+            m_outputBuffer = new MMBuffer(oItem->compiledSize);
+            m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
+
+            writeRootObject();
+        }
+
+        return std::move(*m_outputBuffer);
+    }
 
     void decodeOneMap(MMKVMap &dic, size_t position, bool greedy);
     void decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy);
@@ -68,16 +83,10 @@ class MiniPBCoder {
     size_t prepareObjectForEncode(const std::string &str);
     size_t prepareObjectForEncode(const std::vector<std::string> &vector);
 
-    MMBuffer getEncodeData(const std::string &str);
-    MMBuffer getEncodeData(const std::vector<std::string> &vector);
-
-    std::string decodeOneString();
-    MMBuffer decodeOneBytes();
-    std::vector<std::string> decodeOneSet();
+    std::vector<std::string> decodeOneVector();
 #else
     // NSString, NSData, NSDate
     size_t prepareObjectForEncode(__unsafe_unretained NSObject *obj);
-    MMBuffer getEncodeData(__unsafe_unretained NSObject *obj);
 #endif
 
 public:
@@ -86,6 +95,21 @@ public:
         try {
             MiniPBCoder pbcoder;
             return pbcoder.getEncodeData(obj);
+        } catch (const std::exception &exception) {
+            MMKVError("%s", exception.what());
+            return MMBuffer();
+        }
+    }
+
+    template <>
+    MMBuffer encodeDataWithObject<MMBuffer>(const MMBuffer &obj) {
+        try {
+            auto valueSize = static_cast<uint32_t>(obj.length());
+            auto compiledSize = pbRawVarint32Size(valueSize) + valueSize;
+            MMBuffer result(compiledSize);
+            CodedOutputData output(result.getPtr(), result.length());
+            output.writeData(obj);
+            return result;
         } catch (const std::exception &exception) {
             MMKVError("%s", exception.what());
             return MMBuffer();
@@ -105,16 +129,11 @@ public:
     static void greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position = 0);
 
 #ifndef MMKV_APPLE
-    static std::string decodeString(const MMBuffer &oData);
-
-    static MMBuffer decodeBytes(const MMBuffer &oData);
-
-    static std::vector<std::string> decodeSet(const MMBuffer &oData);
+    static std::vector<std::string> decodeVector(const MMBuffer &oData);
 #else
     // NSString, NSData, NSDate
     static NSObject *decodeObject(const MMBuffer &oData, Class cls);
 
-    static bool isCompatibleObject(NSObject *obj);
     static bool isCompatibleClass(Class cls);
 #endif
 

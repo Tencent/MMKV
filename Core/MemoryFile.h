@@ -63,7 +63,7 @@ public:
 
     ~MemoryFile() { doCleanMemoryCache(true); }
 
-    size_t getFileSize() { return m_size; }
+    size_t getFileSize() const { return m_size; }
 
     // get the actual file size on disk
     size_t getActualFileSize();

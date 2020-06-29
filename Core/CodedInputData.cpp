@@ -79,10 +79,6 @@ uint32_t CodedInputData::readUInt32() {
     return static_cast<uint32_t>(readRawVarint32());
 }
 
-int32_t CodedInputData::readFixed32() {
-    return this->readRawLittleEndian32();
-}
-
 bool CodedInputData::readBool() {
     return this->readRawVarint32() != 0;
 }

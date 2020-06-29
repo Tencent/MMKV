@@ -206,97 +206,11 @@ int32_t CodedInputDataCrypt::readRawVarint32(bool discardPreData) {
     return result;
 }
 
-int32_t CodedInputDataCrypt::readRawLittleEndian32() {
-    consumeBytes(4);
-
-    int8_t b1 = this->readRawByte();
-    int8_t b2 = this->readRawByte();
-    int8_t b3 = this->readRawByte();
-    int8_t b4 = this->readRawByte();
-    return (((int32_t) b1 & 0xff)) | (((int32_t) b2 & 0xff) << 8) | (((int32_t) b3 & 0xff) << 16) |
-           (((int32_t) b4 & 0xff) << 24);
-}
-
-int64_t CodedInputDataCrypt::readRawLittleEndian64() {
-    consumeBytes(8);
-
-    int8_t b1 = this->readRawByte();
-    int8_t b2 = this->readRawByte();
-    int8_t b3 = this->readRawByte();
-    int8_t b4 = this->readRawByte();
-    int8_t b5 = this->readRawByte();
-    int8_t b6 = this->readRawByte();
-    int8_t b7 = this->readRawByte();
-    int8_t b8 = this->readRawByte();
-    return (((int64_t) b1 & 0xff)) | (((int64_t) b2 & 0xff) << 8) | (((int64_t) b3 & 0xff) << 16) |
-           (((int64_t) b4 & 0xff) << 24) | (((int64_t) b5 & 0xff) << 32) | (((int64_t) b6 & 0xff) << 40) |
-           (((int64_t) b7 & 0xff) << 48) | (((int64_t) b8 & 0xff) << 56);
-}
-
-double CodedInputDataCrypt::readDouble() {
-    return Int64ToFloat64(this->readRawLittleEndian64());
-}
-
-float CodedInputDataCrypt::readFloat() {
-    return Int32ToFloat32(this->readRawLittleEndian32());
-}
-
-int64_t CodedInputDataCrypt::readInt64() {
-    consumeBytes(10);
-
-    int32_t shift = 0;
-    int64_t result = 0;
-    while (shift < 64) {
-        int8_t b = this->readRawByte();
-        result |= (int64_t)(b & 0x7f) << shift;
-        if ((b & 0x80) == 0) {
-            return result;
-        }
-        shift += 7;
-    }
-    throw invalid_argument("InvalidProtocolBuffer malformedInt64");
-}
-
-uint64_t CodedInputDataCrypt::readUInt64() {
-    return static_cast<uint64_t>(readInt64());
-}
-
 int32_t CodedInputDataCrypt::readInt32() {
     return this->readRawVarint32();
 }
 
-uint32_t CodedInputDataCrypt::readUInt32() {
-    return static_cast<uint32_t>(readRawVarint32());
-}
-
-int32_t CodedInputDataCrypt::readFixed32() {
-    return this->readRawLittleEndian32();
-}
-
-bool CodedInputDataCrypt::readBool() {
-    return this->readRawVarint32() != 0;
-}
-
 #ifndef MMKV_APPLE
-
-string CodedInputDataCrypt::readString() {
-    int32_t size = readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
-    auto s_size = static_cast<size_t>(size);
-    if (s_size <= m_size - m_position) {
-        consumeBytes(s_size);
-
-        string result((char *) (m_decryptBuffer + m_decryptBufferPosition), s_size);
-        m_position += s_size;
-        m_decryptBufferPosition += s_size;
-        return result;
-    } else {
-        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
-    }
-}
 
 string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
@@ -322,25 +236,6 @@ string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
 }
 
 #endif
-
-MMBuffer CodedInputDataCrypt::readData() {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
-    auto s_size = static_cast<size_t>(size);
-    if (s_size <= m_size - m_position) {
-        consumeBytes(s_size);
-
-        MMBuffer data(m_decryptBuffer + m_decryptBufferPosition, s_size);
-        m_position += s_size;
-        m_decryptBufferPosition += s_size;
-        return data;
-    } else {
-        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
-    }
-}
 
 void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
     int32_t size = this->readRawVarint32();

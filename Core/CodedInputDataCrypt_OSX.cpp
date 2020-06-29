@@ -33,26 +33,6 @@ using namespace std;
 
 namespace mmkv {
 
-NSString *CodedInputDataCrypt::readString() {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
-    auto s_size = static_cast<size_t>(size);
-    if (s_size <= m_size - m_position) {
-        consumeBytes(s_size);
-
-        auto ptr = m_decryptBuffer + m_decryptBufferPosition;
-        NSString *result = [[NSString alloc] initWithBytes:ptr length:s_size encoding:NSUTF8StringEncoding];
-        m_position += s_size;
-        m_decryptBufferPosition += s_size;
-        return [result autorelease];
-    } else {
-        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
-    }
-}
-
 NSString *CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
@@ -72,26 +52,6 @@ NSString *CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
         m_position += s_size;
         m_decryptBufferPosition += s_size;
         return [result autorelease];
-    } else {
-        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
-    }
-}
-
-NSData *CodedInputDataCrypt::readNSData() {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
-    auto s_size = static_cast<size_t>(size);
-    if (s_size <= m_size - m_position) {
-        consumeBytes(s_size);
-
-        auto ptr = m_decryptBuffer + m_decryptBufferPosition;
-        NSData *result = [NSData dataWithBytes:ptr length:s_size];
-        m_position += s_size;
-        m_decryptBufferPosition += s_size;
-        return result;
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }

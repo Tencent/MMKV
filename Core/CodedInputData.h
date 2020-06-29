@@ -47,7 +47,7 @@ class CodedInputData {
 public:
     CodedInputData(const void *oData, size_t length);
 
-    bool isAtEnd() { return m_position == m_size; };
+    bool isAtEnd() const { return m_position == m_size; };
 
     void seek(size_t addedSize);
 
@@ -64,8 +64,6 @@ public:
     int32_t readInt32();
 
     uint32_t readUInt32();
-
-    int32_t readFixed32();
 
     MMBuffer readData();
     void readData(KeyValueHolder &kvHolder);
