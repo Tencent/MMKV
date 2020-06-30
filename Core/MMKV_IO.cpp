@@ -466,7 +466,12 @@ MMBuffer MMKV::getDataForKey(MMKVKey_t key) {
     return nan;
 }
 
+// for Apple watch simulator
+#if defined(TARGET_OS_SIMULATOR) && defined(TARGET_CPU_X86)
+static AESCryptStatus t_status;
+#else
 thread_local AESCryptStatus t_status;
+#endif
 
 bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     if ((!isDataHolder && data.length() == 0) || isKeyEmpty(key)) {

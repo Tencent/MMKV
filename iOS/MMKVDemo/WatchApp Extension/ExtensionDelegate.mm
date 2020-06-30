@@ -19,7 +19,7 @@
  */
 
 #import "ExtensionDelegate.h"
-#import <MMKV/MMKV.h>
+#import <MMKVWatchExtension/MMKV.h>
 
 @implementation ExtensionDelegate
 
