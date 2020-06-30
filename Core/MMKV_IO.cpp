@@ -834,8 +834,7 @@ WRITE_DATA:
         }
     }
     auto writtenSize = static_cast<size_t>(writePtr - output->curWritePointer());
-    auto totalSize = preparedData.second;
-    assert(writtenSize + ItemSizeHolderSize == totalSize);
+    assert(writtenSize + ItemSizeHolderSize == preparedData.second);
     output->seek(writtenSize);
 }
 
