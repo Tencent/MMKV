@@ -91,7 +91,7 @@ public:
     }
 
     // opt encoding a single MMBuffer
-    MMBuffer encodeDataWithObject(const MMBuffer &obj);
+    static MMBuffer encodeDataWithObject(const MMBuffer &obj);
 
     // return empty result if there's any error
     static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position = 0);
