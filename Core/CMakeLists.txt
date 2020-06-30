@@ -62,6 +62,8 @@ add_library(core
         MMKV.h
         MMKV.cpp
         MMKV_Android.cpp
+        MMKV_IO.h
+        MMKV_IO.cpp
         MMKV_OSX.cpp
         MMKVLog.h
         MMKVLog.cpp
@@ -69,8 +71,13 @@ add_library(core
         CodedInputData.h
         CodedInputData.cpp
         CodedInputData_OSX.cpp
+        CodedInputDataCrypt.h
+        CodedInputDataCrypt.cpp
+        CodedInputDataCrypt_OSX.cpp
         CodedOutputData.h
         CodedOutputData.cpp
+        KeyValueHolder.h
+        KeyValueHolder.cpp
         PBUtility.h
         PBUtility.cpp
         MiniPBCoder.h

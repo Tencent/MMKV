@@ -23,6 +23,7 @@
 #ifdef MMKV_APPLE
 
 #    include "CodedInputData.h"
+#    include "CodedInputDataCrypt.h"
 #    include "CodedOutputData.h"
 #    include "MMBuffer.h"
 #    include "PBEncodeItem.hpp"
@@ -74,17 +75,20 @@ size_t MiniPBCoder::prepareObjectForEncode(__unsafe_unretained NSObject *obj) {
     return index;
 }
 
-void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
-    auto block = [size, this](MMKVMap &dictionary) {
-        if (size == 0) {
-            [[maybe_unused]] auto length = m_inputData->readInt32();
+void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
+    auto block = [position, this](MMKVMap &dictionary) {
+        if (position) {
+            m_inputData->seek(position);
+        } else {
+            m_inputData->readInt32();
         }
         while (!m_inputData->isAtEnd()) {
-            const auto &key = m_inputData->readString();
+            KeyValueHolder kvHolder;
+            const auto &key = m_inputData->readString(kvHolder);
             if (key.length > 0) {
-                auto value = m_inputData->readData();
-                if (value.length() > 0) {
-                    dictionary[key] = move(value);
+                m_inputData->readData(kvHolder);
+                if (kvHolder.valueSize > 0) {
+                    dictionary[key] = move(kvHolder);
                     [key retain];
                 } else {
                     auto itr = dictionary.find(key);
@@ -117,18 +121,50 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t size, bool greedy) {
     }
 }
 
-MMBuffer MiniPBCoder::getEncodeData(__unsafe_unretained NSObject *obj) {
-    m_encodeItems = new vector<PBEncodeItem>();
-    size_t index = prepareObjectForEncode(obj);
-    PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
-    if (oItem && oItem->compiledSize > 0) {
-        m_outputBuffer = new MMBuffer(oItem->compiledSize);
-        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
+void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) {
+    auto block = [position, this](MMKVMapCrypt &dictionary) {
+        if (position) {
+            m_inputDataDecrpt->seek(position);
+        } else {
+            m_inputDataDecrpt->readInt32();
+        }
+        while (!m_inputDataDecrpt->isAtEnd()) {
+            KeyValueHolderCrypt kvHolder;
+            const auto &key = m_inputDataDecrpt->readString(kvHolder);
+            if (key.length > 0) {
+                m_inputDataDecrpt->readData(kvHolder);
+                if (kvHolder.valueSize > 0) {
+                    dictionary[key] = move(kvHolder);
+                    [key retain];
+                } else {
+                    auto itr = dictionary.find(key);
+                    if (itr != dictionary.end()) {
+                        dictionary.erase(itr);
+                        [itr->first release];
+                    }
+                }
+            }
+        }
+    };
 
-        writeRootObject();
+    if (greedy) {
+        try {
+            block(dic);
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    } else {
+        try {
+            MMKVMapCrypt tmpDic;
+            block(tmpDic);
+            dic.swap(tmpDic);
+            for (auto &pair : tmpDic) {
+                [pair.first release];
+            }
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
     }
-
-    return move(*m_outputBuffer);
 }
 
 NSObject *MiniPBCoder::decodeObject(const MMBuffer &oData, Class cls) {
@@ -151,20 +187,6 @@ NSObject *MiniPBCoder::decodeObject(const MMBuffer &oData, Class cls) {
     }
 
     return nil;
-}
-
-bool MiniPBCoder::isCompatibleObject(NSObject *obj) {
-    if ([obj isKindOfClass:[NSString class]]) {
-        return true;
-    }
-    if ([obj isKindOfClass:[NSData class]]) {
-        return true;
-    }
-    if ([obj isKindOfClass:[NSDate class]]) {
-        return true;
-    }
-
-    return false;
 }
 
 bool MiniPBCoder::isCompatibleClass(Class cls) {

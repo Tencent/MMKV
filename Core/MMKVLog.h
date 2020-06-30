@@ -20,7 +20,7 @@
 
 #ifndef MMKV_MMKVLOG_H
 #define MMKV_MMKVLOG_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 

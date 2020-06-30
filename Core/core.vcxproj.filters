@@ -60,6 +60,9 @@
     <ClCompile Include="aes\openssl\openssl_md5_one.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="KeyValueHolder.cpp" />
+    <ClCompile Include="CodedInputDataCrypt.cpp" />
+    <ClCompile Include="MMKV_IO.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodedInputData.h">
@@ -140,5 +143,8 @@
     <ClInclude Include="aes\openssl\openssl_arm_arch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="KeyValueHolder.h" />
+    <ClInclude Include="CodedInputDataCrypt.h" />
+    <ClInclude Include="MMKV_IO.h" />
   </ItemGroup>
 </Project>

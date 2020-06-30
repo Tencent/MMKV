@@ -24,6 +24,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ViewController (TestCaseBad)
 
+- (void)testCornerSize;
+
+- (void)testFastRemoveCornerSize;
+
+- (void)testChineseCharKey;
+
 @end
 
 NS_ASSUME_NONNULL_END

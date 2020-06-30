@@ -23,6 +23,7 @@
 #ifdef MMKV_ANDROID
 
 #    include "InterProcessLock.h"
+#    include "KeyValueHolder.h"
 #    include "MMKVLog.h"
 #    include "MMKVMetaInfo.hpp"
 #    include "MemoryFile.h"
@@ -44,6 +45,8 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     : m_mmapID(mmapedKVKey(mmapID, relativePath)) // historically Android mistakenly use mmapKey as mmapID
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
+    , m_dic(nullptr)
+    , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE))
     , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType))
     , m_metaInfo(new MMKVMetaInfo())
@@ -57,7 +60,10 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_output = nullptr;
 
     if (cryptKey && cryptKey->length() > 0) {
+        m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
+    } else {
+        m_dic = new MMKVMap();
     }
 
     m_needLoadFromFile = true;
@@ -79,6 +85,8 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
     , m_crcPath(crcPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
+    , m_dic(nullptr)
+    , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(ashmemFD))
     , m_metaFile(new MemoryFile(ashmemMetaFD))
     , m_metaInfo(new MMKVMetaInfo())
@@ -93,7 +101,10 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     m_output = nullptr;
 
     if (cryptKey && cryptKey->length() > 0) {
+        m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
+    } else {
+        m_dic = new MMKVMap();
     }
 
     m_needLoadFromFile = true;

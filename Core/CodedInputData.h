@@ -20,13 +20,13 @@
 
 #ifndef MMKV_CODEDINPUTDATA_H
 #define MMKV_CODEDINPUTDATA_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 
+#include "KeyValueHolder.h"
 #include "MMBuffer.h"
 #include <cstdint>
-#include <string>
 
 namespace mmkv {
 
@@ -46,7 +46,9 @@ class CodedInputData {
 public:
     CodedInputData(const void *oData, size_t length);
 
-    bool isAtEnd() { return m_position == m_size; };
+    bool isAtEnd() const { return m_position == m_size; };
+
+    void seek(size_t addedSize);
 
     bool readBool();
 
@@ -62,14 +64,15 @@ public:
 
     uint32_t readUInt32();
 
-    int32_t readFixed32();
-
     MMBuffer readData();
+    void readData(KeyValueHolder &kvHolder);
 
 #ifndef MMKV_APPLE
     std::string readString();
+    std::string readString(KeyValueHolder &kvHolder);
 #else
     NSString *readString();
+    NSString *readString(KeyValueHolder &kvHolder);
     NSData *readNSData();
 #endif
 };

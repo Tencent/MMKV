@@ -23,22 +23,29 @@
 
 #if defined(MMKV_IOS) && defined(__cplusplus)
 
+MMKV_NAMESPACE_BEGIN
+
 class MLockPtr {
     size_t m_lockDownSize;
     uint8_t *m_lockedPtr;
 
 public:
     MLockPtr(void *ptr, size_t size);
-    
+    MLockPtr(MLockPtr &&other);
+
     ~MLockPtr();
 
     bool isLocked() const {
         return (m_lockedPtr != nullptr);
     }
-    
+
     // just forbid it for possibly misuse
     explicit MLockPtr(const MLockPtr &other) = delete;
     MLockPtr &operator=(const MLockPtr &other) = delete;
 };
+
+std::pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size);
+
+MMKV_NAMESPACE_END
 
 #endif

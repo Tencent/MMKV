@@ -22,7 +22,7 @@
 #import "ViewController+TestCaseBad.h"
 #import <MMKV/MMKV.h>
 
-@interface TestNSArchive : NSObject <NSCoding>
+@interface TestNSArchive : NSObject <NSSecureCoding>
 @property(nonatomic, strong) NSString *m_username;
 @property(nonatomic, assign) int32_t m_age;
 @property(nonatomic, assign) float m_score;
@@ -49,6 +49,10 @@
     [encoder encodeFloat:self.m_score forKey:@"m_score"];
 }
 
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
 @end
 
 @implementation ViewController {
@@ -64,18 +68,18 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    [self funcionalTest];
+    [self funcionalTest:NO];
     [self testReKey];
     [self testImportFromUserDefault];
-    //[self testCornerSize];
-    //[self testFastRemoveCornerSize];
-    //[self testChineseCharKey];
+    // [self testCornerSize];
+    // [self testFastRemoveCornerSize];
+    // [self testChineseCharKey];
 
     DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
     [swiftUsageDemo testSwiftFunctionality];
 
     [self testMultiProcess];
-    //[self testMultiProcess];
+    // [self testMultiProcess];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -84,6 +88,8 @@
     m_arrObjKeys = [NSMutableArray arrayWithCapacity:m_loops];
     m_arrNSCodingObjs = [NSMutableArray arrayWithCapacity:m_loops];
     for (size_t index = 0; index < m_loops; index++) {
+        // auto str = @"[MMKV] [Info]<MemoryFile_OSX.cpp:36>: protection on [/var/mobile/Containers/Data/Application/B93F2BD3-E0DB-49B3-9BB0-C662E2FC11D9/Documents/mmkv/cips_commoncache] is NSFileProtectionCompleteUntilFirstUserAuthentication";
+        // str = [str stringByAppendingFormat:@", %s-%d", __FILE__, rand()];
         NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
         [m_arrStrings addObject:str];
 
@@ -105,60 +111,88 @@
     //getMMKVForBatchTest();
 }
 
-- (void)funcionalTest {
+- (void)funcionalTest:(BOOL)decodeOnly {
     auto path = [MMKV mmkvBasePath];
     path = [path stringByDeletingLastPathComponent];
     path = [path stringByAppendingPathComponent:@"mmkv_2"];
-    auto mmkv = [MMKV mmkvWithID:@"test/case1" relativePath:path];
+    NSData *key_1 = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
+    auto mmkv = [MMKV mmkvWithID:@"test/case_aes" cryptKey:key_1 relativePath:path];
 
-    [mmkv setBool:YES forKey:@"bool"];
+    if (!decodeOnly) {
+        [mmkv setBool:YES forKey:@"bool"];
+    }
     NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
 
-    [mmkv setInt32:-1024 forKey:@"int32"];
+    if (!decodeOnly) {
+        [mmkv setInt32:-1024 forKey:@"int32"];
+    }
     NSLog(@"int32:%d", [mmkv getInt32ForKey:@"int32"]);
 
-    [mmkv setUInt32:std::numeric_limits<uint32_t>::max() forKey:@"uint32"];
+    if (!decodeOnly) {
+        [mmkv setUInt32:std::numeric_limits<uint32_t>::max() forKey:@"uint32"];
+    }
     NSLog(@"uint32:%u", [mmkv getUInt32ForKey:@"uint32"]);
 
-    [mmkv setInt64:std::numeric_limits<int64_t>::min() forKey:@"int64"];
+    if (!decodeOnly) {
+        [mmkv setInt64:std::numeric_limits<int64_t>::min() forKey:@"int64"];
+    }
     NSLog(@"int64:%lld", [mmkv getInt64ForKey:@"int64"]);
 
-    [mmkv setUInt64:std::numeric_limits<uint64_t>::max() forKey:@"uint64"];
+    if (!decodeOnly) {
+        [mmkv setUInt64:std::numeric_limits<uint64_t>::max() forKey:@"uint64"];
+    }
     NSLog(@"uint64:%llu", [mmkv getInt64ForKey:@"uint64"]);
 
-    [mmkv setFloat:-3.1415926 forKey:@"float"];
+    if (!decodeOnly) {
+        [mmkv setFloat:-3.1415926 forKey:@"float"];
+    }
     NSLog(@"float:%f", [mmkv getFloatForKey:@"float"]);
 
-    [mmkv setDouble:std::numeric_limits<double>::max() forKey:@"double"];
+    if (!decodeOnly) {
+        [mmkv setDouble:std::numeric_limits<double>::max() forKey:@"double"];
+    }
     NSLog(@"double:%f", [mmkv getDoubleForKey:@"double"]);
 
-    [mmkv setString:@"hello, mmkv" forKey:@"string"];
+    if (!decodeOnly) {
+        [mmkv setString:@"hello, mmkv" forKey:@"string"];
+    }
     NSLog(@"string:%@", [mmkv getStringForKey:@"string"]);
 
-    [mmkv setObject:nil forKey:@"string"];
-    NSLog(@"string after set nil:%@, containsKey:%d",
-          [mmkv getObjectOfClass:NSString.class
-                          forKey:@"string"],
-          [mmkv containsKey:@"string"]);
+    if (!decodeOnly) {
+        [mmkv setObject:nil forKey:@"string"];
+        NSLog(@"string after set nil:%@, containsKey:%d",
+              [mmkv getObjectOfClass:NSString.class
+                              forKey:@"string"],
+              [mmkv containsKey:@"string"]);
+    }
 
-    [mmkv setDate:[NSDate date] forKey:@"date"];
+    if (!decodeOnly) {
+        [mmkv setDate:[NSDate date] forKey:@"date"];
+    }
     NSLog(@"date:%@", [mmkv getDateForKey:@"date"]);
 
-    [mmkv setData:[@"hello, mmkv again and again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
+    if (!decodeOnly) {
+        auto str = @"[MMKV] [Info]<MemoryFile_OSX.cpp:36>: protection on [/var/mobile/Containers/Data/Application/B93F2BD3-E0DB-49B3-9BB0-C662E2FC11D9/Documents/mmkv/cips_commoncache] is NSFileProtectionCompleteUntilFirstUserAuthentication";
+        [mmkv setData:[str dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
+    }
     NSData *data = [mmkv getDataForKey:@"data"];
     NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
     NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data"]);
 
-    [mmkv setObject:[NSData data] forKey:@"data"];
-    NSLog(@"data after set empty data:%@, containsKey:%d",
-          [mmkv getObjectOfClass:NSData.class
-                          forKey:@"data"],
-          [mmkv containsKey:@"data"]);
+    if (!decodeOnly) {
+        [mmkv setObject:[NSData data] forKey:@"data"];
+        NSLog(@"data after set empty data:%@, containsKey:%d",
+              [mmkv getObjectOfClass:NSData.class
+                              forKey:@"data"],
+              [mmkv containsKey:@"data"]);
+    }
 
-    [mmkv removeValueForKey:@"bool"];
-    NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
-    [mmkv removeValuesForKeys:@[ @"int32", @"uint64" ]];
-    NSLog(@"allKeys %@", [mmkv allKeys]);
+    if (!decodeOnly) {
+        [mmkv removeValueForKey:@"bool"];
+        NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
+        [mmkv removeValuesForKeys:@[ @"int32", @"uint64" ]];
+        NSLog(@"allKeys %@", [mmkv allKeys]);
+    }
 
     [mmkv close];
 }
@@ -311,7 +345,7 @@
     NSLog(@"string = %@", [mmkv getStringForKey:@"string"]);
     NSLog(@"date = %@", [mmkv getDateForKey:@"date"]);
     NSLog(@"data = %@", [[NSString alloc] initWithData:[mmkv getDataForKey:@"data"] encoding:NSUTF8StringEncoding]);
-    NSLog(@"url = %@", [NSKeyedUnarchiver unarchiveObjectWithData:[mmkv getDataForKey:@"url"]]);
+    NSLog(@"url = %@", [NSKeyedUnarchiver unarchivedObjectOfClass:NSURL.class fromData:[mmkv getDataForKey:@"url"] error:nil]);
     NSLog(@"number_bool = %d", [mmkv getBoolForKey:@"number_bool"]);
     NSLog(@"number_char = %d", [mmkv getInt32ForKey:@"number_char"]);
     NSLog(@"number_unsigned_char = %d", [mmkv getInt32ForKey:@"number_unsigned_char"]);
@@ -338,6 +372,8 @@
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         self->m_arrStrings = [NSMutableArray arrayWithCapacity:self->m_loops];
         for (size_t index = 0; index < self->m_loops; index++) {
+            // auto str = @"[MMKV] [Info]<MemoryFile_OSX.cpp:36>: protection on [/var/mobile/Containers/Data/Application/B93F2BD3-E0DB-49B3-9BB0-C662E2FC11D9/Documents/mmkv/cips_commoncache] is NSFileProtectionCompleteUntilFirstUserAuthentication";
+            // str = [str stringByAppendingFormat:@", %s-%d", __FILE__, rand()];
             NSString *str = [NSString stringWithFormat:@"%s-%d", __FILE__, rand()];
             [self->m_arrStrings addObject:str];
 
@@ -369,9 +405,13 @@
 }
 
 MMKV *getMMKVForBatchTest() {
-    //auto cryptKey = [@"crypt_key" dataUsingEncoding:NSUTF8StringEncoding];
+    // return [MMKV mmkvWithID:@"inter-process" mode:MMKVMultiProcess];
+    // auto cryptKey = [@"crypt_key" dataUsingEncoding:NSUTF8StringEncoding];
     NSData *cryptKey = nil;
-    MMKV *mmkv = [MMKV mmkvWithID:@"batchTest" cryptKey:cryptKey];
+    // static auto key = [NSString stringWithFormat:@"batchTest_%d", rand()];
+    // auto key = @"batchTest_crypt1";
+    static auto key = @"batchTest1";
+    MMKV *mmkv = [MMKV mmkvWithID:key cryptKey:cryptKey];
     return mmkv;
 }
 
@@ -386,8 +426,20 @@ MMKV *getMMKVForBatchTest() {
             [mmkv setInt32:tmp forKey:intKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"mmkv write int %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv write int %d times, cost:%.1f ms", loops, cost);
+
+        /* delete some
+        startDate = [NSDate date];
+
+        for (int index = 0; index < (loops / 2); index++) {
+            int32_t tmp = rand() % loops;
+            NSString *intKey = m_arrIntKeys[tmp];
+            [mmkv removeValueForKey:intKey];
+        }
+        endDate = [NSDate date];
+        cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv delete int %d times, cost:%d ms", (loops / 2), cost);*/
     }
 }
 
@@ -401,8 +453,8 @@ MMKV *getMMKVForBatchTest() {
             [mmkv getInt32ForKey:intKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"mmkv read int %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv read int %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -417,8 +469,20 @@ MMKV *getMMKVForBatchTest() {
             [mmkv setObject:str forKey:strKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"mmkv write string %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv write string %d times, cost:%.1f ms", loops, cost);
+
+        /* delete some
+        startDate = [NSDate date];
+
+        for (int index = 0; index < (loops / 2); index++) {
+            int32_t tmp = rand() % loops;
+            NSString *strKey = m_arrStrKeys[tmp];
+            [mmkv removeValueForKey:strKey];
+        }
+        endDate = [NSDate date];
+        cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv delete string %d times, cost:%d ms", (loops / 2), cost);*/
     }
 }
 
@@ -432,8 +496,8 @@ MMKV *getMMKVForBatchTest() {
             [mmkv getObjectOfClass:NSString.class forKey:strKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"mmkv read string %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv read string %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -447,8 +511,8 @@ MMKV *getMMKVForBatchTest() {
             [mmkv removeValueForKey:strKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"mmkv delete string %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv delete string %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -463,8 +527,8 @@ MMKV *getMMKVForBatchTest() {
             [mmkv setObject:obj forKey:objKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"mmkv write object %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv write object %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -478,8 +542,8 @@ MMKV *getMMKVForBatchTest() {
             [mmkv getObjectOfClass:TestNSArchive.class forKey:objKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"mmkv read object %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"mmkv read object %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -506,8 +570,8 @@ MMKV *getMMKVForBatchTest() {
         }
         [userdefault synchronize];
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"NSUserDefaults write int %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults write int %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -521,8 +585,8 @@ MMKV *getMMKVForBatchTest() {
             [userdefault integerForKey:intKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"NSUserDefaults read int %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults read int %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -538,8 +602,8 @@ MMKV *getMMKVForBatchTest() {
         }
         [userdefault synchronize];
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"NSUserDefaults write string %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults write string %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -553,8 +617,8 @@ MMKV *getMMKVForBatchTest() {
             [userdefault objectForKey:strKey];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"NSUserDefaults read string %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults read string %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -566,13 +630,13 @@ MMKV *getMMKVForBatchTest() {
         for (int index = 0; index < loops; index++) {
             TestNSArchive *obj = m_arrNSCodingObjs[index];
             NSString *objKey = m_arrObjKeys[index];
-            auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
+            auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj requiringSecureCoding:YES error:nil];
             [userdefault setObject:tmp forKey:objKey];
         }
         [userdefault synchronize];
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"NSUserDefaults write object %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults write object %d times, cost:%.1f ms", loops, cost);
     }
 }
 
@@ -584,11 +648,11 @@ MMKV *getMMKVForBatchTest() {
         for (int index = 0; index < loops; index++) {
             NSString *objKey = m_arrObjKeys[index];
             NSData *tmp = [userdefault objectForKey:objKey];
-            [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
+            [NSKeyedUnarchiver unarchivedObjectOfClass:TestNSArchive.class fromData:tmp error:nil];
         }
         NSDate *endDate = [NSDate date];
-        int cost = [endDate timeIntervalSinceDate:startDate] * 1000;
-        NSLog(@"NSUserDefaults read object %d times, cost:%d ms", loops, cost);
+        auto cost = [endDate timeIntervalSinceDate:startDate] * 1000;
+        NSLog(@"NSUserDefaults read object %d times, cost:%.1f ms", loops, cost);
     }
 }
 

@@ -20,11 +20,9 @@
 
 #ifndef MMKV_MAMERYFILE_H
 #define MMKV_MAMERYFILE_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
-
-#include <string>
 
 #ifdef MMKV_ANDROID
 MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
@@ -63,7 +61,7 @@ public:
 
     ~MemoryFile() { doCleanMemoryCache(true); }
 
-    size_t getFileSize() { return m_size; }
+    size_t getFileSize() const { return m_size; }
 
     // get the actual file size on disk
     size_t getActualFileSize();

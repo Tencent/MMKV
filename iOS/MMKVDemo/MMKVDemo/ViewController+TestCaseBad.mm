@@ -26,7 +26,8 @@
 @implementation ViewController (TestCaseBad)
 
 - (void)testCornerSize {
-    auto mmkv = [MMKV mmkvWithID:@"test/cornerSize" cryptKey:[@"crypt" dataUsingEncoding:NSUTF8StringEncoding]];
+    // auto mmkv = [MMKV mmkvWithID:@"test/cornerSize" cryptKey:[@"crypt" dataUsingEncoding:NSUTF8StringEncoding]];
+    auto mmkv = [MMKV mmkvWithID:@"test/cornerSize1"];
     [mmkv clearAll];
     auto size = getpagesize() - 2;
     size -= 4;
@@ -40,7 +41,8 @@
 }
 
 - (void)testFastRemoveCornerSize {
-    auto mmkv = [MMKV mmkvWithID:@"test/FastRemoveCornerSize" cryptKey:[@"crypt" dataUsingEncoding:NSUTF8StringEncoding]];
+    // auto mmkv = [MMKV mmkvWithID:@"test/FastRemoveCornerSize" cryptKey:[@"crypt" dataUsingEncoding:NSUTF8StringEncoding]];
+    auto mmkv = [MMKV mmkvWithID:@"test/FastRemoveCornerSize1"];
     [mmkv clearAll];
     auto size = getpagesize() - 4;
     size -= 4;

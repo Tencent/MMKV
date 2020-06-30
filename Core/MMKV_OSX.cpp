@@ -28,8 +28,10 @@
 #    include "MMKV.h"
 #    include "MemoryFile.h"
 #    include "MiniPBCoder.h"
+#    include "PBUtility.h"
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
+#    include "aes/AESCrypt.h"
 #    include <sys/utsname.h>
 
 #    ifdef MMKV_IOS
@@ -50,13 +52,19 @@ using namespace mmkv;
 
 extern ThreadLock *g_instanceLock;
 extern MMKVPath_t g_rootDir;
+constexpr uint32_t Fixed32Size = pbFixed32Size();
 
 enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
 static void GetAppleMachineInfo(int &device, int &version);
 
+MMKV_NAMESPACE_BEGIN
+
 #    ifdef MMKV_IOS
 MLockPtr::MLockPtr(void *ptr, size_t size) : m_lockDownSize(0), m_lockedPtr(nullptr) {
-    // calc ptr to be mlock()
+    if (!ptr || size == 0) {
+        return;
+    }
+    // calc ptr to mlock()
     auto writePtr = (size_t) ptr;
     auto lockPtr = (writePtr / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
     auto lockDownSize = writePtr - lockPtr + size;
@@ -69,6 +77,10 @@ MLockPtr::MLockPtr(void *ptr, size_t size) : m_lockDownSize(0), m_lockedPtr(null
     }
 }
 
+MLockPtr::MLockPtr(MLockPtr &&other) : m_lockDownSize(other.m_lockDownSize), m_lockedPtr(other.m_lockedPtr) {
+    other.m_lockedPtr = nullptr;
+}
+
 MLockPtr::~MLockPtr() {
     if (m_lockedPtr) {
         munlock(m_lockedPtr, m_lockDownSize);
@@ -76,8 +88,6 @@ MLockPtr::~MLockPtr() {
 }
 
 #    endif
-
-MMKV_NAMESPACE_BEGIN
 
 extern ThreadOnceToken_t once_control;
 extern void initialize();
@@ -88,7 +98,7 @@ void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
     // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
     int device = 0, version = 0;
     GetAppleMachineInfo(device, version);
-#    ifdef __aarch64__
+#    ifdef MMKV_USE_ARMV8_CRC32
     if ((device == iPhone && version >= 9) || (device == iPad && version >= 7)) {
         CRC32 = mmkv::armv8_crc32;
     }
@@ -112,31 +122,13 @@ void MMKV::setIsInBackground(bool isInBackground) {
     MMKVInfo("g_isInBackground:%d", g_isInBackground);
 }
 
-bool MMKV::protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block) {
+pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
     if (g_isInBackground) {
         MLockPtr mlockPtr(ptr, size);
-        if (mlockPtr.isLocked()) {
-            try {
-                block();
-            } catch (std::exception &exception) {
-                MMKVError("%s", exception.what());
-                return false;
-            }
-        } else {
-            // just fail on this condition, otherwise app will crash anyway
-            //block(m_output);
-            return false;
-        }
+        return make_pair(mlockPtr.isLocked(), move(mlockPtr));
     } else {
-        try {
-            block();
-        } catch (std::exception &exception) {
-            MMKVError("%s", exception.what());
-            return false;
-        }
+        return make_pair(true, MLockPtr(nullptr, 0));
     }
-
-    return true;
 }
 
 #    endif // MMKV_IOS
@@ -149,19 +141,31 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
         removeValueForKey(key);
         return true;
     }
-    MMBuffer data;
-    if (MiniPBCoder::isCompatibleObject(obj)) {
-        data = MiniPBCoder::encodeDataWithObject(obj);
+
+    NSData *tmpData = nil;
+    if ([obj isKindOfClass:NSString.class]) {
+        auto str = (NSString *) obj;
+        tmpData = [str dataUsingEncoding:NSUTF8StringEncoding];
+    } else if ([obj isKindOfClass:NSData.class]) {
+        tmpData = (NSData *) obj;
+    }
+    if (tmpData) {
+        // delay write the size needed for encoding tmpData
+        // avoid memory copying
+        return setDataForKey(MMBuffer(tmpData, MMBufferNoCopy), key, true);
+    } else if ([obj isKindOfClass:NSDate.class]) {
+        NSDate *oDate = (NSDate *) obj;
+        double time = oDate.timeIntervalSince1970;
+        return set(time, key);
     } else {
         /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
             auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
             if (tmp.length > 0) {
-                data = MMBuffer(tmp);
+                return setDataForKey(MMBuffer(tmp, MMBufferNoCopy), key);
             }
         }
     }
-
-    return setDataForKey(std::move(data), key);
+    return false;
 }
 
 NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
@@ -169,7 +173,7 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
         return nil;
     }
     SCOPED_LOCK(m_lock);
-    auto &data = getDataForKey(key);
+    auto data = getDataForKey(key);
     if (data.length() > 0) {
         if (MiniPBCoder::isCompatibleClass(cls)) {
             try {
@@ -188,13 +192,38 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
     return nil;
 }
 
+pair<bool, KeyValueHolder>
+MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {
+    if (kvHolder.type != KeyValueHolderType_Offset) {
+        return appendDataWithKey(data, key, isDataHolder);
+    }
+    SCOPED_LOCK(m_exclusiveProcessLock);
+
+    uint32_t keyLength = kvHolder.keySize;
+    // size needed to encode the key
+    size_t rawKeySize = keyLength + pbRawVarint32Size(keyLength);
+
+    auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+    MMBuffer keyData(rawKeySize);
+    AESCrypt decrypter = m_crypter->cloneWithStatus(kvHolder.cryptStatus);
+    decrypter.decrypt(basePtr + kvHolder.offset, keyData.getPtr(), rawKeySize);
+
+    return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
+}
+
 NSArray *MMKV::allKeys() {
     SCOPED_LOCK(m_lock);
     checkLoadData();
 
     NSMutableArray *keys = [NSMutableArray array];
-    for (const auto &pair : m_dic) {
-        [keys addObject:pair.first];
+    if (m_crypter) {
+        for (const auto &pair : *m_dicCrypt) {
+            [keys addObject:pair.first];
+        }
+    } else {
+        for (const auto &pair : *m_dic) {
+            [keys addObject:pair.first];
+        }
     }
     return keys;
 }
@@ -212,12 +241,23 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
     checkLoadData();
 
     size_t deleteCount = 0;
-    for (NSString *key in arrKeys) {
-        auto itr = m_dic.find(key);
-        if (itr != m_dic.end()) {
-            [itr->first release];
-            m_dic.erase(itr);
-            deleteCount++;
+    if (m_crypter) {
+        for (NSString *key in arrKeys) {
+            auto itr = m_dicCrypt->find(key);
+            if (itr != m_dicCrypt->end()) {
+                [itr->first release];
+                m_dicCrypt->erase(itr);
+                deleteCount++;
+            }
+        }
+    } else {
+        for (NSString *key in arrKeys) {
+            auto itr = m_dic->find(key);
+            if (itr != m_dic->end()) {
+                [itr->first release];
+                m_dic->erase(itr);
+                deleteCount++;
+            }
         }
     }
     if (deleteCount > 0) {
@@ -235,11 +275,21 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     checkLoadData();
 
     MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-    for (const auto &pair : m_dic) {
-        BOOL stop = NO;
-        block(pair.first, &stop);
-        if (stop) {
-            break;
+    if (m_crypter) {
+        for (const auto &pair : *m_dicCrypt) {
+            BOOL stop = NO;
+            block(pair.first, &stop);
+            if (stop) {
+                break;
+            }
+        }
+    } else {
+        for (const auto &pair : *m_dic) {
+            BOOL stop = NO;
+            block(pair.first, &stop);
+            if (stop) {
+                break;
+            }
         }
     }
     MMKVInfo("enumerate [%s] finish", m_mmapID.c_str());

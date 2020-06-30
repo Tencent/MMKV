@@ -72,4 +72,5 @@ int main() {
     brutleTest(processID);
 
     cout << processID << ": ended\n";
+    return 0;
 }

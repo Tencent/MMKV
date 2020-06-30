@@ -23,9 +23,7 @@
 #ifdef  __cplusplus
 
 #include "MMBuffer.h"
-#include "MMKVPredef.h"
 #include <cstdint>
-#include <vector>
 
 namespace mmkv {
 class CodedOutputData;
@@ -50,8 +48,8 @@ enum MMKVMode : uint32_t {
 
 class MMKV {
 #ifndef MMKV_ANDROID
-    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
     std::string m_mmapKey;
+    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
 #else // defined(MMKV_ANDROID)
     MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
 
@@ -60,10 +58,11 @@ class MMKV {
 
     ~MMKV();
 
-    mmkv::MMKVMap m_dic;
     std::string m_mmapID;
     MMKVPath_t m_path;
     MMKVPath_t m_crcPath;
+    mmkv::MMKVMap *m_dic;
+    mmkv::MMKVMapCrypt *m_dicCrypt;
 
     mmkv::MemoryFile *m_file;
     size_t m_actualSize;
@@ -115,27 +114,33 @@ class MMKV {
 
     bool ensureMemorySize(size_t newSize);
 
-    bool fullWriteback();
+    bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr);
 
-    bool doFullWriteBack(mmkv::MMBuffer &&allData);
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter);
 
-    const mmkv::MMBuffer &getDataForKey(MMKVKey_t key);
+    mmkv::MMBuffer getDataForKey(MMKVKey_t key);
 
-    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key);
+    // isDataHolder: avoid memory copying
+    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, bool isDataHolder = false);
 
     bool removeDataForKey(MMKVKey_t key);
 
-    bool appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key);
+    using KVHolderRet_t = std::pair<bool, mmkv::KeyValueHolder>;
+    // isDataHolder: avoid memory copying
+    KVHolderRet_t doAppendDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder, uint32_t keyLength);
+    KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
+    KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
+#ifdef MMKV_APPLE
+    KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data,
+                                    MMKVKey_t key,
+                                    const mmkv::KeyValueHolderCrypt &kvHolder,
+                                    bool isDataHolder = false);
+#endif
 
     void notifyContentChanged();
 
 #ifdef MMKV_ANDROID
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
-#endif
-
-#if defined(MMKV_IOS)
-    typedef void (^WriteBlock)(void);
-    bool protectFromBackgroundWriting(void *ptr, size_t size, WriteBlock block);
 #endif
 
 public:

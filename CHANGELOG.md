@@ -1,5 +1,21 @@
 # MMKV Change Log
 
+## v1.2.0 / 2020-06-30
+This is the second **major version** of MMKV. Everything you call is the same as the last version, while almost everything underneath has been improved. 
+
+* **Reduce Memory Usage**. We used to cache all key-values in a dictionary for efficiency. From now on we store the offset of each key-value inside the mmap-memory instead, **reducing memory usage by almost half** for (non-encrypt) MMKV. And the accessing efficiency is almost the same as before. As for encrypted MMKV, we can't simply store the offset of each key-value, the relative encrypt info needs to be stored as well. That will be too much for small key-values. We only store such info for large key-values (larger than 256B).
+* **Improve writeback efficiency**. Thanks to the optimization above, we now can implement writeback by simply calling **memmove()** multiple times. Efficiency is increased and memory consumption is down.
+* **Optimize small key-values**. Small key-values of encrypted MMKV are still cached in memory, as all the old versions did. From now on, the struct `MMBuffer` will try to **store small values in the stack** instead of the heap memory, saving a lot of time from malloc & free. In fact, all primitive types will be store in the stack memory.
+
+All of the improvements above are available to all supported platforms. Here are the additional changes for each platform.
+
+### iOS / macOS
+* **Optimize insert & delete**. Especially for inserting new values to an **existing keys**, or deleting keys. We now use the UTF-8 encoded keys in the mmap-memory instead of live encoding from keys, cutting the cost of string encoding conversion.
+* Fix Xcode compile error on some projects.
+
+### POSIX
+* It's known that GCC before 5.0 doesn't support C++17 standard very well. You should upgrade to the latest version of GCC to compile MMKV.
+
 ## v1.1.2 / 2020-05-29
 
 ### Android / iOS & macOS / Win32 / POSIX

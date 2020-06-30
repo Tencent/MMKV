@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKVCore"
-  s.version      = "1.1.2"
+  s.version      = "1.2.0"
   s.summary      = "MMKVCore for MMKV. MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC

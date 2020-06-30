@@ -20,7 +20,7 @@
 
 #ifndef MMKV_MMKVMETAINFO_H
 #define MMKV_MMKVMETAINFO_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "aes/AESCrypt.h"
 #include <cstdint>
@@ -45,22 +45,22 @@ struct MMKVMetaInfo {
     uint32_t m_crcDigest = 0;
     uint32_t m_version = MMKVVersionSequence;
     uint32_t m_sequence = 0; // full write-back count
-    unsigned char m_vector[AES_KEY_LEN] = {};
+    uint8_t m_vector[AES_KEY_LEN] = {};
     uint32_t m_actualSize = 0;
 
     // confirmed info: it's been synced to file
     struct {
         uint32_t lastActualSize = 0;
         uint32_t lastCRCDigest = 0;
-        uint32_t __reserved__[16] = {};
+        uint32_t _reserved[16] = {};
     } m_lastConfirmedMetaInfo;
 
-    void write(void *ptr) {
+    void write(void *ptr) const {
         MMKV_ASSERT(ptr);
         memcpy(ptr, this, sizeof(MMKVMetaInfo));
     }
 
-    void writeCRCAndActualSizeOnly(void *ptr) {
+    void writeCRCAndActualSizeOnly(void *ptr) const {
         MMKV_ASSERT(ptr);
         auto other = (MMKVMetaInfo *) ptr;
         other->m_crcDigest = m_crcDigest;

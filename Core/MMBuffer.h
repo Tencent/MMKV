@@ -20,7 +20,7 @@
 
 #ifndef MMKV_MMBUFFER_H
 #define MMKV_MMBUFFER_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMKVPredef.h"
 
@@ -34,14 +34,37 @@ enum MMBufferCopyFlag : bool {
     MMBufferNoCopy = true,
 };
 
+#pragma pack(push, 1)
+
+struct KeyValueHolderCrypt;
+
 class MMBuffer {
-private:
-    void *ptr;
-    size_t size;
-    MMBufferCopyFlag isNoCopy;
+    enum MMBufferType : uint8_t {
+        MMBufferType_Small,  // store small buffer in stack memory
+        MMBufferType_Normal, // store in heap memory
+    };
+    MMBufferType type;
+
+    union {
+        struct {
+            MMBufferCopyFlag isNoCopy;
+            size_t size;
+            void *ptr;
 #ifdef MMKV_APPLE
-    NSData *m_data = nil;
+            NSData *m_data;
 #endif
+        };
+        struct {
+            uint8_t paddedSize;
+            // make at least 10 bytes to hold all primitive types (negative int32, int64, double etc) on 32 bit device
+            // on 64 bit device it's guaranteed larger than 10 bytes
+            uint8_t paddedBuffer[10];
+        };
+    };
+
+    static constexpr size_t SmallBufferSize() {
+        return sizeof(MMBuffer) - offsetof(MMBuffer, paddedBuffer);
+    }
 
 public:
     explicit MMBuffer(size_t length = 0);
@@ -55,14 +78,21 @@ public:
 
     ~MMBuffer();
 
-    void *getPtr() const { return ptr; }
+    void *getPtr() const { return (type == MMBufferType_Small) ? (void *) paddedBuffer : ptr; }
 
-    size_t length() const { return size; }
+    size_t length() const { return (type == MMBufferType_Small) ? paddedSize : size; }
+
+    // transfer ownership to others
+    void detach();
 
     // those are expensive, just forbid it for possibly misuse
     explicit MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;
+
+    friend KeyValueHolderCrypt;
 };
+
+#pragma pack(pop)
 
 } // namespace mmkv
 

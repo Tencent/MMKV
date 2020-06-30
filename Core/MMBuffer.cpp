@@ -19,6 +19,7 @@
  */
 
 #include "MMBuffer.h"
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <utility>
@@ -29,23 +30,59 @@
 #    endif
 #endif
 
+using namespace std;
+
 namespace mmkv {
 
-MMBuffer::MMBuffer(size_t length) : ptr(nullptr), size(length), isNoCopy(MMBufferCopy) {
-    if (size > 0) {
+MMBuffer::MMBuffer(size_t length) {
+    if (length > SmallBufferSize()) {
+        type = MMBufferType_Normal;
+        isNoCopy = MMBufferCopy;
+        size = length;
         ptr = malloc(size);
+        if (!ptr) {
+            throw std::runtime_error(strerror(errno));
+        }
+#ifdef MMKV_APPLE
+        m_data = nil;
+#endif
+    } else {
+        type = MMBufferType_Small;
+        paddedSize = static_cast<uint8_t>(length);
     }
 }
 
-MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : ptr(source), size(length), isNoCopy(flag) {
+MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : isNoCopy(flag) {
     if (isNoCopy == MMBufferCopy) {
-        ptr = malloc(size);
-        memcpy(ptr, source, size);
+        if (length > SmallBufferSize()) {
+            type = MMBufferType_Normal;
+            size = length;
+            ptr = malloc(size);
+            if (!ptr) {
+                throw std::runtime_error(strerror(errno));
+            }
+            memcpy(ptr, source, size);
+#ifdef MMKV_APPLE
+            m_data = nil;
+#endif
+        } else {
+            type = MMBufferType_Small;
+            paddedSize = static_cast<uint8_t>(length);
+            memcpy(paddedBuffer, source, length);
+        }
+    } else {
+        type = MMBufferType_Normal;
+        size = length;
+        ptr = source;
+#ifdef MMKV_APPLE
+        m_data = nil;
+#endif
     }
 }
 
 #ifdef MMKV_APPLE
-MMBuffer::MMBuffer(NSData *data, MMBufferCopyFlag flag) : ptr((void *) data.bytes), size(data.length), isNoCopy(flag) {
+MMBuffer::MMBuffer(NSData *data, MMBufferCopyFlag flag)
+    : type(MMBufferType_Normal), ptr((void *) data.bytes), size(data.length), isNoCopy(flag) {
     if (isNoCopy == MMBufferCopy) {
         m_data = [data retain];
     } else {
@@ -54,37 +91,80 @@ MMBuffer::MMBuffer(NSData *data, MMBufferCopyFlag flag) : ptr((void *) data.byte
 }
 #endif
 
-MMBuffer::MMBuffer(MMBuffer &&other) noexcept : ptr(other.ptr), size(other.size), isNoCopy(other.isNoCopy) {
-    other.ptr = nullptr;
-    other.size = 0;
-    other.isNoCopy = MMBufferCopy;
-
+MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
+    if (type == MMBufferType_Normal) {
+        size = other.size;
+        ptr = other.ptr;
+        isNoCopy = other.isNoCopy;
 #ifdef MMKV_APPLE
-    m_data = other.m_data;
-    other.m_data = nil;
+        m_data = other.m_data;
 #endif
+        other.detach();
+    } else {
+        paddedSize = other.paddedSize;
+        memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
+    }
 }
 
 MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
-    std::swap(ptr, other.ptr);
-    std::swap(size, other.size);
-    std::swap(isNoCopy, other.isNoCopy);
-
+    if (type == MMBufferType_Normal) {
+        if (other.type == MMBufferType_Normal) {
+            std::swap(isNoCopy, other.isNoCopy);
+            std::swap(size, other.size);
+            std::swap(ptr, other.ptr);
 #ifdef MMKV_APPLE
-    std::swap(m_data, other.m_data);
+            std::swap(m_data, other.m_data);
 #endif
+        } else {
+            type = MMBufferType_Small;
+            if (isNoCopy == MMBufferCopy) {
+#ifdef MMKV_APPLE
+                if (m_data) {
+                    [m_data release];
+                } else if (ptr) {
+                    free(ptr);
+                }
+#else
+                if (ptr) {
+                    free(ptr);
+                }
+#endif
+            }
+            paddedSize = other.paddedSize;
+            memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
+        }
+    } else {
+        if (other.type == MMBufferType_Normal) {
+            type = MMBufferType_Normal;
+            isNoCopy = other.isNoCopy;
+            size = other.size;
+            ptr = other.ptr;
+#ifdef MMKV_APPLE
+            m_data = other.m_data;
+#endif
+            other.detach();
+        } else {
+            uint8_t tmp[SmallBufferSize()];
+            memcpy(tmp, other.paddedBuffer, other.paddedSize);
+            memcpy(other.paddedBuffer, paddedBuffer, paddedSize);
+            memcpy(paddedBuffer, tmp, other.paddedSize);
+            std::swap(paddedSize, other.paddedSize);
+        }
+    }
 
     return *this;
 }
 
 MMBuffer::~MMBuffer() {
+    if (type == MMBufferType_Small) {
+        return;
+    }
+
 #ifdef MMKV_APPLE
     if (m_data) {
         if (isNoCopy == MMBufferCopy) {
             [m_data release];
         }
-        m_data = nil;
-        ptr = nullptr;
         return;
     }
 #endif
@@ -92,7 +172,13 @@ MMBuffer::~MMBuffer() {
     if (isNoCopy == MMBufferCopy && ptr) {
         free(ptr);
     }
-    ptr = nullptr;
+}
+
+void MMBuffer::detach() {
+    // type = MMBufferType_Small;
+    // paddedSize = 0;
+    auto memsetPtr = (size_t *) &type;
+    *memsetPtr = 0;
 }
 
 } // namespace mmkv
