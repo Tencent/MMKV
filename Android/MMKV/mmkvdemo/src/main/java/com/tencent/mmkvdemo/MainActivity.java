@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 baseline.mmkvBaselineTest();
                 baseline.sharedPreferencesBaselineTest();
-                baseline.sqliteBaselineTest(true);
+                baseline.sqliteBaselineTest(false);
 
                 //testInterProcessReKey();
                 //testInterProcessLockPhase2();
