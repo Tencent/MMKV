@@ -30,7 +30,7 @@ Pod::Spec.new do |s|
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
   }
 
-  s.dependency 'MMKVCore', '~> 1.1.2'
+  s.dependency 'MMKVCore', '~> 1.2.0'
 
 end
 
