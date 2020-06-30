@@ -89,28 +89,6 @@ void AESCrypt::decrypt(const void *input, void *output, size_t length) {
     AES_cfb128_decrypt((const uint8_t *) input, (uint8_t *) output, length, m_aesKey, m_vector, &m_number);
 }
 
-/*void AESCrypt::skipDecrypt(const void *input, size_t length) {
-    if (!input || length == 0) {
-        return;
-    }
-    auto readPtr = (const uint8_t*) input;
-    uint8_t buffer[AES_KEY_LEN];
-    if (m_number) {
-        auto size = std::min(static_cast<size_t>(m_number), length);
-        AES_cfb128_decrypt(readPtr, buffer, size, m_aesKey, m_vector, &m_number);
-        readPtr += size;
-        length -= size;
-    }
-    while (length >= AES_KEY_LEN) {
-        AES_cfb128_decrypt(readPtr, buffer, AES_KEY_LEN, m_aesKey, m_vector, &m_number);
-        readPtr += AES_KEY_LEN;
-        length -= AES_KEY_LEN;
-    }
-    if (length) {
-        AES_cfb128_decrypt(readPtr, buffer, length, m_aesKey, m_vector, &m_number);
-    }
-}*/
-
 void AESCrypt::fillRandomIV(void *vector) {
     if (!vector) {
         return;
@@ -122,13 +100,14 @@ void AESCrypt::fillRandomIV(void *vector) {
     }
 }
 
-void Rollback_cfb_decrypt(const uint8_t *in, const uint8_t *out, size_t len, AES_KEY *key, AESCryptStatus &status) {
+static inline void
+Rollback_cfb_decrypt(const uint8_t *input, const uint8_t *output, size_t len, AES_KEY *key, AESCryptStatus &status) {
     auto ivec = status.m_vector;
     auto n = status.m_number;
 
     while (n && len) {
-        auto c = *(--out);
-        ivec[--n] = *(--in) ^ c;
+        auto c = *(--output);
+        ivec[--n] = *(--input) ^ c;
         len--;
     }
     if (n == 0 && (status.m_number != 0)) {
@@ -136,11 +115,11 @@ void Rollback_cfb_decrypt(const uint8_t *in, const uint8_t *out, size_t len, AES
     }
     while (len >= 16) {
         len -= 16;
-        out -= 16;
-        in -= 16;
+        output -= 16;
+        input -= 16;
         for (; n < 16; n += sizeof(size_t)) {
-            size_t t = *(size_t *) (out + n);
-            *(size_t *) (ivec + n) = *(size_t *) (in + n) ^ t;
+            size_t t = *(size_t *) (output + n);
+            *(size_t *) (ivec + n) = *(size_t *) (input + n) ^ t;
         }
         n = 0;
         AES_decrypt(ivec, ivec, key);
@@ -148,18 +127,13 @@ void Rollback_cfb_decrypt(const uint8_t *in, const uint8_t *out, size_t len, AES
     if (len) {
         n = 16;
         do {
-            auto c = *(--out);
-            ivec[--n] = *(--in) ^ c;
+            auto c = *(--output);
+            ivec[--n] = *(--input) ^ c;
             len--;
         } while (len);
     }
 
     status.m_number = n;
-}
-
-void AESCrypt::getCurStatus(AESCryptStatus &status) {
-    status.m_number = static_cast<uint8_t>(m_number);
-    memcpy(status.m_vector, m_vector, sizeof(m_vector));
 }
 
 void AESCrypt::statusBeforeDecrypt(const void *input, const void *output, size_t length, AESCryptStatus &status) {
@@ -174,6 +148,11 @@ void AESCrypt::statusBeforeDecrypt(const void *input, const void *output, size_t
     }
     getCurStatus(status);
     Rollback_cfb_decrypt((const uint8_t *) input, (const uint8_t *) output, length, m_aesRollbackKey, status);
+}
+
+void AESCrypt::getCurStatus(AESCryptStatus &status) {
+    status.m_number = static_cast<uint8_t>(m_number);
+    memcpy(status.m_vector, m_vector, sizeof(m_vector));
 }
 
 AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
@@ -210,7 +189,7 @@ void AESCrypt::testAESCrypt() {
     memset(encryptText, 0, DEFAULT_MMAP_SIZE);
     memset(decryptText, 0, DEFAULT_MMAP_SIZE);
 
-    /* in-place encryption & decryption, this is crazy
+    /* in-place encryption & decryption
     memcpy(encryptText, plainText, textLength);
     crypt1.encrypt(encryptText, encryptText, textLength);
     crypt2.decrypt(encryptText, encryptText, textLength);
@@ -231,7 +210,7 @@ void AESCrypt::testAESCrypt() {
         }
 
         AESCrypt *decrypter;
-        int oldNum;
+        uint32_t oldNum;
         uint8_t oldVector[sizeof(crypt1.m_vector)];
 
         flip = !flip;

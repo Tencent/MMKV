@@ -27,7 +27,6 @@
 #include "MMBuffer.h"
 #include <cstdint>
 #include <memory.h>
-#include <string>
 
 namespace mmkv {
 

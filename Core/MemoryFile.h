@@ -24,8 +24,6 @@
 
 #include "MMKVPredef.h"
 
-#include <string>
-
 #ifdef MMKV_ANDROID
 MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
 

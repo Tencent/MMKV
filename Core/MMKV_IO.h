@@ -23,7 +23,6 @@
 #ifdef __cplusplus
 
 #include "MMKV.h"
-#include <string>
 
 MMKV_NAMESPACE_BEGIN
 
@@ -35,13 +34,16 @@ MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
 MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
 
 template <typename T>
-void clearDictionary(T &dic) {
+void clearDictionary(T *dic) {
+    if (!dic) {
+        return;
+    }
 #ifdef MMKV_APPLE
-    for (auto &pair : dic) {
+    for (auto &pair : *dic) {
         [pair.first release];
     }
 #endif
-    dic.clear();
+    dic->clear();
 }
 
 enum : bool {

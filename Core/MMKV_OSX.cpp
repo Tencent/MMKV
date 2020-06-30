@@ -205,7 +205,7 @@ MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolde
 
     auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
     MMBuffer keyData(rawKeySize);
-    AESCrypt decrypter = m_crypter->cloneWithStatus(*kvHolder.cryptStatus());
+    AESCrypt decrypter = m_crypter->cloneWithStatus(kvHolder.cryptStatus);
     decrypter.decrypt(basePtr + kvHolder.offset, keyData.getPtr(), rawKeySize);
 
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
@@ -217,11 +217,11 @@ NSArray *MMKV::allKeys() {
 
     NSMutableArray *keys = [NSMutableArray array];
     if (m_crypter) {
-        for (const auto &pair : m_dicCrypt) {
+        for (const auto &pair : *m_dicCrypt) {
             [keys addObject:pair.first];
         }
     } else {
-        for (const auto &pair : m_dic) {
+        for (const auto &pair : *m_dic) {
             [keys addObject:pair.first];
         }
     }
@@ -243,19 +243,19 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
     size_t deleteCount = 0;
     if (m_crypter) {
         for (NSString *key in arrKeys) {
-            auto itr = m_dicCrypt.find(key);
-            if (itr != m_dicCrypt.end()) {
+            auto itr = m_dicCrypt->find(key);
+            if (itr != m_dicCrypt->end()) {
                 [itr->first release];
-                m_dicCrypt.erase(itr);
+                m_dicCrypt->erase(itr);
                 deleteCount++;
             }
         }
     } else {
         for (NSString *key in arrKeys) {
-            auto itr = m_dic.find(key);
-            if (itr != m_dic.end()) {
+            auto itr = m_dic->find(key);
+            if (itr != m_dic->end()) {
                 [itr->first release];
-                m_dic.erase(itr);
+                m_dic->erase(itr);
                 deleteCount++;
             }
         }
@@ -276,7 +276,7 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
 
     MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
     if (m_crypter) {
-        for (const auto &pair : m_dicCrypt) {
+        for (const auto &pair : *m_dicCrypt) {
             BOOL stop = NO;
             block(pair.first, &stop);
             if (stop) {
@@ -284,7 +284,7 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
             }
         }
     } else {
-        for (const auto &pair : m_dic) {
+        for (const auto &pair : *m_dic) {
             BOOL stop = NO;
             block(pair.first, &stop);
             if (stop) {

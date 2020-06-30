@@ -35,8 +35,8 @@ struct AES_KEY {
     int rounds;
 };
 
-void AES_cfb128_encrypt(const uint8_t *in, uint8_t *out, size_t length, const AES_KEY *key, uint8_t *ivec, int *num);
-void AES_cfb128_decrypt(const uint8_t *in, uint8_t *out, size_t length, const AES_KEY *key, uint8_t *ivec, int *num);
+void AES_cfb128_encrypt(const uint8_t *in, uint8_t *out, size_t length, const AES_KEY *key, uint8_t *ivec, uint32_t *num);
+void AES_cfb128_decrypt(const uint8_t *in, uint8_t *out, size_t length, const AES_KEY *key, uint8_t *ivec, uint32_t *num);
 
 } // namespace openssl
 

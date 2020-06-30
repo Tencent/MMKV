@@ -22,6 +22,7 @@
 #include "CodedInputData.h"
 #include "CodedInputDataCrypt.h"
 #include "CodedOutputData.h"
+#include "PBEncodeItem.hpp"
 
 #ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
@@ -32,6 +33,9 @@
 using namespace std;
 
 namespace mmkv {
+
+MiniPBCoder::MiniPBCoder() : m_encodeItems(new std::vector<PBEncodeItem>()) {
+}
 
 MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer, AESCrypt *crypter) : MiniPBCoder() {
     m_inputBuffer = inputBuffer;
@@ -153,6 +157,32 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVVector &vec) {
     encodeItem->compiledSize = pbRawVarint32Size(encodeItem->valueSize) + encodeItem->valueSize;
 
     return index;
+}
+
+MMBuffer MiniPBCoder::writePreparedItems(size_t index) {
+    PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
+    if (oItem && oItem->compiledSize > 0) {
+        m_outputBuffer = new MMBuffer(oItem->compiledSize);
+        m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
+
+        writeRootObject();
+    }
+
+    return std::move(*m_outputBuffer);
+}
+
+MMBuffer MiniPBCoder::encodeDataWithObject(const MMBuffer &obj) {
+    try {
+        auto valueSize = static_cast<uint32_t>(obj.length());
+        auto compiledSize = pbRawVarint32Size(valueSize) + valueSize;
+        MMBuffer result(compiledSize);
+        CodedOutputData output(result.getPtr(), result.length());
+        output.writeData(obj);
+        return result;
+    } catch (const std::exception &exception) {
+        MMKVError("%s", exception.what());
+        return MMBuffer();
+    }
 }
 
 #ifndef MMKV_APPLE

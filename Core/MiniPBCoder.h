@@ -24,17 +24,12 @@
 
 #include "MMKVPredef.h"
 
-#include "CodedOutputData.h"
 #include "KeyValueHolder.h"
 #include "MMBuffer.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
-#include "PBEncodeItem.hpp"
 #include "PBUtility.h"
 #include <cstdint>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace mmkv {
 
@@ -42,6 +37,7 @@ class CodedInputData;
 class CodedOutputData;
 class AESCrypt;
 class CodedInputDataCrypt;
+struct PBEncodeItem;
 
 class MiniPBCoder {
     const MMBuffer *m_inputBuffer = nullptr;
@@ -52,7 +48,7 @@ class MiniPBCoder {
     CodedOutputData *m_outputData = nullptr;
     std::vector<PBEncodeItem> *m_encodeItems = nullptr;
 
-    MiniPBCoder() = default;
+    MiniPBCoder();
     explicit MiniPBCoder(const MMBuffer *inputBuffer, AESCrypt *crypter = nullptr);
     ~MiniPBCoder();
 
@@ -62,19 +58,12 @@ class MiniPBCoder {
     size_t prepareObjectForEncode(const MMBuffer &buffer);
 
     template <typename T>
-    MMBuffer getEncodeData(const T &vec) {
-        m_encodeItems = new std::vector<PBEncodeItem>();
-        size_t index = prepareObjectForEncode(vec);
-        PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
-        if (oItem && oItem->compiledSize > 0) {
-            m_outputBuffer = new MMBuffer(oItem->compiledSize);
-            m_outputData = new CodedOutputData(m_outputBuffer->getPtr(), m_outputBuffer->length());
-
-            writeRootObject();
-        }
-
-        return std::move(*m_outputBuffer);
+    MMBuffer getEncodeData(const T &obj) {
+        size_t index = prepareObjectForEncode(obj);
+        return writePreparedItems(index);
     }
+
+    MMBuffer writePreparedItems(size_t index);
 
     void decodeOneMap(MMKVMap &dic, size_t position, bool greedy);
     void decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy);
@@ -101,20 +90,8 @@ public:
         }
     }
 
-    template <>
-    MMBuffer encodeDataWithObject<MMBuffer>(const MMBuffer &obj) {
-        try {
-            auto valueSize = static_cast<uint32_t>(obj.length());
-            auto compiledSize = pbRawVarint32Size(valueSize) + valueSize;
-            MMBuffer result(compiledSize);
-            CodedOutputData output(result.getPtr(), result.length());
-            output.writeData(obj);
-            return result;
-        } catch (const std::exception &exception) {
-            MMKVError("%s", exception.what());
-            return MMBuffer();
-        }
-    }
+    // opt encoding a single MMBuffer
+    MMBuffer encodeDataWithObject(const MMBuffer &obj);
 
     // return empty result if there's any error
     static void decodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position = 0);

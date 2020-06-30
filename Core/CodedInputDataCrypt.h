@@ -28,7 +28,6 @@
 #include "MMBuffer.h"
 #include "aes/AESCrypt.h"
 #include <cstdint>
-#include <string>
 
 namespace mmkv {
 
@@ -36,14 +35,14 @@ class CodedInputDataCrypt {
     uint8_t *const m_ptr;
     size_t m_size;
     size_t m_position;
-    size_t m_decryptPosition;
+    size_t m_decryptPosition; // position of text that has beed decrypted
 
     AESCrypt &m_decrypter;
-    uint8_t *m_decryptBuffer;
+    uint8_t *m_decryptBuffer; // internal decrypt buffer, grows by (n * AES_KEY_LEN) bytes
     size_t m_decryptBufferSize;
-    size_t m_decryptBufferDiscardPosition;
-    size_t m_decryptBufferPosition;
-    size_t m_decryptBufferDecryptPosition;
+    size_t m_decryptBufferPosition; // reader position in the buffer, synced with m_position
+    size_t m_decryptBufferDecryptLength; // length of the buffer that has been used
+    size_t m_decryptBufferDiscardPosition; // recycle position, any data before that can be discarded
 
     void consumeBytes(size_t length, bool discardPreData = false);
     void skipBytes(size_t length);

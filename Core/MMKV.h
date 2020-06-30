@@ -22,11 +22,8 @@
 #define MMKV_MMKV_H
 #ifdef  __cplusplus
 
-#include "KeyValueHolder.h"
 #include "MMBuffer.h"
-#include "MMKVPredef.h"
 #include <cstdint>
-#include <vector>
 
 namespace mmkv {
 class CodedOutputData;
@@ -51,8 +48,8 @@ enum MMKVMode : uint32_t {
 
 class MMKV {
 #ifndef MMKV_ANDROID
-    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
     std::string m_mmapKey;
+    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
 #else // defined(MMKV_ANDROID)
     MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *relativePath);
 
@@ -61,11 +58,11 @@ class MMKV {
 
     ~MMKV();
 
-    mmkv::MMKVMap m_dic;
-    mmkv::MMKVMapCrypt m_dicCrypt;
     std::string m_mmapID;
     MMKVPath_t m_path;
     MMKVPath_t m_crcPath;
+    mmkv::MMKVMap *m_dic;
+    mmkv::MMKVMapCrypt *m_dicCrypt;
 
     mmkv::MemoryFile *m_file;
     size_t m_actualSize;

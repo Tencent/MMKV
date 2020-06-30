@@ -21,6 +21,7 @@
 #include "CodedInputData.h"
 #include "CodedOutputData.h"
 #include "InterProcessLock.h"
+#include "KeyValueHolder.h"
 #include "MMBuffer.h"
 #include "MMKVLog.h"
 #include "MMKVMetaInfo.hpp"
@@ -67,6 +68,8 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
+    , m_dic(nullptr)
+    , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(m_path))
     , m_metaFile(new MemoryFile(m_crcPath))
     , m_metaInfo(new MMKVMetaInfo())
@@ -80,7 +83,10 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
     m_output = nullptr;
 
     if (cryptKey && cryptKey->length() > 0) {
+        m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
+    } else {
+        m_dic = new MMKVMap();
     }
 
     m_needLoadFromFile = true;
@@ -103,6 +109,8 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
 MMKV::~MMKV() {
     clearMemoryCache();
 
+    delete m_dic;
+    delete m_dicCrypt;
     delete m_crypter;
     delete m_file;
     delete m_metaFile;
@@ -703,9 +711,9 @@ bool MMKV::containsKey(MMKVKey_t key) {
     checkLoadData();
 
     if (m_crypter) {
-        return m_dicCrypt.find(key) != m_dicCrypt.end();
+        return m_dicCrypt->find(key) != m_dicCrypt->end();
     } else {
-        return m_dic.find(key) != m_dic.end();
+        return m_dic->find(key) != m_dic->end();
     }
 }
 
@@ -713,9 +721,9 @@ size_t MMKV::count() {
     SCOPED_LOCK(m_lock);
     checkLoadData();
     if (m_crypter) {
-        return m_dicCrypt.size();
+        return m_dicCrypt->size();
     } else {
-        return m_dic.size();
+        return m_dic->size();
     }
 }
 
@@ -750,11 +758,11 @@ vector<string> MMKV::allKeys() {
 
     vector<string> keys;
     if (m_crypter) {
-        for (const auto &itr : m_dicCrypt) {
+        for (const auto &itr : *m_dicCrypt) {
             keys.push_back(itr.first);
         }
     } else {
-        for (const auto &itr : m_dic) {
+        for (const auto &itr : *m_dic) {
             keys.push_back(itr.first);
         }
     }
@@ -776,17 +784,17 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     size_t deleteCount = 0;
     if (m_crypter) {
         for (const auto &key : arrKeys) {
-            auto itr = m_dicCrypt.find(key);
-            if (itr != m_dicCrypt.end()) {
-                m_dicCrypt.erase(itr);
+            auto itr = m_dicCrypt->find(key);
+            if (itr != m_dicCrypt->end()) {
+                m_dicCrypt->erase(itr);
                 deleteCount++;
             }
         }
     } else {
         for (const auto &key : arrKeys) {
-            auto itr = m_dic.find(key);
-            if (itr != m_dic.end()) {
-                m_dic.erase(itr);
+            auto itr = m_dic->find(key);
+            if (itr != m_dic->end()) {
+                m_dic->erase(itr);
                 deleteCount++;
             }
         }

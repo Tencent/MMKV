@@ -109,10 +109,6 @@ KeyValueHolderCrypt::~KeyValueHolderCrypt() {
     }
 }
 
-AESCryptStatus *KeyValueHolderCrypt::cryptStatus() const {
-    return (AESCryptStatus *) (&aesNumber);
-}
-
 // get decrypt data with [position, -1)
 static MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
     static uint8_t smallBuffer[16];
@@ -146,7 +142,7 @@ MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr, const AESCrypt *cr
         auto position = static_cast<uint32_t>(pbKeyValueSize + keySize);
         auto realSize = position + valueSize;
         auto kvBuffer = MMBuffer(realPtr, realSize, MMBufferNoCopy);
-        auto decrypter = crypter->cloneWithStatus(*cryptStatus());
+        auto decrypter = crypter->cloneWithStatus(cryptStatus);
         return decryptBuffer(decrypter, kvBuffer, position);
     }
 }
@@ -200,7 +196,7 @@ void KeyValueHolderCrypt::testAESToMMBuffer() {
     KeyValueHolderCrypt kvHolder(keySize, valueSize, 0);
     auto rollbackSize = position + 5;
     decrypt.statusBeforeDecrypt(encryptText + rollbackSize, smallBuffer + rollbackSize, rollbackSize,
-                                *kvHolder.cryptStatus());
+                                kvHolder.cryptStatus);
     auto value = kvHolder.toMMBuffer(encryptText, &decrypt);
 #    ifdef MMKV_APPLE
     MMKVInfo("testAESToMMBuffer: %@", CodedInputData((char *) value.getPtr(), value.length()).readString());

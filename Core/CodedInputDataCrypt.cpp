@@ -39,7 +39,7 @@ CodedInputDataCrypt::CodedInputDataCrypt(const void *oData, size_t length, AESCr
     m_decryptBufferSize = AES_KEY_LEN * 2;
     m_decryptBufferPosition = static_cast<size_t>(crypt.m_number);
     m_decryptBufferDiscardPosition = m_decryptBufferPosition;
-    m_decryptBufferDecryptPosition = m_decryptBufferPosition;
+    m_decryptBufferDecryptLength = m_decryptBufferPosition;
 
     m_decryptBuffer = (uint8_t *) malloc(m_decryptBufferSize);
     if (!m_decryptBuffer) {
@@ -67,38 +67,41 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
     if (discardPreData) {
         m_decryptBufferDiscardPosition = m_decryptBufferPosition;
     }
-    auto decryptedBytesLeft = m_decryptBufferDecryptPosition - m_decryptBufferPosition;
+    auto decryptedBytesLeft = m_decryptBufferDecryptLength - m_decryptBufferPosition;
     if (decryptedBytesLeft >= length) {
         return;
     }
     length -= decryptedBytesLeft;
 
+    // if there's some data left inside m_decrypter.m_vector, use them first
+    // it will be faster when always decrypt with (n * AES_KEY_LEN) bytes
     if (m_decrypter.m_number != 0) {
-        constexpr auto S_AES_KEY_LEN = static_cast<int32_t>(AES_KEY_LEN);
-        auto alignCrypter = S_AES_KEY_LEN - m_decrypter.m_number;
-        auto s_length = static_cast<int32_t>(length);
-        s_length -= alignCrypter; // might be negative
-        s_length = ((s_length + S_AES_KEY_LEN - 1) / S_AES_KEY_LEN) * S_AES_KEY_LEN;
-        s_length += alignCrypter;
-        assert(static_cast<size_t>(s_length) >= length);
-        length = static_cast<size_t>(s_length);
+        auto alignDecrypter = AES_KEY_LEN - m_decrypter.m_number;
+        // make sure no data left inside m_decrypter.m_vector after decrypt
+        if (length < alignDecrypter) {
+            length = alignDecrypter;
+        } else {
+            length -= alignDecrypter;
+            length = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
+            length += alignDecrypter;
+        }
     } else {
         length = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
     }
     auto bytesLeftInSrc = m_size - m_decryptPosition;
     length = min(bytesLeftInSrc, length);
 
-    auto bytesLeftInBuffer = m_decryptBufferSize - m_decryptBufferDecryptPosition;
+    auto bytesLeftInBuffer = m_decryptBufferSize - m_decryptBufferDecryptLength;
     // try move some space
     if (bytesLeftInBuffer < length && m_decryptBufferDiscardPosition > 0) {
         auto posToMove = (m_decryptBufferDiscardPosition / AES_KEY_LEN) * AES_KEY_LEN;
         if (posToMove) {
-            auto sizeToMove = m_decryptBufferDecryptPosition - posToMove;
+            auto sizeToMove = m_decryptBufferDecryptLength - posToMove;
             memmove(m_decryptBuffer, m_decryptBuffer + posToMove, sizeToMove);
             m_decryptBufferPosition -= posToMove;
-            m_decryptBufferDecryptPosition -= posToMove;
+            m_decryptBufferDecryptLength -= posToMove;
             m_decryptBufferDiscardPosition = 0;
-            bytesLeftInBuffer = m_decryptBufferSize - m_decryptBufferDecryptPosition;
+            bytesLeftInBuffer = m_decryptBufferSize - m_decryptBufferDecryptLength;
         }
     }
     // still no enough sapce, try realloc()
@@ -111,22 +114,22 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
         m_decryptBuffer = (uint8_t *) newBuffer;
         m_decryptBufferSize = newSize;
     }
-    m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer + m_decryptBufferDecryptPosition, length);
+    m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer + m_decryptBufferDecryptLength, length);
     m_decryptPosition += length;
-    m_decryptBufferDecryptPosition += length;
+    m_decryptBufferDecryptLength += length;
     assert(m_decryptPosition == m_size || m_decrypter.m_number == 0);
 }
 
 void CodedInputDataCrypt::skipBytes(size_t length) {
     m_position += length;
 
-    auto decryptedBytesLeft = m_decryptBufferDecryptPosition - m_decryptBufferPosition;
+    auto decryptedBytesLeft = m_decryptBufferDecryptLength - m_decryptBufferPosition;
     if (decryptedBytesLeft >= length) {
         m_decryptBufferPosition += length;
         return;
     }
     length -= decryptedBytesLeft;
-    // if this happens, we need a optimization like the alignCrypter above
+    // if this happens, we need optimization like the alignDecrypter above
     assert(m_decrypter.m_number == 0);
 
     size_t alignSize = ((length + AES_KEY_LEN - 1) / AES_KEY_LEN) * AES_KEY_LEN;
@@ -142,18 +145,18 @@ void CodedInputDataCrypt::skipBytes(size_t length) {
         m_decrypter.decrypt(m_ptr + m_decryptPosition, m_decryptBuffer, size);
         m_decryptPosition += size;
         m_decryptBufferPosition = size - decryptedBytesLeft;
-        m_decryptBufferDecryptPosition = size;
+        m_decryptBufferDecryptLength = size;
     } else {
         m_decryptBufferPosition = AES_KEY_LEN - decryptedBytesLeft;
-        m_decryptBufferDecryptPosition = AES_KEY_LEN;
+        m_decryptBufferDecryptLength = AES_KEY_LEN;
     }
-    assert(m_decryptBufferPosition <= m_decryptBufferDecryptPosition);
-    assert(m_decryptPosition - m_decryptBufferDecryptPosition + m_decryptBufferPosition == m_position);
+    assert(m_decryptBufferPosition <= m_decryptBufferDecryptLength);
+    assert(m_decryptPosition - m_decryptBufferDecryptLength + m_decryptBufferPosition == m_position);
 }
 
 inline void CodedInputDataCrypt::statusBeforeDecrypt(size_t rollbackSize, AESCryptStatus &status) {
-    rollbackSize += m_decryptBufferDecryptPosition - m_decryptBufferPosition;
-    m_decrypter.statusBeforeDecrypt(m_ptr + m_decryptPosition, m_decryptBuffer + m_decryptBufferDecryptPosition,
+    rollbackSize += m_decryptBufferDecryptLength - m_decryptBufferPosition;
+    m_decrypter.statusBeforeDecrypt(m_ptr + m_decryptPosition, m_decryptBuffer + m_decryptBufferDecryptLength,
                                     rollbackSize, status);
 }
 
@@ -252,7 +255,7 @@ void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
                 static_cast<uint8_t>(pbRawVarint32Size(kvHolder.valueSize) + pbRawVarint32Size(kvHolder.keySize));
 
             size_t rollbackSize = kvHolder.pbKeyValueSize + kvHolder.keySize;
-            statusBeforeDecrypt(rollbackSize, *kvHolder.cryptStatus());
+            statusBeforeDecrypt(rollbackSize, kvHolder.cryptStatus);
 
             skipBytes(s_size);
         } else {

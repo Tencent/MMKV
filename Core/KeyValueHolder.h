@@ -23,6 +23,7 @@
 #ifdef __cplusplus
 
 #include "MMBuffer.h"
+#include "aes/AESCrypt.h"
 
 namespace mmkv {
 
@@ -46,9 +47,6 @@ enum KeyValueHolderType : uint8_t {
     KeyValueHolderType_Offset, // store value by offset
 };
 
-class AESCrypt;
-struct AESCryptStatus;
-
 // kv holder for encrypted mmkv
 struct KeyValueHolderCrypt {
     KeyValueHolderType type = KeyValueHolderType_Direct;
@@ -60,8 +58,7 @@ struct KeyValueHolderCrypt {
             uint16_t keySize;
             uint32_t valueSize;
             uint32_t offset;
-            uint8_t aesNumber;
-            uint8_t aesVector[AES_KEY_LEN];
+            AESCryptStatus cryptStatus;
         };
         // store value directly
         struct {
@@ -92,12 +89,10 @@ struct KeyValueHolderCrypt {
 
     ~KeyValueHolderCrypt();
 
-    AESCryptStatus *cryptStatus() const;
-
     MMBuffer toMMBuffer(const void *basePtr, const AESCrypt *crypter) const;
 
-    std::tuple<uint32_t, uint32_t, AESCryptStatus *> toTuple() const {
-        return std::make_tuple(offset, pbKeyValueSize + keySize + valueSize, cryptStatus());
+    std::tuple<uint32_t, uint32_t, AESCryptStatus *> toTuple() {
+        return std::make_tuple(offset, pbKeyValueSize + keySize + valueSize, &cryptStatus);
     }
 
     // those are expensive, just forbid it for possibly misuse
