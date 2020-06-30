@@ -85,7 +85,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		CB1E0651242B84D800F2FD42 /* MMKV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKVAppExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "MMKV copy-Info.plist"; path = "/Users/lingol/Developer/mmkv/iOS/MMKV/MMKV copy-Info.plist"; sourceTree = "<absolute>"; };
 		CB1FD4912046984F00931B5F /* libMMKV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMMKV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1FD4942046984F00931B5F /* MMKV.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
@@ -97,7 +97,7 @@
 		CBC1A90320DA94A000AD5087 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		CBC1A90A20DA95E100AD5087 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CBDF328F2192C0000028DB4D /* MMKVHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKVHandler.h; sourceTree = "<group>"; };
-		CBF1904C243D706D001C82ED /* MMKV.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKV.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBF1904C243D706D001C82ED /* MMKVWatchExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKVWatchExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBF1904D243D706D001C82ED /* MMKVAppExtension copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "MMKVAppExtension copy-Info.plist"; path = "/Users/lingol/Developer/mmkv/iOS/MMKV/MMKVAppExtension copy-Info.plist"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -161,8 +161,8 @@
 			children = (
 				CB1FD4912046984F00931B5F /* libMMKV.a */,
 				CBC1A8F620DA946200AD5087 /* MMKV.framework */,
-				CB1E0651242B84D800F2FD42 /* MMKV.framework */,
-				CBF1904C243D706D001C82ED /* MMKV.framework */,
+				CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */,
+				CBF1904C243D706D001C82ED /* MMKVWatchExtension.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -254,7 +254,7 @@
 			);
 			name = MMKVAppExtension;
 			productName = MMKV;
-			productReference = CB1E0651242B84D800F2FD42 /* MMKV.framework */;
+			productReference = CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 		CB1FD4902046984F00931B5F /* MMKV Static */ = {
@@ -309,7 +309,7 @@
 			);
 			name = MMKVWatchExtension;
 			productName = MMKV;
-			productReference = CBF1904C243D706D001C82ED /* MMKV.framework */;
+			productReference = CBF1904C243D706D001C82ED /* MMKVWatchExtension.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -495,10 +495,11 @@
 					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
-				PRODUCT_NAME = MMKV;
+				PRODUCT_NAME = MMKVAppExtension;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64 armv7 arm64e";
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -540,10 +541,11 @@
 					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
-				PRODUCT_NAME = MMKV;
+				PRODUCT_NAME = MMKVAppExtension;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64 armv7 arm64e";
+				"VALID_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				"VALID_ARCHS[sdk=macosx*]" = x86_64;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -804,6 +806,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ARCHS[sdk=watchsimulator*]" = i386;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
@@ -836,12 +839,13 @@
 					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVWatchExtension;
-				PRODUCT_NAME = MMKV;
+				PRODUCT_NAME = MMKVWatchExtension;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "watchsimulator watchos";
 				TARGETED_DEVICE_FAMILY = 4;
-				VALID_ARCHS = "armv7k arm64_32";
+				VALID_ARCHS = "arm64_32 armv7k";
+				"VALID_ARCHS[sdk=watchsimulator*]" = i386;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 				WATCHOS_DEPLOYMENT_TARGET = 2.0;
@@ -852,6 +856,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ARCHS[sdk=watchsimulator*]" = i386;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
@@ -883,12 +888,13 @@
 					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVWatchExtension;
-				PRODUCT_NAME = MMKV;
+				PRODUCT_NAME = MMKVWatchExtension;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "watchsimulator watchos";
 				TARGETED_DEVICE_FAMILY = 4;
-				VALID_ARCHS = "armv7k arm64_32";
+				VALID_ARCHS = "arm64_32 armv7k";
+				"VALID_ARCHS[sdk=watchsimulator*]" = i386;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 				WATCHOS_DEPLOYMENT_TARGET = 2.0;

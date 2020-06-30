@@ -12,6 +12,7 @@ All of the improvements above are available to all supported platforms. Here are
 ### iOS / macOS
 * **Optimize insert & delete**. Especially for inserting new values to an **existing keys**, or deleting keys. We now use the UTF-8 encoded keys in the mmap-memory instead of live encoding from keys, cutting the cost of string encoding conversion.
 * Fix Xcode compile error on some projects.
+* Drop the support of iOS 8. `thread_local` is not available on iOS 8. We choose to drop support instead of working around because iOS 8's market share is considerable small.
 
 ### POSIX
 * It's known that GCC before 5.0 doesn't support C++17 standard very well. You should upgrade to the latest version of GCC to compile MMKV.
