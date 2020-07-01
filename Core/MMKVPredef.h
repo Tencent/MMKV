@@ -21,6 +21,12 @@
 #ifndef MMKV_SRC_MMKVPREDEF_H
 #define MMKV_SRC_MMKVPREDEF_H
 
+// disable encryption & decryption to reduce some code
+//#define MMKV_DISABLE_CRYPT
+
+// using POSIX implementation
+//#define FORCE_POSIX
+
 #ifdef __cplusplus
 
 #include <string>
@@ -142,7 +148,12 @@ extern size_t DEFAULT_MMAP_SIZE;
 
 class MMBuffer;
 struct KeyValueHolder;
+
+#ifdef MMKV_DISABLE_CRYPT
+using KeyValueHolderCrypt = KeyValueHolder;
+#else
 struct KeyValueHolderCrypt;
+#endif
 
 #ifdef MMKV_APPLE
 struct KeyHasher {

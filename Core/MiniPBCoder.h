@@ -66,7 +66,9 @@ class MiniPBCoder {
     MMBuffer writePreparedItems(size_t index);
 
     void decodeOneMap(MMKVMap &dic, size_t position, bool greedy);
+#ifndef MMKV_DISABLE_CRYPT
     void decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy);
+#endif
 
 #ifndef MMKV_APPLE
     size_t prepareObjectForEncode(const std::string &str);
@@ -99,11 +101,13 @@ public:
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t position = 0);
 
+#ifndef MMKV_DISABLE_CRYPT
     // return empty result if there's any error
     static void decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position = 0);
 
     // decode as much data as possible before any error happens
     static void greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position = 0);
+#endif // MMKV_DISABLE_CRYPT
 
 #ifndef MMKV_APPLE
     static std::vector<std::string> decodeVector(const MMBuffer &oData);

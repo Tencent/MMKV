@@ -41,6 +41,8 @@
 #include "openssl_aes.h"
 #include "openssl_aes_locl.h"
 
+#ifndef MMKV_DISABLE_CRYPT
+
 #if (__ARM_MAX_ARCH__ > 7) && defined(MMKV_ANDROID)
 
 aes_set_encrypt_t AES_set_encrypt_key = openssl::AES_C_set_encrypt_key;
@@ -1039,3 +1041,4 @@ void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *k) {
 
 #endif // (__ARM_MAX_ARCH__ < 0) || (__ARM_MAX_ARCH__ > 7 && defined(MMKV_ANDROID))
 
+#endif // MMKV_DISABLE_CRYPT

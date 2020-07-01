@@ -25,6 +25,14 @@
 #include "MMKVPredef.h"
 #include <cstddef>
 
+#ifdef MMKV_DISABLE_CRYPT
+
+namespace mmkv {
+class AESCrypt;
+}
+
+#else
+
 namespace openssl {
 struct AES_KEY;
 }
@@ -94,5 +102,6 @@ public:
 
 } // namespace mmkv
 
-#endif
+#endif // MMKV_DISABLE_CRYPT
+#endif // __cplusplus
 #endif /* AES_CRYPT_H_ */

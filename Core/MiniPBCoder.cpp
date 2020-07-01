@@ -39,16 +39,22 @@ MiniPBCoder::MiniPBCoder() : m_encodeItems(new std::vector<PBEncodeItem>()) {
 
 MiniPBCoder::MiniPBCoder(const MMBuffer *inputBuffer, AESCrypt *crypter) : MiniPBCoder() {
     m_inputBuffer = inputBuffer;
+#ifndef MMKV_DISABLE_CRYPT
     if (crypter) {
         m_inputDataDecrpt = new CodedInputDataCrypt(m_inputBuffer->getPtr(), m_inputBuffer->length(), *crypter);
     } else {
         m_inputData = new CodedInputData(m_inputBuffer->getPtr(), m_inputBuffer->length());
     }
+#else
+    m_inputData = new CodedInputData(m_inputBuffer->getPtr(), m_inputBuffer->length());
+#endif // MMKV_DISABLE_CRYPT
 }
 
 MiniPBCoder::~MiniPBCoder() {
     delete m_inputData;
+#ifndef MMKV_DISABLE_CRYPT
     delete m_inputDataDecrpt;
+#endif
     delete m_outputBuffer;
     delete m_outputData;
     delete m_encodeItems;
@@ -121,6 +127,8 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMBuffer &buffer) {
     return index;
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+
 size_t MiniPBCoder::prepareObjectForEncode(const MMKVVector &vec) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
@@ -132,11 +140,11 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVVector &vec) {
         for (const auto &itr : vec) {
             const auto &key = itr.first;
             const auto &value = itr.second;
-#ifdef MMKV_APPLE
+#    ifdef MMKV_APPLE
             if (key.length <= 0) {
-#else
+#    else
             if (key.length() <= 0) {
-#endif
+#    endif
                 continue;
             }
 
@@ -158,6 +166,8 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVVector &vec) {
 
     return index;
 }
+
+#endif // MMKV_DISABLE_CRYPT
 
 MMBuffer MiniPBCoder::writePreparedItems(size_t index) {
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
@@ -277,6 +287,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
     }
 }
 
+#    ifndef MMKV_DISABLE_CRYPT
+
 void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) {
     auto block = [position, this](MMKVMapCrypt &dictionary) {
         if (position) {
@@ -318,6 +330,8 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
     }
 }
 
+#    endif // MMKV_DISABLE_CRYPT
+
 vector<string> MiniPBCoder::decodeVector(const MMBuffer &oData) {
     MiniPBCoder oCoder(&oData);
     return oCoder.decodeOneVector();
@@ -335,6 +349,8 @@ void MiniPBCoder::greedyDecodeMap(MMKVMap &dic, const MMBuffer &oData, size_t po
     oCoder.decodeOneMap(dic, position, true);
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+
 void MiniPBCoder::decodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position) {
     MiniPBCoder oCoder(&oData, crypter);
     oCoder.decodeOneMap(dic, position, false);
@@ -344,5 +360,7 @@ void MiniPBCoder::greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESC
     MiniPBCoder oCoder(&oData, crypter);
     oCoder.decodeOneMap(dic, position, true);
 }
+
+#endif
 
 } // namespace mmkv

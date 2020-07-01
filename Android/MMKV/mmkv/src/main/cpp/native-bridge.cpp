@@ -116,6 +116,7 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     // get CPU status of ARMv8 extensions (CRC32, AES)
 #ifdef __aarch64__
     auto hwcaps = getauxval(AT_HWCAP);
+#    ifndef MMKV_DISABLE_CRYPT
     if (hwcaps & HWCAP_AES) {
         AES_set_encrypt_key = openssl_aes_armv8_set_encrypt_key;
         AES_set_decrypt_key = openssl_aes_armv8_set_decrypt_key;
@@ -123,11 +124,12 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         AES_decrypt = openssl_aes_armv8_decrypt;
         MMKVInfo("armv8 AES instructions is supported");
     }
+#    endif // MMKV_DISABLE_CRYPT
     if (hwcaps & HWCAP_CRC32) {
         CRC32 = mmkv::armv8_crc32;
         MMKVInfo("armv8 CRC32 instructions is supported");
     }
-#endif
+#endif // __aarch64__
 
     return JNI_VERSION_1_6;
 }
@@ -658,6 +660,8 @@ MMKV_JNI jint pageSize(JNIEnv *env, jclass type) {
     return DEFAULT_MMAP_SIZE;
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+
 MMKV_JNI jstring cryptKey(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
     if (kv) {
@@ -696,6 +700,8 @@ MMKV_JNI void checkReSetCryptKey(JNIEnv *env, jobject instance, jstring cryptKey
         }
     }
 }
+
+#endif // MMKV_DISABLE_CRYPT
 
 MMKV_JNI void trim(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
@@ -780,9 +786,11 @@ MMKV_JNI void checkContentChanged(JNIEnv *env, jobject instance) {
 
 static JNINativeMethod g_methods[] = {
     {"onExit", "()V", (void *) mmkv::onExit},
+#ifndef MMKV_DISABLE_CRYPT
     {"cryptKey", "()Ljava/lang/String;", (void *) mmkv::cryptKey},
     {"reKey", "(Ljava/lang/String;)Z", (void *) mmkv::reKey},
     {"checkReSetCryptKey", "(Ljava/lang/String;)V", (void *) mmkv::checkReSetCryptKey},
+#endif
     {"pageSize", "()I", (void *) mmkv::pageSize},
     {"mmapID", "()Ljava/lang/String;", (void *) mmkv::mmapID},
     {"lock", "()V", (void *) mmkv::lock},

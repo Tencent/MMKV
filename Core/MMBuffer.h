@@ -36,7 +36,9 @@ enum MMBufferCopyFlag : bool {
 
 #pragma pack(push, 1)
 
+#ifndef MMKV_DISABLE_CRYPT
 struct KeyValueHolderCrypt;
+#endif
 
 class MMBuffer {
     enum MMBufferType : uint8_t {
@@ -89,7 +91,9 @@ public:
     explicit MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;
 
+#ifndef MMKV_DISABLE_CRYPT
     friend KeyValueHolderCrypt;
+#endif
 };
 
 #pragma pack(pop)

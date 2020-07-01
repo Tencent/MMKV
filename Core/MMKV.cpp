@@ -82,12 +82,16 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
     m_actualSize = 0;
     m_output = nullptr;
 
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
         m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
     } else {
         m_dic = new MMKVMap();
     }
+#    else
+    m_dic = new MMKVMap();
+#    endif
 
     m_needLoadFromFile = true;
     m_hasFullWriteback = false;
@@ -110,8 +114,10 @@ MMKV::~MMKV() {
     clearMemoryCache();
 
     delete m_dic;
+#ifndef MMKV_DISABLE_CRYPT
     delete m_dicCrypt;
     delete m_crypter;
+#endif
     delete m_file;
     delete m_metaFile;
     delete m_metaInfo;
@@ -136,7 +142,7 @@ void initialize() {
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
     MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(MMKV_DISABLE_CRYPT)
     AESCrypt::testAESCrypt();
     KeyValueHolderCrypt::testAESToMMBuffer();
 #endif
@@ -205,17 +211,6 @@ const string &MMKV::mmapID() {
     return m_mmapID;
 }
 
-string MMKV::cryptKey() {
-    SCOPED_LOCK(m_lock);
-
-    if (m_crypter) {
-        char key[AES_KEY_LEN];
-        m_crypter->getKey(key);
-        return string(key, strnlen(key, AES_KEY_LEN));
-    }
-    return "";
-}
-
 mmkv::ContentChangeHandler g_contentChangeHandler = nullptr;
 
 void MMKV::notifyContentChanged() {
@@ -244,12 +239,11 @@ void MMKV::clearMemoryCache() {
         return;
     }
     m_needLoadFromFile = true;
-
-    clearDictionary(m_dicCrypt);
-    clearDictionary(m_dic);
-
     m_hasFullWriteback = false;
 
+    clearDictionary(m_dic);
+#ifndef MMKV_DISABLE_CRYPT
+    clearDictionary(m_dicCrypt);
     if (m_crypter) {
         if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
             m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
@@ -257,6 +251,7 @@ void MMKV::clearMemoryCache() {
             m_crypter->resetIV();
         }
     }
+#endif
 
     delete m_output;
     m_output = nullptr;
@@ -280,6 +275,19 @@ void MMKV::close() {
         g_instanceDic->erase(itr);
     }
     delete this;
+}
+
+#ifndef MMKV_DISABLE_CRYPT
+
+string MMKV::cryptKey() {
+    SCOPED_LOCK(m_lock);
+
+    if (m_crypter) {
+        char key[AES_KEY_LEN];
+        m_crypter->getKey(key);
+        return string(key, strnlen(key, AES_KEY_LEN));
+    }
+    return "";
 }
 
 void MMKV::checkReSetCryptKey(const string *cryptKey) {
@@ -317,6 +325,8 @@ void MMKV::checkReSetCryptKey(const string *cryptKey) {
         }
     }
 }
+
+#endif // MMKV_DISABLE_CRYPT
 
 bool MMKV::isFileValid() {
     return m_file->isFileValid();

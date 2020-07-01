@@ -139,7 +139,7 @@ class MMKV {
 
     void notifyContentChanged();
 
-#ifdef MMKV_ANDROID
+#if defined(MMKV_ANDROID) && !defined(MMKV_DISABLE_CRYPT)
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 #endif
 
@@ -191,6 +191,7 @@ public:
 
     const bool m_isInterProcess;
 
+#ifndef MMKV_DISABLE_CRYPT
     std::string cryptKey();
 
     // transform plain text into encrypted text, or vice versa with empty cryptKey
@@ -200,6 +201,7 @@ public:
     // just reset cryptKey (will not encrypt or decrypt anything)
     // usually you should call this method after other process reKey() the multi-process mmkv
     void checkReSetCryptKey(const std::string *cryptKey);
+#endif
 
     bool set(bool value, MMKVKey_t key);
 

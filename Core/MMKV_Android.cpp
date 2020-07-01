@@ -59,10 +59,13 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_actualSize = 0;
     m_output = nullptr;
 
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
         m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
-    } else {
+    } else
+#    endif
+    {
         m_dic = new MMKVMap();
     }
 
@@ -100,10 +103,13 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     m_actualSize = 0;
     m_output = nullptr;
 
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
         m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
-    } else {
+    } else
+#    endif
+    {
         m_dic = new MMKVMap();
     }
 
@@ -159,7 +165,9 @@ MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *c
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
+#    ifndef MMKV_DISABLE_CRYPT
         kv->checkReSetCryptKey(fd, metaFD, cryptKey);
+#    endif
         return kv;
     }
     auto kv = new MMKV(mmapID, fd, metaFD, cryptKey);
@@ -175,6 +183,7 @@ int MMKV::ashmemMetaFD() {
     return (m_file->m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile->getFd() : -1;
 }
 
+#    ifndef MMKV_DISABLE_CRYPT
 void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
     SCOPED_LOCK(m_lock);
 
@@ -189,5 +198,6 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
         }
     }
 }
+#    endif // MMKV_DISABLE_CRYPT
 
-#endif
+#endif // MMKV_ANDROID

@@ -256,6 +256,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 #pragma mark - encryption & decryption
 
+#ifndef MMKV_DISABLE_CRYPT
+
 - (nullable NSData *)cryptKey {
     auto str = m_mmkv->cryptKey();
     if (str.length() > 0) {
@@ -280,6 +282,21 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         m_mmkv->checkReSetCryptKey(nullptr);
     }
 }
+
+#else
+
+- (nullable NSData *)cryptKey {
+    return nil;
+}
+
+- (BOOL)reKey:(nullable NSData *)newKey {
+    return NO;
+}
+
+- (void)checkReSetCryptKey:(nullable NSData *)cryptKey {
+}
+
+#endif // MMKV_DISABLE_CRYPT
 
 #pragma mark - set & get
 
