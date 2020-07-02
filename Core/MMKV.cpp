@@ -64,10 +64,10 @@ constexpr uint32_t Fixed32Size = pbFixed32Size();
 MMKV_NAMESPACE_BEGIN
 
 #ifndef MMKV_ANDROID
-MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *relativePath)
+MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath)
     : m_mmapID(mmapID)
-    , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
+    , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
+    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(m_path))
@@ -162,30 +162,30 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
 }
 
 #ifndef MMKV_ANDROID
-MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *relativePath) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath) {
 
     if (mmapID.empty()) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
 
-    auto mmapKey = mmapedKVKey(mmapID, relativePath);
+    auto mmapKey = mmapedKVKey(mmapID, rootPath);
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
         return kv;
     }
 
-    if (relativePath) {
-        MMKVPath_t specialPath = (*relativePath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+    if (rootPath) {
+        MMKVPath_t specialPath = (*rootPath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
         if (!isFileExist(specialPath)) {
             mkPath(specialPath);
         }
-        MMKVInfo("prepare to load %s (id %s) from relativePath %s", mmapID.c_str(), mmapKey.c_str(),
-                 relativePath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(),
+                 rootPath->c_str());
     }
 
-    auto kv = new MMKV(mmapID, mode, cryptKey, relativePath);
+    auto kv = new MMKV(mmapID, mode, cryptKey, rootPath);
     kv->m_mmapKey = mmapKey;
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
@@ -903,22 +903,22 @@ static MMKVPath_t encodeFilePath(const string &mmapID) {
     }
 }
 
-string mmapedKVKey(const string &mmapID, MMKVPath_t *relativePath) {
-    if (relativePath && g_rootDir != (*relativePath)) {
-        return md5(*relativePath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID));
+string mmapedKVKey(const string &mmapID, MMKVPath_t *rootPath) {
+    if (rootPath && g_rootDir != (*rootPath)) {
+        return md5(*rootPath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID));
     }
     return mmapID;
 }
 
-MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath) {
+MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *rootPath) {
 #ifndef MMKV_ANDROID
-    if (relativePath) {
+    if (rootPath) {
 #else
     if (mode & MMKV_ASHMEM) {
         return ashmemMMKVPathWithID(encodeFilePath(mmapID));
-    } else if (relativePath) {
+    } else if (rootPath) {
 #endif
-        return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+        return *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
     }
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
 }
@@ -929,15 +929,15 @@ constexpr auto CRC_SUFFIX = ".crc";
 constexpr auto CRC_SUFFIX = L".crc";
 #endif
 
-MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath) {
+MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *rootPath) {
 #ifndef MMKV_ANDROID
-    if (relativePath) {
+    if (rootPath) {
 #else
     if (mode & MMKV_ASHMEM) {
         return ashmemMMKVPathWithID(encodeFilePath(mmapID)) + CRC_SUFFIX;
-    } else if (relativePath) {
+    } else if (rootPath) {
 #endif
-        return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
+        return *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
     }
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
 }

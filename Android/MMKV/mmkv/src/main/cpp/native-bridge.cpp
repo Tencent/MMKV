@@ -255,7 +255,7 @@ static void onContentChangedByOuterProcess(const std::string &mmapID) {
     }
 }
 
-MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, jstring cryptKey, jstring relativePath) {
+MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, jstring cryptKey, jstring rootPath) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return (jlong) kv;
@@ -266,8 +266,8 @@ MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, js
     if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
-            if (relativePath) {
-                string path = jstring2string(env, relativePath);
+            if (rootPath) {
+                string path = jstring2string(env, rootPath);
                 kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, &path);
             } else {
                 kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, nullptr);
@@ -276,8 +276,8 @@ MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, js
         }
     }
     if (!done) {
-        if (relativePath) {
-            string path = jstring2string(env, relativePath);
+        if (rootPath) {
+            string path = jstring2string(env, rootPath);
             kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, &path);
         } else {
             kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, nullptr);

@@ -37,14 +37,14 @@ using namespace mmkv;
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
 
-extern string mmapedKVKey(const string &mmapID, string *relativePath);
-extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
-extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
+extern string mmapedKVKey(const string &mmapID, string *rootPath);
+extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *rootPath);
+extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *rootPath);
 
-MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath)
-    : m_mmapID(mmapedKVKey(mmapID, relativePath)) // historically Android mistakenly use mmapKey as mmapID
-    , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
+MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath)
+    : m_mmapID(mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
+    , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
+    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE))
@@ -128,29 +128,29 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     }
 }
 
-MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath) {
 
     if (mmapID.empty()) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
 
-    auto mmapKey = mmapedKVKey(mmapID, relativePath);
+    auto mmapKey = mmapedKVKey(mmapID, rootPath);
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
         return kv;
     }
-    if (relativePath) {
-        if (!isFileExist(*relativePath)) {
-            if (!mkPath(*relativePath)) {
+    if (rootPath) {
+        if (!isFileExist(*rootPath)) {
+            if (!mkPath(*rootPath)) {
                 return nullptr;
             }
         }
-        MMKVInfo("prepare to load %s (id %s) from relativePath %s", mmapID.c_str(), mmapKey.c_str(),
-                 relativePath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(),
+                 rootPath->c_str());
     }
-    auto kv = new MMKV(mmapID, size, mode, cryptKey, relativePath);
+    auto kv = new MMKV(mmapID, size, mode, cryptKey, rootPath);
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }

@@ -133,9 +133,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Nullable
-    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String relativePath) {
+    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String rootPath) {
         //MMKV kv = MMKV.defaultMMKV();
-        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, relativePath);
+        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath);
         if (kv == null) {
             return null;
         }

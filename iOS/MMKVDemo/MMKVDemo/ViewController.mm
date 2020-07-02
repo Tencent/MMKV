@@ -116,7 +116,7 @@
     path = [path stringByDeletingLastPathComponent];
     path = [path stringByAppendingPathComponent:@"mmkv_2"];
     NSData *key_1 = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
-    auto mmkv = [MMKV mmkvWithID:@"test/case_aes" cryptKey:key_1 relativePath:path];
+    auto mmkv = [MMKV mmkvWithID:@"test/case_aes" cryptKey:key_1 rootPath:path];
 
     if (!decodeOnly) {
         [mmkv setBool:YES forKey:@"bool"];

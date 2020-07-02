@@ -34,7 +34,7 @@
     auto path = [MMKV mmkvBasePath];
     path = [path stringByDeletingLastPathComponent];
     path = [path stringByAppendingPathComponent:@"mmkv_2"];
-    auto mmkv = [MMKV mmkvWithID:@"test/case1" relativePath:path];
+    auto mmkv = [MMKV mmkvWithID:@"test/case1" rootPath:path];
 
     [mmkv setBool:YES forKey:@"bool"];
     NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
