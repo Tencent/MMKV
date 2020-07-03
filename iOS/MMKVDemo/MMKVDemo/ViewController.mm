@@ -74,7 +74,7 @@
     // [self testCornerSize];
     // [self testFastRemoveCornerSize];
     // [self testChineseCharKey];
-    [self testItemSizeHolderOverride];
+    // [self testItemSizeHolderOverride];
 
     DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
     [swiftUsageDemo testSwiftFunctionality];
