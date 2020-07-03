@@ -71,8 +71,10 @@ public final class Baseline {
         mmkvBatchReadString();
 
         //mmkvBatchDeleteString();
-        //MMKV mmkv = mmkvForTest();
+        MMKV mmkv = mmkvForTest();
         //mmkv.trim();
+        mmkv.clearMemoryCache();
+        mmkv.totalSize();
     }
 
     private MMKV mmkvForTest() {

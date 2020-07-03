@@ -1,5 +1,16 @@
 # MMKV Change Log
 
+## v1.2.1 / 2020-07-03
+This is a hotfix release. Anyone who has upgraded to v1.2.0 should upgrade to this version **immediately**.
+
+* Fix a potential file corruption bug when writing a file that was created in versions older than v1.2.0. This bug was introduced in v1.2.0.
+* Add a preprocess directive `MMKV_DISABLE_CRYPT` to turn off MMKV encryption ability once and for all. If you integrate MMKV by source code, and if you are pretty sure encryption is not needed, you can turn that off to save some binary size.
+* The parameter `relativePath` (customizing a separate folder for an MMKV instance), has been renamed to `rootPath`. Making it clear that an absolute path is expected for that parameter.
+
+### iOS / macOS
+* `-[MMKV mmkvWithID: relativePath:]` is deprecated. Use `-[MMKV mmkvWithID: rootPath:]` instead. 
+* Likewise, `-[MMKV mmkvWithID: cryptKey: relativePath:]` is deprecated. Use `-[MMKV mmkvWithID: cryptKey: rootPath:]` instead. 
+
 ## v1.2.0 / 2020-06-30
 This is the second **major version** of MMKV. Everything you call is the same as the last version, while almost everything underneath has been improved. 
 

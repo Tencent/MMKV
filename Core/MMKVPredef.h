@@ -33,7 +33,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v1.2.0";
+constexpr auto MMKV_VERSION = "v1.2.1";
 
 #ifdef __ANDROID__
 #    define MMKV_ANDROID
