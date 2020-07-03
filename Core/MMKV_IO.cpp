@@ -743,10 +743,9 @@ bool MMKV::fullWriteback(AESCrypt *newCrypter) {
 // we don't need to really serialize the dictionary, just reuse what's already in the file
 static void
 memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt *encrypter, size_t totalSize) {
-    // hold the fake size of dictionary's serialization result
     auto originOutputPtr = output->curWritePointer();
-    output->writeRawVarint32(ItemSizeHolder);
-    auto writePtr = output->curWritePointer();
+    // make space to hold the fake size of dictionary's serialization result
+    auto writePtr = originOutputPtr + ItemSizeHolderSize;
     // reuse what's already in the file
     if (!dic.empty()) {
         // sort by offset
@@ -785,6 +784,8 @@ memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt 
             }
         }
     }
+    // hold the fake size of dictionary's serialization result
+    output->writeRawVarint32(ItemSizeHolder);
     auto writtenSize = static_cast<size_t>(writePtr - originOutputPtr);
 #ifndef MMKV_DISABLE_CRYPT
     if (encrypter) {
@@ -803,27 +804,31 @@ static void memmoveDictionary(MMKVMapCrypt &dic,
                               AESCrypt *decrypter,
                               AESCrypt *encrypter,
                               pair<MMBuffer, size_t> &preparedData) {
-    // hold the fake size of dictionay's serialization result
-    output->writeRawVarint32(ItemSizeHolder);
-    auto writePtr = output->curWritePointer();
-    if (encrypter) {
-        encrypter->encrypt(writePtr - ItemSizeHolderSize, writePtr - ItemSizeHolderSize, ItemSizeHolderSize);
-    }
     // reuse what's already in the file
+    vector<KeyValueHolderCrypt *> vec;
     if (!dic.empty()) {
         // sort by offset
-        vector<KeyValueHolderCrypt *> vec;
         vec.reserve(dic.size());
         for (auto &itr : dic) {
             if (itr.second.type == KeyValueHolderType_Offset) {
                 vec.push_back(&itr.second);
             }
         }
-        if (vec.empty()) {
-            goto WRITE_DATA;
-        }
         sort(vec.begin(), vec.end(), [](auto left, auto right) { return left->offset < right->offset; });
-
+    }
+    auto sizeHolder = ItemSizeHolder, sizeHolderSize = ItemSizeHolderSize;
+    if (!vec.empty() && vec.front()->offset < ItemSizeHolderSize) {
+        sizeHolderSize = vec.front()->offset;
+        assert(sizeHolderSize > 0);
+        static const uint32_t ItemSizeHolders[] = {0, 0x0f, 0xff, 0xffff};
+        sizeHolder = ItemSizeHolders[sizeHolderSize];
+    }
+    output->writeRawVarint32(static_cast<int32_t>(sizeHolder));
+    auto writePtr = output->curWritePointer();
+    if (encrypter) {
+        encrypter->encrypt(writePtr - sizeHolderSize, writePtr - sizeHolderSize, sizeHolderSize);
+    }
+    if (!vec.empty()) {
         // merge nearby items to make memmove quicker
         vector<tuple<uint32_t, uint32_t, AESCryptStatus *>> dataSections; // pair(offset, size)
         dataSections.push_back(vec.front()->toTuple());
@@ -855,7 +860,6 @@ static void memmoveDictionary(MMKVMapCrypt &dic,
             }
         }
     }
-WRITE_DATA:
     auto &data = preparedData.first;
     if (data.length() > 0) {
         auto dataSize = CodedInputData(data.getPtr(), data.length()).readUInt32();

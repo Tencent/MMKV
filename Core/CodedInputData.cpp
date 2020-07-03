@@ -38,11 +38,10 @@ CodedInputData::CodedInputData(const void *oData, size_t length)
 }
 
 void CodedInputData::seek(size_t addedSize) {
-    m_position += addedSize;
-
-    if (m_position > m_size) {
+    if (m_position + addedSize > m_size) {
         throw out_of_range("OutOfSpace");
     }
+    m_position += addedSize;
 }
 
 double CodedInputData::readDouble() {

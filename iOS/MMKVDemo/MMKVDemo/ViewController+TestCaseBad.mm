@@ -128,4 +128,25 @@
     }
 }
 
+- (void)testItemSizeHolderOverride {
+    /* do these on v1.1.2
+    {
+        auto mmkv = [MMKV mmkvWithID:@"testItemSizeHolderOverride"];
+        [mmkv setBool:YES forKey:@"bool"];
+    }*/
+    // do these on v1.2.0
+    {
+        auto mmkv = [MMKV mmkvWithID:@"testItemSizeHolderOverride"];
+        auto actualSize = [mmkv actualSize];
+        auto fileSize = [mmkv totalSize];
+        // force a fullwrieback()
+        auto valueSize = fileSize - actualSize;
+        auto value = [NSMutableData dataWithLength:valueSize];
+        [mmkv setObject:value forKey:@"data"];
+        [mmkv clearMemoryCache];
+        // you won't find the key "bool"
+        NSLog(@"%@", [mmkv allKeys]);
+    }
+}
+
 @end

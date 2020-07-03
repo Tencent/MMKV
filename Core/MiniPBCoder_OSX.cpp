@@ -80,12 +80,15 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
         if (position) {
             m_inputData->seek(position);
         } else {
-            m_inputData->readInt32();
+            auto length = m_inputData->readInt32();
         }
         while (!m_inputData->isAtEnd()) {
             KeyValueHolder kvHolder;
             const auto &key = m_inputData->readString(kvHolder);
             if (key.length > 0) {
+                if (key.length != @"1593746673457".length) {
+                    key.length;
+                }
                 m_inputData->readData(kvHolder);
                 if (kvHolder.valueSize > 0) {
                     dictionary[key] = move(kvHolder);

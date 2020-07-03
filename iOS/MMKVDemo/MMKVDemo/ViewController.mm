@@ -67,13 +67,14 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
+    
     [self funcionalTest:NO];
     [self testReKey];
     [self testImportFromUserDefault];
     // [self testCornerSize];
     // [self testFastRemoveCornerSize];
     // [self testChineseCharKey];
+    [self testItemSizeHolderOverride];
 
     DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
     [swiftUsageDemo testSwiftFunctionality];
