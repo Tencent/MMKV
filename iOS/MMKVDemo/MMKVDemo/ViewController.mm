@@ -280,7 +280,7 @@
 }
 
 - (void)testImportFromUserDefault {
-    NSUserDefaults *userDefault = [[NSUserDefaults alloc] initWithSuiteName:@"testNSUserDefaults"];
+    NSUserDefaults *userDefault = [[NSUserDefaults alloc] initWithSuiteName:@"testNSUserDefaults1"];
     [userDefault setBool:YES forKey:@"bool"];
     [userDefault setInteger:std::numeric_limits<NSInteger>::max() forKey:@"NSInteger"];
     [userDefault setFloat:3.14 forKey:@"float"];
@@ -335,8 +335,11 @@
     number = [NSNumber numberWithUnsignedInteger:std::numeric_limits<NSUInteger>::max()];
     [userDefault setObject:number forKey:@"number_NSUInteger"];
 
-    auto mmkv = [MMKV mmkvWithID:@"testImportNSUserDefaults"];
+    auto mmkv = [MMKV mmkvWithID:@"testImportNSUserDefaults1"];
     [mmkv migrateFromUserDefaults:userDefault];
+    [mmkv clearMemoryCache];
+    NSLog(@"%@", [mmkv allKeys]);
+
     NSLog(@"migrate from NSUserDefault begin");
 
     NSLog(@"bool = %d", [mmkv getBoolForKey:@"bool"]);

@@ -783,7 +783,7 @@ memmoveDictionary(MMKVMap &dic, CodedOutputData *output, uint8_t *ptr, AESCrypt 
         }
         // update offset
         if (!encrypter) {
-            auto offset = static_cast<uint32_t>(output->curWritePointer() - basePtr);
+            auto offset = ItemSizeHolderSize;
             for (auto kvHolder : vec) {
                 kvHolder->offset = offset;
                 offset += kvHolder->computedKVSize + kvHolder->valueSize;
@@ -859,7 +859,7 @@ static void memmoveDictionary(MMKVMapCrypt &dic,
         }
         // update offset & AESCryptStatus
         if (encrypter) {
-            auto offset = static_cast<uint32_t>(output->curWritePointer() - basePtr);
+            auto offset = sizeHolderSize;
             for (auto kvHolder : vec) {
                 kvHolder->offset = offset;
                 auto size = kvHolder->pbKeyValueSize + kvHolder->keySize + kvHolder->valueSize;
