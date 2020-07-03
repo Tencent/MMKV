@@ -129,22 +129,40 @@
 }
 
 - (void)testItemSizeHolderOverride {
+    auto mmapID = @"testItemSizeHolderOverride";
+    auto cryptKey = nil;
+    // auto mmapID = @"testItemSizeHolderOverride_crypt";
+    // auto cryptKey = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
+
     /* do these on v1.1.2
     {
-        auto mmkv = [MMKV mmkvWithID:@"testItemSizeHolderOverride"];
-        [mmkv setBool:YES forKey:@"bool"];
+        auto mmkv = [MMKV mmkvWithID:mmapID cryptKey:cryptKey];
+
+        // turn on to check crypt MMKV
+        // [mmkv setBool:YES forKey:@"b"];
+
+        // turn on (mutex with the above setBool:forKey testcase) to check crypt MMKV
+        // [mmkv setInt32:0xff forKey:@"i"];
+
+        auto value = [NSMutableData dataWithLength:512];
+        [mmkv setData:value forKey:@"data"];
+        NSLog(@"%@", [mmkv allKeys]);
     }*/
+
     // do these on v1.2.0
     {
-        auto mmkv = [MMKV mmkvWithID:@"testItemSizeHolderOverride"];
+        auto mmkv = [MMKV mmkvWithID:mmapID cryptKey:cryptKey];
         auto actualSize = [mmkv actualSize];
         auto fileSize = [mmkv totalSize];
         // force a fullwrieback()
         auto valueSize = fileSize - actualSize;
         auto value = [NSMutableData dataWithLength:valueSize];
-        [mmkv setObject:value forKey:@"data"];
+        [mmkv setObject:value forKey:@"bigData"];
+
         [mmkv clearMemoryCache];
-        // you won't find the key "bool"
+
+        // it might throw exception
+        // you won't find the key "data"
         NSLog(@"%@", [mmkv allKeys]);
     }
 }

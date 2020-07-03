@@ -181,8 +181,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
         if (!isFileExist(specialPath)) {
             mkPath(specialPath);
         }
-        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(),
-                 rootPath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
 
     auto kv = new MMKV(mmapID, mode, cryptKey, rootPath);

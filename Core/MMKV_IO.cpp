@@ -316,17 +316,23 @@ static pair<MMBuffer, size_t> prepareEncode(const mmkv::MMKVMap &dic) {
 
 #ifndef MMKV_DISABLE_CRYPT
 static pair<MMBuffer, size_t> prepareEncode(const mmkv::MMKVMapCrypt &dic) {
-    // make some room for placeholder
-    size_t totalSize = ItemSizeHolderSize;
     MMKVVector vec;
+    size_t totalSize = 0;
+    // make some room for placeholder
+    uint32_t smallestOffet = 5 + 1; // 5 is the largest size needed to encode varint32
     for (auto &itr : dic) {
         auto &kvHolder = itr.second;
         if (kvHolder.type == KeyValueHolderType_Offset) {
             totalSize += kvHolder.pbKeyValueSize + kvHolder.keySize + kvHolder.valueSize;
+            smallestOffet = min(smallestOffet, kvHolder.offset);
         } else {
             vec.emplace_back(itr.first, kvHolder.toMMBuffer(nullptr, nullptr));
         }
     }
+    if (smallestOffet > 5) {
+        smallestOffet = ItemSizeHolderSize;
+    }
+    totalSize += smallestOffet;
     if (vec.empty()) {
         return make_pair(MMBuffer(), totalSize);
     }
@@ -817,11 +823,14 @@ static void memmoveDictionary(MMKVMapCrypt &dic,
         sort(vec.begin(), vec.end(), [](auto left, auto right) { return left->offset < right->offset; });
     }
     auto sizeHolder = ItemSizeHolder, sizeHolderSize = ItemSizeHolderSize;
-    if (!vec.empty() && vec.front()->offset < ItemSizeHolderSize) {
-        sizeHolderSize = vec.front()->offset;
-        assert(sizeHolderSize > 0);
-        static const uint32_t ItemSizeHolders[] = {0, 0x0f, 0xff, 0xffff};
-        sizeHolder = ItemSizeHolders[sizeHolderSize];
+    if (!vec.empty()) {
+        auto smallestOffset = vec.front()->offset;
+        if (smallestOffset != ItemSizeHolderSize && smallestOffset <= 5) {
+            sizeHolderSize = smallestOffset;
+            assert(sizeHolderSize != 0);
+            static const uint32_t ItemSizeHolders[] = {0, 0x0f, 0xff, 0xffff, 0xffffff, 0xffffffff};
+            sizeHolder = ItemSizeHolders[sizeHolderSize];
+        }
     }
     output->writeRawVarint32(static_cast<int32_t>(sizeHolder));
     auto writePtr = output->curWritePointer();
@@ -874,7 +883,7 @@ static void memmoveDictionary(MMKVMapCrypt &dic,
         }
     }
     auto writtenSize = static_cast<size_t>(writePtr - output->curWritePointer());
-    assert(writtenSize + ItemSizeHolderSize == preparedData.second);
+    assert(writtenSize + sizeHolderSize == preparedData.second);
     output->seek(writtenSize);
 }
 
