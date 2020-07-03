@@ -41,6 +41,8 @@ struct KeyValueHolder {
     MMBuffer toMMBuffer(const void *basePtr) const;
 };
 
+#ifndef MMKV_DISABLE_CRYPT
+
 enum KeyValueHolderType : uint8_t {
     KeyValueHolderType_Direct, // store value directly
     KeyValueHolderType_Memory, // store value in the heap memory
@@ -103,6 +105,8 @@ struct KeyValueHolderCrypt {
     static void testAESToMMBuffer();
 #endif
 };
+
+#endif // MMKV_DISABLE_CRYPT
 
 #pragma pack(pop)
 

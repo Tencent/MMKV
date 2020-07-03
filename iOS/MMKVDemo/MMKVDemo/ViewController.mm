@@ -74,6 +74,7 @@
     // [self testCornerSize];
     // [self testFastRemoveCornerSize];
     // [self testChineseCharKey];
+    // [self testItemSizeHolderOverride];
 
     DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
     [swiftUsageDemo testSwiftFunctionality];
@@ -116,7 +117,7 @@
     path = [path stringByDeletingLastPathComponent];
     path = [path stringByAppendingPathComponent:@"mmkv_2"];
     NSData *key_1 = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
-    auto mmkv = [MMKV mmkvWithID:@"test/case_aes" cryptKey:key_1 relativePath:path];
+    auto mmkv = [MMKV mmkvWithID:@"test/case_aes" cryptKey:key_1 rootPath:path];
 
     if (!decodeOnly) {
         [mmkv setBool:YES forKey:@"bool"];
@@ -279,7 +280,7 @@
 }
 
 - (void)testImportFromUserDefault {
-    NSUserDefaults *userDefault = [[NSUserDefaults alloc] initWithSuiteName:@"testNSUserDefaults"];
+    NSUserDefaults *userDefault = [[NSUserDefaults alloc] initWithSuiteName:@"testNSUserDefaults1"];
     [userDefault setBool:YES forKey:@"bool"];
     [userDefault setInteger:std::numeric_limits<NSInteger>::max() forKey:@"NSInteger"];
     [userDefault setFloat:3.14 forKey:@"float"];
@@ -334,8 +335,11 @@
     number = [NSNumber numberWithUnsignedInteger:std::numeric_limits<NSUInteger>::max()];
     [userDefault setObject:number forKey:@"number_NSUInteger"];
 
-    auto mmkv = [MMKV mmkvWithID:@"testImportNSUserDefaults"];
+    auto mmkv = [MMKV mmkvWithID:@"testImportNSUserDefaults1"];
     [mmkv migrateFromUserDefaults:userDefault];
+    [mmkv clearMemoryCache];
+    NSLog(@"%@", [mmkv allKeys]);
+
     NSLog(@"migrate from NSUserDefault begin");
 
     NSLog(@"bool = %d", [mmkv getBoolForKey:@"bool"]);
@@ -393,15 +397,19 @@
 #pragma mark - mmkv baseline test
 
 - (void)mmkvBaselineTest:(int)loops {
-    [self mmkvBatchWriteInt:loops];
     [self mmkvBatchReadInt:loops];
-    [self mmkvBatchWriteString:loops];
+    [self mmkvBatchWriteInt:loops];
     [self mmkvBatchReadString:loops];
+    [self mmkvBatchWriteString:loops];
     //[self mmkvBatchWriteObject:loops];
     //[self mmkvBatchReadObject:loops];
 
     //[self mmkvBatchDeleteString:loops];
     //[[MMKV defaultMMKV] trim];
+
+    // auto mmkv = getMMKVForBatchTest();
+    // [mmkv clearMemoryCache];
+    // [mmkv actualSize];
 }
 
 MMKV *getMMKVForBatchTest() {

@@ -29,6 +29,14 @@
 #include "aes/AESCrypt.h"
 #include <cstdint>
 
+#ifdef MMKV_DISABLE_CRYPT
+
+namespace mmkv {
+class CodedInputDataCrypt;
+}
+
+#else
+
 namespace mmkv {
 
 class CodedInputDataCrypt {
@@ -74,5 +82,6 @@ public:
 
 } // namespace mmkv
 
-#endif
+#endif // MMKV_DISABLE_CRYPT
+#endif // __cplusplus
 #endif /* CodedInputDataCrypt_h */

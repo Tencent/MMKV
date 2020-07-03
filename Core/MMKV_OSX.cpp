@@ -52,7 +52,6 @@ using namespace mmkv;
 
 extern ThreadLock *g_instanceLock;
 extern MMKVPath_t g_rootDir;
-constexpr uint32_t Fixed32Size = pbFixed32Size();
 
 enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
 static void GetAppleMachineInfo(int &device, int &version);
@@ -192,6 +191,10 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
     return nil;
 }
 
+#    ifndef MMKV_DISABLE_CRYPT
+
+constexpr uint32_t Fixed32Size = pbFixed32Size();
+
 pair<bool, KeyValueHolder>
 MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {
     if (kvHolder.type != KeyValueHolderType_Offset) {
@@ -210,6 +213,7 @@ MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolde
 
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
 }
+#    endif
 
 NSArray *MMKV::allKeys() {
     SCOPED_LOCK(m_lock);

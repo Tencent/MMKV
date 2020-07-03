@@ -176,12 +176,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     @Nullable
-    public static MMKV mmkvWithID(String mmapID, String relativePath) {
+    public static MMKV mmkvWithID(String mmapID, String rootPath) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, relativePath);
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath);
         if (handle == 0) {
             return null;
         }
@@ -190,12 +190,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // cryptKey's length <= 16
     @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode, String cryptKey, String relativePath) {
+    public static MMKV mmkvWithID(String mmapID, int mode, String cryptKey, String rootPath) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, relativePath);
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath);
         if (handle == 0) {
             return null;
         }
@@ -823,7 +823,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void jniInitialize(String rootDir, int level);
 
-    private native static long getMMKVWithID(String mmapID, int mode, String cryptKey, String relativePath);
+    private native static long getMMKVWithID(String mmapID, int mode, String cryptKey, String rootPath);
 
     private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, String cryptKey);
 

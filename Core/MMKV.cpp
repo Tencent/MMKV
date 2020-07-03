@@ -64,10 +64,10 @@ constexpr uint32_t Fixed32Size = pbFixed32Size();
 MMKV_NAMESPACE_BEGIN
 
 #ifndef MMKV_ANDROID
-MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *relativePath)
+MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath)
     : m_mmapID(mmapID)
-    , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
+    , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
+    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(m_path))
@@ -82,12 +82,16 @@ MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_
     m_actualSize = 0;
     m_output = nullptr;
 
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
         m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
     } else {
         m_dic = new MMKVMap();
     }
+#    else
+    m_dic = new MMKVMap();
+#    endif
 
     m_needLoadFromFile = true;
     m_hasFullWriteback = false;
@@ -110,8 +114,10 @@ MMKV::~MMKV() {
     clearMemoryCache();
 
     delete m_dic;
+#ifndef MMKV_DISABLE_CRYPT
     delete m_dicCrypt;
     delete m_crypter;
+#endif
     delete m_file;
     delete m_metaFile;
     delete m_metaInfo;
@@ -136,7 +142,7 @@ void initialize() {
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
     MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(MMKV_DISABLE_CRYPT)
     AESCrypt::testAESCrypt();
     KeyValueHolderCrypt::testAESToMMBuffer();
 #endif
@@ -156,30 +162,29 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
 }
 
 #ifndef MMKV_ANDROID
-MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *relativePath) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath) {
 
     if (mmapID.empty()) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
 
-    auto mmapKey = mmapedKVKey(mmapID, relativePath);
+    auto mmapKey = mmapedKVKey(mmapID, rootPath);
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
         return kv;
     }
 
-    if (relativePath) {
-        MMKVPath_t specialPath = (*relativePath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+    if (rootPath) {
+        MMKVPath_t specialPath = (*rootPath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
         if (!isFileExist(specialPath)) {
             mkPath(specialPath);
         }
-        MMKVInfo("prepare to load %s (id %s) from relativePath %s", mmapID.c_str(), mmapKey.c_str(),
-                 relativePath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
 
-    auto kv = new MMKV(mmapID, mode, cryptKey, relativePath);
+    auto kv = new MMKV(mmapID, mode, cryptKey, rootPath);
     kv->m_mmapKey = mmapKey;
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
@@ -203,17 +208,6 @@ void MMKV::onExit() {
 
 const string &MMKV::mmapID() {
     return m_mmapID;
-}
-
-string MMKV::cryptKey() {
-    SCOPED_LOCK(m_lock);
-
-    if (m_crypter) {
-        char key[AES_KEY_LEN];
-        m_crypter->getKey(key);
-        return string(key, strnlen(key, AES_KEY_LEN));
-    }
-    return "";
 }
 
 mmkv::ContentChangeHandler g_contentChangeHandler = nullptr;
@@ -244,12 +238,11 @@ void MMKV::clearMemoryCache() {
         return;
     }
     m_needLoadFromFile = true;
-
-    clearDictionary(m_dicCrypt);
-    clearDictionary(m_dic);
-
     m_hasFullWriteback = false;
 
+    clearDictionary(m_dic);
+#ifndef MMKV_DISABLE_CRYPT
+    clearDictionary(m_dicCrypt);
     if (m_crypter) {
         if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
             m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
@@ -257,6 +250,7 @@ void MMKV::clearMemoryCache() {
             m_crypter->resetIV();
         }
     }
+#endif
 
     delete m_output;
     m_output = nullptr;
@@ -280,6 +274,19 @@ void MMKV::close() {
         g_instanceDic->erase(itr);
     }
     delete this;
+}
+
+#ifndef MMKV_DISABLE_CRYPT
+
+string MMKV::cryptKey() {
+    SCOPED_LOCK(m_lock);
+
+    if (m_crypter) {
+        char key[AES_KEY_LEN];
+        m_crypter->getKey(key);
+        return string(key, strnlen(key, AES_KEY_LEN));
+    }
+    return "";
 }
 
 void MMKV::checkReSetCryptKey(const string *cryptKey) {
@@ -317,6 +324,8 @@ void MMKV::checkReSetCryptKey(const string *cryptKey) {
         }
     }
 }
+
+#endif // MMKV_DISABLE_CRYPT
 
 bool MMKV::isFileValid() {
     return m_file->isFileValid();
@@ -893,22 +902,22 @@ static MMKVPath_t encodeFilePath(const string &mmapID) {
     }
 }
 
-string mmapedKVKey(const string &mmapID, MMKVPath_t *relativePath) {
-    if (relativePath && g_rootDir != (*relativePath)) {
-        return md5(*relativePath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID));
+string mmapedKVKey(const string &mmapID, MMKVPath_t *rootPath) {
+    if (rootPath && g_rootDir != (*rootPath)) {
+        return md5(*rootPath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID));
     }
     return mmapID;
 }
 
-MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath) {
+MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *rootPath) {
 #ifndef MMKV_ANDROID
-    if (relativePath) {
+    if (rootPath) {
 #else
     if (mode & MMKV_ASHMEM) {
         return ashmemMMKVPathWithID(encodeFilePath(mmapID));
-    } else if (relativePath) {
+    } else if (rootPath) {
 #endif
-        return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+        return *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
     }
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
 }
@@ -919,15 +928,15 @@ constexpr auto CRC_SUFFIX = ".crc";
 constexpr auto CRC_SUFFIX = L".crc";
 #endif
 
-MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *relativePath) {
+MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *rootPath) {
 #ifndef MMKV_ANDROID
-    if (relativePath) {
+    if (rootPath) {
 #else
     if (mode & MMKV_ASHMEM) {
         return ashmemMMKVPathWithID(encodeFilePath(mmapID)) + CRC_SUFFIX;
-    } else if (relativePath) {
+    } else if (rootPath) {
 #endif
-        return *relativePath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
+        return *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
     }
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
 }

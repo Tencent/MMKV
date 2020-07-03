@@ -37,14 +37,14 @@ using namespace mmkv;
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
 
-extern string mmapedKVKey(const string &mmapID, string *relativePath);
-extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
-extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *relativePath);
+extern string mmapedKVKey(const string &mmapID, string *rootPath);
+extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *rootPath);
+extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *rootPath);
 
-MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath)
-    : m_mmapID(mmapedKVKey(mmapID, relativePath)) // historically Android mistakenly use mmapKey as mmapID
-    , m_path(mappedKVPathWithID(m_mmapID, mode, relativePath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, relativePath))
+MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath)
+    : m_mmapID(mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
+    , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
+    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE))
@@ -59,10 +59,13 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_actualSize = 0;
     m_output = nullptr;
 
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
         m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
-    } else {
+    } else
+#    endif
+    {
         m_dic = new MMKVMap();
     }
 
@@ -100,10 +103,13 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     m_actualSize = 0;
     m_output = nullptr;
 
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
         m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
-    } else {
+    } else
+#    endif
+    {
         m_dic = new MMKVMap();
     }
 
@@ -122,29 +128,28 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     }
 }
 
-MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *relativePath) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath) {
 
     if (mmapID.empty()) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
 
-    auto mmapKey = mmapedKVKey(mmapID, relativePath);
+    auto mmapKey = mmapedKVKey(mmapID, rootPath);
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
         return kv;
     }
-    if (relativePath) {
-        if (!isFileExist(*relativePath)) {
-            if (!mkPath(*relativePath)) {
+    if (rootPath) {
+        if (!isFileExist(*rootPath)) {
+            if (!mkPath(*rootPath)) {
                 return nullptr;
             }
         }
-        MMKVInfo("prepare to load %s (id %s) from relativePath %s", mmapID.c_str(), mmapKey.c_str(),
-                 relativePath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
-    auto kv = new MMKV(mmapID, size, mode, cryptKey, relativePath);
+    auto kv = new MMKV(mmapID, size, mode, cryptKey, rootPath);
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }
@@ -159,7 +164,9 @@ MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *c
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
+#    ifndef MMKV_DISABLE_CRYPT
         kv->checkReSetCryptKey(fd, metaFD, cryptKey);
+#    endif
         return kv;
     }
     auto kv = new MMKV(mmapID, fd, metaFD, cryptKey);
@@ -175,6 +182,7 @@ int MMKV::ashmemMetaFD() {
     return (m_file->m_fileType & mmkv::MMFILE_TYPE_ASHMEM) ? m_metaFile->getFd() : -1;
 }
 
+#    ifndef MMKV_DISABLE_CRYPT
 void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
     SCOPED_LOCK(m_lock);
 
@@ -189,5 +197,6 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
         }
     }
 }
+#    endif // MMKV_DISABLE_CRYPT
 
-#endif
+#endif // MMKV_ANDROID

@@ -1,6 +1,8 @@
 #include "openssl_arm_arch.h"
+#include "../../MMKVPredef.h"
 
-#if __ARM_MAX_ARCH__ > 7
+#if (__ARM_MAX_ARCH__ > 7) && !defined(MMKV_DISABLE_CRYPT)
+
 .text
 
 .align	5

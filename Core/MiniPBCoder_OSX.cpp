@@ -121,6 +121,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
     }
 }
 
+#    ifndef MMKV_DISABLE_CRYPT
+
 void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) {
     auto block = [position, this](MMKVMapCrypt &dictionary) {
         if (position) {
@@ -166,6 +168,8 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
         }
     }
 }
+
+#    endif // MMKV_DISABLE_CRYPT
 
 NSObject *MiniPBCoder::decodeObject(const MMBuffer &oData, Class cls) {
     if (!cls || oData.length() == 0) {

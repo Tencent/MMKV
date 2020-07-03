@@ -20,7 +20,7 @@
 
 #include "CodedInputDataCrypt.h"
 
-#ifdef MMKV_APPLE
+#if defined(MMKV_APPLE) && !defined(MMKV_DISABLE_CRYPT)
 
 #    include "PBUtility.h"
 #    include <stdexcept>
@@ -59,4 +59,4 @@ NSString *CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
 
 } // namespace mmkv
 
-#endif // MMKV_APPLE
+#endif // MMKV_APPLE && !MMKV_DISABLE_CRYPT

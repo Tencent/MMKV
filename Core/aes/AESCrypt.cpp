@@ -20,10 +20,12 @@
 
 #include "AESCrypt.h"
 #include "openssl/openssl_aes.h"
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <stdint.h>
+
+#ifndef MMKV_DISABLE_CRYPT
 
 using namespace openssl;
 
@@ -161,10 +163,10 @@ AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
 
 } // namespace mmkv
 
-#ifndef NDEBUG
+#    ifndef NDEBUG
 
-#    include "../MMKVLog.h"
-#    include "../MemoryFile.h"
+#        include "../MMKVLog.h"
+#        include "../MemoryFile.h"
 
 namespace mmkv {
 
@@ -250,4 +252,5 @@ void AESCrypt::testAESCrypt() {
 
 } // namespace mmkv
 
-#endif
+#    endif // NDEBUG
+#endif     // MMKV_DISABLE_CRYPT

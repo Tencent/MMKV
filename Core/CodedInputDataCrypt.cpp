@@ -30,6 +30,8 @@
 #    endif
 #endif // MMKV_APPLE
 
+#ifndef MMKV_DISABLE_CRYPT
+
 using namespace std;
 
 namespace mmkv {
@@ -213,7 +215,7 @@ int32_t CodedInputDataCrypt::readInt32() {
     return this->readRawVarint32();
 }
 
-#ifndef MMKV_APPLE
+#    ifndef MMKV_APPLE
 
 string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
@@ -238,7 +240,7 @@ string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     }
 }
 
-#endif
+#    endif
 
 void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
     int32_t size = this->readRawVarint32();
@@ -272,3 +274,5 @@ void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
 }
 
 } // namespace mmkv
+
+#endif // MMKV_DISABLE_CRYPT

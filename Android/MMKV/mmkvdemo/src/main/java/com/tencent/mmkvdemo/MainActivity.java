@@ -116,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
         //testCornerSize();
         //testFastRemoveCornerSize();
         //testTrimNonEmptyInterProcess();
+        //testItemSizeHolderOverride();
     }
 
     private void testInterProcessLogic() {
@@ -133,9 +134,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Nullable
-    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String relativePath) {
+    private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String rootPath) {
         //MMKV kv = MMKV.defaultMMKV();
-        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, relativePath);
+        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath);
         if (kv == null) {
             return null;
         }
@@ -443,5 +444,31 @@ public class MainActivity extends AppCompatActivity {
 
         SystemClock.sleep(1000 * 3);
         Log.i("MMKV", "NonEmptyKey: " + mmkv.decodeString("NonEmptyKey"));
+    }
+
+    private void testItemSizeHolderOverride() {
+        // final String mmapID = "testItemSizeHolderOverride_crypted";
+        // final String encryptKey = "encrypeKey";
+        final String mmapID = "testItemSizeHolderOverride_plaintext";
+        final String encryptKey = null;
+        MMKV mmkv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, encryptKey);
+        /* do this in v1.1.2
+        {
+            // mmkv.encode("b", true);
+            byte[] value = new byte[512];
+            mmkv.encode("data", value);
+            Log.i("MMKV", "allKeys: " + Arrays.toString(mmkv.allKeys()));
+        }*/
+        // do this in v1.2.0
+        {
+            long totalSize = mmkv.totalSize();
+            long bufferSize = totalSize - 512;
+            byte[] value = new byte[(int) bufferSize];
+            // force a fullwriteback()
+            mmkv.encode("bigData", value);
+
+            mmkv.clearMemoryCache();
+            Log.i("MMKV", "allKeys: " + Arrays.toString(mmkv.allKeys()));
+        }
     }
 }

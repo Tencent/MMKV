@@ -30,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testChineseCharKey;
 
+- (void)testItemSizeHolderOverride;
+
 @end
 
 NS_ASSUME_NONNULL_END

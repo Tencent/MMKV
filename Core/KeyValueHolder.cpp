@@ -39,6 +39,8 @@ MMBuffer KeyValueHolder::toMMBuffer(const void *basePtr) const {
     return MMBuffer(realPtr, valueSize, MMBufferNoCopy);
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+
 KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length) {
     if (length <= SmallBufferSize()) {
         type = KeyValueHolderType_Direct;
@@ -63,9 +65,9 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(MMBuffer &&data) {
         paddedSize = static_cast<uint8_t>(data.length());
         memcpy(paddedValue, data.getPtr(), data.length());
     } else {
-#ifdef MMKV_APPLE
+#    ifdef MMKV_APPLE
         assert(data.m_data == nil);
-#endif
+#    endif
         type = KeyValueHolderType_Memory;
         memSize = static_cast<uint32_t>(data.length());
         memPtr = data.getPtr();
@@ -147,9 +149,11 @@ MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr, const AESCrypt *cr
     }
 }
 
+#endif // MMKV_DISABLE_CRYPT
+
 } // namespace mmkv
 
-#ifndef NDEBUG
+#if !defined(MMKV_DISABLE_CRYPT) && !defined(NDEBUG)
 #    include "CodedInputData.h"
 #    include "CodedOutputData.h"
 #    include "MMKVLog.h"
