@@ -397,15 +397,19 @@
 #pragma mark - mmkv baseline test
 
 - (void)mmkvBaselineTest:(int)loops {
-    [self mmkvBatchWriteInt:loops];
     [self mmkvBatchReadInt:loops];
-    [self mmkvBatchWriteString:loops];
+    [self mmkvBatchWriteInt:loops];
     [self mmkvBatchReadString:loops];
+    [self mmkvBatchWriteString:loops];
     //[self mmkvBatchWriteObject:loops];
     //[self mmkvBatchReadObject:loops];
 
     //[self mmkvBatchDeleteString:loops];
     //[[MMKV defaultMMKV] trim];
+
+    // auto mmkv = getMMKVForBatchTest();
+    // [mmkv clearMemoryCache];
+    // [mmkv actualSize];
 }
 
 MMKV *getMMKVForBatchTest() {
