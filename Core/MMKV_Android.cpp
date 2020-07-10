@@ -59,6 +59,10 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_actualSize = 0;
     m_output = nullptr;
 
+    m_fileModeLock = nullptr;
+    m_sharedProcessModeLock = nullptr;
+    m_exclusiveProcessModeLock = nullptr;
+
 #    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
         m_dicCrypt = new MMKVMapCrypt();
@@ -102,6 +106,10 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 
     m_actualSize = 0;
     m_output = nullptr;
+
+    m_fileModeLock = nullptr;
+    m_sharedProcessModeLock = nullptr;
+    m_exclusiveProcessModeLock = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
@@ -198,5 +206,38 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
     }
 }
 #    endif // MMKV_DISABLE_CRYPT
+
+bool MMKV::checkProcessMode() {
+    if (!m_fileModeLock) {
+        // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+        m_fileModeLock = new FileLock(m_file->getFd(), true);
+    }
+    if (!m_sharedProcessModeLock) {
+        m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+    }
+    if (m_isInterProcess) {
+        if (!m_exclusiveProcessModeLock) {
+            m_exclusiveProcessModeLock = new InterProcessLock(m_fileModeLock, ExclusiveLockType);
+        }
+        auto shareLocked = m_sharedProcessModeLock->try_lock();
+        if (!shareLocked) {
+            // this call will fail on most case, just do it to make sure
+            m_exclusiveProcessModeLock->try_lock();
+            return true;
+        } else {
+            auto exclusiveLocked = m_exclusiveProcessModeLock->try_lock();
+            if (!exclusiveLocked) {
+                MMKVError("Fail to exclusive lock [%s]", m_mmapID.c_str());
+            }
+            return exclusiveLocked;
+        }
+    } else {
+        auto ret = m_sharedProcessModeLock->try_lock();
+        if (!ret) {
+            MMKVError("Fail to share lock [%s]", m_mmapID.c_str());
+        }
+        return ret;
+    }
+}
 
 #endif // MMKV_ANDROID

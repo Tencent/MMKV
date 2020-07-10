@@ -366,6 +366,14 @@ MMKV_JNI jint ashmemMetaFD(JNIEnv *env, jobject instance) {
     return -1;
 }
 
+MMKV_JNI jboolean checkProcessMode(JNIEnv *env, jobject, jlong handle) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->checkProcessMode();
+    }
+    return false;
+}
+
 MMKV_JNI jboolean encodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean value) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -839,6 +847,7 @@ static JNINativeMethod g_methods[] = {
     {"writeValueToNB", "(JLjava/lang/String;JI)I", (void *) mmkv::writeValueToNB},
     {"setWantsContentChangeNotify", "(Z)V", (void *) mmkv::setWantsContentChangeNotify},
     {"checkContentChangedByOuterProcess", "()V", (void *) mmkv::checkContentChanged},
+    {"checkProcessMode", "(J)Z", (void *) mmkv::checkProcessMode},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

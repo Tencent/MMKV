@@ -51,6 +51,10 @@ class MMKV {
     std::string m_mmapKey;
     MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath);
 #else // defined(MMKV_ANDROID)
+    mmkv::FileLock *m_fileModeLock;
+    mmkv::InterProcessLock *m_sharedProcessModeLock;
+    mmkv::InterProcessLock *m_exclusiveProcessModeLock;
+
     MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath);
 
     MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
@@ -182,6 +186,7 @@ public:
 
     int ashmemMetaFD();
 
+    bool checkProcessMode();
 #endif // MMKV_ANDROID
 
     // you can call this on application termination, it's totally fine if you don't call

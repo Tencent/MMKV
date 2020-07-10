@@ -125,6 +125,11 @@ MMKV::~MMKV() {
     delete m_fileLock;
     delete m_sharedProcessLock;
     delete m_exclusiveProcessLock;
+#ifdef MMKV_ANDROID
+    delete m_fileModeLock;
+    delete m_sharedProcessModeLock;
+    delete m_exclusiveProcessModeLock;
+#endif
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
