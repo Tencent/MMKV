@@ -179,6 +179,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     if (kv == nil) {
         kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode];
         if (!kv->m_mmkv) {
+            [kv release];
             return nil;
         }
         kv->m_mmapKey = kvKey;
