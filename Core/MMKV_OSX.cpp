@@ -121,6 +121,12 @@ void MMKV::setIsInBackground(bool isInBackground) {
     MMKVInfo("g_isInBackground:%d", g_isInBackground);
 }
 
+bool MMKV::isInBackground() {
+    SCOPED_LOCK(g_instanceLock);
+
+    return g_isInBackground;
+}
+
 pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
     if (g_isInBackground) {
         MLockPtr mlockPtr(ptr, size);

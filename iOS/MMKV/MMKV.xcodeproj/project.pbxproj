@@ -8,23 +8,23 @@
 
 /* Begin PBXBuildFile section */
 		CB0DCC78242B5AAF009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
-		CB1E0645242B84D800F2FD42 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
+		CB1E0645242B84D800F2FD42 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB1E0647242B84D800F2FD42 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
 		CB1E0648242B84D800F2FD42 /* libMMKVCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6F6C0123ACCF47000351EA /* libMMKVCore.a */; };
 		CB1E0649242B84D800F2FD42 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CB1E064B242B84D800F2FD42 /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CB1E064C242B84D800F2FD42 /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		CB1FD4962046984F00931B5F /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
+		CB1FD4962046984F00931B5F /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB1FD4972046984F00931B5F /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; };
 		CB1FD4CD2046ACBC00931B5F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CB6F6C0223ACCF53000351EA /* libMMKVCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6F6C0123ACCF47000351EA /* libMMKVCore.a */; };
 		CB6F6C0523ACCF62000351EA /* libMMKVCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6F6C0123ACCF47000351EA /* libMMKVCore.a */; };
-		CBC1A90220DA948A00AD5087 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
+		CBC1A90220DA948A00AD5087 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CBC1A90620DA94B900AD5087 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */ = {isa = PBXBuildFile; fileRef = CB1FD4942046984F00931B5F /* MMKV.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CBDF32902192C0000028DB4D /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CBDF32912192C0340028DB4D /* MMKVHandler.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; };
-		CBF19040243D706D001C82ED /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; };
+		CBF19040243D706D001C82ED /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CBF19042243D706D001C82ED /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
 		CBF19044243D706D001C82ED /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4CC2046ACBC00931B5F /* Foundation.framework */; };
 		CBF19046243D706D001C82ED /* MMKVHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = CBDF328F2192C0000028DB4D /* MMKVHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };

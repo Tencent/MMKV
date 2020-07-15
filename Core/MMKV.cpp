@@ -237,11 +237,11 @@ void MMKV::unRegisterContentChangeHandler() {
 }
 
 void MMKV::clearMemoryCache() {
-    MMKVInfo("clearMemoryCache [%s]", m_mmapID.c_str());
     SCOPED_LOCK(m_lock);
     if (m_needLoadFromFile) {
         return;
     }
+    MMKVInfo("clearMemoryCache [%s]", m_mmapID.c_str());
     m_needLoadFromFile = true;
     m_hasFullWriteback = false;
 

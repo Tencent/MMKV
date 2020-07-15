@@ -286,6 +286,7 @@ public:
 
 #    ifdef MMKV_IOS
     static void setIsInBackground(bool isInBackground);
+    static bool isInBackground();
 #    endif
 #else  // !defined(MMKV_APPLE)
     std::vector<std::string> allKeys();
