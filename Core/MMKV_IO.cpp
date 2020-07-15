@@ -578,15 +578,17 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
             static MMBuffer nan;
 #    ifdef MMKV_APPLE
             auto ret = appendDataWithKey(nan, key, itr->second);
+            if (ret.first) {
+                auto oldKey = itr->first;
+                m_dicCrypt->erase(itr);
+                [oldKey release];
+            }
 #    else
             auto ret = appendDataWithKey(nan, key);
-#    endif
             if (ret.first) {
-#    ifdef MMKV_APPLE
-                [itr->first release];
-#    endif
                 m_dicCrypt->erase(itr);
             }
+#    endif
             return ret.first;
         }
     } else
@@ -599,9 +601,12 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
             auto ret = appendDataWithKey(nan, itr->second);
             if (ret.first) {
 #ifdef MMKV_APPLE
-                [itr->first release];
-#endif
+                auto oldKey = itr->first;
                 m_dic->erase(itr);
+                [oldKey release];
+#else
+                m_dic->erase(itr);
+#endif
             }
             return ret.first;
         }

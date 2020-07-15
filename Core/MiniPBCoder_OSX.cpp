@@ -93,8 +93,9 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
                 } else {
                     auto itr = dictionary.find(key);
                     if (itr != dictionary.end()) {
+                        auto oldKey = itr->first;
                         dictionary.erase(itr);
-                        [itr->first release];
+                        [oldKey release];
                     }
                 }
             }
@@ -141,8 +142,9 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
                 } else {
                     auto itr = dictionary.find(key);
                     if (itr != dictionary.end()) {
+                        auto oldKey = itr->first;
                         dictionary.erase(itr);
-                        [itr->first release];
+                        [oldKey release];
                     }
                 }
             }

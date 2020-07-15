@@ -249,8 +249,9 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
         for (NSString *key in arrKeys) {
             auto itr = m_dicCrypt->find(key);
             if (itr != m_dicCrypt->end()) {
-                [itr->first release];
+                auto oldKey = itr->first;
                 m_dicCrypt->erase(itr);
+                [oldKey release];
                 deleteCount++;
             }
         }
@@ -258,8 +259,9 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
         for (NSString *key in arrKeys) {
             auto itr = m_dic->find(key);
             if (itr != m_dic->end()) {
-                [itr->first release];
+                auto oldKey = itr->first;
                 m_dic->erase(itr);
+                [oldKey release];
                 deleteCount++;
             }
         }
