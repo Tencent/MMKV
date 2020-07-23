@@ -321,9 +321,9 @@ static void GetAppleMachineInfo(int &device, int &version) {
     std::string machine(systemInfo.machine);
 #    else
     size_t size;
-    sysctlbyname("hw.machine", NULL, &size, NULL, 0);
+    sysctlbyname("hw.machine", nullptr, &size, nullptr, 0);
     char *answer = (char *) malloc(size);
-    sysctlbyname("hw.machine", answer, &size, NULL, 0);
+    sysctlbyname("hw.machine", answer, &size, nullptr, 0);
     std::string machine(answer);
     free(answer);
 #    endif
