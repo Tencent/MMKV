@@ -309,14 +309,25 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
 
 MMKV_NAMESPACE_END
 
+#    include <sys/sysctl.h>
+
 static void GetAppleMachineInfo(int &device, int &version) {
     device = UnKnown;
     version = 0;
 
+#    if 0
     struct utsname systemInfo = {};
     uname(&systemInfo);
-
     std::string machine(systemInfo.machine);
+#    else
+    size_t size;
+    sysctlbyname("hw.machine", NULL, &size, NULL, 0);
+    char *answer = (char *) malloc(size);
+    sysctlbyname("hw.machine", answer, &size, NULL, 0);
+    std::string machine(answer);
+    free(answer);
+#    endif
+
     if (machine.find("PowerMac") != std::string::npos || machine.find("Power Macintosh") != std::string::npos) {
         device = PowerMac;
     } else if (machine.find("Mac") != std::string::npos || machine.find("Macintosh") != std::string::npos) {
