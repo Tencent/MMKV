@@ -42,7 +42,15 @@ CRC32_Func_t CRC32 = _crc32Wrap;
 #    endif
 
 // targeting armv8 with crc instruction extension
+#ifdef __GNUC__
+#    define TARGET_ARM_CRC __attribute__((target("+crc")))
+#    define __builtin_arm_crc32b(a, b) __builtin_aarch64_crc32b(a, b)
+#    define __builtin_arm_crc32h(a, b) __builtin_aarch64_crc32h(a, b)
+#    define __builtin_arm_crc32w(a, b) __builtin_aarch64_crc32w(a, b)
+#    define __builtin_arm_crc32d(a, b) __builtin_aarch64_crc32x(a, b)
+#else
 #    define TARGET_ARM_CRC __attribute__((target("crc")))
+#endif
 
 TARGET_ARM_CRC static inline uint32_t __crc32b(uint32_t a, uint8_t b) {
     return __builtin_arm_crc32b(a, b);
