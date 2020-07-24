@@ -51,7 +51,7 @@ ENDIF()
 IF(UNIX AND (NOT APPLE))
     IF("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
         SET(ASM_OPTIONS "-x assembler-with-cpp")
-        SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8-a+crypto -D__ANDROID__")
+        SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8-a+crypto")
     ENDIF()
 ENDIF()
 
