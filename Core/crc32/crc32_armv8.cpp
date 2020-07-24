@@ -22,13 +22,24 @@
 
 #ifdef MMKV_USE_ARMV8_CRC32
 
-#    include <zlib.h>
+#    if MMKV_EMBED_ZLIB
+
+static inline uint32_t _crc32Wrap(uint32_t crc, const uint8_t *buf, size_t len) {
+    return static_cast<uint32_t>(zlib::crc32(crc, buf, static_cast<uInt>(len)));
+}
+
+CRC32_Func_t CRC32 = _crc32Wrap;
+
+#    else
+#        include <zlib.h>
 
 static inline uint32_t _crc32Wrap(uint32_t crc, const uint8_t *buf, size_t len) {
     return static_cast<uint32_t>(::crc32(crc, buf, static_cast<uInt>(len)));
 }
 
 CRC32_Func_t CRC32 = _crc32Wrap;
+
+#    endif
 
 // targeting armv8 with crc instruction extension
 #    define TARGET_ARM_CRC __attribute__((target("crc")))

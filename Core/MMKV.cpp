@@ -154,7 +154,7 @@ void initialize() {
     MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
 
     // get CPU status of ARMv8 extensions (CRC32, AES)
-#if defined(__aarch64__) && (defined(MMKV_ANDROID) || defined(MMKV_POSIX))
+#if defined(__aarch64__) && defined(__linux__)
     auto hwcaps = getauxval(AT_HWCAP);
 #    ifndef MMKV_DISABLE_CRYPT
     if (hwcaps & HWCAP_AES) {
@@ -165,13 +165,13 @@ void initialize() {
         MMKVInfo("armv8 AES instructions is supported");
     }
 #    endif // MMKV_DISABLE_CRYPT
-#ifdef MMKV_USE_ARMV8_CRC32
+#    ifdef MMKV_USE_ARMV8_CRC32
     if (hwcaps & HWCAP_CRC32) {
         CRC32 = mmkv::armv8_crc32;
         MMKVInfo("armv8 CRC32 instructions is supported");
     }
-#endif // MMKV_USE_ARMV8_CRC32
-#endif // __aarch64__ && (defined(MMKV_ANDROID) || defined(MMKV_POSIX))
+#    endif // MMKV_USE_ARMV8_CRC32
+#endif     // __aarch64__ && defined(__linux__)
 
 #if !defined(NDEBUG) && !defined(MMKV_DISABLE_CRYPT)
     AESCrypt::testAESCrypt();
