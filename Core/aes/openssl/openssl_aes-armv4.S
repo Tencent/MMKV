@@ -170,9 +170,6 @@ AES_Te:
 _openssl_aes_arm_encrypt:
 #else
 .globl	openssl_aes_arm_encrypt
-#ifdef __thumb2__
-.thumb_func	openssl_aes_arm_encrypt
-#endif
 .align	5
 openssl_aes_arm_encrypt:
 #endif
@@ -286,7 +283,7 @@ openssl_aes_arm_encrypt:
 #endif
 
 
-#ifdef __thumb2__
+#if defined(__thumb2__) && !defined(__linux__)
 .thumb_func	_armv4_AES_encrypt
 #endif
 .align	2
@@ -434,9 +431,6 @@ Lenc_loop:
 _openssl_aes_arm_set_encrypt_key:
 #else
 .globl	openssl_aes_arm_set_encrypt_key
-#ifdef __thumb2__
-.thumb_func	openssl_aes_arm_set_encrypt_key
-#endif
 .align	5
 openssl_aes_arm_set_encrypt_key:
 #endif
@@ -750,9 +744,6 @@ Labrt:
 _openssl_aes_arm_set_decrypt_key:
 #else // __linux__
 .globl    openssl_aes_arm_set_decrypt_key
-#ifdef __thumb2__
-.thumb_func    openssl_aes_arm_set_decrypt_key
-#endif
 .align    5
 openssl_aes_arm_set_decrypt_key:
 #endif // __linux__
@@ -766,7 +757,7 @@ openssl_aes_arm_set_decrypt_key:
     mov    r1,r2            // which is AES_KEY *key
     b    _armv4_AES_set_enc2dec_key
 
-#ifdef __thumb2__
+#if defined(__thumb2__) && !defined(__linux__)
 .thumb_func    _armv4_AES_set_enc2dec_key
 #endif
 .align    5
@@ -973,9 +964,6 @@ AES_Td:
 _openssl_aes_arm_decrypt:
 #else // __linux__
 .globl    openssl_aes_arm_decrypt
-#ifdef __thumb2__
-.thumb_func    openssl_aes_arm_decrypt
-#endif
 .align    5
 openssl_aes_arm_decrypt:
 #endif // __linux__
@@ -1089,7 +1077,7 @@ openssl_aes_arm_decrypt:
 #endif
 
 
-#ifdef __thumb2__
+#if defined(__thumb2__) && !defined(__linux__)
 .thumb_func    _armv4_AES_decrypt
 #endif
 .align    2
