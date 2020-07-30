@@ -11,17 +11,17 @@ Lrcon:
 .long	0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d	// rotate-n-splat
 .long	0x1b,0x1b,0x1b,0x1b
 
-#ifndef __ANDROID__
+#ifndef __linux__
 .globl	_openssl_aes_arm_set_encrypt_key
 
 .align	5
 _openssl_aes_arm_set_encrypt_key:
-#else
+#else // __linux__
 .globl	openssl_aes_armv8_set_encrypt_key
 
 .align	5
 openssl_aes_armv8_set_encrypt_key:
-#endif // __ANDROID__
+#endif // __linux__
 
 Lenc_key:
 	stp	x29,x30,[sp,#-16]!
@@ -185,17 +185,17 @@ Lenc_key_abort:
 	ldr	x29,[sp],#16
 	ret
 
-#ifndef __ANDROID__
+#ifndef __linux__
 .globl    _openssl_aes_arm_set_decrypt_key
 
 .align    5
 _openssl_aes_arm_set_decrypt_key:
-#else // __ANDROID__
+#else // __linux__
 .globl    openssl_aes_armv8_set_decrypt_key
 
 .align    5
 openssl_aes_armv8_set_decrypt_key:
-#endif // __ANDROID__
+#endif // __linux__
     stp    x29,x30,[sp,#-16]!
     add    x29,sp,#0
     bl    Lenc_key
@@ -231,17 +231,17 @@ Ldec_key_abort:
     ldp    x29,x30,[sp],#16
     ret
 
-#ifndef __ANDROID__
+#ifndef __linux__
 .globl	_openssl_aes_arm_encrypt
 
 .align	5
 _openssl_aes_arm_encrypt:
-#else
+#else // __linux__
 .globl	openssl_aes_armv8_encrypt
 
 .align	5
 openssl_aes_armv8_encrypt:
-#endif // __ANDROID__
+#endif // __linux__
 
 	ldr	w3,[x2,#240]
 	ld1	{v0.4s},[x2],#16
@@ -268,17 +268,17 @@ Loop_enc:
 	st1	{v2.16b},[x1]
 	ret
 
-#ifndef __ANDROID__
+#ifndef __linux__
 .globl    _openssl_aes_arm_decrypt
 
 .align    5
 _openssl_aes_arm_decrypt:
-#else
+#else  // __linux__
 .globl    openssl_aes_armv8_decrypt
 
 .align    5
 openssl_aes_armv8_decrypt:
-#endif  // __ANDROID__
+#endif  // __linux__
 
     ldr    w3,[x2,#240]
     ld1    {v0.4s},[x2],#16

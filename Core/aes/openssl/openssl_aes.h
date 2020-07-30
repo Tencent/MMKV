@@ -44,7 +44,7 @@ void AES_cfb128_decrypt(const uint8_t *in, uint8_t *out, size_t length, const AE
 
 #if __ARM_MAX_ARCH__ > 0
 
-#ifndef MMKV_ANDROID
+#ifndef __linux__
 
 extern "C" int openssl_aes_arm_set_encrypt_key(const uint8_t *userKey, const int bits, void *key);
 extern "C" int openssl_aes_arm_set_decrypt_key(const uint8_t *userKey, const int bits, void *key);
@@ -56,7 +56,7 @@ extern "C" void openssl_aes_arm_decrypt(const uint8_t *in, uint8_t *out, const v
 #define AES_encrypt(in, out, key) openssl_aes_arm_encrypt(in, out, key)
 #define AES_decrypt(in, out, key) openssl_aes_arm_decrypt(in, out, key)
 
-#else // MMKV_ANDROID
+#else // __linux__
 
 #if __ARM_MAX_ARCH__ <= 7
 
@@ -98,7 +98,7 @@ extern aes_decrypt_t AES_decrypt;
 
 #endif // __ARM_MAX_ARCH__ <= 7
 
-#endif // MMKV_ANDROID
+#endif // __linux__
 
 #else // __ARM_MAX_ARCH__ <= 0
 

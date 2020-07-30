@@ -121,6 +121,12 @@ void MMKV::setIsInBackground(bool isInBackground) {
     MMKVInfo("g_isInBackground:%d", g_isInBackground);
 }
 
+bool MMKV::isInBackground() {
+    SCOPED_LOCK(g_instanceLock);
+
+    return g_isInBackground;
+}
+
 pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
     if (g_isInBackground) {
         MLockPtr mlockPtr(ptr, size);
@@ -249,8 +255,9 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
         for (NSString *key in arrKeys) {
             auto itr = m_dicCrypt->find(key);
             if (itr != m_dicCrypt->end()) {
-                [itr->first release];
+                auto oldKey = itr->first;
                 m_dicCrypt->erase(itr);
+                [oldKey release];
                 deleteCount++;
             }
         }
@@ -258,8 +265,9 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
         for (NSString *key in arrKeys) {
             auto itr = m_dic->find(key);
             if (itr != m_dic->end()) {
-                [itr->first release];
+                auto oldKey = itr->first;
                 m_dic->erase(itr);
+                [oldKey release];
                 deleteCount++;
             }
         }
@@ -301,14 +309,25 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
 
 MMKV_NAMESPACE_END
 
+#    include <sys/sysctl.h>
+
 static void GetAppleMachineInfo(int &device, int &version) {
     device = UnKnown;
     version = 0;
 
+#    if 0
     struct utsname systemInfo = {};
     uname(&systemInfo);
-
     std::string machine(systemInfo.machine);
+#    else
+    size_t size;
+    sysctlbyname("hw.machine", nullptr, &size, nullptr, 0);
+    char *answer = (char *) malloc(size);
+    sysctlbyname("hw.machine", answer, &size, nullptr, 0);
+    std::string machine(answer);
+    free(answer);
+#    endif
+
     if (machine.find("PowerMac") != std::string::npos || machine.find("Power Macintosh") != std::string::npos) {
         device = PowerMac;
     } else if (machine.find("Mac") != std::string::npos || machine.find("Macintosh") != std::string::npos) {

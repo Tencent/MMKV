@@ -48,6 +48,10 @@
     // register handler
     [MMKV registerHandler:self];
 
+    // enable auto clean up
+    uint32_t maxIdleMinutes = 1;
+    [MMKV enableAutoCleanUp:maxIdleMinutes];
+
     return YES;
 }
 
@@ -107,7 +111,8 @@
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    // it's totally fine no calling this method
+    [MMKV onAppTerminate];
 }
 
 @end

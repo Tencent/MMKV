@@ -1,5 +1,17 @@
 # MMKV Change Log
 
+## v1.2.2 / 2020-07-30
+
+### iOS / macOS
+* Add auto clean up feature. Call `+[MMKV enableAutoCleanUp:]` to enable auto cleanup MMKV instances that not been accessed recently.
+* Fix a potential crash on devices under iPhone X.
+
+### Android
+* Add multi-process mode check. After so many issues had been created due to mistakenly using MMKV in multi-process mode in Android, this check is added. If an MMKV instance is accessed with `SINGLE_PROCESS_MODE` in multi-process, an `IllegalArgumentException` will be thrown.
+
+### POSIX
+* Add support for armv7 & arm64 arch on Linux.
+
 ## v1.2.1 / 2020-07-03
 This is a hotfix release. Anyone who has upgraded to v1.2.0 should upgrade to this version **immediately**.
 
@@ -14,7 +26,7 @@ This is a hotfix release. Anyone who has upgraded to v1.2.0 should upgrade to th
 ## v1.2.0 / 2020-06-30
 This is the second **major version** of MMKV. Everything you call is the same as the last version, while almost everything underneath has been improved. 
 
-* **Reduce Memory Usage**. We used to cache all key-values in a dictionary for efficiency. From now on we store the offset of each key-value inside the mmap-memory instead, **reducing memory usage by almost half** for (non-encrypt) MMKV. And the accessing efficiency is almost the same as before. As for encrypted MMKV, we can't simply store the offset of each key-value, the relative encrypt info needs to be stored as well. That will be too much for small key-values. We only store such info for large key-values (larger than 256B).
+* **Reduce Memory Footprint**. We used to cache all key-values in a dictionary for efficiency. From now on we store the offset of each key-value inside the mmap-memory instead, **reducing memory footprint by almost half** for (non-encrypt) MMKV. And the accessing efficiency is almost the same as before. As for encrypted MMKV, we can't simply store the offset of each key-value, the relative encrypt info needs to be stored as well. That will be too much for small key-values. We only store such info for large key-values (larger than 256B).
 * **Improve Writeback Efficiency**. Thanks to the optimization above, we now can implement writeback by simply calling **memmove()** multiple times. Efficiency is increased and memory consumption is down.
 * **Optimize Small Key-Values**. Small key-values of encrypted MMKV are still cached in memory, as all the old versions did. From now on, the struct `MMBuffer` will try to **store small values in the stack** instead of in the heap, saving a lot of time from `malloc()` & `free()`. In fact, all primitive types will be store in the stack memory.
 

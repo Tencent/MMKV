@@ -46,6 +46,16 @@ ELSEIF("${ANDROID_ABI}" STREQUAL "armeabi")
     SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv5 -D__ANDROID__")
 ENDIF()
 
+#include(CMakePrintHelpers)
+#cmake_print_variables(CMAKE_SYSTEM_PROCESSOR)
+IF(UNIX AND (NOT APPLE))
+    IF("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
+        SET(ASM_OPTIONS "-x assembler-with-cpp")
+        SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8-a+crypto")
+    ENDIF()
+ENDIF()
+
+
 project(core)
 
 # Creates and names a library, sets it as either STATIC

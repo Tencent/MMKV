@@ -29,6 +29,10 @@
 #import <UIKit/UIKit.h>
 #endif
 
+#if __has_feature(objc_arc)
+#error This file must be compiled with MRC. Use -fno-objc-arc flag.
+#endif
+
 using namespace std;
 
 static NSMutableDictionary *g_instanceDic = nil;
@@ -50,6 +54,7 @@ static void ContentChangeHandler(const string &mmapID);
     NSString *m_mmapID;
     NSString *m_mmapKey;
     mmkv::MMKV *m_mmkv;
+    uint64_t m_lastAccessTime;
 }
 
 #pragma mark - init
@@ -94,7 +99,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     }
     g_hasCalledInitializeMMKV = YES;
 
-    g_basePath = (rootDir != nil) ? rootDir : [self mmkvBasePath];
+    g_basePath = (rootDir != nil) ? [rootDir retain] : [self mmkvBasePath];
     mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
 
     return [self mmkvBasePath];
@@ -103,7 +108,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel {
     auto ret = [MMKV initializeMMKV:rootDir logLevel:logLevel];
 
-    g_groupPath = [groupDir stringByAppendingPathComponent:@"mmkv"];
+    g_groupPath = [[groupDir stringByAppendingPathComponent:@"mmkv"] retain];
     MMKVInfo("groupDir: %@", g_groupPath);
 
     return ret;
@@ -174,11 +179,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     if (kv == nil) {
         kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode];
         if (!kv->m_mmkv) {
+            [kv release];
             return nil;
         }
         kv->m_mmapKey = kvKey;
         [g_instanceDic setObject:kv forKey:kvKey];
+        [kv release];
     }
+    kv->m_lastAccessTime = [NSDate timeIntervalSinceReferenceDate];
     return kv;
 }
 
@@ -216,6 +224,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     [self clearMemoryCache];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    [super dealloc];
 }
 
 #pragma mark - Application state
@@ -489,8 +499,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->removeValuesForKeys(arrKeys);
 }
 
-#pragma mark - Boring stuff
-
 - (void)sync {
     m_mmkv->sync(mmkv::MMKV_SYNC);
 }
@@ -504,11 +512,84 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 + (void)onAppTerminate {
-    SCOPED_LOCK(g_lock);
+    g_lock->lock();
 
-    [g_instanceDic removeAllObjects];
+    [g_instanceDic release];
+    g_instanceDic = nil;
+
+    [g_basePath release];
+    g_basePath = nil;
+
+    [g_groupPath release];
+    g_groupPath = nil;
 
     mmkv::MMKV::onExit();
+
+    g_lock->unlock();
+    delete g_lock;
+    g_lock = nullptr;
+}
+
+static bool g_isAutoCleanUpEnabled = false;
+static uint32_t g_maxIdleSeconds = 0;
+static dispatch_source_t g_autoCleanUpTimer = nullptr;
+
++ (void)enableAutoCleanUp:(uint32_t)maxIdleMinutes NS_SWIFT_NAME(enableAutoCleanUp(maxIdleMinutes:)) {
+    MMKVInfo("enable auto clean up with maxIdleMinutes:%zu", maxIdleMinutes);
+    SCOPED_LOCK(g_lock);
+
+    g_isAutoCleanUpEnabled = true;
+    g_maxIdleSeconds = maxIdleMinutes * 60;
+
+    if (!g_autoCleanUpTimer) {
+        g_autoCleanUpTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
+        dispatch_source_set_event_handler(g_autoCleanUpTimer, ^{
+            [MMKV tryAutoCleanUpInstances];
+        });
+    } else {
+        dispatch_suspend(g_autoCleanUpTimer);
+    }
+    dispatch_source_set_timer(g_autoCleanUpTimer, dispatch_time(DISPATCH_TIME_NOW, g_maxIdleSeconds * NSEC_PER_SEC), g_maxIdleSeconds * NSEC_PER_SEC, 0);
+    dispatch_resume(g_autoCleanUpTimer);
+}
+
++ (void)disableAutoCleanUp {
+    MMKVInfo("disable auto clean up");
+    SCOPED_LOCK(g_lock);
+
+    g_isAutoCleanUpEnabled = false;
+    g_maxIdleSeconds = 0;
+
+    if (g_autoCleanUpTimer) {
+        dispatch_source_cancel(g_autoCleanUpTimer);
+        dispatch_release(g_autoCleanUpTimer);
+        g_autoCleanUpTimer = nullptr;
+    }
+}
+
++ (void)tryAutoCleanUpInstances {
+    SCOPED_LOCK(g_lock);
+
+#ifdef MMKV_IOS
+    if (mmkv::MMKV::isInBackground()) {
+        MMKVInfo("don't cleanup in background, might just wakeup from suspend");
+        return;
+    }
+#endif
+
+    uint64_t now = [NSDate timeIntervalSinceReferenceDate];
+    NSMutableArray *arrKeys = [NSMutableArray array];
+    [g_instanceDic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+        auto mmkv = (MMKV *) obj;
+        if (mmkv->m_lastAccessTime + g_maxIdleSeconds <= now && mmkv.retainCount == 1) {
+            [arrKeys addObject:key];
+        }
+    }];
+    if (arrKeys.count > 0) {
+        auto msg = [NSString stringWithFormat:@"auto cleanup mmkv %@", arrKeys];
+        MMKVInfo(msg.UTF8String);
+        [g_instanceDic removeObjectsForKeys:arrKeys];
+    }
 }
 
 + (NSString *)mmkvBasePath {
@@ -519,7 +600,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentPath = (NSString *) [paths firstObject];
     if ([documentPath length] > 0) {
-        g_basePath = [documentPath stringByAppendingPathComponent:@"mmkv"];
+        g_basePath = [[documentPath stringByAppendingPathComponent:@"mmkv"] retain];
         return g_basePath;
     } else {
         return @"";
@@ -528,7 +609,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (void)setMMKVBasePath:(NSString *)basePath {
     if (basePath.length > 0) {
-        g_basePath = basePath;
+        [g_basePath release];
+        g_basePath = [basePath retain];
         [MMKV initializeMMKV:basePath];
 
         // still warn about it
@@ -610,23 +692,25 @@ static NSString *md5(NSString *value) {
 }
 
 - (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults {
-    NSDictionary *dic = [userDaults dictionaryRepresentation];
-    if (dic.count <= 0) {
-        MMKVInfo("migrate data fail, userDaults is nil or empty");
-        return 0;
-    }
-    __block uint32_t count = 0;
-    [dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
-        if ([key isKindOfClass:[NSString class]]) {
-            NSString *stringKey = key;
-            if ([MMKV tranlateData:obj key:stringKey kv:self]) {
-                count++;
-            }
-        } else {
-            MMKVWarning("unknown type of key:%@", key);
+    @autoreleasepool {
+        NSDictionary *dic = [userDaults dictionaryRepresentation];
+        if (dic.count <= 0) {
+            MMKVInfo("migrate data fail, userDaults is nil or empty");
+            return 0;
         }
-    }];
-    return count;
+        __block uint32_t count = 0;
+        [dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
+            if ([key isKindOfClass:[NSString class]]) {
+                NSString *stringKey = key;
+                if ([MMKV tranlateData:obj key:stringKey kv:self]) {
+                    count++;
+                }
+            } else {
+                MMKVWarning("unknown type of key:%@", key);
+            }
+        }];
+        return count;
+    }
 }
 
 + (BOOL)tranlateData:(id)obj key:(NSString *)key kv:(MMKV *)kv {

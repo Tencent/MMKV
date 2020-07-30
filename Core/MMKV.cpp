@@ -39,6 +39,11 @@
 #include <cstdio>
 #include <cstring>
 
+#if defined(__aarch64__) && (defined(MMKV_ANDROID) || defined(MMKV_POSIX))
+#    include <asm/hwcap.h>
+#    include <sys/auxv.h>
+#endif
+
 #ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
@@ -125,6 +130,11 @@ MMKV::~MMKV() {
     delete m_fileLock;
     delete m_sharedProcessLock;
     delete m_exclusiveProcessLock;
+#ifdef MMKV_ANDROID
+    delete m_fileModeLock;
+    delete m_sharedProcessModeLock;
+    delete m_exclusiveProcessModeLock;
+#endif
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
@@ -142,6 +152,27 @@ void initialize() {
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
     MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
+
+    // get CPU status of ARMv8 extensions (CRC32, AES)
+#if defined(__aarch64__) && defined(__linux__)
+    auto hwcaps = getauxval(AT_HWCAP);
+#    ifndef MMKV_DISABLE_CRYPT
+    if (hwcaps & HWCAP_AES) {
+        AES_set_encrypt_key = openssl_aes_armv8_set_encrypt_key;
+        AES_set_decrypt_key = openssl_aes_armv8_set_decrypt_key;
+        AES_encrypt = openssl_aes_armv8_encrypt;
+        AES_decrypt = openssl_aes_armv8_decrypt;
+        MMKVInfo("armv8 AES instructions is supported");
+    }
+#    endif // MMKV_DISABLE_CRYPT
+#    ifdef MMKV_USE_ARMV8_CRC32
+    if (hwcaps & HWCAP_CRC32) {
+        CRC32 = mmkv::armv8_crc32;
+        MMKVInfo("armv8 CRC32 instructions is supported");
+    }
+#    endif // MMKV_USE_ARMV8_CRC32
+#endif     // __aarch64__ && defined(__linux__)
+
 #if !defined(NDEBUG) && !defined(MMKV_DISABLE_CRYPT)
     AESCrypt::testAESCrypt();
     KeyValueHolderCrypt::testAESToMMBuffer();
@@ -232,11 +263,11 @@ void MMKV::unRegisterContentChangeHandler() {
 }
 
 void MMKV::clearMemoryCache() {
-    MMKVInfo("clearMemoryCache [%s]", m_mmapID.c_str());
     SCOPED_LOCK(m_lock);
     if (m_needLoadFromFile) {
         return;
     }
+    MMKVInfo("clearMemoryCache [%s]", m_mmapID.c_str());
     m_needLoadFromFile = true;
     m_hasFullWriteback = false;
 
