@@ -1,5 +1,17 @@
 # MMKV Change Log
 
+## v1.2.2 / 2020-07-30
+
+### iOS / macOS
+* Add auto clean up feature. Call `+[MMKV enableAutoCleanUp:]` to enable auto cleanup MMKV instances that not been accessed recently.
+* Fix a potential crash on devices under iPhone X.
+
+### Android
+* Add multi-process mode check. After so many issues had been created due to mistakenly using MMKV in multi-process mode in Android, this check is added. If an MMKV instance is accessed with `SINGLE_PROCESS_MODE` in multi-process, an `IllegalArgumentException` will be thrown.
+
+### POSIX
+* Add support for armv7 & arm64 arch on Linux.
+
 ## v1.2.1 / 2020-07-03
 This is a hotfix release. Anyone who has upgraded to v1.2.0 should upgrade to this version **immediately**.
 
