@@ -20,11 +20,10 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
   s.public_header_files = "iOS/MMKV/MMKV/MMKV.h", "iOS/MMKV/MMKV/MMKVHandler.h"
-  s.requires_arc = ['iOS/MMKV/MMKV/libMMKV.mm']
 
   s.framework    = "CoreFoundation"
   s.libraries    = "z", "c++"
-  s.requires_arc = true
+  s.requires_arc = false
   s.pod_target_xcconfig = {
     "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++17",
     "CLANG_CXX_LIBRARY" => "libc++",
