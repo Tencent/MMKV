@@ -206,7 +206,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         if (!m_mmkv) {
             return self;
         }
-        m_mmapID = [NSString stringWithUTF8String:m_mmkv->mmapID().c_str()];
+        m_mmapID = [[NSString alloc] initWithUTF8String:m_mmkv->mmapID().c_str()];
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
         if (!g_isRunningInAppExtension) {
@@ -224,6 +224,12 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     [self clearMemoryCache];
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    [m_mmapID release];
+    if (m_mmkv) {
+        m_mmkv->close();
+        m_mmkv = nullptr;
+    }
 
     [super dealloc];
 }
@@ -261,9 +267,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (void)close {
     SCOPED_LOCK(g_lock);
     MMKVInfo("closing %@", m_mmapID);
-
-    m_mmkv->close();
-    m_mmkv = nullptr;
 
     [g_instanceDic removeObjectForKey:m_mmapKey];
 }
