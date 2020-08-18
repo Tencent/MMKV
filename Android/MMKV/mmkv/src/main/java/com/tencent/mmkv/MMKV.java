@@ -278,7 +278,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                 if (mode == SINGLE_PROCESS_MODE) {
                     message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
                 } else {
-                    message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE";
+                    message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
                     message += "while it's already been opened with SINGLE_PROCESS_MODE by someone somewhere else!";
                 }
                 throw new IllegalArgumentException(message);
