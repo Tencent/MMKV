@@ -11,8 +11,9 @@ about: Create a report to help us improve
 
 ### The version of MMKV
 
-> e.g. v1.1.22
-> Note: For versions older than the latest version, please upgrade before posting any issue. We don't have much time for old version tech support.
+> e.g. v1.2.2  
+> Note: For versions older than the latest version, please upgrade before posting any issue.  
+> We don't have much time for old version tech support.
 
 
 
