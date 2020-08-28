@@ -16,6 +16,9 @@ xcuserdata
 *.xcscmblueprint
 *.xcscheme
 
+#python
+venv
+
 ## OS X
 .DS_Store
 
