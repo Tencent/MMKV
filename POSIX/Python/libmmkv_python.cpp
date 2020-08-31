@@ -20,6 +20,7 @@
 
 #include "MMKV.h"
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 using namespace mmkv;
 using namespace std;
@@ -35,7 +36,7 @@ static MMBuffer pyBytes2MMBuffer(const py::bytes &bytes) {
 }
 
 PYBIND11_MODULE(mmkv, m) {
-    m.doc() = "An efficient, small mobile key-value storage framework developed by WeChat Team.";
+    m.doc() = "An efficient, small key-value storage framework developed by WeChat Team.";
 
     py::enum_<MMKVMode>(m, "MMKVMode")
         .value("SingleProcess", MMKVMode::MMKV_SINGLE_PROCESS)
@@ -50,21 +51,37 @@ PYBIND11_MODULE(mmkv, m) {
         .value("LogError", MMKVLogLevel::MMKVLogError)
         .export_values();
 
+    py::enum_<SyncFlag>(m, "SyncFlag")
+        .value("Sync", SyncFlag::MMKV_SYNC)
+        .value("ASync", SyncFlag::MMKV_ASYNC)
+        .export_values();
+
     py::class_<MMKV, unique_ptr<MMKV, py::nodelete>> clsMMKV(m, "MMKV");
-    //        .def(py::init(&MMKV::mmkvWithID), // TODO: not working
+
+    // TODO: not working
+    // clsMMKV.def(py::init(&MMKV::mmkvWithID),
     //             py::arg("mmapID"),
     //             py::arg("mode") = MMKV_SINGLE_PROCESS,
     //             py::arg("cryptKey") = (string*) nullptr,
-    //             py::arg("rootDir") = (string*) nullptr)
+    //             py::arg("rootDir") = (string*) nullptr);
+
     clsMMKV.def(py::init([](const string &mmapID, MMKVMode mode, const string &cryptKey, const string &rootDir) {
                     string *cryptKeyPtr = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
                     string *rootDirPtr = (rootDir.length() > 0) ? (string *) &rootDir : nullptr;
                     return MMKV::mmkvWithID(mmapID, mode, cryptKeyPtr, rootDirPtr);
                 }),
+                "Parameters:\n"
+                "  mmapID: all instances of the same mmapID share the same data and file storage\n"
+                "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
+                "  cryptKey: pass a non-empty string for an encrypted MMKV, 16 bytes at most\n"
+                "  rootDir: custom root directory",
                 py::arg("mmapID"), py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string(),
                 py::arg("rootDir") = string());
 
-    clsMMKV.def_static("initializeMMKV", &MMKV::initializeMMKV, py::arg("rootDir"), py::arg("logLevel") = MMKVLogNone);
+    clsMMKV.def("__eq__", [](MMKV &kv, const MMKV &other) { return kv.mmapID() == other.mmapID(); });
+
+    clsMMKV.def_static("initializeMMKV", &MMKV::initializeMMKV, "must call this before getting any MMKV instance",
+                       py::arg("rootDir"), py::arg("logLevel") = MMKVLogNone);
 
     clsMMKV.def_static(
         "defaultMMKV",
@@ -72,41 +89,58 @@ PYBIND11_MODULE(mmkv, m) {
             string *cryptKeyPtr = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
             return MMKV::defaultMMKV(mode, cryptKeyPtr);
         },
-        py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string());
+        "a generic purpose instance", py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string());
 
     clsMMKV.def("mmapID", &MMKV::mmapID);
     clsMMKV.def_readonly("isInterProcess", &MMKV::m_isInterProcess);
 
     clsMMKV.def("cryptKey", &MMKV::cryptKey);
-    clsMMKV.def("reKey", &MMKV::reKey, py::arg("newCryptKey"));
-    clsMMKV.def("checkReSetCryptKey", &MMKV::checkReSetCryptKey, py::arg("newCryptKey"));
+    clsMMKV.def("reKey", &MMKV::reKey,
+                "transform plain text into encrypted text, or vice versa with an empty cryptKey\n"
+                "Parameters:\n"
+                "  newCryptKey: 16 bytes at most",
+                py::arg("newCryptKey"));
+    clsMMKV.def("checkReSetCryptKey", &MMKV::checkReSetCryptKey,
+                "just reset cryptKey (will not encrypt or decrypt anything),\n"
+                "usually you should call this method after other process reKey() a multi-process mmkv",
+                py::arg("newCryptKey"));
 
     // TODO: Doesn't work, why?
     // clsMMKV.def("set", py::overload_cast<bool, const string&>(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("setBool", (bool (MMKV::*)(bool, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(int32_t, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(uint32_t, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(int64_t, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(uint64_t, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(float, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(double, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(bool, const string &))(&MMKV::set), "encode a boolean value", py::arg("value"),
+                py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(int32_t, const string &))(&MMKV::set), "encode an int32 value", py::arg("value"),
+                py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(uint32_t, const string &))(&MMKV::set), "encode an unsigned int32 value",
+                py::arg("value"), py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(int64_t, const string &))(&MMKV::set), "encode an int64 value", py::arg("value"),
+                py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(uint64_t, const string &))(&MMKV::set), "encode an unsigned int64 value",
+                py::arg("value"), py::arg("key"));
+    //clsMMKV.def("set", (bool (MMKV::*)(float, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(double, const string &))(&MMKV::set), "encode a float/double value",
+                py::arg("value"), py::arg("key"));
     //clsMMKV.def("set", (bool (MMKV::*)(const char*, const string&))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(const string &, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(const string &, const string &))(&MMKV::set),
+                "encode an UTF-8 String/bytes value", py::arg("value"), py::arg("key"));
 #if PY_MAJOR_VERSION >= 3
     clsMMKV.def(
         "set", [](MMKV &kv, const py::bytes &value, const string &key) { return kv.set(pyBytes2MMBuffer(value), key); },
-        py::arg("value"), py::arg("key"));
+        "encode a bytes value", py::arg("value"), py::arg("key"));
 #endif
 
-    clsMMKV.def("getBool", &MMKV::getBool, py::arg("key"), py::arg("defaultValue") = false);
-    clsMMKV.def("getInt", &MMKV::getInt32, py::arg("key"), py::arg("defaultValue") = 0);
-    clsMMKV.def("getUInt", &MMKV::getUInt32, py::arg("key"), py::arg("defaultValue") = 0);
-    clsMMKV.def("getLongInt", &MMKV::getInt64, py::arg("key"), py::arg("defaultValue") = 0);
-    clsMMKV.def("getLongUInt", &MMKV::getUInt64, py::arg("key"), py::arg("defaultValue") = 0);
-    clsMMKV.def("getFloat", &MMKV::getFloat, py::arg("key"), py::arg("defaultValue") = 0);
-    clsMMKV.def("getDouble", &MMKV::getDouble, py::arg("key"), py::arg("defaultValue") = 0);
+    clsMMKV.def("getBool", &MMKV::getBool, "decode a boolean value", py::arg("key"), py::arg("defaultValue") = false);
+    clsMMKV.def("getInt", &MMKV::getInt32, "decode an int32 value", py::arg("key"), py::arg("defaultValue") = 0);
+    clsMMKV.def("getUInt", &MMKV::getUInt32, "decode an unsigned int32 value", py::arg("key"),
+                py::arg("defaultValue") = 0);
+    clsMMKV.def("getLongInt", &MMKV::getInt64, "decode an int64 value", py::arg("key"), py::arg("defaultValue") = 0);
+    clsMMKV.def("getLongUInt", &MMKV::getUInt64, "decode an unsigned int64 value", py::arg("key"),
+                py::arg("defaultValue") = 0);
+    //clsMMKV.def("getFloat", &MMKV::getFloat, py::arg("key"), py::arg("defaultValue") = 0);
+    clsMMKV.def("getFloat", &MMKV::getDouble, "decode a float/double value", py::arg("key"),
+                py::arg("defaultValue") = 0);
     clsMMKV.def(
-        "getStr",
+        "getString",
         [](MMKV &kv, const string &key, const string &defaultValue) {
             string result;
             if (kv.getString(key, result)) {
@@ -114,7 +148,8 @@ PYBIND11_MODULE(mmkv, m) {
             }
             return defaultValue;
         },
-        py::arg("key"), py::arg("defaultValue") = string());
+        "decode an UTF-8 String/bytes value", py::arg("key"), py::arg("defaultValue") = string());
+#if PY_MAJOR_VERSION >= 3
     clsMMKV.def(
         "getBytes",
         [](MMKV &kv, const string &key, const py::bytes &defaultValue) {
@@ -124,5 +159,27 @@ PYBIND11_MODULE(mmkv, m) {
             }
             return defaultValue;
         },
-        py::arg("key"), py::arg("defaultValue") = py::bytes());
+        "decode a bytes value", py::arg("key"), py::arg("defaultValue") = py::bytes());
+#endif
+
+    clsMMKV.def("__contains__", &MMKV::containsKey, py::arg("key"));
+    clsMMKV.def("keys", &MMKV::allKeys);
+
+    clsMMKV.def("count", &MMKV::count);
+    clsMMKV.def("totalSize", &MMKV::totalSize);
+    clsMMKV.def("actualSize", &MMKV::actualSize);
+
+    clsMMKV.def("remove", &MMKV::removeValueForKey, py::arg("key"));
+    clsMMKV.def("remove", &MMKV::removeValuesForKeys, py::arg("keys"));
+    clsMMKV.def("clearAll", &MMKV::clearAll, "remove all key-values");
+    clsMMKV.def("trim", &MMKV::trim, "call this method after lots of removing if you care about disk usage");
+    clsMMKV.def("clearMemoryCache", &MMKV::clearMemoryCache, "call this method if you are facing memory-warning");
+
+    clsMMKV.def("sync", &MMKV::sync, py::arg("flag") = MMKV_SYNC,
+                "this call is not necessary unless you worry about unexpected shutdown of the machine (running out of "
+                "battery, etc)");
+
+    clsMMKV.def("lock", &MMKV::lock, "get exclusive access, won't return until the lock is obtained");
+    clsMMKV.def("unlock", &MMKV::unlock);
+    clsMMKV.def("try_lock", &MMKV::try_lock, "try to get exclusive access");
 }
