@@ -169,6 +169,19 @@ def test_bytes(kv):
     print('test bytes: passed')
 
 
+def test_equal(kv, mmap_id):
+    assert kv.mmapID() == mmap_id
+
+    another = mmkv.MMKV(mmap_id)
+    assert kv == another
+
+    kv_keys = sorted(kv.keys())
+    another_keys = sorted(another.keys())
+    assert kv_keys == another_keys
+
+    print('test equal: passed')
+
+
 if __name__ == '__main__':
     mmkv.MMKV.initializeMMKV('/tmp/mmkv')
     kv = mmkv.MMKV('unit_test_python')
@@ -180,3 +193,4 @@ if __name__ == '__main__':
     test_float(kv)
     test_string(kv)
     test_bytes(kv)
+    test_equal(kv, 'unit_test_python')
