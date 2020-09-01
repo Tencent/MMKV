@@ -3,6 +3,7 @@
 import mmkv
 import sys
 
+
 def functional_test(decode_only):
     kv = mmkv.MMKV('test_python')
 
