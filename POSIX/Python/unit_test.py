@@ -23,14 +23,14 @@ def test_bool(kv):
 
 
 def test_int(kv):
-    MinInt = -1 * (2**31)
+    MinInt = -1 * (2 ** 31)
     ret = kv.set(MinInt, 'Int')
     assert ret
 
     value = kv.getInt('Int')
     assert value == MinInt
 
-    MaxInt = (2**31) - 1
+    MaxInt = (2 ** 31) - 1
     ret = kv.set(MaxInt, 'Int')
     assert ret
 
@@ -47,7 +47,7 @@ def test_int(kv):
 
 
 def test_uint(kv):
-    MaxUInt = (2**32) - 1
+    MaxUInt = (2 ** 32) - 1
     ret = kv.set(MaxUInt, 'UInt')
     assert ret
 
@@ -64,14 +64,14 @@ def test_uint(kv):
 
 
 def test_long_int(kv):
-    MinLongInt = -1 * (2**63)
+    MinLongInt = -1 * (2 ** 63)
     ret = kv.set(MinLongInt, 'LongInt')
     assert ret
 
     value = kv.getLongInt('LongInt')
     assert value == MinLongInt
 
-    MaxLongInt = (2**63) - 1
+    MaxLongInt = (2 ** 63) - 1
     ret = kv.set(MaxLongInt, 'LongInt')
     assert ret
 
@@ -88,7 +88,7 @@ def test_long_int(kv):
 
 
 def test_long_uint(kv):
-    MaxLongUInt = (2**64) - 1
+    MaxLongUInt = (2 ** 64) - 1
     ret = kv.set(MaxLongUInt, 'LongUInt')
     assert ret
 
@@ -104,8 +104,8 @@ def test_long_uint(kv):
     print('test long unsigned int: passed')
 
 
-def is_float_equal(a, b, accuracy = 1e-09):
-    return abs(a-b) <= max(accuracy * max(abs(a), abs(b)), 0.0)
+def is_float_equal(a, b, accuracy=1e-09):
+    return abs(a - b) <= max(accuracy * max(abs(a), abs(b)), 0.0)
 
 
 def test_float(kv):
@@ -180,4 +180,3 @@ if __name__ == '__main__':
     test_float(kv)
     test_string(kv)
     test_bytes(kv)
-
