@@ -51,7 +51,7 @@ def functional_test(decode_only):
 
 
 if __name__ == '__main__':
-    # you can pass LogInfo to enable logging
-    # mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.LogInfo)
+    # you can enable logging
+    #mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info)
     mmkv.MMKV.initializeMMKV('/tmp/mmkv')
     functional_test(False)

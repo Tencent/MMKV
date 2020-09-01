@@ -44,11 +44,11 @@ PYBIND11_MODULE(mmkv, m) {
         .export_values();
 
     py::enum_<MMKVLogLevel>(m, "MMKVLogLevel")
-        .value("LogNone", MMKVLogLevel::MMKVLogNone)
-        .value("LogDebug", MMKVLogLevel::MMKVLogDebug)
-        .value("LogInfo", MMKVLogLevel::MMKVLogInfo)
-        .value("LogWarning", MMKVLogLevel::MMKVLogWarning)
-        .value("LogError", MMKVLogLevel::MMKVLogError)
+        .value("None", MMKVLogLevel::MMKVLogNone)
+        .value("Debug", MMKVLogLevel::MMKVLogDebug)
+        .value("Info", MMKVLogLevel::MMKVLogInfo)
+        .value("Warning", MMKVLogLevel::MMKVLogWarning)
+        .value("Error", MMKVLogLevel::MMKVLogError)
         .export_values();
 
     py::enum_<SyncFlag>(m, "SyncFlag")
