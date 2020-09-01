@@ -1,7 +1,7 @@
 #!/ usr / bin / env python
 # - * - coding : utf - 8 - * -
 import mmkv
-
+import sys
 
 def functional_test(decode_only):
     kv = mmkv.MMKV('test_python')
@@ -50,8 +50,37 @@ def functional_test(decode_only):
         print('keys:', sorted(kv.keys()))
 
 
+def logger(log_level, file, line, function, message):
+    level = {mmkv.MMKVLogLevel.NoLog : 'N', mmkv.MMKVLogLevel.Debug : 'D', mmkv.MMKVLogLevel.Info : 'I', mmkv.MMKVLogLevel.Warning : 'W', mmkv.MMKVLogLevel.Error : 'E'}
+    print('r-[{0}] <{1}:{2}:{3}> {4}'.format(level[log_level], file, line, function, message))
+
+
+def error_handler(mmap_id, error_type):
+    return mmkv.MMKVErrorType.OnErrorRecover
+
+
+def content_change_handler(mmap_id):
+    print("[%s]'s content has been changed by other process" % mmap_id)
+
+
 if __name__ == '__main__':
     # you can enable logging
-    #mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info)
+    # mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info)
     mmkv.MMKV.initializeMMKV('/tmp/mmkv')
+
+    # redirect logging
+    # mmkv.MMKV.registerLogHandler(logger)
+
+    # try recover on error
+    # mmkv.MMKV.registerErrorHandler(error_handler)
+
+    # get notified after content changed by other process
+    # mmkv.MMKV.registerContentChangeHandler(content_change_handler)
+
     functional_test(False)
+
+    # mmkv.MMKV.unRegisterLogHandler()
+    # mmkv.MMKV.unRegisterErrorHandler()
+    # mmkv.MMKV.unRegisterContentChangeHandler()
+    mmkv.MMKV.onExit()
+

@@ -19,6 +19,7 @@
  */
 
 #include "MMKV.h"
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -35,6 +36,29 @@ static MMBuffer pyBytes2MMBuffer(const py::bytes &bytes) {
     return MMBuffer(0);
 }
 
+static function<void(MMKVLogLevel level, const char *file, int line, const char *function, const string &message)>
+    g_logHandler = nullptr;
+static void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
+    if (g_logHandler) {
+        g_logHandler(level, file, line, function, message);
+    }
+}
+
+static function<MMKVRecoverStrategic(const string &mmapID, MMKVErrorType errorType)> g_errorHandler = nullptr;
+static MMKVRecoverStrategic MyErrorHandler(const string &mmapID, MMKVErrorType errorType) {
+    if (g_errorHandler) {
+        return g_errorHandler(mmapID, errorType);
+    }
+    return OnErrorDiscard;
+}
+
+static function<void(const string &mmapID)> g_contentHandler = nullptr;
+static void MyContentChangeHandler(const std::string &mmapID) {
+    if (g_contentHandler) {
+        g_contentHandler(mmapID);
+    }
+}
+
 PYBIND11_MODULE(mmkv, m) {
     m.doc() = "An efficient, small key-value storage framework developed by WeChat Team.";
 
@@ -44,7 +68,7 @@ PYBIND11_MODULE(mmkv, m) {
         .export_values();
 
     py::enum_<MMKVLogLevel>(m, "MMKVLogLevel")
-        .value("None", MMKVLogLevel::MMKVLogNone)
+        .value("NoLog", MMKVLogLevel::MMKVLogNone)
         .value("Debug", MMKVLogLevel::MMKVLogDebug)
         .value("Info", MMKVLogLevel::MMKVLogInfo)
         .value("Warning", MMKVLogLevel::MMKVLogWarning)
@@ -54,6 +78,16 @@ PYBIND11_MODULE(mmkv, m) {
     py::enum_<SyncFlag>(m, "SyncFlag")
         .value("Sync", SyncFlag::MMKV_SYNC)
         .value("ASync", SyncFlag::MMKV_ASYNC)
+        .export_values();
+
+    py::enum_<MMKVRecoverStrategic>(m, "MMKVRecoverStrategic")
+        .value("OnErrorDiscard", MMKVRecoverStrategic::OnErrorDiscard)
+        .value("OnErrorRecover", MMKVRecoverStrategic::OnErrorRecover)
+        .export_values();
+
+    py::enum_<MMKVErrorType>(m, "MMKVErrorType")
+        .value("CRCCheckFail", MMKVErrorType::MMKVCRCCheckFail)
+        .value("FileLength", MMKVErrorType::MMKVFileLength)
         .export_values();
 
     py::class_<MMKV, unique_ptr<MMKV, py::nodelete>> clsMMKV(m, "MMKV");
@@ -182,4 +216,79 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("lock", &MMKV::lock, "get exclusive access, won't return until the lock is obtained");
     clsMMKV.def("unlock", &MMKV::unlock);
     clsMMKV.def("try_lock", &MMKV::try_lock, "try to get exclusive access");
+
+    // log callback handler
+    clsMMKV.def_static(
+        "registerLogHandler",
+        [](decltype(g_logHandler) callback) {
+            g_logHandler = move(callback);
+            MMKV::registerLogHandler(MyLogHandler);
+        },
+        "call this method to redirect MMKV's log,\n"
+        "must call MMKV.unRegisterLogHandler() or MMKV.onExit() before exit\n"
+        "Parameters:\n"
+        "  log_handler: (logLevel: mmkv.MMKVLogLevel, file: str, line: int, function: str, message: str) -> None",
+        py::arg("log_handler"));
+    clsMMKV.def_static(
+        "unRegisterLogHandler",
+        [] {
+            g_logHandler = nullptr;
+            MMKV::unRegisterLogHandler();
+        },
+        "If you have registered a log handler, you must call this method or MMKV.onExit() before exit. "
+        "Otherwise your app/script won't exit properly.");
+
+    // error callback handler
+    clsMMKV.def_static(
+        "registerErrorHandler",
+        [](decltype(g_errorHandler) callback) {
+            g_errorHandler = move(callback);
+            MMKV::registerErrorHandler(MyErrorHandler);
+        },
+        "call this method to handle MMKV failure,\n"
+        "must call MMKV.unRegisterErrorHandler() or MMKV.onExit() before exit\n"
+        "Parameters:\n"
+        "  error_handler: (mmapID: str, errorType: mmkv.MMKVErrorType) -> mmkv.MMKVRecoverStrategic",
+        py::arg("error_handler"));
+    clsMMKV.def_static(
+        "unRegisterErrorHandler",
+        [] {
+            g_errorHandler = nullptr;
+            MMKV::unRegisterErrorHandler();
+        },
+        "If you have registered an error handler, you must call this method or MMKV.onExit() before exit. "
+        "Otherwise your app/script won't exit properly.");
+
+    // content change callback handler
+    clsMMKV.def("checkContentChanged", &MMKV::checkContentChanged, "check if content been changed by other process");
+    clsMMKV.def_static(
+        "registerContentChangeHandler",
+        [](decltype(g_contentHandler) callback) {
+            g_contentHandler = move(callback);
+            MMKV::registerContentChangeHandler(MyContentChangeHandler);
+        },
+        "register a content change handler,\n"
+        "get notified when an MMKV instance has been changed by other process (not guarantee real-time notification),\n"
+        "must call MMKV.unRegisterContentChangeHandler() or MMKV.onExit() before exit\n"
+        "Parameters:\n"
+        "  content_change_handler: (mmapID: str) -> None",
+        py::arg("content_change_handler"));
+    clsMMKV.def_static(
+        "unRegisterContentChangeHandler",
+        [] {
+            g_contentHandler = nullptr;
+            MMKV::unRegisterContentChangeHandler();
+        },
+        "If you have registered a content change handler, you must call this method or MMKV.onExit() before exit. "
+        "Otherwise your app/script won't exit properly.");
+
+    clsMMKV.def_static(
+        "onExit",
+        [] {
+            MMKV::onExit();
+            g_logHandler = nullptr;
+            g_errorHandler = nullptr;
+            g_contentHandler = nullptr;
+        },
+        "call this method before exit, especially if you have registered any callback handlers");
 }

@@ -320,7 +320,7 @@ public:
     void unlock();
     bool try_lock();
 
-    // check if content changed by other process
+    // check if content been changed by other process
     void checkContentChanged();
 
     // called when content is changed by other process
