@@ -5,6 +5,8 @@ import sys
 
 
 def functional_test(decode_only):
+    # pass MMKVMode.MultiProcess to get a multi-process instance
+    # kv = mmkv.MMKV('test_python', mmkv.MMKVMode.MultiProcess)
     kv = mmkv.MMKV('test_python')
 
     if not decode_only:
