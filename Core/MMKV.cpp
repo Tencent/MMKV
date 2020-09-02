@@ -237,7 +237,7 @@ void MMKV::onExit() {
     g_instanceDic = nullptr;
 }
 
-const string &MMKV::mmapID() {
+const string &MMKV::mmapID() const {
     return m_mmapID;
 }
 
@@ -309,7 +309,7 @@ void MMKV::close() {
 
 #ifndef MMKV_DISABLE_CRYPT
 
-string MMKV::cryptKey() {
+string MMKV::cryptKey() const {
     SCOPED_LOCK(m_lock);
 
     if (m_crypter) {

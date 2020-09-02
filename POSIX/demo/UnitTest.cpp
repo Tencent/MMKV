@@ -19,7 +19,6 @@
  */
 
 #include "MMKV.h"
-#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -30,20 +29,7 @@
 using namespace std;
 using namespace mmkv;
 
-static const string MMKV_ID = "process_test";
 static const string KeyNotExist = "KeyNotExist";
-
-void brutleTest() {
-    using hclock = chrono::high_resolution_clock;
-    auto start = hclock::now();
-
-    auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
-
-    auto finish = hclock::now();
-    auto used = chrono::duration_cast<chrono::milliseconds>(finish - start).count();
-    cout << "used: " << used << " ms\n";
-    cout.flush();
-}
 
 void testBool(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool");

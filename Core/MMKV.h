@@ -192,12 +192,12 @@ public:
     // you can call this on application termination, it's totally fine if you don't call
     static void onExit();
 
-    const std::string &mmapID();
+    const std::string &mmapID() const;
 
     const bool m_isInterProcess;
 
 #ifndef MMKV_DISABLE_CRYPT
-    std::string cryptKey();
+    std::string cryptKey() const;
 
     // transform plain text into encrypted text, or vice versa with empty cryptKey
     // you can change existing crypt key with different cryptKey
@@ -320,7 +320,7 @@ public:
     void unlock();
     bool try_lock();
 
-    // check if content changed by other process
+    // check if content been changed by other process
     void checkContentChanged();
 
     // called when content is changed by other process

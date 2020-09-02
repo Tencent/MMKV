@@ -208,6 +208,11 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
 #    endif // MMKV_DISABLE_CRYPT
 
 bool MMKV::checkProcessMode() {
+    // avoid exception on open() error
+    if (!m_file->isFileValid()) {
+        return true;
+    }
+
     if (!m_fileModeLock) {
         // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
         m_fileModeLock = new FileLock(m_file->getFd(), true);

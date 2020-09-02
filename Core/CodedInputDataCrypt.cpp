@@ -20,6 +20,7 @@
 
 #include "CodedInputDataCrypt.h"
 #include "PBUtility.h"
+#include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>

@@ -16,6 +16,9 @@ xcuserdata
 *.xcscmblueprint
 *.xcscheme
 
+#python
+venv
+
 ## OS X
 .DS_Store
 
@@ -39,6 +42,8 @@ Linux/Makefile
 cmake-build-debug/
 cmake-build-release/
 build/
+dist/
+*.egg-info/
 
 #CLion
 .idea
