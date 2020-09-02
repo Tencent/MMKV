@@ -1,7 +1,8 @@
-#!/ usr / bin / env python
-# - * - coding : utf - 8 - * -
-import mmkv
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
+import mmkv
 
 
 def functional_test(decode_only):
@@ -41,7 +42,9 @@ def functional_test(decode_only):
         ls = range(0, 10)
         kv.set(bytes(ls), 'bytes')
     b = kv.getBytes('bytes')
-    print('raw bytes = ', b, ', decoded bytes = ', list(b))
+    print('raw bytes = ', b)
+    if sys.version_info >= (3, 0):
+        print('decoded bytes = ', list(b))
 
     if not decode_only:
         print('keys before remove:', sorted(kv.keys()))
@@ -54,11 +57,16 @@ def functional_test(decode_only):
 
 
 def logger(log_level, file, line, function, message):
-    level = {mmkv.MMKVLogLevel.NoLog : 'N', mmkv.MMKVLogLevel.Debug : 'D', mmkv.MMKVLogLevel.Info : 'I', mmkv.MMKVLogLevel.Warning : 'W', mmkv.MMKVLogLevel.Error : 'E'}
+    level = {mmkv.MMKVLogLevel.NoLog: 'N',
+             mmkv.MMKVLogLevel.Debug: 'D',
+             mmkv.MMKVLogLevel.Info: 'I',
+             mmkv.MMKVLogLevel.Warning: 'W',
+             mmkv.MMKVLogLevel.Error: 'E'}
     print('r-[{0}] <{1}:{2}:{3}> {4}'.format(level[log_level], file, line, function, message))
 
 
 def error_handler(mmap_id, error_type):
+    print('[{}] has error {}'.format(mmap_id, error_type))
     return mmkv.MMKVErrorType.OnErrorRecover
 
 
@@ -86,4 +94,3 @@ if __name__ == '__main__':
     # mmkv.MMKV.unRegisterErrorHandler()
     # mmkv.MMKV.unRegisterContentChangeHandler()
     mmkv.MMKV.onExit()
-

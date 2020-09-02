@@ -183,7 +183,7 @@ PYBIND11_MODULE(mmkv, m) {
             return defaultValue;
         },
         "decode an UTF-8 String/bytes value", py::arg("key"), py::arg("defaultValue") = string());
-#if PY_MAJOR_VERSION >= 3
+
     clsMMKV.def(
         "getBytes",
         [](MMKV &kv, const string &key, const py::bytes &defaultValue) {
@@ -194,7 +194,6 @@ PYBIND11_MODULE(mmkv, m) {
             return defaultValue;
         },
         "decode a bytes value", py::arg("key"), py::arg("defaultValue") = py::bytes());
-#endif
 
     clsMMKV.def("__contains__", &MMKV::containsKey, py::arg("key"));
     clsMMKV.def("keys", &MMKV::allKeys);

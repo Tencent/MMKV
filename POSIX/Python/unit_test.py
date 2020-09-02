@@ -1,5 +1,6 @@
-#!/ usr / bin / env python
-# - * - coding : utf - 8 - * -
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
 import mmkv
 
@@ -138,7 +139,10 @@ def test_string(kv):
     assert ret
 
     value = kv.getString('String')
-    assert value == OlympicString
+    if sys.version_info >= (3, 0):
+        assert value == OlympicString
+    else:
+        assert value == OlympicString.decode('utf-8')
 
     value = kv.getString(KeyNotExist)
     assert (not value) or (len(value) == 0)
@@ -157,14 +161,20 @@ def test_bytes(kv):
 
     value = kv.getBytes('Bytes')
     assert value == OlympicYearsBytes
-    value = list(value)
-    assert value == OlympicYears
+    if sys.version_info >= (3, 0):
+        value = list(value)
+        assert value == OlympicYears
 
     value = kv.getBytes(KeyNotExist)
     assert (not value) or (len(value) == 0)
 
-    value = kv.getBytes(KeyNotExist, bytes('哦豁', 'utf8'))
-    assert value == bytes('哦豁', 'utf8')
+    default_value = None
+    if sys.version_info >= (3, 0):
+        default_value = bytes('哦豁', 'utf8')
+    else:
+        default_value = bytes('a')
+    value = kv.getBytes(KeyNotExist, default_value)
+    assert value == default_value
 
     print('test bytes: passed')
 
