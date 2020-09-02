@@ -36,6 +36,7 @@
 #include "crc32/Checksum.h"
 #include <algorithm>
 #include <cstring>
+#include <cassert>
 
 #ifdef MMKV_IOS
 #    include "MMKV_OSX.h"
