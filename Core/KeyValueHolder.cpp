@@ -113,7 +113,7 @@ KeyValueHolderCrypt::~KeyValueHolderCrypt() {
 
 // get decrypt data with [position, -1)
 static MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
-    static uint8_t smallBuffer[16];
+    static size_t smallBuffer[16 / sizeof(size_t)];
     auto basePtr = (uint8_t *) inputBuffer.getPtr();
     auto ptr = basePtr;
     for (size_t index = sizeof(smallBuffer); index < position; index += sizeof(smallBuffer)) {
