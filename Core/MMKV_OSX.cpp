@@ -133,11 +133,11 @@ void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
     GetAppleMachineInfo(device, version);
 #    ifdef MMKV_USE_ARMV8_CRC32
     if ((device == iPhone && version >= 9) || (device == iPad && version >= 7)) {
-        // it's reported that some 64-bit iPhone 7 and above doesn't support CRC32: https://github.com/Tencent/MMKV/issues/525
+        // it's reported that some 64-bit iPhone (7 and above) doesn't support CRC32: https://github.com/Tencent/MMKV/issues/525
         // try to detect by signal handler
         if (DetectCRCAvailabilityBySIGILL()) {
             CRC32 = mmkv::armv8_crc32;
-            MMKVInfo("Detect CRC Availability By SIGILL: Looks like armv8 CRC32 instructions is supported");
+            MMKVInfo("Detect CRC Availability By SIGILL: Looks like armv8 CRC32 instructions are supported");
         }
     }
 #    endif
