@@ -236,9 +236,7 @@ bool MMKV::checkProcessMode() {
             m_exclusiveProcessModeLock->try_lock();
             return true;
         } else {
-            if (tryAgain) {
-                // actually there's no need to try exclusive lock again, we know it's locked by other process
-            } else {
+            if (!tryAgain) {
                 // something wrong with the OS/filesystem, let's try again
                 exclusiveLocked = m_exclusiveProcessModeLock->try_lock(&tryAgain);
                 if (!exclusiveLocked && !tryAgain) {
@@ -253,11 +251,17 @@ bool MMKV::checkProcessMode() {
             return exclusiveLocked;
         }
     } else {
-        auto ret = m_sharedProcessModeLock->try_lock();
-        if (!ret) {
+        auto tryAgain = false;
+        auto shareLocked = m_sharedProcessModeLock->try_lock(&tryAgain);
+        if (!shareLocked && !tryAgain) {
+            // something wrong with the OS/filesystem, we have to give up and assume it passed the test
+            MMKVWarning("Fail to shared lock [%s], assume it's ok", m_mmapID.c_str());
+            shareLocked = true;
+        }
+        if (!shareLocked) {
             MMKVError("Fail to share lock [%s]", m_mmapID.c_str());
         }
-        return ret;
+        return shareLocked;
     }
 }
 

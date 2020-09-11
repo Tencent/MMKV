@@ -115,5 +115,5 @@ public:
 
 } // namespace mmkv
 
-#endif
-#endif //MMKV_INTERPROCESSLOCK_H
+#endif // __cplusplus
+#endif // MMKV_INTERPROCESSLOCK_H
