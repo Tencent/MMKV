@@ -225,7 +225,9 @@ bool MMKV::checkProcessMode() {
             m_exclusiveProcessModeLock = new InterProcessLock(m_fileModeLock, ExclusiveLockType);
         }
         // avoid multiple processes get shared lock at the same time, https://github.com/Tencent/MMKV/issues/523
-        if (m_exclusiveProcessModeLock->try_lock()) {
+        auto tryAgain = false;
+        auto exclusiveLocked = m_exclusiveProcessModeLock->try_lock(&tryAgain);
+        if (exclusiveLocked) {
             return true;
         }
         auto shareLocked = m_sharedProcessModeLock->try_lock();
@@ -234,9 +236,21 @@ bool MMKV::checkProcessMode() {
             m_exclusiveProcessModeLock->try_lock();
             return true;
         } else {
-            // there's no need to try exclusive lock again
-            MMKVError("Got a shared lock, but fail to exclusive lock [%s]", m_mmapID.c_str());
-            return false;
+            if (tryAgain) {
+                // actually there's no need to try exclusive lock again, we know it's locked by other process
+            } else {
+                // something wrong with the OS/filesystem, let's try again
+                exclusiveLocked = m_exclusiveProcessModeLock->try_lock(&tryAgain);
+                if (!exclusiveLocked && !tryAgain) {
+                    // still something wrong, we have to give up and assume it passed the test
+                    MMKVWarning("Got a shared lock, but fail to exclusive lock [%s], assume it's ok", m_mmapID.c_str());
+                    exclusiveLocked = true;
+                }
+            }
+            if (!exclusiveLocked) {
+                MMKVError("Got a shared lock, but fail to exclusive lock [%s]", m_mmapID.c_str());
+            }
+            return exclusiveLocked;
         }
     } else {
         auto ret = m_sharedProcessModeLock->try_lock();

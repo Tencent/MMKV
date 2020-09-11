@@ -31,11 +31,11 @@ bool FileLock::lock(LockType lockType) {
     return doLock(lockType, true);
 }
 
-bool FileLock::try_lock(LockType lockType) {
-    return doLock(lockType, false);
+bool FileLock::try_lock(LockType lockType, bool *tryAgain) {
+    return doLock(lockType, false, tryAgain);
 }
 
-bool FileLock::doLock(LockType lockType, bool wait) {
+bool FileLock::doLock(LockType lockType, bool wait, bool *tryAgain) {
     if (!isFileLockValid()) {
         return false;
     }
@@ -59,7 +59,7 @@ bool FileLock::doLock(LockType lockType, bool wait) {
         }
     }
 
-    auto ret = platformLock(lockType, wait, unLockFirstIfNeeded);
+    auto ret = platformLock(lockType, wait, unLockFirstIfNeeded, tryAgain);
     if (ret) {
         if (lockType == SharedLockType) {
             m_sharedLockCount++;
@@ -82,10 +82,10 @@ static int32_t LockType2FlockType(LockType lockType) {
     return LOCK_EX;
 }
 
-bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded) {
+bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain) {
 #    ifdef MMKV_ANDROID
     if (m_isAshmem) {
-        return ashmemLock(lockType, wait, unLockFirstIfNeeded);
+        return ashmemLock(lockType, wait, unLockFirstIfNeeded, tryAgain);
     }
 #    endif
     auto realLockType = LockType2FlockType(lockType);
@@ -105,7 +105,12 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
 
     auto ret = flock(m_fd, cmd);
     if (ret != 0) {
-        MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        if (tryAgain) {
+            *tryAgain = (errno == EWOULDBLOCK);
+        }
+        if (wait) {
+            MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
+        }
         // try recover my shared-lock
         if (unLockFirstIfNeeded) {
             ret = flock(m_fd, LockType2FlockType(SharedLockType));
