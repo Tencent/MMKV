@@ -59,8 +59,9 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_actualSize = 0;
     m_output = nullptr;
 
-    m_fileModeLock = nullptr;
-    m_sharedProcessModeLock = nullptr;
+    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+    m_fileModeLock = new FileLock(m_file->getFd(), true);
+    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     m_exclusiveProcessModeLock = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
@@ -107,8 +108,9 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     m_actualSize = 0;
     m_output = nullptr;
 
-    m_fileModeLock = nullptr;
-    m_sharedProcessModeLock = nullptr;
+    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+    m_fileModeLock = new FileLock(m_file->getFd(), true);
+    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     m_exclusiveProcessModeLock = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
@@ -213,13 +215,6 @@ bool MMKV::checkProcessMode() {
         return true;
     }
 
-    if (!m_fileModeLock) {
-        // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-        m_fileModeLock = new FileLock(m_file->getFd(), true);
-    }
-    if (!m_sharedProcessModeLock) {
-        m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
-    }
     if (m_isInterProcess) {
         if (!m_exclusiveProcessModeLock) {
             m_exclusiveProcessModeLock = new InterProcessLock(m_fileModeLock, ExclusiveLockType);
