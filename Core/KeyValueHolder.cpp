@@ -111,6 +111,18 @@ KeyValueHolderCrypt::~KeyValueHolderCrypt() {
     }
 }
 
+uint32_t KeyValueHolderCrypt::realValueSize() const {
+    switch (type) {
+        case KeyValueHolderType_Direct:
+            return paddedSize;
+        case KeyValueHolderType_Offset:
+            return valueSize;
+        case KeyValueHolderType_Memory:
+            return memSize;
+    }
+    return 0;
+}
+
 // get decrypt data with [position, -1)
 static MMBuffer decryptBuffer(AESCrypt &crypter, const MMBuffer &inputBuffer, size_t position) {
     static size_t smallBuffer[16 / sizeof(size_t)];
