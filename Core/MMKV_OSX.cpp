@@ -88,7 +88,7 @@ __attribute__((target("crc"))) static bool DetectCRCAvailabilityBySIGILL() {
     signal(SIGILL, oldHandler);
     return result;
 }
-#    endif
+#    endif // MMKV_USE_ARMV8_CRC32
 
 MMKV_NAMESPACE_BEGIN
 
@@ -140,7 +140,7 @@ void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
             MMKVInfo("Detect CRC Availability By SIGILL: Looks like armv8 CRC32 instructions are supported");
         }
     }
-#    endif
+#    endif // MMKV_USE_ARMV8_CRC32
     MMKVInfo("Apple Device:%d, version:%d", device, version);
 
     g_rootDir = defaultRootDir;

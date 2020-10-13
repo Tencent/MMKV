@@ -54,7 +54,7 @@ extern CRC32_Func_t CRC32;
 
 #else // MMKV_EMBED_ZLIB
 
-#    ifdef __aarch64__
+#    if defined(__aarch64__) && !defined(MMKV_APPLE)
 
 #        define MMKV_USE_ARMV8_CRC32
 
@@ -66,7 +66,7 @@ uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len);
 typedef uint32_t (*CRC32_Func_t)(uint32_t crc, const uint8_t *buf, size_t len);
 extern CRC32_Func_t CRC32;
 
-#    else // __aarch64__
+#    else // defined(__aarch64__) && !defined(MMKV_APPLE)
 
 #        include <zlib.h>
 
