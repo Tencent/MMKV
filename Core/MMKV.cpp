@@ -135,6 +135,8 @@ MMKV::~MMKV() {
     delete m_sharedProcessModeLock;
     delete m_exclusiveProcessModeLock;
 #endif
+
+    MMKVInfo("destruct [%s]", m_mmapID.c_str());
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {

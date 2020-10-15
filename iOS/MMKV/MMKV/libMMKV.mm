@@ -225,7 +225,9 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
+    MMKVInfo("dealloc %@", m_mmapID);
     [m_mmapID release];
+
     if (m_mmkv) {
         m_mmkv->close();
         m_mmkv = nullptr;
@@ -517,6 +519,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 + (void)onAppTerminate {
     g_lock->lock();
 
+    // make sure no further call will go into m_mmkv
+    [g_instanceDic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, MMKV *_Nonnull mmkv, BOOL *_Nonnull stop) {
+        mmkv->m_mmkv = nullptr;
+    }];
     [g_instanceDic release];
     g_instanceDic = nil;
 
