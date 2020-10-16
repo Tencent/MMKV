@@ -1,5 +1,21 @@
 # MMKV Change Log
 
+## v1.2.3 / 2020-10-16
+### Changes for All platforms
+* Fix a potential crash on 32-bit devices due to pointer alignment issue.
+* Fix a decode error of encrypted MMKV on some 32-bit devices.
+
+### iOS / macOS
+* Fix a potential `crc32()` crash on some kind of arm64 devices.
+* Fix a potential crash after calling `+[MMKV onAppTerminate]`.
+
+### Android
+* Fix a rare lock conflict on `checkProcessMode()`.
+
+### POSIX
+Add MMKV support for **Python** on POSIX platforms.  Most things actually work!  
+Check out the [wiki](https://github.com/Tencent/MMKV/wiki/python_setup) for more info.
+
 ## v1.2.2 / 2020-07-30
 
 ### iOS / macOS
