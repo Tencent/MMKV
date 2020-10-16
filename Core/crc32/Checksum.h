@@ -22,7 +22,7 @@
 #define CHECKSUM_H
 #ifdef __cplusplus
 
-#include "../MMKVPredef.h"
+#include "MMKVPredef.h"
 
 #if MMKV_EMBED_ZLIB
 

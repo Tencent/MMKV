@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
-		CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
 		CB0DCC6D242B5786009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF3450323B4BABA00168AC7 /* libz.tbd */; };
 		CB30A3EE24987C32007171B1 /* CodedInputDataCrypt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB30A3EC24987C32007171B1 /* CodedInputDataCrypt.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB30A3EF24987C32007171B1 /* CodedInputDataCrypt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB30A3EC24987C32007171B1 /* CodedInputDataCrypt.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -16,8 +14,6 @@
 		CB30A4202498CFB7007171B1 /* CodedInputDataCrypt_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB30A41E2498CFB6007171B1 /* CodedInputDataCrypt_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB550CCC2488E3F20042CD20 /* KeyValueHolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB550CCA2488E3F20042CD20 /* KeyValueHolder.cpp */; };
 		CB58B40023AB3035002457F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
-		CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
-		CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
 		CB7589D3248E68F100A546B4 /* KeyValueHolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB550CCA2488E3F20042CD20 /* KeyValueHolder.cpp */; };
 		CB7C029A24A0F65B008D77E6 /* MMKV_IO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB7C029924A0F65B008D77E6 /* MMKV_IO.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB7C029B24A0F65B008D77E6 /* MMKV_IO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB7C029924A0F65B008D77E6 /* MMKV_IO.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -36,14 +32,25 @@
 		CB95642123AB2E9100ACCD39 /* InterProcessLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */; };
 		CB95642223AB2E9100ACCD39 /* MMKVLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */; };
 		CB95642323AB2E9100ACCD39 /* PBUtility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641223AB2E9100ACCD39 /* PBUtility.cpp */; };
-		CB95642423AB2F7200ACCD39 /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563ED23AB2E9100ACCD39 /* MMKV.h */; };
-		CB95642523AB2FA800ACCD39 /* MMBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */; };
-		CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F623AB2E9100ACCD39 /* PBUtility.h */; };
-		CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640D23AB2E9100ACCD39 /* ThreadLock.h */; };
-		CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */; };
 		CBC7A01123C7231600CCC492 /* openssl_aesv8-armx.S in Sources */ = {isa = PBXBuildFile; fileRef = CBC7A01023C7231600CCC492 /* openssl_aesv8-armx.S */; };
 		CBC7A07F23C7516700CCC492 /* openssl_aes-armv4.S in Sources */ = {isa = PBXBuildFile; fileRef = CBC7A07E23C7516700CCC492 /* openssl_aes-armv4.S */; };
 		CBC7A0C323C8B2C900CCC492 /* crc32_armv8.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBC7A0C223C8B2C900CCC492 /* crc32_armv8.cpp */; };
+		CBD361A425387EEB001831E9 /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361A325387EE6001831E9 /* MMKV.h */; };
+		CBD361A725387EF0001831E9 /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361A325387EE6001831E9 /* MMKV.h */; };
+		CBD361B5253880E6001831E9 /* MMBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361B3253880BA001831E9 /* MMBuffer.h */; };
+		CBD361B6253880E6001831E9 /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AC2538801D001831E9 /* MMKVLog.h */; };
+		CBD361B7253880E6001831E9 /* MMKVPredef.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361B4253880D8001831E9 /* MMKVPredef.h */; };
+		CBD361B8253880E6001831E9 /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AB2538801D001831E9 /* openssl_md5.h */; };
+		CBD361B9253880E6001831E9 /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361B025388090001831E9 /* openssl_opensslconf.h */; };
+		CBD361BA253880E6001831E9 /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AA2538801D001831E9 /* ScopedLock.hpp */; };
+		CBD361BB253880E6001831E9 /* ThreadLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AD2538801D001831E9 /* ThreadLock.h */; };
+		CBD361C0253880F2001831E9 /* MMBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361B3253880BA001831E9 /* MMBuffer.h */; };
+		CBD361C1253880F2001831E9 /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AC2538801D001831E9 /* MMKVLog.h */; };
+		CBD361C2253880F2001831E9 /* MMKVPredef.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361B4253880D8001831E9 /* MMKVPredef.h */; };
+		CBD361C3253880F2001831E9 /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AB2538801D001831E9 /* openssl_md5.h */; };
+		CBD361C4253880F2001831E9 /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361B025388090001831E9 /* openssl_opensslconf.h */; };
+		CBD361C5253880F2001831E9 /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AA2538801D001831E9 /* ScopedLock.hpp */; };
+		CBD361C6253880F2001831E9 /* ThreadLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CBD361AD2538801D001831E9 /* ThreadLock.h */; };
 		CBD723BF23B5C22800D3CDAF /* MMKV_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CBD723F323B5E59800D3CDAF /* MemoryFile_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */; };
 		CBD723F523B5E76200D3CDAF /* MiniPBCoder_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -72,15 +79,6 @@
 		CBF19065243D70BA001C82ED /* InterProcessLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */; };
 		CBF19067243D70BA001C82ED /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF3450323B4BABA00168AC7 /* libz.tbd */; };
 		CBF19068243D70BA001C82ED /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB58B3FF23AB3035002457F1 /* Foundation.framework */; };
-		CBF1906A243D70BA001C82ED /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
-		CBF1906B243D70BA001C82ED /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
-		CBF1906C243D70BA001C82ED /* MMKVLog.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F423AB2E9100ACCD39 /* MMKVLog.h */; };
-		CBF1906D243D70BA001C82ED /* ScopedLock.hpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */; };
-		CBF1906E243D70BA001C82ED /* MMKVPredef.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */; };
-		CBF1906F243D70BA001C82ED /* PBUtility.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F623AB2E9100ACCD39 /* PBUtility.h */; };
-		CBF19070243D70BA001C82ED /* ThreadLock.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640D23AB2E9100ACCD39 /* ThreadLock.h */; };
-		CBF19071243D70BA001C82ED /* MMBuffer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */; };
-		CBF19072243D70BA001C82ED /* MMKV.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563ED23AB2E9100ACCD39 /* MMKV.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -90,15 +88,14 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
-				CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */,
-				CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */,
-				CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */,
-				CB6F6C0823ACCFEE000351EA /* ScopedLock.hpp in CopyFiles */,
-				CB95642923AB2FC100ACCD39 /* MMKVPredef.h in CopyFiles */,
-				CB95642723AB2FB800ACCD39 /* PBUtility.h in CopyFiles */,
-				CB95642823AB2FB800ACCD39 /* ThreadLock.h in CopyFiles */,
-				CB95642523AB2FA800ACCD39 /* MMBuffer.h in CopyFiles */,
-				CB95642423AB2F7200ACCD39 /* MMKV.h in CopyFiles */,
+				CBD361C0253880F2001831E9 /* MMBuffer.h in CopyFiles */,
+				CBD361C1253880F2001831E9 /* MMKVLog.h in CopyFiles */,
+				CBD361C2253880F2001831E9 /* MMKVPredef.h in CopyFiles */,
+				CBD361C3253880F2001831E9 /* openssl_md5.h in CopyFiles */,
+				CBD361C4253880F2001831E9 /* openssl_opensslconf.h in CopyFiles */,
+				CBD361C5253880F2001831E9 /* ScopedLock.hpp in CopyFiles */,
+				CBD361C6253880F2001831E9 /* ThreadLock.h in CopyFiles */,
+				CBD361A425387EEB001831E9 /* MMKV.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,15 +105,14 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
-				CBF1906A243D70BA001C82ED /* openssl_opensslconf.h in CopyFiles */,
-				CBF1906B243D70BA001C82ED /* openssl_md5.h in CopyFiles */,
-				CBF1906C243D70BA001C82ED /* MMKVLog.h in CopyFiles */,
-				CBF1906D243D70BA001C82ED /* ScopedLock.hpp in CopyFiles */,
-				CBF1906E243D70BA001C82ED /* MMKVPredef.h in CopyFiles */,
-				CBF1906F243D70BA001C82ED /* PBUtility.h in CopyFiles */,
-				CBF19070243D70BA001C82ED /* ThreadLock.h in CopyFiles */,
-				CBF19071243D70BA001C82ED /* MMBuffer.h in CopyFiles */,
-				CBF19072243D70BA001C82ED /* MMKV.h in CopyFiles */,
+				CBD361B5253880E6001831E9 /* MMBuffer.h in CopyFiles */,
+				CBD361B6253880E6001831E9 /* MMKVLog.h in CopyFiles */,
+				CBD361B7253880E6001831E9 /* MMKVPredef.h in CopyFiles */,
+				CBD361B8253880E6001831E9 /* openssl_md5.h in CopyFiles */,
+				CBD361B9253880E6001831E9 /* openssl_opensslconf.h in CopyFiles */,
+				CBD361BA253880E6001831E9 /* ScopedLock.hpp in CopyFiles */,
+				CBD361BB253880E6001831E9 /* ThreadLock.h in CopyFiles */,
+				CBD361A725387EF0001831E9 /* MMKV.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,26 +133,19 @@
 		CB9563E423AB2E9100ACCD39 /* CodedInputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedInputData.h; sourceTree = "<group>"; };
 		CB9563EB23AB2E9100ACCD39 /* Checksum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Checksum.h; sourceTree = "<group>"; };
 		CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = MMKVMetaInfo.hpp; sourceTree = "<group>"; };
-		CB9563ED23AB2E9100ACCD39 /* MMKV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
-		CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVPredef.h; sourceTree = "<group>"; };
 		CB9563EF23AB2E9100ACCD39 /* CodedOutputData.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = CodedOutputData.cpp; sourceTree = "<group>"; };
 		CB9563F023AB2E9100ACCD39 /* MemoryFile.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MemoryFile.cpp; sourceTree = "<group>"; };
 		CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MiniPBCoder.h; sourceTree = "<group>"; };
 		CB9563F223AB2E9100ACCD39 /* MMKV.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MMKV.cpp; sourceTree = "<group>"; };
-		CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ScopedLock.hpp; sourceTree = "<group>"; };
-		CB9563F423AB2E9100ACCD39 /* MMKVLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVLog.h; sourceTree = "<group>"; };
 		CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MiniPBCoder.cpp; sourceTree = "<group>"; };
 		CB9563F623AB2E9100ACCD39 /* PBUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBUtility.h; sourceTree = "<group>"; };
 		CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = ThreadLock.cpp; sourceTree = "<group>"; };
 		CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = MMBuffer.cpp; sourceTree = "<group>"; };
 		CB9563F923AB2E9100ACCD39 /* CodedInputData.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = CodedInputData.cpp; sourceTree = "<group>"; };
-		CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMBuffer.h; sourceTree = "<group>"; };
 		CB9563FB23AB2E9100ACCD39 /* InterProcessLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InterProcessLock.h; sourceTree = "<group>"; };
 		CB9563FD23AB2E9100ACCD39 /* AESCrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AESCrypt.h; sourceTree = "<group>"; };
 		CB9563FF23AB2E9100ACCD39 /* openssl_md32_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md32_common.h; sourceTree = "<group>"; };
-		CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_opensslconf.h; sourceTree = "<group>"; };
 		CB95640123AB2E9100ACCD39 /* openssl_cfb128.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = openssl_cfb128.cpp; sourceTree = "<group>"; };
-		CB95640223AB2E9100ACCD39 /* openssl_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5.h; sourceTree = "<group>"; };
 		CB95640323AB2E9100ACCD39 /* openssl_aes_core.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = openssl_aes_core.cpp; sourceTree = "<group>"; };
 		CB95640523AB2E9100ACCD39 /* openssl_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_aes.h; sourceTree = "<group>"; };
 		CB95640623AB2E9100ACCD39 /* openssl_md5_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5_locl.h; sourceTree = "<group>"; };
@@ -165,7 +154,6 @@
 		CB95640A23AB2E9100ACCD39 /* openssl_aes_locl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_aes_locl.h; sourceTree = "<group>"; };
 		CB95640B23AB2E9100ACCD39 /* AESCrypt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = AESCrypt.cpp; sourceTree = "<group>"; };
 		CB95640C23AB2E9100ACCD39 /* CodedOutputData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodedOutputData.h; sourceTree = "<group>"; };
-		CB95640D23AB2E9100ACCD39 /* ThreadLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadLock.h; sourceTree = "<group>"; };
 		CB95640E23AB2E9100ACCD39 /* MemoryFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryFile.h; sourceTree = "<group>"; };
 		CB95640F23AB2E9100ACCD39 /* PBEncodeItem.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = PBEncodeItem.hpp; sourceTree = "<group>"; };
 		CB95641023AB2E9100ACCD39 /* InterProcessLock.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = InterProcessLock.cpp; sourceTree = "<group>"; };
@@ -175,6 +163,14 @@
 		CBC7A01223C7235000CCC492 /* openssl_arm_arch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_arm_arch.h; sourceTree = "<group>"; };
 		CBC7A07E23C7516700CCC492 /* openssl_aes-armv4.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = "openssl_aes-armv4.S"; sourceTree = "<group>"; };
 		CBC7A0C223C8B2C900CCC492 /* crc32_armv8.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = crc32_armv8.cpp; sourceTree = "<group>"; };
+		CBD361A325387EE6001831E9 /* MMKV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
+		CBD361AA2538801D001831E9 /* ScopedLock.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ScopedLock.hpp; sourceTree = "<group>"; };
+		CBD361AB2538801D001831E9 /* openssl_md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_md5.h; sourceTree = "<group>"; };
+		CBD361AC2538801D001831E9 /* MMKVLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVLog.h; sourceTree = "<group>"; };
+		CBD361AD2538801D001831E9 /* ThreadLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadLock.h; sourceTree = "<group>"; };
+		CBD361B025388090001831E9 /* openssl_opensslconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openssl_opensslconf.h; sourceTree = "<group>"; };
+		CBD361B3253880BA001831E9 /* MMBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMBuffer.h; sourceTree = "<group>"; };
+		CBD361B4253880D8001831E9 /* MMKVPredef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVPredef.h; sourceTree = "<group>"; };
 		CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = MMKV_OSX.cpp; sourceTree = "<group>"; };
 		CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = MemoryFile_OSX.cpp; sourceTree = "<group>"; };
 		CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp.preprocessed; path = MiniPBCoder_OSX.cpp; sourceTree = "<group>"; };
@@ -218,6 +214,7 @@
 		CB9563CF23AB2D9500ACCD39 = {
 			isa = PBXGroup;
 			children = (
+				CBD361A125387EE6001831E9 /* include */,
 				CB9563FC23AB2E9100ACCD39 /* aes */,
 				CB9563E523AB2E9100ACCD39 /* crc32 */,
 				CB30A41E2498CFB6007171B1 /* CodedInputDataCrypt_OSX.cpp */,
@@ -239,23 +236,17 @@
 				CB9563F523AB2E9100ACCD39 /* MiniPBCoder.cpp */,
 				CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */,
 				CB9563F823AB2E9100ACCD39 /* MMBuffer.cpp */,
-				CB9563FA23AB2E9100ACCD39 /* MMBuffer.h */,
 				CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */,
 				CB467F862431D3ED00FD7421 /* MMKV_OSX.h */,
 				CB9563F223AB2E9100ACCD39 /* MMKV.cpp */,
 				CB7C029924A0F65B008D77E6 /* MMKV_IO.cpp */,
 				CB7C029E24A0FBC2008D77E6 /* MMKV_IO.h */,
-				CB9563ED23AB2E9100ACCD39 /* MMKV.h */,
 				CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */,
-				CB9563F423AB2E9100ACCD39 /* MMKVLog.h */,
 				CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */,
-				CB9563EE23AB2E9100ACCD39 /* MMKVPredef.h */,
 				CB95640F23AB2E9100ACCD39 /* PBEncodeItem.hpp */,
 				CB95641223AB2E9100ACCD39 /* PBUtility.cpp */,
 				CB9563F623AB2E9100ACCD39 /* PBUtility.h */,
-				CB9563F323AB2E9100ACCD39 /* ScopedLock.hpp */,
 				CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */,
-				CB95640D23AB2E9100ACCD39 /* ThreadLock.h */,
 				CB58B3FE23AB3035002457F1 /* Frameworks */,
 				CB9563D923AB2D9500ACCD39 /* Products */,
 			);
@@ -302,11 +293,32 @@
 				CB95640923AB2E9100ACCD39 /* openssl_md5_dgst.cpp */,
 				CB95640623AB2E9100ACCD39 /* openssl_md5_locl.h */,
 				CB95640723AB2E9100ACCD39 /* openssl_md5_one.cpp */,
-				CB95640223AB2E9100ACCD39 /* openssl_md5.h */,
 				CB9563FF23AB2E9100ACCD39 /* openssl_md32_common.h */,
-				CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */,
 			);
 			path = openssl;
+			sourceTree = "<group>";
+		};
+		CBD361A125387EE6001831E9 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				CBD361A225387EE6001831E9 /* MMKVCore */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		CBD361A225387EE6001831E9 /* MMKVCore */ = {
+			isa = PBXGroup;
+			children = (
+				CBD361B3253880BA001831E9 /* MMBuffer.h */,
+				CBD361A325387EE6001831E9 /* MMKV.h */,
+				CBD361AC2538801D001831E9 /* MMKVLog.h */,
+				CBD361B4253880D8001831E9 /* MMKVPredef.h */,
+				CBD361AB2538801D001831E9 /* openssl_md5.h */,
+				CBD361B025388090001831E9 /* openssl_opensslconf.h */,
+				CBD361AA2538801D001831E9 /* ScopedLock.hpp */,
+				CBD361AD2538801D001831E9 /* ThreadLock.h */,
+			);
+			path = MMKVCore;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -576,6 +588,7 @@
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_SIGN_COMPARE = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
+				HEADER_SEARCH_PATHS = include/MMKVCore;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "-ObjC";
@@ -606,6 +619,7 @@
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_SIGN_COMPARE = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
+				HEADER_SEARCH_PATHS = include/MMKVCore;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_LDFLAGS = "-ObjC";

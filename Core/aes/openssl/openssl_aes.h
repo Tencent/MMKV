@@ -14,7 +14,7 @@
 #include "openssl_opensslconf.h"
 #include "openssl_arm_arch.h"
 #include <stddef.h>
-#include "../../MMKVPredef.h"
+#include "MMKVPredef.h"
 
 #ifndef MMKV_DISABLE_CRYPT
 

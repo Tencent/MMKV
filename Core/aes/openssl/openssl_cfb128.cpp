@@ -8,7 +8,7 @@
  */
 
 #include "openssl_aes.h"
-#include "../../MMKVPredef.h"
+#include "MMKVPredef.h"
 #include <cstring>
 
 #ifndef  MMKV_DISABLE_CRYPT

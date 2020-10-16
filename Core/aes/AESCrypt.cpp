@@ -165,7 +165,7 @@ AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
 
 #    ifndef NDEBUG
 
-#        include "../MMKVLog.h"
+#        include "MMKVLog.h"
 #        include "../MemoryFile.h"
 
 namespace mmkv {

@@ -33,7 +33,7 @@
 #include "ThreadLock.h"
 #include "aes/AESCrypt.h"
 #include "aes/openssl/openssl_aes.h"
-#include "aes/openssl/openssl_md5.h"
+#include "openssl_md5.h"
 #include "crc32/Checksum.h"
 #include <algorithm>
 #include <cstdio>
