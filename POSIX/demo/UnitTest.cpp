@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <unistd.h>
 

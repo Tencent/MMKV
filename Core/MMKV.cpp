@@ -135,6 +135,8 @@ MMKV::~MMKV() {
     delete m_sharedProcessModeLock;
     delete m_exclusiveProcessModeLock;
 #endif
+
+    MMKVInfo("destruct [%s]", m_mmapID.c_str());
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
@@ -163,12 +165,16 @@ void initialize() {
         AES_encrypt = openssl_aes_armv8_encrypt;
         AES_decrypt = openssl_aes_armv8_decrypt;
         MMKVInfo("armv8 AES instructions is supported");
+    } else {
+        MMKVInfo("armv8 AES instructions is not supported");
     }
 #    endif // MMKV_DISABLE_CRYPT
 #    ifdef MMKV_USE_ARMV8_CRC32
     if (hwcaps & HWCAP_CRC32) {
         CRC32 = mmkv::armv8_crc32;
         MMKVInfo("armv8 CRC32 instructions is supported");
+    } else {
+        MMKVInfo("armv8 CRC32 instructions is not supported");
     }
 #    endif // MMKV_USE_ARMV8_CRC32
 #endif     // __aarch64__ && defined(__linux__)

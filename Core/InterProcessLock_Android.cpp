@@ -45,7 +45,7 @@ static short LockType2FlockType(LockType lockType) {
     }
 }
 
-bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded) {
+bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain) {
     m_lockInfo.l_type = LockType2FlockType(lockType);
     if (unLockFirstIfNeeded) {
         // try lock
@@ -66,6 +66,9 @@ bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded
     int cmd = wait ? F_SETLKW : F_SETLK;
     auto ret = fcntl(m_fd, cmd, &m_lockInfo);
     if (ret != 0) {
+        if (tryAgain) {
+            *tryAgain = (errno == EAGAIN);
+        }
         if (wait) {
             MMKVError("fail to lock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         }

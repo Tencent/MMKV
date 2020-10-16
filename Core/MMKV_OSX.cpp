@@ -56,6 +56,40 @@ extern MMKVPath_t g_rootDir;
 enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
 static void GetAppleMachineInfo(int &device, int &version);
 
+#    ifdef MMKV_USE_ARMV8_CRC32
+#        include <setjmp.h>
+#        include <signal.h>
+
+static sigjmp_buf g_jmpBuff;
+
+static void TrivialSignalHandler(int signo) {
+    siglongjmp(g_jmpBuff, 1);
+}
+
+__attribute__((target("crc"))) static bool DetectCRCAvailabilityBySIGILL() {
+    volatile auto result = true;
+
+    volatile auto oldHandler = signal(SIGILL, TrivialSignalHandler);
+    if (oldHandler == SIG_ERR) {
+        return false;
+    }
+
+    if (sigsetjmp(g_jmpBuff, 1)) {
+        result = false;
+    } else {
+        auto tmp = __builtin_arm_crc32d(0, 1);
+        tmp = __builtin_arm_crc32w(tmp, 2);
+        tmp = __builtin_arm_crc32h(tmp, 3);
+        tmp = __builtin_arm_crc32b(tmp, 4);
+
+        result = !!tmp;
+    }
+
+    signal(SIGILL, oldHandler);
+    return result;
+}
+#    endif // MMKV_USE_ARMV8_CRC32
+
 MMKV_NAMESPACE_BEGIN
 
 #    ifdef MMKV_IOS
@@ -99,9 +133,14 @@ void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
     GetAppleMachineInfo(device, version);
 #    ifdef MMKV_USE_ARMV8_CRC32
     if ((device == iPhone && version >= 9) || (device == iPad && version >= 7)) {
-        CRC32 = mmkv::armv8_crc32;
+        // it's reported that some 64-bit iPhone (7 and above) doesn't support CRC32: https://github.com/Tencent/MMKV/issues/525
+        // try to detect by signal handler
+        if (DetectCRCAvailabilityBySIGILL()) {
+            CRC32 = mmkv::armv8_crc32;
+            MMKVInfo("Detect CRC Availability By SIGILL: Looks like armv8 CRC32 instructions are supported");
+        }
     }
-#    endif
+#    endif // MMKV_USE_ARMV8_CRC32
     MMKVInfo("Apple Device:%d, version:%d", device, version);
 
     g_rootDir = defaultRootDir;

@@ -91,6 +91,8 @@ struct KeyValueHolderCrypt {
 
     ~KeyValueHolderCrypt();
 
+    uint32_t realValueSize() const;
+
     MMBuffer toMMBuffer(const void *basePtr, const AESCrypt *crypter) const;
 
     std::tuple<uint32_t, uint32_t, AESCryptStatus *> toTuple() {

@@ -59,8 +59,9 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_actualSize = 0;
     m_output = nullptr;
 
-    m_fileModeLock = nullptr;
-    m_sharedProcessModeLock = nullptr;
+    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+    m_fileModeLock = new FileLock(m_file->getFd(), true);
+    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     m_exclusiveProcessModeLock = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
@@ -107,8 +108,9 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     m_actualSize = 0;
     m_output = nullptr;
 
-    m_fileModeLock = nullptr;
-    m_sharedProcessModeLock = nullptr;
+    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+    m_fileModeLock = new FileLock(m_file->getFd(), true);
+    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     m_exclusiveProcessModeLock = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
@@ -213,16 +215,15 @@ bool MMKV::checkProcessMode() {
         return true;
     }
 
-    if (!m_fileModeLock) {
-        // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-        m_fileModeLock = new FileLock(m_file->getFd(), true);
-    }
-    if (!m_sharedProcessModeLock) {
-        m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
-    }
     if (m_isInterProcess) {
         if (!m_exclusiveProcessModeLock) {
             m_exclusiveProcessModeLock = new InterProcessLock(m_fileModeLock, ExclusiveLockType);
+        }
+        // avoid multiple processes get shared lock at the same time, https://github.com/Tencent/MMKV/issues/523
+        auto tryAgain = false;
+        auto exclusiveLocked = m_exclusiveProcessModeLock->try_lock(&tryAgain);
+        if (exclusiveLocked) {
+            return true;
         }
         auto shareLocked = m_sharedProcessModeLock->try_lock();
         if (!shareLocked) {
@@ -230,18 +231,32 @@ bool MMKV::checkProcessMode() {
             m_exclusiveProcessModeLock->try_lock();
             return true;
         } else {
-            auto exclusiveLocked = m_exclusiveProcessModeLock->try_lock();
+            if (!tryAgain) {
+                // something wrong with the OS/filesystem, let's try again
+                exclusiveLocked = m_exclusiveProcessModeLock->try_lock(&tryAgain);
+                if (!exclusiveLocked && !tryAgain) {
+                    // still something wrong, we have to give up and assume it passed the test
+                    MMKVWarning("Got a shared lock, but fail to exclusive lock [%s], assume it's ok", m_mmapID.c_str());
+                    exclusiveLocked = true;
+                }
+            }
             if (!exclusiveLocked) {
-                MMKVError("Fail to exclusive lock [%s]", m_mmapID.c_str());
+                MMKVError("Got a shared lock, but fail to exclusive lock [%s]", m_mmapID.c_str());
             }
             return exclusiveLocked;
         }
     } else {
-        auto ret = m_sharedProcessModeLock->try_lock();
-        if (!ret) {
+        auto tryAgain = false;
+        auto shareLocked = m_sharedProcessModeLock->try_lock(&tryAgain);
+        if (!shareLocked && !tryAgain) {
+            // something wrong with the OS/filesystem, we have to give up and assume it passed the test
+            MMKVWarning("Fail to shared lock [%s], assume it's ok", m_mmapID.c_str());
+            shareLocked = true;
+        }
+        if (!shareLocked) {
             MMKVError("Fail to share lock [%s]", m_mmapID.c_str());
         }
-        return ret;
+        return shareLocked;
     }
 }
 

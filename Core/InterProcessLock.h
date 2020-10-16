@@ -22,9 +22,9 @@
 #define MMKV_INTERPROCESSLOCK_H
 #ifdef __cplusplus
 
-#include "MMKVPredef.h"
+#    include "MMKVPredef.h"
 
-#include <fcntl.h>
+#    include <fcntl.h>
 
 namespace mmkv {
 
@@ -40,39 +40,39 @@ class FileLock {
     size_t m_sharedLockCount;
     size_t m_exclusiveLockCount;
 
-    bool doLock(LockType lockType, bool wait);
-    bool platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded);
+    bool doLock(LockType lockType, bool wait, bool *tryAgain = nullptr);
+    bool platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain);
     bool platformUnLock(bool unLockFirstIfNeeded);
 
-#ifndef MMKV_WIN32
+#    ifndef MMKV_WIN32
     bool isFileLockValid() { return m_fd >= 0; }
-#    ifdef MMKV_ANDROID
+#        ifdef MMKV_ANDROID
     const bool m_isAshmem;
     struct flock m_lockInfo;
-    bool ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded);
+    bool ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain);
     bool ashmemUnLock(bool unLockFirstIfNeeded);
-#    endif
+#        endif
 
-#else  // defined(MMKV_WIN32)
+#    else  // defined(MMKV_WIN32)
     OVERLAPPED m_overLapped;
 
     bool isFileLockValid() { return m_fd != INVALID_HANDLE_VALUE; }
-#endif // MMKV_WIN32
+#    endif // MMKV_WIN32
 
 public:
-#ifndef MMKV_WIN32
-#    ifndef MMKV_ANDROID
+#    ifndef MMKV_WIN32
+#        ifndef MMKV_ANDROID
     explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
-#    else
+#        else
     explicit FileLock(MMKVFileHandle_t fd, bool isAshmem = false);
-#    endif // MMKV_ANDROID
-#else      // defined(MMKV_WIN32)
+#        endif // MMKV_ANDROID
+#    else      // defined(MMKV_WIN32)
     explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_overLapped{}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
-#endif     // MMKV_WIN32
+#    endif     // MMKV_WIN32
 
     bool lock(LockType lockType);
 
-    bool try_lock(LockType lockType);
+    bool try_lock(LockType lockType, bool *tryAgain);
 
     bool unlock(LockType lockType);
 
@@ -99,9 +99,9 @@ public:
         }
     }
 
-    bool try_lock() {
+    bool try_lock(bool *tryAgain = nullptr) {
         if (m_enable) {
-            return m_fileLock->try_lock(m_lockType);
+            return m_fileLock->try_lock(m_lockType, tryAgain);
         }
         return false;
     }
@@ -115,5 +115,5 @@ public:
 
 } // namespace mmkv
 
-#endif
-#endif //MMKV_INTERPROCESSLOCK_H
+#endif // __cplusplus
+#endif // MMKV_INTERPROCESSLOCK_H

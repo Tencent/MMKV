@@ -35,8 +35,8 @@
 #include "aes/openssl/openssl_md5.h"
 #include "crc32/Checksum.h"
 #include <algorithm>
-#include <cstring>
 #include <cassert>
+#include <cstring>
 
 #ifdef MMKV_IOS
 #    include "MMKV_OSX.h"
