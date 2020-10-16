@@ -38,7 +38,7 @@ static DWORD LockType2Flag(LockType lockType) {
     return flag;
 }
 
-bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded) {
+bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain) {
     auto realLockType = LockType2Flag(lockType);
     auto flag = wait ? realLockType : (realLockType | LOCKFILE_FAIL_IMMEDIATELY);
     if (unLockFirstIfNeeded) {
@@ -56,7 +56,12 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
 
     auto ret = LockFileEx(m_fd, flag, 0, 1, 0, &m_overLapped);
     if (!ret) {
-        MMKVError("fail to lock fd=%p, error:%d", m_fd, GetLastError());
+        if (tryAgain) {
+            *tryAgain = (GetLastError() == ERROR_LOCK_VIOLATION);
+        }
+        if (wait) {
+            MMKVError("fail to lock fd=%p, error:%d", m_fd, GetLastError());
+        }
         // try recover my shared-lock
         if (unLockFirstIfNeeded) {
             ret = LockFileEx(m_fd, LockType2Flag(SharedLockType), 0, 1, 0, &m_overLapped);

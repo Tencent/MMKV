@@ -27,6 +27,7 @@
 #    include "MMKVLog.h"
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
+#    include <cassert>
 
 using namespace std;
 
