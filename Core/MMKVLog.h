@@ -48,7 +48,7 @@ extern mmkv::LogHandler g_logHandler;
 #    define MMKVInfo(format, ...)                                                                                      \
         _MMKVLogWithLevel(MMKV_NAMESPACE_PREFIX::MMKVLogInfo, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
 
-#    ifndef NDEBUG
+#    ifdef MMKV_DEBUG
 #        define MMKVDebug(format, ...)                                                                                 \
             _MMKVLogWithLevel(MMKV_NAMESPACE_PREFIX::MMKVLogDebug, __FILE__, __func__, __LINE__, format, ##__VA_ARGS__)
 #    else

@@ -33,7 +33,15 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v1.2.2";
+constexpr auto MMKV_VERSION = "v1.2.4";
+
+#ifdef DEBUG
+#    define MMKV_DEBUG
+#endif
+
+#ifdef NDEBUG
+#    undef MMKV_DEBUG
+#endif
 
 #ifdef __ANDROID__
 #    define MMKV_ANDROID
@@ -186,7 +194,7 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 
 } // namespace mmkv
 
-#ifndef NDEBUG
+#ifdef MMKV_DEBUG
 #    include <cassert>
 #    define MMKV_ASSERT(var) assert(var)
 #else

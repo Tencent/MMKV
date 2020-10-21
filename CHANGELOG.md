@@ -1,5 +1,14 @@
 # MMKV Change Log
 
+## v1.2.4 / 2020-10-21
+This is a hotfix mainly for iOS.
+
+### iOS / macOS
+* Fix a decode error of encrypted MMKV on some devices.
+
+### Android
+* Fix a potential issue on checking `rootDir` in multi-thread while MMKV initialization is not finished.
+
 ## v1.2.3 / 2020-10-16
 ### Changes for All platforms
 * Fix a potential crash on 32-bit devices due to pointer alignment issue.
