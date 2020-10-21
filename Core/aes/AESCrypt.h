@@ -94,7 +94,7 @@ public:
 
     friend CodedInputDataCrypt;
 
-#ifndef NDEBUG
+#ifdef MMKV_DEBUG
     // check if AESCrypt is encrypt-decrypt full-duplex
     static void testAESCrypt();
 #endif

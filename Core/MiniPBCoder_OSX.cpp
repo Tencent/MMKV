@@ -136,7 +136,7 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
             const auto &key = m_inputDataDecrpt->readString(kvHolder);
             if (key.length > 0) {
                 m_inputDataDecrpt->readData(kvHolder);
-                if (kvHolder.valueSize > 0) {
+                if (kvHolder.realValueSize() > 0) {
                     dictionary[key] = move(kvHolder);
                     [key retain];
                 } else {

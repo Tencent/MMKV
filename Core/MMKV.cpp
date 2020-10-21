@@ -179,7 +179,7 @@ void initialize() {
 #    endif // MMKV_USE_ARMV8_CRC32
 #endif     // __aarch64__ && defined(__linux__)
 
-#if !defined(NDEBUG) && !defined(MMKV_DISABLE_CRYPT)
+#if defined(MMKV_DEBUG) && !defined(MMKV_DISABLE_CRYPT)
     AESCrypt::testAESCrypt();
     KeyValueHolderCrypt::testAESToMMBuffer();
 #endif

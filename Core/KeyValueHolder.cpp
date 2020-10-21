@@ -165,7 +165,7 @@ MMBuffer KeyValueHolderCrypt::toMMBuffer(const void *basePtr, const AESCrypt *cr
 
 } // namespace mmkv
 
-#if !defined(MMKV_DISABLE_CRYPT) && !defined(NDEBUG)
+#if !defined(MMKV_DISABLE_CRYPT) && defined(MMKV_DEBUG)
 #    include "CodedInputData.h"
 #    include "CodedOutputData.h"
 #    include "MMKVLog.h"

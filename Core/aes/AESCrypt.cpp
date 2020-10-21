@@ -163,7 +163,7 @@ AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
 
 } // namespace mmkv
 
-#    ifndef NDEBUG
+#    ifdef MMKV_DEBUG
 
 #        include "../MMKVLog.h"
 #        include "../MemoryFile.h"
@@ -252,5 +252,5 @@ void AESCrypt::testAESCrypt() {
 
 } // namespace mmkv
 
-#    endif // NDEBUG
+#    endif // MMKV_DEBUG
 #endif     // MMKV_DISABLE_CRYPT

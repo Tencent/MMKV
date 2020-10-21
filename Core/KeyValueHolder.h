@@ -103,7 +103,7 @@ struct KeyValueHolderCrypt {
     explicit KeyValueHolderCrypt(const KeyValueHolderCrypt &other) = delete;
     KeyValueHolderCrypt &operator=(const KeyValueHolderCrypt &other) = delete;
 
-#ifndef NDEBUG
+#ifdef MMKV_DEBUG
     static void testAESToMMBuffer();
 #endif
 };
