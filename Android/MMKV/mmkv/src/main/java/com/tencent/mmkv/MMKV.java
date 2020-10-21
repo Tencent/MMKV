@@ -98,9 +98,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             }
             System.loadLibrary("mmkv");
         }
+        jniInitialize(rootDir, logLevel2Int(logLevel));
         MMKV.rootDir = rootDir;
-        jniInitialize(MMKV.rootDir, logLevel2Int(logLevel));
-        return rootDir;
+        return MMKV.rootDir;
     }
 
     static private String rootDir = null;
