@@ -39,10 +39,10 @@ import java.util.Set;
 
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
-    private static EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
-    private static EnumMap<MMKVLogLevel, Integer> logLevel2Index;
-    private static MMKVLogLevel[] index2LogLevel;
-    private static HashSet<Long> checkedHandleSet;
+    private static final EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
+    private static final EnumMap<MMKVLogLevel, Integer> logLevel2Index;
+    private static final MMKVLogLevel[] index2LogLevel;
+    private static final HashSet<Long> checkedHandleSet;
     static {
         recoverIndex = new EnumMap<>(MMKVRecoverStrategic.class);
         recoverIndex.put(MMKVRecoverStrategic.OnErrorDiscard, 0);
@@ -114,9 +114,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             case LevelDebug:
                 realLevel = 0;
                 break;
-            case LevelInfo:
-                realLevel = 1;
-                break;
             case LevelWarning:
                 realLevel = 2;
                 break;
@@ -126,6 +123,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             case LevelNone:
                 realLevel = 4;
                 break;
+            case LevelInfo:
             default:
                 realLevel = 1;
                 break;
@@ -832,7 +830,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native void checkContentChangedByOuterProcess();
 
     // jni
-    private long nativeHandle;
+    private final long nativeHandle;
 
     private MMKV(long handle) {
         nativeHandle = handle;

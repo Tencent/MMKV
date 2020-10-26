@@ -26,7 +26,7 @@ import android.os.Parcelable;
 import java.io.IOException;
 
 public final class ParcelableMMKV implements Parcelable {
-    private String mmapID;
+    private final String mmapID;
     private int ashmemFD = -1;
     private int ashmemMetaFD = -1;
     private String cryptKey = null;
