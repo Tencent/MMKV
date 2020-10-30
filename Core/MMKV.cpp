@@ -39,7 +39,7 @@
 #include <cstdio>
 #include <cstring>
 
-#if defined(__aarch64__) && (defined(MMKV_ANDROID) || defined(MMKV_POSIX))
+#if defined(__aarch64__) && defined(__linux)
 #    include <asm/hwcap.h>
 #    include <sys/auxv.h>
 #endif
