@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 
-  s.name         = "MMKVCore"
+  s.name         = "MMKVCoreFlutter"
   s.version      = "1.2.4"
   s.summary      = "MMKVCore for MMKV. MMKV is a cross-platform key-value storage framework developed by WeChat."
 
@@ -32,6 +32,7 @@ Pod::Spec.new do |s|
     "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++17",
     "CLANG_CXX_LIBRARY" => "libc++",
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
+    "GCC_PREPROCESSOR_DEFINITIONS" => "FORCE_POSIX",
   }
 
 end
