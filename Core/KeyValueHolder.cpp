@@ -227,6 +227,8 @@ void KeyValueHolderCrypt::testAESToMMBuffer() {
 #    endif
     MMKVInfo("MMBuffer::SmallBufferSize() = %u, KeyValueHolderCrypt::SmallBufferSize() = %u",
              MMBuffer::SmallBufferSize(), KeyValueHolderCrypt::SmallBufferSize());
+
+    delete[] encryptText;
 }
 
 } // namespace mmkv
