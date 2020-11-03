@@ -189,6 +189,13 @@
     }
 
     if (!decodeOnly) {
+        auto array = @[ @"1984", @"2046", @"Move" ];
+        [mmkv setObject:array forKey:@"array"];
+    }
+    NSArray *array = [mmkv getObjectOfClass:NSArray.class forKey:@"array"];
+    NSLog(@"array:%@", array);
+
+    if (!decodeOnly) {
         [mmkv removeValueForKey:@"bool"];
         NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);
         [mmkv removeValuesForKeys:@[ @"int32", @"uint64" ]];
