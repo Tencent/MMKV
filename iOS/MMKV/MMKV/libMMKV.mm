@@ -99,7 +99,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     }
     g_hasCalledInitializeMMKV = YES;
 
-    g_basePath = (rootDir != nil) ? [rootDir retain] : [self mmkvBasePath];
+    if (rootDir != nil) {
+        [g_basePath release];
+        g_basePath = [rootDir retain];
+    }
     mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
 
     return [self mmkvBasePath];

@@ -87,15 +87,19 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
             const auto &key = m_inputData->readString(kvHolder);
             if (key.length > 0) {
                 m_inputData->readData(kvHolder);
-                if (kvHolder.valueSize > 0) {
-                    dictionary[key] = move(kvHolder);
-                    [key retain];
-                } else {
-                    auto itr = dictionary.find(key);
-                    if (itr != dictionary.end()) {
+                auto itr = dictionary.find(key);
+                if (itr != dictionary.end()) {
+                    if (kvHolder.valueSize > 0) {
+                        itr->second = move(kvHolder);
+                    } else {
                         auto oldKey = itr->first;
                         dictionary.erase(itr);
                         [oldKey release];
+                    }
+                } else {
+                    if (kvHolder.valueSize > 0) {
+                        dictionary.emplace(key, move(kvHolder));
+                        [key retain];
                     }
                 }
             }
@@ -136,15 +140,19 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
             const auto &key = m_inputDataDecrpt->readString(kvHolder);
             if (key.length > 0) {
                 m_inputDataDecrpt->readData(kvHolder);
-                if (kvHolder.realValueSize() > 0) {
-                    dictionary[key] = move(kvHolder);
-                    [key retain];
-                } else {
-                    auto itr = dictionary.find(key);
-                    if (itr != dictionary.end()) {
+                auto itr = dictionary.find(key);
+                if (itr != dictionary.end()) {
+                    if (kvHolder.realValueSize() > 0) {
+                        itr->second = move(kvHolder);
+                    } else {
                         auto oldKey = itr->first;
                         dictionary.erase(itr);
                         [oldKey release];
+                    }
+                } else {
+                    if (kvHolder.realValueSize() > 0) {
+                        dictionary.emplace(key, move(kvHolder));
+                        [key retain];
                     }
                 }
             }

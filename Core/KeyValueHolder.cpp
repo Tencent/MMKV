@@ -65,13 +65,19 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(MMBuffer &&data) {
         paddedSize = static_cast<uint8_t>(data.length());
         memcpy(paddedValue, data.getPtr(), data.length());
     } else {
-#    ifdef MMKV_APPLE
-        assert(data.m_data == nil);
-#    endif
         type = KeyValueHolderType_Memory;
         memSize = static_cast<uint32_t>(data.length());
+#    ifdef MMKV_APPLE
+        if (data.m_data != nil) {
+            memPtr = malloc(memSize);
+            if (!memPtr) {
+                throw std::runtime_error(strerror(errno));
+            }
+            memcpy(memPtr, data.getPtr(), memSize);
+            return;
+        }
+#    endif
         memPtr = data.getPtr();
-
         data.detach();
     }
 }
@@ -221,6 +227,8 @@ void KeyValueHolderCrypt::testAESToMMBuffer() {
 #    endif
     MMKVInfo("MMBuffer::SmallBufferSize() = %u, KeyValueHolderCrypt::SmallBufferSize() = %u",
              MMBuffer::SmallBufferSize(), KeyValueHolderCrypt::SmallBufferSize());
+
+    delete[] encryptText;
 }
 
 } // namespace mmkv
