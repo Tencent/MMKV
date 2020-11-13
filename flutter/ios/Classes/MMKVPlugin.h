@@ -18,9 +18,7 @@
  * limitations under the License.
  */
 
-package com.example.mmkv_example;
+#import <Flutter/Flutter.h>
 
-import io.flutter.embedding.android.FlutterActivity;
-
-public class MainActivity extends FlutterActivity {
-}
+@interface MMKVPlugin : NSObject <FlutterPlugin>
+@end

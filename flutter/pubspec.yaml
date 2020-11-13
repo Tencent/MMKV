@@ -1,6 +1,6 @@
 name: MMKVFlutter
 description: An efficient, small mobile key-value storage framework developed by WeChat. Works on Android, iOS, macOS, Windows, and POSIX.
-version: 1.2.4
+version: 1.2.5
 homepage: https://github.com/Tencent/mmkv
 
 environment:
@@ -29,7 +29,7 @@ flutter:
     platforms:
       android:
         package: com.tencent.mmkv
-        pluginClass: MmkvPlugin
+        pluginClass: MMKVPlugin
       ios:
-        pluginClass: MmkvPlugin
+        pluginClass: MMKVPlugin
 
