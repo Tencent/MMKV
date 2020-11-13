@@ -2,7 +2,9 @@ apply from: rootProject.file('gradle/build_library.gradle')
 
 android {
 //    defaultPublishConfig "StaticCppRelease"
-    defaultPublishConfig "SharedCppRelease"
+//    defaultPublishConfig "SharedCppRelease"
+    defaultPublishConfig "FlutterRelease"
+
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -53,6 +55,16 @@ android {
             externalNativeBuild {
                 cmake {
                     arguments = ["-DANDROID_STL=c++_shared"]
+                }
+            }
+        }
+        Flutter {
+            dimension "stl_mode"
+            ext.artifactIdSuffix = 'flutter'
+            externalNativeBuild {
+                cmake {
+                    arguments = ["-DANDROID_STL=c++_static"]
+                    cppFlags += "-DFORCE_POSIX"
                 }
             }
         }

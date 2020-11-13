@@ -122,6 +122,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:(@"" DEFAULT_MMAP_ID) cryptKey:nil rootPath:nil mode:MMKVSingleProcess];
 }
 
++ (nullable instancetype)defaultMMKVWithCryptKey:(nullable NSData *)cryptKey {
+    return [MMKV mmkvWithID:(@"" DEFAULT_MMAP_ID) cryptKey:cryptKey rootPath:nil mode:MMKVSingleProcess];
+}
+
 // any unique ID (com.tencent.xin.pay, etc)
 + (instancetype)mmkvWithID:(NSString *)mmapID {
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:nil mode:MMKVSingleProcess];
@@ -237,6 +241,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     }
 
     [super dealloc];
+}
+
+- (NSString *)mmapID {
+    return m_mmapID;
 }
 
 #pragma mark - Application state
@@ -465,8 +473,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return valueData;
 }
 
-- (size_t)getValueSizeForKey:(NSString *)key {
-    return m_mmkv->getValueSize(key, false);
+- (size_t)getValueSizeForKey:(NSString *)key actualSize:(BOOL)actualSize {
+    return m_mmkv->getValueSize(key, actualSize);
 }
 
 - (int32_t)writeValueForKey:(NSString *)key toBuffer:(NSMutableData *)buffer {
@@ -489,6 +497,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (size_t)actualSize {
     return m_mmkv->actualSize();
+}
+
++ (size_t)pageSize {
+    return mmkv::DEFAULT_MMAP_SIZE;
 }
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block {
