@@ -645,6 +645,10 @@ MMKV_JNI jint pageSize(JNIEnv *env, jclass type) {
     return DEFAULT_MMAP_SIZE;
 }
 
+MMKV_JNI jstring version(JNIEnv *env, jclass type) {
+    return string2jstring(env, MMKV_VERSION);
+}
+
 #    ifndef MMKV_DISABLE_CRYPT
 
 MMKV_JNI jstring cryptKey(JNIEnv *env, jobject instance) {
@@ -778,6 +782,7 @@ static JNINativeMethod g_methods[] = {
 #    endif
     {"pageSize", "()I", (void *) mmkv::pageSize},
     {"mmapID", "()Ljava/lang/String;", (void *) mmkv::mmapID},
+    {"version", "()Ljava/lang/String;", (void *) mmkv::version},
     {"lock", "()V", (void *) mmkv::lock},
     {"unlock", "()V", (void *) mmkv::unlock},
     {"tryLock", "()Z", (void *) mmkv::tryLock},

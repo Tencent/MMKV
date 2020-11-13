@@ -503,6 +503,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return mmkv::DEFAULT_MMAP_SIZE;
 }
 
++ (NSString *)version {
+    return [NSString stringWithCString:MMKV_VERSION encoding:NSASCIIStringEncoding];
+}
+
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block {
     m_mmkv->enumerateKeys(block);
 }

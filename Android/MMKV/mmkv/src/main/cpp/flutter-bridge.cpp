@@ -378,6 +378,10 @@ MMKV_EXPORT int32_t pageSize() {
     return static_cast<int32_t>(DEFAULT_MMAP_SIZE);
 }
 
+MMKV_EXPORT const char *version() {
+    return MMKV_VERSION;
+}
+
 MMKV_EXPORT void trim(void *handle) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {

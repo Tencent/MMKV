@@ -179,6 +179,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (size_t)pageSize;
 
++ (NSString *)version;
+
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 - (NSArray *)allKeys;
 

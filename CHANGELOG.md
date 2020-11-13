@@ -1,5 +1,19 @@
 # MMKV Change Log
 
+## v1.2.5 / 2020-11-13
+This is a pre-version for Flutter. The official Flutter plugin of MMKV will come out soon. Stay Tune!
+
+### iOS / macOS
+* Fix an assert error of encrypted MMKV when encoding some `<NSCoding>` objects.
+* Fix a potential leak when decoding duplicated keys from the file.
+* Add `+[MMKV pageSize]`, `+[MMKV version]` methods.
+* Add `+[MMKV defaultMMKVWithCryptKey:]`, you can encrypt the default MMKV instance now, just like the Android users who already enjoy this for a long time.
+* Rename `-[MMKV getValueSizeForKey:]` to `-[MMKV getValueSizeForKey: actualSize:]` to align with Android interface.
+
+### Android
+* Fix a potential crash when getting MMKV instances in multi-thread at the same time.
+* Add `MMKV.version()` method.
+
 ## v1.2.4 / 2020-10-21
 This is a hotfix mainly for iOS.
 
