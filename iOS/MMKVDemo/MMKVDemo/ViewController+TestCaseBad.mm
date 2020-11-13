@@ -122,7 +122,7 @@
         } else {
             assert(0);
         }
-        auto resultSize = [mmkv getValueSizeForKey:key];
+        auto resultSize = [mmkv getValueSizeForKey:key actualSize:NO];
         assert(resultSize == orgSize);
         NSLog(@"%@, %zu", key, [mmkv actualSize]);
     }
