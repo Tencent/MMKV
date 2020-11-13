@@ -19,6 +19,7 @@
  */
 
 #include "MMKV.h"
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>

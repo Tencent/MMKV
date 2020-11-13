@@ -80,9 +80,11 @@ public:
 
     ~MMBuffer();
 
-    void *getPtr() const { return (type == MMBufferType_Small) ? (void *) paddedBuffer : ptr; }
+    bool isStoredOnStack() const { return (type == MMBufferType_Small); }
 
-    size_t length() const { return (type == MMBufferType_Small) ? paddedSize : size; }
+    void *getPtr() const { return isStoredOnStack() ? (void *) paddedBuffer : ptr; }
+
+    size_t length() const { return isStoredOnStack() ? paddedSize : size; }
 
     // transfer ownership to others
     void detach();

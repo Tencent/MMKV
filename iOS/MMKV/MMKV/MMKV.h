@@ -50,6 +50,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// a generic purpose instance (in MMKVSingleProcess mode)
 + (nullable instancetype)defaultMMKV;
 
+/// an encrypted generic purpose instance (in MMKVSingleProcess mode)
++ (nullable instancetype)defaultMMKVWithCryptKey:(nullable NSData *)cryptKey;
+
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(init(mmapID:));
 
@@ -92,6 +95,8 @@ NS_ASSUME_NONNULL_BEGIN
 // if you want to change the base path, do it BEFORE getting any MMKV instance
 // otherwise the behavior is undefined
 + (void)setMMKVBasePath:(NSString *)basePath __attribute__((deprecated("use +initializeMMKV: instead", "+initializeMMKV:")));
+
+- (NSString *)mmapID;
 
 // transform plain text into encrypted text, or vice versa by passing newKey = nil
 // you can change existing crypt key with different key
@@ -158,7 +163,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // return the actual size consumption of the key's value
 // Note: might be a little bigger than value's length
-- (size_t)getValueSizeForKey:(NSString *)key NS_SWIFT_NAME(valueSize(forKey:));
+- (size_t)getValueSizeForKey:(NSString *)key actualSize:(BOOL)actualSize NS_SWIFT_NAME(valueSize(forKey:actualSize:));
 
 // return size written into buffer
 // return -1 on any error
@@ -171,6 +176,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (size_t)totalSize;
 
 - (size_t)actualSize;
+
++ (size_t)pageSize;
+
++ (NSString *)version;
 
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 - (NSArray *)allKeys;

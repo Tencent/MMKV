@@ -156,7 +156,7 @@ MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
 }
 
 MMBuffer::~MMBuffer() {
-    if (type == MMBufferType_Small) {
+    if (isStoredOnStack()) {
         return;
     }
 

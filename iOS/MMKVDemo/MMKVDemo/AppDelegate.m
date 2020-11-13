@@ -43,6 +43,8 @@
 
         // you can turn off logging by passing MMKVLogNone
         [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:MMKVLogInfo];
+
+        NSLog(@"MMKV version: %@", [MMKV version]);
     }
 
     // register handler

@@ -301,6 +301,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // get device's page size
     public static native int pageSize();
 
+    public static native String version();
+
     public native String mmapID();
 
     public native void lock();

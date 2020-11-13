@@ -178,7 +178,7 @@
     }
     NSData *data = [mmkv getDataForKey:@"data"];
     NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
-    NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data"]);
+    NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data" actualSize:NO]);
 
     if (!decodeOnly) {
         [mmkv setObject:[NSData data] forKey:@"data"];
@@ -730,7 +730,7 @@ MMKV *getMMKVForBatchTest() {
     [mmkv setData:[@"hello, mmkv again and again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
     NSData *data = [mmkv getDataForKey:@"data"];
     NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
-    NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data"]);
+    NSLog(@"data length:%zu, value size consumption:%zu", data.length, [mmkv getValueSizeForKey:@"data" actualSize:NO]);
 
     [mmkv removeValueForKey:@"bool"];
     NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);

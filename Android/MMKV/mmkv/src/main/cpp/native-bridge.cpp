@@ -20,13 +20,15 @@
 
 #include "MMKVPredef.h"
 
-#include "MMBuffer.h"
-#include "MMKV.h"
-#include "MMKVLog.h"
-#include "MemoryFile.h"
-#include <cstdint>
-#include <jni.h>
-#include <string>
+#ifdef MMKV_ANDROID
+
+#    include "MMBuffer.h"
+#    include "MMKV.h"
+#    include "MMKVLog.h"
+#    include "MemoryFile.h"
+#    include <cstdint>
+#    include <jni.h>
+#    include <string>
 
 using namespace std;
 using namespace mmkv;
@@ -110,7 +112,7 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 //#define MMKV_JNI extern "C" JNIEXPORT JNICALL
-#define MMKV_JNI static
+#    define MMKV_JNI static
 
 namespace mmkv {
 
@@ -643,7 +645,11 @@ MMKV_JNI jint pageSize(JNIEnv *env, jclass type) {
     return DEFAULT_MMAP_SIZE;
 }
 
-#ifndef MMKV_DISABLE_CRYPT
+MMKV_JNI jstring version(JNIEnv *env, jclass type) {
+    return string2jstring(env, MMKV_VERSION);
+}
+
+#    ifndef MMKV_DISABLE_CRYPT
 
 MMKV_JNI jstring cryptKey(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
@@ -684,7 +690,7 @@ MMKV_JNI void checkReSetCryptKey(JNIEnv *env, jobject instance, jstring cryptKey
     }
 }
 
-#endif // MMKV_DISABLE_CRYPT
+#    endif // MMKV_DISABLE_CRYPT
 
 MMKV_JNI void trim(JNIEnv *env, jobject instance) {
     MMKV *kv = getMMKV(env, instance);
@@ -769,13 +775,14 @@ MMKV_JNI void checkContentChanged(JNIEnv *env, jobject instance) {
 
 static JNINativeMethod g_methods[] = {
     {"onExit", "()V", (void *) mmkv::onExit},
-#ifndef MMKV_DISABLE_CRYPT
+#    ifndef MMKV_DISABLE_CRYPT
     {"cryptKey", "()Ljava/lang/String;", (void *) mmkv::cryptKey},
     {"reKey", "(Ljava/lang/String;)Z", (void *) mmkv::reKey},
     {"checkReSetCryptKey", "(Ljava/lang/String;)V", (void *) mmkv::checkReSetCryptKey},
-#endif
+#    endif
     {"pageSize", "()I", (void *) mmkv::pageSize},
     {"mmapID", "()Ljava/lang/String;", (void *) mmkv::mmapID},
+    {"version", "()Ljava/lang/String;", (void *) mmkv::version},
     {"lock", "()V", (void *) mmkv::lock},
     {"unlock", "()V", (void *) mmkv::unlock},
     {"tryLock", "()Z", (void *) mmkv::tryLock},
@@ -828,3 +835,5 @@ static JNINativeMethod g_methods[] = {
 static int registerNativeMethods(JNIEnv *env, jclass cls) {
     return env->RegisterNatives(cls, g_methods, sizeof(g_methods) / sizeof(g_methods[0]));
 }
+
+#endif // MMKV_ANDROID
