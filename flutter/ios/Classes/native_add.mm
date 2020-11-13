@@ -234,17 +234,6 @@ MMKV_EXPORT int32_t writeValueToNB(const void *handle, char *oKey, void *pointer
     return -1;
 }
 
-@interface Dummp : NSObject
-@end
-
-@implementation Dummp
-
-- (void)dealloc {
-    NSLog(@"%s", __func__);
-}
-
-@end
-
 MMKV_EXPORT uint64_t allKeys(const void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {

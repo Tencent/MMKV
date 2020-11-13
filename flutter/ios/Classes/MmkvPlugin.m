@@ -11,17 +11,17 @@
 }
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    if ([@"getPlatformVersion" isEqualToString:call.method]) {
-        result([@"iOS " stringByAppendingString:[[UIDevice currentDevice] systemVersion]]);
-    } else if ([@"initializeMMKV" isEqualToString:call.method]) {
+    if ([@"initializeMMKV" isEqualToString:call.method]) {
         NSString *rootDir = [call.arguments objectForKey:@"rootDir"];
         NSNumber *logLevel = [call.arguments objectForKey:@"logLevel"];
         NSString *groupDir = [call.arguments objectForKey:@"groupDir"];
+        NSString *ret = nil;
         if (groupDir.length > 0) {
-            [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:logLevel.intValue];
+            ret = [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:logLevel.intValue];
         } else {
-            [MMKV initializeMMKV:rootDir logLevel:logLevel.intValue];
+            ret = [MMKV initializeMMKV:rootDir logLevel:logLevel.intValue];
         }
+        result(ret);
     } else {
         result(FlutterMethodNotImplemented);
     }

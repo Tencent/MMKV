@@ -1,9 +1,9 @@
 apply from: rootProject.file('gradle/build_library.gradle')
 
 android {
-//    defaultPublishConfig "StaticCppRelease"
+    defaultPublishConfig "StaticCppRelease"
 //    defaultPublishConfig "SharedCppRelease"
-    defaultPublishConfig "FlutterRelease"
+//    defaultPublishConfig "FlutterRelease"
 
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -58,7 +58,7 @@ android {
                 }
             }
         }
-        Flutter {
+        /*Flutter {
             dimension "stl_mode"
             ext.artifactIdSuffix = 'flutter'
             externalNativeBuild {
@@ -67,7 +67,7 @@ android {
                     cppFlags += "-DFORCE_POSIX"
                 }
             }
-        }
+        }*/
     }
 }
 

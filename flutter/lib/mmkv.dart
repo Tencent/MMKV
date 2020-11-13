@@ -90,14 +90,9 @@ class MMBuffer {
 }
 
 class MMKV {
-  static const MethodChannel _channel = const MethodChannel('mmkv');
-
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
-
   Pointer<Void> _handle;
+
+  static const MethodChannel _channel = const MethodChannel('mmkv');
 
   static void initialize([String rootDir, String groupDir, MMKVLogLevel logLevel = MMKVLogLevel.Info]) async {
     WidgetsFlutterBinding.ensureInitialized();

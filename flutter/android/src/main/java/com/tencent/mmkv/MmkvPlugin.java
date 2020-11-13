@@ -1,6 +1,7 @@
 package com.tencent.mmkv;
 
 import androidx.annotation.NonNull;
+import com.tencent.mmkv.MMKV;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -24,8 +25,11 @@ public class MmkvPlugin implements FlutterPlugin, MethodCallHandler {
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-        if (call.method.equals("getPlatformVersion")) {
-            result.success("Android " + android.os.Build.VERSION.RELEASE);
+        if (call.method.equals("initializeMMKV")) {
+            final String rootDir = call.argument("rootDir");
+            final int logLevel = call.argument("logLevel");
+            final String ret = MMKV.initialize(rootDir, MMKVLogLevel.values()[logLevel]);
+            result.success(ret);
         } else {
             result.notImplemented();
         }
