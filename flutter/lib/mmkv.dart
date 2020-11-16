@@ -113,7 +113,7 @@ class MMKV {
 
   static const MethodChannel _channel = const MethodChannel('mmkv');
 
-  static void initialize([String rootDir, String groupDir, MMKVLogLevel logLevel = MMKVLogLevel.Info]) async {
+  static Future<String> initialize([String rootDir, String groupDir, MMKVLogLevel logLevel = MMKVLogLevel.Info]) async {
     WidgetsFlutterBinding.ensureInitialized();
 
     if (rootDir == null) {
@@ -129,11 +129,13 @@ class MMKV {
       if (groupDir != null) {
         params['groupDir'] = groupDir;
       }
-      await _channel.invokeMethod('initializeMMKV', params);
+      final ret = await _channel.invokeMethod('initializeMMKV', params);
+      return ret;
     } else {
       final rootDirPtr = Utf8.toUtf8(rootDir);
       _mmkvInitialize(rootDirPtr, logLevel.index);
       free(rootDirPtr);
+      return rootDir;
     }
   }
 

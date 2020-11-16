@@ -24,8 +24,6 @@ import 'dart:convert';
 import 'package:MMKVFlutter/mmkv.dart';
 
 void main() {
-  // MMKV.initialize();
-
   runApp(MyApp());
 }
 

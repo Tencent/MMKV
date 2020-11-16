@@ -1,4 +1,4 @@
-group 'com.example.mmkv'
+group 'com.tencent.mmkv'
 version '1.0'
 
 buildscript {
@@ -16,7 +16,7 @@ rootProject.allprojects {
     repositories {
         google()
         jcenter()
-        mavenLocal()
+//        mavenLocal()
     }
 }
 
@@ -35,11 +35,4 @@ android {
     dependencies {
         implementation 'com.tencent:mmkv-static:1.2.5'
     }
-    /*externalNativeBuild {
-        // Encapsulates your CMake build configurations.
-        cmake {
-            // Provides a relative path to your CMake build script.
-            path "CMakeLists.txt"
-        }
-    }*/
 }
