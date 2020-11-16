@@ -66,15 +66,14 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *c
 MMKV_EXPORT int64_t getDefaultMMKV(int32_t mode, const char *cryptKey) {
     MMKV *kv = nil;
 
-    // TODO: defaultMMKV with cryptKey for iOS
-    /*if (cryptKey) {
+    if (cryptKey) {
         auto crypt = [NSString stringWithUTF8String:cryptKey];
-        if (crypt.length > 0) {
-            kv = [MMKV defaultMMKV];
+        auto cryptKeyData = [crypt dataUsingEncoding:NSUTF8StringEncoding];
+        if (cryptKeyData.length > 0) {
+            kv = [MMKV defaultMMKVWithCryptKey:cryptKeyData];
         }
     }
-    if (!kv)*/
-    {
+    if (!kv) {
         kv = [MMKV defaultMMKV];
     }
 
@@ -84,8 +83,7 @@ MMKV_EXPORT int64_t getDefaultMMKV(int32_t mode, const char *cryptKey) {
 MMKV_EXPORT const char *mmapID(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
-        // TODO: mmapID property for iOS
-        // return [kv];
+        return [[kv mmapID] UTF8String];
     }
     return nullptr;
 }
@@ -167,7 +165,7 @@ MMKV_EXPORT bool encodeBytes(const void *handle, const char *oKey, void *oValue,
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
         if (oValue) {
-            auto value = [NSData dataWithBytesNoCopy:oValue length:length freeWhenDone:NO];
+            auto value = [NSData dataWithBytesNoCopy:oValue length:static_cast<NSUInteger>(length) freeWhenDone:NO];
             return [kv setData:value forKey:key];
         } else {
             [kv removeValueForKey:key];
@@ -235,12 +233,8 @@ MMKV_EXPORT uint32_t valueSize(const void *handle, char *oKey, bool actualSize) 
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
-        if (!actualSize) {
-            auto ret = [kv getValueSizeForKey:key];
-            return static_cast<uint32_t>(ret);
-        } else {
-            // TODO: get actual size of value for iOS
-        }
+        auto ret = [kv getValueSizeForKey:key actualSize:actualSize];
+        return static_cast<uint32_t>(ret);
     }
     return 0;
 }
@@ -367,9 +361,7 @@ MMKV_EXPORT void clearMemoryCache(const void *handle) {
 }
 
 MMKV_EXPORT int32_t pageSize() {
-    // TODO: pageSize for iOS
-    // return static_cast<int32_t>([MMKV pageSize]);
-    return static_cast<int32_t>(NSPageSize());
+    return static_cast<int32_t>([MMKV pageSize]);
 }
 
 MMKV_EXPORT void trim(const void *handle) {
