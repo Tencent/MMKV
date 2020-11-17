@@ -46,6 +46,16 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+
+    dependencies {
+        implementation('com.tencent:mmkv:1.2.5')
+
+        modules {
+            module("com.tencent:mmkv") {
+                replacedBy("com.tencent:mmkv-static", "Using mmkv-static for flutter")
+            }
+        }
+    }
 }
 
 flutter {
