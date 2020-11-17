@@ -38,6 +38,7 @@ MMKV_NAMESPACE_END
 
 using namespace mmkv;
 
+#    ifndef __FILE_NAME__
 const char *_getFileName(const char *path) {
     const char *ptr = strrchr(path, '/');
     if (!ptr) {
@@ -49,6 +50,7 @@ const char *_getFileName(const char *path) {
         return path;
     }
 }
+#    endif
 
 #    ifndef MMKV_ANDROID
 
@@ -69,15 +71,13 @@ static const char *MMKVLogLevelDesc(MMKVLogLevel level) {
 
 #        ifdef MMKV_APPLE
 
-void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         NSString *nsFormat = [NSString stringWithUTF8String:format];
         va_list argList;
         va_start(argList, format);
         NSString *message = [[NSString alloc] initWithFormat:nsFormat arguments:argList];
         va_end(argList);
-
-        auto filename = _getFileName(file);
 
         if (g_logHandler) {
             g_logHandler(level, filename, line, func, message);
@@ -89,7 +89,7 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
 
 #        else
 
-void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         std::string message;
         char buffer[16];
@@ -109,8 +109,6 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
             std::vsnprintf(const_cast<char *>(message.data()), static_cast<size_t>(length) + 1, format, args);
             va_end(args);
         }
-
-        auto filename = _getFileName(file);
 
         if (g_logHandler) {
             g_logHandler(level, filename, line, func, message);
