@@ -1,287 +1,201 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.2.4-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Win32%20%7C%20POSIX-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Release Version](https://img.shields.io/badge/release-1.2.5-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
-中文版本请参看[这里](./readme_cn.md)
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android** and **iOS**.
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Win32** and **POSIX**.
-
-# MMKV for Android
+# MMKV for Flutter
 
 ## Features
 
-* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of Android to achieve best performance.
+* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of native platform to achieve best performance.
   * **Multi-Process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
 
 * **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.
 
 * **Small**.
   * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
-  * **About 50K in binary size**: MMKV adds about 50K per architecture on App size, and much less when zipped (apk).
+  * **About 100K in binary size**: MMKV adds about 100K per architecture on App size, and much less when zipped (apk/ipa).
 
 
 ## Getting Started
 
-### Installation Via Maven
-Add the following lines to `build.gradle` on your app module:
+### Installation
+Add the following lines to `pubspec.yaml` on your app module:
 
+```yaml
+dependencies:
+  MMKVFlutter: ">=1.2.5"
+  ...
+```
+
+Note: MMKV for Flutter works perfectly with the native MMKV lib you already used on your App. All you have to do is upgrade to version newer than v1.2.5.  
+However, if you previously use `com.tencent.mmkv` in your Android App, you should move to `com.tencent.mmkv-static`.
+And if your App depends on any 3rd SDK that embeds `com.tencent.mmkv`, you can add this lines to your `build.gradle` to avoid conflict:
 ```gradle
-dependencies {
-    implementation 'com.tencent:mmkv-static:1.2.4'
-    // replace "1.2.4" with any available version
-}
+    dependencies {
+        ...
+
+        modules {
+            module("com.tencent:mmkv") {
+                replacedBy("com.tencent:mmkv-static", "Using mmkv-static for flutter")
+            }
+        }
+    }
 ```
 
-For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
-
-### Quick Tutorial
+### Setup
 You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.  
-Setup MMKV on App startup, say your `Application` class, add these lines:
+Setup MMKV on App startup, say your `main()` function, add these lines:
 
-```Java
-public void onCreate() {
-    super.onCreate();
+```dart
+import 'package:MMKVFlutter/mmkv.dart';
 
-    String rootDir = MMKV.initialize(this);
-    System.out.println("mmkv root: " + rootDir);
-    //……
+void main() async {
+
+  // must wait for MMKV to finish initialization
+  final rootDir = await MMKV.initialize();
+  print('MMKV for flutter with rootDir = $rootDir');
+
+  runApp(MyApp());
 }
 ```
+Note that you have to **wait for MMKV to finish initialization** before accessing any MMKV instance.
 
-MMKV has a global instance, that can be used directly:
+### CRUD Operations
 
-```Java
-import com.tencent.mmkv.MMKV;
+* MMKV has a global instance, that can be used directly:
+
+    ```dart
+    import 'package:MMKVFlutter/mmkv.dart';
+        
+    var mmkv = MMKV.defaultMMKV();
+    mmkv.encodeBool('bool', true);
+    print('bool = ${mmkv.decodeBool('bool')}');
     
-MMKV kv = MMKV.defaultMMKV();
-
-kv.encode("bool", true);
-boolean bValue = kv.decodeBool("bool");
-
-kv.encode("int", Integer.MIN_VALUE);
-int iValue = kv.decodeInt("int");
-
-kv.encode("string", "Hello from mmkv");
-String str = kv.decodeString("string");
-```
-
-MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Android Tutorial](https://github.com/Tencent/MMKV/wiki/android_tutorial).
-
-## Performance
-Writing random `int` for 1000 times, we get this chart:  
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_android_mini.png)  
-For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/android_benchmark).
-
-# MMKV for iOS/macOS
-
-## Features
-
-* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of iOS/macOS to achieve best performance.
- 
-* **Easy-to-use**. You can use MMKV as you go, no configurations needed. All changes are saved immediately, no `synchronize` calls needed.
-
-* **Small**.
-  * **A handful of files**: MMKV contains encode/decode helpers and mmap logics and nothing more. It's really tidy.
-  * **Less than 30K in binary size**: MMKV adds less than 30K per architecture on App size, and much less when zipped (ipa).
-
-## Getting Started
-
-### Installation Via CocoaPods:
-  1. Install [CocoaPods](https://guides.CocoaPods.org/using/getting-started.html);
-  2. Open terminal, `cd` to your project directory, run `pod repo update` to make CocoaPods aware of the latest available MMKV versions;
-  3. Edit your Podfile, add `pod 'MMKV'` to your app target;
-  4. Run `pod install`;
-  5. Open the `.xcworkspace` file generated by CocoaPods;
-  6. Add `#import <MMKV/MMKV.h>` to your source file and we are done.
-
-For other installation options, see [iOS/macOS Setup](https://github.com/Tencent/MMKV/wiki/iOS_setup).
-
-### Quick Tutorial
-You can use MMKV as you go, no configurations needed. All changes are saved immediately, no `synchronize` calls needed.
-Setup MMKV on App startup, in your `-[MyApp application: didFinishLaunchingWithOptions:]`, add these lines:
-
-```objective-c
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // init MMKV in the main thread
-    [MMKV initializeMMKV:nil];
-
-    //...
-    return YES;
-}
-```
-
-MMKV has a global instance, that can be used directly:
-
-```objective-c
-MMKV *mmkv = [MMKV defaultMMKV];
+    mmkv.encodeInt32('int32', (1<<31) - 1);
+    print('max int32 = ${mmkv.decodeInt32('int32')}');
     
-[mmkv setBool:YES forKey:@"bool"];
-BOOL bValue = [mmkv getBoolForKey:@"bool"];
+    mmkv.encodeInt('int', (1<<63) - 1);
+    print('max int = ${mmkv.decodeInt('int')}');
     
-[mmkv setInt32:-1024 forKey:@"int32"];
-int32_t iValue = [mmkv getInt32ForKey:@"int32"];
-    
-[mmkv setString:@"hello, mmkv" forKey:@"string"];
-NSString *str = [mmkv getStringForKey:@"string"];
-```
+    String str = 'Hello Flutter from MMKV';
+    mmkv.encodeString('string', str);
+    print('string = ${mmkv.decodeString('string')}');
 
-MMKV also supports **Multi-Process Access**. Full tutorials can be found [here](https://github.com/Tencent/MMKV/wiki/iOS_tutorial).
+    str = 'Hello Flutter from MMKV with bytes';
+    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str));
+    mmkv.encodeBytes('bytes', bytes);
+    bytes.destroy();
 
-## Performance
-Writing random `int` for 10000 times, we get this chart:  
-![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.png)  
-For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
-
-
-# MMKV for Win32
-
-## Features
-
-* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of Windows to achieve best performance.
-  * **Multi-Process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
-
-* **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `save`, no `sync` calls needed.
-
-* **Small**.
-  * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
-  * **About 10K in binary size**: MMKV adds about 10K on application size, and much less when zipped.
-
-
-## Getting Started
-
-### Installation Via Source
-1. Getting source code from git repository:
-  
-   ```
-   git clone https://github.com/Tencent/MMKV.git
-   ```
-  
-2. Add `Win32/MMKV/MMKV.vcxproj` to your solution;
-3. Add `MMKV` project to your project's dependencies;
-4. Add `$(OutDir)include` to your project's `C/C++` -> `General` -> `Additional Include Directories`;
-5. Add `$(OutDir)` to your project's `Linker` -> `General` -> `Additional Library Directories`;
-6. Add `MMKV.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
-7. Add `#include <MMKV/MMKV.h>` to your source file and we are done.
-
-
-note:  
-
-1. MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or vise versa.
-2. MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
-
-For other installation options, see [Win32 Setup](https://github.com/Tencent/MMKV/wiki/windows_setup).
-
-### Quick Tutorial
-You can use MMKV as you go. All changes are saved immediately, no `sync`, no `save` calls needed.  
-Setup MMKV on App startup, say in your `main()`, add these lines:
-
-```C++
-#include <MMKV/MMKV.h>
-
-int main() {
-    std::wstring rootDir = getYourAppDocumentDir();
-    MMKV::initializeMMKV(rootDir);
-    //...
-}
-```
-
-MMKV has a global instance, that can be used directly:
-
-```C++
-auto mmkv = MMKV::defaultMMKV();
-
-mmkv->set(true, "bool");
-std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
-
-mmkv->set(1024, "int32");
-std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
-
-mmkv->set("Hello, MMKV for Win32", "string");
-std::string result;
-mmkv->getString("string", result);
-std::cout << "string = " << result << std::endl;
-```
-
-MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Win32 Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial).
-
-# MMKV for POSIX
-
-## Features
-
-* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of POSIX to achieve best performance.
-  * **Multi-Process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
-
-* **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `save`, no `sync` calls needed.
-
-* **Small**.
-  * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
-  * **About 7K in binary size**: MMKV adds about 7K on application size, and much less when zipped.
-
-
-## Getting Started
-
-### Installation Via CMake
-1. Getting source code from git repository:
-  
-   ```
-   git clone https://github.com/Tencent/MMKV.git
-   ```
-2. Edit your `CMakeLists.txt`, add those lines:
-
-    ```cmake
-    add_subdirectory(mmkv/POSIX/src mmkv)
-    target_link_libraries(MyApp
-        mmkv)
+    bytes = mmkv.decodeBytes('bytes');
+    print('bytes = ${Utf8Decoder().convert(bytes.asList())}');
+    bytes.destroy();
     ```
-3. Add `#include "MMKV.h"` to your source file and we are done.
 
-For other installation options, see [POSIX Setup](https://github.com/Tencent/MMKV/wiki/posix_setup).
+    As you can see, MMKV is quite easy to use.
+    
+* **Deleting & Querying**:
 
-### Quick Tutorial
-You can use MMKV as you go. All changes are saved immediately, no `sync`, no `save` calls needed.  
-Setup MMKV on App startup, say in your `main()`, add these lines:
+    ```dart
+    var mmkv = MMKV.defaultMMKV();
 
-```C++
-#include "MMKV.h"
+    mmkv.removeValue('bool');
+    print('contains "bool": ${mmkv.containsKey('bool')}');
 
-int main() {
-    std::string rootDir = getYourAppDocumentDir();
-    MMKV::initializeMMKV(rootDir);
-    //...
-}
-```
+    mmkv.removeValues(['int32', 'int']);
+    print('all keys: ${mmkv.allKeys}');
+    ```
 
-MMKV has a global instance, that can be used directly:
+* If different modules/logic need **isolated storage**, you can also create your own MMKV instance separately:
 
-```C++
-auto mmkv = MMKV::defaultMMKV();
+    ```dart
+    var mmkv = MMKV("test");
+    mmkv.encodeBool('bool', true);
+    print('bool = ${mmkv.decodeBool('bool')}');
+    ```
 
-mmkv->set(true, "bool");
-std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
+* If **multi-process accessing** is needed，you can set `MMKV.MULTI_PROCESS_MODE` on MMKV initialization:
 
-mmkv->set(1024, "int32");
-std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
+    ```dart
+    var mmkv = MMKV("test-multi-process", mode: MMKVMode.MULTI_PROCESS_MODE);
+    mmkv.encodeBool('bool', true);
+    print('bool = ${mmkv.decodeBool('bool')}');
+    ```
 
-mmkv->set("Hello, MMKV for Win32", "string");
-std::string result;
-mmkv->getString("string", result);
-std::cout << "string = " << result << std::endl;
-```
+### Supported Types
+* Primitive Types:
+  - `bool, int, double`
 
-MMKV also supports **Multi-Process Access**. Full tutorials can be found here [POSIX Tutorial](https://github.com/Tencent/MMKV/wiki/posix_tutorial).
+* Classes & Collections:
+  - `String, List<int>, MMBuffer`
+
+### Log
+
+* By default, MMKV prints log to logcat/console, which is not convenient for diagnosing online issues. 
+You can setup MMKV **log redirecting** on App startup on the **native** interface of MMKV. 
+Checkout how to do it on [Android](https://github.com/Tencent/MMKV/wiki/android_advance#log) / [iOS](https://github.com/Tencent/MMKV/wiki/ios_advance#log).
+Due to the current limitation of Flutter runtime, we can't redirect log on the Flutter side.
+
+* You can turn off MMKV's logging once and for all on initialization (which we strongly disrecommend).  
+
+    ```dart
+    final rootDir = await MMKV.initialize(logLevel: MMKVLogLevel.None);
+    ```
+### Encryption
+* By default MMKV stores all key-values in plain text on file, relying on Android's/iOS's sandbox to make sure the file is encrypted. Should you worry about information leaking, you can choose to encrypt MMKV.
+
+    ```dart
+    final encryptKey = 'MyEncryptKey';
+    var mmkv = MMKV("test-encryption", cryptKey: encryptKey);
+    ```
+
+* You can change the encryption key later as you like. You can also change an existing MMKV instance from encrypted to unencrypted, or vice versa.
+
+    ```dart
+    // an unencrypted MMKV instance
+    var mmkv = MMKV("test-encryption");
+
+    // change from unencrypted to encrypted
+    mmkv.reKey("Key_seq_1");
+
+    // change encryption key
+    mmkv.reKey("Key_seq_2");
+
+    // change from encrypted to unencrypted
+    kmmkv.reKey(null);
+    ```
+ 
+### Customize location
+* By default, MMKV stores file inside `$(FilesDir)/mmkv/`. You can customize MMKV's **root directory** on App startup:
+
+    ```dart
+    final dir = await getApplicationSupportDirectory();
+    final rootDir = await MMKV.initialize(dir, rootDir: dir.path + '/mmkv_2');
+    print('MMKV for flutter with rootDir = $rootDir');
+    ```
+
+* You can even customize any MMKV instance's location:
+
+    ```dart
+    final dir = await getApplicationSupportDirectory();
+    var mmkv = MMKV('testCustomDir', rootDir: dir.path + '/mmkv_3');
+    ```
+  **Note:** It's recommended to store MMKV files **inside** your App's sandbox path. **DO NOT** store them on external storage(aka SD card). If you have to do it, you should  follow Android's [scoped storage](https://developer.android.com/preview/privacy/storage) enforcement.
+
 
 ## License
-MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](./LICENSE.TXT).
+MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).
 
 ## Change Log
-Check out the [CHANGELOG.md](./CHANGELOG.md) for details of change history.
+Check out the [CHANGELOG.md](https://github.com/Tencent/MMKV/blob/master/flutter/CHANGELOG.md) for details of change history.
 
 ## Contributing
 
-If you are interested in contributing, check out the [CONTRIBUTING.md](./CONTRIBUTING.md), also join our [Tencent OpenSource Plan](https://opensource.tencent.com/contribution).
+If you are interested in contributing, check out the [CONTRIBUTING.md](https://github.com/Tencent/MMKV/blob/master/CONTRIBUTING.md), also join our [Tencent OpenSource Plan](https://opensource.tencent.com/contribution).
 
-To give clarity of what is expected of our members, MMKV has adopted the code of conduct defined by the Contributor Covenant, which is widely used. And we think it articulates our values well. For more, check out the [Code of Conduct](./CODE_OF_CONDUCT.md).
+To give clarity of what is expected of our members, MMKV has adopted the code of conduct defined by the Contributor Covenant, which is widely used. And we think it articulates our values well. For more, check out the [Code of Conduct](https://github.com/Tencent/MMKV/blob/master/CODE_OF_CONDUCT.md).
 
 ## FAQ & Feedback
 Check out the [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ) first. Should there be any questions, don't hesitate to create [issues](https://github.com/Tencent/MMKV/issues).

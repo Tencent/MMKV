@@ -19,53 +19,55 @@
  */
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi'; // For FFI
 import 'dart:io'; // For Platform.isX
 import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
-
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
-enum MMKVLogLevel {
-  Debug,
-  Info,
-  Warning,
-  Error,
-  None
-}
+/// Log level for MMKV.
+enum MMKVLogLevel { Debug, Info, Warning, Error, None }
 
+/// Process mode for MMKV, default to [SINGLE_PROCESS_MODE].
 enum MMKVMode {
   INVALID_MODE,
   SINGLE_PROCESS_MODE,
   MULTI_PROCESS_MODE,
 }
 
-// a native memory buffer, must call destroy() after no longer use
+/// A native memory buffer, must call [MMBuffer.destroy()] after no longer use.
 class MMBuffer {
   int _length;
+
+  /// The size of the memory buffer.
   int get length => _length;
 
   Pointer<Uint8> _ptr;
+
+  /// The pointer of underlying memory buffer.
   Pointer<Uint8> get pointer => _ptr;
 
-  MMBuffer(int size) {
-    _length = size;
-    if (size > 0) {
-      _ptr = allocate<Uint8>(count: size);
+  /// Create a memory buffer with size of [length].
+  MMBuffer(int length) {
+    _length = length;
+    if (length > 0) {
+      _ptr = allocate<Uint8>(count: length);
     }
   }
 
-  // copy all data from list
+  /// Copy all data from [list].
   static MMBuffer fromList(List<int> list) {
     var buffer = MMBuffer(list.length);
     buffer.asList().setAll(0, list);
     return buffer;
   }
 
+  /// Create a wrapper of native pointer [ptr] with size [length].
+  /// DON'T [destroy()] the result because it's not a copy.
   static MMBuffer _fromPointer(Pointer<Uint8> ptr, int length) {
     var buffer = MMBuffer(0);
     buffer._length = length;
@@ -73,6 +75,8 @@ class MMBuffer {
     return buffer;
   }
 
+  /// Create a wrapper of native pointer [ptr] with size [length].
+  /// DO remember to [destroy()] the result because it's a COPY.
   static MMBuffer _copyFromPointer(Pointer<Uint8> ptr, int length) {
     var buffer = MMBuffer(length);
     buffer._length = length;
@@ -80,15 +84,17 @@ class MMBuffer {
     return buffer;
   }
 
-  // must call destroy after no longer use
+  /// Must call this after no longer use.
   void destroy() {
     if (_ptr != null && _ptr != nullptr) {
       free(_ptr);
     }
     _ptr = null;
+    _length = 0;
   }
 
-  // get a list view of the underlying data
+  /// Get a **list view** of the underlying data.
+  /// Must call [destroy()] later after not longer use.
   Uint8List asList() {
     if (_ptr != null && _ptr != nullptr) {
       return _ptr.asTypedList(_length);
@@ -96,8 +102,8 @@ class MMBuffer {
     return null;
   }
 
-  // copy the underlying data as a list
-  // and destroy() self
+  /// Copy the underlying data as a list.
+  /// And [destroy()] itself at the same time.
   Uint8List takeList() {
     if (_ptr != null && _ptr != nullptr) {
       var list = Uint8List.fromList(asList());
@@ -108,12 +114,35 @@ class MMBuffer {
   }
 }
 
+/// An efficient, small mobile key-value storage framework developed by WeChat.
+/// Works on Android & iOS.
 class MMKV {
   Pointer<Void> _handle;
 
   static const MethodChannel _channel = const MethodChannel('mmkv');
 
-  static Future<String> initialize([String rootDir, String groupDir, MMKVLogLevel logLevel = MMKVLogLevel.Info]) async {
+  /// MMKV must be initialized before any usage.
+  ///
+  /// Generally speaking you should do this inside `main()`:
+  /// ```dart
+  /// void main() async {
+  ///   // must wait for MMKV to finish initialization
+  ///   final rootDir = await MMKV.initialize();
+  ///   print('MMKV for flutter with rootDir = $rootDir');
+  ///
+  ///   runApp(MyApp());
+  /// }
+  /// ```
+  /// Note that you must **wait for it** to finish before any usage.
+  /// * You can customize MMKV's root dir by passing [rootDir], `${Document}/mmkv` by default.
+  /// * You can customize MMKV's log level by passing [logLevel].
+  /// You can even turnoff logging by passing [MMKVLogLevel.None], which we don't recommend doing.
+  /// * If you want to use MMKV in multi-process on iOS, you should set group folder by passing [groupDir].
+  /// [groupDir] will be ignored on Android.
+  static Future<String> initialize(
+      {String rootDir,
+      String groupDir,
+      MMKVLogLevel logLevel = MMKVLogLevel.Info}) async {
     WidgetsFlutterBinding.ensureInitialized();
 
     if (rootDir == null) {
@@ -123,8 +152,8 @@ class MMKV {
 
     if (Platform.isIOS) {
       final Map<String, dynamic> params = {
-        'rootDir' : rootDir,
-        'logLevel' : logLevel.index,
+        'rootDir': rootDir,
+        'logLevel': logLevel.index,
       };
       if (groupDir != null) {
         params['groupDir'] = groupDir;
@@ -139,7 +168,25 @@ class MMKV {
     }
   }
 
-  MMKV(String mmapID, [MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String cryptKey, String rootDir]) {
+  /// A generic purpose instance in single-process mode.
+  static MMKV defaultMMKV({String cryptKey}) {
+    var mmkv = MMKV(null);
+    var cryptKeyPtr = _string2Pointer(cryptKey);
+    mmkv._handle = _getDefaultMMKV(cryptKeyPtr);
+    free(cryptKeyPtr);
+    return mmkv;
+  }
+
+  /// Get a MMKV instance with an unique ID [mmapID].
+  ///
+  /// * If you want a per-user mmkv, you could merge user-id within [mmapID].
+  /// * You can get a multi-process MMKV instance by passing [MMKVMode.MULTI_PROCESS_MODE].
+  /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
+  /// * You can customize the [rootDir] of the file.
+  MMKV(String mmapID,
+      {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE,
+      String cryptKey,
+      String rootDir}) {
     if (mmapID != null) {
       var mmapIDPtr = _string2Pointer(mmapID);
       var cryptKeyPtr = _string2Pointer(cryptKey);
@@ -153,15 +200,7 @@ class MMKV {
     }
   }
 
-  static MMKV defaultMMKV([String cryptKey]) {
-    var mmkv = MMKV(null);
-    var cryptKeyPtr = _string2Pointer(cryptKey);
-    mmkv._handle = _getDefaultMMKV(cryptKeyPtr);
-    free(cryptKeyPtr);
-    return mmkv;
-  }
-
-  String mmapID() {
+  String get mmapID {
     return _pointer2String(_mmapID(_handle));
   }
 
@@ -172,13 +211,15 @@ class MMKV {
     return _int2Bool(ret);
   }
 
-  bool decodeBool(String key, [bool defaultValue = false]) {
+  bool decodeBool(String key, {bool defaultValue = false}) {
     var keyPtr = Utf8.toUtf8(key);
     var ret = _decodeBool(_handle, keyPtr, _bool2Int(defaultValue));
     free(keyPtr);
     return _int2Bool(ret);
   }
 
+  /// Use this when the [value] won't be larger than a normal int32.
+  /// It's more efficient & cost less space.
   bool encodeInt32(String key, int value) {
     var keyPtr = Utf8.toUtf8(key);
     var ret = _encodeInt32(_handle, keyPtr, value);
@@ -186,7 +227,9 @@ class MMKV {
     return _int2Bool(ret);
   }
 
-  int decodeInt32(String key, [int defaultValue = 0]) {
+  /// Use this when the value won't be larger than a normal int32.
+  /// It's more efficient & cost less space.
+  int decodeInt32(String key, {int defaultValue = 0}) {
     var keyPtr = Utf8.toUtf8(key);
     var ret = _decodeInt32(_handle, keyPtr, defaultValue);
     free(keyPtr);
@@ -200,7 +243,7 @@ class MMKV {
     return _int2Bool(ret);
   }
 
-  int decodeInt(String key, [int defaultValue = 0]) {
+  int decodeInt(String key, {int defaultValue = 0}) {
     var keyPtr = Utf8.toUtf8(key);
     var ret = _decodeInt64(_handle, keyPtr, defaultValue);
     free(keyPtr);
@@ -214,13 +257,14 @@ class MMKV {
     return _int2Bool(ret);
   }
 
-  double decodeDouble(String key, [double defaultValue = 0]) {
+  double decodeDouble(String key, {double defaultValue = 0}) {
     var keyPtr = Utf8.toUtf8(key);
     var ret = _decodeDouble(_handle, keyPtr, defaultValue);
     free(keyPtr);
     return ret;
   }
 
+  /// Encode an utf-8 string.
   bool encodeString(String key, String value) {
     var keyPtr = Utf8.toUtf8(key);
     var bytes = MMBuffer.fromList(Utf8Encoder().convert(value));
@@ -232,6 +276,7 @@ class MMKV {
     return _int2Bool(ret);
   }
 
+  /// Decode as an utf-8 string.
   String decodeString(String key) {
     var keyPtr = Utf8.toUtf8(key);
     Pointer<Uint64> lengthPtr = allocate();
@@ -252,6 +297,19 @@ class MMKV {
     return null;
   }
 
+  /// Encoding bytes.
+  ///
+  /// You can serialize an object into bytes, then store it inside MMKV.
+  /// ```dart
+  /// // assume using protobuf https://developers.google.com/protocol-buffers/docs/darttutorial
+  /// var object = MyClass();
+  /// final list = object.writeToBuffer();
+  /// final buffer = MMBuffer.fromList(list);
+  ///
+  /// mmkv.encodeBytes('bytes', buffer);
+  ///
+  /// buffer.destroy();
+  /// ```
   bool encodeBytes(String key, MMBuffer value) {
     var keyPtr = Utf8.toUtf8(key);
     var ret = _encodeBytes(_handle, keyPtr, value.pointer, value.length);
@@ -259,6 +317,20 @@ class MMKV {
     return _int2Bool(ret);
   }
 
+  /// Decoding bytes.
+  ///
+  /// You can decode bytes from MMKV, then deserialize an object from the bytes.
+  /// ```dart
+  /// // assume using protobuf https://developers.google.com/protocol-buffers/docs/darttutorial
+  /// final bytes = mmkv.decodeBytes('bytes');
+  /// if (bytes != null) {
+  ///   final list = bytes.asList();
+  ///   final object = MyClass.fromBuffer(list);
+  ///
+  ///   // Must [destroy()] after no longer use.
+  ///   bytes.destroy();
+  /// }
+  /// ```
   MMBuffer decodeBytes(String key) {
     var keyPtr = Utf8.toUtf8(key);
     Pointer<Uint64> lengthPtr = allocate();
@@ -279,14 +351,26 @@ class MMKV {
     return null;
   }
 
+  /// Change encryption key for the MMKV instance.
+  ///
+  /// * The [cryptKey] is 16 bytes limited.
+  /// * You can transfer a plain-text MMKV into encrypted by setting an non-null, non-empty [cryptKey].
+  /// * Or vice versa by passing [cryptKey] with null.
+  /// See also [checkReSetCryptKey()].
   bool reKey(String cryptKey) {
-    var bytes = MMBuffer.fromList(Utf8Encoder().convert(cryptKey));
-    var ret = _reKey(_handle, bytes.pointer, bytes.length);
-    bytes.destroy();
-    return _int2Bool(ret);
+    if (cryptKey != null && cryptKey.length > 0) {
+      var bytes = MMBuffer.fromList(Utf8Encoder().convert(cryptKey));
+      var ret = _reKey(_handle, bytes.pointer, bytes.length);
+      bytes.destroy();
+      return _int2Bool(ret);
+    } else {
+      var ret = _reKey(_handle, nullptr, 0);
+      return _int2Bool(ret);
+    }
   }
 
-  String cryptKey() {
+  /// See also [reKey()].
+  String get cryptKey {
     Pointer<Uint64> lengthPtr = allocate();
     var ret = _cryptKey(_handle, lengthPtr);
     if (ret != null && ret != nullptr) {
@@ -299,12 +383,16 @@ class MMKV {
     return null;
   }
 
+  /// Just reset the [cryptKey] (will not encrypt or decrypt anything).
+  /// Usually you should call this method after other process [reKey()] the multi-process mmkv.
   void checkReSetCryptKey(String cryptKey) {
     var bytes = MMBuffer.fromList(Utf8Encoder().convert(cryptKey));
     _checkReSetCryptKey(_handle, bytes.pointer, bytes.length);
     bytes.destroy();
   }
 
+  /// Get the actual size consumption of the key's value.
+  /// Pass [actualSize] with true to get value's length.
   int valueSize(String key, bool actualSize) {
     var keyPtr = Utf8.toUtf8(key);
     var ret = _valueSize(_handle, keyPtr, _bool2Int(actualSize));
@@ -312,14 +400,20 @@ class MMKV {
     return ret;
   }
 
+  /// Write the value to a pre-allocated native buffer.
+  ///
+  /// * Return size written into buffer.
+  /// * Return -1 on any error, such as [buffer] not large enough.
   int writeValueToNativeBuffer(String key, MMBuffer buffer) {
     var keyPtr = Utf8.toUtf8(key);
-    var ret = _writeValueToNB(_handle, keyPtr, buffer.pointer.cast(), buffer.length);
+    var ret =
+        _writeValueToNB(_handle, keyPtr, buffer.pointer.cast(), buffer.length);
     free(keyPtr);
     return ret;
   }
 
-  List<String> allKeys() {
+  /// Get all the keys (_unsorted_).
+  List<String> get allKeys {
     Pointer<Pointer<Pointer<Utf8>>> keyArrayPtr = allocate();
     Pointer<Pointer<Uint32>> sizeArrayPtr = allocate();
     List<String> keys;
@@ -357,15 +451,17 @@ class MMKV {
     return _int2Bool(ret);
   }
 
-  int count() {
+  int get count {
     return _count(_handle);
   }
 
-  int totalSize() {
+  /// Get the file size. See also [actualSize].
+  int get totalSize {
     return _totalSize(_handle);
   }
 
-  int actualSize() {
+  /// Get the actual used size. See also [totalSize].
+  int get actualSize {
     return _actualSize(_handle);
   }
 
@@ -375,6 +471,7 @@ class MMKV {
     free(keyPtr);
   }
 
+  /// See also [trim()].
   void removeValues(List<String> keys) {
     if (keys.isEmpty) {
       return;
@@ -401,22 +498,36 @@ class MMKV {
     _clearAll(_handle);
   }
 
+  /// Synchronize memory to file.
+  /// You don't need to call this, really, I mean it.
+  /// Unless you worry about running out of battery.
+  /// * Pass `true` to perform synchronous write.
+  /// * Pass `false` to perform asynchronous write, return immediately.
   void sync(bool sync) {
     _mmkvSync(_handle, _bool2Int(sync));
   }
 
+  /// Clear all caches (on memory warning).
   void clearMemoryCache() {
     _clearMemoryCache(_handle);
   }
 
-  static int pageSize() {
+  /// Get memory page size.
+  static int get pageSize {
     return _pageSize();
   }
 
+  /// Trim the file size to minimal.
+  ///
+  /// * MMKV's size won't reduce after deleting key-values.
+  /// * Call this method after lots of deleting if you care about disk usage.
+  /// * Note that [clearAll()] has the similar effect.
   void trim() {
     _trim(_handle);
   }
 
+  /// Close the instance when it's no longer needed in the near future.
+  /// Any subsequent call to the instance is **undefined behavior**.
   void close() {
     _mmkvClose(_handle);
   }
@@ -512,171 +623,203 @@ String _buffer2String(Pointer<Uint8> ptr, int length) {
   return null;
 }
 
-final DynamicLibrary nativeLib = Platform.isAndroid
+final DynamicLibrary _nativeLib = Platform.isAndroid
     ? DynamicLibrary.open("libmmkv.so")
     : DynamicLibrary.process();
 
 final void Function(Pointer<Utf8> rootDir, int logLevel) _mmkvInitialize =
-  Platform.isIOS ? null : nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Utf8>, Int32)>>("mmkvInitialize")
-    .asFunction();
+    Platform.isIOS
+        ? null
+        : _nativeLib
+            .lookup<NativeFunction<Void Function(Pointer<Utf8>, Int32)>>(
+                "mmkvInitialize")
+            .asFunction();
 
-final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir) _getMMKVWithID =
-nativeLib
-    .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>, Pointer<Utf8>)>>("getMMKVWithID")
-    .asFunction();
+final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey,
+        Pointer<Utf8> rootDir) _getMMKVWithID =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>,
+                    Pointer<Utf8>)>>("getMMKVWithID")
+        .asFunction();
 
 final Pointer<Void> Function(Pointer<Utf8> cryptKey) _getDefaultMMKV =
-nativeLib
-    .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>)>>("getDefaultMMKV")
-    .asFunction();
+    _nativeLib
+        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>)>>(
+            "getDefaultMMKV")
+        .asFunction();
 
-final Pointer<Utf8> Function(Pointer<Void>) _mmapID =
-nativeLib
+final Pointer<Utf8> Function(Pointer<Void>) _mmapID = _nativeLib
     .lookup<NativeFunction<Pointer<Utf8> Function(Pointer<Void>)>>("mmapID")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>("encodeBool")
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool = _nativeLib
+    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(
+        "encodeBool")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeBool =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>("decodeBool")
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeBool = _nativeLib
+    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(
+        "decodeBool")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt32 =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>("encodeInt32")
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt32 = _nativeLib
+    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(
+        "encodeInt32")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt32 =
-nativeLib
-    .lookup<NativeFunction<Int32 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>("decodeInt32")
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt32 = _nativeLib
+    .lookup<
+        NativeFunction<
+            Int32 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>("decodeInt32")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt64 =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>("encodeInt64")
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt64 = _nativeLib
+    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(
+        "encodeInt64")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt64 =
-nativeLib
-    .lookup<NativeFunction<Int64 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>("decodeInt64")
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt64 = _nativeLib
+    .lookup<
+        NativeFunction<
+            Int64 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>("decodeInt64")
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, double) _encodeDouble =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Double)>>("encodeDouble")
-    .asFunction();
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(
+                    Pointer<Void>, Pointer<Utf8>, Double)>>("encodeDouble")
+        .asFunction();
 
 final double Function(Pointer<Void>, Pointer<Utf8>, double) _decodeDouble =
-nativeLib
-    .lookup<NativeFunction<Double Function(Pointer<Void>, Pointer<Utf8>, Double)>>("decodeDouble")
-    .asFunction();
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Double Function(
+                    Pointer<Void>, Pointer<Utf8>, Double)>>("decodeDouble")
+        .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int) _encodeBytes =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, Uint64)>>("encodeBytes")
-    .asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int)
+    _encodeBytes = _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>,
+                    Uint64)>>("encodeBytes")
+        .asFunction();
 
-final Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>) _decodeBytes =
-nativeLib
-    .lookup<NativeFunction<Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>)>>("decodeBytes")
-    .asFunction();
+final Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>)
+    _decodeBytes = _nativeLib
+        .lookup<
+            NativeFunction<
+                Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>,
+                    Pointer<Uint64>)>>("decodeBytes")
+        .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Uint8>, int) _reKey =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>("reKey")
+final int Function(Pointer<Void>, Pointer<Uint8>, int) _reKey = _nativeLib
+    .lookup<
+        NativeFunction<
+            Int8 Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>("reKey")
     .asFunction();
 
 final Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>) _cryptKey =
-nativeLib
-    .lookup<NativeFunction<Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>)>>("cryptKey")
-    .asFunction();
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Pointer<Uint8> Function(
+                    Pointer<Void>, Pointer<Uint64>)>>("cryptKey")
+        .asFunction();
 
 final void Function(Pointer<Void>, Pointer<Uint8>, int) _checkReSetCryptKey =
-nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>("checkReSetCryptKey")
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Void Function(Pointer<Void>, Pointer<Uint8>,
+                    Uint64)>>("checkReSetCryptKey")
+        .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _valueSize = _nativeLib
+    .lookup<
+        NativeFunction<
+            Uint32 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>("valueSize")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _valueSize =
-nativeLib
-    .lookup<NativeFunction<Uint32 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>("valueSize")
+final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int)
+    _writeValueToNB = _nativeLib
+        .lookup<
+            NativeFunction<
+                Int32 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>,
+                    Uint32)>>("writeValueToNB")
+        .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
+        Pointer<Pointer<Uint32>>) _allKeys =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
+                    Pointer<Pointer<Uint32>>)>>("allKeys")
+        .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
+    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>)>>(
+        "containsKey")
     .asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int) _writeValueToNB =
-nativeLib
-    .lookup<NativeFunction<Int32 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, Uint32)>>("writeValueToNB")
-    .asFunction();
-
-final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>) _allKeys =
-nativeLib
-    .lookup<NativeFunction<Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>)>>("allKeys")
-    .asFunction();
-
-final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey =
-nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>)>>("containsKey")
-    .asFunction();
-
-final int Function(Pointer<Void>) _count =
-nativeLib
+final int Function(Pointer<Void>) _count = _nativeLib
     .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>("count")
     .asFunction();
 
-final int Function(Pointer<Void>) _totalSize =
-nativeLib
+final int Function(Pointer<Void>) _totalSize = _nativeLib
     .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>("totalSize")
     .asFunction();
 
-final int Function(Pointer<Void>) _actualSize =
-nativeLib
+final int Function(Pointer<Void>) _actualSize = _nativeLib
     .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>("actualSize")
     .asFunction();
 
 final void Function(Pointer<Void>, Pointer<Utf8>) _removeValueForKey =
-nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Utf8>)>>("removeValueForKey")
-    .asFunction();
+    _nativeLib
+        .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Utf8>)>>(
+            "removeValueForKey")
+        .asFunction();
 
-final void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int) _removeValuesForKeys =
-nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, Uint64)>>("removeValuesForKeys")
-    .asFunction();
+final void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int)
+    _removeValuesForKeys = _nativeLib
+        .lookup<
+            NativeFunction<
+                Void Function(Pointer<Void>, Pointer<Pointer<Utf8>>,
+                    Pointer<Uint32>, Uint64)>>("removeValuesForKeys")
+        .asFunction();
 
-final void Function(Pointer<Void>) _clearAll =
-nativeLib
+final void Function(Pointer<Void>) _clearAll = _nativeLib
     .lookup<NativeFunction<Void Function(Pointer<Void>)>>("clearAll")
     .asFunction();
 
-final void Function(Pointer<Void>, int) _mmkvSync =
-nativeLib
+final void Function(Pointer<Void>, int) _mmkvSync = _nativeLib
     .lookup<NativeFunction<Void Function(Pointer<Void>, Int8)>>("mmkvSync")
     .asFunction();
 
-final void Function(Pointer<Void>) _clearMemoryCache =
-nativeLib
+final void Function(Pointer<Void>) _clearMemoryCache = _nativeLib
     .lookup<NativeFunction<Void Function(Pointer<Void>)>>("clearMemoryCache")
     .asFunction();
 
-final int Function() _pageSize =
-nativeLib
+final int Function() _pageSize = _nativeLib
     .lookup<NativeFunction<Int32 Function()>>("pageSize")
     .asFunction();
 
-final void Function(Pointer<Void>) _trim =
-nativeLib
+final void Function(Pointer<Void>) _trim = _nativeLib
     .lookup<NativeFunction<Void Function(Pointer<Void>)>>("trim")
     .asFunction();
 
-final void Function(Pointer<Void>) _mmkvClose =
-nativeLib
+final void Function(Pointer<Void>) _mmkvClose = _nativeLib
     .lookup<NativeFunction<Void Function(Pointer<Void>)>>("mmkvClose")
     .asFunction();
 
-final void Function(Pointer<Void>, Pointer<Void>, int) _memcpy =
-nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Void>, Uint64)>>("mmkvMemcpy")
+final void Function(Pointer<Void>, Pointer<Void>, int) _memcpy = _nativeLib
+    .lookup<
+        NativeFunction<
+            Void Function(Pointer<Void>, Pointer<Void>, Uint64)>>("mmkvMemcpy")
     .asFunction();

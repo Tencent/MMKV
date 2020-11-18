@@ -24,7 +24,6 @@ import 'dart:convert';
 import 'package:MMKVFlutter/mmkv.dart';
 
 void main() async {
-
   // must wait for MMKV to finish initialization
   final rootDir = await MMKV.initialize();
   print('MMKV for flutter with rootDir = $rootDir');
@@ -38,7 +37,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   @override
   void initState() {
     super.initState();
@@ -62,16 +60,16 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeBool('bool', true);
     print('bool = ${mmkv.decodeBool('bool')}');
 
-    mmkv.encodeInt32('int32', (1<<31) - 1);
+    mmkv.encodeInt32('int32', (1 << 31) - 1);
     print('max int32 = ${mmkv.decodeInt32('int32')}');
 
-    mmkv.encodeInt32('int32', 0 - (1<<31));
+    mmkv.encodeInt32('int32', 0 - (1 << 31));
     print('min int32 = ${mmkv.decodeInt32('int32')}');
 
-    mmkv.encodeInt('int', (1<<63) - 1);
+    mmkv.encodeInt('int', (1 << 63) - 1);
     print('max int = ${mmkv.decodeInt('int')}');
 
-    mmkv.encodeInt('int', 0 - (1<<63));
+    mmkv.encodeInt('int', 0 - (1 << 63));
     print('min int = ${mmkv.decodeInt('int')}');
 
     mmkv.encodeDouble('double', double.maxFinite);
@@ -96,13 +94,13 @@ class _MyAppState extends State<MyApp> {
     mmkv.removeValue('bool');
     print('after remove, contains "bool": ${mmkv.containsKey('bool')}');
     mmkv.removeValues(['int32', 'int']);
-    print('all keys: ${mmkv.allKeys()}');
+    print('all keys: ${mmkv.allKeys}');
 
     mmkv.trim();
     mmkv.clearMemoryCache();
-    print('all keys: ${mmkv.allKeys()}');
+    print('all keys: ${mmkv.allKeys}');
     mmkv.clearAll();
-    print('all keys: ${mmkv.allKeys()}');
+    print('all keys: ${mmkv.allKeys}');
     // mmkv.sync(true);
     // mmkv.close();
   }
@@ -115,12 +113,9 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-          child: Column(
-            children: <Widget>[
-              // Text('Running on: $_platformVersion\n'),
-            ]
-          )
-        ),
+            child: Column(children: <Widget>[
+          // Text('Running on: $_platformVersion\n'),
+        ])),
       ),
     );
   }
