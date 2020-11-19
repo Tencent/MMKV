@@ -26,7 +26,7 @@ Add the following lines to `pubspec.yaml` on your app module:
 
 ```yaml
 dependencies:
-  MMKVFlutter: ">=1.2.5"
+  mmkvflutter: ">=1.2.5"
   ...
 ```
 
@@ -50,7 +50,7 @@ You can use MMKV as you go. All changes are saved immediately, no `sync`, no `ap
 Setup MMKV on App startup, say your `main()` function, add these lines:
 
 ```dart
-import 'package:MMKVFlutter/mmkv.dart';
+import 'package:mmkvflutter/mmkv.dart';
 
 void main() async {
 
@@ -68,7 +68,7 @@ Note that you have to **wait for MMKV to finish initialization** before accessin
 * MMKV has a global instance, that can be used directly:
 
     ```dart
-    import 'package:MMKVFlutter/mmkv.dart';
+    import 'package:mmkvflutter/mmkv.dart';
         
     var mmkv = MMKV.defaultMMKV();
     mmkv.encodeBool('bool', true);
