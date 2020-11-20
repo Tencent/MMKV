@@ -25,9 +25,42 @@ def flutter_root
   raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
 end
 
+# to avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to change the plugin name 'mmkv' to 'mmkvflutter'
+def fix_mmkv_plugin_name
+# locate the generated file '.flutter-plugins-dependencies', usually it's on the root dir of your flutter app or module
+  podfile_dir = File.dirname(File.realpath(__FILE__))
+  plugins_file = File.join(podfile_dir, '..', '.flutter-plugins-dependencies')
+
+  fix_mmkv_plugin_name_inside_dependencies(plugins_file)
+end
+
+# to avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to change the plugin name 'mmkv' to 'mmkvflutter'
+def fix_mmkv_plugin_name_inside_dependencies(plugin_deps_file)
+  plugin_deps_file = File.expand_path(plugin_deps_file)
+  unless File.exists?(plugin_deps_file)
+    raise "#{plugin_deps_file} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  dependencies_hash = JSON.parse(File.read(plugin_deps_file))
+  (dependencies_hash.dig('plugins', 'ios') || []).each do |plugin|
+    if plugin['name'] == 'mmkv'
+      plugin['name'] = 'mmkvflutter'
+
+      json = dependencies_hash.to_json
+      File.write(plugin_deps_file, json)
+      return
+    end
+  end  
+end
+
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
 flutter_ios_podfile_setup
+
+# to avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to change the plugin name 'mmkv' to 'mmkvflutter'
+fix_mmkv_plugin_name
+# or simpley run with the relative path of the file '.flutter-plugins-dependencies'
+# fix_mmkv_plugin_name_inside_dependencies('../.flutter-plugins-dependencies')
 
 target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))

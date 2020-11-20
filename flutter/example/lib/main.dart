@@ -21,7 +21,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'package:mmkvflutter/mmkvflutter.dart';
+import 'package:mmkv/mmkv.dart';
 
 void main() async {
   // must wait for MMKV to finish initialization

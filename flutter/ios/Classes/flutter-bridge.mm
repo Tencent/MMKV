@@ -439,7 +439,7 @@ using LogCallback_t = void (*)(uint32_t level, const char *file, int32_t line, c
                     return "N";
             }
         };
-        NSLog(@"mmkvflutter:[%s] <%s:%d::%s> %@\n", LogLevelDesc(level), file, line, funcname, message);
+        NSLog(@"mmkv:[%s] <%s:%d::%s> %@\n", LogLevelDesc(level), file, line, funcname, message);
     }
 }
 
