@@ -23,6 +23,7 @@
 
 // disable encryption & decryption to reduce some code
 //#define MMKV_DISABLE_CRYPT
+//#define MMKV_DISABLE_FLUTTER
 
 // using POSIX implementation
 //#define FORCE_POSIX

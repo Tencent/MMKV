@@ -20,14 +20,16 @@
 
 #include "MMKVPredef.h"
 
-#include "MMKV.h"
-#include <stdint.h>
-#include <string>
+#ifndef MMKV_DISABLE_FLUTTER
+
+#    include "MMKV.h"
+#    include <stdint.h>
+#    include <string>
 
 using namespace mmkv;
 using namespace std;
 
-#define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
+#    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
 MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
     if (!rootDir) {
@@ -207,6 +209,8 @@ MMKV_EXPORT void *decodeBytes(void *handle, const char *oKey, uint64_t *lengthPt
     return nullptr;
 }
 
+#    ifndef MMKV_DISABLE_CRYPT
+
 MMKV_EXPORT bool reKey(void *handle, char *oKey, uint64_t length) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
@@ -247,6 +251,8 @@ MMKV_EXPORT void checkReSetCryptKey(void *handle, char *oKey, uint64_t length) {
         }
     }
 }
+
+#    endif // MMKV_DISABLE_CRYPT
 
 MMKV_EXPORT uint32_t valueSize(void *handle, char *oKey, bool actualSize) {
     MMKV *kv = static_cast<MMKV *>(handle);
@@ -399,3 +405,5 @@ MMKV_EXPORT void mmkvClose(void *handle) {
 MMKV_EXPORT void mmkvMemcpy(void *dst, const void *src, uint64_t size) {
     memcpy(dst, src, size);
 }
+
+#endif // MMKV_DISABLE_FLUTTER
