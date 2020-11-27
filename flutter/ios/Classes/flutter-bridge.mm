@@ -488,3 +488,9 @@ MMKV_EXPORT void checkContentChanged(const void *handle) {
     }
 }
 */
+
+@interface MMKVDummy : NSObject
+@end
+
+@implementation MMKVDummy
+@end
