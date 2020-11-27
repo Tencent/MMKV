@@ -18,9 +18,9 @@
  * limitations under the License.
  */
 
-import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:mmkv/mmkv.dart';
 
 void main() async {
