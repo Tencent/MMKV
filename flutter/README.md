@@ -30,7 +30,7 @@ dependencies:
   ...
 ```
 
-If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.7.  
+If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.6.  
 
 #### iOS  
 To avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to **change the plugin name 'mmkv' to 'mmkvflutter'**.  
