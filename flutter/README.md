@@ -73,6 +73,8 @@ fix_mmkv_plugin_name(flutter_application_path)
 
 ```
 
+**Note**: You can find the [script](https://github.com/Tencent/MMKV/blob/master/flutter/tool/fix_mmkv_plugin_name.rb) inside mmkv plugin under path `tool/fix_mmkv_plugin_name.rb`.
+
 #### Android  
 If you previously use `com.tencent.mmkv` in your Android App, you should move to `com.tencent.mmkv-static`.
 And if your App depends on any 3rd SDK that embeds `com.tencent.mmkv`, you can add this lines to your `build.gradle` to avoid conflict:
