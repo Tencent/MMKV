@@ -18,9 +18,8 @@
  * limitations under the License.
  */
 
-package com.example.mmkv_example;
+package com.tencent.mmkv_example;
 
 import io.flutter.embedding.android.FlutterActivity;
 
-public class MainActivity extends FlutterActivity {
-}
+public class MainActivity extends FlutterActivity {}

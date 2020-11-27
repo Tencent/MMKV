@@ -1,5 +1,17 @@
 # MMKV Change Log
 
+## v1.2.6 / 2020-11-27
+### Changes for All platforms
+* Fix a file corruption when calling `reKey()` after `removeKeys()` has just been called.
+
+### Android
+* Fix compile error when `MMKV_DISABLE_CRYPT` is set.
+* Add a preprocess directive `MMKV_DISABLE_FLUTTER` to disable flutter plugin features. If you integrate MMKV by source code, and if you are pretty sure the flutter plugin is not needed, you can turn that off to save some binary size.
+
+### Flutter
+Add MMKV support for **Flutter** on iOS & Android platform.  Most things actually work!  
+Check out the [wiki](https://github.com/Tencent/MMKV/wiki/flutter_setup) for more info.
+
 ## v1.2.5 / 2020-11-13
 This is a pre-version for Flutter. The official Flutter plugin of MMKV will come out soon. Stay Tune!
 

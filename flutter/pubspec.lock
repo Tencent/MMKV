@@ -51,7 +51,7 @@ packages:
     source: hosted
     version: "1.2.0-nullsafety.1"
   ffi:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: ffi
       url: "https://pub.dartlang.org"

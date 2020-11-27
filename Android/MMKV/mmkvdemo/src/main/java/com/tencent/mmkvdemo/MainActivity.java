@@ -199,6 +199,12 @@ public class MainActivity extends AppCompatActivity {
             Log.e("MMKV", "fail to decodeParcelable of key:parcel");
         }
 
+        kv.encode("null string", "some string");
+        Log.i("MMKV", "string before set null: " + kv.decodeString("null string"));
+        kv.encode("null string", (String) null);
+        Log.i("MMKV", "string after set null: " + kv.decodeString("null string")
+                          + ", containsKey:" + kv.contains("null string"));
+
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
         Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
         Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
@@ -206,12 +212,6 @@ public class MainActivity extends AppCompatActivity {
         kv.removeValueForKey("bool");
         Log.i("MMKV", "bool: " + kv.decodeBool("bool"));
         kv.removeValuesForKeys(new String[] {"int", "long"});
-
-        kv.encode("null string", "some string");
-        Log.i("MMKV", "string before set null: " + kv.decodeString("null string"));
-        kv.encode("null string", (String) null);
-        Log.i("MMKV", "string after set null: " + kv.decodeString("null string")
-                          + ", containsKey:" + kv.contains("null string"));
 
         //kv.sync();
         //kv.async();
