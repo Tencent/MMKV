@@ -50,8 +50,7 @@ class _MyAppState extends State<MyApp> {
     // setState to update our non-existent appearance.
     if (!mounted) return;
 
-    setState(() {
-    });
+    setState(() {});
   }
 
   @override
@@ -63,14 +62,18 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Center(
             child: Column(children: <Widget>[
-              Text('MMKV Version: ${MMKV.version}\n'),
-              TextButton(onPressed:() {
+          Text('MMKV Version: ${MMKV.version}\n'),
+          TextButton(
+              onPressed: () {
                 funtionalTest();
-              }, child: Text('functional test', style: TextStyle(fontSize: 18))),
-              TextButton(onPressed:() {
+              },
+              child: Text('Functional Test', style: TextStyle(fontSize: 18))),
+          TextButton(
+              onPressed: () {
                 testReKey();
-              }, child: Text('encryption test', style: TextStyle(fontSize: 18))),
-            ])),
+              },
+              child: Text('Encryption Test', style: TextStyle(fontSize: 18))),
+        ])),
       ),
     );
   }
@@ -125,7 +128,8 @@ class _MyAppState extends State<MyApp> {
     // mmkv.close();
   }
 
-  MMKV testMMKV(String mmapID, String cryptKey, bool decodeOnly, String rootPath) {
+  MMKV testMMKV(
+      String mmapID, String cryptKey, bool decodeOnly, String rootPath) {
     final mmkv = MMKV(mmapID, cryptKey: cryptKey, rootDir: rootPath);
     if (mmkv == null) {
       return null;

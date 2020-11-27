@@ -519,7 +519,7 @@ class MMKV {
 
   static String get version {
     return _pointer2String(_version());
-}
+  }
 
   /// Trim the file size to minimal.
   ///
