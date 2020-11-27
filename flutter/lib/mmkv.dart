@@ -517,6 +517,10 @@ class MMKV {
     return _pageSize();
   }
 
+  static String get version {
+    return _pointer2String(_version());
+}
+
   /// Trim the file size to minimal.
   ///
   /// * MMKV's size won't reduce after deleting key-values.
@@ -808,6 +812,10 @@ final void Function(Pointer<Void>) _clearMemoryCache = _nativeLib
 
 final int Function() _pageSize = _nativeLib
     .lookup<NativeFunction<Int32 Function()>>("pageSize")
+    .asFunction();
+
+final Pointer<Utf8> Function() _version = _nativeLib
+    .lookup<NativeFunction<Pointer<Utf8> Function()>>("version")
     .asFunction();
 
 final void Function(Pointer<Void>) _trim = _nativeLib

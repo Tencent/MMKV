@@ -364,6 +364,10 @@ MMKV_EXPORT int32_t pageSize() {
     return static_cast<int32_t>([MMKV pageSize]);
 }
 
+MMKV_EXPORT const char *version() {
+    return [MMKV version].UTF8String;
+}
+
 MMKV_EXPORT void trim(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
