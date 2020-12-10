@@ -18,3 +18,50 @@
  * limitations under the License.
  */
 
+#ifdef __cplusplus
+#include <stdint>
+extern "C" {
+#else
+#include <stdint.h>
+#include <stdbool.h>
+#endif
+
+void mmkvInitialize(const char *rootDir, int32_t logLevel);
+void onExit();
+void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath);
+void *getDefaultMMKV(int32_t mode, const char *cryptKey);
+const char *mmapID(void *handle);
+bool encodeBool(void *handle, const char *oKey, bool value);
+bool decodeBool(void *handle, const char *oKey, bool defaultValue);
+bool encodeInt32(void *handle, const char *oKey, int32_t value);
+int32_t decodeInt32(void *handle, const char *oKey, int32_t defaultValue);
+bool encodeInt64(void *handle, const char *oKey, int64_t value);
+int64_t decodeInt64(void *handle, const char *oKey, int64_t defaultValue);
+bool encodeDouble(void *handle, const char *oKey, double value);
+double decodeDouble(void *handle, const char *oKey, double defaultValue);
+bool encodeBytes(void *handle, const char *oKey, void *oValue, uint64_t length);
+void *decodeBytes(void *handle, const char *oKey, uint64_t *lengthPtr);
+bool reKey(void *handle, char *oKey, uint64_t length);
+void *cryptKey(void *handle, uint64_t *lengthPtr);
+void checkReSetCryptKey(void *handle, char *oKey, uint64_t length);
+uint32_t valueSize(void *handle, char *oKey, bool actualSize);
+int32_t writeValueToNB(void *handle, char *oKey, void *pointer, uint32_t size);
+uint64_t allKeys(void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr);
+bool containsKey(void *handle, char *oKey);
+uint64_t count(void *handle);
+uint64_t totalSize(void *handle);
+uint64_t actualSize(void *handle);
+void removeValueForKey(void *handle, char *oKey);
+void removeValuesForKeys(void *handle, char **keyArray, uint32_t *sizeArray, uint64_t count);
+void clearAll(void *handle);
+void mmkvSync(void *handle, bool sync);
+void clearMemoryCache(void *handle);
+int32_t pageSize();
+const char *version();
+void trim(void *handle);
+void mmkvClose(void *handle);
+
+
+#ifdef __cplusplus
+}
+#endif

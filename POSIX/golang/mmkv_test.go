@@ -22,10 +22,10 @@ package mmkv
 
 import (
     "testing"
-    "regexp"
+//     "regexp"
 )
 
-func TestHelloEmpty(t *testing.T) {
+func TestVersionEmpty(t *testing.T) {
     msg := Version()
     if msg == "" {
         t.Fatalf("Version() == \"\"")

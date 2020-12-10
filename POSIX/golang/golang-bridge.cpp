@@ -18,9 +18,9 @@
  * limitations under the License.
  */
 
-#include "MMKVPredef.h"
+#ifndef CGO
 
-#ifndef MMKV_DISABLE_FLUTTER
+#include "MMKVPredef.h"
 
 #    include "MMKV.h"
 #    include <stdint.h>
@@ -402,8 +402,4 @@ MMKV_EXPORT void mmkvClose(void *handle) {
     }
 }
 
-MMKV_EXPORT void mmkvMemcpy(void *dst, const void *src, uint64_t size) {
-    memcpy(dst, src, size);
-}
-
-#endif // MMKV_DISABLE_FLUTTER
+#endif // CGO
