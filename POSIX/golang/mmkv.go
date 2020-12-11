@@ -62,6 +62,7 @@ type MMKV interface {
     SetFloat32(value float32, key string) bool
     SetFloat64(value float64, key string) bool
     SetString(value string, key string) bool
+    SetBytes(value []byte, key string) bool
 
     GetBool(key string) bool
     GetBoolWithDefault(key string, defaultValue bool) bool
@@ -78,6 +79,7 @@ type MMKV interface {
     GetFloat64(key string) float64
     GetFloat64WithDefault(key string, defaultValue float64) float64
     GetString(key string) string
+    GetBytes(key string) []byte
 /*
     RemoveKey(key string)
     RemoveKeys(keys []string)
@@ -279,6 +281,29 @@ func (kv ctorMMKV) GetString(key string) string {
 
     cValue := C.decodeBytes(unsafe.Pointer(kv), cKey, (*C.uint64_t)(&length))
     value := C.GoString((*C.char)(cValue))
+
+    C.free(unsafe.Pointer(cKey))
+    C.free(unsafe.Pointer(cValue))
+    return value
+}
+
+func (kv ctorMMKV) SetBytes(value []byte, key string) bool {
+    cKey := C.CString(key)
+    cValue := C.CBytes(value)
+
+    ret := C.encodeBytes(unsafe.Pointer(kv), cKey, unsafe.Pointer(cValue), C.uint64_t(len(value)));
+
+    C.free(unsafe.Pointer(cKey))
+    C.free(unsafe.Pointer(cValue))
+    return bool(ret)
+}
+
+func (kv ctorMMKV) GetBytes(key string) []byte {
+    cKey := C.CString(key)
+    var length uint64
+
+    cValue := C.decodeBytes(unsafe.Pointer(kv), cKey, (*C.uint64_t)(&length))
+    value := C.GoBytes(unsafe.Pointer(cValue), C.int(length))
 
     C.free(unsafe.Pointer(cKey))
     C.free(unsafe.Pointer(cValue))
