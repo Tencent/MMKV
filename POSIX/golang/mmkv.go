@@ -22,10 +22,36 @@ package mmkv
 
 // #cgo CXXFLAGS: -D CGO -D FORCE_POSIX -I ${SRCDIR}/../../Core -std=c++17
 // #cgo LDFLAGS: -L. -lmmkv -L./Core -lcore -lz -lpthread
-// #include "golang-bridge.h"
-// #include <stdlib.h>
+/*
+#include "golang-bridge.h"
+#include <stdlib.h>
+
+typedef void* voidptr_t;
+
+static void setStringArray(char **array, char *str, size_t n) {
+    array[n] = str;
+}
+
+static char *getStringArray(char **array, size_t n) {
+    return array[n];
+}
+
+static void setSizeArray(uint32_t *array, uint32_t value, size_t n) {
+    array[n] = value;
+}
+
+static uint32_t getSizeArray(uint32_t *array, size_t n) {
+    return array[n];
+}
+
+static void freeStringArray(char **a, size_t size) {
+    size_t i;
+    for (i = 0; i < size; i++) {
+        free(a[i]);
+    }
+}
+*/
 import "C"
-// import "fmt"
 import "unsafe"
 
 const (
@@ -80,26 +106,26 @@ type MMKV interface {
     GetFloat64WithDefault(key string, defaultValue float64) float64
     GetString(key string) string
     GetBytes(key string) []byte
-/*
+
     RemoveKey(key string)
     RemoveKeys(keys []string)
     ClearAll()
 
     Count() uint64
-    AllKeys() []string*/
+    AllKeys() []string
     Contains(key string) bool
     TotalSize() uint64
     ActualSize() uint64
-/*
+
     MMAP_ID() string
 
     Sync(sync bool)
+    ClearMemoryCache()
     Trim()
     Close()
 
     ReKey(newKey string) bool
     CryptKey() string
-    */
 }
 
 // Hello returns a greeting for the named person.
@@ -129,10 +155,47 @@ func PageSize() int32 {
     return int32(C.pageSize())
 }
 
+func DefaultMMKV() MMKV {
+    mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, nil))
+    return MMKV(mmkv)
+}
+
+func DefaultMMKVWithMode(mode int) MMKV {
+    mmkv := ctorMMKV(C.getDefaultMMKV(C.int(mode), nil))
+    return MMKV(mmkv)
+}
+
+func DefaultMMKVWithModeAndCryptKey(mode int, cryptKey string) MMKV {
+    cCryptKey := C.CString(cryptKey)
+    mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, cCryptKey))
+    C.free(unsafe.Pointer(cCryptKey))
+    return MMKV(mmkv)
+}
+
 func MMKVWithID(mmapID string) MMKV {
     cmmapID := C.CString(mmapID)
     mmkv := ctorMMKV(C.getMMKVWithID(cmmapID, MMKV_SINGLE_PROCESS, nil, nil))
     C.free(unsafe.Pointer(cmmapID))
+
+    return MMKV(mmkv)
+}
+
+func MMKVWithIDAndMode(mmapID string, mode int) MMKV {
+    cmmapID := C.CString(mmapID)
+    mmkv := ctorMMKV(C.getMMKVWithID(cmmapID, C.int(mode), nil, nil))
+    C.free(unsafe.Pointer(cmmapID))
+
+    return MMKV(mmkv)
+}
+
+func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string) MMKV {
+    cmmapID := C.CString(mmapID)
+    cCryptKey := C.CString(cryptKey)
+
+    mmkv := ctorMMKV(C.getMMKVWithID(cmmapID, C.int(mode), cCryptKey, nil))
+
+    C.free(unsafe.Pointer(cmmapID))
+    C.free(unsafe.Pointer(cCryptKey))
 
     return MMKV(mmkv)
 }
@@ -310,11 +373,63 @@ func (kv ctorMMKV) GetBytes(key string) []byte {
     return value
 }
 
+func (kv ctorMMKV) RemoveKey(key string) {
+    cKey := C.CString(key)
+    C.removeValueForKey(unsafe.Pointer(kv), cKey);
+    C.free(unsafe.Pointer(cKey))
+}
+
+func (kv ctorMMKV) RemoveKeys(keys []string) {
+    keyArray := (**C.char)(C.calloc(C.size_t(len(keys)), C.sizeof_voidptr_t))
+    sizeArray := (*C.uint32_t)(C.calloc(C.size_t(len(keys)), C.sizeof_voidptr_t))
+
+    for index, key := range keys {
+        C.setStringArray(keyArray, C.CString(key), C.size_t(index))
+        C.setSizeArray(sizeArray, C.uint32_t(len(key)), C.size_t(index))
+    }
+    C.removeValuesForKeys(unsafe.Pointer(kv), keyArray, sizeArray, C.uint64_t(len(keys)))
+
+    C.freeStringArray(keyArray, C.size_t(len(keys)))
+    C.free(unsafe.Pointer(keyArray))
+    C.free(unsafe.Pointer(sizeArray))
+}
+
+func (kv ctorMMKV) Count() uint64 {
+    return uint64(C.count(unsafe.Pointer(kv)))
+}
+
+func (kv ctorMMKV) AllKeys() []string {
+    var keyArray **C.char
+    var sizeArray *C.uint32_t
+
+    cCount := C.allKeys(unsafe.Pointer(kv), &keyArray, &sizeArray)
+    count := uint64(cCount)
+    if count == 0 {
+        return []string{}
+    }
+
+    result := make([]string, count)
+    for index := uint64(0); index < count; index++ {
+        cStr := C.getStringArray(keyArray, C.size_t(index))
+        cLen := C.getSizeArray(sizeArray, C.size_t(index))
+        result[index] = C.GoStringN(cStr, C.int(cLen))
+    }
+
+    C.freeStringArray(keyArray, C.size_t(cCount))
+    C.free(unsafe.Pointer(keyArray))
+    C.free(unsafe.Pointer(sizeArray))
+    return result
+}
+
 func (kv ctorMMKV) Contains(key string) bool {
     cKey := C.CString(key)
     ret := C.containsKey(unsafe.Pointer(kv), cKey);
     C.free(unsafe.Pointer(cKey))
     return bool(ret)
+}
+
+func (kv ctorMMKV) ClearAll() {
+    C.clearAll(unsafe.Pointer(kv))
 }
 
 func (kv ctorMMKV) TotalSize() uint64 {
@@ -323,4 +438,43 @@ func (kv ctorMMKV) TotalSize() uint64 {
 
 func (kv ctorMMKV) ActualSize() uint64 {
     return uint64(C.actualSize(unsafe.Pointer(kv)))
+}
+
+func (kv ctorMMKV) MMAP_ID() string {
+    cStr := C.mmapID(unsafe.Pointer(kv))
+    return C.GoString(cStr)
+}
+
+func (kv ctorMMKV) Sync(sync bool) {
+    C.mmkvSync(unsafe.Pointer(kv), C.bool(sync))
+}
+
+func (kv ctorMMKV) ClearMemoryCache() {
+    C.clearMemoryCache(unsafe.Pointer(kv))
+}
+
+func (kv ctorMMKV) Trim() {
+    C.trim(unsafe.Pointer(kv))
+}
+
+func (kv ctorMMKV) Close() {
+    C.mmkvClose(unsafe.Pointer(kv))
+}
+
+func (kv ctorMMKV) ReKey(newKey string) bool {
+    cKey := C.CString(newKey)
+    ret := C.reKey(unsafe.Pointer(kv), cKey, C.uint32_t(len(newKey)))
+    C.free(unsafe.Pointer(cKey))
+    return bool(ret)
+}
+
+func (kv ctorMMKV) CryptKey() string {
+    var cLen C.uint32_t
+    cStr := C.cryptKey(unsafe.Pointer(kv), &cLen)
+    if cStr == nil || cLen == 0 {
+        return ""
+    }
+    result := C.GoStringN((*C.char)(cStr), C.int(cLen))
+    C.free(unsafe.Pointer(cStr))
+    return result
 }

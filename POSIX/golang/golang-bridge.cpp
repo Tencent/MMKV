@@ -20,7 +20,7 @@
 
 #ifndef CGO
 
-#include "MMKVPredef.h"
+#    include "MMKVPredef.h"
 
 #    include "MMKV.h"
 #    include <stdint.h>
@@ -265,7 +265,7 @@ MMKV_EXPORT void *decodeBytes(void *handle, const char *oKey, uint64_t *lengthPt
 
 #    ifndef MMKV_DISABLE_CRYPT
 
-MMKV_EXPORT bool reKey(void *handle, char *oKey, uint64_t length) {
+MMKV_EXPORT bool reKey(void *handle, char *oKey, uint32_t length) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
         if (oKey && length > 0) {
@@ -278,7 +278,7 @@ MMKV_EXPORT bool reKey(void *handle, char *oKey, uint64_t length) {
     return false;
 }
 
-MMKV_EXPORT void *cryptKey(void *handle, uint64_t *lengthPtr) {
+MMKV_EXPORT void *cryptKey(void *handle, uint32_t *lengthPtr) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && lengthPtr) {
         auto cryptKey = kv->cryptKey();
@@ -307,25 +307,6 @@ MMKV_EXPORT void checkReSetCryptKey(void *handle, char *oKey, uint64_t length) {
 }
 
 #    endif // MMKV_DISABLE_CRYPT
-
-MMKV_EXPORT uint32_t valueSize(void *handle, char *oKey, bool actualSize) {
-    MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        string key(oKey);
-        auto ret = kv->getValueSize(key, actualSize);
-        return static_cast<uint32_t>(ret);
-    }
-    return 0;
-}
-
-MMKV_EXPORT int32_t writeValueToNB(void *handle, char *oKey, void *pointer, uint32_t size) {
-    MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        string key(oKey);
-        return kv->writeValueToBuffer(key, pointer, size);
-    }
-    return -1;
-}
 
 MMKV_EXPORT uint64_t allKeys(void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr) {
     MMKV *kv = static_cast<MMKV *>(handle);

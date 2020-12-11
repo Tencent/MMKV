@@ -19,11 +19,11 @@
  */
 
 #ifdef __cplusplus
-#include <stdint>
+#    include <stdint>
 extern "C" {
 #else
-#include <stdint.h>
-#include <stdbool.h>
+#    include <stdbool.h>
+#    include <stdint.h>
 #endif
 
 void mmkvInitialize(const char *rootDir, int32_t logLevel);
@@ -47,11 +47,9 @@ bool encodeDouble(void *handle, const char *oKey, double value);
 double decodeDouble(void *handle, const char *oKey, double defaultValue);
 bool encodeBytes(void *handle, const char *oKey, void *oValue, uint64_t length);
 void *decodeBytes(void *handle, const char *oKey, uint64_t *lengthPtr);
-bool reKey(void *handle, char *oKey, uint64_t length);
-void *cryptKey(void *handle, uint64_t *lengthPtr);
+bool reKey(void *handle, char *oKey, uint32_t length);
+void *cryptKey(void *handle, uint32_t *lengthPtr);
 void checkReSetCryptKey(void *handle, char *oKey, uint64_t length);
-uint32_t valueSize(void *handle, char *oKey, bool actualSize);
-int32_t writeValueToNB(void *handle, char *oKey, void *pointer, uint32_t size);
 uint64_t allKeys(void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr);
 bool containsKey(void *handle, char *oKey);
 uint64_t count(void *handle);
@@ -66,7 +64,6 @@ int32_t pageSize();
 const char *version();
 void trim(void *handle);
 void mmkvClose(void *handle);
-
 
 #ifdef __cplusplus
 }
