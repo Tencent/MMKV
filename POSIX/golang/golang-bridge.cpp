@@ -134,6 +134,24 @@ MMKV_EXPORT int32_t decodeInt32(void *handle, const char *oKey, int32_t defaultV
     return defaultValue;
 }
 
+MMKV_EXPORT bool encodeUInt32(void *handle, const char *oKey, uint32_t value) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->set(value, key);
+    }
+    return false;
+}
+
+MMKV_EXPORT uint32_t decodeUInt32(void *handle, const char *oKey, uint32_t defaultValue) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->getUInt32(key, defaultValue);
+    }
+    return defaultValue;
+}
+
 MMKV_EXPORT bool encodeInt64(void *handle, const char *oKey, int64_t value) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -148,6 +166,42 @@ MMKV_EXPORT int64_t decodeInt64(void *handle, const char *oKey, int64_t defaultV
     if (kv && oKey) {
         auto key = string(oKey);
         return kv->getInt64(key, defaultValue);
+    }
+    return defaultValue;
+}
+
+MMKV_EXPORT bool encodeUInt64(void *handle, const char *oKey, uint64_t value) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->set(value, key);
+    }
+    return false;
+}
+
+MMKV_EXPORT uint64_t decodeUInt64(void *handle, const char *oKey, uint64_t defaultValue) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->getUInt64(key, defaultValue);
+    }
+    return defaultValue;
+}
+
+MMKV_EXPORT bool encodeFloat(void *handle, const char *oKey, float value) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->set((float) value, key);
+    }
+    return false;
+}
+
+MMKV_EXPORT float decodeFloat(void *handle, const char *oKey, float defaultValue) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->getFloat(key, defaultValue);
     }
     return defaultValue;
 }
