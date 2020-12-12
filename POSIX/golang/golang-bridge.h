@@ -19,12 +19,17 @@
  */
 
 #ifdef __cplusplus
-#    include <stdint>
+#    include <cstdint>
 extern "C" {
 #else
 #    include <stdbool.h>
 #    include <stdint.h>
 #endif
+
+typedef struct {
+    const char *ptr;
+    size_t length;
+} GoStringWrap;
 
 void mmkvInitialize(const char *rootDir, int32_t logLevel);
 void onExit();
@@ -33,6 +38,10 @@ void *getDefaultMMKV(int32_t mode, const char *cryptKey);
 const char *mmapID(void *handle);
 bool encodeBool(void *handle, const char *oKey, bool value);
 bool decodeBool(void *handle, const char *oKey, bool defaultValue);
+
+bool encodeBool2(void *handle, GoStringWrap oKey, bool value);
+bool decodeBool2(void *handle, GoStringWrap oKey, bool defaultValue);
+
 bool encodeInt32(void *handle, const char *oKey, int32_t value);
 int32_t decodeInt32(void *handle, const char *oKey, int32_t defaultValue);
 bool encodeUInt32(void *handle, const char *oKey, uint32_t value);

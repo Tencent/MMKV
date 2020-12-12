@@ -25,6 +25,7 @@
 #    include "MMKV.h"
 #    include <stdint.h>
 #    include <string>
+#include "golang-bridge.h"
 
 using namespace mmkv;
 using namespace std;
@@ -111,6 +112,24 @@ MMKV_EXPORT bool decodeBool(void *handle, const char *oKey, bool defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && oKey) {
         auto key = string(oKey);
+        return kv->getBool(key, defaultValue);
+    }
+    return defaultValue;
+}
+
+MMKV_EXPORT bool encodeBool2(void *handle, GoStringWrap oKey, bool value) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
+        return kv->set((bool) value, key);
+    }
+    return false;
+}
+
+MMKV_EXPORT bool decodeBool2(void *handle, GoStringWrap oKey, bool defaultValue) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->getBool(key, defaultValue);
     }
     return defaultValue;
