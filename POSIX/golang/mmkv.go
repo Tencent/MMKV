@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+// MMKV is a cross-platform key-value storage framework developed by WeChat.
 package mmkv
 
 // #cgo CXXFLAGS: -D CGO -D FORCE_POSIX -I ${SRCDIR}/../../Core -std=c++17
@@ -79,50 +80,92 @@ type ctorMMKV uintptr
 
 type MMKV interface {
 	SetBool(value bool, key string) bool
-	SetInt32(value int32, key string) bool
-	SetInt64(value int64, key string) bool
-	SetUInt32(value uint32, key string) bool
-	SetUInt64(value uint64, key string) bool
-	SetFloat32(value float32, key string) bool
-	SetFloat64(value float64, key string) bool
-	SetString(value string, key string) bool
-	SetBytes(value []byte, key string) bool
-
 	GetBool(key string) bool
 	GetBoolWithDefault(key string, defaultValue bool) bool
+
+	SetInt32(value int32, key string) bool
 	GetInt32(key string) int32
 	GetInt32WithDefault(key string, defaultValue int32) int32
-	GetUInt32(key string) uint32
-	GetUInt32WithDefault(key string, defaultValue uint32) uint32
+
+	SetInt64(value int64, key string) bool
 	GetInt64(key string) int64
 	GetInt64WithDefault(key string, defaultValue int64) int64
+
+	SetUInt32(value uint32, key string) bool
+	GetUInt32(key string) uint32
+	GetUInt32WithDefault(key string, defaultValue uint32) uint32
+
+	SetUInt64(value uint64, key string) bool
 	GetUInt64(key string) uint64
 	GetUInt64WithDefault(key string, defaultValue uint64) uint64
+
+	SetFloat32(value float32, key string) bool
 	GetFloat32(key string) float32
 	GetFloat32WithDefault(key string, defaultValue float32) float32
+
+	SetFloat64(value float64, key string) bool
 	GetFloat64(key string) float64
 	GetFloat64WithDefault(key string, defaultValue float64) float64
+
+	// string value should be utf-8 encoded
+	SetString(value string, key string) bool
 	GetString(key string) string
+
+	SetBytes(value []byte, key string) bool
 	GetBytes(key string) []byte
 
 	RemoveKey(key string)
 	RemoveKeys(keys []string)
+
+	// clear all key-values
 	ClearAll()
 
+	// return count of keys
 	Count() uint64
+
 	AllKeys() []string
 	Contains(key string) bool
+
+	// total size of the file
 	TotalSize() uint64
+
+	// actual used size of the file
 	ActualSize() uint64
 
+	// the mmapID of the instance
 	MMAP_ID() string
 
+	/* Synchronize memory to file. You don't need to call this, really, I mean it. Unless you worry about running out of battery.
+	 * Pass true to perform synchronous write.
+	 * Pass false to perform asynchronous write, return immediately.
+	 */
 	Sync(sync bool)
+	// Clear all caches (on memory warning).
 	ClearMemoryCache()
+
+	/* Trim the file size to minimal.
+	 * MMKV's size won't reduce after deleting key-values.
+	 * Call this method after lots of deleting if you care about disk usage.
+	 * Note that clearAll() has the similar effect.
+	 */
 	Trim()
+
+	// Close the instance when it's no longer needed in the near future.
+	// Any subsequent call to the instance is undefined behavior.
 	Close()
 
+	/* Change encryption key for the MMKV instance.
+	 * The cryptKey is 16 bytes limited.
+	 * You can transfer a plain-text MMKV into encrypted by setting an non-null, non-empty cryptKey.
+	 * Or vice versa by passing cryptKey with null. See also checkReSetCryptKey().
+	 */
 	ReKey(newKey string) bool
+
+	// Just reset the cryptKey (will not encrypt or decrypt anything).
+	// Usually you should call this method after other process reKey() the multi-process mmkv.
+	CheckReSetCryptKey(key string)
+
+	// See also reKey().
 	CryptKey() string
 }
 
@@ -387,6 +430,11 @@ func (kv ctorMMKV) Close() {
 
 func (kv ctorMMKV) ReKey(newKey string) bool {
 	ret := C.reKey(unsafe.Pointer(kv), C.wrapGoString(newKey))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) CheckReSetCryptKey(key string) {
+	ret := C.checkReSetCryptKey(unsafe.Pointer(kv), C.wrapGoString(key))
 	return bool(ret)
 }
 
