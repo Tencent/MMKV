@@ -21,13 +21,13 @@
 package mmkv
 
 import (
-    "testing"
-//     "regexp"
+	"testing"
+	//     "regexp"
 )
 
 func TestVersionEmpty(t *testing.T) {
-    msg := Version()
-    if msg == "" {
-        t.Fatalf("Version() == \"\"")
-    }
+	msg := Version()
+	if msg == "" {
+		t.Fatalf("Version() == \"\"")
+	}
 }
