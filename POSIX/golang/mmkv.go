@@ -169,56 +169,73 @@ type MMKV interface {
 	CryptKey() string
 }
 
-// Hello returns a greeting for the named person.
+// return the version of MMKV
 func Version() string {
 	version := C.version()
 	goStr := C.GoString(version)
 	return goStr
 }
 
+/* MMKV must be initialized before any usage.
+ * Generally speaking you should do this inside main():
+func main() {
+	mmkv.InitializeMMKV("/path/to/my/working/dir")
+	// other logic
+}
+*/
 func InitializeMMKV(rootDir string) {
 	C.mmkvInitialize(C.wrapGoString(rootDir), MMKVLogInfo)
 }
 
+// Same as the function InitializeMMKV() above, except that you can customize MMKV's log level by passing logLevel.
+// You can even turnoff logging by passing MMKVLogNone, which we don't recommend doing.
 func InitializeMMKVWithLogLevel(rootDir string, logLevel int) {
 	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel))
 }
 
+// Call before App exists, it's just fine not calling it on most case (except when the device shutdown suddenly).
 func OnExit() {
 	C.onExit()
 }
 
+// return the page size of memory
 func PageSize() int32 {
 	return int32(C.pageSize())
 }
 
+// a generic purpose instance in single-process mode.
 func DefaultMMKV() MMKV {
 	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.GoStringWrapNil()))
 	return MMKV(mmkv)
 }
 
+// a generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithMode(mode int) MMKV {
 	mmkv := ctorMMKV(C.getDefaultMMKV(C.int(mode), C.GoStringWrapNil()))
 	return MMKV(mmkv)
 }
 
+// an encrypted generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithModeAndCryptKey(mode int, cryptKey string) MMKV {
 	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.wrapGoString(cryptKey)))
 	return MMKV(mmkv)
 }
 
+// an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithID(mmapID string) MMKV {
 	cStrNull := C.GoStringWrapNil()
 	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull))
 	return MMKV(mmkv)
 }
 
+// an instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndMode(mmapID string, mode int) MMKV {
 	cStrNull := C.GoStringWrapNil()
 	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, cStrNull))
 	return MMKV(mmkv)
 }
 
+// an encrypted instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string) MMKV {
 	cStrNull := C.GoStringWrapNil()
 	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), cStrNull))
