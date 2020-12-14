@@ -41,10 +41,10 @@ func functionalTest() {
 	kv.SetFloat64(math.MaxFloat64, "float64")
 	fmt.Println("float64 =", kv.GetFloat64("float64"))
 
-	kv.SetString("Hello world, from MMKV!", "string")
+	kv.SetString("Hello world, 你好 from MMKV!", "string")
 	fmt.Println("string =", kv.GetString("string"))
 
-	kv.SetBytes([]byte("Hello world, from MMKV with bytes!"), "bytes")
+	kv.SetBytes([]byte("Hello world, 你好 from MMKV 以及 bytes!"), "bytes")
 	fmt.Println("bytes =", string(kv.GetBytes("bytes")))
 
 	fmt.Println("contains \"bool\"? ", kv.Contains("bool"))
@@ -102,12 +102,12 @@ func testMMKV(mmapID string, cryptKey string, decodeOnly bool) mmkv.MMKV {
 	fmt.Println("float64 =", kv.GetFloat64("float64"))
 
 	if !decodeOnly {
-		kv.SetString("Hello world, from MMKV!", "string")
+		kv.SetString("Hello world, 你好 from MMKV!", "string")
 	}
 	fmt.Println("string =", kv.GetString("string"))
 
 	if !decodeOnly {
-		kv.SetBytes([]byte("Hello world, from MMKV with bytes!"), "bytes")
+		kv.SetBytes([]byte("Hello world, 你好 from MMKV 以及 bytes!"), "bytes")
 	}
 	fmt.Println("bytes =", string(kv.GetBytes("bytes")))
 

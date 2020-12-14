@@ -28,31 +28,24 @@ package mmkv
 
 typedef void* voidptr_t;
 
-GoStringWrap wrapGoString(_GoString_ str) {
-    GoStringWrap wrap = { _GoStringPtr(str), _GoStringLen(str) };
+static GoStringWrap_t wrapGoString(_GoString_ str) {
+    GoStringWrap_t wrap = { _GoStringPtr(str), _GoStringLen(str) };
     return wrap;
 }
 
-static void setStringArray(char **array, char *str, size_t n) {
-    array[n] = str;
+static GoStringWrap_t GoStringWrapNil() {
+	GoStringWrap_t result = { 0, 0 };
+	return result;
 }
 
-static char *getStringArray(char **array, size_t n) {
-    return array[n];
+static GoStringWrap_t wrapGoByteSlice(const void *ptr, size_t len) {
+    GoStringWrap_t wrap = { ptr, len };
+    return wrap;
 }
 
-static void setSizeArray(uint32_t *array, uint32_t value, size_t n) {
-    array[n] = value;
-}
-
-static uint32_t getSizeArray(uint32_t *array, size_t n) {
-    return array[n];
-}
-
-static void freeStringArray(char **a, size_t size) {
-    size_t i;
-    for (i = 0; i < size; i++) {
-        free(a[i]);
+static void freeStringArray(GoStringWrap_t *a, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        free((void*) a[i].ptr);
     }
 }
 */
@@ -141,15 +134,11 @@ func Version() string {
 }
 
 func InitializeMMKV(rootDir string) {
-	cRootDir := C.CString(rootDir)
-	C.mmkvInitialize(cRootDir, MMKVLogInfo)
-	C.free(unsafe.Pointer(cRootDir))
+	C.mmkvInitialize(C.wrapGoString(rootDir), MMKVLogInfo)
 }
 
 func InitializeMMKVWithLogLevel(rootDir string, logLevel int) {
-	cRootDir := C.CString(rootDir)
-	C.mmkvInitialize(cRootDir, C.int32_t(logLevel))
-	C.free(unsafe.Pointer(cRootDir))
+	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel))
 }
 
 func OnExit() {
@@ -161,57 +150,40 @@ func PageSize() int32 {
 }
 
 func DefaultMMKV() MMKV {
-	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, nil))
+	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.GoStringWrapNil()))
 	return MMKV(mmkv)
 }
 
 func DefaultMMKVWithMode(mode int) MMKV {
-	mmkv := ctorMMKV(C.getDefaultMMKV(C.int(mode), nil))
+	mmkv := ctorMMKV(C.getDefaultMMKV(C.int(mode), C.GoStringWrapNil()))
 	return MMKV(mmkv)
 }
 
 func DefaultMMKVWithModeAndCryptKey(mode int, cryptKey string) MMKV {
-	cCryptKey := C.CString(cryptKey)
-	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, cCryptKey))
-	C.free(unsafe.Pointer(cCryptKey))
+	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.wrapGoString(cryptKey)))
 	return MMKV(mmkv)
 }
 
 func MMKVWithID(mmapID string) MMKV {
-	cmmapID := C.CString(mmapID)
-	mmkv := ctorMMKV(C.getMMKVWithID(cmmapID, MMKV_SINGLE_PROCESS, nil, nil))
-	C.free(unsafe.Pointer(cmmapID))
-
+	cStrNull := C.GoStringWrapNil()
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull))
 	return MMKV(mmkv)
 }
 
 func MMKVWithIDAndMode(mmapID string, mode int) MMKV {
-	cmmapID := C.CString(mmapID)
-	mmkv := ctorMMKV(C.getMMKVWithID(cmmapID, C.int(mode), nil, nil))
-	C.free(unsafe.Pointer(cmmapID))
-
+	cStrNull := C.GoStringWrapNil()
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, cStrNull))
 	return MMKV(mmkv)
 }
 
 func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string) MMKV {
-	cmmapID := C.CString(mmapID)
-	cCryptKey := C.CString(cryptKey)
-
-	mmkv := ctorMMKV(C.getMMKVWithID(cmmapID, C.int(mode), cCryptKey, nil))
-
-	C.free(unsafe.Pointer(cmmapID))
-	C.free(unsafe.Pointer(cCryptKey))
-
+	cStrNull := C.GoStringWrapNil()
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), cStrNull))
 	return MMKV(mmkv)
 }
 
-// TODO: use _GoString_ to avoid string copying
 func (kv ctorMMKV) SetBool(value bool, key string) bool {
-	//cKey := C.CString(key)
-	//ret := C.encodeBool(unsafe.Pointer(kv), cKey, C.bool(value))
-	//C.free(unsafe.Pointer(cKey))
-	cKey := C.wrapGoString(key)
-	ret := C.encodeBool2(unsafe.Pointer(kv), cKey, C.bool(value))
+	ret := C.encodeBool(unsafe.Pointer(kv), C.wrapGoString(key), C.bool(value))
 	return bool(ret)
 }
 
@@ -220,18 +192,12 @@ func (kv ctorMMKV) GetBool(key string) bool {
 }
 
 func (kv ctorMMKV) GetBoolWithDefault(key string, defaultValue bool) bool {
-	//cKey := C.CString(key)
-	//value := C.decodeBool(unsafe.Pointer(kv), cKey, C.bool(defaultValue))
-	//C.free(unsafe.Pointer(cKey))
-	cKey := C.wrapGoString(key)
-	value := C.decodeBool2(unsafe.Pointer(kv), cKey, C.bool(defaultValue))
+	value := C.decodeBool(unsafe.Pointer(kv), C.wrapGoString(key), C.bool(defaultValue))
 	return bool(value)
 }
 
 func (kv ctorMMKV) SetInt32(value int32, key string) bool {
-	cKey := C.CString(key)
-	ret := C.encodeInt32(unsafe.Pointer(kv), cKey, C.int32_t(value))
-	C.free(unsafe.Pointer(cKey))
+	ret := C.encodeInt32(unsafe.Pointer(kv), C.wrapGoString(key), C.int32_t(value))
 	return bool(ret)
 }
 
@@ -240,16 +206,12 @@ func (kv ctorMMKV) GetInt32(key string) int32 {
 }
 
 func (kv ctorMMKV) GetInt32WithDefault(key string, defaultValue int32) int32 {
-	cKey := C.CString(key)
-	value := C.decodeInt32(unsafe.Pointer(kv), cKey, C.int32_t(defaultValue))
-	C.free(unsafe.Pointer(cKey))
+	value := C.decodeInt32(unsafe.Pointer(kv), C.wrapGoString(key), C.int32_t(defaultValue))
 	return int32(value)
 }
 
 func (kv ctorMMKV) SetUInt32(value uint32, key string) bool {
-	cKey := C.CString(key)
-	ret := C.encodeUInt32(unsafe.Pointer(kv), cKey, C.uint32_t(value))
-	C.free(unsafe.Pointer(cKey))
+	ret := C.encodeUInt32(unsafe.Pointer(kv), C.wrapGoString(key), C.uint32_t(value))
 	return bool(ret)
 }
 
@@ -258,16 +220,12 @@ func (kv ctorMMKV) GetUInt32(key string) uint32 {
 }
 
 func (kv ctorMMKV) GetUInt32WithDefault(key string, defaultValue uint32) uint32 {
-	cKey := C.CString(key)
-	value := C.decodeUInt32(unsafe.Pointer(kv), cKey, C.uint32_t(defaultValue))
-	C.free(unsafe.Pointer(cKey))
+	value := C.decodeUInt32(unsafe.Pointer(kv), C.wrapGoString(key), C.uint32_t(defaultValue))
 	return uint32(value)
 }
 
 func (kv ctorMMKV) SetInt64(value int64, key string) bool {
-	cKey := C.CString(key)
-	ret := C.encodeInt64(unsafe.Pointer(kv), cKey, C.int64_t(value))
-	C.free(unsafe.Pointer(cKey))
+	ret := C.encodeInt64(unsafe.Pointer(kv), C.wrapGoString(key), C.int64_t(value))
 	return bool(ret)
 }
 
@@ -276,16 +234,12 @@ func (kv ctorMMKV) GetInt64(key string) int64 {
 }
 
 func (kv ctorMMKV) GetInt64WithDefault(key string, defaultValue int64) int64 {
-	cKey := C.CString(key)
-	value := C.decodeInt64(unsafe.Pointer(kv), cKey, C.int64_t(defaultValue))
-	C.free(unsafe.Pointer(cKey))
+	value := C.decodeInt64(unsafe.Pointer(kv), C.wrapGoString(key), C.int64_t(defaultValue))
 	return int64(value)
 }
 
 func (kv ctorMMKV) SetUInt64(value uint64, key string) bool {
-	cKey := C.CString(key)
-	ret := C.encodeUInt64(unsafe.Pointer(kv), cKey, C.uint64_t(value))
-	C.free(unsafe.Pointer(cKey))
+	ret := C.encodeUInt64(unsafe.Pointer(kv), C.wrapGoString(key), C.uint64_t(value))
 	return bool(ret)
 }
 
@@ -294,16 +248,12 @@ func (kv ctorMMKV) GetUInt64(key string) uint64 {
 }
 
 func (kv ctorMMKV) GetUInt64WithDefault(key string, defaultValue uint64) uint64 {
-	cKey := C.CString(key)
-	value := C.decodeUInt64(unsafe.Pointer(kv), cKey, C.uint64_t(defaultValue))
-	C.free(unsafe.Pointer(cKey))
+	value := C.decodeUInt64(unsafe.Pointer(kv), C.wrapGoString(key), C.uint64_t(defaultValue))
 	return uint64(value)
 }
 
 func (kv ctorMMKV) SetFloat32(value float32, key string) bool {
-	cKey := C.CString(key)
-	ret := C.encodeFloat(unsafe.Pointer(kv), cKey, C.float(value))
-	C.free(unsafe.Pointer(cKey))
+	ret := C.encodeFloat(unsafe.Pointer(kv), C.wrapGoString(key), C.float(value))
 	return bool(ret)
 }
 
@@ -312,16 +262,12 @@ func (kv ctorMMKV) GetFloat32(key string) float32 {
 }
 
 func (kv ctorMMKV) GetFloat32WithDefault(key string, defaultValue float32) float32 {
-	cKey := C.CString(key)
-	value := C.decodeFloat(unsafe.Pointer(kv), cKey, C.float(defaultValue))
-	C.free(unsafe.Pointer(cKey))
+	value := C.decodeFloat(unsafe.Pointer(kv), C.wrapGoString(key), C.float(defaultValue))
 	return float32(value)
 }
 
 func (kv ctorMMKV) SetFloat64(value float64, key string) bool {
-	cKey := C.CString(key)
-	ret := C.encodeDouble(unsafe.Pointer(kv), cKey, C.double(value))
-	C.free(unsafe.Pointer(cKey))
+	ret := C.encodeDouble(unsafe.Pointer(kv), C.wrapGoString(key), C.double(value))
 	return bool(ret)
 }
 
@@ -330,77 +276,49 @@ func (kv ctorMMKV) GetFloat64(key string) float64 {
 }
 
 func (kv ctorMMKV) GetFloat64WithDefault(key string, defaultValue float64) float64 {
-	cKey := C.CString(key)
-	value := C.decodeDouble(unsafe.Pointer(kv), cKey, C.double(defaultValue))
-	C.free(unsafe.Pointer(cKey))
+	value := C.decodeDouble(unsafe.Pointer(kv), C.wrapGoString(key), C.double(defaultValue))
 	return float64(value)
 }
 
 func (kv ctorMMKV) SetString(value string, key string) bool {
-	cKey := C.CString(key)
-	cValue := C.CString(value)
-
-	ret := C.encodeBytes(unsafe.Pointer(kv), cKey, unsafe.Pointer(cValue), C.uint64_t(len(value)))
-
-	C.free(unsafe.Pointer(cKey))
-	C.free(unsafe.Pointer(cValue))
+	cValue := C.wrapGoString(value)
+	ret := C.encodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), cValue)
 	return bool(ret)
 }
 
 func (kv ctorMMKV) GetString(key string) string {
-	cKey := C.CString(key)
 	var length uint64
 
-	cValue := C.decodeBytes(unsafe.Pointer(kv), cKey, (*C.uint64_t)(&length))
-	value := C.GoString((*C.char)(cValue))
+	cValue := C.decodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), (*C.uint64_t)(&length))
+	value := C.GoStringN((*C.char)(cValue), C.int(length))
 
-	C.free(unsafe.Pointer(cKey))
 	C.free(unsafe.Pointer(cValue))
 	return value
 }
 
 func (kv ctorMMKV) SetBytes(value []byte, key string) bool {
-	cKey := C.CString(key)
-	cValue := C.CBytes(value)
-
-	ret := C.encodeBytes(unsafe.Pointer(kv), cKey, unsafe.Pointer(cValue), C.uint64_t(len(value)))
-
-	C.free(unsafe.Pointer(cKey))
-	C.free(unsafe.Pointer(cValue))
+	cValue := C.wrapGoByteSlice(unsafe.Pointer(&value[0]), C.size_t(len(value)))
+	ret := C.encodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), cValue)
 	return bool(ret)
 }
 
 func (kv ctorMMKV) GetBytes(key string) []byte {
-	cKey := C.CString(key)
 	var length uint64
 
-	cValue := C.decodeBytes(unsafe.Pointer(kv), cKey, (*C.uint64_t)(&length))
+	cValue := C.decodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), (*C.uint64_t)(&length))
 	value := C.GoBytes(unsafe.Pointer(cValue), C.int(length))
 
-	C.free(unsafe.Pointer(cKey))
 	C.free(unsafe.Pointer(cValue))
 	return value
 }
 
 func (kv ctorMMKV) RemoveKey(key string) {
-	cKey := C.CString(key)
-	C.removeValueForKey(unsafe.Pointer(kv), cKey)
-	C.free(unsafe.Pointer(cKey))
+	C.removeValueForKey(unsafe.Pointer(kv), C.wrapGoString(key))
 }
 
 func (kv ctorMMKV) RemoveKeys(keys []string) {
-	keyArray := (**C.char)(C.calloc(C.size_t(len(keys)), C.sizeof_voidptr_t))
-	sizeArray := (*C.uint32_t)(C.calloc(C.size_t(len(keys)), C.sizeof_voidptr_t))
-
-	for index, key := range keys {
-		C.setStringArray(keyArray, C.CString(key), C.size_t(index))
-		C.setSizeArray(sizeArray, C.uint32_t(len(key)), C.size_t(index))
-	}
-	C.removeValuesForKeys(unsafe.Pointer(kv), keyArray, sizeArray, C.uint64_t(len(keys)))
-
-	C.freeStringArray(keyArray, C.size_t(len(keys)))
-	C.free(unsafe.Pointer(keyArray))
-	C.free(unsafe.Pointer(sizeArray))
+	keyArray := (*C.struct_GoStringWrap)(unsafe.Pointer(&keys[0]))
+	C.removeValuesForKeys(unsafe.Pointer(kv), keyArray, C.uint64_t(len(keys)))
 }
 
 func (kv ctorMMKV) Count() uint64 {
@@ -408,32 +326,29 @@ func (kv ctorMMKV) Count() uint64 {
 }
 
 func (kv ctorMMKV) AllKeys() []string {
-	var keyArray **C.char
-	var sizeArray *C.uint32_t
-
-	cCount := C.allKeys(unsafe.Pointer(kv), &keyArray, &sizeArray)
-	count := uint64(cCount)
-	if count == 0 {
+	count := uint64(0)
+	keyArray := C.allKeys(unsafe.Pointer(kv), (*C.uint64_t)(&count))
+	if keyArray == nil || count == 0 {
 		return []string{}
 	}
+	// turn C array into go slice with offset(0), length(count) & capacity(count)
+	keys := (*[1 << 30]C.struct_GoStringWrap)(unsafe.Pointer(keyArray))[0:count:count]
 
+	// Actually the keys IS a go string slice, but we need to COPY the elements for the caller to use.
+	// Too bad go doesn't has destructors, hence we can't simply TRANSFER ownership of C memory.
 	result := make([]string, count)
 	for index := uint64(0); index < count; index++ {
-		cStr := C.getStringArray(keyArray, C.size_t(index))
-		cLen := C.getSizeArray(sizeArray, C.size_t(index))
-		result[index] = C.GoStringN(cStr, C.int(cLen))
+		key := keys[index]
+		result[index] = C.GoStringN(key.ptr, C.int(key.length))
 	}
 
-	C.freeStringArray(keyArray, C.size_t(cCount))
+	C.freeStringArray(keyArray, C.size_t(count))
 	C.free(unsafe.Pointer(keyArray))
-	C.free(unsafe.Pointer(sizeArray))
 	return result
 }
 
 func (kv ctorMMKV) Contains(key string) bool {
-	cKey := C.CString(key)
-	ret := C.containsKey(unsafe.Pointer(kv), cKey)
-	C.free(unsafe.Pointer(cKey))
+	ret := C.containsKey(unsafe.Pointer(kv), C.wrapGoString(key))
 	return bool(ret)
 }
 
@@ -471,9 +386,7 @@ func (kv ctorMMKV) Close() {
 }
 
 func (kv ctorMMKV) ReKey(newKey string) bool {
-	cKey := C.CString(newKey)
-	ret := C.reKey(unsafe.Pointer(kv), cKey, C.uint32_t(len(newKey)))
-	C.free(unsafe.Pointer(cKey))
+	ret := C.reKey(unsafe.Pointer(kv), C.wrapGoString(newKey))
 	return bool(ret)
 }
 

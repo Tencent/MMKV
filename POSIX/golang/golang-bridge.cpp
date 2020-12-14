@@ -23,39 +23,39 @@
 #    include "MMKVPredef.h"
 
 #    include "MMKV.h"
+#    include "golang-bridge.h"
 #    include <stdint.h>
 #    include <string>
-#include "golang-bridge.h"
 
 using namespace mmkv;
 using namespace std;
 
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
-MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
-    if (!rootDir) {
+MMKV_EXPORT void mmkvInitialize(GoStringWrap rootDir, int32_t logLevel) {
+    if (!rootDir.ptr) {
         return;
     }
-    MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
+    MMKV::initializeMMKV(string(rootDir.ptr, rootDir.length), (MMKVLogLevel) logLevel);
 }
 
 MMKV_EXPORT void onExit() {
     MMKV::onExit();
 }
 
-MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath) {
+MMKV_EXPORT void *getMMKVWithID(GoStringWrap mmapID, int32_t mode, GoStringWrap cryptKey, GoStringWrap rootPath) {
     MMKV *kv = nullptr;
-    if (!mmapID) {
+    if (!mmapID.ptr) {
         return kv;
     }
-    string str = mmapID;
+    auto str = string(mmapID.ptr, mmapID.length);
 
     bool done = false;
-    if (cryptKey) {
-        string crypt = cryptKey;
+    if (cryptKey.ptr) {
+        auto crypt = string(cryptKey.ptr, cryptKey.length);
         if (crypt.length() > 0) {
-            if (rootPath) {
-                string path = rootPath;
+            if (rootPath.ptr) {
+                auto path = string(rootPath.ptr, rootPath.length);
                 kv = MMKV::mmkvWithID(str, (MMKVMode) mode, &crypt, &path);
             } else {
                 kv = MMKV::mmkvWithID(str, (MMKVMode) mode, &crypt, nullptr);
@@ -64,8 +64,8 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
         }
     }
     if (!done) {
-        if (rootPath) {
-            string path = rootPath;
+        if (rootPath.ptr) {
+            auto path = string(rootPath.ptr, rootPath.length);
             kv = MMKV::mmkvWithID(str, (MMKVMode) mode, nullptr, &path);
         } else {
             kv = MMKV::mmkvWithID(str, (MMKVMode) mode, nullptr, nullptr);
@@ -75,11 +75,11 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
     return kv;
 }
 
-MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey) {
+MMKV_EXPORT void *getDefaultMMKV(int32_t mode, GoStringWrap cryptKey) {
     MMKV *kv = nullptr;
 
-    if (cryptKey) {
-        string crypt = cryptKey;
+    if (cryptKey.ptr) {
+        auto crypt = string(cryptKey.ptr, cryptKey.length);
         if (crypt.length() > 0) {
             kv = MMKV::defaultMMKV((MMKVMode) mode, &crypt);
         }
@@ -99,25 +99,7 @@ MMKV_EXPORT const char *mmapID(void *handle) {
     return nullptr;
 }
 
-MMKV_EXPORT bool encodeBool(void *handle, const char *oKey, bool value) {
-    MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
-        return kv->set((bool) value, key);
-    }
-    return false;
-}
-
-MMKV_EXPORT bool decodeBool(void *handle, const char *oKey, bool defaultValue) {
-    MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
-        return kv->getBool(key, defaultValue);
-    }
-    return defaultValue;
-}
-
-MMKV_EXPORT bool encodeBool2(void *handle, GoStringWrap oKey, bool value) {
+MMKV_EXPORT bool encodeBool(void *handle, GoStringWrap oKey, bool value) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && oKey.ptr) {
         auto key = string(oKey.ptr, oKey.length);
@@ -126,7 +108,7 @@ MMKV_EXPORT bool encodeBool2(void *handle, GoStringWrap oKey, bool value) {
     return false;
 }
 
-MMKV_EXPORT bool decodeBool2(void *handle, GoStringWrap oKey, bool defaultValue) {
+MMKV_EXPORT bool decodeBool(void *handle, GoStringWrap oKey, bool defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && oKey.ptr) {
         auto key = string(oKey.ptr, oKey.length);
@@ -135,120 +117,120 @@ MMKV_EXPORT bool decodeBool2(void *handle, GoStringWrap oKey, bool defaultValue)
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeInt32(void *handle, const char *oKey, int32_t value) {
+MMKV_EXPORT bool encodeInt32(void *handle, GoStringWrap oKey, int32_t value) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->set((int32_t) value, key);
     }
     return false;
 }
 
-MMKV_EXPORT int32_t decodeInt32(void *handle, const char *oKey, int32_t defaultValue) {
+MMKV_EXPORT int32_t decodeInt32(void *handle, GoStringWrap oKey, int32_t defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->getInt32(key, defaultValue);
     }
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeUInt32(void *handle, const char *oKey, uint32_t value) {
+MMKV_EXPORT bool encodeUInt32(void *handle, GoStringWrap oKey, uint32_t value) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->set(value, key);
     }
     return false;
 }
 
-MMKV_EXPORT uint32_t decodeUInt32(void *handle, const char *oKey, uint32_t defaultValue) {
+MMKV_EXPORT uint32_t decodeUInt32(void *handle, GoStringWrap oKey, uint32_t defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->getUInt32(key, defaultValue);
     }
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeInt64(void *handle, const char *oKey, int64_t value) {
+MMKV_EXPORT bool encodeInt64(void *handle, GoStringWrap oKey, int64_t value) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->set((int64_t) value, key);
     }
     return false;
 }
 
-MMKV_EXPORT int64_t decodeInt64(void *handle, const char *oKey, int64_t defaultValue) {
+MMKV_EXPORT int64_t decodeInt64(void *handle, GoStringWrap oKey, int64_t defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->getInt64(key, defaultValue);
     }
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeUInt64(void *handle, const char *oKey, uint64_t value) {
+MMKV_EXPORT bool encodeUInt64(void *handle, GoStringWrap oKey, uint64_t value) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->set(value, key);
     }
     return false;
 }
 
-MMKV_EXPORT uint64_t decodeUInt64(void *handle, const char *oKey, uint64_t defaultValue) {
+MMKV_EXPORT uint64_t decodeUInt64(void *handle, GoStringWrap oKey, uint64_t defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->getUInt64(key, defaultValue);
     }
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeFloat(void *handle, const char *oKey, float value) {
+MMKV_EXPORT bool encodeFloat(void *handle, GoStringWrap oKey, float value) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->set((float) value, key);
     }
     return false;
 }
 
-MMKV_EXPORT float decodeFloat(void *handle, const char *oKey, float defaultValue) {
+MMKV_EXPORT float decodeFloat(void *handle, GoStringWrap oKey, float defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->getFloat(key, defaultValue);
     }
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeDouble(void *handle, const char *oKey, double value) {
+MMKV_EXPORT bool encodeDouble(void *handle, GoStringWrap oKey, double value) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->set((double) value, key);
     }
     return false;
 }
 
-MMKV_EXPORT double decodeDouble(void *handle, const char *oKey, double defaultValue) {
+MMKV_EXPORT double decodeDouble(void *handle, GoStringWrap oKey, double defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->getDouble(key, defaultValue);
     }
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeBytes(void *handle, const char *oKey, void *oValue, uint64_t length) {
+MMKV_EXPORT bool encodeBytes(void *handle, GoStringWrap oKey, GoStringWrap oValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
-        if (oValue) {
-            auto value = MMBuffer(oValue, static_cast<size_t>(length), MMBufferNoCopy);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
+        if (oValue.ptr) {
+            auto value = MMBuffer((void *) oValue.ptr, oValue.length, MMBufferNoCopy);
             return kv->set(value, key);
         } else {
             kv->removeValueForKey(key);
@@ -258,10 +240,10 @@ MMKV_EXPORT bool encodeBytes(void *handle, const char *oKey, void *oValue, uint6
     return false;
 }
 
-MMKV_EXPORT void *decodeBytes(void *handle, const char *oKey, uint64_t *lengthPtr) {
+MMKV_EXPORT void *decodeBytes(void *handle, GoStringWrap oKey, uint64_t *lengthPtr) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        auto key = string(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         auto value = kv->getBytes(key);
         if (value.length() > 0) {
             if (value.isStoredOnStack()) {
@@ -284,11 +266,11 @@ MMKV_EXPORT void *decodeBytes(void *handle, const char *oKey, uint64_t *lengthPt
 
 #    ifndef MMKV_DISABLE_CRYPT
 
-MMKV_EXPORT bool reKey(void *handle, char *oKey, uint32_t length) {
+MMKV_EXPORT bool reKey(void *handle, GoStringWrap oKey) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        if (oKey && length > 0) {
-            string key(oKey, length);
+        if (oKey.ptr && oKey.length > 0) {
+            string key(oKey.ptr, oKey.length);
             return kv->reKey(key);
         } else {
             return kv->reKey(string());
@@ -313,11 +295,11 @@ MMKV_EXPORT void *cryptKey(void *handle, uint32_t *lengthPtr) {
     return nullptr;
 }
 
-MMKV_EXPORT void checkReSetCryptKey(void *handle, char *oKey, uint64_t length) {
+MMKV_EXPORT void checkReSetCryptKey(void *handle, GoStringWrap oKey) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        if (oKey && length > 0) {
-            string key(oKey, length);
+        if (oKey.ptr && oKey.length > 0) {
+            string key(oKey.ptr, oKey.length);
             kv->checkReSetCryptKey(&key);
         } else {
             kv->checkReSetCryptKey(nullptr);
@@ -327,39 +309,36 @@ MMKV_EXPORT void checkReSetCryptKey(void *handle, char *oKey, uint64_t length) {
 
 #    endif // MMKV_DISABLE_CRYPT
 
-MMKV_EXPORT uint64_t allKeys(void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr) {
+MMKV_EXPORT GoStringWrap *allKeys(void *handle, uint64_t *lengthPtr) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
         auto keys = kv->allKeys();
         if (!keys.empty()) {
-            auto keyArray = (char **) malloc(keys.size() * sizeof(void *));
-            auto sizeArray = (uint32_t *) malloc(keys.size() * sizeof(uint32_t *));
-            if (!keyArray || !sizeArray) {
-                free(keyArray);
-                free(sizeArray);
-                return 0;
+            auto keyArray = (GoStringWrap *) calloc(keys.size(), sizeof(GoStringWrap));
+            if (!keyArray) {
+                return nullptr;
             }
-            *keyArrayPtr = keyArray;
-            *sizeArrayPtr = sizeArray;
 
             for (size_t index = 0; index < keys.size(); index++) {
                 auto &key = keys[index];
-                sizeArray[index] = static_cast<uint32_t>(key.length());
-                keyArray[index] = (char *) malloc(key.length());
-                if (keyArray[index]) {
-                    memcpy(keyArray[index], key.data(), key.length());
+                auto &stringWrap = keyArray[index];
+                stringWrap.length = static_cast<uint32_t>(key.length());
+                stringWrap.ptr = (char *) malloc(key.length());
+                if (stringWrap.ptr) {
+                    memcpy((void *) stringWrap.ptr, key.data(), key.length());
                 }
             }
+            *lengthPtr = keys.size();
+            return keyArray;
         }
-        return keys.size();
     }
-    return 0;
+    return nullptr;
 }
 
-MMKV_EXPORT bool containsKey(void *handle, char *oKey) {
+MMKV_EXPORT bool containsKey(void *handle, GoStringWrap oKey) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        string key(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         return kv->containsKey(key);
     }
     return false;
@@ -389,22 +368,23 @@ MMKV_EXPORT uint64_t actualSize(void *handle) {
     return 0;
 }
 
-MMKV_EXPORT void removeValueForKey(void *handle, char *oKey) {
+MMKV_EXPORT void removeValueForKey(void *handle, GoStringWrap oKey) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && oKey) {
-        string key(oKey);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
         kv->removeValueForKey(key);
     }
 }
 
-MMKV_EXPORT void removeValuesForKeys(void *handle, char **keyArray, uint32_t *sizeArray, uint64_t count) {
+MMKV_EXPORT void removeValuesForKeys(void *handle, GoStringWrap *keyArray, uint64_t count) {
     MMKV *kv = static_cast<MMKV *>(handle);
-    if (kv && keyArray && sizeArray && count > 0) {
+    if (kv && keyArray && count > 0) {
         vector<string> arrKeys;
         arrKeys.reserve(count);
         for (uint64_t index = 0; index < count; index++) {
-            if (sizeArray[index] > 0 && keyArray[index]) {
-                arrKeys.emplace_back(keyArray[index], sizeArray[index]);
+            auto &stringWrap = keyArray[index];
+            if (stringWrap.ptr && stringWrap.length > 0) {
+                arrKeys.emplace_back(stringWrap.ptr, stringWrap.length);
             }
         }
         if (!arrKeys.empty()) {
