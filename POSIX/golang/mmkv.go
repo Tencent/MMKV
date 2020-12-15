@@ -66,17 +66,30 @@ const (
 	MMKV_MULTI_PROCESS
 )
 
-const (
-	OnErrorDiscard = iota
-	OnErrorRecover
-)
+// a wrapper of native C memory, efficient for simple usage
+// must call MMBuffer.Destroy() after no longer usage
+type MMBuffer struct {
+	ptr    uintptr
+	length int
+}
 
-const (
-	MMKVCRCCheckFail = iota
-	MMKVFileLength
-)
+// get byte slice view of underlying memory
+// the slice is valid as long as MMBuffer.Destroy() not called
+func (buffer MMBuffer) ByteSliceView() []byte {
+	bytes := (*[1 << 30]byte)(unsafe.Pointer(buffer.ptr))[0:buffer.length:buffer.length]
+	return bytes
+}
 
-type ctorMMKV uintptr
+// get string view of underlying memory
+// the string is valid as long as MMBuffer.Destroy() not called
+func (buffer MMBuffer) StringView() string {
+	return *((*string)(unsafe.Pointer(&buffer)))
+}
+
+// must call Destroy() after no longer usage
+func (buffer MMBuffer) Destroy() {
+	C.free(unsafe.Pointer(buffer.ptr))
+}
 
 type MMKV interface {
 	SetBool(value bool, key string) bool
@@ -110,9 +123,13 @@ type MMKV interface {
 	// string value should be utf-8 encoded
 	SetString(value string, key string) bool
 	GetString(key string) string
+	// get C memory directly (without memcpy), much more efferent for large value
+	GetStringBuffer(key string) MMBuffer
 
 	SetBytes(value []byte, key string) bool
 	GetBytes(key string) []byte
+	// get C memory directly (without memcpy), much more efferent for large value
+	GetBytesBuffer(key string) MMBuffer
 
 	RemoveKey(key string)
 	RemoveKeys(keys []string)
@@ -168,6 +185,8 @@ type MMKV interface {
 	// See also reKey().
 	CryptKey() string
 }
+
+type ctorMMKV uintptr
 
 // return the version of MMKV
 func Version() string {
@@ -356,6 +375,10 @@ func (kv ctorMMKV) GetString(key string) string {
 	return value
 }
 
+func (kv ctorMMKV) GetStringBuffer(key string) MMBuffer {
+	return kv.GetBytesBuffer(key)
+}
+
 func (kv ctorMMKV) SetBytes(value []byte, key string) bool {
 	cValue := C.wrapGoByteSlice(unsafe.Pointer(&value[0]), C.size_t(len(value)))
 	ret := C.encodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), cValue)
@@ -369,6 +392,15 @@ func (kv ctorMMKV) GetBytes(key string) []byte {
 	value := C.GoBytes(unsafe.Pointer(cValue), C.int(length))
 
 	C.free(unsafe.Pointer(cValue))
+	return value
+}
+
+func (kv ctorMMKV) GetBytesBuffer(key string) MMBuffer {
+	var length uint64
+
+	cValue := C.decodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), (*C.uint64_t)(&length))
+	value := MMBuffer{uintptr(cValue), int(length)}
+
 	return value
 }
 
@@ -451,8 +483,7 @@ func (kv ctorMMKV) ReKey(newKey string) bool {
 }
 
 func (kv ctorMMKV) CheckReSetCryptKey(key string) {
-	ret := C.checkReSetCryptKey(unsafe.Pointer(kv), C.wrapGoString(key))
-	return bool(ret)
+	C.checkReSetCryptKey(unsafe.Pointer(kv), C.wrapGoString(key))
 }
 
 func (kv ctorMMKV) CryptKey() string {

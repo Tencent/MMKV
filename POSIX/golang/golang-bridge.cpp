@@ -436,4 +436,54 @@ MMKV_EXPORT void mmkvClose(void *handle) {
     }
 }
 
+extern "C" void myLogHandler(int64_t level, GoStringWrap file, int64_t line, GoStringWrap function, GoStringWrap message);
+
+void cLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
+    GoStringWrap oFile { file, static_cast<int64_t>(strlen(file)) };
+    GoStringWrap oFunction { function, static_cast<int64_t>(strlen(function)) };
+    GoStringWrap oMessage { message.data(), static_cast<int64_t>(message.length()) };
+
+    myLogHandler(level, oFile, line, oFunction, oMessage);
+}
+
+void setWantsLogRedirect(bool redirect) {
+    if (redirect) {
+        MMKV::registerLogHandler(&cLogHandler);
+    } else {
+        MMKV::unRegisterLogHandler();
+    }
+}
+
+extern "C" int64_t myErrorHandler(GoStringWrap mmapID, int64_t error);
+
+static MMKVRecoverStrategic cErrorHandler(const std::string &mmapID, MMKVErrorType errorType) {
+    GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
+
+    return static_cast<MMKVRecoverStrategic>(myErrorHandler(oID, static_cast<int64_t>(errorType)));
+}
+
+void setWantsErrorHandle(bool errorHandle) {
+    if (errorHandle) {
+        MMKV::registerErrorHandler(&cErrorHandler);
+    } else {
+        MMKV::unRegisterErrorHandler();
+    }
+}
+
+extern "C" void myContentChangeHandler(GoStringWrap mmapID);
+
+static void cContentChangeHandler(const std::string &mmapID) {
+    GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
+
+    myContentChangeHandler(oID);
+}
+
+void setWantsContentChangeHandle(bool errorHandle) {
+    if (errorHandle) {
+        MMKV::registerContentChangeHandler(&cContentChangeHandler);
+    } else {
+        MMKV::unRegisterContentChangeHandler();
+    }
+}
+
 #endif // CGO

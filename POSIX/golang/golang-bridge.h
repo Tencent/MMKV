@@ -92,6 +92,10 @@ void mmkvClose(void *handle);
 int32_t pageSize();
 const char *version();
 
+void setWantsLogRedirect(bool redirect);
+void setWantsErrorHandle(bool errorHandle);
+void setWantsContentChangeHandle(bool contentChange);
+
 #ifdef __cplusplus
 }
 #endif
