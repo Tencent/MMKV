@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	// init MMKV with root dir
 	mmkv.InitializeMMKV("/tmp/mmkv")
 
 	// you can set log redirecting
