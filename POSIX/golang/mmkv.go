@@ -22,7 +22,7 @@
 package mmkv
 
 // #cgo CXXFLAGS: -D CGO -D FORCE_POSIX -I ${SRCDIR}/../../Core -std=c++17
-// #cgo LDFLAGS: -L. -lmmkv -L./Core -lcore -lz -lpthread
+// #cgo LDFLAGS: -L./lib -lmmkv -lcore -lz -lpthread
 /*
 #include "golang-bridge.h"
 #include <stdlib.h>

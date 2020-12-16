@@ -62,3 +62,12 @@ target_link_libraries( mmkv
                        core
                        pthread
         )
+
+# Install source file & library to tencent.com/mmkv dir
+
+install(FILES mmkv.go callback.go go.mod mmkv_test.go golang-bridge.h golang-bridge.cpp
+  DESTINATION "tencent.com/mmkv")
+
+install(FILES libmmkv.a Core/libcore.a
+  DESTINATION "tencent.com/mmkv/lib")
+
