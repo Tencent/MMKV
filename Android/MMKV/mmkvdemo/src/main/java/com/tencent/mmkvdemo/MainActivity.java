@@ -255,6 +255,10 @@ public class MainActivity extends AppCompatActivity {
         Log.i("MMKV", "string: " + kv.getString("string", null));
         Log.i("MMKV", "string-set: " + kv.getStringSet("string-set", null));
         Log.i("MMKV", "linked-string-set: " + kv.decodeStringSet("string-set", null, LinkedHashSet.class));
+
+        // test @Nullable
+        kv.putStringSet("string-set", null);
+        Log.i("MMKV", "after set null, string-set: " + kv.getStringSet("string-set", null));
     }
 
     private void testReKey() {
