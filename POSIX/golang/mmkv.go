@@ -73,6 +73,16 @@ type MMBuffer struct {
 	length int
 }
 
+// the address of underlying memory
+func (buffer MMBuffer) Pointer() uintptr {
+	return buffer.ptr
+}
+
+// the size of underlying memory
+func (buffer MMBuffer) Length() int {
+	return buffer.length
+}
+
 // get byte slice view of underlying memory
 // the slice is valid as long as MMBuffer.Destroy() not called
 func (buffer MMBuffer) ByteSliceView() []byte {
