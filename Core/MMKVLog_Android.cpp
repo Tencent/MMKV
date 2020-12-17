@@ -30,8 +30,6 @@ using namespace std;
 
 constexpr auto APP_NAME = "MMKV";
 
-extern const char *_getFileName(const char *path);
-
 static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
     switch (level) {
         case MMKVLogDebug:
@@ -47,7 +45,7 @@ static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
     }
 }
 
-void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, int line, const char *format, ...) {
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         string message;
         char buffer[16];
@@ -67,8 +65,6 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *file, const char *func, i
             std::vsnprintf(const_cast<char *>(message.data()), static_cast<size_t>(length) + 1, format, args);
             va_end(args);
         }
-
-        auto filename = _getFileName(file);
 
         if (g_logHandler) {
             g_logHandler(level, filename, line, func, message);
