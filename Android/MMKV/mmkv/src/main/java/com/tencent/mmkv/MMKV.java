@@ -75,6 +75,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return initialize(root, null, logLevel);
     }
 
+    public static String initialize(Context context, LibLoader loader) {
+        String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(root, loader, logLevel);
+    }
+    public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
+        String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        return initialize(root, loader, logLevel);
+    }
+
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(rootDir, null, logLevel);
