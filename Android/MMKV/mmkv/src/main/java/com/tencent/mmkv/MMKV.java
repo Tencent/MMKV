@@ -454,8 +454,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public boolean encode(String key, @Nullable Parcelable value) {
         if (value == null) {
-            removeValueForKey(key);
-            return true;
+            return encodeBytes(nativeHandle, key, null);
         }
 
         Parcel source = Parcel.obtain();
