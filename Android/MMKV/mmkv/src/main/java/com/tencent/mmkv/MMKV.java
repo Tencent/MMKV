@@ -403,11 +403,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public boolean encode(String key, @Nullable Set<String> value) {
-        if (value == null) {
-            removeValueForKey(key);
-            return true;
-        }
-        return encodeSet(nativeHandle, key, value.toArray(new String[0]));
+        return encodeSet(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]));
     }
 
     @Nullable
