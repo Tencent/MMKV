@@ -79,7 +79,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   void funtionalTest() {
-    var mmkv = MMKV("test");
+    // var mmkv = MMKV("test");
+    var mmkv = MMKV.defaultMMKV();
     mmkv.encodeBool('bool', true);
     print('bool = ${mmkv.decodeBool('bool')}');
 
