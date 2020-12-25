@@ -1,5 +1,23 @@
 # MMKV Change Log
 
+## v1.2.7 / 2020-12-25
+Happy holidays everyone!
+ 
+### Changes for All platforms
+* Fix a bug when calling `sync()` with `false ` won't do `msync()` asynchronous and won't return immediately.
+
+### Android
+* Fix an null pointer exception when calling `putStringSet()` with `null`.
+* Complete review of all MMKV methods about Java nullable/nonnull annotation.
+* Add API for `MMKV.initialize()` with both `Context` and `LibLoader` parammeters.
+
+### Flutter
+* Fix a crash on the iOS simulator when accessing the default MMKV instance.
+* Fix a bug on iOS when initing the default MMKV instance with a crypt key, the instance is still in plaintext.
+
+### Golang
+Add golang for POSIX platforms. Most things actually work!. Check out the [wiki](https://github.com/Tencent/MMKV/wiki/golang_setup) for information.
+
 ## v1.2.6 / 2020-11-27
 ### Changes for All platforms
 * Fix a file corruption when calling `reKey()` after `removeKeys()` has just been called.
