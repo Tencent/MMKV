@@ -68,12 +68,6 @@ android {
 }
 
 repositories {
-//    maven {
-//        url uri('/tmp/localmvn/')
-//        url "http://maven.oa.com/nexus/content/repositories/thirdparty"
-//        url "http://maven.oa.com/nexus/content/repositories/thirdparty-snapshots"
-//        url "https://dl.bintray.com/wemobiledev/maven"
-//    }
     jcenter()
     mavenCentral()
 //    mavenLocal()
