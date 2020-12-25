@@ -1,11 +1,11 @@
 PODS:
   - Flutter (1.0.0)
-  - MMKV (1.2.6):
-    - MMKVCore (~> 1.2.6)
-  - MMKVCore (1.2.6)
-  - mmkvflutter (1.2.6):
+  - MMKV (1.2.7):
+    - MMKVCore (~> 1.2.7)
+  - MMKVCore (1.2.7)
+  - mmkvflutter (1.2.8):
     - Flutter
-    - MMKV (>= 1.2.6)
+    - MMKV (>= 1.2.7)
   - path_provider (0.0.1):
     - Flutter
 
@@ -29,9 +29,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  MMKV: 27f6b9e34849e77e78c5a1cc8f7f513e37f5fa15
-  MMKVCore: c301b04fd2ab9957e6e4d4465b9b60e443b0bb6b
-  mmkvflutter: 65612ee6250669d8d5715246c07662a6033529a7
+  MMKV: 22e5136f7d00197bc0fc9694b7f71519f0d1ca12
+  MMKVCore: 607b7b05f2c2140056b5d338e45f2c14bf3f4232
+  mmkvflutter: 2c306eaf1d620dc7c6ad06265e085b4a8f4c9d0a
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
 
 PODFILE CHECKSUM: 56a04502099a98f6f9fd2c6f8055159cd69b1375
