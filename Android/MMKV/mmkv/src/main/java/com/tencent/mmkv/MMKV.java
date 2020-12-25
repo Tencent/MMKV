@@ -75,6 +75,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return initialize(root, null, logLevel);
     }
 
+    public static String initialize(Context context, LibLoader loader) {
+        String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(root, loader, logLevel);
+    }
+    public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
+        String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
+        return initialize(root, loader, logLevel);
+    }
+
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(rootDir, null, logLevel);
@@ -149,6 +159,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static private final int ASHMEM_MODE = 0x8;
 
+    @Nullable
     public static MMKV mmkvWithID(String mmapID) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -158,6 +169,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
+    @Nullable
     public static MMKV mmkvWithID(String mmapID, int mode) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -168,7 +180,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // cryptKey's length <= 16
-    public static MMKV mmkvWithID(String mmapID, int mode, String cryptKey) {
+    @Nullable
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -189,7 +202,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // cryptKey's length <= 16
     @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode, String cryptKey, String rootPath) {
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -201,7 +214,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // a memory only MMKV, cleared on program exit
     // size cannot change afterward (because ashmem won't allow it)
     @Nullable
-    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, String cryptKey) {
+    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -249,6 +262,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return null;
     }
 
+    @Nullable
     public static MMKV defaultMMKV() {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -258,7 +272,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, "DefaultMMKV", SINGLE_PROCESS_MODE);
     }
 
-    public static MMKV defaultMMKV(int mode, String cryptKey) {
+    @Nullable
+    public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -267,6 +282,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, "DefaultMMKV", mode);
     }
 
+    @Nullable
     private static MMKV checkProcessMode(long handle, String mmapID, int mode) {
         if (handle == 0) {
             return null;
@@ -288,15 +304,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // encryption & decryption key
+    @Nullable
     public native String cryptKey();
 
     // transform plain text into encrypted text, or vice versa by passing cryptKey = null
     // you can change existing crypt key with different cryptKey
-    public native boolean reKey(String cryptKey);
+    public native boolean reKey(@Nullable String cryptKey);
 
     // just reset cryptKey (will not encrypt or decrypt anything)
     // usually you should call this method after other process reKey() the multi-process mmkv
-    public native void checkReSetCryptKey(String cryptKey);
+    public native void checkReSetCryptKey(@Nullable String cryptKey);
 
     // get device's page size
     public static native int pageSize();
@@ -371,32 +388,37 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return decodeDouble(nativeHandle, key, defaultValue);
     }
 
-    public boolean encode(String key, String value) {
+    public boolean encode(String key, @Nullable String value) {
         return encodeString(nativeHandle, key, value);
     }
 
+    @Nullable
     public String decodeString(String key) {
         return decodeString(nativeHandle, key, null);
     }
 
-    public String decodeString(String key, String defaultValue) {
+    @Nullable
+    public String decodeString(String key, @Nullable String defaultValue) {
         return decodeString(nativeHandle, key, defaultValue);
     }
 
-    public boolean encode(String key, Set<String> value) {
-        return encodeSet(nativeHandle, key, value.toArray(new String[0]));
+    public boolean encode(String key, @Nullable Set<String> value) {
+        return encodeSet(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]));
     }
 
+    @Nullable
     public Set<String> decodeStringSet(String key) {
         return decodeStringSet(key, null);
     }
 
-    public Set<String> decodeStringSet(String key, Set<String> defaultValue) {
+    @Nullable
+    public Set<String> decodeStringSet(String key, @Nullable Set<String> defaultValue) {
         return decodeStringSet(key, defaultValue, HashSet.class);
     }
 
     @SuppressWarnings("unchecked")
-    public Set<String> decodeStringSet(String key, Set<String> defaultValue, Class<? extends Set> cls) {
+    @Nullable
+    public Set<String> decodeStringSet(String key, @Nullable Set<String> defaultValue, Class<? extends Set> cls) {
         String[] result = decodeStringSet(nativeHandle, key);
         if (result == null) {
             return defaultValue;
@@ -413,22 +435,28 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return a;
     }
 
-    public boolean encode(String key, byte[] value) {
+    public boolean encode(String key, @Nullable byte[] value) {
         return encodeBytes(nativeHandle, key, value);
     }
 
+    @Nullable
     public byte[] decodeBytes(String key) {
         return decodeBytes(key, null);
     }
 
-    public byte[] decodeBytes(String key, byte[] defaultValue) {
+    @Nullable
+    public byte[] decodeBytes(String key, @Nullable byte[] defaultValue) {
         byte[] ret = decodeBytes(nativeHandle, key);
         return (ret != null) ? ret : defaultValue;
     }
 
     private static final HashMap<String, Parcelable.Creator<?>> mCreators = new HashMap<>();
 
-    public boolean encode(String key, Parcelable value) {
+    public boolean encode(String key, @Nullable Parcelable value) {
+        if (value == null) {
+            return encodeBytes(nativeHandle, key, null);
+        }
+
         Parcel source = Parcel.obtain();
         value.writeToParcel(source, value.describeContents());
         byte[] bytes = source.marshall();
@@ -438,12 +466,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     @SuppressWarnings("unchecked")
+    @Nullable
     public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass) {
         return decodeParcelable(key, tClass, null);
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass, T defaultValue) {
+    @Nullable
+    public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass, @Nullable T defaultValue) {
         if (tClass == null) {
             return defaultValue;
         }
@@ -501,6 +531,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return containsKey(nativeHandle, key);
     }
 
+    @Nullable
     public native String[] allKeys();
 
     public long count() {
@@ -841,13 +872,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void jniInitialize(String rootDir, int level);
 
-    private native static long getMMKVWithID(String mmapID, int mode, String cryptKey, String rootPath);
+    private native static long
+    getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath);
 
-    private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, String cryptKey);
+    private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, @Nullable String cryptKey);
 
-    private native static long getDefaultMMKV(int mode, String cryptKey);
+    private native static long getDefaultMMKV(int mode, @Nullable String cryptKey);
 
-    private native static long getMMKVWithAshmemFD(String mmapID, int fd, int metaFD, String cryptKey);
+    private native static long getMMKVWithAshmemFD(String mmapID, int fd, int metaFD, @Nullable String cryptKey);
 
     private native boolean encodeBool(long handle, String key, boolean value);
 
@@ -869,16 +901,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private native double decodeDouble(long handle, String key, double defaultValue);
 
-    private native boolean encodeString(long handle, String key, String value);
+    private native boolean encodeString(long handle, String key, @Nullable String value);
 
-    private native String decodeString(long handle, String key, String defaultValue);
+    @Nullable
+    private native String decodeString(long handle, String key, @Nullable String defaultValue);
 
-    private native boolean encodeSet(long handle, String key, String[] value);
+    private native boolean encodeSet(long handle, String key, @Nullable String[] value);
 
+    @Nullable
     private native String[] decodeStringSet(long handle, String key);
 
-    private native boolean encodeBytes(long handle, String key, byte[] value);
+    private native boolean encodeBytes(long handle, String key, @Nullable byte[] value);
 
+    @Nullable
     private native byte[] decodeBytes(long handle, String key);
 
     private native boolean containsKey(long handle, String key);

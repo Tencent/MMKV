@@ -24,7 +24,7 @@ import com.tencent.mmkv.MMKV
 import java.util.*
 
 fun kotlinFunctionalTest() {
-    val mmkv = MMKV.mmkvWithID("testKotlin")
+    val mmkv = MMKV.mmkvWithID("testKotlin") ?: return
     mmkv.encode("bool", true)
     println("bool = " + mmkv.decodeBool("bool"))
 
@@ -43,9 +43,9 @@ fun kotlinFunctionalTest() {
     mmkv.encode("string", "Hello from mmkv")
     println("string: " + mmkv.decodeString("string"))
 
-        val bytes = byteArrayOf('m'.toByte(), 'm'.toByte(), 'k'.toByte(), 'v'.toByte())
+    val bytes = byteArrayOf('m'.toByte(), 'm'.toByte(), 'k'.toByte(), 'v'.toByte())
     mmkv.encode("bytes", bytes)
-    println("bytes: " + String(mmkv.decodeBytes("bytes")))
+    println("bytes: " + mmkv.decodeBytes("bytes")?.let { String(it) })
 
     println("allKeys: " + Arrays.toString(mmkv.allKeys()))
     println("count = " + mmkv.count() + ", totalSize = " + mmkv.totalSize())

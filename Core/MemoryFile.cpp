@@ -102,7 +102,7 @@ bool MemoryFile::truncate(size_t size) {
 
 bool MemoryFile::msync(SyncFlag syncFlag) {
     if (m_ptr) {
-        auto ret = ::msync(m_ptr, m_size, syncFlag ? MMKV_SYNC : MMKV_ASYNC);
+        auto ret = ::msync(m_ptr, m_size, syncFlag ? MS_SYNC : MS_ASYNC);
         if (ret == 0) {
             return true;
         }
