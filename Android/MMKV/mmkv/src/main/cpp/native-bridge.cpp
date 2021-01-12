@@ -579,7 +579,7 @@ MMKV_JNI void sync(JNIEnv *env, jobject instance, jboolean sync) {
 MMKV_JNI jboolean isFileValid(JNIEnv *env, jclass type, jstring oMmapID, jstring rootPath) {
     if (oMmapID) {
         string mmapID = jstring2string(env, oMmapID);
-        if (rootPath) {
+        if (!rootPath) {
             return (jboolean) MMKV::isFileValid(mmapID, nullptr);
         } else {
             auto root = jstring2string(env, rootPath);
