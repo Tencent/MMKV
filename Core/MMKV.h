@@ -342,6 +342,8 @@ public:
     static void registerLogHandler(mmkv::LogHandler handler);
     static void unRegisterLogHandler();
 
+    // detect if the MMKV file is valid or not
+    // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
     static bool isFileValid(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
 
     // just forbid it for possibly misuse

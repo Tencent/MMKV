@@ -229,7 +229,8 @@ NS_ASSUME_NONNULL_BEGIN
 // return imported count of key-values
 - (uint32_t)migrateFromUserDefaults:(NSUserDefaults *)userDaults NS_SWIFT_NAME(migrateFrom(userDefaults:));
 
-// for CrashProtected Only
+// detect if the MMKV file is valid or not
+// Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
 + (BOOL)isFileValid:(NSString *)mmapID rootPath:(nullable NSString *)path NS_SWIFT_NAME(isFileValid(for:rootPath:));
 

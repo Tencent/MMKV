@@ -576,6 +576,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private native void sync(boolean sync);
 
+    // detect if the MMKV file is valid or not
+    // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
     public static native boolean isFileValid(String mmapID);
 
     // SharedPreferences migration
