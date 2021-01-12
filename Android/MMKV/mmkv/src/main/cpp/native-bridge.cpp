@@ -576,10 +576,15 @@ MMKV_JNI void sync(JNIEnv *env, jobject instance, jboolean sync) {
     }
 }
 
-MMKV_JNI jboolean isFileValid(JNIEnv *env, jclass type, jstring oMmapID) {
+MMKV_JNI jboolean isFileValid(JNIEnv *env, jclass type, jstring oMmapID, jstring rootPath) {
     if (oMmapID) {
         string mmapID = jstring2string(env, oMmapID);
-        return (jboolean) MMKV::isFileValid(mmapID);
+        if (rootPath) {
+            return (jboolean) MMKV::isFileValid(mmapID, nullptr);
+        } else {
+            auto root = jstring2string(env, rootPath);
+            return (jboolean) MMKV::isFileValid(mmapID, &root);
+        }
     }
     return (jboolean) false;
 }
@@ -793,7 +798,7 @@ static JNINativeMethod g_methods[] = {
     {"close", "()V", (void *) mmkv::close},
     {"clearMemoryCache", "()V", (void *) mmkv::clearMemoryCache},
     {"sync", "(Z)V", (void *) mmkv::sync},
-    {"isFileValid", "(Ljava/lang/String;)Z", (void *) mmkv::isFileValid},
+    {"isFileValid", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::isFileValid},
     {"ashmemFD", "()I", (void *) mmkv::ashmemFD},
     {"ashmemMetaFD", "()I", (void *) mmkv::ashmemMetaFD},
     {"jniInitialize", "(Ljava/lang/String;I)V", (void *) mmkv::jniInitialize},
