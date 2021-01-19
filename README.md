@@ -3,7 +3,7 @@
 [![Release Version](https://img.shields.io/badge/release-1.2.7-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Win32%20%7C%20POSIX-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
-中文版本请参看[这里](./readme_cn.md)
+中文版本请参看[这里](./README_CN.md)
 
 MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Win32** and **POSIX**.
 
