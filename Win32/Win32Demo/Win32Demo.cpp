@@ -171,7 +171,8 @@ size_t getpagesize(void) {
 }
 
 void cornetSizeTest() {
-    auto mmkv = MMKV::mmkvWithID("cornerSize", MMKV_MULTI_PROCESS, &string("aes"));
+    auto cryptKey = string("aes");
+    auto mmkv = MMKV::mmkvWithID("cornerSize", MMKV_MULTI_PROCESS, &cryptKey);
     mmkv->clearAll();
     auto size = getpagesize() - 2;
     size -= 4;
@@ -186,7 +187,8 @@ void cornetSizeTest() {
 }
 
 void fastRemoveCornetSizeTest() {
-    auto mmkv = MMKV::mmkvWithID("fastRemoveCornerSize", MMKV_MULTI_PROCESS, &string("aes"));
+    auto cryptKey = string("aes");
+    auto mmkv = MMKV::mmkvWithID("fastRemoveCornerSize", MMKV_MULTI_PROCESS, &cryptKey);
     mmkv->clearAll();
     auto size = getpagesize() - 4;
     size -= 4;
@@ -239,7 +241,8 @@ int main() {
     MMKV::registerLogHandler(LogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
-    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &string("cryptKey"));
+    auto cryptKey = string("cryptKey");
+    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &cryptKey);
     functionalTest(mmkv, false);
 
     for (size_t index = 0; index < keyCount; index++) {
