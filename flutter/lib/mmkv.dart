@@ -56,12 +56,21 @@ class MMBuffer {
     _length = length;
     if (length > 0) {
       _ptr = allocate<Uint8>(count: length);
+    } else {
+      _ptr = nullptr;
     }
   }
 
   /// Copy all data from [list].
   static MMBuffer fromList(List<int> list) {
+    if (list == null) {
+      return null;
+    }
+
     var buffer = MMBuffer(list.length);
+    if (list.length == 0) {
+      buffer._ptr = allocate<Uint8>(count: 0);
+    }
     buffer.asList().setAll(0, list);
     return buffer;
   }
@@ -266,6 +275,11 @@ class MMKV {
 
   /// Encode an utf-8 string.
   bool encodeString(String key, String value) {
+    if (value == null) {
+      removeValue(key);
+      return true;
+    }
+
     var keyPtr = Utf8.toUtf8(key);
     var bytes = MMBuffer.fromList(Utf8Encoder().convert(value));
 
@@ -311,6 +325,11 @@ class MMKV {
   /// buffer.destroy();
   /// ```
   bool encodeBytes(String key, MMBuffer value) {
+    if (value == null) {
+      removeValue(key);
+      return true;
+    }
+
     var keyPtr = Utf8.toUtf8(key);
     var ret = _encodeBytes(_handle, keyPtr, value.pointer, value.length);
     free(keyPtr);

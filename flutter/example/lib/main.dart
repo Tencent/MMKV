@@ -106,6 +106,14 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeString('string', str);
     print('string = ${mmkv.decodeString('string')}');
 
+    mmkv.encodeString('string', '');
+    print('empty string = ${mmkv.decodeString('string')}');
+    print('contains "string": ${mmkv.containsKey('string')}');
+
+    mmkv.encodeString('string', null);
+    print('null string = ${mmkv.decodeString('string')}');
+    print('contains "string": ${mmkv.containsKey('string')}');
+
     str += ' with bytes';
     var bytes = MMBuffer.fromList(Utf8Encoder().convert(str));
     mmkv.encodeBytes('bytes', bytes);
