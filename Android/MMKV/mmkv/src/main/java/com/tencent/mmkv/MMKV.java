@@ -31,7 +31,6 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,7 +58,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         index2LogLevel = new MMKVLogLevel[] {MMKVLogLevel.LevelDebug, MMKVLogLevel.LevelInfo, MMKVLogLevel.LevelWarning,
                                              MMKVLogLevel.LevelError, MMKVLogLevel.LevelNone};
 
-        checkedHandleSet = Collections.synchronizedSet(new HashSet<Long>());
+        checkedHandleSet = new HashSet<Long>();
     }
 
     public interface LibLoader { void loadLibrary(String libName); }
@@ -287,20 +286,41 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (handle == 0) {
             return null;
         }
-        if (!checkedHandleSet.contains(handle)) {
-            if (!checkProcessMode(handle)) {
-                String message;
-                if (mode == SINGLE_PROCESS_MODE) {
-                    message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
-                } else {
-                    message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
-                    message += "while it's already been opened with SINGLE_PROCESS_MODE by someone somewhere else!";
+        if (!isProcessModeCheckerEnabled) {
+            return new MMKV(handle);
+        }
+        synchronized (checkedHandleSet) {
+            if (!checkedHandleSet.contains(handle)) {
+                if (!checkProcessMode(handle)) {
+                    String message;
+                    if (mode == SINGLE_PROCESS_MODE) {
+                        message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
+                    } else {
+                        message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
+                        message += "while it's already been opened with SINGLE_PROCESS_MODE by someone somewhere else!";
+                    }
+                    throw new IllegalArgumentException(message);
                 }
-                throw new IllegalArgumentException(message);
+                checkedHandleSet.add(handle);
             }
-            checkedHandleSet.add(handle);
         }
         return new MMKV(handle);
+    }
+
+    // enable checkProcessMode() when initializing an MMKV instance, it's enabled by default
+    private static boolean isProcessModeCheckerEnabled = true;
+    public static void enableProcessModeChecker() {
+        synchronized (checkedHandleSet) {
+            isProcessModeCheckerEnabled = true;
+        }
+    }
+
+    // disable checkProcessMode() when initializing an MMKV instance, it's enabled by default
+    // use it at your own risk
+    public static void disableProcessModeChecker() {
+        synchronized (checkedHandleSet) {
+            isProcessModeCheckerEnabled = false;
+        }
     }
 
     // encryption & decryption key
