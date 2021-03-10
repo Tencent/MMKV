@@ -7,12 +7,12 @@ version: 1.0.0+1
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  path_provider: ">=1.6.0 <2.0.0"
+  path_provider: ">=2.0.1"
 
   mmkv:
     # When depending on this package from a real application you should use:
