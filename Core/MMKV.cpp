@@ -191,7 +191,9 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
     g_currentLogLevel = logLevel;
 
     ThreadLock::ThreadOnce(&once_control, initialize);
-
+    if (!g_rootDir.empty() && rootDir != g_rootDir) {
+        MMKVError("MMKV has Already been initialized, This Operation will lost data !!!");
+    }
     g_rootDir = rootDir;
     mkPath(g_rootDir);
 
