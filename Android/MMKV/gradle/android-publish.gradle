@@ -9,10 +9,8 @@ import java.util.regex.Pattern
  * 2. Provide RELEASE_REPOSITORY_URL and SNAPSHOT_REPOSITORY_URL with gradle.properties or local.properties.
  * 3. Provide REPOSITORY_USERNAME and REPOSITORY_PASSWORD if needed.
  */
-apply plugin: 'digital.wup.android-maven-publish'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
-apply plugin: 'com.jfrog.bintray'
-
 
 def isReleaseBuild() {
     return version.contains("SNAPSHOT") == false
@@ -36,53 +34,23 @@ def readPropertyFromLocalProperties(String key) {
     return properties.getProperty(key)
 }
 
-def getRepositoryUsername() {
-    return hasProperty('REPOSITORY_USERNAME') ? REPOSITORY_USERNAME : readPropertyFromLocalProperties('REPOSITORY_USERNAME')
+def getOSSRUsername() {
+    return hasProperty('ossrhUsername') ? ossrhUsername : readPropertyFromLocalProperties('ossrhUsername')
 }
 
-def getRepositoryPassword() {
-    return hasProperty('REPOSITORY_PASSWORD') ? REPOSITORY_PASSWORD : readPropertyFromLocalProperties('REPOSITORY_PASSWORD')
-}
-
-def getBintrayUser() {
-    return hasProperty('BINTRAY_USER') ? BINTRAY_USER : readPropertyFromLocalProperties('BINTRAY_USER')
-}
-
-def getBintrayKey() {
-    return hasProperty('BINTRAY_APIKEY') ? BINTRAY_APIKEY : readPropertyFromLocalProperties('BINTRAY_APIKEY')
-}
-
-def pomConfig = {
-    scm {
-        url POM_SCM_URL
-    }
-
-    licenses {
-        license {
-            name POM_LICENCE_NAME
-            url POM_LICENCE_URL
-            distribution POM_LICENCE_DIST
-        }
-    }
-
-    developers {
-        developer {
-            id POM_DEVELOPER_ID
-            name POM_DEVELOPER_NAME
-        }
-    }
+def getOSSRPassword() {
+    return hasProperty('ossrhPassword') ? ossrhPassword : readPropertyFromLocalProperties('ossrhPassword')
 }
 
 def curArtifactId
 
-def bintrayPublicationNames = []
 android.libraryVariants.all { variant ->
     // Skipped debug variants
     if (variant.buildType.name == "debug") {
         return
     }
     // Skipped non publishing variants
-    if(!android.defaultPublishConfig.startsWith(variant.flavorName)) {
+    if (!android.defaultPublishConfig.startsWith(variant.flavorName)) {
         return
     }
 
@@ -103,11 +71,7 @@ android.libraryVariants.all { variant ->
 
     curArtifactId = "${POM_ARTIFACT_ID}${artifactIdSuffix}"
 
-    /**
-     * Includes
-     */
-    def sourceDirs = variant.sourceSets.collect {
-        it.javaDirectories // TODO: kotlin sources
+    def jniJar = task("${variant.name}JniJar", type: Jar, dependsOn: 'build') {
     }
     def javadoc = task("${variant.name}Javadoc", type: Javadoc) {
         source = variant.javaCompile.source // TODO: deprecated
@@ -124,10 +88,6 @@ android.libraryVariants.all { variant ->
     def javadocJar = task("${variant.name}JavadocJar", type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
         from javadoc.destinationDir
-    }
-    def sourcesJar = task("${variant.name}SourcesJar", type: Jar) {
-        classifier = 'sources'
-        from sourceDirs
     }
     def jniSymbolsJar = task("${variant.name}SymbolJar", type: Jar, dependsOn: 'build') {
         classifier = "so-symbols"
@@ -151,65 +111,90 @@ android.libraryVariants.all { variant ->
         }
     }
 
-    // require gradle 4.x +
-    /*if (GradleVersion.current() < GradleVersion.version('4.0')) {
-        throw new GradleException('android-publish.gradle need Gradle 4.0 or newer')
-    }*/
-
-    // For bintrayUpload
     def publicationName = "component${variant.name.capitalize()}"
-    bintrayPublicationNames.add(publicationName)
 
     // Declare publications
     publishing.publications {
         "$publicationName"(MavenPublication) {
-            artifactId curArtifactId
             groupId groupId
+            artifactId curArtifactId
             version version
 
             from components.findByName("android${variant.name.capitalize()}")
 
-            // artifact sourcesJar
+            if (hasFlavors) {
+                variant.productFlavors.each { flavor ->
+                    artifact("build/outputs/aar/${project.getName()}-${flavor.name}-release.aar")
+                }
+            } else {
+                artifact("build/outputs/aar/${project.getName()}-release.aar")
+            }
             artifact javadocJar
             artifact jniSymbolsJar
+
+            pom {
+                name = 'MMKV'
+                description = POM_DESCRIPTION
+                url = POM_URL
+                licenses {
+                    license {
+                        name = POM_LICENCE_NAME
+                        url = POM_LICENCE_URL
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = POM_DEVELOPER_ID
+                        name = POM_DEVELOPER_NAME
+                    }
+                }
+
+                scm {
+                    url = POM_SCM_URL
+                    connection = POM_SCM_CONNECTION
+                    developerConnection = POM_SCM_DEV_CONNECTION
+                }
+
+                // write the dependency of the library into pom
+                withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+                    project.configurations.all { configuration ->
+                        def name = configuration.name
+                        if (name != "implementation" && name != "compile" && name != "api") {
+                            return
+                        }
+                        configuration.dependencies.each {
+                            if (it.name == "unspecified") {
+                                return
+                            }
+                            def dependencyNode = dependenciesNode.appendNode('dependency')
+                            dependencyNode.appendNode('groupId', it.group)
+                            dependencyNode.appendNode('artifactId', it.name)
+                            dependencyNode.appendNode('version', it.version)
+                            if (name == "api" || name == "compile") {
+                                dependencyNode.appendNode("scope", "compile")
+                            } else {
+                                dependencyNode.appendNode("scope", "runtime")
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-/**
- * Setup custom maven repo
- */
+signing {
+    sign publishing.publications
+}
+
 publishing.repositories {
     maven {
         url "${isReleaseBuild() ? getReleaseRepositoryUrl() : getSnapshotRepositoryUrl()}"
         credentials {
-            username "${getRepositoryUsername()}"
-            password "${getRepositoryPassword()}"
-        }
-    }
-}
-
-/**
- * Then update bintray configurations
- */
-afterEvaluate {
-    bintray {
-        user = getBintrayUser()
-        key = getBintrayKey()
-        publications = bintrayPublicationNames
-
-        pkg {
-            repo = 'maven'
-            userOrg = BINTRAY_ORGANIZATION
-//            name = "${GROUP}:${POM_ARTIFACT_ID}"
-            name = "${GROUP}:" + curArtifactId
-            licenses = BINTRAY_LICENCE
-            vcsUrl = POM_SCM_URL
-            websiteUrl = POM_URL
-            issueTrackerUrl = POM_ISSUE_URL
-            publicDownloadNumbers = true
-            publish = true
-            dryRun = false
+            username "${getOSSRUsername()}"
+            password "${getOSSRPassword()}"
         }
     }
 }
@@ -249,14 +234,6 @@ task buildAndPublishRepo(type: Copy, dependsOn: ['build', 'publish']) {
 
     doLast {
         println "* published to repo: ${project.group}:${project.name}:${project.version}"
-    }
-}
-
-tasks.getByName("bintrayUpload") {
-    it.doFirst {
-        if (!isReleaseBuild()) {
-            throw new GradleException("bintrayUpload only support release version")
-        }
     }
 }
 
