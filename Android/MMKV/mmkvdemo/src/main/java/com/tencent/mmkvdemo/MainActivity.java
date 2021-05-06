@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
         //kv.clearAll();
         kv.clearMemoryCache();
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
-        Log.i("MMKV", "isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID()));
+        Log.i("MMKV", "isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID(), rootPath));
 
         return kv;
     }

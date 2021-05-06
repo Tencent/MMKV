@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-               BuildableName = "libMMKV.a"
-               BlueprintName = "MMKV Static"
+               BlueprintIdentifier = "CBF1903C243D706D001C82ED"
+               BuildableName = "MMKVWatchExtension.framework"
+               BlueprintName = "MMKVWatchExtension"
                ReferencedContainer = "container:MMKV.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -40,15 +40,6 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV.a"
-            BlueprintName = "MMKV Static"
-            ReferencedContainer = "container:MMKV.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -59,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV.a"
-            BlueprintName = "MMKV Static"
+            BlueprintIdentifier = "CBF1903C243D706D001C82ED"
+            BuildableName = "MMKVWatchExtension.framework"
+            BlueprintName = "MMKVWatchExtension"
             ReferencedContainer = "container:MMKV.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

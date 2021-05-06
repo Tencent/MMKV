@@ -26,16 +26,19 @@ Add the following lines to `pubspec.yaml` on your app module. Then run `flutter 
 
 ```yaml
 dependencies:
-  mmkv: ">=1.2.8"
+  mmkv: ">=1.2.9"
   ...
 ```
 
-If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.7.  
+If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.8.  
 
 #### iOS  
 To avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to **change the plugin name 'mmkv' to 'mmkvflutter'**.  
 
-* For a **purely flutter** App, add this function `fix_mmkv_plugin_name()` to `ios/Podfile`, invoke it **before** calling any `flutter_xxx()` functions. Run `pod install` and we are all set.  
+##### For a purely flutter App:  
+* Add this function `fix_mmkv_plugin_name()` to `ios/Podfile`, invoke it **before** calling any `flutter_xxx()` functions. Run `pod install` and we are all set.  
+* **Note**: you need to run `pod install` each time you have called `flutter pub get`, or has just returned to Xcode from Android Studio. 
+* We recommend **using Xcode** to debug iOS App.
 
 ```ruby
 def fix_mmkv_plugin_name(flutter_application_path)
@@ -60,7 +63,10 @@ end
 fix_mmkv_plugin_name(File.dirname(File.realpath(__FILE__)))
 ```
 
-* For using **[flutter as a module](https://flutter.dev/docs/development/add-to-app/ios/project-setup#embed-the-flutter-module-in-your-existing-application)** to your existing iOS App, add the function `fix_mmkv_plugin_name()` above to your iOS App's `Podfile`, invoke it **before** calling any `flutter_xxx()` functions. Run `pod install` and we are all set.
+##### For using flutter as a module:  
+* For **[embding flutter](https://flutter.dev/docs/development/add-to-app/ios/project-setup#embed-the-flutter-module-in-your-existing-application)** to your existing iOS App, add the function `fix_mmkv_plugin_name()` above to your iOS App's `Podfile`, invoke it **before** calling any `flutter_xxx()` functions. Run `pod install` and we are all set.
+* **Note**: you need to run `pod install` each time you have called `flutter pub get`, or has just returned to Xcode from Android Studio. 
+* We recommend **using Xcode** to debug iOS App.
 
 ```ruby
 def fix_mmkv_plugin_name(flutter_application_path)
@@ -131,12 +137,12 @@ Note that you have to **wait for MMKV to finish initialization** before accessin
     print('string = ${mmkv.decodeString('string')}');
 
     str = 'Hello Flutter from MMKV with bytes';
-    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str));
+    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str))!;
     mmkv.encodeBytes('bytes', bytes);
     bytes.destroy();
 
-    bytes = mmkv.decodeBytes('bytes');
-    print('bytes = ${Utf8Decoder().convert(bytes.asList())}');
+    bytes = mmkv.decodeBytes('bytes')!;
+    print('bytes = ${Utf8Decoder().convert(bytes.asList()!)}');
     bytes.destroy();
     ```
 

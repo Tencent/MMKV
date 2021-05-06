@@ -14,6 +14,7 @@ android {
         }
         // ndk doesn't have targetSDK support
         //minSdkVersion = 26
+        ndkVersion = '16.1.4479499' // android-ndk-r16b
     }
     buildTypes {
         release {
@@ -77,9 +78,9 @@ configurations {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.annotation:annotation:1.1.0'
-    javadocDeps 'androidx.annotation:annotation:1.1.0'
-    testImplementation 'junit:junit:4.12'
+    implementation 'androidx.annotation:annotation:1.2.0'
+    javadocDeps 'androidx.annotation:annotation:1.2.0'
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.3.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }

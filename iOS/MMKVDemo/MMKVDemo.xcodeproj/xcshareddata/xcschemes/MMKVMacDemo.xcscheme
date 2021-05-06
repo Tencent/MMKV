@@ -14,10 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-               BuildableName = "libMMKV.a"
-               BlueprintName = "MMKV Static"
-               ReferencedContainer = "container:MMKV.xcodeproj">
+               BlueprintIdentifier = "CBB6C81E215CDB9500487192"
+               BuildableName = "MMKVMacDemo.app"
+               BlueprintName = "MMKVMacDemo"
+               ReferencedContainer = "container:MMKVDemo.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -40,15 +40,16 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <MacroExpansion>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV.a"
-            BlueprintName = "MMKV Static"
-            ReferencedContainer = "container:MMKV.xcodeproj">
+            BlueprintIdentifier = "CBB6C81E215CDB9500487192"
+            BuildableName = "MMKVMacDemo.app"
+            BlueprintName = "MMKVMacDemo"
+            ReferencedContainer = "container:MMKVDemo.xcodeproj">
          </BuildableReference>
-      </MacroExpansion>
+      </BuildableProductRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -56,15 +57,16 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <MacroExpansion>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV.a"
-            BlueprintName = "MMKV Static"
-            ReferencedContainer = "container:MMKV.xcodeproj">
+            BlueprintIdentifier = "CBB6C81E215CDB9500487192"
+            BuildableName = "MMKVMacDemo.app"
+            BlueprintName = "MMKVMacDemo"
+            ReferencedContainer = "container:MMKVDemo.xcodeproj">
          </BuildableReference>
-      </MacroExpansion>
+      </BuildableProductRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

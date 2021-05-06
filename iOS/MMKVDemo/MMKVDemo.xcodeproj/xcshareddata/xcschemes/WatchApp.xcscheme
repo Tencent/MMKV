@@ -14,10 +14,24 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-               BuildableName = "libMMKV.a"
-               BlueprintName = "MMKV Static"
-               ReferencedContainer = "container:MMKV.xcodeproj">
+               BlueprintIdentifier = "CBF19011243D6F59001C82ED"
+               BuildableName = "WatchApp.app"
+               BlueprintName = "WatchApp"
+               ReferencedContainer = "container:MMKVDemo.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "CB1FD41F20455E2D00931B5F"
+               BuildableName = "MMKVDemo.app"
+               BlueprintName = "MMKVDemo"
+               ReferencedContainer = "container:MMKVDemo.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -40,15 +54,18 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <MacroExpansion>
+      <RemoteRunnable
+         runnableDebuggingMode = "2"
+         BundleIdentifier = "com.apple.Carousel"
+         RemotePath = "/MMKVDemo">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV.a"
-            BlueprintName = "MMKV Static"
-            ReferencedContainer = "container:MMKV.xcodeproj">
+            BlueprintIdentifier = "CBF19011243D6F59001C82ED"
+            BuildableName = "WatchApp.app"
+            BlueprintName = "WatchApp"
+            ReferencedContainer = "container:MMKVDemo.xcodeproj">
          </BuildableReference>
-      </MacroExpansion>
+      </RemoteRunnable>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -56,13 +73,25 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <RemoteRunnable
+         runnableDebuggingMode = "2"
+         BundleIdentifier = "com.apple.Carousel"
+         RemotePath = "/MMKVDemo">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "CBF19011243D6F59001C82ED"
+            BuildableName = "WatchApp.app"
+            BlueprintName = "WatchApp"
+            ReferencedContainer = "container:MMKVDemo.xcodeproj">
+         </BuildableReference>
+      </RemoteRunnable>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD4902046984F00931B5F"
-            BuildableName = "libMMKV.a"
-            BlueprintName = "MMKV Static"
-            ReferencedContainer = "container:MMKV.xcodeproj">
+            BlueprintIdentifier = "CBF19011243D6F59001C82ED"
+            BuildableName = "WatchApp.app"
+            BlueprintName = "WatchApp"
+            ReferencedContainer = "container:MMKVDemo.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>

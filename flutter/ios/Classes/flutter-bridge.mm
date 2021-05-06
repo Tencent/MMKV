@@ -180,9 +180,13 @@ MMKV_EXPORT void *decodeBytes(const void *handle, const char *oKey, uint64_t *le
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
         auto value = [kv getDataForKey:key];
-        if (value.length > 0) {
+        if (value) {
             *lengthPtr = value.length;
-            return (void *) value.bytes;
+            if (value.bytes) {
+                return (void *) value.bytes;
+            } else {
+                return (__bridge void *) value;
+            }
         }
     }
     return nullptr;

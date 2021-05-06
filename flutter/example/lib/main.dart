@@ -106,12 +106,21 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeString('string', str);
     print('string = ${mmkv.decodeString('string')}');
 
+    // TODO: Fix 'empty string = null' bug on Android
+    mmkv.encodeString('string', '');
+    print('empty string = ${mmkv.decodeString('string')}');
+    print('contains "string": ${mmkv.containsKey('string')}');
+
+    mmkv.encodeString('string', null);
+    print('null string = ${mmkv.decodeString('string')}');
+    print('contains "string": ${mmkv.containsKey('string')}');
+
     str += ' with bytes';
-    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str));
+    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str))!;
     mmkv.encodeBytes('bytes', bytes);
     bytes.destroy();
-    bytes = mmkv.decodeBytes('bytes');
-    print('bytes = ${Utf8Decoder().convert(bytes.asList())}');
+    bytes = mmkv.decodeBytes('bytes')!;
+    print('bytes = ${Utf8Decoder().convert(bytes.asList()!)}');
     bytes.destroy();
 
     print('contains "bool": ${mmkv.containsKey('bool')}');
@@ -130,11 +139,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   MMKV testMMKV(
-      String mmapID, String cryptKey, bool decodeOnly, String rootPath) {
+      String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {
     final mmkv = MMKV(mmapID, cryptKey: cryptKey, rootDir: rootPath);
-    if (mmkv == null) {
-      return null;
-    }
 
     if (!decodeOnly) {
       mmkv.encodeBool('bool', true);
@@ -178,13 +184,13 @@ class _MyAppState extends State<MyApp> {
     print('string = ${mmkv.decodeString('string')}');
 
     str += ' with bytes';
-    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str));
+    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str))!;
     if (!decodeOnly) {
       mmkv.encodeBytes('bytes', bytes);
     }
     bytes.destroy();
-    bytes = mmkv.decodeBytes('bytes');
-    print('bytes = ${Utf8Decoder().convert(bytes.asList())}');
+    bytes = mmkv.decodeBytes('bytes')!;
+    print('bytes = ${Utf8Decoder().convert(bytes.asList()!)}');
     bytes.destroy();
 
     print('contains "bool": ${mmkv.containsKey('bool')}');
@@ -199,9 +205,6 @@ class _MyAppState extends State<MyApp> {
   void testReKey() {
     final mmapID = 'testAES_reKey1';
     MMKV kv = testMMKV(mmapID, null, false, null);
-    if (kv == null) {
-      return;
-    }
 
     kv.reKey("Key_seq_1");
     kv.clearMemoryCache();

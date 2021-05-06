@@ -23,6 +23,7 @@ package com.tencent.mmkv;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -31,7 +32,6 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,7 +59,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         index2LogLevel = new MMKVLogLevel[] {MMKVLogLevel.LevelDebug, MMKVLogLevel.LevelInfo, MMKVLogLevel.LevelWarning,
                                              MMKVLogLevel.LevelError, MMKVLogLevel.LevelNone};
 
-        checkedHandleSet = Collections.synchronizedSet(new HashSet<Long>());
+        checkedHandleSet = new HashSet<Long>();
     }
 
     public interface LibLoader { void loadLibrary(String libName); }
@@ -68,36 +68,47 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(root, null, logLevel);
+        return initialize(context, root, null, logLevel);
     }
     public static String initialize(Context context, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
-        return initialize(root, null, logLevel);
+        return initialize(context, root, null, logLevel);
     }
 
     public static String initialize(Context context, LibLoader loader) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(root, loader, logLevel);
+        return initialize(context, root, loader, logLevel);
     }
     public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
-        return initialize(root, loader, logLevel);
+        return initialize(context, root, loader, logLevel);
     }
 
-    public static String initialize(String rootDir) {
+    public static String initialize(Context context, String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(rootDir, null, logLevel);
+        return initialize(context, rootDir, null, logLevel);
     }
-    public static String initialize(String rootDir, MMKVLogLevel logLevel) {
-        return initialize(rootDir, null, logLevel);
+    public static String initialize(Context context, String rootDir, MMKVLogLevel logLevel) {
+        return initialize(context, rootDir, null, logLevel);
+    }
+    public static String initialize(Context context, String rootDir, LibLoader loader) {
+        MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return initialize(context, rootDir, loader, logLevel);
+    }
+    public static String initialize(Context context, String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
+        // disable process mode in release build
+        // FIXME: Find a better way to getApplicationInfo() without using context.
+        //  If any one knows how, you're welcome to make a contribution.
+        if ((context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) == 0) {
+            disableProcessModeChecker();
+        } else {
+            enableProcessModeChecker();
+        }
+        return doInitialize(rootDir, loader, logLevel);
     }
 
-    public static String initialize(String rootDir, LibLoader loader) {
-        MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(rootDir, loader, logLevel);
-    }
-    public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
+    private static String doInitialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
         if (loader != null) {
             if (BuildConfig.FLAVOR.equals("SharedCpp")) {
                 loader.loadLibrary("c++_shared");
@@ -112,6 +123,42 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         jniInitialize(rootDir, logLevel2Int(logLevel));
         MMKV.rootDir = rootDir;
         return MMKV.rootDir;
+    }
+
+    /**
+     * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
+     * Use the initialize(context, rootDir) method instead.
+     */
+    @Deprecated
+    public static String initialize(String rootDir) {
+        MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return doInitialize(rootDir, null, logLevel);
+    }
+    /**
+     * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
+     * Use the initialize(context, rootDir, logLevel) method instead.
+     */
+    @Deprecated
+    public static String initialize(String rootDir, MMKVLogLevel logLevel) {
+        return doInitialize(rootDir, null, logLevel);
+    }
+
+    /**
+     * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
+     * Use the initialize(context, rootDir, libLoader) method instead.
+     */
+    @Deprecated
+    public static String initialize(String rootDir, LibLoader loader) {
+        MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
+        return doInitialize(rootDir, loader, logLevel);
+    }
+    /**
+     * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
+     * Use the initialize(context, rootDir, libLoader, logLevel) method instead.
+     */
+    @Deprecated
+    public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
+        return doInitialize(rootDir, loader, logLevel);
     }
 
     static private String rootDir = null;
@@ -287,20 +334,42 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (handle == 0) {
             return null;
         }
-        if (!checkedHandleSet.contains(handle)) {
-            if (!checkProcessMode(handle)) {
-                String message;
-                if (mode == SINGLE_PROCESS_MODE) {
-                    message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
-                } else {
-                    message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
-                    message += "while it's already been opened with SINGLE_PROCESS_MODE by someone somewhere else!";
+        if (!isProcessModeCheckerEnabled) {
+            return new MMKV(handle);
+        }
+        synchronized (checkedHandleSet) {
+            if (!checkedHandleSet.contains(handle)) {
+                if (!checkProcessMode(handle)) {
+                    String message;
+                    if (mode == SINGLE_PROCESS_MODE) {
+                        message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
+                    } else {
+                        message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
+                        message += "while it's already been opened with SINGLE_PROCESS_MODE by someone somewhere else!";
+                    }
+                    throw new IllegalArgumentException(message);
                 }
-                throw new IllegalArgumentException(message);
+                checkedHandleSet.add(handle);
             }
-            checkedHandleSet.add(handle);
         }
         return new MMKV(handle);
+    }
+
+    // Enable checkProcessMode() when initializing an MMKV instance, it's automatically enabled on debug build.
+    private static boolean isProcessModeCheckerEnabled = true;
+    public static void enableProcessModeChecker() {
+        synchronized (checkedHandleSet) {
+            isProcessModeCheckerEnabled = true;
+        }
+        Log.i("MMKV", "Enable checkProcessMode()");
+    }
+
+    // Disable checkProcessMode() when initializing an MMKV instance, it's automatically disabled on release build.
+    public static void disableProcessModeChecker() {
+        synchronized (checkedHandleSet) {
+            isProcessModeCheckerEnabled = false;
+        }
+        Log.i("MMKV", "Disable checkProcessMode()");
     }
 
     // encryption & decryption key
@@ -576,7 +645,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private native void sync(boolean sync);
 
-    public static native boolean isFileValid(String mmapID);
+    // detect if the MMKV file is valid or not
+    // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
+    public static boolean isFileValid(String mmapID) {
+        return isFileValid(mmapID, null);
+    }
+
+    public static native boolean isFileValid(String mmapID, @Nullable String rootPath);
 
     // SharedPreferences migration
     @SuppressWarnings("unchecked")

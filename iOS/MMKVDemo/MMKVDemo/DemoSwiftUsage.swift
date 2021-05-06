@@ -61,6 +61,13 @@ class DemoSwiftUsage : NSObject {
         let str = String(data: data ?? Data(), encoding: .utf8) ?? ""
         print("Swift: data = \(str)")
 
+        let arr = [1, 0, 2, 4]
+        if let objArr = arr as NSArray? {
+            mmkv.set(objArr, forKey:"array")
+            let result = mmkv.object(of: NSArray.self, forKey: "array");
+            print("Swift: array = \(result as! NSArray)")
+        }
+
         mmkv.removeValue(forKey: "bool")
         print("Swift: after delete bool = \(mmkv.bool(forKey: "bool"))")
 	}
