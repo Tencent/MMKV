@@ -4,18 +4,18 @@ version '1.0'
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
+        classpath 'com.android.tools.build:gradle:4.2.0'
     }
 }
 
 rootProject.allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
 //        mavenLocal()
     }
 }
@@ -33,6 +33,6 @@ android {
     }
 
     dependencies {
-        implementation 'com.tencent:mmkv-static:[1.2.7,)'
+        implementation 'com.tencent:mmkv-static:[1.2.8,)'
     }
 }
