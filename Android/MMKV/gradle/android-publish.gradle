@@ -34,12 +34,12 @@ def readPropertyFromLocalProperties(String key) {
     return properties.getProperty(key)
 }
 
-def getOSSRUsername() {
-    return hasProperty('ossrhUsername') ? ossrhUsername : readPropertyFromLocalProperties('ossrhUsername')
+def getRepositoryUsername() {
+    return hasProperty('REPOSITORY_USERNAME') ? REPOSITORY_USERNAME : readPropertyFromLocalProperties('REPOSITORY_USERNAME')
 }
 
-def getOSSRPassword() {
-    return hasProperty('ossrhPassword') ? ossrhPassword : readPropertyFromLocalProperties('ossrhPassword')
+def getRepositoryPassword() {
+    return hasProperty('REPOSITORY_PASSWORD') ? REPOSITORY_PASSWORD : readPropertyFromLocalProperties('REPOSITORY_PASSWORD')
 }
 
 def curArtifactId
@@ -193,8 +193,8 @@ publishing.repositories {
     maven {
         url "${isReleaseBuild() ? getReleaseRepositoryUrl() : getSnapshotRepositoryUrl()}"
         credentials {
-            username "${getOSSRUsername()}"
-            password "${getOSSRPassword()}"
+            username "${getRepositoryUsername()}"
+            password "${getRepositoryPassword()}"
         }
     }
 }
