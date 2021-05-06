@@ -4,10 +4,10 @@
 * Support null-safety.
 * Upgrade to Flutter 2.0.
 * Keep up with MMKV native lib v1.2.8, which migrates the Android Native Lib to Maven Central Repository.
-* Fix `MMKV.encodeString()` crash on iOS with an empty string.
+* Fix `MMKV.encodeString()` crash on iOS with an empty string value.
 
 ### Known Issue
-* When calling `MMKV.encodeString()` with an empty string value on Android, `MMKV.decodeString()` will return `null`. iOS does not have such bug.
+* When calling `MMKV.encodeString()` with an empty string value on Android, `MMKV.decodeString()` will return `null`. This bug will be fixed in the next version of Android Native Lib. iOS does not have such a bug.
 
 ## v1.2.8 / 2020-12-25
 * Keep up with MMKV native lib v1.2.7, which fix the `MMKV.sync(false)` not being asynchronous bug.
