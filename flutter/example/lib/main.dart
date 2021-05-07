@@ -106,7 +106,6 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeString('string', str);
     print('string = ${mmkv.decodeString('string')}');
 
-    // TODO: Fix 'empty string = null' bug on Android
     mmkv.encodeString('string', '');
     print('empty string = ${mmkv.decodeString('string')}');
     print('contains "string": ${mmkv.containsKey('string')}');

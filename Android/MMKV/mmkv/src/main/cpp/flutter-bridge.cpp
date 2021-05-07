@@ -189,21 +189,27 @@ MMKV_EXPORT void *decodeBytes(void *handle, const char *oKey, uint64_t *lengthPt
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && oKey) {
         auto key = string(oKey);
-        auto value = kv->getBytes(key);
-        if (value.length() > 0) {
-            if (value.isStoredOnStack()) {
-                auto result = malloc(value.length());
-                if (result) {
-                    memcpy(result, value.getPtr(), value.length());
-                    *lengthPtr = value.length();
+        mmkv::MMBuffer value;
+        auto hasValue = kv->getBytes(key, value);
+        if (hasValue) {
+            if (value.length() > 0) {
+                if (value.isStoredOnStack()) {
+                    auto result = malloc(value.length());
+                    if (result) {
+                        memcpy(result, value.getPtr(), value.length());
+                        *lengthPtr = value.length();
+                    }
+                    return result;
                 }
-                return result;
-            } else {
                 void *result = value.getPtr();
                 *lengthPtr = value.length();
                 value.detach();
                 return result;
             }
+            *lengthPtr = 0;
+            // this ptr is intended for checking existence of the value
+            // don't free this ptr
+            return value.getPtr();
         }
     }
     return nullptr;

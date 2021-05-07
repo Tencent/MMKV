@@ -540,6 +540,24 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
     return false;
 }
 
+bool MMKV::getBytes(MMKVKey_t key, mmkv::MMBuffer &result) {
+    if (isKeyEmpty(key)) {
+        return false;
+    }
+    SCOPED_LOCK(m_lock);
+    auto data = getDataForKey(key);
+    if (data.length() > 0) {
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            result = move(input.readData());
+            return true;
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    }
+    return false;
+}
+
 MMBuffer MMKV::getBytes(MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return MMBuffer();

@@ -16,7 +16,7 @@ rootProject.allprojects {
     repositories {
         google()
         mavenCentral()
-//        mavenLocal()
+        mavenLocal()
     }
 }
 
@@ -33,6 +33,6 @@ android {
     }
 
     dependencies {
-        implementation 'com.tencent:mmkv-static:[1.2.8,)'
+        implementation 'com.tencent:mmkv-static:[1.2.9,)'
     }
 }

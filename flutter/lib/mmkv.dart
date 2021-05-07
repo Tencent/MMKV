@@ -298,11 +298,11 @@ class MMKV {
     var ret = _decodeBytes(_handle, keyPtr, lengthPtr);
     calloc.free(keyPtr);
 
-    if (/*ret != null && */ ret != nullptr) {
+    if (ret != nullptr) {
       var length = lengthPtr.value;
       calloc.free(lengthPtr);
       var result = _buffer2String(ret, length);
-      if (!Platform.isIOS) {
+      if (!Platform.isIOS && length > 0) {
         calloc.free(ret);
       }
       return result;

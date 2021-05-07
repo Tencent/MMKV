@@ -243,6 +243,8 @@ public:
 
     mmkv::MMBuffer getBytes(MMKVKey_t key);
 
+    bool getBytes(MMKVKey_t key, mmkv::MMBuffer &result);
+
     bool getVector(MMKVKey_t key, std::vector<std::string> &result);
 #endif // MMKV_APPLE
 
