@@ -9,12 +9,11 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
-        // ndk doesn't have targetSDK support
-        //minSdkVersion = 26
-        ndkVersion = '16.1.4479499' // android-ndk-r16b
+        // android-ndk-r16b
+        // ndkVersion = '16.1.4479499'
     }
     buildTypes {
         release {
