@@ -153,7 +153,7 @@ void initialize() {
     g_instanceLock->initialize();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
-    MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
+    MMKVInfo("version %s, page size %d, arch %s", MMKV_VERSION, DEFAULT_MMAP_SIZE, MMKV_ABI);
 
     // get CPU status of ARMv8 extensions (CRC32, AES)
 #if defined(__aarch64__) && defined(__linux__)
