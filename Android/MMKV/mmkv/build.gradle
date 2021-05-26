@@ -47,6 +47,7 @@ android {
             externalNativeBuild {
                 cmake {
                     arguments = ["-DANDROID_STL=c++_static"]
+                    cppFlags "-DMMKV_STL_SHARED=0"
                 }
             }
         }
@@ -56,6 +57,7 @@ android {
             externalNativeBuild {
                 cmake {
                     arguments = ["-DANDROID_STL=c++_shared"]
+                    cppFlags "-DMMKV_STL_SHARED=1"
                 }
             }
         }
