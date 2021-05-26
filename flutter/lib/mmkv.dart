@@ -179,8 +179,8 @@ class MMKV {
 
   /// A generic purpose instance in single-process mode.
   ///
-  /// Note: If you come across to failing to load defaultMMKV() on Android after upgrading Flutter from 1.20+ to 2.0+,
-  /// you can try passing this encryption key '\u{2}U' instead.
+  /// Note: If you come across to failing to load [defaultMMKV()] on Android after upgrading Flutter from 1.20+ to 2.0+,
+  /// you can try passing this [cryptKey] `'\u{2}U'` instead.
   /// ```dart
   /// var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
   /// ```

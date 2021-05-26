@@ -26,11 +26,11 @@ Add the following lines to `pubspec.yaml` on your app module. Then run `flutter 
 
 ```yaml
 dependencies:
-  mmkv: ">=1.2.9"
+  mmkv: ">=1.2.10"
   ...
 ```
 
-If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.8.  
+If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.9.  
 
 #### iOS  
 To avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to **change the plugin name 'mmkv' to 'mmkvflutter'**.  
@@ -147,6 +147,12 @@ Note that you have to **wait for MMKV to finish initialization** before accessin
     ```
 
     As you can see, MMKV is quite easy to use.
+    
+    **Note**: If you come across to failing to load `defaultMMKV()` **on Android** after **upgrading** Flutter from 1.20+ to 2.0+, you can try passing this encryption key `'\u{2}U'` instead.  
+
+   ```dart
+   var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
+   ```
     
 * **Deleting & Querying**:
 
