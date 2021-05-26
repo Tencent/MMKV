@@ -3,18 +3,18 @@ apply from: rootProject.file('gradle/build_library.gradle')
 android {
     defaultPublishConfig "StaticCppRelease"
 //    defaultPublishConfig "SharedCppRelease"
-//    defaultPublishConfig "FlutterRelease"
 
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                // uncomment this line to support armeabi
+                // abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
-        // ndk doesn't have targetSDK support
-        //minSdkVersion = 26
-        ndkVersion = '16.1.4479499' // android-ndk-r16b
+        // uncomment this line to support armeabi by using android-ndk-r16b
+        // ndkVersion = '16.1.4479499'
     }
     buildTypes {
         release {
@@ -47,6 +47,7 @@ android {
             externalNativeBuild {
                 cmake {
                     arguments = ["-DANDROID_STL=c++_static"]
+                    cppFlags "-DMMKV_STL_SHARED=0"
                 }
             }
         }
@@ -56,19 +57,10 @@ android {
             externalNativeBuild {
                 cmake {
                     arguments = ["-DANDROID_STL=c++_shared"]
+                    cppFlags "-DMMKV_STL_SHARED=1"
                 }
             }
         }
-        /*Flutter {
-            dimension "stl_mode"
-            ext.artifactIdSuffix = 'flutter'
-            externalNativeBuild {
-                cmake {
-                    arguments = ["-DANDROID_STL=c++_static"]
-                    cppFlags += "-DFORCE_POSIX"
-                }
-            }
-        }*/
     }
 }
 

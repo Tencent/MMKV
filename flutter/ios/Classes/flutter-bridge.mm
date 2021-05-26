@@ -63,7 +63,7 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *c
     return (__bridge void *) kv;
 }
 
-MMKV_EXPORT int64_t getDefaultMMKV(const char *cryptKey) {
+MMKV_EXPORT int64_t getDefaultMMKV(int /*mode*/, const char *cryptKey) {
     MMKV *kv = nil;
 
     if (cryptKey) {

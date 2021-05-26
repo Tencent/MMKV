@@ -153,7 +153,7 @@ void initialize() {
     g_instanceLock->initialize();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
-    MMKVInfo("version %s page size:%d", MMKV_VERSION, DEFAULT_MMAP_SIZE);
+    MMKVInfo("version %s, page size %d, arch %s", MMKV_VERSION, DEFAULT_MMAP_SIZE, MMKV_ABI);
 
     // get CPU status of ARMv8 extensions (CRC32, AES)
 #if defined(__aarch64__) && defined(__linux__)
@@ -532,6 +532,24 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
         try {
             CodedInputData input(data.getPtr(), data.length());
             result = input.readString();
+            return true;
+        } catch (std::exception &exception) {
+            MMKVError("%s", exception.what());
+        }
+    }
+    return false;
+}
+
+bool MMKV::getBytes(MMKVKey_t key, mmkv::MMBuffer &result) {
+    if (isKeyEmpty(key)) {
+        return false;
+    }
+    SCOPED_LOCK(m_lock);
+    auto data = getDataForKey(key);
+    if (data.length() > 0) {
+        try {
+            CodedInputData input(data.getPtr(), data.length());
+            result = move(input.readData());
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());

@@ -1,5 +1,10 @@
 # MMKV for Flutter Change Log
 
+## v1.2.10 / 2021-05-26
+* Bug Fixed: When calling `MMKV.encodeString()` with an empty string value on Android, `MMKV.decodeString()` will return `null`.
+* Bug Fixed: After upgrading from Flutter 1.20+ to 2.0+, calling `MMKV.defaultMMKV()` on Android might fail to load, you can try calling `MMKV.defaultMMKV(cryptKey: '\u{2}U')` instead.
+* Keep up with MMKV native lib v1.2.9, which drops the **armeabi** arch on Android.
+
 ## v1.2.9 / 2021-05-06
 * Support null-safety.
 * Upgrade to Flutter 2.0.

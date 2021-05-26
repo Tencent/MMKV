@@ -65,7 +65,7 @@ class _MyAppState extends State<MyApp> {
           Text('MMKV Version: ${MMKV.version}\n'),
           TextButton(
               onPressed: () {
-                funtionalTest();
+                functionalTest();
               },
               child: Text('Functional Test', style: TextStyle(fontSize: 18))),
           TextButton(
@@ -78,8 +78,11 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void funtionalTest() {
-    // var mmkv = MMKV("test");
+  void functionalTest() {
+    /* Note: If you come across to failing to load defaultMMKV() on Android after upgrading Flutter from 1.20+ to 2.0+,
+     * you can try passing this encryption key '\u{2}U' instead.
+     * var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
+     */
     var mmkv = MMKV.defaultMMKV();
     mmkv.encodeBool('bool', true);
     print('bool = ${mmkv.decodeBool('bool')}');
@@ -106,7 +109,6 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeString('string', str);
     print('string = ${mmkv.decodeString('string')}');
 
-    // TODO: Fix 'empty string = null' bug on Android
     mmkv.encodeString('string', '');
     print('empty string = ${mmkv.decodeString('string')}');
     print('contains "string": ${mmkv.containsKey('string')}');

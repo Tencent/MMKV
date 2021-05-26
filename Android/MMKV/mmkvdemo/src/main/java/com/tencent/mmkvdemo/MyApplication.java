@@ -24,7 +24,6 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
             }
         }, MMKVLogLevel.LevelInfo);
         Log.i("MMKV", "mmkv root: " + rootDir);
-        Log.i("MMKV", "mmkv version: " + MMKV.version());
 
         // set log level
         MMKV.setLogLevel(MMKVLogLevel.LevelInfo);

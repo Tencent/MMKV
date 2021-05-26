@@ -100,7 +100,11 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         jfieldID sdkIntFieldID = env->GetStaticFieldID(versionClass, "SDK_INT", "I");
         if (sdkIntFieldID) {
             g_android_api = env->GetStaticIntField(versionClass, sdkIntFieldID);
-            MMKVInfo("current API level = %d", g_android_api);
+#ifdef MMKV_STL_SHARED
+            MMKVInfo("current API level = %d, libc++_shared=%d", g_android_api, MMKV_STL_SHARED);
+#else
+            MMKVInfo("current API level = %d, libc++_shared=?", g_android_api);
+#endif
         } else {
             MMKVError("fail to get field id android.os.Build.VERSION.SDK_INT");
         }

@@ -1,7 +1,20 @@
 # MMKV Change Log
 
+## v1.2.9 / 2021-05-26
+This version is mainly for Android & Flutter.  
+
+### Android
+* Drop the support of **armeabi** arch. As has been mention in the last release, to avoid some crashes on the old NDK (r16b), and make the most of a more stable `libc++`, we have decided to upgrade MMKV's building NDK in this release. That means we can't support **armeabi** anymore. Those who still in need of armeabi can **build from sources** by following the [instruction in the wiki](https://github.com/Tencent/MMKV/wiki/android_setup).
+
+We really appreciate your understanding.
+
+### Flutter (v1.2.10)
+* Bug Fixed: When calling `MMKV.encodeString()` with an empty string value on Android, `MMKV.decodeString()` will return `null`.
+* Bug Fixed: After **upgrading** from Flutter 1.20+ to 2.0+, calling `MMKV.defaultMMKV()` on Android might fail to load, you can try calling `MMKV.defaultMMKV(cryptKey: '\u{2}U')` with an **encrytion key** '\u{2}U' instead.
+* Keep up with MMKV native lib v1.2.9.
+
 ## v1.2.8 / 2021-05-06
-This will be the last version that supports **armeabi arch** on Android. To avoid some crashed on the old NDK (r16b), and make the most of a more stable `libc++`, we have decided to upgrade MMKV's building NDK in the next release. That means we can't support **armeabi** anymore.  
+This will be the last version that supports **armeabi arch** on Android. To avoid some crashes on the old NDK (r16b), and make the most of a more stable `libc++`, we have decided to upgrade MMKV's building NDK in the next release. That means we can't support **armeabi** anymore.  
 
 We really appreciate your understanding.
 
@@ -15,7 +28,7 @@ We really appreciate your understanding.
 * Min iOS support has been **upgrade to iOS 9**.
 * Support building by Xcode 12.
 
-### Flutter
+### Flutter (v1.2.9)
 * Support null-safety.
 * Upgrade to flutter 2.0.
 * Fix a crash on the iOS when calling `encodeString()` with an empty string value.
@@ -38,7 +51,7 @@ Happy holidays everyone!
 * Complete review of all MMKV methods about Java nullable/nonnull annotation.
 * Add API for `MMKV.initialize()` with both `Context` and `LibLoader` parammeters.
 
-### Flutter
+### Flutter (v1.2.8)
 * Fix a crash on the iOS simulator when accessing the default MMKV instance.
 * Fix a bug on iOS when initing the default MMKV instance with a crypt key, the instance is still in plaintext.
 
@@ -53,7 +66,7 @@ Add golang for POSIX platforms. Most things actually work!. Check out the [wiki]
 * Fix compile error when `MMKV_DISABLE_CRYPT` is set.
 * Add a preprocess directive `MMKV_DISABLE_FLUTTER` to disable flutter plugin features. If you integrate MMKV by source code, and if you are pretty sure the flutter plugin is not needed, you can turn that off to save some binary size.
 
-### Flutter
+### Flutter (v1.2.7)
 Add MMKV support for **Flutter** on iOS & Android platform.  Most things actually work!  
 Check out the [wiki](https://github.com/Tencent/MMKV/wiki/flutter_setup) for more info.
 
