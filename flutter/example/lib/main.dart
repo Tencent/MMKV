@@ -27,8 +27,6 @@ void main() async {
   // must wait for MMKV to finish initialization
   final rootDir = await MMKV.initialize();
   print('MMKV for flutter with rootDir = $rootDir');
-  var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
-  print('all keys=${mmkv.allKeys}');
 
   runApp(MyApp());
 }
@@ -81,7 +79,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void funtionalTest() {
-    /* Note: If you come across to failing to load defaultMMKV() after upgrading Flutter from 1.20+ to 2.0+,
+    /* Note: If you come across to failing to load defaultMMKV() on Android after upgrading Flutter from 1.20+ to 2.0+,
      * you can try passing this encryption key '\u{2}U' instead.
      * var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
      */
