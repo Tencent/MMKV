@@ -178,10 +178,17 @@ class MMKV {
   }
 
   /// A generic purpose instance in single-process mode.
+  ///
+  /// Note: If you come across to failing to load defaultMMKV() after upgrading Flutter from 1.20+ to 2.0+,
+  /// you can try passing this encryption key '\u{2}U' instead.
+  /// ```dart
+  /// var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
+  /// ```
   static MMKV defaultMMKV({String? cryptKey}) {
     var mmkv = MMKV("");
     final cryptKeyPtr = _string2Pointer(cryptKey);
-    mmkv._handle = _getDefaultMMKV(cryptKeyPtr);
+    final mode = MMKVMode.SINGLE_PROCESS_MODE;
+    mmkv._handle = _getDefaultMMKV(mode.index, cryptKeyPtr);
     calloc.free(cryptKeyPtr);
     return mmkv;
   }
@@ -666,9 +673,9 @@ final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey,
                     Pointer<Utf8>)>>("getMMKVWithID")
         .asFunction();
 
-final Pointer<Void> Function(Pointer<Utf8> cryptKey) _getDefaultMMKV =
+final Pointer<Void> Function(int, Pointer<Utf8> cryptKey) _getDefaultMMKV =
     _nativeLib
-        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>)>>(
+        .lookup<NativeFunction<Pointer<Void> Function(Uint32, Pointer<Utf8>)>>(
             "getDefaultMMKV")
         .asFunction();
 
