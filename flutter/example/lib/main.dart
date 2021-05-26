@@ -65,7 +65,7 @@ class _MyAppState extends State<MyApp> {
           Text('MMKV Version: ${MMKV.version}\n'),
           TextButton(
               onPressed: () {
-                funtionalTest();
+                functionalTest();
               },
               child: Text('Functional Test', style: TextStyle(fontSize: 18))),
           TextButton(
@@ -78,7 +78,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void funtionalTest() {
+  void functionalTest() {
     /* Note: If you come across to failing to load defaultMMKV() on Android after upgrading Flutter from 1.20+ to 2.0+,
      * you can try passing this encryption key '\u{2}U' instead.
      * var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
