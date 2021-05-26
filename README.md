@@ -33,7 +33,7 @@ dependencies {
 }
 ```
 
-Starting from v1.2.9, MMKV has been **migrated to Maven Central**. Older versions (<= v1.2.7) are still available on JCenter.  
+Starting from v1.2.8, MMKV has been **migrated to Maven Central**. Older versions (<= v1.2.7) are still available on JCenter.  
 For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
 
 ### Quick Tutorial
