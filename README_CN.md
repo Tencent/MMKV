@@ -26,7 +26,7 @@ dependencies {
     // replace "1.2.9" with any available version
 }
 ```
-从 v1.2.9 起, MMKV **迁移到 Maven Central**。老版本 (<= v1.2.7) 仍然在 JCenter。  
+从 v1.2.8 起, MMKV **迁移到 Maven Central**。老版本 (<= v1.2.7) 仍然在 JCenter。  
 更多安装指引参考 [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup_cn)。
 
 ### 快速上手
