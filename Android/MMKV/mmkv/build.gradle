@@ -10,7 +10,6 @@ android {
             cmake {
                 // uncomment this line to support armeabi
                 // abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
         // uncomment this line to support armeabi by using android-ndk-r16b
