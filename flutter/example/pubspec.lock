@@ -101,7 +101,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.2.10"
+    version: "1.2.11"
   path:
     dependency: transitive
     description:

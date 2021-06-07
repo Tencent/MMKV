@@ -1,5 +1,8 @@
 # MMKV for Flutter Change Log
 
+## v1.2.11 / 2021-06-xx
+* Rename iOS function names to avoid conflict with other libs.
+
 ## v1.2.10 / 2021-05-26
 * Bug Fixed: When calling `MMKV.encodeString()` with an empty string value on Android, `MMKV.decodeString()` will return `null`.
 * Bug Fixed: After upgrading from Flutter 1.20+ to 2.0+, calling `MMKV.defaultMMKV()` on Android might fail to load, you can try calling `MMKV.defaultMMKV(cryptKey: '\u{2}U')` instead.

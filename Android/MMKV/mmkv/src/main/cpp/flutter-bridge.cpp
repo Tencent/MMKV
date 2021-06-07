@@ -38,10 +38,6 @@ MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
     MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
 }
 
-MMKV_EXPORT void onExit() {
-    MMKV::onExit();
-}
-
 MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath) {
     MMKV *kv = nullptr;
     if (!mmapID) {
