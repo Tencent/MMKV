@@ -23,6 +23,7 @@ import 'dart:convert';
 import 'dart:ffi'; // For FFI
 import 'dart:io'; // For Platform.isX
 import 'dart:typed_data';
+
 import 'package:ffi/ffi.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -687,55 +688,58 @@ final Pointer<Void> Function(int, Pointer<Utf8> cryptKey) _getDefaultMMKV =
         .asFunction();
 
 final Pointer<Utf8> Function(Pointer<Void>) _mmapID = _nativeLib
-    .lookup<NativeFunction<Pointer<Utf8> Function(Pointer<Void>)>>(_nativeFuncName("mmapID"))
+    .lookup<NativeFunction<Pointer<Utf8> Function(Pointer<Void>)>>(
+        _nativeFuncName("mmapID"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(
-    _nativeFuncName("encodeBool"))
+        _nativeFuncName("encodeBool"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeBool = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(
-    _nativeFuncName("decodeBool"))
+        _nativeFuncName("decodeBool"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt32 = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(
-    _nativeFuncName("encodeInt32"))
+        _nativeFuncName("encodeInt32"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt32 = _nativeLib
     .lookup<
         NativeFunction<
-            Int32 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(_nativeFuncName("decodeInt32"))
+            Int32 Function(Pointer<Void>, Pointer<Utf8>,
+                Int32)>>(_nativeFuncName("decodeInt32"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt64 = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(
-    _nativeFuncName("encodeInt64"))
+        _nativeFuncName("encodeInt64"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt64 = _nativeLib
     .lookup<
         NativeFunction<
-            Int64 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(_nativeFuncName("decodeInt64"))
+            Int64 Function(Pointer<Void>, Pointer<Utf8>,
+                Int64)>>(_nativeFuncName("decodeInt64"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, double) _encodeDouble =
     _nativeLib
         .lookup<
             NativeFunction<
-                Int8 Function(
-                    Pointer<Void>, Pointer<Utf8>, Double)>>(_nativeFuncName("encodeDouble"))
+                Int8 Function(Pointer<Void>, Pointer<Utf8>,
+                    Double)>>(_nativeFuncName("encodeDouble"))
         .asFunction();
 
 final double Function(Pointer<Void>, Pointer<Utf8>, double) _decodeDouble =
     _nativeLib
         .lookup<
             NativeFunction<
-                Double Function(
-                    Pointer<Void>, Pointer<Utf8>, Double)>>(_nativeFuncName("decodeDouble"))
+                Double Function(Pointer<Void>, Pointer<Utf8>,
+                    Double)>>(_nativeFuncName("decodeDouble"))
         .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int)
@@ -757,15 +761,16 @@ final Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>)
 final int Function(Pointer<Void>, Pointer<Uint8>, int) _reKey = _nativeLib
     .lookup<
         NativeFunction<
-            Int8 Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>(_nativeFuncName("reKey"))
+            Int8 Function(Pointer<Void>, Pointer<Uint8>,
+                Uint64)>>(_nativeFuncName("reKey"))
     .asFunction();
 
 final Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>) _cryptKey =
     _nativeLib
         .lookup<
             NativeFunction<
-                Pointer<Uint8> Function(
-                    Pointer<Void>, Pointer<Uint64>)>>(_nativeFuncName("cryptKey"))
+                Pointer<Uint8> Function(Pointer<Void>,
+                    Pointer<Uint64>)>>(_nativeFuncName("cryptKey"))
         .asFunction();
 
 final void Function(Pointer<Void>, Pointer<Uint8>, int) _checkReSetCryptKey =
@@ -779,7 +784,8 @@ final void Function(Pointer<Void>, Pointer<Uint8>, int) _checkReSetCryptKey =
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _valueSize = _nativeLib
     .lookup<
         NativeFunction<
-            Uint32 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("valueSize"))
+            Uint32 Function(Pointer<Void>, Pointer<Utf8>,
+                Int8)>>(_nativeFuncName("valueSize"))
     .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int)
@@ -801,37 +807,44 @@ final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
 
 final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>)>>(
-    _nativeFuncName("containsKey"))
+        _nativeFuncName("containsKey"))
     .asFunction();
 
 final int Function(Pointer<Void>) _count = _nativeLib
-    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(_nativeFuncName("count"))
+    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(
+        _nativeFuncName("count"))
     .asFunction();
 
 final int Function(Pointer<Void>) _totalSize = _nativeLib
-    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(_nativeFuncName("totalSize"))
+    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(
+        _nativeFuncName("totalSize"))
     .asFunction();
 
 final int Function(Pointer<Void>) _actualSize = _nativeLib
-    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(_nativeFuncName("actualSize"))
+    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(
+        _nativeFuncName("actualSize"))
     .asFunction();
 
 final void Function(Pointer<Void>, Pointer<Utf8>) _removeValueForKey =
     _nativeLib
         .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Utf8>)>>(
-        _nativeFuncName("removeValueForKey"))
+            _nativeFuncName("removeValueForKey"))
         .asFunction();
 
 final void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int)
     _removeValuesForKeys = _nativeLib
         .lookup<
             NativeFunction<
-                Void Function(Pointer<Void>, Pointer<Pointer<Utf8>>,
-                    Pointer<Uint32>, Uint64)>>(_nativeFuncName("removeValuesForKeys"))
+                Void Function(
+                    Pointer<Void>,
+                    Pointer<Pointer<Utf8>>,
+                    Pointer<Uint32>,
+                    Uint64)>>(_nativeFuncName("removeValuesForKeys"))
         .asFunction();
 
 final void Function(Pointer<Void>) _clearAll = _nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>)>>(_nativeFuncName("clearAll"))
+    .lookup<NativeFunction<Void Function(Pointer<Void>)>>(
+        _nativeFuncName("clearAll"))
     .asFunction();
 
 final void Function(Pointer<Void>, int) _mmkvSync = _nativeLib
@@ -839,7 +852,8 @@ final void Function(Pointer<Void>, int) _mmkvSync = _nativeLib
     .asFunction();
 
 final void Function(Pointer<Void>) _clearMemoryCache = _nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>)>>(_nativeFuncName("clearMemoryCache"))
+    .lookup<NativeFunction<Void Function(Pointer<Void>)>>(
+        _nativeFuncName("clearMemoryCache"))
     .asFunction();
 
 final int Function() _pageSize = _nativeLib
@@ -847,11 +861,13 @@ final int Function() _pageSize = _nativeLib
     .asFunction();
 
 final Pointer<Utf8> Function() _version = _nativeLib
-    .lookup<NativeFunction<Pointer<Utf8> Function()>>(_nativeFuncName("version"))
+    .lookup<NativeFunction<Pointer<Utf8> Function()>>(
+        _nativeFuncName("version"))
     .asFunction();
 
 final void Function(Pointer<Void>) _trim = _nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>)>>(_nativeFuncName("trim"))
+    .lookup<NativeFunction<Void Function(Pointer<Void>)>>(
+        _nativeFuncName("trim"))
     .asFunction();
 
 final void Function(Pointer<Void>) _mmkvClose = _nativeLib
