@@ -60,16 +60,13 @@ public class MMKVContentProvider extends ContentProvider {
         return MMKVContentProvider.gUri;
     }
 
-    private Bundle mmkvFromAshmemID(String ashmemID, int size, int mode, String cryptKey) {
+    private Bundle mmkvFromAshmemID(String ashmemID, int size, int mode, String cryptKey) throws RuntimeException {
         MMKV mmkv = MMKV.mmkvWithAshmemID(getContext(), ashmemID, size, mode, cryptKey);
-        if (mmkv != null) {
-            ParcelableMMKV parcelableMMKV = new ParcelableMMKV(mmkv);
-            Log.i("MMKV", ashmemID + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
-            Bundle result = new Bundle();
-            result.putParcelable(MMKVContentProvider.KEY, parcelableMMKV);
-            return result;
-        }
-        return null;
+        ParcelableMMKV parcelableMMKV = new ParcelableMMKV(mmkv);
+        Log.i("MMKV", ashmemID + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
+        Bundle result = new Bundle();
+        result.putParcelable(MMKVContentProvider.KEY, parcelableMMKV);
+        return result;
     }
 
     private static String queryAuthority(Context context) {
@@ -129,7 +126,12 @@ public class MMKVContentProvider extends ContentProvider {
                 int size = extras.getInt(MMKVContentProvider.KEY_SIZE);
                 int mode = extras.getInt(MMKVContentProvider.KEY_MODE);
                 String cryptKey = extras.getString(MMKVContentProvider.KEY_CRYPT);
-                return mmkvFromAshmemID(mmapID, size, mode, cryptKey);
+                try {
+                    return mmkvFromAshmemID(mmapID, size, mode, cryptKey);
+                } catch (Exception e) {
+                    Log.e("MMKV", e.getMessage());
+                    return null;
+                }
             }
         }
         return null;

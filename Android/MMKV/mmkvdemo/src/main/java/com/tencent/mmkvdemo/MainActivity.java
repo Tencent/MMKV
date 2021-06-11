@@ -100,10 +100,8 @@ public class MainActivity extends AppCompatActivity {
 
         String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
         MMKV kv = testMMKV("test/AES", "Tencent MMKV", false, otherDir);
-        if (kv != null) {
-            kv.checkContentChangedByOuterProcess();
-            kv.close();
-        }
+        kv.checkContentChangedByOuterProcess();
+        kv.close();
 
         testAshmem();
         testReKey();
@@ -133,13 +131,9 @@ public class MainActivity extends AppCompatActivity {
         Log.d("mmkv", "" + value);
     }
 
-    @Nullable
     private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String rootPath) {
         //MMKV kv = MMKV.defaultMMKV();
         MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath);
-        if (kv == null) {
-            return null;
-        }
 
         if (!decodeOnly) {
             kv.encode("bool", true);
@@ -264,9 +258,6 @@ public class MainActivity extends AppCompatActivity {
     private void testReKey() {
         final String mmapID = "testAES_reKey1";
         MMKV kv = testMMKV(mmapID, null, false, null);
-        if (kv == null) {
-            return;
-        }
 
         kv.reKey("Key_seq_1");
         kv.clearMemoryCache();

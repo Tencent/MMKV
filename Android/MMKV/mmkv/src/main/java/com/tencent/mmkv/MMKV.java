@@ -44,6 +44,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static final EnumMap<MMKVLogLevel, Integer> logLevel2Index;
     private static final MMKVLogLevel[] index2LogLevel;
     private static final Set<Long> checkedHandleSet;
+
     static {
         recoverIndex = new EnumMap<>(MMKVRecoverStrategic.class);
         recoverIndex.put(MMKVRecoverStrategic.OnErrorDiscard, 0);
@@ -70,6 +71,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, root, null, logLevel);
     }
+
     public static String initialize(Context context, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         return initialize(context, root, null, logLevel);
@@ -80,6 +82,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, root, loader, logLevel);
     }
+
     public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         return initialize(context, root, loader, logLevel);
@@ -89,13 +92,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, rootDir, null, logLevel);
     }
+
     public static String initialize(Context context, String rootDir, MMKVLogLevel logLevel) {
         return initialize(context, rootDir, null, logLevel);
     }
+
     public static String initialize(Context context, String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, rootDir, loader, logLevel);
     }
+
     public static String initialize(Context context, String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
@@ -134,6 +140,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return doInitialize(rootDir, null, logLevel);
     }
+
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
      * Use the initialize(context, rootDir, logLevel) method instead.
@@ -152,6 +159,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return doInitialize(rootDir, loader, logLevel);
     }
+
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
      * Use the initialize(context, rootDir, libLoader, logLevel) method instead.
@@ -162,6 +170,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     static private String rootDir = null;
+
     public static String getRootDir() {
         return rootDir;
     }
@@ -206,8 +215,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static private final int ASHMEM_MODE = 0x8;
 
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID) {
+    public static MMKV mmkvWithID(String mmapID) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -216,8 +224,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode) {
+    public static MMKV mmkvWithID(String mmapID, int mode) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -227,8 +234,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // cryptKey's length <= 16
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) {
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -237,8 +243,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, mode);
     }
 
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, String rootPath) {
+    public static MMKV mmkvWithID(String mmapID, String rootPath) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -248,8 +253,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     // cryptKey's length <= 16
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath) {
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath)
+        throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -260,22 +265,24 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // a memory only MMKV, cleared on program exit
     // size cannot change afterward (because ashmem won't allow it)
-    @Nullable
-    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey) {
+    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey)
+        throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
         String processName = MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
         if (processName == null || processName.length() == 0) {
-            simpleLog(MMKVLogLevel.LevelError, "process name detect fail, try again later");
-            return null;
+            String message = "process name detect fail, try again later";
+            simpleLog(MMKVLogLevel.LevelError, message);
+            throw new IllegalStateException(message);
         }
         if (processName.contains(":")) {
             Uri uri = MMKVContentProvider.contentUri(context);
             if (uri == null) {
-                simpleLog(MMKVLogLevel.LevelError, "MMKVContentProvider has invalid authority");
-                return null;
+                String message = "MMKVContentProvider has invalid authority";
+                simpleLog(MMKVLogLevel.LevelError, message);
+                throw new IllegalStateException(message);
             }
             simpleLog(MMKVLogLevel.LevelInfo, "getting parcelable mmkv in process, Uri = " + uri);
 
@@ -295,22 +302,22 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                     if (mmkv != null) {
                         simpleLog(MMKVLogLevel.LevelInfo,
                                   mmkv.mmapID() + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
+                        return mmkv;
                     }
-                    return mmkv;
                 }
             }
-        } else {
-            simpleLog(MMKVLogLevel.LevelInfo, "getting mmkv in main process");
+        }
+        simpleLog(MMKVLogLevel.LevelInfo, "getting mmkv in main process");
 
-            mode = mode | ASHMEM_MODE;
-            long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
+        mode = mode | ASHMEM_MODE;
+        long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
+        if (handle != 0) {
             return new MMKV(handle);
         }
-        return null;
+        throw new IllegalStateException("Fail to create an Ashmem MMKV instance [" + mmapID + "]");
     }
 
-    @Nullable
-    public static MMKV defaultMMKV() {
+    public static MMKV defaultMMKV() throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -319,8 +326,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, "DefaultMMKV", SINGLE_PROCESS_MODE);
     }
 
-    @Nullable
-    public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) {
+    public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -329,10 +335,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, "DefaultMMKV", mode);
     }
 
-    @Nullable
-    private static MMKV checkProcessMode(long handle, String mmapID, int mode) {
+    private static MMKV checkProcessMode(long handle, String mmapID, int mode) throws RuntimeException {
         if (handle == 0) {
-            return null;
+            throw new RuntimeException("Fail to create a MMKV instance [" + mmapID + "] in JNI");
         }
         if (!isProcessModeCheckerEnabled) {
             return new MMKV(handle);
@@ -357,6 +362,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // Enable checkProcessMode() when initializing an MMKV instance, it's automatically enabled on debug build.
     private static boolean isProcessModeCheckerEnabled = true;
+
     public static void enableProcessModeChecker() {
         synchronized (checkedHandleSet) {
             isProcessModeCheckerEnabled = true;
@@ -846,6 +852,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // callback handler
     private static MMKVHandler gCallbackHandler;
     private static boolean gWantLogReDirecting = false;
+
     public static void registerHandler(MMKVHandler handler) {
         gCallbackHandler = handler;
 
@@ -919,6 +926,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // content change notification of other process
     // trigger by getXXX() or setXXX() or checkContentChangedByOuterProcess()
     private static MMKVContentChangeNotification gContentChangeNotify;
+
     public static void registerContentChangeNotify(MMKVContentChangeNotification notify) {
         gContentChangeNotify = notify;
         setWantsContentChangeNotify(gContentChangeNotify != null);
@@ -928,11 +936,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         gContentChangeNotify = null;
         setWantsContentChangeNotify(false);
     }
+
     private static void onContentChangedByOuterProcess(String mmapID) {
         if (gContentChangeNotify != null) {
             gContentChangeNotify.onContentChangedByOuterProcess(mmapID);
         }
     }
+
     private static native void setWantsContentChangeNotify(boolean needsNotify);
 
     // check change manually
