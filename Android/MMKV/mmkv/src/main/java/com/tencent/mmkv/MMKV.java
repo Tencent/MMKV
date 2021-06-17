@@ -613,9 +613,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return count(nativeHandle);
     }
 
-    // used file size
+    // file size
     public long totalSize() {
         return totalSize(nativeHandle);
+    }
+
+    // used size
+    public long actualSize() {
+        return actualSize(nativeHandle);
     }
 
     public void removeValueForKey(String key) {
@@ -1006,6 +1011,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native long count(long handle);
 
     private native long totalSize(long handle);
+
+    private native long actualSize(long handle);
 
     private native void removeValueForKey(long handle, String key);
 

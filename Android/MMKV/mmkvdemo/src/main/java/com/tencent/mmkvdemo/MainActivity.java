@@ -200,7 +200,8 @@ public class MainActivity extends AppCompatActivity {
                           + ", containsKey:" + kv.contains("null string"));
 
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
-        Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
+        Log.i("MMKV",
+                "count = " + kv.count() + ", totalSize = " + kv.totalSize() + ", actualSize = " + kv.actualSize());
         Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
 
         kv.removeValueForKey("bool");
@@ -309,7 +310,8 @@ public class MainActivity extends AppCompatActivity {
         Log.i("MMKV", "bytes: " + new String(kv.decodeBytes("bytes")));
 
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
-        Log.i("MMKV", "count = " + kv.count() + ", totalSize = " + kv.totalSize());
+        Log.i("MMKV",
+              "count = " + kv.count() + ", totalSize = " + kv.totalSize() + ", actualSize = " + kv.actualSize());
         Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
 
         kv.removeValueForKey("bool");

@@ -548,6 +548,15 @@ MMKV_JNI jlong totalSize(JNIEnv *env, jobject instance, jlong handle) {
     return 0;
 }
 
+MMKV_JNI jlong actualSize(JNIEnv *env, jobject instance, jlong handle) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        jlong size = kv->actualSize();
+        return size;
+    }
+    return 0;
+}
+
 MMKV_JNI void removeValueForKey(JNIEnv *env, jobject instance, jlong handle, jstring oKey) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -829,6 +838,7 @@ static JNINativeMethod g_methods[] = {
     {"containsKey", "(JLjava/lang/String;)Z", (void *) mmkv::containsKey},
     {"count", "(J)J", (void *) mmkv::count},
     {"totalSize", "(J)J", (void *) mmkv::totalSize},
+    {"actualSize", "(J)J", (void *) mmkv::actualSize},
     {"removeValueForKey", "(JLjava/lang/String;)V", (void *) mmkv::removeValueForKey},
     {"valueSize", "(JLjava/lang/String;Z)I", (void *) mmkv::valueSize},
     {"setLogLevel", "(I)V", (void *) mmkv::setLogLevel},
