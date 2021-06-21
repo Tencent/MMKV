@@ -76,7 +76,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Initialize MMKV with default configuration.
      * You must call one of the initialize() methods on App startup process before using MMKV.
      * @param context The context of Android App, usually from Application.
-     * @return The root folder of MMKV.
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      */
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
@@ -89,7 +89,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * You must call one of the initialize() methods on App startup process before using MMKV.
      * @param context The context of Android App, usually from Application.
      * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
-     * @return The root folder of MMKV.
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      */
     public static String initialize(Context context, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
@@ -101,7 +101,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * You must call one of the initialize() methods on App startup process before using MMKV.
      * @param context The context of Android App, usually from Application.
      * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
-     * @return The root folder of MMKV.
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      */
     public static String initialize(Context context, LibLoader loader) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
@@ -115,7 +115,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param context The context of Android App, usually from Application.
      * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
      * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
-     * @return The root folder of MMKV.
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      */
     public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
