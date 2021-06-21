@@ -237,6 +237,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static private String rootDir = null;
 
+    /**
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     */
     public static String getRootDir() {
         return rootDir;
     }
@@ -264,16 +267,28 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return realLevel;
     }
 
+    /**
+     * @param logLevel Set the log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     */
     public static void setLogLevel(MMKVLogLevel level) {
         int realLevel = logLevel2Int(level);
         setLogLevel(realLevel);
     }
 
-    // call on program exit
+    /**
+     * Notify MMKV that App is about to exit. It's totally fine not calling it at all.
+     */
     public static native void onExit();
 
+    /**
+     * Single-process mode. The default mode on an MMKV instance.
+     */
     static public final int SINGLE_PROCESS_MODE = 0x1;
 
+    /**
+     * Multi-process mode.
+     * To enable multi-process accessing of an MMKV instance, you must set this mode whenever you getting that instance.
+     */
     static public final int MULTI_PROCESS_MODE = 0x2;
 
     // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
