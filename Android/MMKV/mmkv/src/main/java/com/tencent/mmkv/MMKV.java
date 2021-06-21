@@ -38,6 +38,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * An highly efficient, reliable, multi-process key-value storage framework.
+ * THE PERFECT drop-in replacement for SharedPreferences & MultiProcessSharedPreferences.
+ */
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static final EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
@@ -63,45 +67,107 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         checkedHandleSet = new HashSet<Long>();
     }
 
+    /**
+     * The interface for providing a 3rd library loader (the ReLinker https://github.com/KeepSafe/ReLinker, etc).
+     */
     public interface LibLoader { void loadLibrary(String libName); }
 
-    // call on program start
+    /**
+     * Initialize MMKV with default configuration.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, root, null, logLevel);
     }
 
+    /**
+     * Initialize MMKV with customize log level.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         return initialize(context, root, null, logLevel);
     }
 
+    /**
+     * Initialize MMKV with a 3rd library loader.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, LibLoader loader) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, root, loader, logLevel);
     }
 
+    /**
+     * Initialize MMKV with a 3rd library loader, and customize log level.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         return initialize(context, root, loader, logLevel);
     }
 
+    /**
+     * Initialize MMKV with customize root folder.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, rootDir, null, logLevel);
     }
 
+    /**
+     * Initialize MMKV with customize root folder, and log level.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir, MMKVLogLevel logLevel) {
         return initialize(context, rootDir, null, logLevel);
     }
 
+    /**
+     * Initialize MMKV with customize root folder, and a 3rd library loader.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, rootDir, loader, logLevel);
     }
 
+    /**
+     * Initialize MMKV with customize settings.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
