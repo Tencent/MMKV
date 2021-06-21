@@ -268,7 +268,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * @param logLevel Set the log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * Set the log level of MMKV.
+     * @param logLevel Defaults to {@link MMKVLogLevel#LevelInfo}.
      */
     public static void setLogLevel(MMKVLogLevel level) {
         int realLevel = logLevel2Int(level);
