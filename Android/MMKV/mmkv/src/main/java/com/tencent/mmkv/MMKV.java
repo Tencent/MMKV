@@ -375,6 +375,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, mode);
     }
 
+    /**
+     * Create an MMKV instance base on Anonymous Shared Memory, aka not synced to any disk files.
+     * @param context The context of Android App, usually from Application.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param size The maximum size of the underlying Anonymous Shared Memory.
+     *            Anonymous Shared Memory on Android can't grow dynamically, must set an appropriate size on creation.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @throws RuntimeException if there's an runtime error.
+     */
     // a memory only MMKV, cleared on program exit
     // size cannot change afterward (because ashmem won't allow it)
     public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey)
@@ -429,6 +439,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         throw new IllegalStateException("Fail to create an Ashmem MMKV instance [" + mmapID + "]");
     }
 
+    /**
+     * Create the default MMKV instance in single-process mode.
+     * @throws RuntimeException if there's an runtime error.
+     */
     public static MMKV defaultMMKV() throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -438,6 +452,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, "DefaultMMKV", SINGLE_PROCESS_MODE);
     }
 
+    /**
+     * Create the default MMKV instance in customize process mode, with an encryption key.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @throws RuntimeException if there's an runtime error.
+     */
     public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -475,6 +495,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // Enable checkProcessMode() when initializing an MMKV instance, it's automatically enabled on debug build.
     private static boolean isProcessModeCheckerEnabled = true;
 
+    /**
+     * Manually enable the process mode checker.
+     * By default, it's automatically enabled in DEBUG build, and disabled in RELEASE build.
+     * If it's enabled, MMKV will throw exceptions when an MMKV instance is created with mismatch process mode.
+     */
     public static void enableProcessModeChecker() {
         synchronized (checkedHandleSet) {
             isProcessModeCheckerEnabled = true;
@@ -482,7 +507,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         Log.i("MMKV", "Enable checkProcessMode()");
     }
 
-    // Disable checkProcessMode() when initializing an MMKV instance, it's automatically disabled on release build.
+    /**
+     * Manually disable the process mode checker.
+     * By default, it's automatically enabled in DEBUG build, and disabled in RELEASE build.
+     * If it's enabled, MMKV will throw exceptions when an MMKV instance is created with mismatch process mode.
+     */
     public static void disableProcessModeChecker() {
         synchronized (checkedHandleSet) {
             isProcessModeCheckerEnabled = false;
