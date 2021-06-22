@@ -483,7 +483,7 @@ What's new
 
 Known Issues
 
-* Getting a MMKV instance with mmapID that contains `/` may fail.  
+* Getting an MMKV instance with mmapID that contains `/` may fail.  
 MMKV uses mmapID as its filename, so don't contain any `/` inside mmapID.
 * Storing a value of `type A` and getting by `type B` may not work.  
 MMKV does type erasure while storing values. That means it's hard for MMKV to do value-type-checking, if not impossible.

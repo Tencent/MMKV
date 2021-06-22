@@ -297,6 +297,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static private final int ASHMEM_MODE = 0x8;
 
+    /**
+     * Create an MMKV instance with an unique ID (in single-process mode).
+     * @param mmapID The unique ID of the MMKV instance.
+     * @throws RuntimeException if there's an runtime error.
+     */
     public static MMKV mmkvWithID(String mmapID) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -306,6 +311,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
+    /**
+     * Create an MMKV instance in single-process or multi-process mode.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @throws RuntimeException if there's an runtime error.
+     */
     public static MMKV mmkvWithID(String mmapID, int mode) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -315,7 +326,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, mode);
     }
 
-    // cryptKey's length <= 16
+    /**
+     * Create an MMKV instance in customize process mode, with an encryption key.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @throws RuntimeException if there's an runtime error.
+     */
     public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -325,6 +342,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, mode);
     }
 
+    /**
+     * Create an MMKV instance in customize folder.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @throws RuntimeException if there's an runtime error.
+     */
     public static MMKV mmkvWithID(String mmapID, String rootPath) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
@@ -334,7 +357,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
-    // cryptKey's length <= 16
+    /**
+     * Create an MMKV instance with customize settings all in one.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @throws RuntimeException if there's an runtime error.
+     */
     public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath)
         throws RuntimeException {
         if (rootDir == null) {
@@ -419,7 +449,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static MMKV checkProcessMode(long handle, String mmapID, int mode) throws RuntimeException {
         if (handle == 0) {
-            throw new RuntimeException("Fail to create a MMKV instance [" + mmapID + "] in JNI");
+            throw new RuntimeException("Fail to create an MMKV instance [" + mmapID + "] in JNI");
         }
         if (!isProcessModeCheckerEnabled) {
             return new MMKV(handle);
@@ -431,7 +461,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                     if (mode == SINGLE_PROCESS_MODE) {
                         message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
                     } else {
-                        message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
+                        message = "Opening an MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
                         message += "while it's already been opened with SINGLE_PROCESS_MODE by someone somewhere else!";
                     }
                     throw new IllegalArgumentException(message);

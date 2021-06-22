@@ -194,7 +194,7 @@ class MMKV {
     return mmkv;
   }
 
-  /// Get a MMKV instance with an unique ID [mmapID].
+  /// Get an MMKV instance with an unique ID [mmapID].
   ///
   /// * If you want a per-user mmkv, you could merge user-id within [mmapID].
   /// * You can get a multi-process MMKV instance by passing [MMKVMode.MULTI_PROCESS_MODE].
