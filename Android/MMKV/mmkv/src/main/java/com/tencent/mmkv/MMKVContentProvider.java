@@ -35,6 +35,9 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+/**
+ * A helper class for MMKV based on Anonymous Shared Memory. {@link MMKV#mmkvWithAshmemID}
+ */
 public class MMKVContentProvider extends ContentProvider {
 
     static protected final String KEY = "KEY";

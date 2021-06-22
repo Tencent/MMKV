@@ -20,7 +20,17 @@
 
 package com.tencent.mmkv;
 
+/**
+ * The recover strategic of MMKV on errors. {@link MMKV#registerHandler}
+ */
 public enum MMKVRecoverStrategic {
+    /**
+     * The default strategic is to discard everything on errors.
+     */
     OnErrorDiscard,
+
+    /**
+     * The recover strategic will try to recover as much data as possible.
+     */
     OnErrorRecover,
 }
