@@ -199,7 +199,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir) method instead.
+     * Use the {@link #initialize(Context, String)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir) {
@@ -209,7 +209,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir, logLevel) method instead.
+     * Use the {@link #initialize(Context, String, MMKVLogLevel)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir, MMKVLogLevel logLevel) {
@@ -218,7 +218,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir, libLoader) method instead.
+     * Use the {@link #initialize(Context, String, LibLoader)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader) {
@@ -228,7 +228,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir, libLoader, logLevel) method instead.
+     * Use the {@link #initialize(Context, String, LibLoader, MMKVLogLevel)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
@@ -1025,23 +1025,22 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Save all mmap memory to file synchronously.
-     * You don't need to call this, really, I mean it.
-     * Unless you worry about the device running out of battery.
-     * In fact, you should remove all the calls after migration to MMKV.
+     * @deprecated This method is only for compatibility purpose. You should remove all the calls after migration to MMKV.
+     * MMKV doesn't rely on commit() to save data to file.
+     * If you really worry about losing battery & data corruption, call {@link #async()} or {@link #sync()} instead.
      */
-    @Override
+    @Override @Deprecated
     public boolean commit() {
         sync(true);
         return true;
     }
 
     /**
-     * Save all mmap memory to file asynchronously.
-     * No need to call this unless you worry about the device running out of battery.
-     * In fact, you should remove all the calls after migration to MMKV.
+     * @deprecated This method is only for compatibility purpose. You should remove all the calls after migration to MMKV.
+     * MMKV doesn't rely on apply() to save data to file.
+     * If you really worry about losing battery & data corruption, call {@link #async()} instead.
      */
-    @Override
+    @Override @Deprecated
     public void apply() {
         sync(false);
     }
