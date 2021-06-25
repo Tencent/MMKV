@@ -40,7 +40,7 @@ import java.util.Set;
 
 /**
  * An highly efficient, reliable, multi-process key-value storage framework.
- * THE PERFECT drop-in replacement for SharedPreferences & MultiProcessSharedPreferences.
+ * THE PERFECT drop-in replacement for SharedPreferences and MultiProcessSharedPreferences.
  */
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
@@ -269,7 +269,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set the log level of MMKV.
-     * @param logLevel Defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @param level Defaults to {@link MMKVLogLevel#LevelInfo}.
      */
     public static void setLogLevel(MMKVLogLevel level) {
         int realLevel = logLevel2Int(level);
@@ -330,7 +330,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Create an MMKV instance in customize process mode, with an encryption key.
      * @param mmapID The unique ID of the MMKV instance.
      * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
-     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) throws RuntimeException {
@@ -361,7 +361,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Create an MMKV instance with customize settings all in one.
      * @param mmapID The unique ID of the MMKV instance.
      * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
-     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
      * @throws RuntimeException if there's an runtime error.
      */
@@ -382,7 +382,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param size The maximum size of the underlying Anonymous Shared Memory.
      *            Anonymous Shared Memory on Android can't grow dynamically, must set an appropriate size on creation.
      * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
-     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey)
@@ -453,7 +453,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * Create the default MMKV instance in customize process mode, with an encryption key.
      * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
-     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) throws RuntimeException {
@@ -518,7 +518,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * @return The encryption key (<= 16 bytes).
+     * @return The encryption key (no more than 16 bytes).
      */
     @Nullable
     public native String cryptKey();
@@ -526,15 +526,15 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * Transform plain text into encrypted text, or vice versa by passing a null encryption key.
      * You can also change existing crypt key with a different cryptKey.
-     * @param cryptKey The new encryption key (<= 16 bytes).
+     * @param cryptKey The new encryption key (no more than 16 bytes).
      * @return True if success, otherwise False.
      */
     public native boolean reKey(@Nullable String cryptKey);
 
     /**
      * Just reset the encryption key (will not encrypt or decrypt anything).
-     * Usually you should call this method after another process has {@link #reKey)} the multi-process MMKV instance.
-     * @param cryptKey The new encryption key (<= 16 bytes).
+     * Usually you should call this method after another process has {@link #reKey(String)} the multi-process MMKV instance.
+     * @param cryptKey The new encryption key (no more than 16 bytes).
      */
     public native void checkReSetCryptKey(@Nullable String cryptKey);
 
@@ -808,7 +808,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Get the actual used size of the MMKV instance.
-     * This size might increase and decrease as MMKV doing insertion & full write back.
+     * This size might increase and decrease as MMKV doing insertion and full write back.
      */
     public long actualSize() {
         return actualSize(nativeHandle);
@@ -1027,7 +1027,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * @deprecated This method is only for compatibility purpose. You should remove all the calls after migration to MMKV.
      * MMKV doesn't rely on commit() to save data to file.
-     * If you really worry about losing battery & data corruption, call {@link #async()} or {@link #sync()} instead.
+     * If you really worry about losing battery and data corruption, call {@link #async()} or {@link #sync()} instead.
      */
     @Override @Deprecated
     public boolean commit() {
@@ -1038,7 +1038,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * @deprecated This method is only for compatibility purpose. You should remove all the calls after migration to MMKV.
      * MMKV doesn't rely on apply() to save data to file.
-     * If you really worry about losing battery & data corruption, call {@link #async()} instead.
+     * If you really worry about losing battery and data corruption, call {@link #async()} instead.
      */
     @Override @Deprecated
     public void apply() {
@@ -1074,11 +1074,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Get an ashmem MMKV instance that has been initiated by another process.
-     * Normally you should just call {@link #mmkvWithAshmemID)} instead.
+     * Normally you should just call {@link #mmkvWithAshmemID(Context, String, int, int, String)} instead.
      * @param mmapID The unique ID of the MMKV instance.
      * @param fd The file descriptor of the ashmem of the MMKV file, transferred from another process by binder.
      * @param metaFD The file descriptor of the ashmem of the MMKV crc file, transferred from another process by binder.
-     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      * @throws RuntimeException If any failure in JNI or runtime.
      */
     // Parcelable
@@ -1102,7 +1102,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Create an native buffer, whose underlying memory can be directly transferred to another JNI method.
-     * Avoiding unnecessary JNI boxing & unboxing.
+     * Avoiding unnecessary JNI boxing and unboxing.
      * An NativeBuffer must be manually {@link #destroyNativeBuffer} to avoid memory leak.
      * @param size The size of the underlying memory.
      */
