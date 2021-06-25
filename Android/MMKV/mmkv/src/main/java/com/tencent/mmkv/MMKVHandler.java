@@ -20,19 +20,37 @@
 
 package com.tencent.mmkv;
 
-// callback is called on the operating thread of the MMKV instance
+/**
+ * Callback handler for MMKV.
+ * Callback is called on the operating thread of the MMKV instance.
+ */
 public interface MMKVHandler {
-    // by default MMKV will discard all data on crc32-check failure
-    // return `OnErrorRecover` to recover any data on the file
+    /**
+     * By default MMKV will discard all data on crc32-check failure. {@link MMKVRecoverStrategic#OnErrorDiscard}
+     * @param mmapID The unique ID of the MMKV instance.
+     * @return Return {@link MMKVRecoverStrategic#OnErrorRecover} to recover any data on the file.
+     */
     MMKVRecoverStrategic onMMKVCRCCheckFail(String mmapID);
 
-    // by default MMKV will discard all data on file length mismatch
-    // return `OnErrorRecover` to recover any data on the file
+    /**
+     * By default MMKV will discard all data on file length mismatch. {@link MMKVRecoverStrategic#OnErrorDiscard}
+     * @param mmapID The unique ID of the MMKV instance.
+     * @return Return {@link MMKVRecoverStrategic#OnErrorRecover} to recover any data on the file.
+     */
     MMKVRecoverStrategic onMMKVFileLengthError(String mmapID);
 
-    // return false if you don't want log redirecting
+    /**
+     * @return Return False if you don't want log redirecting.
+     */
     boolean wantLogRedirecting();
 
-    // log redirecting
+    /**
+     * Log Redirecting.
+     * @param level The level of this log.
+     * @param file The file name of this log.
+     * @param line The line of code of this log.
+     * @param function The function name of this log.
+     * @param message The content of this log.
+     */
     void mmkvLog(MMKVLogLevel level, String file, int line, String function, String message);
 }

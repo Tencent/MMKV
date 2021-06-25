@@ -22,8 +22,8 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv-static:1.2.9'
-    // replace "1.2.9" with any available version
+    implementation 'com.tencent:mmkv-static:1.2.10'
+    // replace "1.2.10" with any available version
 }
 ```
 从 v1.2.8 起, MMKV **迁移到 Maven Central**。老版本 (<= v1.2.7) 仍然在 JCenter。  

@@ -38,12 +38,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * An highly efficient, reliable, multi-process key-value storage framework.
+ * THE PERFECT drop-in replacement for SharedPreferences & MultiProcessSharedPreferences.
+ */
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static final EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
     private static final EnumMap<MMKVLogLevel, Integer> logLevel2Index;
     private static final MMKVLogLevel[] index2LogLevel;
     private static final Set<Long> checkedHandleSet;
+
     static {
         recoverIndex = new EnumMap<>(MMKVRecoverStrategic.class);
         recoverIndex.put(MMKVRecoverStrategic.OnErrorDiscard, 0);
@@ -62,40 +67,107 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         checkedHandleSet = new HashSet<Long>();
     }
 
+    /**
+     * The interface for providing a 3rd library loader (the ReLinker https://github.com/KeepSafe/ReLinker, etc).
+     */
     public interface LibLoader { void loadLibrary(String libName); }
 
-    // call on program start
+    /**
+     * Initialize MMKV with default configuration.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     */
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, root, null, logLevel);
     }
+
+    /**
+     * Initialize MMKV with customize log level.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     */
     public static String initialize(Context context, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         return initialize(context, root, null, logLevel);
     }
 
+    /**
+     * Initialize MMKV with a 3rd library loader.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     */
     public static String initialize(Context context, LibLoader loader) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, root, loader, logLevel);
     }
+
+    /**
+     * Initialize MMKV with a 3rd library loader, and customize log level.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     */
     public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         return initialize(context, root, loader, logLevel);
     }
 
+    /**
+     * Initialize MMKV with customize root folder.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, rootDir, null, logLevel);
     }
+
+    /**
+     * Initialize MMKV with customize root folder, and log level.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir, MMKVLogLevel logLevel) {
         return initialize(context, rootDir, null, logLevel);
     }
+
+    /**
+     * Initialize MMKV with customize root folder, and a 3rd library loader.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return initialize(context, rootDir, loader, logLevel);
     }
+
+    /**
+     * Initialize MMKV with customize settings.
+     * You must call one of the initialize() methods on App startup process before using MMKV.
+     * @param context The context of Android App, usually from Application.
+     * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     * @param loader The 3rd library loader (for example, the <a href="https://github.com/KeepSafe/ReLinker">ReLinker</a> .
+     * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel#LevelInfo}.
+     * @return The root folder of MMKV.
+     */
     public static String initialize(Context context, String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
@@ -127,16 +199,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir) method instead.
+     * Use the {@link #initialize(Context, String)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return doInitialize(rootDir, null, logLevel);
     }
+
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir, logLevel) method instead.
+     * Use the {@link #initialize(Context, String, MMKVLogLevel)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir, MMKVLogLevel logLevel) {
@@ -145,16 +218,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir, libLoader) method instead.
+     * Use the {@link #initialize(Context, String, LibLoader)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
         return doInitialize(rootDir, loader, logLevel);
     }
+
     /**
      * @deprecated This method is deprecated due to failing to automatically disable checkProcessMode() without Context.
-     * Use the initialize(context, rootDir, libLoader, logLevel) method instead.
+     * Use the {@link #initialize(Context, String, LibLoader, MMKVLogLevel)} method instead.
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
@@ -162,6 +236,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     static private String rootDir = null;
+
+    /**
+     * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+     */
     public static String getRootDir() {
         return rootDir;
     }
@@ -189,16 +267,29 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return realLevel;
     }
 
+    /**
+     * Set the log level of MMKV.
+     * @param logLevel Defaults to {@link MMKVLogLevel#LevelInfo}.
+     */
     public static void setLogLevel(MMKVLogLevel level) {
         int realLevel = logLevel2Int(level);
         setLogLevel(realLevel);
     }
 
-    // call on program exit
+    /**
+     * Notify MMKV that App is about to exit. It's totally fine not calling it at all.
+     */
     public static native void onExit();
 
+    /**
+     * Single-process mode. The default mode on an MMKV instance.
+     */
     static public final int SINGLE_PROCESS_MODE = 0x1;
 
+    /**
+     * Multi-process mode.
+     * To enable multi-process accessing of an MMKV instance, you must set this mode whenever you getting that instance.
+     */
     static public final int MULTI_PROCESS_MODE = 0x2;
 
     // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
@@ -206,8 +297,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     static private final int ASHMEM_MODE = 0x8;
 
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID) {
+    /**
+     * Create an MMKV instance with an unique ID (in single-process mode).
+     * @param mmapID The unique ID of the MMKV instance.
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -216,8 +311,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode) {
+    /**
+     * Create an MMKV instance in single-process or multi-process mode.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, int mode) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -226,9 +326,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, mode);
     }
 
-    // cryptKey's length <= 16
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) {
+    /**
+     * Create an MMKV instance in customize process mode, with an encryption key.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -237,8 +342,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, mode);
     }
 
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, String rootPath) {
+    /**
+     * Create an MMKV instance in customize folder.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, String rootPath) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -247,9 +357,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
-    // cryptKey's length <= 16
-    @Nullable
-    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath) {
+    /**
+     * Create an MMKV instance with customize settings all in one.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath)
+        throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -258,24 +375,34 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, mmapID, mode);
     }
 
-    // a memory only MMKV, cleared on program exit
-    // size cannot change afterward (because ashmem won't allow it)
-    @Nullable
-    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey) {
+    /**
+     * Create an MMKV instance base on Anonymous Shared Memory, aka not synced to any disk files.
+     * @param context The context of Android App, usually from Application.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param size The maximum size of the underlying Anonymous Shared Memory.
+     *            Anonymous Shared Memory on Android can't grow dynamically, must set an appropriate size on creation.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey)
+        throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
         String processName = MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
         if (processName == null || processName.length() == 0) {
-            simpleLog(MMKVLogLevel.LevelError, "process name detect fail, try again later");
-            return null;
+            String message = "process name detect fail, try again later";
+            simpleLog(MMKVLogLevel.LevelError, message);
+            throw new IllegalStateException(message);
         }
         if (processName.contains(":")) {
             Uri uri = MMKVContentProvider.contentUri(context);
             if (uri == null) {
-                simpleLog(MMKVLogLevel.LevelError, "MMKVContentProvider has invalid authority");
-                return null;
+                String message = "MMKVContentProvider has invalid authority";
+                simpleLog(MMKVLogLevel.LevelError, message);
+                throw new IllegalStateException(message);
             }
             simpleLog(MMKVLogLevel.LevelInfo, "getting parcelable mmkv in process, Uri = " + uri);
 
@@ -295,22 +422,26 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                     if (mmkv != null) {
                         simpleLog(MMKVLogLevel.LevelInfo,
                                   mmkv.mmapID() + " fd = " + mmkv.ashmemFD() + ", meta fd = " + mmkv.ashmemMetaFD());
+                        return mmkv;
                     }
-                    return mmkv;
                 }
             }
-        } else {
-            simpleLog(MMKVLogLevel.LevelInfo, "getting mmkv in main process");
+        }
+        simpleLog(MMKVLogLevel.LevelInfo, "getting mmkv in main process");
 
-            mode = mode | ASHMEM_MODE;
-            long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
+        mode = mode | ASHMEM_MODE;
+        long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
+        if (handle != 0) {
             return new MMKV(handle);
         }
-        return null;
+        throw new IllegalStateException("Fail to create an Ashmem MMKV instance [" + mmapID + "]");
     }
 
-    @Nullable
-    public static MMKV defaultMMKV() {
+    /**
+     * Create the default MMKV instance in single-process mode.
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV defaultMMKV() throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -319,8 +450,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, "DefaultMMKV", SINGLE_PROCESS_MODE);
     }
 
-    @Nullable
-    public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) {
+    /**
+     * Create the default MMKV instance in customize process mode, with an encryption key.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) throws RuntimeException {
         if (rootDir == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
@@ -329,10 +465,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return checkProcessMode(handle, "DefaultMMKV", mode);
     }
 
-    @Nullable
-    private static MMKV checkProcessMode(long handle, String mmapID, int mode) {
+    private static MMKV checkProcessMode(long handle, String mmapID, int mode) throws RuntimeException {
         if (handle == 0) {
-            return null;
+            throw new RuntimeException("Fail to create an MMKV instance [" + mmapID + "] in JNI");
         }
         if (!isProcessModeCheckerEnabled) {
             return new MMKV(handle);
@@ -344,7 +479,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                     if (mode == SINGLE_PROCESS_MODE) {
                         message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
                     } else {
-                        message = "Opening a MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
+                        message = "Opening an MMKV instance [" + mmapID + "] with MULTI_PROCESS_MODE, ";
                         message += "while it's already been opened with SINGLE_PROCESS_MODE by someone somewhere else!";
                     }
                     throw new IllegalArgumentException(message);
@@ -357,6 +492,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     // Enable checkProcessMode() when initializing an MMKV instance, it's automatically enabled on debug build.
     private static boolean isProcessModeCheckerEnabled = true;
+
+    /**
+     * Manually enable the process mode checker.
+     * By default, it's automatically enabled in DEBUG build, and disabled in RELEASE build.
+     * If it's enabled, MMKV will throw exceptions when an MMKV instance is created with mismatch process mode.
+     */
     public static void enableProcessModeChecker() {
         synchronized (checkedHandleSet) {
             isProcessModeCheckerEnabled = true;
@@ -364,7 +505,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         Log.i("MMKV", "Enable checkProcessMode()");
     }
 
-    // Disable checkProcessMode() when initializing an MMKV instance, it's automatically disabled on release build.
+    /**
+     * Manually disable the process mode checker.
+     * By default, it's automatically enabled in DEBUG build, and disabled in RELEASE build.
+     * If it's enabled, MMKV will throw exceptions when an MMKV instance is created with mismatch process mode.
+     */
     public static void disableProcessModeChecker() {
         synchronized (checkedHandleSet) {
             isProcessModeCheckerEnabled = false;
@@ -372,29 +517,61 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         Log.i("MMKV", "Disable checkProcessMode()");
     }
 
-    // encryption & decryption key
+    /**
+     * @return The encryption key (<= 16 bytes).
+     */
     @Nullable
     public native String cryptKey();
 
-    // transform plain text into encrypted text, or vice versa by passing cryptKey = null
-    // you can change existing crypt key with different cryptKey
+    /**
+     * Transform plain text into encrypted text, or vice versa by passing a null encryption key.
+     * You can also change existing crypt key with a different cryptKey.
+     * @param cryptKey The new encryption key (<= 16 bytes).
+     * @return True if success, otherwise False.
+     */
     public native boolean reKey(@Nullable String cryptKey);
 
-    // just reset cryptKey (will not encrypt or decrypt anything)
-    // usually you should call this method after other process reKey() the multi-process mmkv
+    /**
+     * Just reset the encryption key (will not encrypt or decrypt anything).
+     * Usually you should call this method after another process has {@link #reKey)} the multi-process MMKV instance.
+     * @param cryptKey The new encryption key (<= 16 bytes).
+     */
     public native void checkReSetCryptKey(@Nullable String cryptKey);
 
-    // get device's page size
+    /**
+     * @return The device's memory page size.
+     */
     public static native int pageSize();
 
+    /**
+     * @return The version of MMKV.
+     */
     public static native String version();
 
+    /**
+     * @return The unique ID of the MMKV instance.
+     */
     public native String mmapID();
 
+    /**
+     * Exclusively inter-process lock the MMKV instance.
+     * It will block and wait until it successfully locks the file.
+     * It will make no effect if the MMKV instance is created with {@link #SINGLE_PROCESS_MODE}.
+     */
     public native void lock();
 
+    /**
+     * Exclusively inter-process unlock the MMKV instance.
+     * It will make no effect if the MMKV instance is created with {@link #SINGLE_PROCESS_MODE}.
+     */
     public native void unlock();
 
+    /**
+     * Try exclusively inter-process lock the MMKV instance.
+     * It will not block if the file has already been locked by another process.
+     * It will make no effect if the MMKV instance is created with {@link #SINGLE_PROCESS_MODE}.
+     * @return True if successfully locked, otherwise return immediately with False.
+     */
     public native boolean tryLock();
 
     public boolean encode(String key, boolean value) {
@@ -584,76 +761,133 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return defaultValue;
     }
 
-    // return the actual size consumption of the key's value
-    // Note: might be a little bigger than value's length
+    /**
+     * Get the actual size consumption of the key's value.
+     * Note: might be a little bigger than value's length.
+     * @param key The key of the value.
+     */
     public int getValueSize(String key) {
         return valueSize(nativeHandle, key, false);
     }
 
-    // return the actual size of the key's value
-    // String's length or byte[]'s length, etc
+    /**
+     * Get the actual size of the key's value. String's length or byte[]'s length, etc.
+     * @param key The key of the value.
+     */
     public int getValueActualSize(String key) {
         return valueSize(nativeHandle, key, true);
     }
 
+    /**
+     * Check whether or not MMKV contains the key.
+     * @param key The key of the value.
+     */
     public boolean containsKey(String key) {
         return containsKey(nativeHandle, key);
     }
 
+    /**
+     * @return All the keys.
+     */
     @Nullable
     public native String[] allKeys();
 
+    /**
+     * @return The total count of all the keys.
+     */
     public long count() {
         return count(nativeHandle);
     }
 
-    // used file size
+    /**
+     * Get the size of the underlying file. Align to the disk block size, typically 4K for an Android device.
+     */
     public long totalSize() {
         return totalSize(nativeHandle);
+    }
+
+    /**
+     * Get the actual used size of the MMKV instance.
+     * This size might increase and decrease as MMKV doing insertion & full write back.
+     */
+    public long actualSize() {
+        return actualSize(nativeHandle);
     }
 
     public void removeValueForKey(String key) {
         removeValueForKey(nativeHandle, key);
     }
 
+    /**
+     * Batch remove some keys from the MMKV instance.
+     * @param arrKeys The keys to be removed.
+     */
     public native void removeValuesForKeys(String[] arrKeys);
 
+    /**
+     * Clear all the key-values inside the MMKV instance.
+     */
     public native void clearAll();
 
-    // MMKV's size won't reduce after deleting key-values
-    // call this method after lots of deleting if you care about disk usage
-    // note that `clearAll` has the similar effect of `trim`
+    /**
+     * The {@link #totalSize()} of an MMKV instance won't reduce after deleting key-values,
+     * call this method after lots of deleting if you care about disk usage.
+     * Note that {@link #clearAll()}  has a similar effect.
+     */
     public native void trim();
 
-    // call this method if the instance is no longer needed in the near future
-    // any subsequent call to the instance is undefined behavior
+    /**
+     * Call this method if the MMKV instance is no longer needed in the near future.
+     * Any subsequent call to any MMKV instances with the same ID is undefined behavior.
+     */
     public native void close();
 
-    // call on memory warning
-    // any subsequent call to the instance will load all key-values from file again
+    /**
+     * Clear memory cache of the MMKV instance.
+     * You can call it on memory warning.
+     * Any subsequent call to the MMKV instance will trigger all key-values loading from the file again.
+     */
     public native void clearMemoryCache();
 
-    // you don't need to call this, really, I mean it
-    // unless you worry about running out of battery
+    /**
+     * Save all mmap memory to file synchronously.
+     * You don't need to call this, really, I mean it.
+     * Unless you worry about the device running out of battery.
+     */
     public void sync() {
         sync(true);
     }
 
+    /**
+     * Save all mmap memory to file asynchronously.
+     * No need to call this unless you worry about the device running out of battery.
+     */
     public void async() {
         sync(false);
     }
 
     private native void sync(boolean sync);
 
-    // detect if the MMKV file is valid or not
-    // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
+    /**
+     * Check whether the MMKV file is valid or not.
+     * Note: Don't use this to check the existence of the instance, the result is undefined on nonexistent files.
+     */
     public static boolean isFileValid(String mmapID) {
         return isFileValid(mmapID, null);
     }
 
+    /**
+     * Check whether the MMKV file is valid or not on customize folder.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     */
     public static native boolean isFileValid(String mmapID, @Nullable String rootPath);
 
-    // SharedPreferences migration
+    /**
+     * Atomically migrate all key-values from an existent SharedPreferences to the MMKV instance.
+     * @param preferences The SharedPreferences to import from.
+     * @return The total count of key-values imported.
+     */
     @SuppressWarnings("unchecked")
     public int importFromSharedPreferences(SharedPreferences preferences) {
         Map<String, ?> kvs = preferences.getAll();
@@ -689,10 +923,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return kvs.size();
     }
 
+    /**
+     * Intentionally Not Supported. Because MMKV does type-eraser inside to get better performance.
+     */
     @Override
     public Map<String, ?> getAll() {
         throw new java.lang.UnsupportedOperationException(
-            "use allKeys() instead, getAll() not implement because type-erasure inside mmkv");
+            "Intentionally Not Supported. Use allKeys() instead, getAll() not implement because type-erasure inside mmkv");
     }
 
     @Nullable
@@ -778,19 +1015,32 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return this;
     }
 
+    /**
+     * {@link #clearAll()}
+     */
     @Override
     public Editor clear() {
         clearAll();
         return this;
     }
 
-    @Override
+    /**
+     * @deprecated This method is only for compatibility purpose. You should remove all the calls after migration to MMKV.
+     * MMKV doesn't rely on commit() to save data to file.
+     * If you really worry about losing battery & data corruption, call {@link #async()} or {@link #sync()} instead.
+     */
+    @Override @Deprecated
     public boolean commit() {
         sync(true);
         return true;
     }
 
-    @Override
+    /**
+     * @deprecated This method is only for compatibility purpose. You should remove all the calls after migration to MMKV.
+     * MMKV doesn't rely on apply() to save data to file.
+     * If you really worry about losing battery & data corruption, call {@link #async()} instead.
+     */
+    @Override @Deprecated
     public void apply() {
         sync(false);
     }
@@ -805,27 +1055,58 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return this;
     }
 
+    /**
+     * Intentionally Not Supported by MMKV. We believe it's better not for a storage framework to notify the change of data.
+     * Check {@link #registerContentChangeNotify} for a potential replacement on inter-process scene.
+     */
     @Override
     public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
-        throw new java.lang.UnsupportedOperationException("Not implement in MMKV");
+        throw new java.lang.UnsupportedOperationException("Intentionally Not implement in MMKV");
     }
 
+    /**
+     * Intentionally Not Supported by MMKV. We believe it's better not for a storage framework to notify the change of data.
+     */
     @Override
     public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
-        throw new java.lang.UnsupportedOperationException("Not implement in MMKV");
+        throw new java.lang.UnsupportedOperationException("Intentionally Not implement in MMKV");
     }
 
+    /**
+     * Get an ashmem MMKV instance that has been initiated by another process.
+     * Normally you should just call {@link #mmkvWithAshmemID)} instead.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param fd The file descriptor of the ashmem of the MMKV file, transferred from another process by binder.
+     * @param metaFD The file descriptor of the ashmem of the MMKV crc file, transferred from another process by binder.
+     * @param cryptKey The encryption key of the MMKV instance (<= 16 bytes).
+     * @throws RuntimeException If any failure in JNI or runtime.
+     */
     // Parcelable
-    public static MMKV mmkvWithAshmemFD(String mmapID, int fd, int metaFD, String cryptKey) {
+    public static MMKV mmkvWithAshmemFD(String mmapID, int fd, int metaFD, String cryptKey) throws RuntimeException {
         long handle = getMMKVWithAshmemFD(mmapID, fd, metaFD, cryptKey);
+        if (handle == 0) {
+            throw new RuntimeException("Fail to create an ashmem MMKV instance [" + mmapID + "] in JNI");
+        }
         return new MMKV(handle);
     }
 
+    /**
+     * @return The file descriptor of the ashmem of the MMKV file.
+     */
     public native int ashmemFD();
 
+    /**
+     * @return The file descriptor of the ashmem of the MMKV crc file.
+     */
     public native int ashmemMetaFD();
 
-    // native buffer
+    /**
+     * Create an native buffer, whose underlying memory can be directly transferred to another JNI method.
+     * Avoiding unnecessary JNI boxing & unboxing.
+     * An NativeBuffer must be manually {@link #destroyNativeBuffer} to avoid memory leak.
+     * @param size The size of the underlying memory.
+     */
+    @Nullable
     public static NativeBuffer createNativeBuffer(int size) {
         long pointer = createNB(size);
         if (pointer <= 0) {
@@ -834,11 +1115,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return new NativeBuffer(pointer, size);
     }
 
+    /**
+     * Destroy the native buffer. An NativeBuffer must be manually destroy to avoid memory leak.
+     */
     public static void destroyNativeBuffer(NativeBuffer buffer) {
         destroyNB(buffer.pointer, buffer.size);
     }
 
-    // return size written, -1 on error
+    /**
+     * Write the value of the key to the native buffer.
+     * @return The size written. Return -1 on any error.
+     */
     public int writeValueToNativeBuffer(String key, NativeBuffer buffer) {
         return writeValueToNB(nativeHandle, key, buffer.pointer, buffer.size);
     }
@@ -846,6 +1133,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // callback handler
     private static MMKVHandler gCallbackHandler;
     private static boolean gWantLogReDirecting = false;
+
+    /**
+     * Register a handler for MMKV log redirecting, and error handling.
+     */
     public static void registerHandler(MMKVHandler handler) {
         gCallbackHandler = handler;
 
@@ -858,6 +1149,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
     }
 
+    /**
+     * Unregister the handler for MMKV.
+     */
     public static void unregisterHandler() {
         gCallbackHandler = null;
 
@@ -919,23 +1213,37 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // content change notification of other process
     // trigger by getXXX() or setXXX() or checkContentChangedByOuterProcess()
     private static MMKVContentChangeNotification gContentChangeNotify;
+
+    /**
+     * Register for MMKV inter-process content change notification.
+     * The notification will trigger only when any method is manually called on the MMKV instance.
+     * For example {@link #checkContentChangedByOuterProcess()}.
+     * @param notify The notification handler.
+     */
     public static void registerContentChangeNotify(MMKVContentChangeNotification notify) {
         gContentChangeNotify = notify;
         setWantsContentChangeNotify(gContentChangeNotify != null);
     }
 
+    /**
+     * Unregister for MMKV inter-process content change notification.
+     */
     public static void unregisterContentChangeNotify() {
         gContentChangeNotify = null;
         setWantsContentChangeNotify(false);
     }
+
     private static void onContentChangedByOuterProcess(String mmapID) {
         if (gContentChangeNotify != null) {
             gContentChangeNotify.onContentChangedByOuterProcess(mmapID);
         }
     }
+
     private static native void setWantsContentChangeNotify(boolean needsNotify);
 
-    // check change manually
+    /**
+     * Check inter-process content change manually.
+     */
     public native void checkContentChangedByOuterProcess();
 
     // jni
@@ -996,6 +1304,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native long count(long handle);
 
     private native long totalSize(long handle);
+
+    private native long actualSize(long handle);
 
     private native void removeValueForKey(long handle, String key);
 

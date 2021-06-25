@@ -326,9 +326,13 @@ public abstract class BenchMarkBaseService extends Service {
         private AshmemMMKVGetter() {
             // 1M, ashmem cannot change size after opened
             final String id = "tetAshmemMMKV";
-            m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, AshmemMMKV_Size,
-                                                 MMKV.MULTI_PROCESS_MODE, CryptKey);
-            m_ashmemMMKV.encode("bool", true);
+            try {
+                m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, AshmemMMKV_Size,
+                        MMKV.MULTI_PROCESS_MODE, CryptKey);
+                m_ashmemMMKV.encode("bool", true);
+            } catch (Exception e) {
+                Log.e("MMKV", e.getMessage());
+            }
         }
 
         public ParcelableMMKV GetAshmemMMKV() {
@@ -346,6 +350,10 @@ public abstract class BenchMarkBaseService extends Service {
     protected void prepareAshmemMMKVByCP() {
         // it's ok for other process not knowing cryptKey
         final String cryptKey = null;
-        m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
+        try {
+            m_ashmemMMKV = MMKV.mmkvWithAshmemID(this, AshmemMMKV_ID, AshmemMMKV_Size, MMKV.MULTI_PROCESS_MODE, cryptKey);
+        } catch (Exception e) {
+            Log.e("MMKV", e.getMessage());
+        }
     }
 }

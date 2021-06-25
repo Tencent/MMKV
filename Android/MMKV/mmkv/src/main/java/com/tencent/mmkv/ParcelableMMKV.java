@@ -25,6 +25,9 @@ import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import java.io.IOException;
 
+/**
+ * A helper class for MMKV based on Anonymous Shared Memory. {@link MMKV#mmkvWithAshmemID}
+ */
 public final class ParcelableMMKV implements Parcelable {
     private final String mmapID;
     private int ashmemFD = -1;

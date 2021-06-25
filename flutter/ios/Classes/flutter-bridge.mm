@@ -23,12 +23,9 @@
 #import <string>
 
 #define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
+#define MMKV_FUNC(func) mmkv_ ## func
 
 using namespace std;
-
-MMKV_EXPORT void onExit() {
-    [MMKV onAppTerminate];
-}
 
 MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *cryptKey, const char *rootPath) {
     MMKV *kv = nil;
@@ -80,7 +77,7 @@ MMKV_EXPORT int64_t getDefaultMMKV(int /*mode*/, const char *cryptKey) {
     return (int64_t) kv;
 }
 
-MMKV_EXPORT const char *mmapID(const void *handle) {
+MMKV_EXPORT const char *MMKV_FUNC(mmapID)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         return [[kv mmapID] UTF8String];
@@ -88,7 +85,7 @@ MMKV_EXPORT const char *mmapID(const void *handle) {
     return nullptr;
 }
 
-MMKV_EXPORT bool encodeBool(const void *handle, const char *oKey, bool value) {
+MMKV_EXPORT bool MMKV_FUNC(encodeBool)(const void *handle, const char *oKey, bool value) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -97,7 +94,7 @@ MMKV_EXPORT bool encodeBool(const void *handle, const char *oKey, bool value) {
     return false;
 }
 
-MMKV_EXPORT bool decodeBool(const void *handle, const char *oKey, bool defaultValue) {
+MMKV_EXPORT bool MMKV_FUNC(decodeBool)(const void *handle, const char *oKey, bool defaultValue) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -106,7 +103,7 @@ MMKV_EXPORT bool decodeBool(const void *handle, const char *oKey, bool defaultVa
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeInt32(const void *handle, const char *oKey, int32_t value) {
+MMKV_EXPORT bool MMKV_FUNC(encodeInt32)(const void *handle, const char *oKey, int32_t value) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -115,7 +112,7 @@ MMKV_EXPORT bool encodeInt32(const void *handle, const char *oKey, int32_t value
     return false;
 }
 
-MMKV_EXPORT int32_t decodeInt32(const void *handle, const char *oKey, int32_t defaultValue) {
+MMKV_EXPORT int32_t MMKV_FUNC(decodeInt32)(const void *handle, const char *oKey, int32_t defaultValue) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -124,7 +121,7 @@ MMKV_EXPORT int32_t decodeInt32(const void *handle, const char *oKey, int32_t de
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeInt64(const void *handle, const char *oKey, int64_t value) {
+MMKV_EXPORT bool MMKV_FUNC(encodeInt64)(const void *handle, const char *oKey, int64_t value) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -133,7 +130,7 @@ MMKV_EXPORT bool encodeInt64(const void *handle, const char *oKey, int64_t value
     return false;
 }
 
-MMKV_EXPORT int64_t decodeInt64(const void *handle, const char *oKey, int64_t defaultValue) {
+MMKV_EXPORT int64_t MMKV_FUNC(decodeInt64)(const void *handle, const char *oKey, int64_t defaultValue) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -142,7 +139,7 @@ MMKV_EXPORT int64_t decodeInt64(const void *handle, const char *oKey, int64_t de
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeDouble(const void *handle, const char *oKey, double value) {
+MMKV_EXPORT bool MMKV_FUNC(encodeDouble)(const void *handle, const char *oKey, double value) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -151,7 +148,7 @@ MMKV_EXPORT bool encodeDouble(const void *handle, const char *oKey, double value
     return false;
 }
 
-MMKV_EXPORT double decodeDouble(const void *handle, const char *oKey, double defaultValue) {
+MMKV_EXPORT double MMKV_FUNC(decodeDouble)(const void *handle, const char *oKey, double defaultValue) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -160,7 +157,7 @@ MMKV_EXPORT double decodeDouble(const void *handle, const char *oKey, double def
     return defaultValue;
 }
 
-MMKV_EXPORT bool encodeBytes(const void *handle, const char *oKey, void *oValue, uint64_t length) {
+MMKV_EXPORT bool MMKV_FUNC(encodeBytes)(const void *handle, const char *oKey, void *oValue, uint64_t length) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -175,7 +172,7 @@ MMKV_EXPORT bool encodeBytes(const void *handle, const char *oKey, void *oValue,
     return false;
 }
 
-MMKV_EXPORT void *decodeBytes(const void *handle, const char *oKey, uint64_t *lengthPtr) {
+MMKV_EXPORT void *MMKV_FUNC(decodeBytes)(const void *handle, const char *oKey, uint64_t *lengthPtr) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -192,7 +189,7 @@ MMKV_EXPORT void *decodeBytes(const void *handle, const char *oKey, uint64_t *le
     return nullptr;
 }
 
-MMKV_EXPORT bool reKey(const void *handle, char *oKey, uint64_t length) {
+MMKV_EXPORT bool MMKV_FUNC(reKey)(const void *handle, char *oKey, uint64_t length) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         if (oKey && length > 0) {
@@ -205,7 +202,7 @@ MMKV_EXPORT bool reKey(const void *handle, char *oKey, uint64_t length) {
     return false;
 }
 
-MMKV_EXPORT void *cryptKey(const void *handle, uint64_t *lengthPtr) {
+MMKV_EXPORT void *MMKV_FUNC(cryptKey)(const void *handle, uint64_t *lengthPtr) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && lengthPtr) {
         auto cryptKey = [kv cryptKey];
@@ -221,7 +218,7 @@ MMKV_EXPORT void *cryptKey(const void *handle, uint64_t *lengthPtr) {
     return nullptr;
 }
 
-MMKV_EXPORT void checkReSetCryptKey(const void *handle, char *oKey, uint64_t length) {
+MMKV_EXPORT void MMKV_FUNC(checkReSetCryptKey)(const void *handle, char *oKey, uint64_t length) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         if (oKey && length > 0) {
@@ -233,7 +230,7 @@ MMKV_EXPORT void checkReSetCryptKey(const void *handle, char *oKey, uint64_t len
     }
 }
 
-MMKV_EXPORT uint32_t valueSize(const void *handle, char *oKey, bool actualSize) {
+MMKV_EXPORT uint32_t MMKV_FUNC(valueSize)(const void *handle, char *oKey, bool actualSize) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -243,7 +240,7 @@ MMKV_EXPORT uint32_t valueSize(const void *handle, char *oKey, bool actualSize) 
     return 0;
 }
 
-MMKV_EXPORT int32_t writeValueToNB(const void *handle, char *oKey, void *pointer, uint32_t size) {
+MMKV_EXPORT int32_t MMKV_FUNC(writeValueToNB)(const void *handle, char *oKey, void *pointer, uint32_t size) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -252,7 +249,7 @@ MMKV_EXPORT int32_t writeValueToNB(const void *handle, char *oKey, void *pointer
     return -1;
 }
 
-MMKV_EXPORT uint64_t allKeys(const void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr) {
+MMKV_EXPORT uint64_t MMKV_FUNC(allKeys)(const void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         auto keys = [kv allKeys];
@@ -279,7 +276,7 @@ MMKV_EXPORT uint64_t allKeys(const void *handle, char ***keyArrayPtr, uint32_t *
     return 0;
 }
 
-MMKV_EXPORT bool containsKey(const void *handle, char *oKey) {
+MMKV_EXPORT bool MMKV_FUNC(containsKey)(const void *handle, char *oKey) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -288,7 +285,7 @@ MMKV_EXPORT bool containsKey(const void *handle, char *oKey) {
     return false;
 }
 
-MMKV_EXPORT uint64_t count(const void *handle) {
+MMKV_EXPORT uint64_t MMKV_FUNC(count)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         return [kv count];
@@ -296,7 +293,7 @@ MMKV_EXPORT uint64_t count(const void *handle) {
     return 0;
 }
 
-MMKV_EXPORT uint64_t totalSize(const void *handle) {
+MMKV_EXPORT uint64_t MMKV_FUNC(totalSize)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         return [kv totalSize];
@@ -304,7 +301,7 @@ MMKV_EXPORT uint64_t totalSize(const void *handle) {
     return 0;
 }
 
-MMKV_EXPORT uint64_t actualSize(const void *handle) {
+MMKV_EXPORT uint64_t MMKV_FUNC(actualSize)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         return [kv actualSize];
@@ -312,7 +309,7 @@ MMKV_EXPORT uint64_t actualSize(const void *handle) {
     return 0;
 }
 
-MMKV_EXPORT void removeValueForKey(const void *handle, char *oKey) {
+MMKV_EXPORT void MMKV_FUNC(removeValueForKey)(const void *handle, char *oKey) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
@@ -320,7 +317,7 @@ MMKV_EXPORT void removeValueForKey(const void *handle, char *oKey) {
     }
 }
 
-MMKV_EXPORT void removeValuesForKeys(const void *handle, char **keyArray, uint32_t *sizeArray, uint64_t count) {
+MMKV_EXPORT void MMKV_FUNC(removeValuesForKeys)(const void *handle, char **keyArray, uint32_t *sizeArray, uint64_t count) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && keyArray && sizeArray && count > 0) {
         NSMutableArray *arrKeys = [NSMutableArray arrayWithCapacity:count];
@@ -339,7 +336,7 @@ MMKV_EXPORT void removeValuesForKeys(const void *handle, char **keyArray, uint32
     }
 }
 
-MMKV_EXPORT void clearAll(const void *handle) {
+MMKV_EXPORT void MMKV_FUNC(clearAll)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         [kv clearAll];
@@ -357,22 +354,22 @@ MMKV_EXPORT void mmkvSync(const void *handle, bool sync) {
     }
 }
 
-MMKV_EXPORT void clearMemoryCache(const void *handle) {
+MMKV_EXPORT void MMKV_FUNC(clearMemoryCache)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         [kv clearMemoryCache];
     }
 }
 
-MMKV_EXPORT int32_t pageSize() {
+MMKV_EXPORT int32_t MMKV_FUNC(pageSize)() {
     return static_cast<int32_t>([MMKV pageSize]);
 }
 
-MMKV_EXPORT const char *version() {
+MMKV_EXPORT const char *MMKV_FUNC(version)() {
     return [MMKV version].UTF8String;
 }
 
-MMKV_EXPORT void trim(const void *handle) {
+MMKV_EXPORT void MMKV_FUNC(trim)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         [kv trim];

@@ -24,7 +24,7 @@ import com.tencent.mmkv.MMKV
 import java.util.*
 
 fun kotlinFunctionalTest() {
-    val mmkv = MMKV.mmkvWithID("testKotlin") ?: return
+    val mmkv = MMKV.mmkvWithID("testKotlin")
     mmkv.encode("bool", true)
     println("bool = " + mmkv.decodeBool("bool"))
 
