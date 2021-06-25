@@ -1,5 +1,18 @@
 # MMKV Change Log
 
+## v1.2.10 / 2021-06-25
+This version is mainly for Android & Flutter.  
+
+### Android
+* Complete **JavaDoc documentation** for all public methods, classes, and interfaces. From now on, you can find the [API reference online](https://javadoc.io/doc/com.tencent/mmkv).
+* Drop the support of **armeabi** arch. Due to some local build cache mistake, the last version (v1.2.9) of MMKV still has an unstripped armeabi arch inside. This is fixed.
+* Change `MMKV.mmkvWithID()` from returning `null` to throwing exceptions on any error.
+* Add `MMKV.actualSize()` to get the actual used size of the file.
+
+### Flutter (v1.2.11)
+* Bug Fixed: When building on iOS, occasionally it will fail on symbol conflict with other libs. We have renamed all public native methods to avoid potential conflict.
+* Keep up with MMKV native lib v1.2.10.
+
 ## v1.2.9 / 2021-05-26
 This version is mainly for Android & Flutter.  
 

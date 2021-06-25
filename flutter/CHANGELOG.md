@@ -1,7 +1,8 @@
 # MMKV for Flutter Change Log
 
-## v1.2.11 / 2021-06-xx
-* Rename iOS function names to avoid conflict with other libs.
+## v1.2.11 / 2021-06-25
+* Bug Fixed: When building on iOS, occasionally it will fail on symbol conflict with other libs. We have renamed all public native methods to avoid potential conflict.
+* Keep up with MMKV native lib v1.2.10.
 
 ## v1.2.10 / 2021-05-26
 * Bug Fixed: When calling `MMKV.encodeString()` with an empty string value on Android, `MMKV.decodeString()` will return `null`.
