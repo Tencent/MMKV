@@ -2,7 +2,7 @@ package com.tencent.mmkv;
 
 /**
  * A native memory wrapper, whose underlying memory can be passed to another JNI method directly.
- * Avoiding unnecessary JNI boxing & unboxing.
+ * Avoiding unnecessary JNI boxing and unboxing.
  * Must be destroy manually {@link MMKV#destroyNativeBuffer}.
  */
 public final class NativeBuffer {
