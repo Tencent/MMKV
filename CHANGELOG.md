@@ -8,6 +8,7 @@ This version is mainly for Android & Flutter.
 * Drop the support of **armeabi** arch. Due to some local build cache mistake, the last version (v1.2.9) of MMKV still has an unstripped armeabi arch inside. This is fixed.
 * Change `MMKV.mmkvWithID()` from returning `null` to throwing exceptions on any error.
 * Add `MMKV.actualSize()` to get the actual used size of the file.
+* Mark `MMKV.commit()` & `MMKV.apply()` as deprecated, to avoid some misuse after migration from SharedPreferences to MMKV.
 
 ### Flutter (v1.2.11)
 * Bug Fixed: When building on iOS, occasionally it will fail on symbol conflict with other libs. We have renamed all public native methods to avoid potential conflict.
