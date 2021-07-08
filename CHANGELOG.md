@@ -1,5 +1,14 @@
 # MMKV Change Log
 
+## v1.2.11 / 2021-07-xx
+
+### Android
+* Due to increasing report about crash inside STL, we have decided to make MMKV **static linking** `libc++` **by default**. Starting from v1.2.11, `com.tencent:mmkv-static` is the same as `com.tencent:mmkv`.
+* For those still in need of MMKV with shared linking of `libc++_shared`, you could use `com.tencent:mmkv-shared` instead.
+
+### Flutter (v1.2.12)
+* Add a fullset of testcase.
+
 ## v1.2.10 / 2021-06-25
 This version is mainly for Android & Flutter.  
 
