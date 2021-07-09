@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.2.10-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-1.2.11-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Win32%20%7C%20POSIX-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./README_CN.md)
@@ -28,12 +28,12 @@ Add the following lines to `build.gradle` on your app module:
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv-static:1.2.10'
-    // replace "1.2.10" with any available version
+    implementation 'com.tencent:mmkv-static:1.2.11'
+    // replace "1.2.11" with any available version
 }
 ```
 
-Starting from v1.2.8, MMKV has been **migrated to Maven Central**. Older versions (<= v1.2.7) are still available on JCenter.  
+Starting from v1.2.8, MMKV has been **migrated to Maven Central**.  
 For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
 
 ### Quick Tutorial
