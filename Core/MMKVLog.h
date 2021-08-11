@@ -45,7 +45,7 @@ extern mmkv::LogHandler g_logHandler;
 #        define __MMKV_FILE_NAME__ __FILE_NAME__
 #    else
 const char *_getFileName(const char *path);
-#        define __MMKV_FILE_NAME__ _getFileName(__FILE__)
+#        define __MMKV_FILE_NAME__ MMKV_NAMESPACE_PREFIX::_getFileName(__FILE__)
 #    endif
 
 #    define MMKVError(format, ...)                                                                                     \
