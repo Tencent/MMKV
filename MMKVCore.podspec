@@ -19,7 +19,11 @@ Pod::Spec.new do |s|
   s.watchos.deployment_target = "2.0"
 
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
-  s.source_files = "Core", "Core/*.{h,cpp,hpp}", "Core/aes/*", "Core/aes/openssl/*", "Core/crc32/*.h"
+  s.source_files = "Core/*.{h,cpp,hpp}", "Core/aes/*.{h,cpp}", "Core/aes/openssl/*.{h,cpp}", "Core/crc32/*.h"
+
+  s.ios.source_files =  "Core/aes/openssl/*.S"
+  s.osx.source_files = "Core/aes/openssl/*.S"
+
   s.public_header_files = "Core/MMBuffer.h", "Core/MMKV.h", "Core/MMKVLog.h", "Core/MMKVPredef.h", "Core/PBUtility.h", "Core/ScopedLock.hpp", "Core/ThreadLock.h", "Core/aes/openssl/openssl_md5.h", "Core/aes/openssl/openssl_opensslconf.h"
   s.compiler_flags = '-x objective-c++'
 
@@ -33,6 +37,11 @@ Pod::Spec.new do |s|
     "CLANG_CXX_LIBRARY" => "libc++",
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
   }
+  s.watchos.pod_target_xcconfig = {
+    'GCC_PREPROCESSOR_DEFINITIONS' => 'MMKV_DISABLE_CRYPT=1',
+    'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => '\$(inherited) MMKV_DISABLE_CRYPT'
+}
+
 
 end
 

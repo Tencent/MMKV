@@ -290,7 +290,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 #pragma mark - encryption & decryption
 
-#ifndef MMKV_DISABLE_CRYPT
+#if !defined(MMKV_DISABLE_CRYPT) && !TARGET_OS_WATCH
 
 - (nullable NSData *)cryptKey {
     auto str = m_mmkv->cryptKey();
