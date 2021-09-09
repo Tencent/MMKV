@@ -256,6 +256,7 @@
 				CB58B3FE23AB3035002457F1 /* Frameworks */,
 				CB9563D923AB2D9500ACCD39 /* Products */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
 		};
 		CB9563D923AB2D9500ACCD39 /* Products */ = {

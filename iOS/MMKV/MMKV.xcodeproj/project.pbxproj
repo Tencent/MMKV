@@ -154,6 +154,7 @@
 				CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */,
 				CBF1904D243D706D001C82ED /* MMKVAppExtension copy-Info.plist */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
 		};
 		CB1FD4922046984F00931B5F /* Products */ = {
