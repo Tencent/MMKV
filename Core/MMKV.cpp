@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <unordered_set>
 
 #if defined(__aarch64__) && defined(__linux)
 #    include <asm/hwcap.h>
@@ -61,12 +62,19 @@ size_t mmkv::DEFAULT_MMAP_SIZE;
 
 #ifndef MMKV_WIN32
 constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = "specialCharacter";
+constexpr auto CRC_SUFFIX = ".crc";
 #else
 constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = L"specialCharacter";
+constexpr auto CRC_SUFFIX = L".crc";
 #endif
+
 constexpr uint32_t Fixed32Size = pbFixed32Size();
 
 MMKV_NAMESPACE_BEGIN
+
+static MMKVPath_t encodeFilePath(const string &mmapID, const MMKVPath_t &rootDir);
+bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix);
+MMKVPath_t filename(const MMKVPath_t &path);
 
 #ifndef MMKV_ANDROID
 MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath)
@@ -895,6 +903,250 @@ bool MMKV::try_lock() {
     return m_exclusiveProcessLock->try_lock();
 }
 
+// backup
+
+static bool backupOneToDirectoryByFilePath(const MMKVPath_t &srcPath, const MMKVPath_t &srcCRCPath, const MMKVPath_t &dstDir) {
+    auto crcFD = open(srcCRCPath.c_str(), O_RDWR | O_CLOEXEC, S_IRWXU);
+    if (crcFD < 0) {
+        MMKVError("fail to open src file %d(%s), %s", errno, strerror(errno), srcCRCPath.c_str());
+        return false;
+    }
+    auto basename = filename(srcPath);
+    auto dstPath = dstDir + MMKV_PATH_SLASH + basename;
+    auto dstCRCPath = dstPath + CRC_SUFFIX;
+
+    FileLock fileLock(crcFD);
+    InterProcessLock lock(&fileLock, SharedLockType);
+    bool ret = false;
+    {
+        MMKVInfo("backup one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
+        SCOPED_LOCK(&lock);
+
+        ret = copyFile(srcPath, dstPath);
+        if (ret) {
+            ret = copyFile(srcCRCPath, dstCRCPath);
+        }
+        MMKVInfo("finish backup one mmkv[%s]", basename.c_str());
+    }
+    ::close(crcFD);
+    return ret;
+}
+
+bool MMKV::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
+    auto rootPath = srcDir ? srcDir : &g_rootDir;
+    if (*rootPath == dstDir) {
+        return true;
+    }
+    mkPath(dstDir);
+    auto encodePath = encodeFilePath(mmapID, dstDir);
+    auto dstPath = dstDir + MMKV_PATH_SLASH + encodePath;
+    auto dstCRCPath = dstPath + CRC_SUFFIX;
+
+    MMKV *kv = nullptr;
+    {
+        SCOPED_LOCK(g_instanceLock);
+        auto mmapKey = mmapedKVKey(mmapID,  rootPath);
+        auto itr = g_instanceDic->find(mmapKey);
+        if (itr != g_instanceDic->end()) {
+            kv = itr->second;
+        }
+    }
+    // get one in cache, do it the esay way
+    if (kv) {
+        MMKVInfo("backup one mmkv[%s] from %s to directory %s", mmapID.c_str(), rootPath->c_str(), dstDir.c_str());
+        SCOPED_LOCK(kv->m_exclusiveProcessLock);
+
+        kv->sync();
+        auto ret = copyFile(kv->m_path, dstPath);
+        if (ret) {
+            ret = copyFile(kv->m_crcPath, dstCRCPath);
+        }
+        MMKVInfo("finish backup one mmkv[%s]", mmapID.c_str());
+        return ret;
+    }
+
+    // no luck with cache, do it the hard way
+    auto srcPath = *rootPath + MMKV_PATH_SLASH + encodePath;
+    auto srcCRCPath = srcPath + CRC_SUFFIX;
+    bool ret = backupOneToDirectoryByFilePath(srcPath, srcCRCPath, dstDir);
+    return ret;
+}
+
+bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix) {
+    if (str.length() >= suffix.length()) {
+        return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+    } else {
+        return false;
+    }
+}
+
+MMKVPath_t filename(const MMKVPath_t &path) {
+    auto startPos = path.rfind(MMKV_PATH_SLASH);
+    startPos++; // don't need check for npos, because npos+1 == 0
+    auto filename = path.substr(startPos);
+    return filename;
+}
+
+static void backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool tryCacheFirst) {
+    unordered_set<MMKVPath_t> mmapIDSet;
+    unordered_set<MMKVPath_t> mmapIDCRCSet;
+    walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
+        if (endsWith(filePath, CRC_SUFFIX)) {
+            mmapIDCRCSet.insert(filePath);
+        } else {
+            mmapIDSet.insert(filePath);
+        }
+    });
+
+    if (!mmapIDSet.empty()) {
+        mkPath(dstDir);
+        for (auto &srcPath : mmapIDSet) {
+            auto srcCRCPath = srcPath + CRC_SUFFIX;
+            if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
+                MMKVWarning("crc not exist %s", srcCRCPath.c_str());
+                continue;
+            }
+            if (tryCacheFirst) {
+                auto mmapID = filename(srcCRCPath);
+                MMKV::backupOneToDirectory(mmapID, dstDir, &srcDir);
+            } else {
+                backupOneToDirectoryByFilePath(srcPath, srcCRCPath, dstDir);
+            }
+        }
+    }
+}
+
+bool MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
+    auto rootPath = srcDir ? srcDir : &g_rootDir;
+    if (*rootPath == dstDir) {
+        return true;
+    }
+    ::backupAllToDirectory(dstDir, *rootPath, true);
+
+    auto specialSrcDir = *rootPath + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+    if (isFileExist(specialSrcDir)) {
+        auto specialDstDir = dstDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+        ::backupAllToDirectory(specialDstDir, specialSrcDir, false);
+    }
+    return true;
+}
+
+// restore
+
+static bool restoreOneToDirectoryByFilePath(const MMKVPath_t &dstDir, const MMKVPath_t &srcPath, const MMKVPath_t &srcCRCPath) {
+    auto basename = filename(srcPath);
+    auto dstPath = dstDir + MMKV_PATH_SLASH + basename;
+    auto dstCRCPath = dstPath + CRC_SUFFIX;
+    auto dstCRCFD = open(dstCRCPath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+    if (dstCRCFD < 0) {
+        MMKVError("fail to open src file %d(%s), %s", errno, strerror(errno), srcCRCPath.c_str());
+        return false;
+    }
+
+    FileLock fileLock(dstCRCFD);
+    InterProcessLock lock(&fileLock, SharedLockType);
+    bool ret = false;
+    {
+        MMKVInfo("retore one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
+        SCOPED_LOCK(&lock);
+
+        ret = copyFileContent(srcPath, dstPath);
+        if (ret) {
+            ret = copyFileContent(srcCRCPath, dstCRCFD);
+        }
+        MMKVInfo("finish restore one mmkv[%s]", basename.c_str());
+    }
+    ::close(dstCRCFD);
+    return ret;
+}
+
+// We can't simply replace the existing file, because other processes might have already open it.
+// They won't know a difference when the file has been replaced.
+// We have to let them know by overriding the existing file with new content.
+bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
+    auto rootPath = dstDir ? dstDir : &g_rootDir;
+    if (*rootPath == srcDir) {
+        return true;
+    }
+    mkPath(*rootPath);
+    auto encodePath = encodeFilePath(mmapID, *rootPath);
+    auto srcPath = srcDir + MMKV_PATH_SLASH + encodePath;
+    auto srcCRCPath = srcPath + CRC_SUFFIX;
+
+    MMKV *kv = nullptr;
+    {
+        SCOPED_LOCK(g_instanceLock);
+        auto mmapKey = mmapedKVKey(mmapID,  rootPath);
+        auto itr = g_instanceDic->find(mmapKey);
+        if (itr != g_instanceDic->end()) {
+            kv = itr->second;
+        }
+    }
+    // get one in cache, do it the esay way
+    if (kv) {
+        MMKVInfo("recover one mmkv[%s] from %s to directory %s", mmapID.c_str(), srcDir.c_str(), rootPath->c_str());
+        SCOPED_LOCK(kv->m_exclusiveProcessLock);
+
+        kv->sync();
+        auto ret = copyFileContent(srcPath, kv->m_file->getFd());
+        if (ret) {
+            ret = copyFileContent(srcPath, kv->m_metaFile->getFd());
+        }
+        MMKVInfo("finish retore one mmkv[%s]", mmapID.c_str());
+        return ret;
+    }
+
+    // no luck with cache, do it the hard way
+    bool ret = restoreOneToDirectoryByFilePath(*rootPath, srcPath, srcCRCPath);
+    return ret;
+}
+
+static void restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool tryCacheFirst) {
+    unordered_set<MMKVPath_t> mmapIDSet;
+    unordered_set<MMKVPath_t> mmapIDCRCSet;
+    walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
+        if (endsWith(filePath, CRC_SUFFIX)) {
+            mmapIDCRCSet.insert(filePath);
+        } else {
+            mmapIDSet.insert(filePath);
+        }
+    });
+
+    if (!mmapIDSet.empty()) {
+        mkPath(dstDir);
+        for (auto &srcPath : mmapIDSet) {
+            auto srcCRCPath = srcPath + CRC_SUFFIX;
+            if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
+                MMKVWarning("crc not exist %s", srcCRCPath.c_str());
+                continue;
+            }
+            if (tryCacheFirst) {
+                auto mmapID = filename(srcCRCPath);
+                MMKV::restoreOneFromDirectory(mmapID, srcDir, &dstDir);
+            } else {
+                restoreOneToDirectoryByFilePath(dstDir, srcPath, srcCRCPath);
+            }
+        }
+    }
+}
+
+bool MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
+    auto rootPath = dstDir ? dstDir : &g_rootDir;
+    if (*rootPath == srcDir) {
+        return true;
+    }
+    ::restoreAllFromDirectory(srcDir, *rootPath, true);
+
+    auto specialSrcDir = srcDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+    if (isFileExist(specialSrcDir)) {
+        auto specialDstDir = *rootPath + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+        ::restoreAllFromDirectory(specialSrcDir, specialDstDir, false);
+    }
+    return true;
+}
+
+// callbacks
+
 void MMKV::registerErrorHandler(ErrorHandler handler) {
     SCOPED_LOCK(g_instanceLock);
     g_errorHandler = handler;
@@ -957,14 +1209,35 @@ static MMKVPath_t encodeFilePath(const string &mmapID) {
     }
 }
 
-string mmapedKVKey(const string &mmapID, MMKVPath_t *rootPath) {
+static MMKVPath_t encodeFilePath(const string &mmapID, const MMKVPath_t &rootDir) {
+    const char *specialCharacters = "\\/:*?\"<>|";
+    string encodedID;
+    bool hasSpecialCharacter = false;
+    for (auto ch : mmapID) {
+        if (strchr(specialCharacters, ch) != nullptr) {
+            encodedID = md5(mmapID);
+            hasSpecialCharacter = true;
+            break;
+        }
+    }
+    if (hasSpecialCharacter) {
+        MMKVPath_t path = rootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+        mkPath(path);
+
+        return MMKVPath_t(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKVPath_t(encodedID);
+    } else {
+        return string2MMKVPath_t(mmapID);
+    }
+}
+
+string mmapedKVKey(const string &mmapID, const MMKVPath_t *rootPath) {
     if (rootPath && g_rootDir != (*rootPath)) {
         return md5(*rootPath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID));
     }
     return mmapID;
 }
 
-MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *rootPath) {
+MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, const MMKVPath_t *rootPath) {
 #ifndef MMKV_ANDROID
     if (rootPath) {
 #else
@@ -977,13 +1250,7 @@ MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *r
     return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
 }
 
-#ifndef MMKV_WIN32
-constexpr auto CRC_SUFFIX = ".crc";
-#else
-constexpr auto CRC_SUFFIX = L".crc";
-#endif
-
-MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, MMKVPath_t *rootPath) {
+MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, const MMKVPath_t *rootPath) {
 #ifndef MMKV_ANDROID
     if (rootPath) {
 #else

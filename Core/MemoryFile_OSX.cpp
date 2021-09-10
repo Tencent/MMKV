@@ -19,10 +19,9 @@
  */
 
 #include "MemoryFile.h"
+#include "MMKVLog.h"
 
 #ifdef MMKV_IOS
-
-#    include "MMKVLog.h"
 
 using namespace std;
 
@@ -50,3 +49,91 @@ void tryResetFileProtection(const string &path) {
 } // namespace mmkv
 
 #endif // MMKV_IOS
+
+#ifdef MMKV_APPLE
+
+#include <copyfile.h>
+#include <mach/mach_time.h>
+
+namespace mmkv {
+
+static bool atomicRename(const char *src, const char *dst) {
+    bool renamed = false;
+
+    // try atomic swap first
+    if (@available(iOS 10.0, watchOS 3.0, *)) {
+        // renameat2() equivalent
+        if (renamex_np(src, dst, RENAME_SWAP) == 0) {
+            renamed = true;
+        } else if (errno != ENOENT) {
+            MMKVError("fail to renamex_np %s to %s, %s", src, dst, strerror(errno));
+        }
+    }
+
+    if (!renamed) {
+        // try old style rename
+        if (rename(src, dst) != 0) {
+            MMKVError("fail to rename %s to %s, %s", src, dst, strerror(errno));
+            return false;
+        }
+    }
+
+    unlink(src);
+
+    return true;
+}
+
+bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    // prepare a temp file for atomic rename, avoid data corruption of suddent crash
+    NSString *uniqueFileName = [NSString stringWithFormat:@"mmkv_%llu", mach_absolute_time()];
+    NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:uniqueFileName];
+    if (copyfile(srcPath.c_str(), tmpFile.UTF8String, nullptr, COPYFILE_UNLINK | COPYFILE_CLONE) != 0) {
+        MMKVError("fail to copyfile [%s] to [%s], %s", srcPath.c_str(), tmpFile.UTF8String, strerror(errno));
+        return false;
+    }
+    MMKVInfo("copyfile [%s] to [%s]", srcPath.c_str(), tmpFile.UTF8String);
+
+    if (atomicRename(tmpFile.UTF8String, dstPath.c_str())) {
+        MMKVInfo("copyfile [%s] to [%s] finish.", srcPath.c_str(), dstPath.c_str());
+        return true;
+    }
+    unlink(tmpFile.UTF8String);
+    return false;
+}
+
+bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    auto dstFD = open(dstPath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+    if (dstFD < 0) {
+        MMKVError("fail to open:%s, %s", dstPath.c_str(), strerror(errno));
+        return false;
+    }
+    auto ret = copyFileContent(srcPath, dstFD);
+    if (!ret) {
+        MMKVError("fail to copyfile(): target file %s", dstPath.c_str());
+    }
+    ::close(dstFD);
+    return ret;
+}
+
+bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
+    if (dstFD < 0) {
+        return false;
+    }
+
+    auto srcFD = open(srcPath.c_str(), O_RDONLY | O_CLOEXEC, S_IRWXU);
+    if (srcFD < 0) {
+        MMKVError("fail to open:%s, %s", srcPath.c_str(), strerror(errno));
+        return false;
+    }
+
+    auto ret = (::fcopyfile(srcFD, dstFD, nullptr, COPYFILE_DATA) == 0);
+    if (!ret) {
+        MMKVError("fail to copyfile(): %d(%s), source file %s", errno, strerror(errno), srcPath.c_str());
+    }
+    ::close(srcFD);
+    return ret;
+}
+
+} // namespace mmkv
+
+#endif // MMKV_APPLE

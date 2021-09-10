@@ -31,6 +31,8 @@
 #    include <sys/mman.h>
 #    include <sys/stat.h>
 #    include <unistd.h>
+#    include <sys/file.h>
+#    include <dirent.h>
 
 using namespace std;
 
@@ -297,6 +299,59 @@ static bool getFileSize(int fd, size_t &size) {
 
 size_t getPageSize() {
     return static_cast<size_t>(getpagesize());
+}
+
+#ifndef MMKV_APPLE
+
+bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    return false;
+}
+
+bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    return false;
+}
+
+bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
+    return false;
+}
+
+#endif
+
+void walkInDir(const MMKVPath_t &dirPath, WalkType type, function<void(const MMKVPath_t&, WalkType)> walker) {
+  auto folderPathStr = dirPath.data();
+  DIR *dir = opendir(folderPathStr);
+  if (!dir) {
+      MMKVError("opendir failed: %d(%s), %s", errno, strerror(errno), dirPath.c_str());
+      return;
+  }
+
+  char childPath[MAXNAMLEN];
+  size_t folderPathLength = dirPath.size();
+  stpncpy(childPath, folderPathStr, folderPathLength + 1);
+  if (folderPathStr[folderPathLength - 1] != '/') {
+      childPath[folderPathLength] = '/';
+      folderPathLength++;
+  }
+
+  while (auto child = readdir(dir)) {
+      if ((child->d_type & DT_REG) && (type & WalkFile)) {
+          stpcpy(childPath + folderPathLength, child->d_name);
+          childPath[folderPathLength + child->d_namlen] = 0;
+
+          walker(childPath, WalkFile);
+      } else if ((child->d_type & DT_DIR) && (type & WalkFolder)) {
+          if ((child->d_namlen == 1 && child->d_name[0] == '.') ||
+              (child->d_namlen == 2 && child->d_name[0] == '.' && child->d_name[1] == '.')) {
+              continue;
+          }
+          stpcpy(childPath + folderPathLength, child->d_name);
+          childPath[folderPathLength + child->d_namlen] = 0;
+
+          walker(childPath, WalkFolder);
+      }
+  }
+
+  closedir(dir);
 }
 
 } // namespace mmkv
