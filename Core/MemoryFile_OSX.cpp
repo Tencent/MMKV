@@ -126,6 +126,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
         return false;
     }
 
+    // sendfile() equivalent
     auto ret = (::fcopyfile(srcFD, dstFD, nullptr, COPYFILE_DATA) == 0);
     if (!ret) {
         MMKVError("fail to copyfile(): %d(%s), source file %s", errno, strerror(errno), srcPath.c_str());

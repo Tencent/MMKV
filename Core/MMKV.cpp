@@ -915,11 +915,11 @@ static bool backupOneToDirectoryByFilePath(const MMKVPath_t &srcPath, const MMKV
     auto dstPath = dstDir + MMKV_PATH_SLASH + basename;
     auto dstCRCPath = dstPath + CRC_SUFFIX;
 
-    FileLock fileLock(crcFD);
-    InterProcessLock lock(&fileLock, SharedLockType);
     bool ret = false;
     {
         MMKVInfo("backup one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
+        FileLock fileLock(crcFD);
+        InterProcessLock lock(&fileLock, SharedLockType);
         SCOPED_LOCK(&lock);
 
         ret = copyFile(srcPath, dstPath);
@@ -954,7 +954,7 @@ bool MMKV::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dst
     // get one in cache, do it the esay way
     if (kv) {
         MMKVInfo("backup one mmkv[%s] from %s to directory %s", mmapID.c_str(), rootPath->c_str(), dstDir.c_str());
-        SCOPED_LOCK(kv->m_exclusiveProcessLock);
+        SCOPED_LOCK(kv->m_sharedProcessLock);
 
         kv->sync();
         auto ret = copyFile(kv->m_path, dstPath);
@@ -1043,11 +1043,11 @@ static bool restoreOneToDirectoryByFilePath(const MMKVPath_t &dstDir, const MMKV
         return false;
     }
 
-    FileLock fileLock(dstCRCFD);
-    InterProcessLock lock(&fileLock, SharedLockType);
     bool ret = false;
     {
         MMKVInfo("retore one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
+        FileLock fileLock(dstCRCFD);
+        InterProcessLock lock(&fileLock, ExclusiveLockType);
         SCOPED_LOCK(&lock);
 
         ret = copyFileContent(srcPath, dstPath);
