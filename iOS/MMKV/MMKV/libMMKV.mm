@@ -687,6 +687,42 @@ static NSString *md5(NSString *value) {
     return NO;
 }
 
+#pragma mark - backup & restore
+
++ (BOOL) backupOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)path toDirectory:(NSString*)dstDir {
+    if (path.length > 0) {
+        string rootPath(path.UTF8String);
+        return mmkv::MMKV::backupOneToDirectory(mmapID.UTF8String, dstDir.UTF8String, &rootPath);
+    }
+    return mmkv::MMKV::backupOneToDirectory(mmapID.UTF8String, dstDir.UTF8String);
+}
+
++ (BOOL) restoreOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)path fromDirectory:(NSString*)srcDir {
+    if (path.length > 0) {
+        string rootPath(path.UTF8String);
+        return mmkv::MMKV::restoreOneFromDirectory(mmapID.UTF8String, srcDir.UTF8String, &rootPath);
+    }
+    return mmkv::MMKV::restoreOneFromDirectory(mmapID.UTF8String, srcDir.UTF8String);
+}
+
++ (size_t) backupAll:(nullable NSString *)path toDirectory:(NSString*)dstDir {
+    if (path.length > 0) {
+        string rootPath(path.UTF8String);
+        return mmkv::MMKV::backupAllToDirectory(dstDir.UTF8String, &rootPath);
+    }
+    return mmkv::MMKV::backupAllToDirectory(dstDir.UTF8String);
+}
+
++ (size_t) restoreAll:(nullable NSString *)path fromDirectory:(NSString*)srcDir {
+    if (path.length > 0) {
+        string rootPath(path.UTF8String);
+        return mmkv::MMKV::restoreAllFromDirectory(srcDir.UTF8String, &rootPath);
+    }
+    return mmkv::MMKV::restoreAllFromDirectory(srcDir.UTF8String);
+}
+
+#pragma mark - handler
+
 + (void)registerHandler:(id<MMKVHandler>)handler {
     SCOPED_LOCK(g_lock);
     g_callbackHandler = handler;

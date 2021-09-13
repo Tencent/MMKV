@@ -332,11 +332,13 @@ public:
 
     // backup all MMKV instance from srcDir to dstDir
     // if srcDir is null, then backup from the root dir of MMKV
-    static bool backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir = nullptr);
+    // return count of MMKV successfully backuped
+    static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir = nullptr);
 
     // restore all MMKV instance from srcDir to dstDir
     // if dstDir is null, then restore to the root dir of MMKV
-    static bool restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir = nullptr);
+    // return count of MMKV successfully restored
+    static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir = nullptr);
 
     // check if content been changed by other process
     void checkContentChanged();
