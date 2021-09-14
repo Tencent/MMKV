@@ -1067,10 +1067,14 @@ static bool restoreOneToDirectoryByFilePath(const MMKVPath_t &dstDir, const MMKV
     return ret;
 }
 
+bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
+    return restoreOneFromDirectory(mmapID, srcDir, dstDir, false);
+}
+
 // We can't simply replace the existing file, because other processes might have already open it.
 // They won't know a difference when the file has been replaced.
 // We have to let them know by overriding the existing file with new content.
-bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
+bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir, bool compareFullPath) {
     auto rootPath = dstDir ? dstDir : &g_rootDir;
     if (*rootPath == srcDir) {
         return true;
@@ -1080,25 +1084,44 @@ bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &
     auto srcPath = srcDir + MMKV_PATH_SLASH + encodePath;
     auto srcCRCPath = srcPath + CRC_SUFFIX;
 
+    // we have to lock the creation of MMKV instance, regardless of in cache or not
+    SCOPED_LOCK(g_instanceLock);
     MMKV *kv = nullptr;
-    {
-        SCOPED_LOCK(g_instanceLock);
+    if (!compareFullPath) {
         auto mmapKey = mmapedKVKey(mmapID,  rootPath);
         auto itr = g_instanceDic->find(mmapKey);
         if (itr != g_instanceDic->end()) {
             kv = itr->second;
         }
+    } else {
+        // filename is not actually mmapID, we can't simply call find()
+        auto path = *rootPath + MMKV_PATH_SLASH + mmapID;
+        for (auto &pair : *g_instanceDic) {
+            if (pair.second->m_path == path) {
+                kv = pair.second;
+                break;
+            }
+        }
     }
     // get one in cache, do it the esay way
     if (kv) {
         MMKVInfo("recover one mmkv[%s] from %s to directory %s", mmapID.c_str(), srcDir.c_str(), rootPath->c_str());
+        SCOPED_LOCK(kv->m_lock);
         SCOPED_LOCK(kv->m_exclusiveProcessLock);
 
         kv->sync();
         auto ret = copyFileContent(srcPath, kv->m_file->getFd());
         if (ret) {
-            ret = copyFileContent(srcPath, kv->m_metaFile->getFd());
+            ret = copyFileContent(srcCRCPath, kv->m_metaFile->getFd());
         }
+
+        // reload data after restore
+        kv->clearMemoryCache();
+        kv->loadFromFile();
+        if (kv->m_isInterProcess) {
+            kv->notifyContentChanged();
+        }
+
         MMKVInfo("finish retore one mmkv[%s]", mmapID.c_str());
         return ret;
     }
@@ -1108,7 +1131,7 @@ bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &
     return ret;
 }
 
-static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool tryCacheFirst) {
+size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool tryCacheFirst) {
     unordered_set<MMKVPath_t> mmapIDSet;
     unordered_set<MMKVPath_t> mmapIDCRCSet;
     walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
@@ -1128,15 +1151,10 @@ static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t
                 MMKVWarning("crc not exist %s", srcCRCPath.c_str());
                 continue;
             }
-            if (tryCacheFirst) {
-                auto mmapID = filename(srcCRCPath);
-                if (MMKV::restoreOneFromDirectory(mmapID, srcDir, &dstDir)) {
-                    count++;
-                }
-            } else {
-                if (restoreOneToDirectoryByFilePath(dstDir, srcPath, srcCRCPath)) {
-                    count++;
-                }
+            auto mmapID = filename(srcPath);
+            auto compareFullPath = !tryCacheFirst;
+            if (MMKV::restoreOneFromDirectory(mmapID, srcDir, &dstDir, compareFullPath)) {
+                count++;
             }
         }
     }
@@ -1148,12 +1166,12 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
     if (*rootPath == srcDir) {
         return true;
     }
-    auto count = ::restoreAllFromDirectory(srcDir, *rootPath, true);
+    auto count = restoreAllFromDirectory(srcDir, *rootPath, true);
 
     auto specialSrcDir = srcDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
     if (isFileExist(specialSrcDir)) {
         auto specialDstDir = *rootPath + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-        count += ::restoreAllFromDirectory(specialSrcDir, specialDstDir, false);
+        count += restoreAllFromDirectory(specialSrcDir, specialDstDir, false);
     }
     return count;
 }

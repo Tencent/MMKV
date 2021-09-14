@@ -146,6 +146,8 @@ class MMKV {
 #if defined(MMKV_ANDROID) && !defined(MMKV_DISABLE_CRYPT)
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 #endif
+    static bool restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir, bool compareFullPath);
+    static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool tryCacheFirst);
 
 public:
     // call this before getting any MMKV instance

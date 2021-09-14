@@ -112,6 +112,8 @@ bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
         MMKVError("fail to copyfile(): target file %s", dstPath.c_str());
     }
     ::close(dstFD);
+    MMKVInfo("copy content from %s to fd[%s] finish", srcPath.c_str(), dstPath.c_str());
+
     return ret;
 }
 
@@ -132,6 +134,8 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
         MMKVError("fail to copyfile(): %d(%s), source file %s", errno, strerror(errno), srcPath.c_str());
     }
     ::close(srcFD);
+    MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
+
     return ret;
 }
 
