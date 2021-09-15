@@ -28,6 +28,7 @@
 #include <semaphore.h>
 #include <string>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 using namespace std;
@@ -207,7 +208,11 @@ void testInterProcessLock() {
         exit(1);
     }
     printf("Waiting for child %d to start ...\n", pid);
-    sem_t *sem = sem_open("mmkv_main", O_CREAT, 0644, 0);
+    sem_t *sem = sem_open("/mmkv_main", O_CREAT, 0644, 0);
+    if (!sem) {
+        printf("fail to create semaphore: %d(%s)\n", errno, strerror(errno));
+        exit(1);
+    }
     sem_wait(sem);
     printf("Child %d to started\n", pid);
 

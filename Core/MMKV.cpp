@@ -39,6 +39,9 @@
 #include <cstdio>
 #include <cstring>
 #include <unordered_set>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #if defined(__aarch64__) && defined(__linux)
 #    include <asm/hwcap.h>
