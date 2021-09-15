@@ -315,6 +315,8 @@ static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
     return {MMKVPath_t(path), fd};
 }
 
+// copy to a temp file then rename it
+// this is the best we can do under the POSIX standard
 bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     auto pair = createUniqueTempFile("MMKV");
     auto tmpFD = pair.second;
@@ -361,20 +363,19 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
         return false;
     }
     bool ret = false;
-    char *buffer = nullptr;
-    auto bufferSize = getPageSize();
     auto srcFd = open(srcPath.c_str(), O_RDONLY, S_IRWXU);
     if (srcFd < 0) {
         MMKVError("fail to open [%s], %d(%s)", srcPath.c_str(), errno, strerror(errno));
         return false;
     }
-    buffer = (char *)malloc(bufferSize);
+    auto bufferSize = getPageSize();
+    auto buffer = (char *) malloc(bufferSize);
     if (!buffer) {
         MMKVError("fail to malloc size %zu, %d(%s)", bufferSize, errno, strerror(errno));
         goto errorOut;
     }
 
-    // the POSIX standard don't have sendfile()/fcopyfile() equivalent, have to do it the hard way
+    // the POSIX standard don't have sendfile()/fcopyfile() equivalent, do it the hard way
     while (true) {
         auto sizeRead = read(srcFd, buffer, bufferSize);
         if (sizeRead < 0) {
@@ -399,7 +400,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
     ret = true;
     MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
 
-    errorOut:
+errorOut:
     free(buffer);
     ::close(srcFd);
     return ret;

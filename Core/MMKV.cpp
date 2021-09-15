@@ -935,26 +935,37 @@ static bool backupOneToDirectoryByFilePath(const MMKVPath_t &srcPath, const MMKV
     return ret;
 }
 
-bool MMKV::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
+bool MMKV::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir, bool compareFullPath) {
     auto rootPath = srcDir ? srcDir : &g_rootDir;
     if (*rootPath == dstDir) {
         return true;
     }
     mkPath(dstDir);
     auto encodePath = encodeFilePath(mmapID, dstDir);
+    auto srcPath = *rootPath + MMKV_PATH_SLASH + encodePath;
 
+    // we have to lock the creation of MMKV instance, regardless of in cache or not
+    SCOPED_LOCK(g_instanceLock);
     MMKV *kv = nullptr;
-    {
-        SCOPED_LOCK(g_instanceLock);
+    if (!compareFullPath) {
         auto mmapKey = mmapedKVKey(mmapID,  rootPath);
         auto itr = g_instanceDic->find(mmapKey);
         if (itr != g_instanceDic->end()) {
             kv = itr->second;
         }
+    } else {
+        // filename is not actually mmapID, we can't simply call find()
+        for (auto &pair : *g_instanceDic) {
+            if (pair.second->m_path == srcPath) {
+                kv = pair.second;
+                break;
+            }
+        }
     }
-    // get one in cache, do it the esay way
+    // get one in cache, do it the easy way
     if (kv) {
         MMKVInfo("backup one mmkv[%s] from %s to directory %s", mmapID.c_str(), rootPath->c_str(), dstDir.c_str());
+        SCOPED_LOCK(kv->m_lock);
         SCOPED_LOCK(kv->m_sharedProcessLock);
 
         kv->sync();
@@ -969,11 +980,14 @@ bool MMKV::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dst
     }
 
     // no luck with cache, do it the hard way
-    auto srcPath = *rootPath + MMKV_PATH_SLASH + encodePath;
     auto srcCRCPath = srcPath + CRC_SUFFIX;
     const auto &realDstDir = (encodePath.find(MMKV_PATH_SLASH) == MMKVPath_t::npos) ? dstDir : (dstDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME);
     bool ret = backupOneToDirectoryByFilePath(srcPath, srcCRCPath, realDstDir);
     return ret;
+}
+
+bool MMKV::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
+    return backupOneToDirectory(mmapID, dstDir, srcDir, false);
 }
 
 bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix) {
@@ -986,12 +1000,12 @@ bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix) {
 
 MMKVPath_t filename(const MMKVPath_t &path) {
     auto startPos = path.rfind(MMKV_PATH_SLASH);
-    startPos++; // don't need check for npos, because npos+1 == 0
+    startPos++; // don't need to check for npos, because npos+1 == 0
     auto filename = path.substr(startPos);
     return filename;
 }
 
-static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool tryCacheFirst) {
+size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool tryCacheFirst) {
     unordered_set<MMKVPath_t> mmapIDSet;
     unordered_set<MMKVPath_t> mmapIDCRCSet;
     walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
@@ -1005,21 +1019,16 @@ static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &s
     size_t count = 0;
     if (!mmapIDSet.empty()) {
         mkPath(dstDir);
+        auto compareFullPath = !tryCacheFirst;
         for (auto &srcPath : mmapIDSet) {
             auto srcCRCPath = srcPath + CRC_SUFFIX;
             if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
                 MMKVWarning("crc not exist %s", srcCRCPath.c_str());
                 continue;
             }
-            if (tryCacheFirst) {
-                auto mmapID = filename(srcPath);
-                if (MMKV::backupOneToDirectory(mmapID, dstDir, &srcDir)) {
-                    count++;
-                }
-            } else {
-                if (backupOneToDirectoryByFilePath(srcPath, srcCRCPath, dstDir)) {
-                    count++;
-                }
+            auto mmapID = filename(srcPath);
+            if (backupOneToDirectory(mmapID, dstDir, &srcDir, compareFullPath)) {
+                count++;
             }
         }
     }
@@ -1031,12 +1040,12 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *sr
     if (*rootPath == dstDir) {
         return true;
     }
-    auto count = ::backupAllToDirectory(dstDir, *rootPath, true);
+    auto count = backupAllToDirectory(dstDir, *rootPath, true);
 
     auto specialSrcDir = *rootPath + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
     if (isFileExist(specialSrcDir)) {
         auto specialDstDir = dstDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-        count += ::backupAllToDirectory(specialDstDir, specialSrcDir, false);
+        count += backupAllToDirectory(specialDstDir, specialSrcDir, false);
     }
     return count;
 }
@@ -1055,7 +1064,7 @@ static bool restoreOneToDirectoryByFilePath(const MMKVPath_t &dstDir, const MMKV
 
     bool ret = false;
     {
-        MMKVInfo("retore one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
+        MMKVInfo("restore one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
         FileLock fileLock(dstCRCFD);
         InterProcessLock lock(&fileLock, ExclusiveLockType);
         SCOPED_LOCK(&lock);
@@ -1106,7 +1115,7 @@ bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &
             }
         }
     }
-    // get one in cache, do it the esay way
+    // get one in cache, do it the easy way
     if (kv) {
         MMKVInfo("recover one mmkv[%s] from %s to directory %s", mmapID.c_str(), srcDir.c_str(), rootPath->c_str());
         SCOPED_LOCK(kv->m_lock);
@@ -1125,7 +1134,7 @@ bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &
             kv->notifyContentChanged();
         }
 
-        MMKVInfo("finish retore one mmkv[%s]", mmapID.c_str());
+        MMKVInfo("finish restore one mmkv[%s]", mmapID.c_str());
         return ret;
     }
 
@@ -1148,6 +1157,7 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
     size_t count = 0;
     if (!mmapIDSet.empty()) {
         mkPath(dstDir);
+        auto compareFullPath = !tryCacheFirst;
         for (auto &srcPath : mmapIDSet) {
             auto srcCRCPath = srcPath + CRC_SUFFIX;
             if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
@@ -1155,8 +1165,7 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
                 continue;
             }
             auto mmapID = filename(srcPath);
-            auto compareFullPath = !tryCacheFirst;
-            if (MMKV::restoreOneFromDirectory(mmapID, srcDir, &dstDir, compareFullPath)) {
+            if (restoreOneFromDirectory(mmapID, srcDir, &dstDir, compareFullPath)) {
                 count++;
             }
         }
