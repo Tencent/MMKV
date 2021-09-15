@@ -303,16 +303,106 @@ size_t getPageSize() {
 
 #ifndef MMKV_APPLE
 
+static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
+    char path[PATH_MAX];
+    snprintf(path, PATH_MAX, "%s%s.XXXXX", P_tmpdir, prefix);
+
+    auto fd = mkstemp(path);
+    if (fd < 0) {
+        MMKVError("fail to create unique temp file %s, %d(%s)", path, errno, strerror(errno));
+        return {"", fd};
+    }
+    return {MMKVPath_t(path), fd};
+}
+
 bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    return false;
+    auto pair = createUniqueTempFile("MMKV");
+    auto tmpFD = pair.second;
+    auto &tmpPath = pair.first;
+    if (tmpFD < 0) {
+        return false;
+    }
+
+    bool ret = false;
+    if (copyFileContent(srcPath, tmpFD)) {
+        MMKVInfo("copyfile [%s] to [%s]", srcPath.c_str(), tmpPath.c_str());
+        ret = (::rename(tmpPath.c_str(), dstPath.c_str()) == 0);
+        if (ret) {
+            MMKVInfo("copyfile [%s] to [%s] finish.", srcPath.c_str(), dstPath.c_str());
+        } else {
+            MMKVError("fail to rename [%s] to [%s]", tmpPath.c_str(), dstPath.c_str());
+        }
+    }
+
+    ::close(tmpFD);
+    ::unlink(tmpPath.c_str());
+
+    return ret;
 }
 
 bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    return false;
+    auto dstFd = open(dstPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+    if (dstFd < 0) {
+        MMKVError("fail to open [%s], %d(%s)", dstPath.c_str(), errno, strerror(errno));
+        return false;
+    }
+    auto ret = copyFileContent(srcPath, dstFd);
+    if (!ret) {
+        MMKVError("fail to copyfile(): target file %s", dstPath.c_str());
+    } else {
+        MMKVInfo("copy content from %s to [%s] finish", srcPath.c_str(), dstPath.c_str());
+    }
+    ::close(dstFd);
+    return ret;
 }
 
 bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
-    return false;
+    if (dstFD < 0) {
+        return false;
+    }
+    bool ret = false;
+    char *buffer = nullptr;
+    auto bufferSize = getPageSize();
+    auto srcFd = open(srcPath.c_str(), O_RDONLY, S_IRWXU);
+    if (srcFd < 0) {
+        MMKVError("fail to open [%s], %d(%s)", srcPath.c_str(), errno, strerror(errno));
+        return false;
+    }
+    buffer = (char *)malloc(bufferSize);
+    if (!buffer) {
+        MMKVError("fail to malloc size %zu, %d(%s)", bufferSize, errno, strerror(errno));
+        goto errorOut;
+    }
+
+    // the POSIX standard don't have sendfile()/fcopyfile() equivalent, have to do it the hard way
+    while (true) {
+        auto sizeRead = read(srcFd, buffer, bufferSize);
+        if (sizeRead < 0) {
+            MMKVError("fail to read file [%s], %d(%s)", srcPath.c_str(), errno, strerror(errno));
+            goto errorOut;
+        }
+
+        size_t totalWrite = 0;
+        do {
+            auto sizeWrite = write(dstFD, buffer + totalWrite, sizeRead - totalWrite);
+            if (sizeWrite < 0) {
+                MMKVError("fail to write fd [%d], %d(%s)", dstFD, errno, strerror(errno));
+                goto errorOut;
+            }
+            totalWrite += sizeWrite;
+        } while (totalWrite < sizeRead);
+
+        if (sizeRead < bufferSize) {
+            break;
+        }
+    }
+    ret = true;
+    MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
+
+    errorOut:
+    free(buffer);
+    ::close(srcFd);
+    return ret;
 }
 
 #endif

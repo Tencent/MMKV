@@ -180,7 +180,7 @@ string ASharedMemory_getName(int fd) {
         MMKVError("fail to get ashmem name:%d, %s", fd, strerror(errno));
         return "";
     }
-    return string(name);
+    return {name};
 }
 
 } // namespace mmkv

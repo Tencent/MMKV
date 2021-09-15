@@ -110,9 +110,10 @@ bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     auto ret = copyFileContent(srcPath, dstFD);
     if (!ret) {
         MMKVError("fail to copyfile(): target file %s", dstPath.c_str());
+    } else {
+        MMKVInfo("copy content from %s to fd[%s] finish", srcPath.c_str(), dstPath.c_str());
     }
     ::close(dstFD);
-    MMKVInfo("copy content from %s to fd[%s] finish", srcPath.c_str(), dstPath.c_str());
 
     return ret;
 }

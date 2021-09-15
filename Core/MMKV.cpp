@@ -332,7 +332,7 @@ string MMKV::cryptKey() const {
     if (m_crypter) {
         char key[AES_KEY_LEN];
         m_crypter->getKey(key);
-        return string(key, strnlen(key, AES_KEY_LEN));
+        return {key, strnlen(key, AES_KEY_LEN)};
     }
     return "";
 }
@@ -1220,7 +1220,7 @@ static string md5(const basic_string<T> &value) {
         snprintf(tmp, sizeof(tmp), "%2.2x", ch);
         strcat(buf, tmp);
     }
-    return string(buf);
+    return {buf};
 }
 
 static MMKVPath_t encodeFilePath(const string &mmapID) {
