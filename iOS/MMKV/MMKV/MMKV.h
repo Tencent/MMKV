@@ -219,25 +219,45 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param mmapID the MMKV ID to backup
 /// @param rootPath the customize root path of the MMKV, if null then backup from the root dir of MMKV
 /// @param dstDir the backup destination directory
-+ (BOOL) backupOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)rootPath toDirectory:(NSString*)dstDir;
++ (BOOL) backupOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)rootPath toDirectory:(NSString*)dstDir  NS_SWIFT_NAME(backup(mmapID:rootPath:dstDir:));
 
-/// restore one MMKV instance from srcDir to dstDir
+/// restore one MMKV instance from srcDir
 /// @param mmapID the MMKV ID to restore
 /// @param rootPath the customize root path of the MMKV, if null then restore to the root dir of MMKV
 /// @param srcDir the restore source directory
-+ (BOOL) restoreOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)rootPath fromDirectory:(NSString*)srcDir;
++ (BOOL) restoreOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)rootPath fromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restore(mmapID:rootPath:srcDir:));
 
 /// backup all MMKV instance to dstDir
 /// @param rootPath the customize root path of the MMKV
 /// @param dstDir the backup destination directory
 /// @return count of MMKV successfully backuped
-+ (size_t) backupAll:(nullable NSString *)rootPath toDirectory:(NSString*)dstDir;
++ (size_t) backupAll:(nullable NSString *)rootPath toDirectory:(NSString*)dstDir NS_SWIFT_NAME(backupAll(rootPath:dstDir:));
 
 /// restore all MMKV instance from srcDir
 /// @param rootPath the customize root path of the MMKV
 /// @param srcDir the restore source directory
 /// @return count of MMKV successfully restored
-+ (size_t) restoreAll:(nullable NSString *)rootPath fromDirectory:(NSString*)srcDir;
++ (size_t) restoreAll:(nullable NSString *)rootPath fromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restoreAll(rootPath:srcDir:));
+
+/// backup one MMKVMultiProcess MMKV instance to dstDir
+/// @param mmapID the MMKV ID to backup
+/// @param dstDir the backup destination directory
++ (BOOL)backupMultiProcessMMKV:(NSString *)mmapID toDirectory:(NSString*)dstDir NS_SWIFT_NAME(backupMultiProcess(mmapID:dstDir:));
+
+/// restore one MMKVMultiProcess MMKV instance from srcDir
+/// @param mmapID the MMKV ID to restore
+/// @param srcDir the restore source directory
++ (BOOL) restoreMultiProcessMMKV:(NSString*)mmapID fromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restoreMultiProcess(mmapID:srcDir:));
+
+/// backup all MMKVMultiProcess MMKV instance to dstDir
+/// @param dstDir the backup destination directory
+/// @return count of MMKV successfully backuped
++ (size_t) backupAllMultiProcessToDirectory:(NSString*)dstDir NS_SWIFT_NAME(backupAllMultiProcess(dstDir:));
+
+/// restore all MMKVMultiProcess MMKV instance from srcDir
+/// @param srcDir the restore source directory
+/// @return count of MMKV successfully restored
++ (size_t) restoreAllMultiProcessFromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restoreAllMultiProcess(srcDir:));
 
 /// check if content changed by other process
 - (void)checkContentChanged;

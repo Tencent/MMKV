@@ -562,7 +562,7 @@ static bool g_isAutoCleanUpEnabled = false;
 static uint32_t g_maxIdleSeconds = 0;
 static dispatch_source_t g_autoCleanUpTimer = nullptr;
 
-+ (void)enableAutoCleanUp:(uint32_t)maxIdleMinutes NS_SWIFT_NAME(enableAutoCleanUp(maxIdleMinutes:)) {
++ (void)enableAutoCleanUp:(uint32_t)maxIdleMinutes {
     MMKVInfo("enable auto clean up with maxIdleMinutes:%zu", maxIdleMinutes);
     SCOPED_LOCK(g_lock);
 
@@ -719,6 +719,38 @@ static NSString *md5(NSString *value) {
         return mmkv::MMKV::restoreAllFromDirectory(srcDir.UTF8String, &rootPath);
     }
     return mmkv::MMKV::restoreAllFromDirectory(srcDir.UTF8String);
+}
+
++ (BOOL)backupMultiProcessMMKV:(NSString *)mmapID toDirectory:(NSString*)dstDir {
+    if (!g_groupPath) {
+        MMKVError("Backup a multi-process MMKV [%@] without setting groupDir makes no sense", mmapID);
+        MMKV_ASSERT(0);
+    }
+    return [MMKV backupOneMMKV:mmapID rootPath:g_groupPath toDirectory:dstDir];
+}
+
++ (BOOL) restoreMultiProcessMMKV:(NSString*)mmapID fromDirectory:(NSString*)srcDir {
+    if (!g_groupPath) {
+        MMKVError("Restore a multi-process MMKV [%@] without setting groupDir makes no sense", mmapID);
+        MMKV_ASSERT(0);
+    }
+    return [MMKV restoreOneMMKV:mmapID rootPath:g_groupPath fromDirectory:srcDir];
+}
+
++ (size_t) backupAllMultiProcessToDirectory:(NSString*)dstDir {
+    if (!g_groupPath) {
+        MMKVError("Backup multi-process MMKV without setting groupDir makes no sense.");
+        MMKV_ASSERT(0);
+    }
+    return [MMKV backupAll:g_groupPath toDirectory:dstDir];
+}
+
++ (size_t) restoreAllMultiProcessFromDirectory:(NSString*)srcDir {
+    if (!g_groupPath) {
+        MMKVError("Restore multi-process MMKV without setting groupDir makes no sense.");
+        MMKV_ASSERT(0);
+    }
+    return [MMKV restoreAll:g_groupPath fromDirectory:srcDir];
 }
 
 #pragma mark - handler
