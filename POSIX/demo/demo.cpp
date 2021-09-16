@@ -34,13 +34,14 @@
 using namespace std;
 using namespace mmkv;
 
-string to_string(vector<string> &&arr) {
+string to_string(vector<string> &&arr, const char* sp = ", ") {
     string str;
     for (const auto &element : arr) {
-        str += element + ", ";
+        str += element;
+        str += sp;
     }
     if (!str.empty()) {
-        str.erase(str.length() - 2);
+        str.erase(str.length() - strlen(sp));
     }
     return str;
 }
@@ -279,6 +280,65 @@ void testClearEmptyMMKV() {
     mmkv->clearAll();
 }
 
+void testBackup() {
+    string rootDir = "/tmp/mmkv_backup";
+    string mmapID = "test/Encrypt";
+    string aesKey = "cryptKey";
+    auto ret = MMKV::backupOneToDirectory(mmapID, rootDir);
+    printf("backup one return %d\n", ret);
+    if (ret) {
+        auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey, &rootDir);
+        cout << "after backup allKeys: " << ::to_string(mmkv->allKeys()) << endl;
+    }
+
+    auto count = MMKV::backupAllToDirectory(rootDir);
+    printf("backup all count: %zu\n", count);
+    if (count > 0) {
+        auto backupMMKV = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey, &rootDir);
+        cout << "check on backup [" << backupMMKV->mmapID() << "] allKeys: " << ::to_string(backupMMKV->allKeys(), ",\n") << endl;
+
+        backupMMKV = MMKV::mmkvWithID("brutleTest", MMKV_SINGLE_PROCESS, nullptr, &rootDir);
+        cout << "check on backup [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
+
+        backupMMKV = MMKV::mmkvWithID("process_test", MMKV_MULTI_PROCESS, nullptr, &rootDir);
+        cout << "check on backup [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
+
+        backupMMKV = MMKV::mmkvWithID("thread_test1", MMKV_SINGLE_PROCESS, nullptr, &rootDir);
+        cout << "check on backup [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
+    }
+}
+
+void testRestore() {
+    string rootDir = "/tmp/mmkv_backup";
+    string mmapID = "test/Encrypt";
+    string aesKey = "cryptKey";
+    auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey);
+    mmkv->set(__LINE__, "test_restore_key");
+    cout << "before restore [" << mmkv->mmapID() << "] allKeys: " << ::to_string(mmkv->allKeys(), ",\n") << endl;
+
+    auto ret = MMKV::restoreOneFromDirectory(mmapID, rootDir);
+    printf("restore one return %d\n", ret);
+    if (ret) {
+        cout << "after restore [" << mmkv->mmapID() << "] allKeys: " << ::to_string(mmkv->allKeys(), ",\n") << endl;
+    }
+
+    auto count = MMKV::restoreAllFromDirectory(rootDir);
+    printf("restore all count: %zu\n", count);
+    if (count > 0) {
+        auto backupMMKV = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey);
+        cout << "check on restore [" << backupMMKV->mmapID() << "] allKeys: " << ::to_string(backupMMKV->allKeys(), ",\n") << endl;
+
+        backupMMKV = MMKV::mmkvWithID("brutleTest");
+        cout << "check on restore [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
+
+        backupMMKV = MMKV::mmkvWithID("process_test", MMKV_MULTI_PROCESS);
+        cout << "check on restore [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
+
+        backupMMKV = MMKV::mmkvWithID("thread_test1", MMKV_SINGLE_PROCESS);
+        cout << "check on restore [" << backupMMKV->mmapID() << "] allKeys count: " << backupMMKV->count() << endl;
+    }
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -311,7 +371,7 @@ int main() {
 
     //auto mmkv = MMKV::defaultMMKV();
     string aesKey = "cryptKey";
-    auto mmkv = MMKV::mmkvWithID("testEncrypt", MMKV_SINGLE_PROCESS, &aesKey);
+    auto mmkv = MMKV::mmkvWithID("test/Encrypt", MMKV_SINGLE_PROCESS, &aesKey);
     functionalTest(mmkv, false);
 
     for (size_t index = 0; index < keyCount; index++) {
@@ -326,4 +386,6 @@ int main() {
     threadTest();
     processTest();
     testInterProcessLock();
+    testBackup();
+    testRestore();
 }

@@ -36,9 +36,65 @@ enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
 
 namespace mmkv {
 
-class MemoryFile {
-    MMKVPath_t m_name;
+enum class OpenFlag : uint32_t {
+    ReadOnly = 1 << 1,
+    WriteOnly = 1 << 2,
+    ReadWrite = ReadOnly | WriteOnly,
+    Create = 1 << 3,
+    Excel = 1 << 4, // fail if Create is set but the file already exist
+    Truncate = 1 << 5,
+};
+
+static inline OpenFlag operator | (OpenFlag left, OpenFlag right) {
+    return static_cast<OpenFlag>(static_cast<uint32_t>(left) | static_cast<uint32_t>(right));
+}
+
+static inline bool operator & (OpenFlag left, OpenFlag right) {
+    return (static_cast<uint32_t>(left) & static_cast<uint32_t>(right));
+}
+
+class File {
+    MMKVPath_t m_path;
     MMKVFileHandle_t m_fd;
+public:
+    const OpenFlag m_flag;
+#ifndef MMKV_ANDROID
+    explicit File(MMKVPath_t path, OpenFlag flag);
+#else
+    File(const MMKVPath_t &path, OpenFlag flag, size_t size, FileType fileType);
+    explicit File(MMKVFileHandle_t ashmemFD);
+
+    const FileType m_fileType;
+#endif // MMKV_ANDROID
+
+    ~File() { close(); }
+
+    bool open();
+
+    void close();
+
+    MMKVFileHandle_t getFd() { return m_fd; }
+
+    const MMKVPath_t &getPath() const { return m_path; }
+
+#ifndef MMKV_WIN32
+    bool isFileValid() const { return m_fd >= 0; }
+#else
+    bool isFileValid() const { return m_fd != INVALID_HANDLE_VALUE; }
+#endif
+
+    // get the actual file size on disk
+    size_t getActualFileSize() const;
+
+    // just forbid it for possibly misuse
+    explicit File(const File &other) = delete;
+    File &operator=(const File &other) = delete;
+
+    friend class MemoryFile;
+};
+
+class MemoryFile {
+    File m_diskFile;
 #ifdef MMKV_WIN32
     HANDLE m_fileMapping;
 #endif
@@ -51,9 +107,9 @@ class MemoryFile {
 
 public:
 #ifndef MMKV_ANDROID
-    explicit MemoryFile(const MMKVPath_t &path);
+    explicit MemoryFile(MMKVPath_t path);
 #else
-    MemoryFile(const MMKVPath_t &path, size_t size, FileType fileType);
+    MemoryFile(MMKVPath_t path, size_t size, FileType fileType);
     explicit MemoryFile(MMKVFileHandle_t ashmemFD);
 
     const FileType m_fileType;
@@ -64,13 +120,13 @@ public:
     size_t getFileSize() const { return m_size; }
 
     // get the actual file size on disk
-    size_t getActualFileSize();
+    size_t getActualFileSize() const { return m_diskFile.getActualFileSize(); }
 
     void *getMemory() { return m_ptr; }
 
-    const MMKVPath_t &getName() { return m_name; }
+    const MMKVPath_t &getPath() { return m_diskFile.getPath(); }
 
-    MMKVFileHandle_t getFd() { return m_fd; }
+    MMKVFileHandle_t getFd() { return m_diskFile.getFd(); }
 
     // the newly expanded file content will be zeroed
     bool truncate(size_t size);
@@ -83,9 +139,9 @@ public:
     void clearMemoryCache() { doCleanMemoryCache(false); }
 
 #ifndef MMKV_WIN32
-    bool isFileValid() { return m_fd >= 0 && m_size > 0 && m_ptr; }
+    bool isFileValid() { return m_diskFile.isFileValid() && m_size > 0 && m_ptr; }
 #else
-    bool isFileValid() { return m_fd != INVALID_HANDLE_VALUE && m_size > 0 && m_fileMapping && m_ptr; }
+    bool isFileValid() { return m_diskFile.isFileValid() && m_size > 0 && m_fileMapping && m_ptr; }
 #endif
 
     // just forbid it for possibly misuse

@@ -41,8 +41,8 @@ extern int ASharedMemory_create(const char *name, size_t size);
 extern size_t ASharedMemory_getSize(int fd);
 extern string ASharedMemory_getName(int fd);
 
-MemoryFile::MemoryFile(const string &path, size_t size, FileType fileType)
-    : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
+MemoryFile::MemoryFile(string path, OpenFlag flag, size_t size, FileType fileType)
+    : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create, size, fileType), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
     if (m_fileType == MMFILE_TYPE_FILE) {
         reloadFromFile();
     } else {
@@ -55,6 +55,7 @@ MemoryFile::MemoryFile(const string &path, size_t size, FileType fileType)
         if (ptr && ptr[sizeof(ASHMEM_NAME_DEF) - 1] == '/') {
             filename = ptr + sizeof(ASHMEM_NAME_DEF);
         }
+        // TODO: move to File.open()
         m_fd = ASharedMemory_create(filename, size);
         if (m_fd >= 0) {
             m_size = size;

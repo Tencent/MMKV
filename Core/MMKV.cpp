@@ -39,9 +39,7 @@
 #include <cstdio>
 #include <cstring>
 #include <unordered_set>
-#include <fcntl.h>
 #include <unistd.h>
-#include <sys/stat.h>
 
 #if defined(__aarch64__) && defined(__linux)
 #    include <asm/hwcap.h>
@@ -909,9 +907,8 @@ bool MMKV::try_lock() {
 // backup
 
 static bool backupOneToDirectoryByFilePath(const MMKVPath_t &srcPath, const MMKVPath_t &srcCRCPath, const MMKVPath_t &dstDir) {
-    auto crcFD = open(srcCRCPath.c_str(), O_RDWR | O_CLOEXEC, S_IRWXU);
-    if (crcFD < 0) {
-        MMKVError("fail to open src file %d(%s), %s", errno, strerror(errno), srcCRCPath.c_str());
+    File crcFile(srcPath, OpenFlag::ReadOnly);
+    if (!crcFile.isFileValid()) {
         return false;
     }
     auto basename = filename(srcPath);
@@ -921,7 +918,7 @@ static bool backupOneToDirectoryByFilePath(const MMKVPath_t &srcPath, const MMKV
     bool ret = false;
     {
         MMKVInfo("backup one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
-        FileLock fileLock(crcFD);
+        FileLock fileLock(crcFile.getFd());
         InterProcessLock lock(&fileLock, SharedLockType);
         SCOPED_LOCK(&lock);
 
@@ -931,7 +928,6 @@ static bool backupOneToDirectoryByFilePath(const MMKVPath_t &srcPath, const MMKV
         }
         MMKVInfo("finish backup one mmkv[%s]", basename.c_str());
     }
-    ::close(crcFD);
     return ret;
 }
 
@@ -1056,26 +1052,24 @@ static bool restoreOneToDirectoryByFilePath(const MMKVPath_t &dstDir, const MMKV
     auto basename = filename(srcPath);
     auto dstPath = dstDir + MMKV_PATH_SLASH + basename;
     auto dstCRCPath = dstPath + CRC_SUFFIX;
-    auto dstCRCFD = open(dstCRCPath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
-    if (dstCRCFD < 0) {
-        MMKVError("fail to open src file %d(%s), %s", errno, strerror(errno), srcCRCPath.c_str());
+    File dstCRCFile(std::move(dstCRCPath), OpenFlag::ReadWrite | OpenFlag::Create);
+    if (!dstCRCFile.isFileValid()) {
         return false;
     }
 
     bool ret = false;
     {
         MMKVInfo("restore one mmkv[%s] from %s to directory %s", basename.c_str(), srcPath.c_str(), dstDir.c_str());
-        FileLock fileLock(dstCRCFD);
+        FileLock fileLock(dstCRCFile.getFd());
         InterProcessLock lock(&fileLock, ExclusiveLockType);
         SCOPED_LOCK(&lock);
 
         ret = copyFileContent(srcPath, dstPath);
         if (ret) {
-            ret = copyFileContent(srcCRCPath, dstCRCFD);
+            ret = copyFileContent(srcCRCPath, dstCRCFile.getFd());
         }
         MMKVInfo("finish restore one mmkv[%s]", basename.c_str());
     }
-    ::close(dstCRCFD);
     return ret;
 }
 
