@@ -57,6 +57,9 @@ constexpr uint32_t Fixed32Size = pbFixed32Size();
 MMKV_NAMESPACE_BEGIN
 
 void MMKV::loadFromFile() {
+    if (!m_metaFile->isFileValid()) {
+        m_metaFile->reloadFromFile();
+    }
     if (m_metaFile->isFileValid()) {
         m_metaInfo->read(m_metaFile->getMemory());
     }
