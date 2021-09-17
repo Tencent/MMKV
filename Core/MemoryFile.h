@@ -29,6 +29,7 @@ MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
 
 namespace mmkv {
 extern int g_android_api;
+extern std::string g_android_tmpDir;
 
 enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
 } // namespace mmkv
@@ -37,12 +38,12 @@ enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
 namespace mmkv {
 
 enum class OpenFlag : uint32_t {
-    ReadOnly = 1 << 1,
-    WriteOnly = 1 << 2,
+    ReadOnly = 1 << 0,
+    WriteOnly = 1 << 1,
     ReadWrite = ReadOnly | WriteOnly,
-    Create = 1 << 3,
-    Excel = 1 << 4, // fail if Create is set but the file already exist
-    Truncate = 1 << 5,
+    Create = 1 << 2,
+    Excel = 1 << 3, // fail if Create is set but the file already exist
+    Truncate = 1 << 4,
 };
 
 static inline OpenFlag operator | (OpenFlag left, OpenFlag right) {
@@ -61,9 +62,10 @@ public:
 #ifndef MMKV_ANDROID
     explicit File(MMKVPath_t path, OpenFlag flag);
 #else
-    File(const MMKVPath_t &path, OpenFlag flag, size_t size, FileType fileType);
+    File(MMKVPath_t path, OpenFlag flag, size_t size = 0, FileType fileType = MMFILE_TYPE_FILE);
     explicit File(MMKVFileHandle_t ashmemFD);
 
+    size_t m_size;
     const FileType m_fileType;
 #endif // MMKV_ANDROID
 

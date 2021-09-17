@@ -27,13 +27,14 @@
 #    include "MMKVLog.h"
 #    include "ScopedLock.hpp"
 #    include <cerrno>
-#include <utility>
+#    include <utility>
 #    include <fcntl.h>
 #    include <sys/mman.h>
 #    include <sys/stat.h>
 #    include <unistd.h>
 #    include <sys/file.h>
 #    include <dirent.h>
+#    include <string.h>
 
 using namespace std;
 
@@ -45,11 +46,6 @@ static bool getFileSize(int fd, size_t &size);
 extern size_t ASharedMemory_getSize(int fd);
 #    else
 File::File(MMKVPath_t path, OpenFlag flag) : m_path(std::move(path)), m_fd(-1), m_flag(flag) {
-#    ifdef MMKV_ANDROID
-    if (m_fileType == MMFILE_TYPE_ASHMEM) {
-        return;
-    }
-#    endif
     open();
 }
 
@@ -81,11 +77,16 @@ static int OpenFlag2NativeFlag(OpenFlag flag) {
 }
 
 bool File::open() {
-    if (m_fd >= 0) {
+#    ifdef MMKV_ANDROID
+    if (m_fileType == MMFILE_TYPE_ASHMEM) {
+        return isFileValid();
+    }
+#    endif
+    if (isFileValid()) {
         return true;
     }
     m_fd = ::open(m_path.c_str(), OpenFlag2NativeFlag(m_flag), S_IRWXU);
-    if (m_fd < 0) {
+    if (!isFileValid()) {
         MMKVError("fail to open [%s], %d(%s)", m_path.c_str(), errno, strerror(errno));
         return false;
     }
@@ -93,7 +94,7 @@ bool File::open() {
 }
 
 void File::close() {
-    if (m_fd >= 0) {
+    if (isFileValid()) {
         if (::close(m_fd) == 0) {
             m_fd = -1;
         } else {
@@ -349,7 +350,11 @@ size_t getPageSize() {
 
 static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
     char path[PATH_MAX];
-    snprintf(path, PATH_MAX, "%s%s.XXXXX", P_tmpdir, prefix);
+#ifdef MMKV_ANDROID
+    snprintf(path, PATH_MAX, "%s/%s.XXXXXX", g_android_tmpDir.c_str(), prefix);
+#else
+    snprintf(path, PATH_MAX, "%s%s.XXXXXX", P_tmpdir, prefix);
+#endif
 
     auto fd = mkstemp(path);
     if (fd < 0) {
@@ -464,40 +469,49 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
 #endif
 
 void walkInDir(const MMKVPath_t &dirPath, WalkType type, function<void(const MMKVPath_t&, WalkType)> walker) {
-  auto folderPathStr = dirPath.data();
-  DIR *dir = opendir(folderPathStr);
-  if (!dir) {
-      MMKVError("opendir failed: %d(%s), %s", errno, strerror(errno), dirPath.c_str());
-      return;
-  }
+    auto folderPathStr = dirPath.data();
+    DIR *dir = opendir(folderPathStr);
+    if (!dir) {
+        MMKVError("opendir failed: %d(%s), %s", errno, strerror(errno), dirPath.c_str());
+        return;
+    }
 
-  char childPath[MAXNAMLEN];
-  size_t folderPathLength = dirPath.size();
-  stpncpy(childPath, folderPathStr, folderPathLength + 1);
-  if (folderPathStr[folderPathLength - 1] != '/') {
-      childPath[folderPathLength] = '/';
-      folderPathLength++;
-  }
+    char childPath[PATH_MAX];
+    size_t folderPathLength = dirPath.size();
+    strncpy(childPath, folderPathStr, folderPathLength + 1);
+    if (folderPathStr[folderPathLength - 1] != '/') {
+        childPath[folderPathLength] = '/';
+        folderPathLength++;
+    }
 
-  while (auto child = readdir(dir)) {
-      if ((child->d_type & DT_REG) && (type & WalkFile)) {
-          stpcpy(childPath + folderPathLength, child->d_name);
-          childPath[folderPathLength + child->d_namlen] = 0;
+    while (auto child = readdir(dir)) {
+        if ((child->d_type & DT_REG) && (type & WalkFile)) {
+#ifdef _DIRENT_HAVE_D_NAMLEN
+            stpcpy(childPath + folderPathLength, child->d_name);
+            childPath[folderPathLength + child->d_namlen] = 0;
+#else
+            strcpy(childPath + folderPathLength, child->d_name);
+#endif
+            walker(childPath, WalkFile);
+        } else if ((child->d_type & DT_DIR) && (type & WalkFolder)) {
+#ifdef _DIRENT_HAVE_D_NAMLEN
+            if ((child->d_namlen == 1 && child->d_name[0] == '.') ||
+                (child->d_namlen == 2 && child->d_name[0] == '.' && child->d_name[1] == '.')) {
+                continue;
+            }
+            stpcpy(childPath + folderPathLength, child->d_name);
+            childPath[folderPathLength + child->d_namlen] = 0;
+#else
+            if (strcmp(child->d_name, ".") == 0 || strcmp(child->d_name, "..") == 0) {
+                continue;
+            }
+            strcpy(childPath + folderPathLength, child->d_name);
+#endif
+            walker(childPath, WalkFolder);
+        }
+    }
 
-          walker(childPath, WalkFile);
-      } else if ((child->d_type & DT_DIR) && (type & WalkFolder)) {
-          if ((child->d_namlen == 1 && child->d_name[0] == '.') ||
-              (child->d_namlen == 2 && child->d_name[0] == '.' && child->d_name[1] == '.')) {
-              continue;
-          }
-          stpcpy(childPath + folderPathLength, child->d_name);
-          childPath[folderPathLength + child->d_namlen] = 0;
-
-          walker(childPath, WalkFolder);
-      }
-  }
-
-  closedir(dir);
+    closedir(dir);
 }
 
 } // namespace mmkv

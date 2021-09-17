@@ -38,11 +38,12 @@ class ThreadLock;
 MMKV_NAMESPACE_BEGIN
 
 enum MMKVMode : uint32_t {
-    MMKV_SINGLE_PROCESS = 0x1,
-    MMKV_MULTI_PROCESS = 0x2,
+    MMKV_SINGLE_PROCESS = 1 << 0,
+    MMKV_MULTI_PROCESS = 1 << 1,
 #ifdef MMKV_ANDROID
-    CONTEXT_MODE_MULTI_PROCESS = 0x4, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
-    MMKV_ASHMEM = 0x8,
+    CONTEXT_MODE_MULTI_PROCESS = 1 << 2, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    MMKV_ASHMEM = 1 << 3,
+    MMKV_BACKUP = 1 << 4,
 #endif
 };
 

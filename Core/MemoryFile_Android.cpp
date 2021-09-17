@@ -41,24 +41,42 @@ extern int ASharedMemory_create(const char *name, size_t size);
 extern size_t ASharedMemory_getSize(int fd);
 extern string ASharedMemory_getName(int fd);
 
-MemoryFile::MemoryFile(string path, OpenFlag flag, size_t size, FileType fileType)
-    : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create, size, fileType), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
+File::File(MMKVPath_t path, OpenFlag flag, size_t size, FileType fileType)
+    : m_path(std::move(path)), m_fd(-1), m_flag(flag), m_size(0), m_fileType(fileType) {
     if (m_fileType == MMFILE_TYPE_FILE) {
-        reloadFromFile();
+        open();
     } else {
         // round up to (n * pagesize)
         if (size < DEFAULT_MMAP_SIZE || (size % DEFAULT_MMAP_SIZE != 0)) {
             size = ((size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
         }
-        auto filename = m_name.c_str();
+        auto filename = m_path.c_str();
         auto ptr = strstr(filename, ASHMEM_NAME_DEF);
         if (ptr && ptr[sizeof(ASHMEM_NAME_DEF) - 1] == '/') {
             filename = ptr + sizeof(ASHMEM_NAME_DEF);
         }
-        // TODO: move to File.open()
         m_fd = ASharedMemory_create(filename, size);
-        if (m_fd >= 0) {
+        if (isFileValid()) {
             m_size = size;
+        }
+    }
+}
+
+File::File(MMKVFileHandle_t ashmemFD)
+    : m_path(), m_fd(ashmemFD), m_flag(OpenFlag::ReadWrite), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM) {
+    if (isFileValid()) {
+        m_path = ASharedMemory_getName(m_fd);
+        m_size = ASharedMemory_getSize(m_fd);
+    }
+}
+
+MemoryFile::MemoryFile(string path, size_t size, FileType fileType)
+    : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create, size, fileType), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
+    if (m_fileType == MMFILE_TYPE_FILE) {
+        reloadFromFile();
+    } else {
+        if (m_diskFile.isFileValid()) {
+            m_size = m_diskFile.m_size;
             auto ret = mmap();
             if (!ret) {
                 doCleanMemoryCache(true);
@@ -68,13 +86,12 @@ MemoryFile::MemoryFile(string path, OpenFlag flag, size_t size, FileType fileTyp
 }
 
 MemoryFile::MemoryFile(int ashmemFD)
-    : m_name(""), m_fd(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM) {
-    if (m_fd < 0) {
-        MMKVError("fd %d invalid", m_fd);
+    : m_diskFile(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM) {
+    if (!m_diskFile.isFileValid()) {
+        MMKVError("fd %d invalid", ashmemFD);
     } else {
-        m_name = ASharedMemory_getName(m_fd);
-        m_size = ASharedMemory_getSize(m_fd);
-        MMKVInfo("ashmem name:%s, size:%zu", m_name.c_str(), m_size);
+        m_size = m_diskFile.m_size;
+        MMKVInfo("ashmem name:%s, size:%zu", m_diskFile.m_path.c_str(), m_size);
         auto ret = mmap();
         if (!ret) {
             doCleanMemoryCache(true);
@@ -98,6 +115,7 @@ constexpr auto __ASHMEMIOC = 0x77;
 #    define ASHMEM_GET_SIZE _IO(__ASHMEMIOC, 4)
 
 int g_android_api = __ANDROID_API_L__;
+std::string g_android_tmpDir = "/data/local/tmp/";
 
 void *loadLibrary() {
     auto name = "libandroid.so";

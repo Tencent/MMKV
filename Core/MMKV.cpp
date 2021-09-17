@@ -961,7 +961,7 @@ bool MMKV::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dst
     }
     // get one in cache, do it the easy way
     if (kv) {
-        MMKVInfo("backup one mmkv[%s] from %s to directory %s", mmapID.c_str(), rootPath->c_str(), dstDir.c_str());
+        MMKVInfo("backup one cached mmkv[%s] from %s to directory %s", mmapID.c_str(), rootPath->c_str(), dstDir.c_str());
         SCOPED_LOCK(kv->m_lock);
         SCOPED_LOCK(kv->m_sharedProcessLock);
 
@@ -1112,7 +1112,7 @@ bool MMKV::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &
     }
     // get one in cache, do it the easy way
     if (kv) {
-        MMKVInfo("recover one mmkv[%s] from %s to directory %s", mmapID.c_str(), srcDir.c_str(), rootPath->c_str());
+        MMKVInfo("recover one cached mmkv[%s] from %s to directory %s", mmapID.c_str(), srcDir.c_str(), rootPath->c_str());
         SCOPED_LOCK(kv->m_lock);
         SCOPED_LOCK(kv->m_exclusiveProcessLock);
 
