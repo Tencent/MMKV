@@ -34,7 +34,27 @@
 #    include <unistd.h>
 #    include <sys/file.h>
 #    include <dirent.h>
-#    include <string.h>
+#    include <cstring>
+
+#if defined(MMKV_ANDROID) || defined(MMKV_LINUX)
+#include <sys/sendfile.h>
+#endif
+
+#ifdef MMKV_ANDROID
+#include <dlfcn.h>
+typedef int (*renameat2_t)(int old_dir_fd, const char* old_path, int new_dir_fd, const char* new_path, unsigned flags);
+#endif
+
+static inline bool hasRenameat2() {
+#ifdef MMKV_LINUX
+    return true;
+#elif defined(MMKV_ANDROID)
+    if (mmkv::g_android_api >= 30) {
+        return true;
+    }
+#endif
+    return false;
+}
 
 using namespace std;
 
@@ -365,6 +385,77 @@ static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
     return {MMKVPath_t(path), fd};
 }
 
+static bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    bool renamed = false;
+
+    // try renameat2() first
+    if (hasRenameat2()) {
+#ifdef MMKV_ANDROID
+        static auto g_renameat2 = (renameat2_t) dlsym(RTLD_DEFAULT, "renameat2");
+        if (g_renameat2) {
+            renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
+        }
+#else
+        renamed = (::renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
+#endif
+        if (!renamed && errno != ENOENT) {
+            MMKVError("fail on renameat2() [%s] to [%s], %d(%s)",
+                      srcPath.c_str(),
+                      dstPath.c_str(),
+                      errno,
+                      strerror(errno));
+        }
+    }
+    if (!renamed) {
+        if (::rename(srcPath.c_str(), dstPath.c_str()) != 0) {
+            MMKVError("fail to rename [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
+            return false;
+        }
+    }
+
+    ::unlink(srcPath.c_str());
+    return true;
+}
+
+#if defined(MMKV_ANDROID) || defined(MMKV_LINUX)
+
+// do it by sendfile()
+static bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
+    if (dstFD < 0) {
+        return false;
+    }
+    File srcFile(srcPath, OpenFlag::ReadOnly);
+    if (!srcFile.isFileValid()) {
+        return false;
+    }
+    auto srcFileSize = srcFile.getActualFileSize();
+
+    lseek(dstFD, 0, SEEK_SET);
+    auto writtenSize = ::sendfile(dstFD, srcFile.getFd(), nullptr, srcFileSize);
+    auto ret = (writtenSize == srcFileSize);
+    if (!ret) {
+        if (writtenSize < 0) {
+            MMKVError("fail to sendfile() %s to fd[%d], %d(%s)", srcPath.c_str(), dstFD, errno, strerror(errno));
+        } else {
+            MMKVError("sendfile() %s to fd[%d], written %lld < %zu", srcPath.c_str(), dstFD, writtenSize, srcFileSize);
+        }
+    } else if (needTruncate) {
+        size_t dstFileSize = 0;
+        getFileSize(dstFD, dstFileSize);
+        if ((dstFileSize != srcFileSize) && (::ftruncate(dstFD, static_cast<off_t>(srcFileSize)) != 0)) {
+            MMKVError("fail to truncate [%d] to size [%zu], %d(%s)", dstFD, srcFileSize, errno, strerror(errno));
+            ret = false;
+        }
+    }
+
+    if (ret) {
+        MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
+    }
+    return ret;
+}
+
+#else
+
 static bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
     if (dstFD < 0) {
         return false;
@@ -380,6 +471,7 @@ static bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, b
         MMKVError("fail to malloc size %zu, %d(%s)", bufferSize, errno, strerror(errno));
         goto errorOut;
     }
+    lseek(dstFD, 0, SEEK_SET);
 
     // the POSIX standard don't have sendfile()/fcopyfile() equivalent, do it the hard way
     while (true) {
@@ -421,6 +513,8 @@ errorOut:
     return ret;
 }
 
+#endif // !defined(MMKV_ANDROID) && !defined(MMKV_LINUX)
+
 // copy to a temp file then rename it
 // this is the best we can do under the POSIX standard
 bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
@@ -431,21 +525,20 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
         return false;
     }
 
-    bool ret = false;
+    bool renamed = false;
     if (copyFileContent(srcPath, tmpFD, false)) {
         MMKVInfo("copyfile [%s] to [%s]", srcPath.c_str(), tmpPath.c_str());
-        ret = (::rename(tmpPath.c_str(), dstPath.c_str()) == 0);
-        if (ret) {
+        renamed = tryAtomicRename(tmpPath, dstPath);
+        if (renamed) {
             MMKVInfo("copyfile [%s] to [%s] finish.", srcPath.c_str(), dstPath.c_str());
-        } else {
-            MMKVError("fail to rename [%s] to [%s], %d(%s)", tmpPath.c_str(), dstPath.c_str(), errno, strerror(errno));
         }
     }
 
     ::close(tmpFD);
-    ::unlink(tmpPath.c_str());
-
-    return ret;
+    if (!renamed) {
+        ::unlink(tmpPath.c_str());
+    }
+    return renamed;
 }
 
 bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
