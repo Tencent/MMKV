@@ -438,7 +438,7 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
         if (ret) {
             MMKVInfo("copyfile [%s] to [%s] finish.", srcPath.c_str(), dstPath.c_str());
         } else {
-            MMKVError("fail to rename [%s] to [%s]", tmpPath.c_str(), dstPath.c_str());
+            MMKVError("fail to rename [%s] to [%s], %d(%s)", tmpPath.c_str(), dstPath.c_str(), errno, strerror(errno));
         }
     }
 

@@ -108,11 +108,11 @@ MemoryFile::MemoryFile(int ashmemFD)
 namespace mmkv {
 
 constexpr auto ASHMEM_NAME_LEN = 256;
-constexpr auto __ASHMEMIOC = 0x77;
-#    define ASHMEM_SET_NAME _IOW(__ASHMEMIOC, 1, char[ASHMEM_NAME_LEN])
-#    define ASHMEM_GET_NAME _IOR(__ASHMEMIOC, 2, char[ASHMEM_NAME_LEN])
-#    define ASHMEM_SET_SIZE _IOW(__ASHMEMIOC, 3, size_t)
-#    define ASHMEM_GET_SIZE _IO(__ASHMEMIOC, 4)
+constexpr auto ASHMEM_IOC = 0x77;
+#    define ASHMEM_SET_NAME _IOW(ASHMEM_IOC, 1, char[ASHMEM_NAME_LEN])
+#    define ASHMEM_GET_NAME _IOR(ASHMEM_IOC, 2, char[ASHMEM_NAME_LEN])
+#    define ASHMEM_SET_SIZE _IOW(ASHMEM_IOC, 3, size_t)
+#    define ASHMEM_GET_SIZE _IO(ASHMEM_IOC, 4)
 
 int g_android_api = __ANDROID_API_L__;
 std::string g_android_tmpDir = "/data/local/tmp/";

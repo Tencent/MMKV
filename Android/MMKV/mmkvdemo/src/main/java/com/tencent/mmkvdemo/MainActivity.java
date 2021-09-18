@@ -477,21 +477,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testBackup() {
-        String rootDir = MMKV.getRootDir();
-        File f = new File(rootDir);
-        String backupRootDir = f.getParent() + "/mmkv_backup";
-        String mmapID = "imported";
-        boolean ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, null);
+        File f = new File(MMKV.getRootDir());
+        String backupRootDir = f.getParent() + "/mmkv_backup_3";
+        String mmapID = "test/AES";
+        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
+
+        boolean ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, otherDir);
         Log.i("MMKV", "backup one [" + mmapID + "] ret = " + ret);
         if (ret) {
-            MMKV mmkv = MMKV.backedUpMMKVWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
+            MMKV mmkv = MMKV.backedUpMMKVWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, "Tencent MMKV", backupRootDir);
             Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
         }
 
+        /*{
+            MMKV mmkv = MMKV.mmkvWithID("imported");
+            mmkv.close();
+            mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+            mmkv.close();
+        }*/
+        backupRootDir = f.getParent() + "/mmkv_backup";
         long count = MMKV.backupAllToDirectory(backupRootDir);
         Log.i("MMKV", "backup all count " + count);
         if (count > 0) {
-            MMKV mmkv = MMKV.backedUpMMKVWithID("testKotlin", MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
+            MMKV mmkv = MMKV.backedUpMMKVWithID("imported", MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
+            mmkv = MMKV.backedUpMMKVWithID("testKotlin", MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
             Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
 
             mmkv = MMKV.backedUpMMKVWithID("test/AES_reKey1", MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
@@ -503,22 +514,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testRestore() {
-        String rootDir = MMKV.getRootDir();
-        File f = new File(rootDir);
-        String backupRootDir = f.getParent() + "/mmkv_backup";
-        String mmapID = "imported";
-        MMKV mmkv = MMKV.mmkvWithID(mmapID);
+        File f = new File(MMKV.getRootDir());
+        String backupRootDir = f.getParent() + "/mmkv_backup_3";
+        String mmapID = "test/AES";
+        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
+
+        MMKV mmkv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, "Tencent MMKV", otherDir);
         mmkv.encode("test_restore", true);
         Log.i("MMKV", "before restore [" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
-        boolean ret = MMKV.restoreOneMMKVFromDirectory(mmapID, backupRootDir, null);
+        boolean ret = MMKV.restoreOneMMKVFromDirectory(mmapID, backupRootDir, otherDir);
         Log.i("MMKV", "restore one [" + mmapID + "] ret = " + ret);
         if (ret) {
             Log.i("MMKV", "after restore [" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
         }
 
+        /*{
+            mmkv = MMKV.mmkvWithID("imported");
+            mmkv.close();
+            mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+            mmkv.close();
+        }*/
+        backupRootDir = f.getParent() + "/mmkv_backup";
         long count = MMKV.restoreAllFromDirectory(backupRootDir);
         Log.i("MMKV", "restore all count " + count);
         if (count > 0) {
+            mmkv = MMKV.mmkvWithID("imported");
+            Log.i("MMKV", "check on restore file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
             mmkv = MMKV.mmkvWithID("testKotlin");
             Log.i("MMKV", "check on restore file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
 
