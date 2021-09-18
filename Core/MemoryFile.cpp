@@ -400,7 +400,7 @@ static bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath
         if (g_renameat2) {
             renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
         }
-#else
+#elif defined(SYS_renameat2)
         renamed = (::syscall(SYS_renameat2, AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
 #endif
         if (!renamed && errno != ENOENT) {
