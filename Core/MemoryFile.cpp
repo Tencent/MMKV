@@ -38,6 +38,7 @@
 
 #if defined(MMKV_ANDROID) || defined(MMKV_LINUX)
 #include <sys/sendfile.h>
+#include <sys/syscall.h>
 #endif
 
 #ifdef MMKV_ANDROID
@@ -45,8 +46,12 @@
 typedef int (*renameat2_t)(int old_dir_fd, const char* old_path, int new_dir_fd, const char* new_path, unsigned flags);
 #endif
 
+#ifndef RENAME_EXCHANGE
+#define RENAME_EXCHANGE (1 << 1) /* Exchange source and dest */
+#endif
+
 static inline bool hasRenameat2() {
-#ifdef MMKV_LINUX
+#if defined(MMKV_LINUX) && defined(SYS_renameat2)
     return true;
 #elif defined(MMKV_ANDROID)
     if (mmkv::g_android_api >= 30) {
@@ -373,7 +378,7 @@ static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
 #ifdef MMKV_ANDROID
     snprintf(path, PATH_MAX, "%s/%s.XXXXXX", g_android_tmpDir.c_str(), prefix);
 #else
-    snprintf(path, PATH_MAX, "%s%s.XXXXXX", P_tmpdir, prefix);
+    snprintf(path, PATH_MAX, "%s/%s.XXXXXX", P_tmpdir, prefix);
 #endif
 
     auto fd = mkstemp(path);
@@ -396,7 +401,7 @@ static bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath
             renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
         }
 #else
-        renamed = (::renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
+        renamed = (::syscall(SYS_renameat2, AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
 #endif
         if (!renamed && errno != ENOENT) {
             MMKVError("fail on renameat2() [%s] to [%s], %d(%s)",

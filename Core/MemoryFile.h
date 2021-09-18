@@ -23,6 +23,7 @@
 #ifdef __cplusplus
 
 #include "MMKVPredef.h"
+#include <functional>
 
 #ifdef MMKV_ANDROID
 MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);

@@ -26,6 +26,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cstring>
 
 using namespace std;
 using namespace mmkv;
