@@ -50,17 +50,6 @@ typedef int (*renameat2_t)(int old_dir_fd, const char* old_path, int new_dir_fd,
 #define RENAME_EXCHANGE (1 << 1) /* Exchange source and dest */
 #endif
 
-static inline bool hasRenameat2() {
-#if defined(MMKV_LINUX) && defined(SYS_renameat2)
-    return true;
-#elif defined(MMKV_ANDROID)
-    if (mmkv::g_android_api >= 30) {
-        return true;
-    }
-#endif
-    return false;
-}
-
 using namespace std;
 
 namespace mmkv {
@@ -394,23 +383,21 @@ static bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath
     bool renamed = false;
 
     // try renameat2() first
-    if (hasRenameat2()) {
+#ifdef SYS_renameat2
 #ifdef MMKV_ANDROID
-        static auto g_renameat2 = (renameat2_t) dlsym(RTLD_DEFAULT, "renameat2");
-        if (g_renameat2) {
-            renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
-        }
-#elif defined(SYS_renameat2)
-        renamed = (::syscall(SYS_renameat2, AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
-#endif
-        if (!renamed && errno != ENOENT) {
-            MMKVError("fail on renameat2() [%s] to [%s], %d(%s)",
-                      srcPath.c_str(),
-                      dstPath.c_str(),
-                      errno,
-                      strerror(errno));
-        }
+    static auto g_renameat2 = (renameat2_t) dlsym(RTLD_DEFAULT, "renameat2");
+    if (g_renameat2) {
+        renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
     }
+#endif
+    if (!renamed) {
+        renamed = (syscall(SYS_renameat2, AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
+    }
+    if (!renamed && errno != ENOENT) {
+        MMKVError("fail on renameat2() [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
+    }
+#endif // SYS_renameat2
+
     if (!renamed) {
         if (::rename(srcPath.c_str(), dstPath.c_str()) != 0) {
             MMKVError("fail to rename [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
