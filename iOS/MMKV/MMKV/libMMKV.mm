@@ -625,7 +625,11 @@ static dispatch_source_t g_autoCleanUpTimer = nullptr;
         return g_basePath;
     }
 
+#if TARGET_OS_TV
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+#else
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+#endif
     NSString *documentPath = (NSString *) [paths firstObject];
     if ([documentPath length] > 0) {
         g_basePath = [[documentPath stringByAppendingPathComponent:@"mmkv"] retain];
