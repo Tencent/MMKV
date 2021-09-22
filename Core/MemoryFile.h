@@ -52,7 +52,7 @@ static inline OpenFlag operator | (OpenFlag left, OpenFlag right) {
 }
 
 static inline bool operator & (OpenFlag left, OpenFlag right) {
-    return (static_cast<uint32_t>(left) & static_cast<uint32_t>(right));
+    return ((static_cast<uint32_t>(left) & static_cast<uint32_t>(right)) != 0);
 }
 
 class File {

@@ -81,11 +81,15 @@ static int OpenFlag2NativeFlag(OpenFlag flag) {
     } else if (flag & OpenFlag::WriteOnly) {
         native |= O_WRONLY;
     }
+
     if (flag & OpenFlag::Create) {
         native |= O_CREAT;
     }
     if (flag & OpenFlag::Excel) {
         native |= O_EXCL;
+    }
+    if (flag & OpenFlag::Truncate) {
+        native |= O_TRUNC;
     }
     return native;
 }
