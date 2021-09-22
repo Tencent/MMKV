@@ -557,7 +557,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
 
 #endif
 
-void walkInDir(const MMKVPath_t &dirPath, WalkType type, function<void(const MMKVPath_t&, WalkType)> walker) {
+void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(const MMKVPath_t&, WalkType)> &walker) {
     auto folderPathStr = dirPath.data();
     DIR *dir = opendir(folderPathStr);
     if (!dir) {

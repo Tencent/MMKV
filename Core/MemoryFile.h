@@ -171,7 +171,7 @@ enum WalkType : uint32_t {
     WalkFile = 1 << 0,
     WalkFolder = 1 << 1,
 };
-extern void walkInDir(const MMKVPath_t &dirPath, WalkType type, std::function<void(const MMKVPath_t&, WalkType)> walker);
+extern void walkInDir(const MMKVPath_t &dirPath, WalkType type, const std::function<void(const MMKVPath_t&, WalkType)> &walker);
 
 } // namespace mmkv
 
