@@ -327,6 +327,8 @@ public:
     void unlock();
     bool try_lock();
 
+    static const MMKVPath_t &getRootDir();
+
     // backup one MMKV instance from srcDir to dstDir
     // if srcDir is null, then backup from the root dir of MMKV
     static bool backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir = nullptr);

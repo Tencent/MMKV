@@ -88,6 +88,7 @@ constexpr auto MMKV_PATH_SLASH = L"\\";
 using MMKVFileHandle_t = HANDLE;
 using MMKVPath_t = std::wstring;
 extern MMKVPath_t string2MMKVPath_t(const std::string &str);
+extern std::string MMKVPath_t2String(const MMKVPath_t &str);
 
 #    ifndef MMKV_EMBED_ZLIB
 #        define MMKV_EMBED_ZLIB 1
@@ -100,6 +101,7 @@ constexpr auto MMKV_PATH_SLASH = "/";
 using MMKVFileHandle_t = int;
 using MMKVPath_t = std::string;
 #    define string2MMKVPath_t(str) (str)
+#    define MMKVPath_t2String(str) (str)
 
 #    ifndef MMKV_EMBED_ZLIB
 #        define MMKV_EMBED_ZLIB 0

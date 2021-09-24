@@ -50,7 +50,10 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
         // let's be gentleman: unlock my shared-lock to prevent deadlock
         auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
         if (!ret) {
-            MMKVError("fail to try unlock first fd=%p, error:%d", m_fd, GetLastError());
+            auto lastError = GetLastError();
+            if (lastError != ERROR_NOT_LOCKED) {
+                MMKVError("fail to try unlock first fd=%p, error:%d", m_fd, lastError);
+            }
         }
     }
 
@@ -91,11 +94,13 @@ bool FileLock::platformUnLock(bool unlockToSharedLock) {
     }
     auto ret = UnlockFileEx(m_fd, 0, 1, 0, &m_overLapped);
     if (!ret) {
-        MMKVError("fail to unlock fd=%p, error:%d", m_fd, GetLastError());
-        return false;
-    } else {
-        return true;
+        auto lastError = GetLastError();
+        if (lastError != ERROR_NOT_LOCKED) {
+            MMKVError("fail to unlock fd=%p, error:%d", m_fd, lastError);
+            return false;
+        }
     }
+    return true;
 }
 
 } // namespace mmkv
