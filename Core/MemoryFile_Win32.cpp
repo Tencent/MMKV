@@ -486,7 +486,7 @@ void walkInDir(const MMKVPath_t &dirPath,
         return;
     }
 
-	do {
+    do {
         if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             if (type & WalkFolder) {
                 if (wcscmp(ffd.cFileName, L".") == 0 || wcscmp(ffd.cFileName, L"..") == 0) {
