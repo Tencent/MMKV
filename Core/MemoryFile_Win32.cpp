@@ -73,11 +73,13 @@ bool File::open() {
         MMKVError("fail to open:[%ws], %d", m_path.c_str(), GetLastError());
         return false;
     }
+    MMKVInfo("open fd[%p], %ws", m_fd, m_path.c_str());
     return true;
 }
 
 void File::close() {
     if (isFileValid()) {
+        MMKVInfo("closing fd[%p], %ws", m_fd, m_path.c_str());
         if (CloseHandle(m_fd)) {
             m_fd = INVALID_HANDLE_VALUE;
         } else {

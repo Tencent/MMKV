@@ -108,11 +108,13 @@ bool File::open() {
         MMKVError("fail to open [%s], %d(%s)", m_path.c_str(), errno, strerror(errno));
         return false;
     }
+    MMKVInfo("open fd[%p], %s", m_fd, m_path.c_str());
     return true;
 }
 
 void File::close() {
     if (isFileValid()) {
+        MMKVInfo("closing fd[%p], %s", m_fd, m_path.c_str());
         if (::close(m_fd) == 0) {
             m_fd = -1;
         } else {
