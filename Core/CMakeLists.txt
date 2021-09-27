@@ -102,6 +102,7 @@ add_library(core
         MemoryFile.h
         MemoryFile.cpp
         MemoryFile_Android.cpp
+        MemoryFile_Linux.cpp
         MemoryFile_Win32.cpp
         MemoryFile_OSX.cpp
         ThreadLock.h

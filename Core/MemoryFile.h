@@ -160,12 +160,15 @@ extern MMBuffer *readWholeFile(const MMKVPath_t &path);
 extern bool zeroFillFile(MMKVFileHandle_t fd, size_t startPos, size_t size);
 extern size_t getPageSize();
 
+extern bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
+
 // copy file by potentially renaming target file, might change file inode
 extern bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 
 // copy file by source file content, keep file inode the same
 extern bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 extern bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD);
+extern bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate);
 
 enum WalkType : uint32_t {
     WalkFile = 1 << 0,

@@ -228,15 +228,15 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
   #else
    #define MMKV_ABI "armeabi"
   #endif
-#elif defined(__i386__)
+#elif defined(__i386__) || defined(_M_IX86)
   #define MMKV_ABI "x86"
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) || defined(_M_X64)
   #define MMKV_ABI "x86_64"
 #elif defined(__mips64)
   #define MMKV_ABI "mips64"
 #elif defined(__mips__)
   #define MMKV_ABI "mips"
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) || defined(_M_ARM64)
   #define MMKV_ABI "arm64-v8a"
 #else
   #define MMKV_ABI "unknown"

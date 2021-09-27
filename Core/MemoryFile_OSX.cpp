@@ -57,7 +57,7 @@ void tryResetFileProtection(const string &path) {
 
 namespace mmkv {
 
-static bool atomicRename(const char *src, const char *dst) {
+bool tryAtomicRename(const char *src, const char *dst) {
     bool renamed = false;
 
     // try atomic swap first
@@ -93,7 +93,7 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     }
     MMKVInfo("copyfile [%s] to [%s]", srcPath.c_str(), tmpFile.UTF8String);
 
-    if (atomicRename(tmpFile.UTF8String, dstPath.c_str())) {
+    if (tryAtomicRename(tmpFile.UTF8String, dstPath.c_str())) {
         MMKVInfo("copyfile [%s] to [%s] finish.", srcPath.c_str(), dstPath.c_str());
         return true;
     }
@@ -102,20 +102,16 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
 }
 
 bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    auto dstFD = open(dstPath.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
-    if (dstFD < 0) {
-        MMKVError("fail to open:%s, %s", dstPath.c_str(), strerror(errno));
+    File dstFile(dstPath, OpenFlag::WriteOnly | OpenFlag::Create | OpenFlag::Truncate);
+    if (!dstFile.isFileValid()) {
         return false;
     }
-    auto ret = copyFileContent(srcPath, dstFD);
-    if (!ret) {
-        MMKVError("fail to copyfile(): target file %s", dstPath.c_str());
-    } else {
+    if (copyFileContent(srcPath, dstFile.getFd())) {
         MMKVInfo("copy content from %s to fd[%s] finish", srcPath.c_str(), dstPath.c_str());
+        return true;
     }
-    ::close(dstFD);
-
-    return ret;
+    MMKVError("fail to copyfile(): target file %s", dstPath.c_str());
+    return false;
 }
 
 bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
@@ -123,21 +119,22 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
         return false;
     }
 
-    auto srcFD = open(srcPath.c_str(), O_RDONLY | O_CLOEXEC, S_IRWXU);
-    if (srcFD < 0) {
-        MMKVError("fail to open:%s, %s", srcPath.c_str(), strerror(errno));
+    File srcFile(srcPath, OpenFlag::ReadOnly);
+    if (!srcFile.isFileValid()) {
         return false;
     }
 
     // sendfile() equivalent
-    auto ret = (::fcopyfile(srcFD, dstFD, nullptr, COPYFILE_DATA) == 0);
-    if (!ret) {
-        MMKVError("fail to copyfile(): %d(%s), source file %s", errno, strerror(errno), srcPath.c_str());
+    if (::fcopyfile(srcFile.getFd(), dstFD, nullptr, COPYFILE_ACL | COPYFILE_STAT | COPYFILE_XATTR | COPYFILE_DATA) == 0) {
+        MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
+        return true;
     }
-    ::close(srcFD);
-    MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
+    MMKVError("fail to copyfile(): %d(%s), source file %s", errno, strerror(errno), srcPath.c_str());
+    return false;
+}
 
-    return ret;
+bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
+    return copyFileContent(srcPath, dstFD);
 }
 
 } // namespace mmkv

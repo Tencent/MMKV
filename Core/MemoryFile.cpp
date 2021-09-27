@@ -36,25 +36,11 @@
 #    include <dirent.h>
 #    include <cstring>
 
-#if defined(MMKV_ANDROID) || defined(MMKV_LINUX)
-#include <sys/sendfile.h>
-#include <sys/syscall.h>
-#endif
-
-#ifdef MMKV_ANDROID
-#include <dlfcn.h>
-typedef int (*renameat2_t)(int old_dir_fd, const char* old_path, int new_dir_fd, const char* new_path, unsigned flags);
-#endif
-
-#ifndef RENAME_EXCHANGE
-#define RENAME_EXCHANGE (1 << 1) /* Exchange source and dest */
-#endif
-
 using namespace std;
 
 namespace mmkv {
 
-static bool getFileSize(int fd, size_t &size);
+extern bool getFileSize(int fd, size_t &size);
 
 #    ifdef MMKV_ANDROID
 extern size_t ASharedMemory_getSize(int fd);
@@ -66,7 +52,7 @@ File::File(MMKVPath_t path, OpenFlag flag) : m_path(std::move(path)), m_fd(-1), 
 MemoryFile::MemoryFile(MMKVPath_t path) : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create), m_ptr(nullptr), m_size(0) {
     reloadFromFile();
 }
-#    endif // MMKV_ANDROID
+#    endif // !defined(MMKV_ANDROID)
 
 #    ifdef MMKV_IOS
 void tryResetFileProtection(const string &path);
@@ -353,7 +339,7 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
     return true;
 }
 
-static bool getFileSize(int fd, size_t &size) {
+bool getFileSize(int fd, size_t &size) {
     struct stat st = {};
     if (fstat(fd, &st) != -1) {
         size = (size_t) st.st_size;
@@ -385,76 +371,17 @@ static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
     return {MMKVPath_t(path), fd};
 }
 
-static bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    bool renamed = false;
+#if !defined(MMKV_ANDROID) && !defined(MMKV_LINUX)
 
-    // try renameat2() first
-#ifdef SYS_renameat2
-#ifdef MMKV_ANDROID
-    static auto g_renameat2 = (renameat2_t) dlsym(RTLD_DEFAULT, "renameat2");
-    if (g_renameat2) {
-        renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
+bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    if (::rename(srcPath.c_str(), dstPath.c_str()) != 0) {
+        MMKVError("fail to rename [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
+        return false;
     }
-#endif
-    if (!renamed) {
-        renamed = (syscall(SYS_renameat2, AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
-    }
-    if (!renamed && errno != ENOENT) {
-        MMKVError("fail on renameat2() [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
-    }
-#endif // SYS_renameat2
-
-    if (!renamed) {
-        if (::rename(srcPath.c_str(), dstPath.c_str()) != 0) {
-            MMKVError("fail to rename [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
-            return false;
-        }
-    }
-
-    ::unlink(srcPath.c_str());
     return true;
 }
 
-#if defined(MMKV_ANDROID) || defined(MMKV_LINUX)
-
-// do it by sendfile()
-static bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
-    if (dstFD < 0) {
-        return false;
-    }
-    File srcFile(srcPath, OpenFlag::ReadOnly);
-    if (!srcFile.isFileValid()) {
-        return false;
-    }
-    auto srcFileSize = srcFile.getActualFileSize();
-
-    lseek(dstFD, 0, SEEK_SET);
-    auto writtenSize = ::sendfile(dstFD, srcFile.getFd(), nullptr, srcFileSize);
-    auto ret = (writtenSize == srcFileSize);
-    if (!ret) {
-        if (writtenSize < 0) {
-            MMKVError("fail to sendfile() %s to fd[%d], %d(%s)", srcPath.c_str(), dstFD, errno, strerror(errno));
-        } else {
-            MMKVError("sendfile() %s to fd[%d], written %lld < %zu", srcPath.c_str(), dstFD, writtenSize, srcFileSize);
-        }
-    } else if (needTruncate) {
-        size_t dstFileSize = 0;
-        getFileSize(dstFD, dstFileSize);
-        if ((dstFileSize != srcFileSize) && (::ftruncate(dstFD, static_cast<off_t>(srcFileSize)) != 0)) {
-            MMKVError("fail to truncate [%d] to size [%zu], %d(%s)", dstFD, srcFileSize, errno, strerror(errno));
-            ret = false;
-        }
-    }
-
-    if (ret) {
-        MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
-    }
-    return ret;
-}
-
-#else
-
-static bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
+bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
     if (dstFD < 0) {
         return false;
     }
@@ -557,7 +484,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
     return copyFileContent(srcPath, dstFD, true);
 }
 
-#endif
+#endif // !defined(MMKV_APPLE)
 
 void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(const MMKVPath_t&, WalkType)> &walker) {
     auto folderPathStr = dirPath.data();
@@ -607,4 +534,4 @@ void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(con
 
 } // namespace mmkv
 
-#endif // MMKV_WIN32
+#endif // !defined(MMKV_WIN32)

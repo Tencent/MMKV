@@ -372,7 +372,15 @@ static pair<MMKVPath_t, MMKVFileHandle_t> createUniqueTempFile(const wchar_t *pr
     return {MMKVPath_t(szTempFileName), hTempFile};
 }
 
-static bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
+bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    if (MoveFileEx(srcPath.c_str(), dstPath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED) == 0) {
+        MMKVError("MoveFileEx [%ws] to [%ws] failed %d", srcPath.c_str(), dstPath.c_str(), GetLastError());
+        return false;
+    }
+    return true;
+}
+
+bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate) {
     if (dstFD == INVALID_HANDLE_VALUE) {
         return false;
     }
@@ -439,10 +447,8 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     if (copyFileContent(srcPath, tmpFD, false)) {
         MMKVInfo("copyed file [%ws] to [%ws]", srcPath.c_str(), tmpPath.c_str());
         CloseHandle(tmpFD);
-        renamed = (MoveFileEx(tmpPath.c_str(), dstPath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED) != 0);
-        if (!renamed) {
-            MMKVError("MoveFileEx [%ws] to [%ws] failed %d", tmpPath.c_str(), dstPath.c_str(), GetLastError());
-        } else {
+        renamed = tryAtomicRename(tmpPath.c_str(), dstPath.c_str());
+        if (renamed) {
             MMKVInfo("copyfile [%ws] to [%ws] finish.", srcPath.c_str(), dstPath.c_str());
         }
     } else {
