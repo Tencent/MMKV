@@ -5,10 +5,10 @@ import sys
 import mmkv
 
 
-def functional_test(decode_only):
+def functional_test(mmap_id, decode_only):
     # pass MMKVMode.MultiProcess to get a multi-process instance
     # kv = mmkv.MMKV('test_python', mmkv.MMKVMode.MultiProcess)
-    kv = mmkv.MMKV('test_python')
+    kv = mmkv.MMKV(mmap_id)
 
     if not decode_only:
         kv.set(True, 'bool')
@@ -56,6 +56,42 @@ def functional_test(decode_only):
         print('keys:', sorted(kv.keys()))
 
 
+def test_backup():
+    root_dir = "/tmp/mmkv_backup"
+    mmap_id = "test_python"
+    ret = mmkv.MMKV.backupOneToDirectory(mmap_id, root_dir)
+    print("backup one return: ", ret)
+
+    kv = mmkv.MMKV("test/Encrypt", mmkv.MMKVMode.SingleProcess, "cryptKey")
+    kv.remove("test_restore_key")
+
+    count = mmkv.MMKV.backupAllToDirectory(root_dir)
+    print("backup all count: ", count)
+
+
+def test_restore():
+    root_dir = "/tmp/mmkv_backup"
+    mmap_id = "test/Encrypt"
+    aes_key = "cryptKey"
+    a_kv = mmkv.MMKV(mmap_id, mmkv.MMKVMode.SingleProcess, aes_key)
+    a_kv.set("string value before restore", "test_restore_key")
+    print("before restore [", a_kv.mmapID(), "] allKeys: ", a_kv.keys())
+
+    ret = mmkv.MMKV.restoreOneFromDirectory(mmap_id, root_dir)
+    print("restore one return: ", ret)
+    if ret:
+        print("after restore [", a_kv.mmapID(), "] allKeys: ", a_kv.keys())
+
+    count = mmkv.MMKV.restoreAllFromDirectory(root_dir)
+    print("restore all count: ", count)
+    if count > 0:
+        backup_mmkv = mmkv.MMKV(mmap_id, mmkv.MMKVMode.SingleProcess, aes_key)
+        print("check on restore [", backup_mmkv.mmapID(), "] allKeys: ", backup_mmkv.keys())
+
+        backup_mmkv = mmkv.MMKV("test_python")
+        print("check on restore [", backup_mmkv.mmapID(), "] allKeys: ", backup_mmkv.keys())
+
+
 def logger(log_level, file, line, function, message):
     level = {mmkv.MMKVLogLevel.NoLog: 'N',
              mmkv.MMKVLogLevel.Debug: 'D',
@@ -88,7 +124,11 @@ if __name__ == '__main__':
     # get notified after content changed by other process
     # mmkv.MMKV.registerContentChangeHandler(content_change_handler)
 
-    functional_test(False)
+    functional_test('test_python', False)
+
+    test_backup()
+
+    test_restore()
 
     # mmkv.MMKV.unRegisterLogHandler()
     # mmkv.MMKV.unRegisterErrorHandler()
