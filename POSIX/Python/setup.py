@@ -66,7 +66,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='mmkv',
-    version='1.2.2',
+    version='1.2.11',
     author='Tencent',
     description='An efficient, small key-value storage framework developed by WeChat Team.',
     long_description='The MMKV, for Python. MMKV is an efficient, generic, easy-to-use key-value storage framework '

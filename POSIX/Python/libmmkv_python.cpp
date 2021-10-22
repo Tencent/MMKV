@@ -31,7 +31,7 @@ static MMBuffer pyBytes2MMBuffer(const py::bytes &bytes) {
     char *buffer = nullptr;
     ssize_t length = 0;
     if (PYBIND11_BYTES_AS_STRING_AND_SIZE(bytes.ptr(), &buffer, &length) == 0) {
-        return MMBuffer(buffer, length, MMBufferNoCopy);
+        return {buffer, static_cast<size_t>(length), MMBufferNoCopy};
     }
     return MMBuffer(0);
 }
