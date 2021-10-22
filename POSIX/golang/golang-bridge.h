@@ -89,6 +89,11 @@ void clearMemoryCache(void *handle);
 void trim(void *handle);
 void mmkvClose(void *handle);
 
+bool backupOneToDirectory(GoStringWrap_t mmapID, GoStringWrap_t dstDir, GoStringWrap_t srcDir);
+bool restoreOneFromDirectory(GoStringWrap_t mmapID, GoStringWrap_t srcDir, GoStringWrap_t dstDir);
+uint64_t backupAllToDirectory(GoStringWrap_t dstDir, GoStringWrap_t srcDir);
+uint64_t restoreAllFromDirectory(GoStringWrap_t srcDir, GoStringWrap_t dstDir);
+
 int32_t pageSize();
 const char *version();
 
