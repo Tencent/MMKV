@@ -28,8 +28,6 @@ IF(APPLE)
     add_compile_definitions(FORCE_POSIX)
 ENDIF()
 
-set(PYBIND11_CPP_STANDARD -std=c++1z)
-
 add_subdirectory(../../Core Core)
 add_subdirectory(pybind11)
 
