@@ -20,6 +20,8 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:mmkv/mmkv.dart';
 
@@ -73,6 +75,13 @@ class _MyAppState extends State<MyApp> {
                 testReKey();
               },
               child: Text('Encryption Test', style: TextStyle(fontSize: 18))),
+          TextButton(
+              onPressed: () {
+                testBackup();
+                testRestore();
+              },
+              child: Text('Backup & Restore Test',
+                  style: TextStyle(fontSize: 18))),
         ])),
       ),
     );
@@ -219,5 +228,50 @@ class _MyAppState extends State<MyApp> {
     kv.reKey(null);
     kv.clearMemoryCache();
     testMMKV(mmapID, null, true, null);
+  }
+
+  void testBackup() {
+    final rootDir = FileSystemEntity.parentOf(MMKV.rootDir);
+    var backupRootDir = rootDir + "/mmkv_backup_3";
+    String mmapID = "test/AES";
+    String cryptKey = "Tencent MMKV";
+    String otherDir = rootDir + "/mmkv_3";
+    testMMKV(mmapID, cryptKey, false, otherDir);
+
+    final ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, rootDir: otherDir);
+    print('backup one [$mmapID] return: $ret');
+
+    backupRootDir = rootDir + "/mmkv_backup";
+    final count = MMKV.backupAllToDirectory(backupRootDir);
+    print("backup all count: $count");
+  }
+
+  void testRestore() {
+    final rootDir = FileSystemEntity.parentOf(MMKV.rootDir);
+    var backupRootDir = rootDir + "/mmkv_backup_3";
+    String mmapID = "test/AES";
+    String cryptKey = "Tencent MMKV";
+    String otherDir = rootDir + "/mmkv_3";
+
+    final kv = MMKV(mmapID, cryptKey: cryptKey, rootDir: otherDir);
+    kv.encodeString('test_restore', 'value before restore');
+    print("before restore [${kv.mmapID}] allKeys: ${kv.allKeys}");
+    final ret = MMKV.restoreOneMMKVFromDirectory(
+        mmapID, backupRootDir, rootDir: otherDir);
+    print("restore one [${kv.mmapID}] ret = $ret");
+    if (ret) {
+      print("after restore [${kv.mmapID}] allKeys: ${kv.allKeys}");
+    }
+
+    backupRootDir = rootDir + "/mmkv_backup";
+    final count = MMKV.restoreAllFromDirectory(backupRootDir);
+    print("restore all count $count");
+    if (count > 0) {
+      var mmkv = MMKV.defaultMMKV();
+      print("check on restore file[${mmkv.mmapID}] allKeys: ${mmkv.allKeys}");
+
+      mmkv = MMKV('testAES_reKey1');
+      print("check on restore file[${mmkv.mmapID}] allKeys: ${mmkv.allKeys}");
+    }
   }
 }

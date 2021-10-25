@@ -1,8 +1,8 @@
 apply from: rootProject.file('gradle/build_library.gradle')
 
 android {
-    defaultPublishConfig "DefaultCppRelease"
-//    defaultPublishConfig "StaticCppRelease"
+//    defaultPublishConfig "DefaultCppRelease"
+    defaultPublishConfig "StaticCppRelease"
 //    defaultPublishConfig "SharedCppRelease"
 
     defaultConfig {

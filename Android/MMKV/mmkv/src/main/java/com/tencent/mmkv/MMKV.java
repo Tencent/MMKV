@@ -205,7 +205,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, rootDir + "/.tmp",null, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel);
     }
 
     /**
@@ -214,7 +214,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, rootDir + "/.tmp",null, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel);
     }
 
     /**
@@ -726,7 +726,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
 
         Parcel source = Parcel.obtain();
-        value.writeToParcel(source, value.describeContents());
+        value.writeToParcel(source, 0);
         byte[] bytes = source.marshall();
         source.recycle();
 

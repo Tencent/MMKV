@@ -4,14 +4,15 @@ version: 1.2.11
 homepage: https://github.com/Tencent/mmkv
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
-  flutter: ">=2.0.0 <3.0.0"
+  sdk: '>=2.12.0'
+  flutter: ">=2.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
   path_provider: ^2.0.1
   ffi: ^1.0.0
+  device_info: ^2.0.2
 
 dev_dependencies:
   test:

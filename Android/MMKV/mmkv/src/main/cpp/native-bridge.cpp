@@ -793,7 +793,7 @@ MMKV_JNI void checkContentChanged(JNIEnv *env, jobject instance) {
     }
 }
 
-MMKV_JNI jboolean backupOneMMKV(JNIEnv *env, jobject obj, jstring mmapID, jstring dstDir, jstring rootPath) {
+MMKV_JNI jboolean backupOne(JNIEnv *env, jobject obj, jstring mmapID, jstring dstDir, jstring rootPath) {
     if (rootPath) {
         string root = jstring2string(env, rootPath);
         if (root.length() > 0) {
@@ -897,7 +897,7 @@ static JNINativeMethod g_methods[] = {
     {"setWantsContentChangeNotify", "(Z)V", (void *) mmkv::setWantsContentChangeNotify},
     {"checkContentChangedByOuterProcess", "()V", (void *) mmkv::checkContentChanged},
     {"checkProcessMode", "(J)Z", (void *) mmkv::checkProcessMode},
-    {"backupOneToDirectory", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::backupOneMMKV},
+    {"backupOneToDirectory", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::backupOne},
     {"restoreOneMMKVFromDirectory", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::restoreOne},
     {"backupAllToDirectory", "(Ljava/lang/String;)J", (void *) mmkv::backupAll},
     {"restoreAllFromDirectory", "(Ljava/lang/String;)J", (void *) mmkv::restoreAll},
