@@ -14,7 +14,6 @@
 
 ### Flutter (v1.2.12)
 * Add backup & restore ability.
-* Add a fullset of unit testcase.
 
 ### POSIX / golang / Python
 * Add backup & restore ability.

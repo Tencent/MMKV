@@ -2,7 +2,6 @@
 
 ## v1.2.12 / 2021-10-26
 * Add backup & restore ability.
-* Add unit test case.
 * Keep up with MMKV native lib v1.2.11.
 
 ## v1.2.11 / 2021-06-25
