@@ -30,6 +30,7 @@
 #    include "ScopedLock.hpp"
 #    include "ThreadLock.h"
 #    include <unistd.h>
+#    include "MMKV_IO.h"
 
 using namespace std;
 using namespace mmkv;
@@ -37,12 +38,8 @@ using namespace mmkv;
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
 
-extern string mmapedKVKey(const string &mmapID, string *rootPath);
-extern string mappedKVPathWithID(const string &mmapID, MMKVMode mode, string *rootPath);
-extern string crcPathWithID(const string &mmapID, MMKVMode mode, string *rootPath);
-
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath)
-    : m_mmapID(mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
+    : m_mmapID((mode & MMKV_BACKUP) ? mmapID : mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
@@ -139,7 +136,6 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 }
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath) {
-
     if (mmapID.empty()) {
         return nullptr;
     }

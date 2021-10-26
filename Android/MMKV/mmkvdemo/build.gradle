@@ -43,6 +43,7 @@ android {
 
     flavorDimensions "stl_mode"
     productFlavors {
+        DefaultCpp.dimension = "stl_mode"
         StaticCpp.dimension = "stl_mode"
         SharedCpp.dimension = "stl_mode"
     }
@@ -69,19 +70,20 @@ android {
 
 repositories {
     mavenCentral()
-//    mavenLocal()
+    mavenLocal()
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(':mmkv')
-//    implementation 'com.tencent:mmkv:1.2.10'
-//    implementation 'com.tencent:mmkv-static:1.2.10'
-    implementation 'androidx.appcompat:appcompat:1.3.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+//    implementation 'com.tencent:mmkv:1.2.11'
+//    implementation 'com.tencent:mmkv-static:1.2.11' // this is identical to 'com.tencent:mmkv'
+//    implementation 'com.tencent:mmkv-shared:1.2.11'
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    androidTestImplementation 'androidx.test:runner:1.4.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.getkeepsafe.relinker:relinker:1.4.3'
 }

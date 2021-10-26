@@ -81,6 +81,8 @@
 
     [self testMultiProcess];
     // [self testMultiProcess];
+    [self testBackup];
+    [self testRestore];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -738,6 +740,76 @@ MMKV *getMMKVForBatchTest() {
     NSLog(@"allKeys %@", [mmkv allKeys]);
 
     [mmkv close];
+}
+
+#pragma mark - backup & restore
+
+- (void)testBackup {
+    auto parentPath = [[MMKV mmkvBasePath] stringByDeletingLastPathComponent];
+    auto dstPath = [parentPath stringByAppendingPathComponent:@"mmkv_backup"];
+    auto rootPath = [parentPath stringByAppendingPathComponent:@"mmkv_2"];
+    auto ret = [MMKV backupOneMMKV:@"test/case_aes" rootPath:rootPath toDirectory:dstPath];
+    NSLog(@"MMKV backup one file ret: %d", ret);
+    if (ret) {
+        NSData *key_1 = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
+        auto backupedMMKV = [MMKV mmkvWithID:@"test/case_aes" cryptKey:key_1 rootPath:dstPath];
+        NSLog(@"check on backup file:%@", [backupedMMKV allKeys]);
+    }
+
+    auto count = [MMKV backupAll:nil toDirectory:dstPath];
+    NSLog(@"MMKV backup all count: %zu", count);
+    if (count > 0) {
+        NSData *key_1 = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
+        auto backupedMMKV = [MMKV mmkvWithID:@"test/case_aes" cryptKey:key_1 rootPath:dstPath];
+        NSLog(@"check on backup file[%@] keys:%@", backupedMMKV.mmapID, [backupedMMKV allKeys]);
+
+        backupedMMKV = [MMKV mmkvWithID:@"testAES_reKey" rootPath:dstPath];
+        NSLog(@"check on backup file[%@] keys:%@", backupedMMKV.mmapID, [backupedMMKV allKeys]);
+
+        backupedMMKV = [MMKV mmkvWithID:@"testImportNSUserDefaults1" rootPath:dstPath];
+        NSLog(@"check on backup file[%@] keys:%@", backupedMMKV.mmapID, [backupedMMKV allKeys]);
+
+        backupedMMKV = [MMKV mmkvWithID:@"testSwift" rootPath:dstPath];
+        NSLog(@"check on backup file[%@] keys:%@", backupedMMKV.mmapID, [backupedMMKV allKeys]);
+    }
+}
+
+- (void)testRestore {
+    auto ID = @"test/case_aes";
+    auto parentPath = [[MMKV mmkvBasePath] stringByDeletingLastPathComponent];
+    auto dstPath = [parentPath stringByAppendingPathComponent:@"mmkv_backup"];
+    auto rootPath = [parentPath stringByAppendingPathComponent:@"mmkv_2"];
+    auto ret = [MMKV backupOneMMKV:ID rootPath:rootPath toDirectory:dstPath];
+    NSLog(@"MMKV backup one file ret: %d", ret);
+    if (ret) {
+        NSData *key_1 = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
+        auto originMMKV = [MMKV mmkvWithID:ID cryptKey:key_1 rootPath:rootPath];
+        [originMMKV setInt32:__LINE__ forKey:@"test_restore_key"];
+        NSLog(@"file[%@] before restore:%@", originMMKV.mmapID, [originMMKV allKeys]);
+
+        ret = [MMKV restoreOneMMKV:ID rootPath:rootPath fromDirectory:dstPath];
+        NSLog(@"MMKV restore one file ret: %d", ret);
+        if (ret) {
+            NSLog(@"file[%@] after restore:%@", originMMKV.mmapID, [originMMKV allKeys]);
+        }
+    }
+
+    auto count = [MMKV restoreAll:nil fromDirectory:dstPath];
+    NSLog(@"MMKV restore all count: %zu", count);
+    if (count > 0) {
+        NSData *key_1 = [@"Key_seq_1" dataUsingEncoding:NSUTF8StringEncoding];
+        auto restoredKV = [MMKV mmkvWithID:ID cryptKey:key_1];
+        NSLog(@"check on restore file[%@] keys:%@", restoredKV.mmapID, [restoredKV allKeys]);
+
+        restoredKV = [MMKV mmkvWithID:@"testAES_reKey"];
+        NSLog(@"check on restore file[%@] keys:%@", restoredKV.mmapID, [restoredKV allKeys]);
+
+        restoredKV = [MMKV mmkvWithID:@"testImportNSUserDefaults1"];
+        NSLog(@"check on restore file[%@] keys:%@", restoredKV.mmapID, [restoredKV allKeys]);
+
+        restoredKV = [MMKV mmkvWithID:@"testSwift"];
+        NSLog(@"check on restore file[%@] keys:%@", restoredKV.mmapID, [restoredKV allKeys]);
+    }
 }
 
 @end

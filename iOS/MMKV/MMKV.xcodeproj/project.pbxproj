@@ -154,6 +154,7 @@
 				CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */,
 				CBF1904D243D706D001C82ED /* MMKVAppExtension copy-Info.plist */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
 		};
 		CB1FD4922046984F00931B5F /* Products */ = {
@@ -485,7 +486,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.2.10;
+				MARKETING_VERSION = 1.2.11;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -497,7 +498,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
 				PRODUCT_NAME = MMKVAppExtension;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -528,7 +529,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.2.10;
+				MARKETING_VERSION = 1.2.11;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -540,7 +541,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
 				PRODUCT_NAME = MMKVAppExtension;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -601,7 +602,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx appletvos appletvsimulator";
 			};
 			name = Debug;
 		};
@@ -654,7 +655,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx";
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx appletvos appletvsimulator";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -678,7 +679,8 @@
 				);
 				PRODUCT_NAME = MMKV;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
+				TVOS_DEPLOYMENT_TARGET = 13.0;
 			};
 			name = Debug;
 		};
@@ -701,7 +703,8 @@
 				);
 				PRODUCT_NAME = MMKV;
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
+				TVOS_DEPLOYMENT_TARGET = 13.0;
 			};
 			name = Release;
 		};
@@ -725,7 +728,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.2.10;
+				MARKETING_VERSION = 1.2.11;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -737,7 +740,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKV;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -763,7 +766,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.2.10;
+				MARKETING_VERSION = 1.2.11;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -775,7 +778,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKV;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
 			};
@@ -785,7 +788,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				"ARCHS[sdk=watchsimulator*]" = i386;
+				"ARCHS[sdk=watchsimulator*]" = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
@@ -808,7 +811,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.2.10;
+				MARKETING_VERSION = 1.2.11;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -833,7 +836,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				"ARCHS[sdk=watchsimulator*]" = i386;
+				"ARCHS[sdk=watchsimulator*]" = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
@@ -855,7 +858,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MARKETING_VERSION = 1.2.10;
+				MARKETING_VERSION = 1.2.11;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,

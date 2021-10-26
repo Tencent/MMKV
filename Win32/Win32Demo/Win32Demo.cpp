@@ -40,6 +40,18 @@ wstring getAppDataRoaming(const wstring &company, const wstring &appName) {
     }
 }
 
+string to_string(vector<string> &&arr, const char *sp = ", ") {
+    string str;
+    for (const auto &element : arr) {
+        str += element;
+        str += sp;
+    }
+    if (!str.empty()) {
+        str.erase(str.length() - strlen(sp));
+    }
+    return str;
+}
+
 void functionalTest(MMKV *mmkv, bool decodeOnly) {
     if (!decodeOnly) {
         mmkv->set(true, "bool");
@@ -208,6 +220,74 @@ void fastRemoveCornetSizeTest() {
         mmkv->set(value, key); // when a full write back is occur, here's corruption happens
         mmkv->removeValueForKey(key);
     }
+
+}
+void testBackup() {
+    auto aesKey = string("cryptKey");
+    auto mmapID = string("testEncrypt");
+    auto mmkvRoot = MMKV::getRootDir();
+    auto pos = mmkvRoot.rfind(L"\\");
+    pos++;
+    auto rootDir = mmkvRoot.replace(pos, wstring::npos, L"mmkv_backup");
+    //wcout << "backup dir: " << mmkvRoot << endl;
+    MMKV *mmkv = nullptr;
+    //mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey);
+    //mmkv->close();
+
+	auto ret = MMKV::backupOneToDirectory(mmapID, rootDir);
+    printf("backup one return %d\n", ret);
+    if (ret) {
+        mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey, &rootDir);
+        cout << "after backup allKeys: " << ::to_string(mmkv->allKeys()) << endl;
+
+		// otherwise it will fail in MMKV::backupAllToDirectory()
+        mmkv->close();
+    }
+
+    auto count = MMKV::backupAllToDirectory(rootDir);
+    printf("backup all count: %zu\n", count);
+    if (count > 0) {
+        mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey, &rootDir);
+        cout << "check on backup [" << mmkv->mmapID() << "] allKeys: " << ::to_string(mmkv->allKeys(), ",\n") << endl;
+        
+        mmkv = MMKV::mmkvWithID("thread_test", MMKV_SINGLE_PROCESS, nullptr, &rootDir);
+        cout << "check on backup [" << mmkv->mmapID() << "] allKeys count: " << mmkv->count() << endl;
+
+        mmkv = MMKV::mmkvWithID("process_test", MMKV_MULTI_PROCESS, nullptr, &rootDir);
+        cout << "check on backup [" << mmkv->mmapID() << "] allKeys count: " << mmkv->count() << endl;
+    }
+}
+
+void testRestore() {
+    auto aesKey = string("cryptKey");
+    auto mmapID = string("testEncrypt");
+    auto mmkvRoot = MMKV::getRootDir();
+    auto pos = mmkvRoot.rfind(L"\\");
+    pos++;
+    auto rootDir = mmkvRoot.replace(pos, wstring::npos, L"mmkv_backup");
+    //wcout << "restore dir: " << mmkvRoot << endl;
+    auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey);
+    mmkv->set((size_t)__LINE__, "test_restore_key");
+    cout << "before restore [" << mmkv->mmapID() << "] allKeys: " << ::to_string(mmkv->allKeys(), ",\n") << endl;
+
+    auto ret = MMKV::restoreOneFromDirectory(mmapID, rootDir);
+    printf("restore one return %d\n", ret);
+    if (ret) {
+        cout << "after restore [" << mmkv->mmapID() << "] allKeys: " << ::to_string(mmkv->allKeys(), ",\n") << endl;
+    }
+
+    auto count = MMKV::restoreAllFromDirectory(rootDir);
+    printf("restore all count: %zu\n", count);
+    if (count > 0) {
+        mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey);
+        cout << "check on restore [" << mmkv->mmapID() << "] allKeys: " << ::to_string(mmkv->allKeys(), ",\n") << endl;
+
+        mmkv = MMKV::mmkvWithID("thread_test");
+        cout << "check on restore [" << mmkv->mmapID() << "] allKeys count: " << mmkv->count() << endl;
+
+        mmkv = MMKV::mmkvWithID("process_test", MMKV_MULTI_PROCESS);
+        cout << "check on restore [" << mmkv->mmapID() << "] allKeys count: " << mmkv->count() << endl;
+    }
 }
 
 static void
@@ -255,4 +335,6 @@ int main() {
     //brutleTest();
     threadTest();
     processTest();
+    testBackup();
+    testRestore();
 }

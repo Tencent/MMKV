@@ -24,7 +24,9 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <string>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <cstring>
 
 using namespace std;
 using namespace mmkv;
@@ -54,7 +56,7 @@ void *threadFunction(void *lpParam) {
 }
 
 bool threadTest() {
-    sem_t *semParent = sem_open("mmkv_main", O_CREAT, 0644, 0);
+    sem_t *semParent = sem_open("/mmkv_main", O_CREAT, 0644, 0);
 
     //auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
     auto fd = open("/tmp/mmkv/TestInterProcessLock.file", O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
@@ -69,7 +71,11 @@ bool threadTest() {
 
     semEnded = sem_open(MMKV_ID, O_CREAT, 0644, 0);
 
-    sem_t *semStarted = sem_open("mmkv_sem_started", O_CREAT, 0644, 0);
+    sem_t *semStarted = sem_open("/mmkv_sem_started", O_CREAT, 0644, 0);
+    if (!semStarted) {
+        printf("fail to create semphare: %d(%s)\n", errno, strerror(errno));
+        exit(1);
+    }
     for (int index = 0; index < 2; ++index) {
         pthread_t threadHandle;
         pthread_create(&threadHandle, nullptr, threadFunction, semStarted);
@@ -99,10 +105,10 @@ int main() {
     MMKV::initializeMMKV(rootDir);
 
     auto processID = getpid();
-    cout << "TestInterProcessLock:" << processID << " started\n";
+    cout << "TestInterProcessLock: " << processID << " started\n";
     auto ret = threadTest();
     cout << "TestInterProcessLock: " << (ret ? "pass" : "failed") << endl;
-    cout << "TestInterProcessLock:" << processID << " ended\n";
+    cout << "TestInterProcessLock: " << processID << " ended\n";
 
     return 0;
 }

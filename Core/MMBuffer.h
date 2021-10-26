@@ -26,6 +26,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstddef>
 
 namespace mmkv {
 

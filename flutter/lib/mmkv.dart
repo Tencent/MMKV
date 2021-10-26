@@ -24,6 +24,7 @@ import 'dart:ffi'; // For FFI
 import 'dart:io'; // For Platform.isX
 import 'dart:typed_data';
 
+import 'package:device_info/device_info.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -128,6 +129,7 @@ class MMBuffer {
 /// Works on Android & iOS.
 class MMKV {
   Pointer<Void> _handle = nullptr;
+  static String _rootDir = "";
 
   static const MethodChannel _channel = const MethodChannel('mmkv');
 
@@ -159,6 +161,7 @@ class MMKV {
       final path = await getApplicationDocumentsDirectory();
       rootDir = path.path + '/mmkv';
     }
+    _rootDir = rootDir;
 
     if (Platform.isIOS) {
       final Map<String, dynamic> params = {
@@ -172,10 +175,22 @@ class MMKV {
       return ret;
     } else {
       final rootDirPtr = _string2Pointer(rootDir);
-      _mmkvInitialize!(rootDirPtr, logLevel.index);
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = androidInfo.version.sdkInt;
+      final cacheDir = await getTemporaryDirectory();
+      final cacheDirPtr = _string2Pointer(cacheDir.path);
+
+      _mmkvInitialize!(rootDirPtr, cacheDirPtr, sdkInt, logLevel.index);
+
       calloc.free(rootDirPtr);
+      calloc.free(cacheDirPtr);
       return rootDir;
     }
+  }
+
+  /// The root directory of MMKV.
+  static String get rootDir {
+    return _rootDir;
   }
 
   /// A generic purpose instance in single-process mode.
@@ -561,6 +576,64 @@ class MMKV {
   void close() {
     _mmkvClose(_handle);
   }
+
+  /// backup one MMKV instance to [dstDir]
+  ///
+  /// * [rootDir] the customize root path of the MMKV, if null then backup from the root dir of MMKV
+  static bool backupOneToDirectory(String mmapID, String dstDir,
+      {String? rootDir}) {
+    var mmapIDPtr = mmapID.toNativeUtf8();
+    var dstDirPtr = dstDir.toNativeUtf8();
+    var rootDirPtr = _string2Pointer(rootDir);
+
+    var ret = _backupOne(mmapIDPtr, dstDirPtr, rootDirPtr);
+
+    calloc.free(mmapIDPtr);
+    calloc.free(dstDirPtr);
+    calloc.free(rootDirPtr);
+
+    return _int2Bool(ret);
+  }
+
+  /// restore one MMKV instance from [srcDir]
+  ///
+  /// * [rootDir] the customize root path of the MMKV, if null then restore to the root dir of MMKV
+  static bool restoreOneMMKVFromDirectory(String mmapID, String srcDir,
+      {String? rootDir}) {
+    var mmapIDPtr = mmapID.toNativeUtf8();
+    var srcDirPtr = srcDir.toNativeUtf8();
+    var rootDirPtr = _string2Pointer(rootDir);
+
+    var ret = _restoreOne(mmapIDPtr, srcDirPtr, rootDirPtr);
+
+    calloc.free(mmapIDPtr);
+    calloc.free(srcDirPtr);
+    calloc.free(rootDirPtr);
+
+    return _int2Bool(ret);
+  }
+
+  /// backup all MMKV instance to [dstDir]
+  static int backupAllToDirectory(String dstDir) {
+    var dstDirPtr = dstDir.toNativeUtf8();
+
+    var ret = _backupAll(dstDirPtr);
+
+    calloc.free(dstDirPtr);
+
+    return ret;
+  }
+
+  /// restore all MMKV instance from [srcDir]
+  static int restoreAllFromDirectory(String srcDir) {
+    var srcDirPtr = srcDir.toNativeUtf8();
+
+    var ret = _restoreAll(srcDirPtr);
+
+    calloc.free(srcDirPtr);
+
+    return ret;
+  }
 }
 
 /* Looks like Dart:ffi's async callback not working perfectly
@@ -664,12 +737,15 @@ final DynamicLibrary _nativeLib = Platform.isAndroid
     ? DynamicLibrary.open("libmmkv.so")
     : DynamicLibrary.process();
 
-final void Function(Pointer<Utf8> rootDir, int logLevel)? _mmkvInitialize =
+final void Function(Pointer<Utf8> rootDir, Pointer<Utf8> cacheDir, int sdkInt,
+        int logLevel)? _mmkvInitialize =
     Platform.isIOS
         ? null
         : _nativeLib
-            .lookup<NativeFunction<Void Function(Pointer<Utf8>, Int32)>>(
-                "mmkvInitialize")
+            .lookup<
+                NativeFunction<
+                    Void Function(Pointer<Utf8>, Pointer<Utf8>, Int32,
+                        Int32)>>("mmkvInitialize_v1")
             .asFunction();
 
 final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey,
@@ -878,4 +954,32 @@ final void Function(Pointer<Void>, Pointer<Void>, int) _memcpy = _nativeLib
     .lookup<
         NativeFunction<
             Void Function(Pointer<Void>, Pointer<Void>, Uint64)>>("mmkvMemcpy")
+    .asFunction();
+
+final int Function(
+        Pointer<Utf8> mmapID, Pointer<Utf8> dstDir, Pointer<Utf8> rootPath)
+    _backupOne = _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Utf8>, Pointer<Utf8>,
+                    Pointer<Utf8>)>>(_nativeFuncName("backupOne"))
+        .asFunction();
+
+final int Function(
+        Pointer<Utf8> mmapID, Pointer<Utf8> srcDir, Pointer<Utf8> rootPath)
+    _restoreOne = _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Utf8>, Pointer<Utf8>,
+                    Pointer<Utf8>)>>(_nativeFuncName("restoreOne"))
+        .asFunction();
+
+final int Function(Pointer<Utf8> dstDir) _backupAll = _nativeLib
+    .lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(
+        _nativeFuncName("backupAll"))
+    .asFunction();
+
+final int Function(Pointer<Utf8> srcDir) _restoreAll = _nativeLib
+    .lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(
+        _nativeFuncName("restoreAll"))
     .asFunction();

@@ -34,6 +34,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.NativeBuffer;
+
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -110,11 +112,15 @@ public class MainActivity extends AppCompatActivity {
 
         testInterProcessLogic();
         testImportSharedPreferences();
+
         //testInterProcessLockPhase1();
         //testCornerSize();
         //testFastRemoveCornerSize();
         //testTrimNonEmptyInterProcess();
         //testItemSizeHolderOverride();
+
+        testBackup();
+        testRestore();;
     }
 
     private void testInterProcessLogic() {
@@ -237,6 +243,7 @@ public class MainActivity extends AppCompatActivity {
         editor.commit();
 
         MMKV kv = MMKV.mmkvWithID("imported");
+        kv.clearAll();
         kv.importFromSharedPreferences(preferences);
         editor.clear().commit();
 
@@ -257,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testReKey() {
-        final String mmapID = "testAES_reKey1";
+        final String mmapID = "test/AES_reKey1";
         MMKV kv = testMMKV(mmapID, null, false, null);
 
         kv.reKey("Key_seq_1");
@@ -466,6 +473,82 @@ public class MainActivity extends AppCompatActivity {
 
             mmkv.clearMemoryCache();
             Log.i("MMKV", "allKeys: " + Arrays.toString(mmkv.allKeys()));
+        }
+    }
+
+    private void testBackup() {
+        File f = new File(MMKV.getRootDir());
+        String backupRootDir = f.getParent() + "/mmkv_backup_3";
+        String mmapID = "test/AES";
+        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
+
+        boolean ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, otherDir);
+        Log.i("MMKV", "backup one [" + mmapID + "] ret = " + ret);
+        if (ret) {
+            MMKV mmkv = MMKV.backedUpMMKVWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, "Tencent MMKV", backupRootDir);
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+        }
+
+        /*{
+            MMKV mmkv = MMKV.mmkvWithID("imported");
+            mmkv.close();
+            mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+            mmkv.close();
+        }*/
+        backupRootDir = f.getParent() + "/mmkv_backup";
+        long count = MMKV.backupAllToDirectory(backupRootDir);
+        Log.i("MMKV", "backup all count " + count);
+        if (count > 0) {
+            MMKV mmkv = MMKV.backedUpMMKVWithID("imported", MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
+            mmkv = MMKV.backedUpMMKVWithID("testKotlin", MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
+            mmkv = MMKV.backedUpMMKVWithID("test/AES_reKey1", MMKV.SINGLE_PROCESS_MODE, null, backupRootDir);
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
+            mmkv = MMKV.backedUpMMKVWithID("benchmark_interprocess", MMKV.MULTI_PROCESS_MODE, null, backupRootDir);
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys count: " + mmkv.count());
+        }
+    }
+
+    private void testRestore() {
+        File f = new File(MMKV.getRootDir());
+        String backupRootDir = f.getParent() + "/mmkv_backup_3";
+        String mmapID = "test/AES";
+        String otherDir = getFilesDir().getAbsolutePath() + "/mmkv_3";
+
+        MMKV mmkv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, "Tencent MMKV", otherDir);
+        mmkv.encode("test_restore", true);
+        Log.i("MMKV", "before restore [" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+        boolean ret = MMKV.restoreOneMMKVFromDirectory(mmapID, backupRootDir, otherDir);
+        Log.i("MMKV", "restore one [" + mmapID + "] ret = " + ret);
+        if (ret) {
+            Log.i("MMKV", "after restore [" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+        }
+
+        /*{
+            mmkv = MMKV.mmkvWithID("imported");
+            mmkv.close();
+            mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+            mmkv.close();
+        }*/
+        backupRootDir = f.getParent() + "/mmkv_backup";
+        long count = MMKV.restoreAllFromDirectory(backupRootDir);
+        Log.i("MMKV", "restore all count " + count);
+        if (count > 0) {
+            mmkv = MMKV.mmkvWithID("imported");
+            Log.i("MMKV", "check on restore file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
+            mmkv = MMKV.mmkvWithID("testKotlin");
+            Log.i("MMKV", "check on restore file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
+            mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+            Log.i("MMKV", "check on restore file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+
+            mmkv = MMKV.mmkvWithID("benchmark_interprocess", MMKV.MULTI_PROCESS_MODE);
+            Log.i("MMKV", "check on restore file[" + mmkv.mmapID() + "] allKeys count: " + mmkv.count());
         }
     }
 }

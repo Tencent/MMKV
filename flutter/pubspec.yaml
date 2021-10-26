@@ -1,19 +1,21 @@
 name: mmkv
 description: An efficient, small mobile key-value storage framework developed by WeChat. Works on Android, iOS, macOS, Windows, and POSIX.
-version: 1.2.11
+version: 1.2.12
 homepage: https://github.com/Tencent/mmkv
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
-  flutter: ">=2.0.0 <3.0.0"
+  sdk: '>=2.12.0'
+  flutter: ">=2.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
   path_provider: ^2.0.1
   ffi: ^1.0.0
+  device_info: ^2.0.2
 
 dev_dependencies:
+  test:
   flutter_test:
     sdk: flutter
 

@@ -23,19 +23,40 @@
 #ifndef MMKV_DISABLE_FLUTTER
 
 #    include "MMKV.h"
-#    include <stdint.h>
+#    include "MMKVLog.h"
+#    include <cstdint>
 #    include <string>
 
 using namespace mmkv;
 using namespace std;
 
+namespace mmkv {
+extern int g_android_api;
+extern string g_android_tmpDir;
+}
+
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
-MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
+MMKV_EXPORT void mmkvInitialize_v1(const char *rootDir, const char *cacheDir, int32_t sdkInt, int32_t logLevel) {
     if (!rootDir) {
         return;
     }
+    if (cacheDir) {
+        g_android_tmpDir = string(cacheDir);
+    }
+
+    g_android_api = sdkInt;
+#ifdef MMKV_STL_SHARED
+    MMKVInfo("current API level = %d, libc++_shared=%d", g_android_api, MMKV_STL_SHARED);
+#else
+    MMKVInfo("current API level = %d, libc++_shared=?", g_android_api);
+#endif
+
     MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
+}
+
+MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
+    mmkvInitialize_v1(rootDir, nullptr, 0, logLevel);
 }
 
 MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath) {
@@ -406,6 +427,50 @@ MMKV_EXPORT void mmkvClose(void *handle) {
 
 MMKV_EXPORT void mmkvMemcpy(void *dst, const void *src, uint64_t size) {
     memcpy(dst, src, size);
+}
+
+MMKV_EXPORT bool backupOne(const char *mmapID, const char *dstDir, const char *rootPath) {
+    if (rootPath) {
+        auto root = string(rootPath);
+        if (root.length() > 0) {
+            return MMKV::backupOneToDirectory(mmapID, dstDir, &root);
+        }
+    }
+    return MMKV::backupOneToDirectory(mmapID, dstDir);
+}
+
+MMKV_EXPORT bool restoreOne(const char *mmapID, const char *srcDir, const char *rootPath) {
+    if (rootPath) {
+        auto root = string(rootPath);
+        if (root.length() > 0) {
+            return MMKV::restoreOneFromDirectory(mmapID, srcDir, &root);
+        }
+    }
+    return MMKV::restoreOneFromDirectory(mmapID, srcDir);
+}
+
+MMKV_EXPORT uint64_t backupAll(const char *dstDir/*, const char *rootPath*/) {
+    // historically Android mistakenly use mmapKey as mmapID
+    // makes everything tricky with customize root
+    /*if (rootPath) {
+        auto root = string(rootPath);
+        if (root.length() > 0) {
+            return MMKV::backupAllToDirectory(dstDir, &root);
+        }
+    }*/
+    return MMKV::backupAllToDirectory(dstDir);
+}
+
+MMKV_EXPORT uint64_t restoreAll(const char *srcDir/*, const char *rootPath*/) {
+    // historically Android mistakenly use mmapKey as mmapID
+    // makes everything tricky with customize root
+    /*if (rootPath) {
+        auto root = string(rootPath);
+        if (root.length() > 0) {
+            return MMKV::restoreAllFromDirectory(srcDir, &root);
+        }
+    }*/
+    return MMKV::restoreAllFromDirectory(srcDir);
 }
 
 #endif // MMKV_DISABLE_FLUTTER

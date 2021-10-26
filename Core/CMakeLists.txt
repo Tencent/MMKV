@@ -20,7 +20,7 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.8.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 IF(APPLE)
     # tell ranlib to ignore empty compilation units
@@ -102,6 +102,7 @@ add_library(core
         MemoryFile.h
         MemoryFile.cpp
         MemoryFile_Android.cpp
+        MemoryFile_Linux.cpp
         MemoryFile_Win32.cpp
         MemoryFile_OSX.cpp
         ThreadLock.h

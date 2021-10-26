@@ -33,6 +33,6 @@ android {
     }
 
     dependencies {
-        implementation 'com.tencent:mmkv-static:[1.2.10,)'
+        implementation 'com.tencent:mmkv-static:1.2.11'
     }
 }

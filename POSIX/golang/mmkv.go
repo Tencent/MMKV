@@ -271,6 +271,36 @@ func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string) MMKV
 	return MMKV(mmkv)
 }
 
+// backup one MMKV instance (from the root dir of MMKV) to dstDir
+func BackupOneToDirectory(mmapID string, dstDir string) bool {
+	cStrNull := C.GoStringWrapNil()
+	ret := C.backupOneToDirectory(C.wrapGoString(mmapID), C.wrapGoString(dstDir), cStrNull)
+	return bool(ret)
+}
+
+// restore one MMKV instance from srcDir (to the root dir of MMKV)
+func RestoreOneFromDirectory(mmapID string, srcDir string) bool {
+	cStrNull := C.GoStringWrapNil()
+	ret := C.restoreOneFromDirectory(C.wrapGoString(mmapID), C.wrapGoString(srcDir), cStrNull)
+	return bool(ret)
+}
+
+// backup all MMKV instance (from the root dir of MMKV) to dstDir
+// return count of MMKV successfully backup-ed
+func BackupAllToDirectory(dstDir string) uint64 {
+	cStrNull := C.GoStringWrapNil()
+	ret := C.backupAllToDirectory(C.wrapGoString(dstDir), cStrNull)
+	return uint64(ret)
+}
+
+// restore all MMKV instance from srcDir (to the root dir of MMKV)
+// return count of MMKV successfully restored
+func RestoreAllFromDirectory(srcDir string) uint64 {
+	cStrNull := C.GoStringWrapNil()
+	ret := C.restoreAllFromDirectory(C.wrapGoString(srcDir), cStrNull)
+	return uint64(ret)
+}
+
 func (kv ctorMMKV) SetBool(value bool, key string) bool {
 	ret := C.encodeBool(unsafe.Pointer(kv), C.wrapGoString(key), C.bool(value))
 	return bool(ret)

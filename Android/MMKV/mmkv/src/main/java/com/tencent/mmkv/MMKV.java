@@ -177,10 +177,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         } else {
             enableProcessModeChecker();
         }
-        return doInitialize(rootDir, loader, logLevel);
+        String cacheDir = context.getCacheDir().getAbsolutePath();
+        return doInitialize(rootDir, cacheDir, loader, logLevel);
     }
 
-    private static String doInitialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
+    private static String doInitialize(String rootDir, String cacheDir, LibLoader loader, MMKVLogLevel logLevel) {
         if (loader != null) {
             if (BuildConfig.FLAVOR.equals("SharedCpp")) {
                 loader.loadLibrary("c++_shared");
@@ -192,7 +193,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             }
             System.loadLibrary("mmkv");
         }
-        jniInitialize(rootDir, logLevel2Int(logLevel));
+        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel));
         MMKV.rootDir = rootDir;
         return MMKV.rootDir;
     }
@@ -204,7 +205,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, null, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel);
     }
 
     /**
@@ -213,7 +214,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, null, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel);
     }
 
     /**
@@ -223,7 +224,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, loader, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel);
     }
 
     /**
@@ -232,7 +233,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, loader, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel);
     }
 
     static private String rootDir = null;
@@ -284,18 +285,20 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * Single-process mode. The default mode on an MMKV instance.
      */
-    static public final int SINGLE_PROCESS_MODE = 0x1;
+    static public final int SINGLE_PROCESS_MODE = 1 << 0;
 
     /**
      * Multi-process mode.
      * To enable multi-process accessing of an MMKV instance, you must set this mode whenever you getting that instance.
      */
-    static public final int MULTI_PROCESS_MODE = 0x2;
+    static public final int MULTI_PROCESS_MODE = 1 << 1;
 
     // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
-    static private final int CONTEXT_MODE_MULTI_PROCESS = 0x4;
+    static private final int CONTEXT_MODE_MULTI_PROCESS = 1 << 2;
 
-    static private final int ASHMEM_MODE = 0x8;
+    static private final int ASHMEM_MODE = 1 << 3;
+
+    static private final int BACKUP_MODE = 1 << 4;
 
     /**
      * Create an MMKV instance with an unique ID (in single-process mode).
@@ -371,6 +374,25 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath);
+        return checkProcessMode(handle, mmapID, mode);
+    }
+
+    /**
+     * Get an backed-up MMKV instance with customize settings all in one.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
+     * @param rootPath The backup folder of the MMKV instance.
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV backedUpMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath)
+            throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
+        mode |= BACKUP_MODE;
         long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath);
         return checkProcessMode(handle, mmapID, mode);
     }
@@ -704,7 +726,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
 
         Parcel source = Parcel.obtain();
-        value.writeToParcel(source, value.describeContents());
+        value.writeToParcel(source, 0);
         byte[] bytes = source.marshall();
         source.recycle();
 
@@ -922,6 +944,36 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
         return kvs.size();
     }
+
+    /**
+     * backup one MMKV instance to dstDir
+     * @param mmapID the MMKV ID to backup
+     * @param rootPath the customize root path of the MMKV, if null then backup from the root dir of MMKV
+     * @param dstDir the backup destination directory
+     */
+    public static native boolean backupOneToDirectory(String mmapID, String dstDir, @Nullable String rootPath);
+
+    /**
+     * restore one MMKV instance from srcDir
+     * @param mmapID the MMKV ID to restore
+     * @param srcDir the restore source directory
+     * @param rootPath the customize root path of the MMKV, if null then restore to the root dir of MMKV
+     */
+    public static native boolean restoreOneMMKVFromDirectory(String mmapID, String srcDir, @Nullable String rootPath);
+
+    /**
+     * backup all MMKV instance to dstDir
+     * @param dstDir the backup destination directory
+     * @return count of MMKV successfully backuped
+     */
+    public static native long backupAllToDirectory(String dstDir);
+
+    /**
+     * restore all MMKV instance from srcDir
+     * @param srcDir the restore source directory
+     * @return count of MMKV successfully restored
+     */
+    public static native long restoreAllFromDirectory(String srcDir);
 
     /**
      * Intentionally Not Supported. Because MMKV does type-eraser inside to get better performance.
@@ -1253,7 +1305,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         nativeHandle = handle;
     }
 
-    private static native void jniInitialize(String rootDir, int level);
+    private static native void jniInitialize(String rootDir, String cacheDir, int level);
 
     private native static long
     getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath);

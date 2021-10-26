@@ -31,7 +31,7 @@ static MMBuffer pyBytes2MMBuffer(const py::bytes &bytes) {
     char *buffer = nullptr;
     ssize_t length = 0;
     if (PYBIND11_BYTES_AS_STRING_AND_SIZE(bytes.ptr(), &buffer, &length) == 0) {
-        return MMBuffer(buffer, length, MMBufferNoCopy);
+        return {buffer, static_cast<size_t>(length), MMBufferNoCopy};
     }
     return MMBuffer(0);
 }
@@ -290,4 +290,40 @@ PYBIND11_MODULE(mmkv, m) {
             g_contentHandler = nullptr;
         },
         "call this method before exit, especially if you have registered any callback handlers");
+
+    clsMMKV.def_static(
+        "backupOneToDirectory",
+        [](const string &mmapID, const string &dstDir, const string &srcDir) {
+            string *srcDirPtr = (srcDir.length() > 0) ? (string *) &srcDir : nullptr;
+            return MMKV::backupOneToDirectory(mmapID, dstDir, srcDirPtr);
+        },
+        "backup one MMKV instance from srcDir (default to the root dir of MMKV) to dstDir",
+        py::arg("mmapID"), py::arg("dstDir"), py::arg("srcDir") = string());
+
+    clsMMKV.def_static(
+        "restoreOneFromDirectory",
+        [](const string &mmapID, const string &srcDir, const string &dstDir) {
+            string *dstDirPtr = (dstDir.length() > 0) ? (string *) &dstDir : nullptr;
+            return MMKV::restoreOneFromDirectory(mmapID, srcDir, dstDirPtr);
+        },
+        "restore one MMKV instance from srcDir to dstDir (default to the root dir of MMKV)",
+        py::arg("mmapID"), py::arg("srcDir"), py::arg("dstDir") = string());
+
+    clsMMKV.def_static(
+        "backupAllToDirectory",
+        [](const string &dstDir, const string &srcDir) {
+            string *srcDirPtr = (srcDir.length() > 0) ? (string *) &srcDir : nullptr;
+            return MMKV::backupAllToDirectory(dstDir, srcDirPtr);
+        },
+        "backup all MMKV instance from srcDir (default to the root dir of MMKV) to dstDir",
+        py::arg("dstDir"), py::arg("srcDir") = string());
+
+    clsMMKV.def_static(
+        "restoreAllFromDirectory",
+        [](const string &srcDir, const string &dstDir) {
+            string *dstDirPtr = (dstDir.length() > 0) ? (string *) &dstDir : nullptr;
+            return MMKV::restoreAllFromDirectory(srcDir, dstDirPtr);
+        },
+        "restore all MMKV instance from srcDir to dstDir (default to the root dir of MMKV)",
+        py::arg("srcDir"), py::arg("dstDir") = string());
 }

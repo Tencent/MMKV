@@ -20,15 +20,13 @@
 
 # Sets the minimum version of CMake required to build the native library.
 
-cmake_minimum_required(VERSION 3.8.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 project(mmkv_python)
 
 IF(APPLE)
     add_compile_definitions(FORCE_POSIX)
 ENDIF()
-
-set(PYBIND11_CPP_STANDARD -std=c++1z)
 
 add_subdirectory(../../Core Core)
 add_subdirectory(pybind11)

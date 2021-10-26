@@ -30,15 +30,7 @@ MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
 
 mmkv::LogHandler g_logHandler;
 
-MMKV_NAMESPACE_END
-
-#ifdef ENABLE_MMKV_LOG
-#    include <cstdarg>
-#    include <string>
-
-using namespace mmkv;
-
-#    ifndef __FILE_NAME__
+#ifndef __FILE_NAME__
 const char *_getFileName(const char *path) {
     const char *ptr = strrchr(path, '/');
     if (!ptr) {
@@ -50,7 +42,16 @@ const char *_getFileName(const char *path) {
         return path;
     }
 }
-#    endif
+#endif
+
+MMKV_NAMESPACE_END
+
+
+#ifdef ENABLE_MMKV_LOG
+#    include <cstdarg>
+#    include <string>
+
+using namespace mmkv;
 
 #    ifndef MMKV_ANDROID
 

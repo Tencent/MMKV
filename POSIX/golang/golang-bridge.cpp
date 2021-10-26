@@ -436,6 +436,58 @@ MMKV_EXPORT void mmkvClose(void *handle) {
     }
 }
 
+MMKV_EXPORT bool backupOneToDirectory(GoStringWrap_t mmapID, GoStringWrap_t dstDir, GoStringWrap_t srcDir) {
+    if (!mmapID.ptr || !dstDir.ptr) {
+        return false;
+    }
+    auto id = string(mmapID.ptr, mmapID.length);
+    auto dst = string(dstDir.ptr, dstDir.length);
+    if (srcDir.ptr) {
+        auto src = string(srcDir.ptr, srcDir.length);
+        return MMKV::backupOneToDirectory(id, dst, &src);
+    }
+    return MMKV::backupOneToDirectory(id, dst, nullptr);
+}
+
+MMKV_EXPORT bool restoreOneFromDirectory(GoStringWrap_t mmapID, GoStringWrap_t srcDir, GoStringWrap_t dstDir) {
+    if (!mmapID.ptr || !srcDir.ptr) {
+        return false;
+    }
+    auto id = string(mmapID.ptr, mmapID.length);
+    auto src = string(srcDir.ptr, srcDir.length);
+    if (dstDir.ptr) {
+        auto dst = string(dstDir.ptr, dstDir.length);
+        return MMKV::restoreOneFromDirectory(id, src, &dst);
+    }
+    return MMKV::restoreOneFromDirectory(id, src, nullptr);
+}
+
+MMKV_EXPORT uint64_t backupAllToDirectory(GoStringWrap_t dstDir, GoStringWrap_t srcDir) {
+    if (!dstDir.ptr) {
+        return 0;
+    }
+
+    auto dst = string(dstDir.ptr, dstDir.length);
+    if (srcDir.ptr) {
+        auto src = string(srcDir.ptr, srcDir.length);
+        return MMKV::backupAllToDirectory(dst, &src);
+    }
+    return MMKV::backupAllToDirectory(dst, nullptr);
+}
+
+MMKV_EXPORT uint64_t restoreAllFromDirectory(GoStringWrap_t srcDir, GoStringWrap_t dstDir) {
+    if (!srcDir.ptr) {
+        return 0;
+    }
+
+    auto src = string(srcDir.ptr, srcDir.length);
+    if (dstDir.ptr) {
+        auto dst = string(dstDir.ptr, dstDir.length);
+        return MMKV::restoreAllFromDirectory(src, &dst);
+    }
+    return MMKV::restoreAllFromDirectory(src, nullptr);
+}
+
 extern "C" void myLogHandler(int64_t level, GoStringWrap file, int64_t line, GoStringWrap function, GoStringWrap message);
 
 void cLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {

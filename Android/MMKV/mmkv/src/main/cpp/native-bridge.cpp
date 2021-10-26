@@ -120,7 +120,9 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 namespace mmkv {
 
-MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jint logLevel) {
+static string jstring2string(JNIEnv *env, jstring str);
+
+MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jstring cacheDir, jint logLevel) {
     if (!rootDir) {
         return;
     }
@@ -128,6 +130,8 @@ MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jint logL
     if (kstr) {
         MMKV::initializeMMKV(kstr, (MMKVLogLevel) logLevel);
         env->ReleaseStringUTFChars(rootDir, kstr);
+
+        g_android_tmpDir = jstring2string(env, cacheDir);
     }
 }
 
@@ -789,6 +793,50 @@ MMKV_JNI void checkContentChanged(JNIEnv *env, jobject instance) {
     }
 }
 
+MMKV_JNI jboolean backupOne(JNIEnv *env, jobject obj, jstring mmapID, jstring dstDir, jstring rootPath) {
+    if (rootPath) {
+        string root = jstring2string(env, rootPath);
+        if (root.length() > 0) {
+            return (jboolean) MMKV::backupOneToDirectory(jstring2string(env, mmapID), jstring2string(env, dstDir), &root);
+        }
+    }
+    return (jboolean) MMKV::backupOneToDirectory(jstring2string(env, mmapID), jstring2string(env, dstDir));
+}
+
+MMKV_JNI jboolean restoreOne(JNIEnv *env, jobject obj, jstring mmapID, jstring srcDir, jstring rootPath) {
+    if (rootPath) {
+        string root = jstring2string(env, rootPath);
+        if (root.length() > 0) {
+            return (jboolean) MMKV::restoreOneFromDirectory(jstring2string(env, mmapID), jstring2string(env, srcDir), &root);
+        }
+    }
+    return (jboolean) MMKV::restoreOneFromDirectory(jstring2string(env, mmapID), jstring2string(env, srcDir));
+}
+
+MMKV_JNI jlong backupAll(JNIEnv *env, jobject obj, jstring dstDir/*, jstring rootPath*/) {
+    // historically Android mistakenly use mmapKey as mmapID
+    // makes everything tricky with customize root
+    /*if (rootPath) {
+        string root = jstring2string(env, rootPath);
+        if (root.length() > 0) {
+            return (jlong) MMKV::backupAllToDirectory(jstring2string(env, dstDir), &root);
+        }
+    }*/
+    return (jlong) MMKV::backupAllToDirectory(jstring2string(env, dstDir));
+}
+
+MMKV_JNI jlong restoreAll(JNIEnv *env, jobject obj, jstring srcDir/*, jstring rootPath*/) {
+    // historically Android mistakenly use mmapKey as mmapID
+    // makes everything tricky with customize root
+    /*if (rootPath) {
+        string root = jstring2string(env, rootPath);
+        if (root.length() > 0) {
+            return (jlong) MMKV::restoreAllFromDirectory(jstring2string(env, srcDir), &root);
+        }
+    }*/
+    return (jlong) MMKV::restoreAllFromDirectory(jstring2string(env, srcDir));
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -814,7 +862,7 @@ static JNINativeMethod g_methods[] = {
     {"isFileValid", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::isFileValid},
     {"ashmemFD", "()I", (void *) mmkv::ashmemFD},
     {"ashmemMetaFD", "()I", (void *) mmkv::ashmemMetaFD},
-    {"jniInitialize", "(Ljava/lang/String;I)V", (void *) mmkv::jniInitialize},
+    {"jniInitialize", "(Ljava/lang/String;Ljava/lang/String;I)V", (void *) mmkv::jniInitialize},
     {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)J", (void *) mmkv::getMMKVWithID},
     {"getMMKVWithIDAndSize", "(Ljava/lang/String;IILjava/lang/String;)J", (void *) mmkv::getMMKVWithIDAndSize},
     {"getDefaultMMKV", "(ILjava/lang/String;)J", (void *) mmkv::getDefaultMMKV},
@@ -849,6 +897,10 @@ static JNINativeMethod g_methods[] = {
     {"setWantsContentChangeNotify", "(Z)V", (void *) mmkv::setWantsContentChangeNotify},
     {"checkContentChangedByOuterProcess", "()V", (void *) mmkv::checkContentChanged},
     {"checkProcessMode", "(J)Z", (void *) mmkv::checkProcessMode},
+    {"backupOneToDirectory", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::backupOne},
+    {"restoreOneMMKVFromDirectory", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::restoreOne},
+    {"backupAllToDirectory", "(Ljava/lang/String;)J", (void *) mmkv::backupAll},
+    {"restoreAllFromDirectory", "(Ljava/lang/String;)J", (void *) mmkv::restoreAll},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

@@ -387,6 +387,41 @@ MMKV_EXPORT void mmkvMemcpy(void *dst, const void *src, uint64_t size) {
     memcpy(dst, src, size);
 }
 
+MMKV_EXPORT bool MMKV_FUNC(backupOne)(const char *mmapID, const char *dstDir, const char *rootPath) {
+    auto strID = [NSString stringWithUTF8String:mmapID];
+    auto strDstDir = [NSString stringWithUTF8String:dstDir];
+
+    if (rootPath) {
+        auto root = [NSString stringWithUTF8String:rootPath];
+        if (root.length > 0) {
+            return [MMKV backupOneMMKV:strID rootPath:root toDirectory:strDstDir];
+        }
+    }
+    return [MMKV backupOneMMKV:strID rootPath:nil toDirectory:strDstDir];
+}
+
+MMKV_EXPORT bool MMKV_FUNC(restoreOne)(const char *mmapID, const char *srcDir, const char *rootPath) {
+    auto strID = [NSString stringWithUTF8String:mmapID];
+    auto strSrcDir = [NSString stringWithUTF8String:srcDir];
+    if (rootPath) {
+        auto root = [NSString stringWithUTF8String:rootPath];
+        if (root.length > 0) {
+            return [MMKV restoreOneMMKV:strID rootPath:root fromDirectory:strSrcDir];
+        }
+    }
+    return [MMKV restoreOneMMKV:strID rootPath:nil fromDirectory:strSrcDir];
+}
+
+MMKV_EXPORT uint64_t MMKV_FUNC(backupAll)(const char *dstDir/*, const char *rootPath*/) {
+    auto strDstDir = [NSString stringWithUTF8String:dstDir];
+    return [MMKV backupAll:nil toDirectory:strDstDir];
+}
+
+MMKV_EXPORT uint64_t MMKV_FUNC(restoreAll)(const char *srcDir/*, const char *rootPath*/) {
+    auto strSrcDir = [NSString stringWithUTF8String:srcDir];
+    return [MMKV restoreAll:nil fromDirectory:strSrcDir];
+}
+
 /* Looks like Dart:ffi's async callback not working perfectly
  * We don't support them for the moment.
  * https://github.com/dart-lang/sdk/issues/37022

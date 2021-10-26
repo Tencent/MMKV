@@ -38,11 +38,12 @@ class ThreadLock;
 MMKV_NAMESPACE_BEGIN
 
 enum MMKVMode : uint32_t {
-    MMKV_SINGLE_PROCESS = 0x1,
-    MMKV_MULTI_PROCESS = 0x2,
+    MMKV_SINGLE_PROCESS = 1 << 0,
+    MMKV_MULTI_PROCESS = 1 << 1,
 #ifdef MMKV_ANDROID
-    CONTEXT_MODE_MULTI_PROCESS = 0x4, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
-    MMKV_ASHMEM = 0x8,
+    CONTEXT_MODE_MULTI_PROCESS = 1 << 2, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
+    MMKV_ASHMEM = 1 << 3,
+    MMKV_BACKUP = 1 << 4,
 #endif
 };
 
@@ -146,6 +147,10 @@ class MMKV {
 #if defined(MMKV_ANDROID) && !defined(MMKV_DISABLE_CRYPT)
     void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
 #endif
+    static bool backupOneToDirectory(const std::string &mmapKey, const MMKVPath_t &dstPath, const MMKVPath_t &srcPath, bool compareFullPath);
+    static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool isInSpecialDir);
+    static bool restoreOneFromDirectory(const std::string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath);
+    static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir);
 
 public:
     // call this before getting any MMKV instance
@@ -321,6 +326,26 @@ public:
     void lock();
     void unlock();
     bool try_lock();
+
+    static const MMKVPath_t &getRootDir();
+
+    // backup one MMKV instance from srcDir to dstDir
+    // if srcDir is null, then backup from the root dir of MMKV
+    static bool backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir = nullptr);
+
+    // restore one MMKV instance from srcDir to dstDir
+    // if dstDir is null, then restore to the root dir of MMKV
+    static bool restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir = nullptr);
+
+    // backup all MMKV instance from srcDir to dstDir
+    // if srcDir is null, then backup from the root dir of MMKV
+    // return count of MMKV successfully backuped
+    static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir = nullptr);
+
+    // restore all MMKV instance from srcDir to dstDir
+    // if dstDir is null, then restore to the root dir of MMKV
+    // return count of MMKV successfully restored
+    static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir = nullptr);
 
     // check if content been changed by other process
     void checkContentChanged();

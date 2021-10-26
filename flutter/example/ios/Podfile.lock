@@ -1,15 +1,18 @@
 PODS:
-  - Flutter (1.0.0)
-  - MMKV (1.2.8):
-    - MMKVCore (~> 1.2.8)
-  - MMKVCore (1.2.8)
-  - mmkvflutter (1.2.10):
+  - device_info (0.0.1):
     - Flutter
-    - MMKV (>= 1.2.8)
+  - Flutter (1.0.0)
+  - MMKV (1.2.10):
+    - MMKVCore (~> 1.2.10)
+  - MMKVCore (1.2.10)
+  - mmkvflutter (1.2.11):
+    - Flutter
+    - MMKV (>= 1.2.10)
   - path_provider (0.0.1):
     - Flutter
 
 DEPENDENCIES:
+  - device_info (from `.symlinks/plugins/device_info/ios`)
   - Flutter (from `Flutter`)
   - mmkvflutter (from `.symlinks/plugins/mmkvflutter/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
@@ -20,6 +23,8 @@ SPEC REPOS:
     - MMKVCore
 
 EXTERNAL SOURCES:
+  device_info:
+    :path: ".symlinks/plugins/device_info/ios"
   Flutter:
     :path: Flutter
   mmkvflutter:
@@ -28,10 +33,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider/ios"
 
 SPEC CHECKSUMS:
+  device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
-  MMKV: b1f5c2cf5f6a4a06200a2b93663ba6db20148b31
-  MMKVCore: 93cc90d5796dd82108de3214cb0b67a0d438b811
-  mmkvflutter: 6f83ab74e519d12695654fe5b010f6e46dc833e1
+  MMKV: 76033b9ace2006623308910a3afcc0e25eba3140
+  MMKVCore: b00e7a09ec77a1b916aef336eedd3b99ec249978
+  mmkvflutter: bd370d138f3673b864572ba7f51ef4c6b4cc03d1
   path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
 
 PODFILE CHECKSUM: 5892152591d599b8a50589fd8872b0421e2fc7b5

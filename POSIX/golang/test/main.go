@@ -21,6 +21,10 @@ func main() {
 
 	functionalTest()
 	testReKey()
+
+	testMMKV("test/Encrypt", "cryptKey", false)
+	testBackup()
+	testRestore()
 }
 
 func functionalTest() {
@@ -161,6 +165,44 @@ func testReKey() {
 	testMMKV(mmapID, "", true)
 }
 
+func testBackup() {
+	rootDir := "/tmp/mmkv_backup"
+	mmapID := "test/Encrypt"
+	ret := mmkv.BackupOneToDirectory(mmapID, rootDir)
+	fmt.Println("backup one return: ", ret)
+
+	count := mmkv.BackupAllToDirectory(rootDir)
+	fmt.Println("backup all count: ", count)
+}
+
+func testRestore() {
+	rootDir := "/tmp/mmkv_backup"
+	mmapID := "test/Encrypt"
+	aesKey := "cryptKey"
+	kv := mmkv.MMKVWithIDAndModeAndCryptKey(mmapID, mmkv.MMKV_SINGLE_PROCESS, aesKey)
+	kv.SetString("string value before restore", "test_restore_key")
+	fmt.Println("before restore [", kv.MMAP_ID(), "] allKeys: ", kv.AllKeys())
+
+	ret := mmkv.RestoreOneFromDirectory(mmapID, rootDir)
+	fmt.Println("restore one return: ", ret)
+	if ret {
+		fmt.Println("after restore [", kv.MMAP_ID(), "] allKeys: ", kv.AllKeys())
+	}
+
+	count := mmkv.RestoreAllFromDirectory(rootDir)
+	fmt.Println("restore all count: ", count)
+	if count > 0 {
+		backupMMKV := mmkv.MMKVWithIDAndModeAndCryptKey(mmapID, mmkv.MMKV_SINGLE_PROCESS, aesKey)
+		fmt.Println("check on restore [", backupMMKV.MMAP_ID(), "] allKeys: ", backupMMKV.AllKeys())
+
+		backupMMKV = mmkv.MMKVWithID("testAES_reKey1")
+		fmt.Println("check on restore [", backupMMKV.MMAP_ID(), "] allKeys: ", backupMMKV.AllKeys())
+
+		backupMMKV = mmkv.DefaultMMKV()
+		fmt.Println("check on restore [", backupMMKV.MMAP_ID(), "] allKeys: ", backupMMKV.AllKeys())
+	}
+}
+
 func logHandler(level int, file string, line int, function string, message string) {
 	var levelStr string
 	switch level {
@@ -190,6 +232,6 @@ func errorHandler(mmapID string, error int) int {
 	return mmkv.OnErrorRecover
 }
 
-func contentChangeNotify(mmapID string)  {
+func contentChangeNotify(mmapID string) {
 	fmt.Println(mmapID, "content changed by other process")
 }

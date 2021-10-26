@@ -20,6 +20,7 @@
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
 		CB467FBC2431EE3000FD7421 /* MMKVAppExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; };
 		CB5C469724AB87F3001B25B8 /* MMKVWatchExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CB6180EA26E904AC003FF912 /* MMKVAppExtension.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6D44CB23B3A44400F369AA /* NotificationCenter.framework */; };
 		CB6D44D023B3A44400F369AA /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB6D44CF23B3A44400F369AA /* TodayViewController.m */; };
 		CB6D44D323B3A44400F369AA /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB6D44D123B3A44400F369AA /* MainInterface.storyboard */; };
@@ -42,7 +43,6 @@
 		CBF1902D243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF1902C243D6F5A001C82ED /* Assets.xcassets */; };
 		CBF19032243D6F5A001C82ED /* WatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = CBF19012243D6F59001C82ED /* WatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CBF1907E243D71E8001C82ED /* MMKVWatchExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */; };
-		CBF190AD243D7869001C82ED /* MMKVAppExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -133,6 +133,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		CB6180E926E90493003FF912 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				CB6180EA26E904AC003FF912 /* MMKVAppExtension.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CB6D44DB23B3A44400F369AA /* Embed App Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -164,17 +174,6 @@
 				CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		CBF190AC243D7853001C82ED /* Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				CBF190AD243D7869001C82ED /* MMKVAppExtension.framework in Frameworks */,
-			);
-			name = Frameworks;
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CBF190AE243D78D4001C82ED /* Frameworks */ = {
@@ -308,6 +307,7 @@
 				CB1FD42120455E2D00931B5F /* Products */,
 				CB1FD45720455F3500931B5F /* Frameworks */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
 		};
 		CB1FD42120455E2D00931B5F /* Products */ = {
@@ -443,6 +443,7 @@
 				CB1FD41E20455E2D00931B5F /* Resources */,
 				CB6D44DB23B3A44400F369AA /* Embed App Extensions */,
 				CBF19033243D6F5A001C82ED /* Embed Watch Content */,
+				CB6180E926E90493003FF912 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -481,7 +482,6 @@
 				CB6D44C623B3A44400F369AA /* Sources */,
 				CB6D44C723B3A44400F369AA /* Frameworks */,
 				CB6D44C823B3A44400F369AA /* Resources */,
-				CBF190AC243D7853001C82ED /* Frameworks */,
 			);
 			buildRules = (
 			);
