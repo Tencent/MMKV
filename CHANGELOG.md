@@ -1,13 +1,27 @@
 # MMKV Change Log
 
-## v1.2.11 / 2021-07-xx
+## v1.2.11 / 2021-10-26
 
 ### Android
 * Due to increasing report about crash inside STL, we have decided to make MMKV **static linking** `libc++` **by default**. Starting from v1.2.11, `com.tencent:mmkv-static` is the same as `com.tencent:mmkv`.
 * For those still in need of MMKV with shared linking of `libc++_shared`, you could use `com.tencent:mmkv-shared` instead.
+* Add backup & restore ability.
+
+### iOS / macOS
+* Add backup & restore ability.
+* Support tvOS.
+* Fix a compile error on some old Xcode.
 
 ### Flutter (v1.2.12)
-* Add a fullset of testcase.
+* Add backup & restore ability.
+* Add a fullset of unit testcase.
+
+### POSIX / golang / Python
+* Add backup & restore ability.
+* Fix a compile error on Gentoo.
+
+### Win32
+* Add backup & restore ability.
 
 ## v1.2.10 / 2021-06-25
 This version is mainly for Android & Flutter.  
