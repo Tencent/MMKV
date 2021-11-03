@@ -28,7 +28,7 @@ Add the following lines to `build.gradle` on your app module:
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv-static:1.2.11'
+    implementation 'com.tencent:mmkv:1.2.11'
     // replace "1.2.11" with any available version
 }
 ```
