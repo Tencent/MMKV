@@ -108,7 +108,7 @@ void CodedInputDataCrypt::consumeBytes(size_t length, bool discardPreData) {
             bytesLeftInBuffer = m_decryptBufferSize - m_decryptBufferDecryptLength;
         }
     }
-    // still no enough sapce, try realloc()
+    // still no enough space, try realloc()
     if (bytesLeftInBuffer < length) {
         auto newSize = m_decryptBufferSize + length;
         auto newBuffer = realloc(m_decryptBuffer, newSize);
