@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     signingConfigs {
         config {
@@ -16,7 +16,7 @@ android {
     defaultConfig {
         applicationId "com.tencent.mmkvdemo"
         minSdkVersion 16
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
 
