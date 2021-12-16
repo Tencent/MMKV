@@ -43,6 +43,8 @@
 
 #ifndef MMKV_DISABLE_CRYPT
 
+namespace openssl {
+
 #if (__ARM_MAX_ARCH__ > 7) && defined(__linux__)
 
 aes_set_encrypt_t AES_set_encrypt_key = openssl::AES_C_set_encrypt_key;
@@ -53,8 +55,6 @@ aes_encrypt_t AES_decrypt = openssl::AES_C_decrypt;
 #endif // (__ARM_MAX_ARCH__ > 7 && defined(__linux__)
 
 #if (__ARM_MAX_ARCH__ <= 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__))
-
-namespace openssl {
 
 /*-
 Te0[x] = S [x].[02, 01, 01, 03];
@@ -1037,8 +1037,8 @@ void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *k) {
     PUTU32(out + 12, s3);
 }
 
-} // namespace openssl
-
 #endif // (__ARM_MAX_ARCH__ < 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__))
+
+} // namespace openssl
 
 #endif // MMKV_DISABLE_CRYPT
