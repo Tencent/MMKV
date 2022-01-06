@@ -1,5 +1,8 @@
 # MMKV Change Log
 
+## v1.2.12 / 2022-01-xx
+To be continue.
+
 ## v1.2.11 / 2021-10-26
 
 ### Android
