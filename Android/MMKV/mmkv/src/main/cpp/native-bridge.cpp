@@ -712,6 +712,12 @@ MMKV_JNI void checkReSetCryptKey(JNIEnv *env, jobject instance, jstring cryptKey
     }
 }
 
+#    else
+
+MMKV_JNI jstring cryptKey(JNIEnv *env, jobject instance) {
+    return nullptr;
+}
+
 #    endif // MMKV_DISABLE_CRYPT
 
 MMKV_JNI void trim(JNIEnv *env, jobject instance) {
@@ -841,8 +847,8 @@ MMKV_JNI jlong restoreAll(JNIEnv *env, jobject obj, jstring srcDir/*, jstring ro
 
 static JNINativeMethod g_methods[] = {
     {"onExit", "()V", (void *) mmkv::onExit},
-#    ifndef MMKV_DISABLE_CRYPT
     {"cryptKey", "()Ljava/lang/String;", (void *) mmkv::cryptKey},
+#    ifndef MMKV_DISABLE_CRYPT
     {"reKey", "(Ljava/lang/String;)Z", (void *) mmkv::reKey},
     {"checkReSetCryptKey", "(Ljava/lang/String;)V", (void *) mmkv::checkReSetCryptKey},
 #    endif
