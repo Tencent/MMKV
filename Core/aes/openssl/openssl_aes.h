@@ -89,12 +89,12 @@ int AES_C_set_decrypt_key(const uint8_t *userKey, const int bits, void *key);
 void AES_C_encrypt(const uint8_t *in, uint8_t *out, const void *key);
 void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *key);
 
-} // namespace openssl
-
 extern aes_set_encrypt_t AES_set_encrypt_key;
 extern aes_set_decrypt_t AES_set_decrypt_key;
 extern aes_encrypt_t AES_encrypt;
 extern aes_decrypt_t AES_decrypt;
+
+} // namespace openssl
 
 #endif // __ARM_MAX_ARCH__ <= 7
 

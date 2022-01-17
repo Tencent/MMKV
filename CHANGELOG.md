@@ -1,5 +1,13 @@
 # MMKV Change Log
 
+## v1.2.12 / 2022-01-17
+### Changes for All platforms
+* Fix a bug that a subsequential `clearAll()` call may fail to take effect in multi-process mode.
+* Hide some OpenSSL symbols to prevent link-time symbol conflict, when an App somehow also static linking OpenSSL.
+
+### Android
+* Upgrade `compileSdkVersion` & `targetSdkVersion` from `30` to `31`.
+
 ## v1.2.11 / 2021-10-26
 
 ### Android

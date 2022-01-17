@@ -1048,9 +1048,7 @@ void MMKV::clearAll() {
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
 
-    if (m_needLoadFromFile) {
-        m_file->reloadFromFile();
-    }
+    checkLoadData();
 
     if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
         MMKVInfo("nothing to clear for [%s]", m_mmapID.c_str());

@@ -1,5 +1,11 @@
 # MMKV for Flutter Change Log
 
+## v1.2.13 / 2022-01-17
+* Fix a bug that a subsequential `clearAll()` call may fail to take effect in multi-process mode.
+* Hide some OpenSSL symbols to prevent link-time symbol conflict, when an App somehow also static linking OpenSSL.
+* Upgrade Android `compileSdkVersion` & `targetSdkVersion` from `30` to `31`.
+* Keep up with MMKV native lib v1.2.12.
+
 ## v1.2.12 / 2021-10-26
 * Add backup & restore ability.
 * Keep up with MMKV native lib v1.2.11.
