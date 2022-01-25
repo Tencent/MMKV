@@ -39,16 +39,21 @@ end
 
 # to avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to change the plugin name 'mmkv' to 'mmkvflutter'
 def fix_mmkv_plugin_name_inside_registrant(plugin_registrant_path, is_module)
-  if is_module
-    plugin_registrant_file = File.expand_path(File.join(plugin_registrant_path, 'FlutterPluginRegistrant.podspec'))
-    if File.exists?(plugin_registrant_file)
-      registrant = File.read(plugin_registrant_file)
-      if registrant.sub!("dependency 'mmkv'", "dependency 'mmkvflutter'")
+  plugin_registrant_file = if is_module
+        File.expand_path(File.join(plugin_registrant_path, 'FlutterPluginRegistrant.podspec'))
+     else
+        File.expand_path(File.join(plugin_registrant_path, 'Flutter', 'FlutterPluginRegistrant', 'FlutterPluginRegistrant.podspec'))
+     end
+
+  if File.exists?(plugin_registrant_file)
+    registrant = File.read(plugin_registrant_file)
+    if registrant.sub!("dependency 'mmkv'", "dependency 'mmkvflutter'")
+      File.write(plugin_registrant_file, registrant)
+    elsif registrant.sub!("dependency \"mmkv\"", "dependency \"mmkvflutter\"")
         File.write(plugin_registrant_file, registrant)
-      end
     end
   end
-
+  
   plugin_registrant_source = is_module ? File.expand_path(File.join(plugin_registrant_path, 'Classes', 'GeneratedPluginRegistrant.m'))
     : File.expand_path(File.join(plugin_registrant_path, 'GeneratedPluginRegistrant.m'))
   if File.exists?(plugin_registrant_source)
@@ -70,7 +75,7 @@ def mmkv_fix_plugin_name(flutter_application_path, is_module)
     flutter_dependencies_path = File.join(flutter_application_path, '..', '.flutter-plugins-dependencies')
     fix_mmkv_plugin_name_inside_dependencies(flutter_dependencies_path)
 
-    flutter_registrant_path = File.join(flutter_application_path, 'Runner')
+    flutter_registrant_path = flutter_application_path
     fix_mmkv_plugin_name_inside_registrant(flutter_registrant_path, is_module)
   end
 end
