@@ -253,19 +253,19 @@ public:
     bool getVector(MMKVKey_t key, std::vector<std::string> &result);
 #endif // MMKV_APPLE
 
-    bool getBool(MMKVKey_t key, bool defaultValue = false);
+    bool getBool(MMKVKey_t key, bool defaultValue = false, bool *outHasValue = nullptr);
 
-    int32_t getInt32(MMKVKey_t key, int32_t defaultValue = 0);
+    int32_t getInt32(MMKVKey_t key, int32_t defaultValue = 0, bool *outHasValue = nullptr);
 
-    uint32_t getUInt32(MMKVKey_t key, uint32_t defaultValue = 0);
+    uint32_t getUInt32(MMKVKey_t key, uint32_t defaultValue = 0, bool *outHasValue = nullptr);
 
-    int64_t getInt64(MMKVKey_t key, int64_t defaultValue = 0);
+    int64_t getInt64(MMKVKey_t key, int64_t defaultValue = 0, bool *outHasValue = nullptr);
 
-    uint64_t getUInt64(MMKVKey_t key, uint64_t defaultValue = 0);
+    uint64_t getUInt64(MMKVKey_t key, uint64_t defaultValue = 0, bool *outHasValue = nullptr);
 
-    float getFloat(MMKVKey_t key, float defaultValue = 0);
+    float getFloat(MMKVKey_t key, float defaultValue = 0, bool *outHasValue = nullptr);
 
-    double getDouble(MMKVKey_t key, double defaultValue = 0);
+    double getDouble(MMKVKey_t key, double defaultValue = 0, bool *outHasValue = nullptr);
 
     // return the actual size consumption of the key's value
     // pass actualSize = true to get value's length
