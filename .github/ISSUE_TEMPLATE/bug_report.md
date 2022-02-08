@@ -3,6 +3,9 @@ name: Bug report
 about: Create a report to help us improve
 ---
 
+## Note:
+An crash issue will be **ignored & closed** in a week **without logs**.
+
 ### The language of MMKV
 
 > e.g. Objective-C, Swift, Java, or Kotlin
@@ -25,7 +28,7 @@ about: Create a report to help us improve
 
 ### The installation of MMKV
 
-> e.g. Cocoapods, Carthage, Maven, AAR Package or Git clone
+> e.g. Cocoapods, Maven, or Git clone
 
 
 
@@ -37,5 +40,6 @@ about: Create a report to help us improve
 > If you have a crash/OOM/ANR on Android, please provide **symbolize stack traces**. https://developer.android.com/ndk/guides/ndk-stack.html
 
 ### What's the log of MMKV when that happened?
-> Your detail logs. As much as possible.
+> Your **detail logs**. As much as possible.
 > For how to forward MMKV's log, you can checkout the wiki on each platform.
+> An crash issue will be **ignored & closed** in a week **without logs**.

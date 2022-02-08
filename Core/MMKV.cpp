@@ -607,8 +607,11 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
 
 #endif // MMKV_APPLE
 
-bool MMKV::getBool(MMKVKey_t key, bool defaultValue) {
+bool MMKV::getBool(MMKVKey_t key, bool defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
+        if (hasValue != nullptr) {
+            *hasValue = false;
+        }
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
@@ -616,16 +619,25 @@ bool MMKV::getBool(MMKVKey_t key, bool defaultValue) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
+            if (hasValue != nullptr) {
+                *hasValue = true;
+            }
             return input.readBool();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
     }
+    if (hasValue != nullptr) {
+        *hasValue = false;
+    }
     return defaultValue;
 }
 
-int32_t MMKV::getInt32(MMKVKey_t key, int32_t defaultValue) {
+int32_t MMKV::getInt32(MMKVKey_t key, int32_t defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
+        if (hasValue != nullptr) {
+            *hasValue = false;
+        }
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
@@ -633,16 +645,25 @@ int32_t MMKV::getInt32(MMKVKey_t key, int32_t defaultValue) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
+            if (hasValue != nullptr) {
+                *hasValue = true;
+            }
             return input.readInt32();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
     }
+    if (hasValue != nullptr) {
+        *hasValue = false;
+    }
     return defaultValue;
 }
 
-uint32_t MMKV::getUInt32(MMKVKey_t key, uint32_t defaultValue) {
+uint32_t MMKV::getUInt32(MMKVKey_t key, uint32_t defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
+        if (hasValue != nullptr) {
+            *hasValue = false;
+        }
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
@@ -650,16 +671,25 @@ uint32_t MMKV::getUInt32(MMKVKey_t key, uint32_t defaultValue) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
+            if (hasValue != nullptr) {
+                *hasValue = true;
+            }
             return input.readUInt32();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
     }
+    if (hasValue != nullptr) {
+        *hasValue = false;
+    }
     return defaultValue;
 }
 
-int64_t MMKV::getInt64(MMKVKey_t key, int64_t defaultValue) {
+int64_t MMKV::getInt64(MMKVKey_t key, int64_t defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
+        if (hasValue != nullptr) {
+            *hasValue = false;
+        }
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
@@ -667,16 +697,25 @@ int64_t MMKV::getInt64(MMKVKey_t key, int64_t defaultValue) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
+            if (hasValue != nullptr) {
+                *hasValue = true;
+            }
             return input.readInt64();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
     }
+    if (hasValue != nullptr) {
+        *hasValue = false;
+    }
     return defaultValue;
 }
 
-uint64_t MMKV::getUInt64(MMKVKey_t key, uint64_t defaultValue) {
+uint64_t MMKV::getUInt64(MMKVKey_t key, uint64_t defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
+        if (hasValue != nullptr) {
+            *hasValue = false;
+        }
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
@@ -684,16 +723,25 @@ uint64_t MMKV::getUInt64(MMKVKey_t key, uint64_t defaultValue) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
+            if (hasValue != nullptr) {
+                *hasValue = true;
+            }
             return input.readUInt64();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
     }
+    if (hasValue != nullptr) {
+        *hasValue = false;
+    }
     return defaultValue;
 }
 
-float MMKV::getFloat(MMKVKey_t key, float defaultValue) {
+float MMKV::getFloat(MMKVKey_t key, float defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
+        if (hasValue != nullptr) {
+            *hasValue = false;
+        }
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
@@ -701,16 +749,25 @@ float MMKV::getFloat(MMKVKey_t key, float defaultValue) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
+            if (hasValue != nullptr) {
+                *hasValue = true;
+            }
             return input.readFloat();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
     }
+    if (hasValue != nullptr) {
+        *hasValue = false;
+    }
     return defaultValue;
 }
 
-double MMKV::getDouble(MMKVKey_t key, double defaultValue) {
+double MMKV::getDouble(MMKVKey_t key, double defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
+        if (hasValue != nullptr) {
+            *hasValue = false;
+        }
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
@@ -718,10 +775,16 @@ double MMKV::getDouble(MMKVKey_t key, double defaultValue) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
+            if (hasValue != nullptr) {
+                *hasValue = true;
+            }
             return input.readDouble();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
         }
+    }
+    if (hasValue != nullptr) {
+        *hasValue = false;
     }
     return defaultValue;
 }
