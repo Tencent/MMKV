@@ -652,6 +652,14 @@ static dispatch_source_t g_autoCleanUpTimer = nullptr;
     }
 }
 
+- (void)setValue:(nullable id)value forKey:(NSString *)key {
+    [super setValue:value forKey:key];
+}
+
+- (void)setValue:(nullable id)value forKeyPath:(NSString *)keyPath {
+    [super setValue:value forKeyPath:keyPath];
+}
+
 static NSString *md5(NSString *value) {
     uint8_t md[MD5_DIGEST_LENGTH] = {};
     char tmp[3] = {}, buf[33] = {};
