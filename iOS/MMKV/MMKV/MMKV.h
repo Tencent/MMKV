@@ -96,6 +96,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// otherwise the behavior is undefined
 + (void)setMMKVBasePath:(NSString *)basePath __attribute__((deprecated("use +initializeMMKV: instead", "+initializeMMKV:")));
 
+// protection from possible misuse
+- (void)setValue:(nullable id)value forKey:(NSString *)key __attribute__((deprecated("use setObject:forKey: instead")));
+- (void)setValue:(nullable id)value forKeyPath:(NSString *)keyPath __attribute__((deprecated("use setObject:forKey: instead")));
+
 - (NSString *)mmapID;
 
 /// transform plain text into encrypted text, or vice versa by passing newKey = nil
