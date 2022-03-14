@@ -383,77 +383,110 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (BOOL)getBoolForKey:(NSString *)key {
-    return [self getBoolForKey:key defaultValue:FALSE];
+    return [self getBoolForKey:key defaultValue:FALSE hasValue:nil];
 }
 - (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
-    return m_mmkv->getBool(key, defaultValue);
+    return [self getBoolForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getBool(key, defaultValue, hasValue);
 }
 
 - (int32_t)getInt32ForKey:(NSString *)key {
-    return [self getInt32ForKey:key defaultValue:0];
+    return [self getInt32ForKey:key defaultValue:0 hasValue:nil];
 }
 - (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue {
-    return m_mmkv->getInt32(key, defaultValue);
+    return [self getInt32ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getInt32(key, defaultValue, hasValue);
 }
 
 - (uint32_t)getUInt32ForKey:(NSString *)key {
-    return [self getUInt32ForKey:key defaultValue:0];
+    return [self getUInt32ForKey:key defaultValue:0 hasValue:nil];
 }
 - (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue {
-    return m_mmkv->getUInt32(key, defaultValue);
+    return [self getUInt32ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getUInt32(key, defaultValue, hasValue);
 }
 
 - (int64_t)getInt64ForKey:(NSString *)key {
-    return [self getInt64ForKey:key defaultValue:0];
+    return [self getInt64ForKey:key defaultValue:0 hasValue:nil];
 }
 - (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue {
-    return m_mmkv->getInt64(key, defaultValue);
+    return [self getInt64ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getInt64(key, defaultValue, hasValue);
 }
 
 - (uint64_t)getUInt64ForKey:(NSString *)key {
-    return [self getUInt64ForKey:key defaultValue:0];
+    return [self getUInt64ForKey:key defaultValue:0 hasValue:nil];
 }
 - (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue {
-    return m_mmkv->getUInt64(key, defaultValue);
+    return [self getUInt64ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getUInt64(key, defaultValue, hasValue);
 }
 
 - (float)getFloatForKey:(NSString *)key {
-    return [self getFloatForKey:key defaultValue:0];
+    return [self getFloatForKey:key defaultValue:0 hasValue:nil];
 }
 - (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue {
-    return m_mmkv->getFloat(key, defaultValue);
+    return [self getFloatForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getFloat(key, defaultValue, hasValue);
 }
 
 - (double)getDoubleForKey:(NSString *)key {
-    return [self getDoubleForKey:key defaultValue:0];
+    return [self getDoubleForKey:key defaultValue:0 hasValue:nil];
 }
 - (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue {
-    return m_mmkv->getDouble(key, defaultValue);
+    return [self getDoubleForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getDouble(key, defaultValue, hasValue);
 }
 
 - (nullable NSString *)getStringForKey:(NSString *)key {
-    return [self getStringForKey:key defaultValue:nil];
+    return [self getStringForKey:key defaultValue:nil hasValue:nil];
 }
 - (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue {
+    return [self getStringForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue hasValue:(OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
     NSString *valueString = [self getObjectOfClass:NSString.class forKey:key];
     if (!valueString) {
+        if (hasValue != nil) {
+            *hasValue = false;
+        }
         valueString = defaultValue;
     }
     return valueString;
 }
 
 - (nullable NSDate *)getDateForKey:(NSString *)key {
-    return [self getDateForKey:key defaultValue:nil];
+    return [self getDateForKey:key defaultValue:nil hasValue:nil];
 }
 - (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue {
+    return [self getDateForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue hasValue:(OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
     NSDate *valueDate = [self getObjectOfClass:NSDate.class forKey:key];
     if (!valueDate) {
+        if (hasValue != nil) {
+            *hasValue = false;
+        }
         valueDate = defaultValue;
     }
     return valueDate;
@@ -463,11 +496,17 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [self getDataForKey:key defaultValue:nil];
 }
 - (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue {
+    return [self getDataForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue hasValue:(OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
     NSData *valueData = [self getObjectOfClass:NSData.class forKey:key];
     if (!valueData) {
+        if (hasValue != nil) {
+            *hasValue = false;
+        }
         valueData = defaultValue;
     }
     return valueData;
