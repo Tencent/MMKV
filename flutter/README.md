@@ -26,11 +26,11 @@ Add the following lines to `pubspec.yaml` on your app module. Then run `flutter 
 
 ```yaml
 dependencies:
-  mmkv: ">=1.2.13"
+  mmkv: ">=1.2.14"
   ...
 ```
 
-If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.12.  
+If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.13.  
 
 #### iOS  
 To avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to **change the plugin name 'mmkv' to 'mmkvflutter'**.  
