@@ -73,7 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:relativePath:))__attribute__((deprecated("use +mmkvWithID:rootPath: instead")));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:relativePath:)) __attribute__((deprecated("use +mmkvWithID:rootPath: instead")));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param rootPath custom path of the file, `NSDocumentDirectory/mmkv` by default
@@ -82,7 +82,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:))__attribute__((deprecated("use +mmkvWithID:cryptKey:rootPath: instead")));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:)) __attribute__((deprecated("use +mmkvWithID:cryptKey:rootPath: instead")));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
