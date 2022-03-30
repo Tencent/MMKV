@@ -73,7 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:relativePath:)) __attribute__((deprecated("use +mmkvWithID:rootPath: instead")));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:relativePath:))__attribute__((deprecated("use +mmkvWithID:rootPath: instead")));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param rootPath custom path of the file, `NSDocumentDirectory/mmkv` by default
@@ -82,7 +82,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
-+ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:)) __attribute__((deprecated("use +mmkvWithID:cryptKey:rootPath: instead")));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:))__attribute__((deprecated("use +mmkvWithID:cryptKey:rootPath: instead")));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
@@ -139,43 +139,43 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)getBoolForKey:(NSString *)key __attribute__((swift_name("bool(forKey:)")));
 - (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue __attribute__((swift_name("bool(forKey:defaultValue:)")));
-- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue hasValue:(OUT BOOL *)hasValue __attribute__((swift_name("bool(forKey:defaultValue:hasValue:)")));
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue hasValue:(OUT nullable BOOL *)hasValue __attribute__((swift_name("bool(forKey:defaultValue:hasValue:)")));
 
 - (int32_t)getInt32ForKey:(NSString *)key NS_SWIFT_NAME(int32(forKey:));
 - (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue NS_SWIFT_NAME(int32(forKey:defaultValue:));
-- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(int32(forKey:defaultValue:hasValue:));
+- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(int32(forKey:defaultValue:hasValue:));
 
 - (uint32_t)getUInt32ForKey:(NSString *)key NS_SWIFT_NAME(uint32(forKey:));
 - (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue NS_SWIFT_NAME(uint32(forKey:defaultValue:));
-- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(uint32(forKey:defaultValue:hasValue:));
+- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(uint32(forKey:defaultValue:hasValue:));
 
 - (int64_t)getInt64ForKey:(NSString *)key NS_SWIFT_NAME(int64(forKey:));
 - (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue NS_SWIFT_NAME(int64(forKey:defaultValue:));
-- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(int64(forKey:defaultValue:hasValue:));
+- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(int64(forKey:defaultValue:hasValue:));
 
 - (uint64_t)getUInt64ForKey:(NSString *)key NS_SWIFT_NAME(uint64(forKey:));
 - (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue NS_SWIFT_NAME(uint64(forKey:defaultValue:));
-- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(uint64(forKey:defaultValue:hasValue:));
+- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(uint64(forKey:defaultValue:hasValue:));
 
 - (float)getFloatForKey:(NSString *)key NS_SWIFT_NAME(float(forKey:));
 - (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue NS_SWIFT_NAME(float(forKey:defaultValue:));
-- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(float(forKey:defaultValue:hasValue:));
+- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(float(forKey:defaultValue:hasValue:));
 
 - (double)getDoubleForKey:(NSString *)key NS_SWIFT_NAME(double(forKey:));
 - (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue NS_SWIFT_NAME(double(forKey:defaultValue:));
-- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(double(forKey:defaultValue:hasValue:));
+- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(double(forKey:defaultValue:hasValue:));
 
 - (nullable NSString *)getStringForKey:(NSString *)key NS_SWIFT_NAME(string(forKey:));
 - (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue NS_SWIFT_NAME(string(forKey:defaultValue:));
-- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(string(forKey:defaultValue:hasValue:));
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(string(forKey:defaultValue:hasValue:));
 
 - (nullable NSDate *)getDateForKey:(NSString *)key NS_SWIFT_NAME(date(forKey:));
 - (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue NS_SWIFT_NAME(date(forKey:defaultValue:));
-- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(date(forKey:defaultValue:hasValue:));
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(date(forKey:defaultValue:hasValue:));
 
 - (nullable NSData *)getDataForKey:(NSString *)key NS_SWIFT_NAME(data(forKey:));
 - (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue NS_SWIFT_NAME(data(forKey:defaultValue:));
-- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue hasValue:(OUT BOOL *)hasValue NS_SWIFT_NAME(data(forKey:defaultValue:hasValue:));
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue hasValue:(OUT nullable BOOL *)hasValue NS_SWIFT_NAME(data(forKey:defaultValue:hasValue:));
 
 // return the actual size consumption of the key's value
 // Note: might be a little bigger than value's length
@@ -235,45 +235,45 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param mmapID the MMKV ID to backup
 /// @param rootPath the customize root path of the MMKV, if null then backup from the root dir of MMKV
 /// @param dstDir the backup destination directory
-+ (BOOL) backupOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)rootPath toDirectory:(NSString*)dstDir  NS_SWIFT_NAME(backup(mmapID:rootPath:dstDir:));
++ (BOOL)backupOneMMKV:(NSString *)mmapID rootPath:(nullable NSString *)rootPath toDirectory:(NSString *)dstDir NS_SWIFT_NAME(backup(mmapID:rootPath:dstDir:));
 
 /// restore one MMKV instance from srcDir
 /// @param mmapID the MMKV ID to restore
 /// @param rootPath the customize root path of the MMKV, if null then restore to the root dir of MMKV
 /// @param srcDir the restore source directory
-+ (BOOL) restoreOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)rootPath fromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restore(mmapID:rootPath:srcDir:));
++ (BOOL)restoreOneMMKV:(NSString *)mmapID rootPath:(nullable NSString *)rootPath fromDirectory:(NSString *)srcDir NS_SWIFT_NAME(restore(mmapID:rootPath:srcDir:));
 
 /// backup all MMKV instance to dstDir
 /// @param rootPath the customize root path of the MMKV
 /// @param dstDir the backup destination directory
 /// @return count of MMKV successfully backuped
-+ (size_t) backupAll:(nullable NSString *)rootPath toDirectory:(NSString*)dstDir NS_SWIFT_NAME(backupAll(rootPath:dstDir:));
++ (size_t)backupAll:(nullable NSString *)rootPath toDirectory:(NSString *)dstDir NS_SWIFT_NAME(backupAll(rootPath:dstDir:));
 
 /// restore all MMKV instance from srcDir
 /// @param rootPath the customize root path of the MMKV
 /// @param srcDir the restore source directory
 /// @return count of MMKV successfully restored
-+ (size_t) restoreAll:(nullable NSString *)rootPath fromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restoreAll(rootPath:srcDir:));
++ (size_t)restoreAll:(nullable NSString *)rootPath fromDirectory:(NSString *)srcDir NS_SWIFT_NAME(restoreAll(rootPath:srcDir:));
 
 /// backup one MMKVMultiProcess MMKV instance to dstDir
 /// @param mmapID the MMKV ID to backup
 /// @param dstDir the backup destination directory
-+ (BOOL)backupMultiProcessMMKV:(NSString *)mmapID toDirectory:(NSString*)dstDir NS_SWIFT_NAME(backupMultiProcess(mmapID:dstDir:));
++ (BOOL)backupMultiProcessMMKV:(NSString *)mmapID toDirectory:(NSString *)dstDir NS_SWIFT_NAME(backupMultiProcess(mmapID:dstDir:));
 
 /// restore one MMKVMultiProcess MMKV instance from srcDir
 /// @param mmapID the MMKV ID to restore
 /// @param srcDir the restore source directory
-+ (BOOL) restoreMultiProcessMMKV:(NSString*)mmapID fromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restoreMultiProcess(mmapID:srcDir:));
++ (BOOL)restoreMultiProcessMMKV:(NSString *)mmapID fromDirectory:(NSString *)srcDir NS_SWIFT_NAME(restoreMultiProcess(mmapID:srcDir:));
 
 /// backup all MMKVMultiProcess MMKV instance to dstDir
 /// @param dstDir the backup destination directory
 /// @return count of MMKV successfully backuped
-+ (size_t) backupAllMultiProcessToDirectory:(NSString*)dstDir NS_SWIFT_NAME(backupAllMultiProcess(dstDir:));
++ (size_t)backupAllMultiProcessToDirectory:(NSString *)dstDir NS_SWIFT_NAME(backupAllMultiProcess(dstDir:));
 
 /// restore all MMKVMultiProcess MMKV instance from srcDir
 /// @param srcDir the restore source directory
 /// @return count of MMKV successfully restored
-+ (size_t) restoreAllMultiProcessFromDirectory:(NSString*)srcDir NS_SWIFT_NAME(restoreAllMultiProcess(srcDir:));
++ (size_t)restoreAllMultiProcessFromDirectory:(NSString *)srcDir NS_SWIFT_NAME(restoreAllMultiProcess(srcDir:));
 
 /// check if content changed by other process
 - (void)checkContentChanged;
