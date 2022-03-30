@@ -1,5 +1,19 @@
 # MMKV Change Log
 
+## v1.2.13 / 2022-03-30
+
+### Android
+* Fix crash on using Ashmem while `MMKV_DISABLE_CRYPT` macro is defined.
+
+### iOS
+* Add ability to retrieve key existece while getting value, aka `-[MMKV getXXX:forKey:hasValue:]` methods.
+
+### POSIX
+* Add ability to retrieve key existece while getting value, aka `MMKV::getXXX(key, defaultValue, hasValue)` methods.
+
+### Win32
+* Add ability to retrieve key existece while getting value, aka `MMKV::getXXX(key, defaultValue, hasValue)` methods.
+
 ## v1.2.12 / 2022-01-17
 ### Changes for All platforms
 * Fix a bug that a subsequential `clearAll()` call may fail to take effect in multi-process mode.
