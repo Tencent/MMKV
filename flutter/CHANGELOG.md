@@ -1,5 +1,9 @@
 # MMKV for Flutter Change Log
 
+## v1.2.14 / 2022-03-30
+* Replace the deprecated `device_info` package with `device_info_plus`.
+* Keep up with MMKV native lib v1.2.13.
+
 ## v1.2.13 / 2022-01-17
 * Fix a bug that a subsequential `clearAll()` call may fail to take effect in multi-process mode.
 * Hide some OpenSSL symbols to prevent link-time symbol conflict, when an App somehow also static linking OpenSSL.

@@ -24,7 +24,7 @@ import 'dart:ffi'; // For FFI
 import 'dart:io'; // For Platform.isX
 import 'dart:typed_data';
 
-import 'package:device_info/device_info.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -176,7 +176,7 @@ class MMKV {
     } else {
       final rootDirPtr = _string2Pointer(rootDir);
       final androidInfo = await DeviceInfoPlugin().androidInfo;
-      final sdkInt = androidInfo.version.sdkInt;
+      final sdkInt = androidInfo.version.sdkInt ?? 0;
       final cacheDir = await getTemporaryDirectory();
       final cacheDirPtr = _string2Pointer(cacheDir.path);
 

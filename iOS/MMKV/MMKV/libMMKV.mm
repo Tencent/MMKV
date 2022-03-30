@@ -383,77 +383,110 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (BOOL)getBoolForKey:(NSString *)key {
-    return [self getBoolForKey:key defaultValue:FALSE];
+    return [self getBoolForKey:key defaultValue:FALSE hasValue:nil];
 }
 - (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
-    return m_mmkv->getBool(key, defaultValue);
+    return [self getBoolForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getBool(key, defaultValue, (bool *) hasValue);
 }
 
 - (int32_t)getInt32ForKey:(NSString *)key {
-    return [self getInt32ForKey:key defaultValue:0];
+    return [self getInt32ForKey:key defaultValue:0 hasValue:nil];
 }
 - (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue {
-    return m_mmkv->getInt32(key, defaultValue);
+    return [self getInt32ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getInt32(key, defaultValue, (bool *) hasValue);
 }
 
 - (uint32_t)getUInt32ForKey:(NSString *)key {
-    return [self getUInt32ForKey:key defaultValue:0];
+    return [self getUInt32ForKey:key defaultValue:0 hasValue:nil];
 }
 - (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue {
-    return m_mmkv->getUInt32(key, defaultValue);
+    return [self getUInt32ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getUInt32(key, defaultValue, (bool *) hasValue);
 }
 
 - (int64_t)getInt64ForKey:(NSString *)key {
-    return [self getInt64ForKey:key defaultValue:0];
+    return [self getInt64ForKey:key defaultValue:0 hasValue:nil];
 }
 - (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue {
-    return m_mmkv->getInt64(key, defaultValue);
+    return [self getInt64ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getInt64(key, defaultValue, (bool *) hasValue);
 }
 
 - (uint64_t)getUInt64ForKey:(NSString *)key {
-    return [self getUInt64ForKey:key defaultValue:0];
+    return [self getUInt64ForKey:key defaultValue:0 hasValue:nil];
 }
 - (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue {
-    return m_mmkv->getUInt64(key, defaultValue);
+    return [self getUInt64ForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getUInt64(key, defaultValue, (bool *) hasValue);
 }
 
 - (float)getFloatForKey:(NSString *)key {
-    return [self getFloatForKey:key defaultValue:0];
+    return [self getFloatForKey:key defaultValue:0 hasValue:nil];
 }
 - (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue {
-    return m_mmkv->getFloat(key, defaultValue);
+    return [self getFloatForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getFloat(key, defaultValue, (bool *) hasValue);
 }
 
 - (double)getDoubleForKey:(NSString *)key {
-    return [self getDoubleForKey:key defaultValue:0];
+    return [self getDoubleForKey:key defaultValue:0 hasValue:nil];
 }
 - (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue {
-    return m_mmkv->getDouble(key, defaultValue);
+    return [self getDoubleForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue hasValue:(OUT BOOL *)hasValue {
+    return m_mmkv->getDouble(key, defaultValue, (bool *) hasValue);
 }
 
 - (nullable NSString *)getStringForKey:(NSString *)key {
-    return [self getStringForKey:key defaultValue:nil];
+    return [self getStringForKey:key defaultValue:nil hasValue:nil];
 }
 - (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue {
+    return [self getStringForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue hasValue:(OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
     NSString *valueString = [self getObjectOfClass:NSString.class forKey:key];
     if (!valueString) {
+        if (hasValue != nil) {
+            *hasValue = false;
+        }
         valueString = defaultValue;
     }
     return valueString;
 }
 
 - (nullable NSDate *)getDateForKey:(NSString *)key {
-    return [self getDateForKey:key defaultValue:nil];
+    return [self getDateForKey:key defaultValue:nil hasValue:nil];
 }
 - (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue {
+    return [self getDateForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue hasValue:(OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
     NSDate *valueDate = [self getObjectOfClass:NSDate.class forKey:key];
     if (!valueDate) {
+        if (hasValue != nil) {
+            *hasValue = false;
+        }
         valueDate = defaultValue;
     }
     return valueDate;
@@ -463,11 +496,17 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [self getDataForKey:key defaultValue:nil];
 }
 - (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue {
+    return [self getDataForKey:key defaultValue:defaultValue hasValue:nil];
+}
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue hasValue:(OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
     NSData *valueData = [self getObjectOfClass:NSData.class forKey:key];
     if (!valueData) {
+        if (hasValue != nil) {
+            *hasValue = false;
+        }
         valueData = defaultValue;
     }
     return valueData;
@@ -652,6 +691,14 @@ static dispatch_source_t g_autoCleanUpTimer = nullptr;
     }
 }
 
+- (void)setValue:(nullable id)value forKey:(NSString *)key {
+    [super setValue:value forKey:key];
+}
+
+- (void)setValue:(nullable id)value forKeyPath:(NSString *)keyPath {
+    [super setValue:value forKeyPath:keyPath];
+}
+
 static NSString *md5(NSString *value) {
     uint8_t md[MD5_DIGEST_LENGTH] = {};
     char tmp[3] = {}, buf[33] = {};
@@ -693,7 +740,7 @@ static NSString *md5(NSString *value) {
 
 #pragma mark - backup & restore
 
-+ (BOOL) backupOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)path toDirectory:(NSString*)dstDir {
++ (BOOL)backupOneMMKV:(NSString *)mmapID rootPath:(nullable NSString *)path toDirectory:(NSString *)dstDir {
     if (path.length > 0) {
         string rootPath(path.UTF8String);
         return mmkv::MMKV::backupOneToDirectory(mmapID.UTF8String, dstDir.UTF8String, &rootPath);
@@ -701,7 +748,7 @@ static NSString *md5(NSString *value) {
     return mmkv::MMKV::backupOneToDirectory(mmapID.UTF8String, dstDir.UTF8String);
 }
 
-+ (BOOL) restoreOneMMKV:(NSString*)mmapID rootPath:(nullable NSString *)path fromDirectory:(NSString*)srcDir {
++ (BOOL)restoreOneMMKV:(NSString *)mmapID rootPath:(nullable NSString *)path fromDirectory:(NSString *)srcDir {
     if (path.length > 0) {
         string rootPath(path.UTF8String);
         return mmkv::MMKV::restoreOneFromDirectory(mmapID.UTF8String, srcDir.UTF8String, &rootPath);
@@ -709,7 +756,7 @@ static NSString *md5(NSString *value) {
     return mmkv::MMKV::restoreOneFromDirectory(mmapID.UTF8String, srcDir.UTF8String);
 }
 
-+ (size_t) backupAll:(nullable NSString *)path toDirectory:(NSString*)dstDir {
++ (size_t)backupAll:(nullable NSString *)path toDirectory:(NSString *)dstDir {
     if (path.length > 0) {
         string rootPath(path.UTF8String);
         return mmkv::MMKV::backupAllToDirectory(dstDir.UTF8String, &rootPath);
@@ -717,7 +764,7 @@ static NSString *md5(NSString *value) {
     return mmkv::MMKV::backupAllToDirectory(dstDir.UTF8String);
 }
 
-+ (size_t) restoreAll:(nullable NSString *)path fromDirectory:(NSString*)srcDir {
++ (size_t)restoreAll:(nullable NSString *)path fromDirectory:(NSString *)srcDir {
     if (path.length > 0) {
         string rootPath(path.UTF8String);
         return mmkv::MMKV::restoreAllFromDirectory(srcDir.UTF8String, &rootPath);
@@ -725,7 +772,7 @@ static NSString *md5(NSString *value) {
     return mmkv::MMKV::restoreAllFromDirectory(srcDir.UTF8String);
 }
 
-+ (BOOL)backupMultiProcessMMKV:(NSString *)mmapID toDirectory:(NSString*)dstDir {
++ (BOOL)backupMultiProcessMMKV:(NSString *)mmapID toDirectory:(NSString *)dstDir {
     if (!g_groupPath) {
         MMKVError("Backup a multi-process MMKV [%@] without setting groupDir makes no sense", mmapID);
         MMKV_ASSERT(0);
@@ -733,7 +780,7 @@ static NSString *md5(NSString *value) {
     return [MMKV backupOneMMKV:mmapID rootPath:g_groupPath toDirectory:dstDir];
 }
 
-+ (BOOL) restoreMultiProcessMMKV:(NSString*)mmapID fromDirectory:(NSString*)srcDir {
++ (BOOL)restoreMultiProcessMMKV:(NSString *)mmapID fromDirectory:(NSString *)srcDir {
     if (!g_groupPath) {
         MMKVError("Restore a multi-process MMKV [%@] without setting groupDir makes no sense", mmapID);
         MMKV_ASSERT(0);
@@ -741,7 +788,7 @@ static NSString *md5(NSString *value) {
     return [MMKV restoreOneMMKV:mmapID rootPath:g_groupPath fromDirectory:srcDir];
 }
 
-+ (size_t) backupAllMultiProcessToDirectory:(NSString*)dstDir {
++ (size_t)backupAllMultiProcessToDirectory:(NSString *)dstDir {
     if (!g_groupPath) {
         MMKVError("Backup multi-process MMKV without setting groupDir makes no sense.");
         MMKV_ASSERT(0);
@@ -749,7 +796,7 @@ static NSString *md5(NSString *value) {
     return [MMKV backupAll:g_groupPath toDirectory:dstDir];
 }
 
-+ (size_t) restoreAllMultiProcessFromDirectory:(NSString*)srcDir {
++ (size_t)restoreAllMultiProcessFromDirectory:(NSString *)srcDir {
     if (!g_groupPath) {
         MMKVError("Restore multi-process MMKV without setting groupDir makes no sense.");
         MMKV_ASSERT(0);
