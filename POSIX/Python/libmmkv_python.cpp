@@ -163,16 +163,16 @@ PYBIND11_MODULE(mmkv, m) {
         "encode a bytes value", py::arg("value"), py::arg("key"));
 #endif
 
-    clsMMKV.def("getBool", &MMKV::getBool, "decode a boolean value", py::arg("key"), py::arg("defaultValue") = false);
-    clsMMKV.def("getInt", &MMKV::getInt32, "decode an int32 value", py::arg("key"), py::arg("defaultValue") = 0);
+    clsMMKV.def("getBool", &MMKV::getBool, "decode a boolean value", py::arg("key"), py::arg("defaultValue") = false, py::arg("outHasValue") = nullptr);
+    clsMMKV.def("getInt", &MMKV::getInt32, "decode an int32 value", py::arg("key"), py::arg("defaultValue") = 0, py::arg("outHasValue") = nullptr);
     clsMMKV.def("getUInt", &MMKV::getUInt32, "decode an unsigned int32 value", py::arg("key"),
-                py::arg("defaultValue") = 0);
-    clsMMKV.def("getLongInt", &MMKV::getInt64, "decode an int64 value", py::arg("key"), py::arg("defaultValue") = 0);
+                py::arg("defaultValue") = 0, py::arg("outHasValue") = nullptr);
+    clsMMKV.def("getLongInt", &MMKV::getInt64, "decode an int64 value", py::arg("key"), py::arg("defaultValue") = 0, py::arg("outHasValue") = nullptr);
     clsMMKV.def("getLongUInt", &MMKV::getUInt64, "decode an unsigned int64 value", py::arg("key"),
-                py::arg("defaultValue") = 0);
+                py::arg("defaultValue") = 0, py::arg("outHasValue") = nullptr);
     //clsMMKV.def("getFloat", &MMKV::getFloat, py::arg("key"), py::arg("defaultValue") = 0);
     clsMMKV.def("getFloat", &MMKV::getDouble, "decode a float/double value", py::arg("key"),
-                py::arg("defaultValue") = 0);
+                py::arg("defaultValue") = 0, py::arg("outHasValue") = nullptr);
     clsMMKV.def(
         "getString",
         [](MMKV &kv, const string &key, const string &defaultValue) {
