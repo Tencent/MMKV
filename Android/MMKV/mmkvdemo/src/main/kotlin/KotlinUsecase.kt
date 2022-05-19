@@ -47,6 +47,9 @@ fun kotlinFunctionalTest() {
     mmkv.encode("bytes", bytes)
     println("bytes: " + mmkv.decodeBytes("bytes")?.let { String(it) })
 
+    mmkv.encode("stringSet", HashSet<String>())
+    println("empty string set: " + mmkv.decodeStringSet("stringSet"))
+
     println("allKeys: " + Arrays.toString(mmkv.allKeys()))
     println("count = " + mmkv.count() + ", totalSize = " + mmkv.totalSize())
     println("containsKey[string]: " + mmkv.containsKey("string"))
