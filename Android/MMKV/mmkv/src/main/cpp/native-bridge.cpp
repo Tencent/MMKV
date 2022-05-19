@@ -624,7 +624,6 @@ MMKV_JNI jobjectArray decodeStringSet(JNIEnv *env, jobject, jlong handle, jstrin
         string key = jstring2string(env, oKey);
         vector<string> value;
         bool hasValue = kv->getVector(key, value);
-        MMKVInfo("key %s, hasValue: %d, value.size %zu", key.c_str(), hasValue, value.size());
         if (hasValue) {
             return vector2jarray(env, value);
         }
