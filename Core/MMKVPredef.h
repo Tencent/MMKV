@@ -196,8 +196,8 @@ using MMKVMapCrypt = std::unordered_map<std::string, mmkv::KeyValueHolderCrypt>;
 template <typename T>
 void unused(const T &) {}
 
-constexpr size_t AES_KEY_LEN = 16;
-constexpr size_t AES_KEY_BITSET_LEN = 128;
+constexpr size_t AES_KEY_LEN = 32;
+constexpr size_t AES_KEY_BITSET_LEN = 256;
 
 } // namespace mmkv
 
