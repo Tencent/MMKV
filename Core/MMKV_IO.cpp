@@ -447,6 +447,8 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
             m_metaInfo->m_version = MMKVVersionActualSize;
         }
         needsFullWrite = true;
+        MMKVInfo("[%s] increase sequence to %u, crc %u, actualSize %u", m_mmapID.c_str(), m_metaInfo->m_sequence,
+                 m_metaInfo->m_crcDigest, m_metaInfo->m_actualSize);
     }
 #ifdef MMKV_IOS
     auto ret = guardForBackgroundWriting(m_metaFile->getMemory(), sizeof(MMKVMetaInfo));
