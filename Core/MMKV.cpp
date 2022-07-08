@@ -540,6 +540,7 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
         return false;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -558,6 +559,7 @@ bool MMKV::getBytes(MMKVKey_t key, mmkv::MMBuffer &result) {
         return false;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -576,6 +578,7 @@ MMBuffer MMKV::getBytes(MMKVKey_t key) {
         return MMBuffer();
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -593,6 +596,7 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
         return false;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -615,6 +619,7 @@ bool MMKV::getBool(MMKVKey_t key, bool defaultValue, bool *hasValue) {
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -641,6 +646,7 @@ int32_t MMKV::getInt32(MMKVKey_t key, int32_t defaultValue, bool *hasValue) {
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -667,6 +673,7 @@ uint32_t MMKV::getUInt32(MMKVKey_t key, uint32_t defaultValue, bool *hasValue) {
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -693,6 +700,7 @@ int64_t MMKV::getInt64(MMKVKey_t key, int64_t defaultValue, bool *hasValue) {
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -719,6 +727,7 @@ uint64_t MMKV::getUInt64(MMKVKey_t key, uint64_t defaultValue, bool *hasValue) {
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -745,6 +754,7 @@ float MMKV::getFloat(MMKVKey_t key, float defaultValue, bool *hasValue) {
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -771,6 +781,7 @@ double MMKV::getDouble(MMKVKey_t key, double defaultValue, bool *hasValue) {
         return defaultValue;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         try {
@@ -794,6 +805,7 @@ size_t MMKV::getValueSize(MMKVKey_t key, bool actualSize) {
         return 0;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (actualSize) {
         try {
@@ -819,6 +831,7 @@ int32_t MMKV::writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size) {
     auto s_size = static_cast<size_t>(size);
 
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     try {
         CodedInputData input(data.getPtr(), data.length());
