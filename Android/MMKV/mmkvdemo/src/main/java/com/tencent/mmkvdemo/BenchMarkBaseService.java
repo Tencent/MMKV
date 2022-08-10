@@ -104,6 +104,7 @@ public abstract class BenchMarkBaseService extends Service {
 
     private void mmkvBatchWriteInt(String caller) {
         Random r = new Random();
+        Log.i(TAG, caller + " mmkv write int: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
@@ -162,6 +163,7 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     private void mmkvBatchReadInt(String caller) {
+        Log.i(TAG, caller + " mmkv read int: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
@@ -212,6 +214,7 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     private void mmkvBatchWriteString(String caller) {
+        Log.i(TAG, caller + " mmkv write String: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
@@ -268,6 +271,7 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     private void mmkvBatchReadString(String caller) {
+        Log.i(TAG, caller + " mmkv read String: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
