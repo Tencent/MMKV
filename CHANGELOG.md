@@ -1,5 +1,16 @@
 # MMKV Change Log
 
+## v1.2.14 / 2022-08-10
+### Changes for All platforms
+* Fix a bug that `MMKV.getXXX()` may return invalid results in multi-process mode.
+
+### Android
+* Return `[]` instead of `null` on empty `StringSet` from `MMKV.decodeStringSet()` methods.
+* Upgrade Android Compile & Target SDK to `32`.
+
+### iOS
+* Protect from the crash in `-[MMKV getObject:forKey:]` method when the key-value doesn't exist.
+
 ## v1.2.13 / 2022-03-30
 
 ### Android
