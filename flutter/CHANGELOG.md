@@ -1,5 +1,10 @@
 # MMKV for Flutter Change Log
 
+## v1.2.15 / 2022-08-10
+* Fix a bug that `MMKV.getXXX()` may return invalid results in multi-process mode.
+* Upgrade to Flutter 3.0.
+* Keep up with MMKV native lib v1.2.14.
+
 ## v1.2.14 / 2022-03-30
 * Replace the deprecated `device_info` package with `device_info_plus`.
 * Keep up with MMKV native lib v1.2.13.
