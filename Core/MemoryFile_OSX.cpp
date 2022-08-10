@@ -61,7 +61,7 @@ bool tryAtomicRename(const char *src, const char *dst) {
     bool renamed = false;
 
     // try atomic swap first
-    if (@available(iOS 10.0, watchOS 3.0, *)) {
+    if (@available(iOS 10.0, watchOS 3.0, macOS 10.12, *)) {
         // renameat2() equivalent
         if (renamex_np(src, dst, RENAME_SWAP) == 0) {
             renamed = true;
