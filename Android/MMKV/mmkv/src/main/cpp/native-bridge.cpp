@@ -177,18 +177,15 @@ static vector<string> jarray2vector(JNIEnv *env, jobjectArray array) {
 }
 
 static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
-    if (!arr.empty()) {
-        jobjectArray result = env->NewObjectArray(arr.size(), env->FindClass("java/lang/String"), nullptr);
-        if (result) {
-            for (size_t index = 0; index < arr.size(); index++) {
-                jstring value = string2jstring(env, arr[index]);
-                env->SetObjectArrayElement(result, index, value);
-                env->DeleteLocalRef(value);
-            }
+    jobjectArray result = env->NewObjectArray(arr.size(), env->FindClass("java/lang/String"), nullptr);
+    if (result) {
+        for (size_t index = 0; index < arr.size(); index++) {
+            jstring value = string2jstring(env, arr[index]);
+            env->SetObjectArrayElement(result, index, value);
+            env->DeleteLocalRef(value);
         }
-        return result;
     }
-    return nullptr;
+    return result;
 }
 
 static JNIEnv *getCurrentEnv() {

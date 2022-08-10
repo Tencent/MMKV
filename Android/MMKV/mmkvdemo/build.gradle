@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     signingConfigs {
         config {
@@ -16,7 +16,7 @@ android {
     defaultConfig {
         applicationId "com.tencent.mmkvdemo"
         minSdkVersion 16
-        targetSdkVersion 31
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
 
@@ -76,11 +76,11 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(':mmkv')
-//    implementation 'com.tencent:mmkv:1.2.13'
-//    implementation 'com.tencent:mmkv-static:1.2.13' // this is identical to 'com.tencent:mmkv'
-//    implementation 'com.tencent:mmkv-shared:1.2.13'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+//    implementation 'com.tencent:mmkv:1.2.14'
+//    implementation 'com.tencent:mmkv-static:1.2.14' // this is identical to 'com.tencent:mmkv'
+//    implementation 'com.tencent:mmkv-shared:1.2.14'
+    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.4.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'

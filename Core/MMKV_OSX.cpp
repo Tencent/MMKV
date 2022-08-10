@@ -173,6 +173,7 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
         return nil;
     }
     SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_sharedProcessLock);
     auto data = getDataForKey(key);
     if (data.length() > 0) {
         if (MiniPBCoder::isCompatibleClass(cls)) {
@@ -185,7 +186,12 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
         } else {
             if ([cls conformsToProtocol:@protocol(NSCoding)]) {
                 auto tmp = [NSData dataWithBytesNoCopy:data.getPtr() length:data.length() freeWhenDone:NO];
-                return [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
+                try {
+                    id result = [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
+                    return result;
+                } catch (NSException *exception) {
+                    MMKVError("%s", exception.reason);
+                }
             }
         }
     }
