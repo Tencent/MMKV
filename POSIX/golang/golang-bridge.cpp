@@ -26,6 +26,7 @@
 #    include "golang-bridge.h"
 #    include <stdint.h>
 #    include <string>
+#    include <cstring>
 
 using namespace mmkv;
 using namespace std;
