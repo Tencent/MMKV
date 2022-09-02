@@ -33,12 +33,10 @@ IF(APPLE)
     add_compile_definitions(FORCE_POSIX)
 ENDIF()
 
-set(CAN_USE_ASM-ATT FALSE)
 include(CheckLanguage)
 check_language(ASM-ATT)
 IF(CMAKE_ASM-ATT_COMPILER)
     enable_language(ASM-ATT)
-    set(CAN_USE_ASM-ATT TRUE)
     IF("${ANDROID_ABI}" STREQUAL "arm64-v8a")
         SET(ASM-ATT_OPTIONS "-x assembler-with-cpp")
         SET(CMAKE_ASM-ATT_FLAGS "${CFLAGS} ${ASM-ATT_OPTIONS} -march=armv8+crypto -D__ANDROID__")
@@ -134,7 +132,7 @@ add_library(core
         MMKVPredef.h
         )
 
-IF (CAN_USE_ASM-ATT)
+IF (CMAKE_ASM-ATT_COMPILER)
     target_sources(core PRIVATE 
         aes/openssl/openssl_aesv8-armx.S
         aes/openssl/openssl_aes-armv4.S)
