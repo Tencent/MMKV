@@ -189,8 +189,8 @@ void initialize() {
 #endif     // __aarch64__ && defined(__linux__)
 
 #if defined(MMKV_DEBUG) && !defined(MMKV_DISABLE_CRYPT)
-    AESCrypt::testAESCrypt();
-    KeyValueHolderCrypt::testAESToMMBuffer();
+    // AESCrypt::testAESCrypt();
+    // KeyValueHolderCrypt::testAESToMMBuffer();
 #endif
 }
 
