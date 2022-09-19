@@ -81,7 +81,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static String initialize(Context context) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(context, root, null, logLevel);
+        return initialize(context, root, null, logLevel, null);
     }
 
     /**
@@ -93,7 +93,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static String initialize(Context context, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
-        return initialize(context, root, null, logLevel);
+        return initialize(context, root, null, logLevel, null);
     }
 
     /**
@@ -106,7 +106,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static String initialize(Context context, LibLoader loader) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(context, root, loader, logLevel);
+        return initialize(context, root, loader, logLevel, null);
     }
 
     /**
@@ -119,7 +119,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static String initialize(Context context, LibLoader loader, MMKVLogLevel logLevel) {
         String root = context.getFilesDir().getAbsolutePath() + "/mmkv";
-        return initialize(context, root, loader, logLevel);
+        return initialize(context, root, loader, logLevel, null);
     }
 
     /**
@@ -131,7 +131,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static String initialize(Context context, String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(context, rootDir, null, logLevel);
+        return initialize(context, rootDir, null, logLevel, null);
     }
 
     /**
@@ -143,7 +143,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @return The root folder of MMKV.
      */
     public static String initialize(Context context, String rootDir, MMKVLogLevel logLevel) {
-        return initialize(context, rootDir, null, logLevel);
+        return initialize(context, rootDir, null, logLevel, null);
     }
 
     /**
@@ -156,7 +156,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static String initialize(Context context, String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return initialize(context, rootDir, loader, logLevel);
+        return initialize(context, rootDir, loader, logLevel, null);
     }
 
     /**
@@ -169,6 +169,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @return The root folder of MMKV.
      */
     public static String initialize(Context context, String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
+        return initialize(context, rootDir, loader, logLevel, null);
+    }
+
+    public static String initialize(Context context, String rootDir, LibLoader loader, MMKVLogLevel logLevel, MMKVHandler handler) {
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
         //  If any one knows how, you're welcome to make a contribution.
@@ -178,10 +182,21 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             enableProcessModeChecker();
         }
         String cacheDir = context.getCacheDir().getAbsolutePath();
-        return doInitialize(rootDir, cacheDir, loader, logLevel);
+
+        gCallbackHandler = handler;
+        if (gCallbackHandler != null && gCallbackHandler.wantLogRedirecting()) {
+            gWantLogReDirecting = true;
+        }
+
+        String ret = doInitialize(rootDir, cacheDir, loader, logLevel, gWantLogReDirecting);
+
+        if (gCallbackHandler != null) {
+            setCallbackHandler(gWantLogReDirecting, true);
+        }
+        return ret;
     }
 
-    private static String doInitialize(String rootDir, String cacheDir, LibLoader loader, MMKVLogLevel logLevel) {
+    private static String doInitialize(String rootDir, String cacheDir, LibLoader loader, MMKVLogLevel logLevel, boolean wantLogReDirecting) {
         if (loader != null) {
             if (BuildConfig.FLAVOR.equals("SharedCpp")) {
                 loader.loadLibrary("c++_shared");
@@ -193,7 +208,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             }
             System.loadLibrary("mmkv");
         }
-        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel));
+        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel), wantLogReDirecting);
         MMKV.rootDir = rootDir;
         return MMKV.rootDir;
     }
@@ -205,7 +220,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
     }
 
     /**
@@ -214,7 +229,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
     }
 
     /**
@@ -224,7 +239,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
     }
 
     /**
@@ -233,7 +248,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel);
+        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
     }
 
     static private String rootDir = null;
@@ -1188,17 +1203,13 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Register a handler for MMKV log redirecting, and error handling.
+     * @deprecated This method is deprecated.
+     * Use the {@link #initialize(Context, String, LibLoader, MMKVLogLevel, MMKVHandler)} method instead.
      */
     public static void registerHandler(MMKVHandler handler) {
         gCallbackHandler = handler;
-
-        if (gCallbackHandler.wantLogRedirecting()) {
-            setCallbackHandler(true, true);
-            gWantLogReDirecting = true;
-        } else {
-            setCallbackHandler(false, true);
-            gWantLogReDirecting = false;
-        }
+        gWantLogReDirecting = gCallbackHandler.wantLogRedirecting();
+        setCallbackHandler(gWantLogReDirecting, true);
     }
 
     /**
@@ -1305,7 +1316,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         nativeHandle = handle;
     }
 
-    private static native void jniInitialize(String rootDir, String cacheDir, int level);
+    private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting);
 
     private native static long
     getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath);
