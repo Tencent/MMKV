@@ -22,17 +22,17 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
             public void loadLibrary(String libName) {
                 ReLinker.loadLibrary(MyApplication.this, libName);
             }
-        }, MMKVLogLevel.LevelInfo);
+        }, MMKVLogLevel.LevelInfo,this);
         Log.i("MMKV", "mmkv root: " + rootDir);
 
         // set log level
-        MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
+        // MMKV.setLogLevel(MMKVLogLevel.LevelInfo);
 
         // you can turn off logging
         //MMKV.setLogLevel(MMKVLogLevel.LevelNone);
 
-        // log redirecting & recover logic
-        MMKV.registerHandler(this);
+        // register log redirecting & recover handler is moved into MMKV.initialize()
+        // MMKV.registerHandler(this);
 
         // content change notification
         MMKV.registerContentChangeNotify(this);
