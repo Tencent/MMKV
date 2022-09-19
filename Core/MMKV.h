@@ -156,7 +156,7 @@ class MMKV {
 
 public:
     // call this before getting any MMKV instance
-    static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo);
+    static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo, mmkv::LogHandler handler = nullptr);
 
 #ifdef MMKV_APPLE
     // protect from some old code that don't call initializeMMKV()

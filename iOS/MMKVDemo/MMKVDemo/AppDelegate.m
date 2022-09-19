@@ -42,13 +42,11 @@
         NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.tencent.mmkv"].path;
 
         // you can turn off logging by passing MMKVLogNone
-        [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:MMKVLogInfo];
+        // register handler on init
+        [MMKV initializeMMKV:rootDir groupDir:groupDir logLevel:MMKVLogInfo handler:self];
 
         NSLog(@"MMKV version: %@", [MMKV version]);
     }
-
-    // register handler
-    [MMKV registerHandler:self];
 
     // enable auto clean up
     uint32_t maxIdleMinutes = 1;
