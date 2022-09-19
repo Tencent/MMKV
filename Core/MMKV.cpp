@@ -196,8 +196,9 @@ void initialize() {
 
 ThreadOnceToken_t once_control = ThreadOnceUninitialized;
 
-void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
+void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::LogHandler handler) {
     g_currentLogLevel = logLevel;
+    g_logHandler = handler;
 
     ThreadLock::ThreadOnce(&once_control, initialize);
 
