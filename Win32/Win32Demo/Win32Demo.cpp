@@ -316,9 +316,9 @@ int main() {
     srand(GetTickCount());
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-MMKV");
-    MMKV::initializeMMKV(rootDir);
+    MMKV::initializeMMKV(rootDir, MMKVLogInfo, LogHandler);
     //MMKV::setLogLevel(MMKVLogNone);
-    MMKV::registerLogHandler(LogHandler);
+    //MMKV::registerLogHandler(LogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
     auto cryptKey = string("cryptKey");
