@@ -9,11 +9,12 @@ import (
 )
 
 func main() {
-	// init MMKV with root dir
-	mmkv.InitializeMMKV("/tmp/mmkv")
+	// init MMKV with root dir and log redirecting
+	mmkv.InitializeMMKVWithLogLevelAndHandler("/tmp/mmkv", mmkv.MMKVLogInfo, logHandler)
 
 	// you can set log redirecting
-	mmkv.RegisterLogHandler(logHandler)
+	// mmkv.RegisterLogHandler(logHandler)
+
 	// you can set error handler
 	mmkv.RegisterErrorHandler(errorHandler)
 	// you can get notify content change by other process (not in realtime)
