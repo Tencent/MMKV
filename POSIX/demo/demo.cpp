@@ -366,9 +366,9 @@ int main() {
     srand((uint64_t) &c);
 
     string rootDir = "/tmp/mmkv";
-    MMKV::initializeMMKV(rootDir);
-    //MMKV::setLogLevel(MMKVLogNone);
-    MMKV::registerLogHandler(MyLogHandler);
+    MMKV::initializeMMKV(rootDir, MMKVLogInfo, MyLogHandler);
+    // MMKV::setLogLevel(MMKVLogNone);
+    // MMKV::registerLogHandler(MyLogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
     string aesKey = "cryptKey";
