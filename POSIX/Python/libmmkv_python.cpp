@@ -114,8 +114,15 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsMMKV.def("__eq__", [](MMKV &kv, const MMKV &other) { return kv.mmapID() == other.mmapID(); });
 
-    clsMMKV.def_static("initializeMMKV", &MMKV::initializeMMKV, "must call this before getting any MMKV instance",
-                       py::arg("rootDir"), py::arg("logLevel") = MMKVLogNone);
+    clsMMKV.def_static("initializeMMKV", [](const string &rootDir, MMKVLogLevel logLevel, decltype(g_logHandler) logHandler) {
+            if (logHandler) {
+                g_logHandler = move(logHandler);
+                MMKV::initializeMMKV(rootDir, logLevel, MyLogHandler);
+            } else {
+                MMKV::initializeMMKV(rootDir, logLevel, nullptr);
+            }
+        }, "must call this before getting any MMKV instance",
+                       py::arg("rootDir"), py::arg("logLevel") = MMKVLogNone, py::arg("log_handler") = nullptr);
 
     clsMMKV.def_static(
         "defaultMMKV",

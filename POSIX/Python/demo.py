@@ -111,8 +111,8 @@ def content_change_handler(mmap_id):
 
 
 if __name__ == '__main__':
-    # you can enable logging
-    # mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info)
+    # you can enable logging & log handler
+    # mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info, logger)
     mmkv.MMKV.initializeMMKV('/tmp/mmkv')
 
     # redirect logging
