@@ -213,13 +213,19 @@ func main() {
 }
 */
 func InitializeMMKV(rootDir string) {
-	C.mmkvInitialize(C.wrapGoString(rootDir), MMKVLogInfo)
+	C.mmkvInitialize(C.wrapGoString(rootDir), MMKVLogInfo, C.bool(false))
 }
 
 // Same as the function InitializeMMKV() above, except that you can customize MMKV's log level by passing logLevel.
 // You can even turnoff logging by passing MMKVLogNone, which we don't recommend doing.
 func InitializeMMKVWithLogLevel(rootDir string, logLevel int) {
-	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel))
+	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(false))
+}
+
+// Same as the function InitializeMMKVWithLogLevel() above, except that you can provide a logHandler at the very beginning.
+func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandler LogHandler) {
+    gLogHandler = logHandler
+	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(true))
 }
 
 // Call before App exists, it's just fine not calling it on most case (except when the device shutdown suddenly).
