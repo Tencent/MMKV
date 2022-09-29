@@ -88,7 +88,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     if (rootDir != nil) {
         [g_basePath release];
         g_basePath = [rootDir retain];
+    } else {
+        [self mmkvBasePath];
     }
+    NSAssert(g_basePath.length > 0, @"MMKV not initialized properly, must not call +initializeMMKV: before -application:didFinishLaunchingWithOptions:");
     mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel, logHandler);
 
     if ([g_callbackHandler respondsToSelector:@selector(onMMKVCRCCheckFail:)] ||
