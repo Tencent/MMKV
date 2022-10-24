@@ -186,10 +186,10 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
         } else {
             if ([cls conformsToProtocol:@protocol(NSCoding)]) {
                 auto tmp = [NSData dataWithBytesNoCopy:data.getPtr() length:data.length() freeWhenDone:NO];
-                try {
+                @try {
                     id result = [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
                     return result;
-                } catch (NSException *exception) {
+                } @catch (NSException *exception) {
                     MMKVError("%s", exception.reason);
                 }
             }
