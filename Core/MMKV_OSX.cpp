@@ -189,8 +189,7 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
                 @try {
                     id result = [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
                     return result;
-                }
-                @catch (NSException *exception) {
+                } @catch (NSException *exception) {
                     MMKVError("%s", exception.reason);
                 }
             }
