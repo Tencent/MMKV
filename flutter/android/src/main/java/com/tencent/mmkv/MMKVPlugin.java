@@ -50,6 +50,9 @@ public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
             final int logLevel = call.argument("logLevel");
             final String ret = MMKV.initialize(rootDir, MMKVLogLevel.values()[logLevel]);
             result.success(ret);
+        } else if (call.method.equals("getSdkVersion")) {
+            final int sdkVersion = getSdkVersion();
+            result.success(sdkVersion);
         } else {
             result.notImplemented();
         }
@@ -58,5 +61,9 @@ public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
         channel.setMethodCallHandler(null);
+    }
+
+    private int getSdkVersion() {
+        return Integer.parseInt(android.os.Build.VERSION.SDK);
     }
 }
