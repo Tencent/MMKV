@@ -289,3 +289,4 @@ Check out the [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ) first. Should ther
 
 ## Personal Information Protection Rules
 User privacy is taken very seriously: MMKV does not obtain, collect or upload any personal information. Please refer to the [MMKV SDK Personal Information Protection Rules](https://support.weixin.qq.com/cgi-bin/mmsupportacctnodeweb-bin/pages/aY5BAtRiO1BpoHxo) for details.
+## lorem
