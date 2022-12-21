@@ -980,8 +980,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Override
     public Map<String, ?> getAll() {
-        throw new java.lang.UnsupportedOperationException(
-            "Intentionally Not Supported. Use allKeys() instead, getAll() not implement because type-erasure inside mmkv");
+        String[] keys = allKeys();
+        Map<String, Object> result = new HashMap<>();
+        if (keys != null) {
+            for (String key : keys) {
+                result.put(key, new Object());
+            }
+        }
+        return result;
     }
 
     @Nullable
