@@ -976,12 +976,15 @@ void MMKV::sync(SyncFlag flag) {
 }
 
 void MMKV::lock() {
+    SCOPED_LOCK(m_lock);
     m_exclusiveProcessLock->lock();
 }
 void MMKV::unlock() {
+    SCOPED_LOCK(m_lock);
     m_exclusiveProcessLock->unlock();
 }
 bool MMKV::try_lock() {
+    SCOPED_LOCK(m_lock);
     return m_exclusiveProcessLock->try_lock();
 }
 
