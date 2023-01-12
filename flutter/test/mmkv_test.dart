@@ -18,15 +18,31 @@
  * limitations under the License.
  */
 
-import 'package:test/test.dart';
-import 'package:mmkv/mmkv.dart';
+import "package:mmkv/mmkv.dart";
+import "package:test/test.dart";
 
 void main() {
-  test('Counter value should be incremented', () {
+  test("Int value should be written and read", () {
     final mmkv = MMKV.defaultMMKV();
 
     mmkv.encodeInt("int", 1024);
 
     expect(mmkv.decodeInt("int"), 1024);
+  });
+
+  test("String value should be written and read", () {
+    final mmkv = MMKV.defaultMMKV();
+
+    mmkv.encodeString("string", "test");
+
+    expect(mmkv.decodeInt("string"), "test");
+  });
+
+  test("bool value should be written and read", () {
+    final mmkv = MMKV.defaultMMKV();
+
+    mmkv.encodeBool("bool", true);
+
+    expect(mmkv.decodeBool("bool"), true);
   });
 }
