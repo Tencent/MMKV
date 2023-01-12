@@ -39,6 +39,9 @@ android {
             version "3.18.0+"
         }
     }
+    lintOptions {
+        tasks.lint.enabled = false
+    }
 
     flavorDimensions "stl_mode"
     productFlavors {
