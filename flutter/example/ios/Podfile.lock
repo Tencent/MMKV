@@ -2,12 +2,12 @@ PODS:
   - device_info_plus (0.0.1):
     - Flutter
   - Flutter (1.0.0)
-  - MMKV (1.2.14):
-    - MMKVCore (~> 1.2.14)
-  - MMKVCore (1.2.14)
-  - mmkvflutter (1.2.14):
+  - MMKV (1.2.15):
+    - MMKVCore (~> 1.2.15)
+  - MMKVCore (1.2.15)
+  - mmkvflutter (1.2.15):
     - Flutter
-    - MMKV (>= 1.2.14)
+    - MMKV (>= 1.2.15)
   - path_provider_ios (0.0.1):
     - Flutter
 
@@ -35,9 +35,9 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   device_info_plus: e5c5da33f982a436e103237c0c85f9031142abed
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
-  MMKV: 9c4663aa7ca255d478ff10f2f5cb7d17c1651ccd
-  MMKVCore: 89f5c8a66bba2dcd551779dea4d412eeec8ff5bb
-  mmkvflutter: 325713a470a4015625dfd829070745c5ca852df6
+  MMKV: 7f34558bbb5a33b0eaefae2de4b6a20a2ffdad6f
+  MMKVCore: ddf41b9d9262f058419f9ba7598719af56c02cd3
+  mmkvflutter: adff7ed724316d0cea22d65b59f43d467fc57403
   path_provider_ios: 14f3d2fd28c4fdb42f44e0f751d12861c43cee02
 
 PODFILE CHECKSUM: 5892152591d599b8a50589fd8872b0421e2fc7b5
