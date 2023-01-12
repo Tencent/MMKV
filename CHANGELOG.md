@@ -1,5 +1,25 @@
 # MMKV Change Log
 
+## v1.2.15 / 2023-01-12
+### Changes for All platforms
+* Log handler now handles all logs from the very beginning, especially the logs in initialization.
+* Log handler register method is now deprecated. It's integrated with `initialize()`.
+* Fix a bug that `lock()`/`unlock()`/`try_lock()` is not thread-safe.
+
+### Flutter
+* Reduce the privacy info needed to obtain android `sdkInt`, avoid unnecessary risk on Android App Review.
+
+### iOS & macOS
+* Fix a compile error on macOS.
+* Fix a bug that some ObjC exceptions are not being caught.
+* Add assert on nil MMKV base path, protect from mis-using MMKV in global variable initialization.
+
+### golang
+* Fix a compile error on GCC.
+
+### Win32
+* Support CMake project on Windows.
+
 ## v1.2.14 / 2022-08-10
 ### Changes for All platforms
 * Fix a bug that `MMKV.getXXX()` may return invalid results in multi-process mode.
