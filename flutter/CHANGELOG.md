@@ -1,5 +1,11 @@
 # MMKV for Flutter Change Log
 
+## v1.2.16 / 2023-01-12
+* Reduce the privacy info needed to obtain android sdkInt, avoid unnecessary risk on Android App Review.
+* Log handler now handles all logs from the very beginning, especially the logs in initialization.
+* Log handler register method is now deprecated. It's integrated with initialize().
+* Keep up with MMKV native lib v1.2.15.
+
 ## v1.2.15 / 2022-08-10
 * Fix a bug that `MMKV.decodeXXX()` may return invalid results in multi-process mode.
 * Upgrade to Flutter 3.0.
