@@ -26,17 +26,21 @@
 #    include "golang-bridge.h"
 #    include <stdint.h>
 #    include <string>
+#    include <cstring>
 
 using namespace mmkv;
 using namespace std;
 
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
-MMKV_EXPORT void mmkvInitialize(GoStringWrap rootDir, int32_t logLevel) {
+void cLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message);
+
+MMKV_EXPORT void mmkvInitialize(GoStringWrap rootDir, int32_t logLevel, bool redirect) {
     if (!rootDir.ptr) {
         return;
     }
-    MMKV::initializeMMKV(string(rootDir.ptr, rootDir.length), (MMKVLogLevel) logLevel);
+    mmkv::LogHandler handler = redirect ? cLogHandler : nullptr;
+    MMKV::initializeMMKV(string(rootDir.ptr, rootDir.length), (MMKVLogLevel) logLevel, handler);
 }
 
 MMKV_EXPORT void onExit() {

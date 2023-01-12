@@ -44,10 +44,23 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// call this in main thread, before calling any other MMKV methods
 /// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
+/// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
+/// @return root dir of MMKV
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel handler:(nullable id<MMKVHandler>)handler NS_SWIFT_NAME(initialize(rootDir:logLevel:handler:));
+
+/// call this in main thread, before calling any other MMKV methods
+/// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
 /// @param groupDir the root dir of multi-process MMKV, MMKV with MMKVMultiProcess mode will be stored in groupDir/mmkv
 /// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
 /// @return root dir of MMKV
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel NS_SWIFT_NAME(initialize(rootDir:groupDir:logLevel:));
+
+/// call this in main thread, before calling any other MMKV methods
+/// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
+/// @param groupDir the root dir of multi-process MMKV, MMKV with MMKVMultiProcess mode will be stored in groupDir/mmkv
+/// @param logLevel MMKVLogInfo by default, MMKVLogNone to disable all logging
+/// @return root dir of MMKV
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel handler:(nullable id<MMKVHandler>)handler NS_SWIFT_NAME(initialize(rootDir:groupDir:logLevel:handler:));
 
 /// a generic purpose instance (in MMKVSingleProcess mode)
 + (nullable instancetype)defaultMMKV;
@@ -278,7 +291,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// check if content changed by other process
 - (void)checkContentChanged;
 
-+ (void)registerHandler:(id<MMKVHandler>)handler;
++ (void)registerHandler:(id<MMKVHandler>)handler __attribute__((deprecated("use +initializeMMKV:logLevel:handler: instead")));
 + (void)unregiserHandler;
 
 /// MMKVLogInfo by default

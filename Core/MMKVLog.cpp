@@ -28,7 +28,7 @@ MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
 MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
 #endif
 
-mmkv::LogHandler g_logHandler;
+mmkv::LogHandler g_logHandler = nullptr;
 
 #ifndef __FILE_NAME__
 const char *_getFileName(const char *path) {

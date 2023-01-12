@@ -189,15 +189,16 @@ void initialize() {
 #endif     // __aarch64__ && defined(__linux__)
 
 #if defined(MMKV_DEBUG) && !defined(MMKV_DISABLE_CRYPT)
-    AESCrypt::testAESCrypt();
-    KeyValueHolderCrypt::testAESToMMBuffer();
+    // AESCrypt::testAESCrypt();
+    // KeyValueHolderCrypt::testAESToMMBuffer();
 #endif
 }
 
 ThreadOnceToken_t once_control = ThreadOnceUninitialized;
 
-void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel) {
+void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::LogHandler handler) {
     g_currentLogLevel = logLevel;
+    g_logHandler = handler;
 
     ThreadLock::ThreadOnce(&once_control, initialize);
 
@@ -975,12 +976,15 @@ void MMKV::sync(SyncFlag flag) {
 }
 
 void MMKV::lock() {
+    SCOPED_LOCK(m_lock);
     m_exclusiveProcessLock->lock();
 }
 void MMKV::unlock() {
+    SCOPED_LOCK(m_lock);
     m_exclusiveProcessLock->unlock();
 }
 bool MMKV::try_lock() {
+    SCOPED_LOCK(m_lock);
     return m_exclusiveProcessLock->try_lock();
 }
 

@@ -59,57 +59,81 @@ static void ContentChangeHandler(const string &mmapID);
 
 #pragma mark - init
 
-// protect from some old code that don't call +initializeMMKV:
-+ (void)initialize {
-    if (self == MMKV.class) {
-        g_instanceDic = [[NSMutableDictionary alloc] init];
-        g_lock = new mmkv::ThreadLock();
-        g_lock->initialize();
-
-        mmkv::MMKV::minimalInit([self mmkvBasePath].UTF8String);
-
-#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
-        // just in case someone forget to set the MMKV_IOS_EXTENSION macro
-        if ([[[NSBundle mainBundle] bundlePath] hasSuffix:@".appex"]) {
-            g_isRunningInAppExtension = YES;
-        }
-        if (!g_isRunningInAppExtension) {
-            auto appState = [UIApplication sharedApplication].applicationState;
-            auto isInBackground = (appState == UIApplicationStateBackground);
-            mmkv::MMKV::setIsInBackground(isInBackground);
-            MMKVInfo("appState:%ld", (long) appState);
-
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
-        }
-#endif
-    }
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir {
+    return [MMKV initializeMMKV:rootDir logLevel:MMKVLogInfo handler:nil];
 }
 
-+ (NSString *)initializeMMKV:(nullable NSString *)rootDir {
-    return [MMKV initializeMMKV:rootDir logLevel:MMKVLogInfo];
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel {
+    return [MMKV initializeMMKV:rootDir logLevel:logLevel handler:nil];
 }
 
 static BOOL g_hasCalledInitializeMMKV = NO;
 
-+ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel {
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel handler:(id<MMKVHandler>)handler {
     if (g_hasCalledInitializeMMKV) {
         MMKVWarning("already called +initializeMMKV before, ignore this request");
         return [self mmkvBasePath];
     }
-    g_hasCalledInitializeMMKV = YES;
+    g_instanceDic = [[NSMutableDictionary alloc] init];
+    g_lock = new mmkv::ThreadLock();
+    g_lock->initialize();
+
+    g_callbackHandler = handler;
+    mmkv::LogHandler logHandler = nullptr;
+    if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
+        g_isLogRedirecting = true;
+        logHandler = LogHandler;
+    }
 
     if (rootDir != nil) {
         [g_basePath release];
         g_basePath = [rootDir retain];
+    } else {
+        [self mmkvBasePath];
     }
-    mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel);
+    NSAssert(g_basePath.length > 0, @"MMKV not initialized properly, must not call +initializeMMKV: before -application:didFinishLaunchingWithOptions:");
+    mmkv::MMKV::initializeMMKV(g_basePath.UTF8String, (mmkv::MMKVLogLevel) logLevel, logHandler);
+
+    if ([g_callbackHandler respondsToSelector:@selector(onMMKVCRCCheckFail:)] ||
+        [g_callbackHandler respondsToSelector:@selector(onMMKVFileLengthError:)]) {
+        mmkv::MMKV::registerErrorHandler(ErrorHandler);
+    }
+    if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
+        mmkv::MMKV::registerContentChangeHandler(ContentChangeHandler);
+    }
+
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
+    // just in case someone forget to set the MMKV_IOS_EXTENSION macro
+    if ([[[NSBundle mainBundle] bundlePath] hasSuffix:@".appex"]) {
+        g_isRunningInAppExtension = YES;
+    }
+    if (!g_isRunningInAppExtension) {
+        auto appState = [UIApplication sharedApplication].applicationState;
+        auto isInBackground = (appState == UIApplicationStateBackground);
+        mmkv::MMKV::setIsInBackground(isInBackground);
+        MMKVInfo("appState:%ld", (long) appState);
+
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+    }
+#endif
+
+    g_hasCalledInitializeMMKV = YES;
 
     return [self mmkvBasePath];
 }
 
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel {
-    auto ret = [MMKV initializeMMKV:rootDir logLevel:logLevel];
+    auto ret = [MMKV initializeMMKV:rootDir logLevel:logLevel handler:nil];
+
+    g_groupPath = [[groupDir stringByAppendingPathComponent:@"mmkv"] retain];
+    MMKVInfo("groupDir: %@", g_groupPath);
+
+    return ret;
+}
+
++ (NSString *)initializeMMKV:(nullable NSString *)rootDir groupDir:(NSString *)groupDir logLevel:(MMKVLogLevel)logLevel handler:(nullable id<MMKVHandler>)handler {
+    auto ret = [MMKV initializeMMKV:rootDir logLevel:logLevel handler:handler];
 
     g_groupPath = [[groupDir stringByAppendingPathComponent:@"mmkv"] retain];
     MMKVInfo("groupDir: %@", g_groupPath);
@@ -163,9 +187,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 // relatePath and MMKVMultiProcess mode can't be set at the same time, so we hide this method from public
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode {
-    if (!g_hasCalledInitializeMMKV) {
-        MMKVError("MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
-    }
+    NSAssert(g_hasCalledInitializeMMKV, @"MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
     if (mmapID.length <= 0) {
         return nil;
     }

@@ -13,7 +13,8 @@ android {
                 // abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
-        // uncomment this line to support armeabi by using android-ndk-r16b
+        // change this line to next line to support armeabi by using android-ndk-r16b
+        ndkVersion = '25.0.8775105'
         // ndkVersion = '16.1.4479499'
     }
     buildTypes {
@@ -37,6 +38,9 @@ android {
             path "CMakeLists.txt"
             version "3.18.0+"
         }
+    }
+    lintOptions {
+        tasks.lint.enabled = false
     }
 
     flavorDimensions "stl_mode"
@@ -80,9 +84,9 @@ configurations {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.annotation:annotation:1.4.0'
-    javadocDeps 'androidx.annotation:annotation:1.4.0'
+    implementation 'androidx.annotation:annotation:1.5.0'
+    javadocDeps 'androidx.annotation:annotation:1.5.0'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }

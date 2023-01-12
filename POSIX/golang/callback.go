@@ -33,6 +33,8 @@ type LogHandler func(level int, file string, line int, function string, message 
 var gLogHandler LogHandler
 
 // register a log callback
+//
+// Deprecated: use mmkv.InitializeMMKVWithLogLevelAndHandler(rootDir, logLevel, logHandler) instead.
 func RegisterLogHandler(logHandler LogHandler) {
 	gLogHandler = logHandler
 
