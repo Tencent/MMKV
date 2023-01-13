@@ -30,13 +30,13 @@ import "package:flutter/services.dart";
 import "package:path_provider/path_provider.dart";
 
 /// Log level for MMKV.
-enum MMKVLogLevel { debug, info, warning, error, none }
+enum MMKVLogLevel { Debug, Info, Warning, Error, None }
 
-/// Process mode for MMKV, default to [singleProcessMode].
+/// Process mode for MMKV, default to [SINGLE_PROCESS_MODE].
 enum MMKVMode {
-  invalidMode,
-  singleProcessMode,
-  multiProcessMode,
+  INVALID_MODE,
+  SINGLE_PROCESS_MODE,
+  MULTI_PROCESS_MODE,
 }
 
 /// A native memory buffer, must call [MMBuffer.destroy()] after no longer use.
@@ -152,7 +152,7 @@ class MMKV {
   static Future<String> initialize(
       {String? rootDir,
       String? groupDir,
-      MMKVLogLevel logLevel = MMKVLogLevel.info}) async {
+      MMKVLogLevel logLevel = MMKVLogLevel.Info}) async {
     WidgetsFlutterBinding.ensureInitialized();
 
     if (rootDir == null) {
@@ -200,7 +200,7 @@ class MMKV {
   static MMKV defaultMMKV({String? cryptKey}) {
     final mmkv = MMKV("");
     final cryptKeyPtr = _string2Pointer(cryptKey);
-    const mode = MMKVMode.singleProcessMode;
+    const mode = MMKVMode.SINGLE_PROCESS_MODE;
     mmkv._handle = _getDefaultMMKV(mode.index, cryptKeyPtr);
     calloc.free(cryptKeyPtr);
     return mmkv;
@@ -213,7 +213,7 @@ class MMKV {
   /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
   /// * You can customize the [rootDir] of the file.
   MMKV(String mmapID,
-      {MMKVMode mode = MMKVMode.singleProcessMode,
+      {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE,
       String? cryptKey,
       String? rootDir}) {
     if (mmapID.isNotEmpty) {
