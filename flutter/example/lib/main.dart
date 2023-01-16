@@ -18,17 +18,18 @@
  * limitations under the License.
  */
 
-import "dart:async";
-import "dart:convert";
-import "dart:io";
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
-import "package:flutter/material.dart";
-import "package:mmkv/mmkv.dart";
+import 'package:flutter/material.dart';
+import 'package:mmkv/mmkv.dart';
 
 void main() async {
   // must wait for MMKV to finish initialization
   final rootDir = await MMKV.initialize();
-  print("MMKV for flutter with rootDir = $rootDir");
+  print('MMKV for flutter with rootDir = $rootDir');
 
   runApp(MyApp());
 }
@@ -60,27 +61,27 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text("MMKV Plugin example app"),
+          title: const Text('MMKV Plugin example app'),
         ),
         body: Center(
             child: Column(children: <Widget>[
-          Text("MMKV Version: ${MMKV.version}\n"),
+          Text('MMKV Version: ${MMKV.version}\n'),
           TextButton(
               onPressed: () {
                 functionalTest();
               },
-              child: Text("Functional Test", style: TextStyle(fontSize: 18))),
+              child: Text('Functional Test', style: TextStyle(fontSize: 18))),
           TextButton(
               onPressed: () {
                 testReKey();
               },
-              child: Text("Encryption Test", style: TextStyle(fontSize: 18))),
+              child: Text('Encryption Test', style: TextStyle(fontSize: 18))),
           TextButton(
               onPressed: () {
                 testBackup();
                 testRestore();
               },
-              child: Text("Backup & Restore Test",
+              child: Text('Backup & Restore Test',
                   style: TextStyle(fontSize: 18))),
         ])),
       ),
@@ -92,59 +93,81 @@ class _MyAppState extends State<MyApp> {
      * you can try passing this encryption key '\u{2}U' instead.
      * var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
      */
-    final mmkv = MMKV.defaultMMKV();
-    mmkv.encodeBool("bool", true);
+    var mmkv = MMKV.defaultMMKV();
+    mmkv.encodeBool('bool', true);
     print('bool = ${mmkv.decodeBool('bool')}');
 
-    mmkv.encodeInt32("int32", (1 << 31) - 1);
+    mmkv.encodeInt32('int32', (1 << 31) - 1);
     print('max int32 = ${mmkv.decodeInt32('int32')}');
 
-    mmkv.encodeInt32("int32", 0 - (1 << 31));
+    mmkv.encodeInt32('int32', 0 - (1 << 31));
     print('min int32 = ${mmkv.decodeInt32('int32')}');
 
-    mmkv.encodeInt("int", (1 << 63) - 1);
+    mmkv.encodeInt('int', (1 << 63) - 1);
     print('max int = ${mmkv.decodeInt('int')}');
 
-    mmkv.encodeInt("int", 0 - (1 << 63));
+    mmkv.encodeInt('int', 0 - (1 << 63));
     print('min int = ${mmkv.decodeInt('int')}');
 
-    mmkv.encodeDouble("double", double.maxFinite);
+    mmkv.encodeDouble('double', double.maxFinite);
     print('max double = ${mmkv.decodeDouble('double')}');
 
-    mmkv.encodeDouble("double", double.minPositive);
+    mmkv.encodeDouble('double', double.minPositive);
     print('min positive double = ${mmkv.decodeDouble('double')}');
 
-    String str = "Hello dart from MMKV";
-    mmkv.encodeString("string", str);
+    String str = 'Hello dart from MMKV';
+    mmkv.encodeString('string', str);
     print('string = ${mmkv.decodeString('string')}');
 
-    mmkv.encodeString("string", "");
+    mmkv.encodeString('string', '');
     print('empty string = ${mmkv.decodeString('string')}');
     print('contains "string": ${mmkv.containsKey('string')}');
 
-    mmkv.encodeString("string", null);
+    mmkv.encodeString('string', null);
     print('null string = ${mmkv.decodeString('string')}');
     print('contains "string": ${mmkv.containsKey('string')}');
 
-    str += " with bytes";
+    str += ' with bytes';
     var bytes = MMBuffer.fromList(Utf8Encoder().convert(str))!;
-    mmkv.encodeBytes("bytes", bytes);
+    mmkv.encodeBytes('bytes', bytes);
     bytes.destroy();
-    bytes = mmkv.decodeBytes("bytes")!;
-    print("bytes = ${Utf8Decoder().convert(bytes.asList()!)}");
+    bytes = mmkv.decodeBytes('bytes')!;
+    print('bytes = ${Utf8Decoder().convert(bytes.asList()!)}');
     bytes.destroy();
 
+    // test empty bytes
+    {
+      final list = Uint8List(0);
+      final buffer = MMBuffer.fromList(list)!;
+
+      const key = 'empty_bytes';
+      mmkv.encodeBytes(key, buffer);
+      buffer.destroy();
+
+      String bytesA;
+      final result = mmkv.decodeBytes(key);
+      if (result == null) {
+        bytesA = 'decodeBytes is null';
+      } else {
+        // bytes = result.takeList().toString();
+        final listA = result.asList();
+        bytesA = listA.toString();
+        result.destroy();
+      }
+      print('$key = $bytesA');
+    }
+
     print('contains "bool": ${mmkv.containsKey('bool')}');
-    mmkv.removeValue("bool");
+    mmkv.removeValue('bool');
     print('after remove, contains "bool": ${mmkv.containsKey('bool')}');
-    mmkv.removeValues(["int32", "int"]);
-    print("all keys: ${mmkv.allKeys}");
+    mmkv.removeValues(['int32', 'int']);
+    print('all keys: ${mmkv.allKeys}');
 
     mmkv.trim();
     mmkv.clearMemoryCache();
-    print("all keys: ${mmkv.allKeys}");
+    print('all keys: ${mmkv.allKeys}');
     mmkv.clearAll();
-    print("all keys: ${mmkv.allKeys}");
+    print('all keys: ${mmkv.allKeys}');
     // mmkv.sync(true);
     // mmkv.close();
   }
@@ -154,76 +177,76 @@ class _MyAppState extends State<MyApp> {
     final mmkv = MMKV(mmapID, cryptKey: cryptKey, rootDir: rootPath);
 
     if (!decodeOnly) {
-      mmkv.encodeBool("bool", true);
+      mmkv.encodeBool('bool', true);
     }
     print('bool = ${mmkv.decodeBool('bool')}');
 
     if (!decodeOnly) {
-      mmkv.encodeInt32("int32", (1 << 31) - 1);
+      mmkv.encodeInt32('int32', (1 << 31) - 1);
     }
     print('max int32 = ${mmkv.decodeInt32('int32')}');
 
     if (!decodeOnly) {
-      mmkv.encodeInt32("int32", 0 - (1 << 31));
+      mmkv.encodeInt32('int32', 0 - (1 << 31));
     }
     print('min int32 = ${mmkv.decodeInt32('int32')}');
 
     if (!decodeOnly) {
-      mmkv.encodeInt("int", (1 << 63) - 1);
+      mmkv.encodeInt('int', (1 << 63) - 1);
     }
     print('max int = ${mmkv.decodeInt('int')}');
 
     if (!decodeOnly) {
-      mmkv.encodeInt("int", 0 - (1 << 63));
+      mmkv.encodeInt('int', 0 - (1 << 63));
     }
     print('min int = ${mmkv.decodeInt('int')}');
 
     if (!decodeOnly) {
-      mmkv.encodeDouble("double", double.maxFinite);
+      mmkv.encodeDouble('double', double.maxFinite);
     }
     print('max double = ${mmkv.decodeDouble('double')}');
 
     if (!decodeOnly) {
-      mmkv.encodeDouble("double", double.minPositive);
+      mmkv.encodeDouble('double', double.minPositive);
     }
     print('min positive double = ${mmkv.decodeDouble('double')}');
 
-    String str = "Hello dart from MMKV";
+    String str = 'Hello dart from MMKV';
     if (!decodeOnly) {
-      mmkv.encodeString("string", str);
+      mmkv.encodeString('string', str);
     }
     print('string = ${mmkv.decodeString('string')}');
 
-    str += " with bytes";
+    str += ' with bytes';
     var bytes = MMBuffer.fromList(Utf8Encoder().convert(str))!;
     if (!decodeOnly) {
-      mmkv.encodeBytes("bytes", bytes);
+      mmkv.encodeBytes('bytes', bytes);
     }
     bytes.destroy();
-    bytes = mmkv.decodeBytes("bytes")!;
-    print("bytes = ${Utf8Decoder().convert(bytes.asList()!)}");
+    bytes = mmkv.decodeBytes('bytes')!;
+    print('bytes = ${Utf8Decoder().convert(bytes.asList()!)}');
     bytes.destroy();
 
     print('contains "bool": ${mmkv.containsKey('bool')}');
-    mmkv.removeValue("bool");
+    mmkv.removeValue('bool');
     print('after remove, contains "bool": ${mmkv.containsKey('bool')}');
-    mmkv.removeValues(["int32", "int"]);
-    print("all keys: ${mmkv.allKeys}");
+    mmkv.removeValues(['int32', 'int']);
+    print('all keys: ${mmkv.allKeys}');
 
     return mmkv;
   }
 
   void testReKey() {
-    final mmapID = "testAES_reKey1";
-    final MMKV kv = testMMKV(mmapID, null, false, null);
+    final mmapID = 'testAES_reKey1';
+    MMKV kv = testMMKV(mmapID, null, false, null);
 
     kv.reKey("Key_seq_1");
     kv.clearMemoryCache();
-    testMMKV(mmapID, "Key_seq_1", true, null);
+    testMMKV(mmapID, 'Key_seq_1', true, null);
 
-    kv.reKey("Key_seq_2");
+    kv.reKey('Key_seq_2');
     kv.clearMemoryCache();
-    testMMKV(mmapID, "Key_seq_2", true, null);
+    testMMKV(mmapID, 'Key_seq_2', true, null);
 
     kv.reKey(null);
     kv.clearMemoryCache();
@@ -233,14 +256,13 @@ class _MyAppState extends State<MyApp> {
   void testBackup() {
     final rootDir = FileSystemEntity.parentOf(MMKV.rootDir);
     var backupRootDir = rootDir + "/mmkv_backup_3";
-    final String mmapID = "test/AES";
-    final String cryptKey = "Tencent MMKV";
-    final String otherDir = rootDir + "/mmkv_3";
+    String mmapID = "test/AES";
+    String cryptKey = "Tencent MMKV";
+    String otherDir = rootDir + "/mmkv_3";
     testMMKV(mmapID, cryptKey, false, otherDir);
 
-    final ret =
-        MMKV.backupOneToDirectory(mmapID, backupRootDir, rootDir: otherDir);
-    print("backup one [$mmapID] return: $ret");
+    final ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, rootDir: otherDir);
+    print('backup one [$mmapID] return: $ret');
 
     backupRootDir = rootDir + "/mmkv_backup";
     final count = MMKV.backupAllToDirectory(backupRootDir);
@@ -250,15 +272,15 @@ class _MyAppState extends State<MyApp> {
   void testRestore() {
     final rootDir = FileSystemEntity.parentOf(MMKV.rootDir);
     var backupRootDir = rootDir + "/mmkv_backup_3";
-    final String mmapID = "test/AES";
-    final String cryptKey = "Tencent MMKV";
-    final String otherDir = rootDir + "/mmkv_3";
+    String mmapID = "test/AES";
+    String cryptKey = "Tencent MMKV";
+    String otherDir = rootDir + "/mmkv_3";
 
     final kv = MMKV(mmapID, cryptKey: cryptKey, rootDir: otherDir);
-    kv.encodeString("test_restore", "value before restore");
+    kv.encodeString('test_restore', 'value before restore');
     print("before restore [${kv.mmapID}] allKeys: ${kv.allKeys}");
-    final ret = MMKV.restoreOneMMKVFromDirectory(mmapID, backupRootDir,
-        rootDir: otherDir);
+    final ret = MMKV.restoreOneMMKVFromDirectory(
+        mmapID, backupRootDir, rootDir: otherDir);
     print("restore one [${kv.mmapID}] ret = $ret");
     if (ret) {
       print("after restore [${kv.mmapID}] allKeys: ${kv.allKeys}");
@@ -271,7 +293,7 @@ class _MyAppState extends State<MyApp> {
       var mmkv = MMKV.defaultMMKV();
       print("check on restore file[${mmkv.mmapID}] allKeys: ${mmkv.allKeys}");
 
-      mmkv = MMKV("testAES_reKey1");
+      mmkv = MMKV('testAES_reKey1');
       print("check on restore file[${mmkv.mmapID}] allKeys: ${mmkv.allKeys}");
     }
   }
