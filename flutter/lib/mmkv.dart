@@ -90,6 +90,9 @@ class MMBuffer {
   static MMBuffer _copyFromPointer(Pointer<Uint8> ptr, int length) {
     var buffer = MMBuffer(length);
     buffer._length = length;
+    if (length == 0 && ptr != nullptr) {
+      buffer._ptr = malloc<Uint8>();
+    }
     _memcpy(buffer.pointer!.cast(), ptr.cast(), length);
     return buffer;
   }
@@ -381,7 +384,7 @@ class MMKV {
     if (/*ret != null && */ ret != nullptr) {
       var length = lengthPtr.value;
       calloc.free(lengthPtr);
-      if (Platform.isIOS) {
+      if (Platform.isIOS || length == 0) {
         return MMBuffer._copyFromPointer(ret, length);
       } else {
         return MMBuffer._fromPointer(ret, length);
