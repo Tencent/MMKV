@@ -18,9 +18,10 @@
  * limitations under the License.
  */
 
-import "dart:async";
-import "dart:convert";
-import "dart:io";
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
 import "package:flutter/material.dart";
 import "package:mmkv/mmkv.dart";
@@ -133,6 +134,28 @@ class _MyAppState extends State<MyApp> {
     bytes = mmkv.decodeBytes("bytes")!;
     print("bytes = ${Utf8Decoder().convert(bytes.asList()!)}");
     bytes.destroy();
+
+    // test empty bytes
+    {
+      final list = Uint8List(0);
+      final buffer = MMBuffer.fromList(list)!;
+
+      const key = 'empty_bytes';
+      mmkv.encodeBytes(key, buffer);
+      buffer.destroy();
+
+      String bytesA;
+      final result = mmkv.decodeBytes(key);
+      if (result == null) {
+        bytesA = 'decodeBytes is null';
+      } else {
+        // bytes = result.takeList().toString();
+        final listA = result.asList();
+        bytesA = listA.toString();
+        result.destroy();
+      }
+      print('$key = $bytesA');
+    }
 
     print('contains "bool": ${mmkv.containsKey('bool')}');
     mmkv.removeValue("bool");
