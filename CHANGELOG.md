@@ -13,6 +13,7 @@
 * Fix a compile error on macOS.
 * Fix a bug that some ObjC exceptions are not being caught.
 * Add assert on nil MMKV base path, protect from mis-using MMKV in global variable initialization.
+* Starting from v1.2.15, one must call `+[MMKV initializeMMKV:]` manually before calling any MMKV methods.
 
 ### golang
 * Fix a compile error on GCC.
