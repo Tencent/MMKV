@@ -149,7 +149,7 @@ public final class Baseline {
         spBatchWriteInt();
         spBatchReadInt();
         spBatchWrieString();
-        spBatchReadStrinfg();
+        spBatchReadString();
     }
 
     private void spBatchWriteInt() {
@@ -197,7 +197,7 @@ public final class Baseline {
         Log.i(TAG, "SharedPreferences write String: loop[" + m_loops + "]: " + m_formatter.format(endTime) + " ms");
     }
 
-    private void spBatchReadStrinfg() {
+    private void spBatchReadString() {
         long startTime = System.nanoTime();
 
         SharedPreferences preferences = m_context.getSharedPreferences(MMKV_ID, MODE_PRIVATE);
