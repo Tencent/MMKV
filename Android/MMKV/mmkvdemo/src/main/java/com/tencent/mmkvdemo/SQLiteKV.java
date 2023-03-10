@@ -26,14 +26,14 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public final class SQLIteKV {
-    private static class SQLIteKVDBHelper extends SQLiteOpenHelper {
+public final class SQLiteKV {
+    private static class SQLiteKVDBHelper extends SQLiteOpenHelper {
         private static final int DB_VERSION = 1;
         private static final String DB_NAME = "kv.db";
         public static final String TABLE_NAME_STR = "kv_str";
         public static final String TABLE_NAME_INT = "kv_int";
 
-        public SQLIteKVDBHelper(Context context) {
+        public SQLiteKVDBHelper(Context context) {
             super(context, DB_NAME, null, DB_VERSION);
         }
 
@@ -55,12 +55,12 @@ public final class SQLIteKV {
             onCreate(sqLiteDatabase);
         }
     }
-    private SQLIteKVDBHelper m_dbHelper;
+    private SQLiteKVDBHelper m_dbHelper;
     private SQLiteDatabase m_writetableDB;
     private SQLiteDatabase m_readableDB;
 
-    public SQLIteKV(Context context) {
-        m_dbHelper = new SQLIteKVDBHelper(context);
+    public SQLiteKV(Context context) {
+        m_dbHelper = new SQLiteKVDBHelper(context);
         m_dbHelper.setWriteAheadLoggingEnabled(true);
     }
 
@@ -107,14 +107,14 @@ public final class SQLIteKV {
         ContentValues contentValues = new ContentValues();
         contentValues.put("k", key);
         contentValues.put("v", value);
-        long rowID = getWritetableDB().insert(SQLIteKVDBHelper.TABLE_NAME_INT, null, contentValues);
+        long rowID = getWritetableDB().insert(SQLiteKVDBHelper.TABLE_NAME_INT, null, contentValues);
         return rowID != -1;
     }
 
     public int getInt(String key) {
         int value = 0;
         Cursor cursor = getReadableDatabase().rawQuery(
-            "select v from " + SQLIteKVDBHelper.TABLE_NAME_INT + " where k=?", new String[] {key});
+            "select v from " + SQLiteKVDBHelper.TABLE_NAME_INT + " where k=?", new String[] {key});
         if (cursor.moveToFirst()) {
             value = cursor.getInt(cursor.getColumnIndex("v"));
         }
@@ -126,14 +126,14 @@ public final class SQLIteKV {
         ContentValues contentValues = new ContentValues();
         contentValues.put("k", key);
         contentValues.put("v", value);
-        long rowID = getWritetableDB().insert(SQLIteKVDBHelper.TABLE_NAME_STR, null, contentValues);
+        long rowID = getWritetableDB().insert(SQLiteKVDBHelper.TABLE_NAME_STR, null, contentValues);
         return rowID != -1;
     }
 
     public String getString(String key) {
         String value = null;
         Cursor cursor = getReadableDatabase().rawQuery(
-            "select v from " + SQLIteKVDBHelper.TABLE_NAME_STR + " where k=?", new String[] {key});
+            "select v from " + SQLiteKVDBHelper.TABLE_NAME_STR + " where k=?", new String[] {key});
         if (cursor.moveToFirst()) {
             value = cursor.getString(cursor.getColumnIndex("v"));
         }
