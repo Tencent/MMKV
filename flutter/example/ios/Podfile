@@ -28,11 +28,22 @@ end
 
 require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
+# from ruby 3.2  File.exists is broken, we need compat function
+def mmkv_file_exists(file)
+  is_exist = false
+  if File.method_defined?(:exists)
+    is_exist = File.exists? file
+  else
+    is_exist = File.exist? file
+  end
+  return is_exist
+end
+
 # to avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to change the plugin name 'mmkv' to 'mmkvflutter'
 def fix_mmkv_plugin_name(flutter_application_path)
   is_module = false
   plugin_deps_file = File.expand_path(File.join(flutter_application_path, '..', '.flutter-plugins-dependencies'))
-  if not File.exists?(plugin_deps_file)
+  if not mmkv_file_exists(plugin_deps_file)
     is_module = true;
     plugin_deps_file = File.expand_path(File.join(flutter_application_path, '.flutter-plugins-dependencies'))
   end
