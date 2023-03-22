@@ -21,7 +21,7 @@
 # from ruby 3.2  File.exists is broken, we need compat function
 def mmkv_file_exists(file)
   is_exist = false
-  if File.method_defined?(:exists)
+  if File.methods.include?(:exists?)
     is_exist = File.exists? file
   else
     is_exist = File.exist? file
