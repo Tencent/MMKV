@@ -14,7 +14,7 @@ dependencies:
     sdk: flutter
   path_provider: ">=2.0.1"
 
-  mmkv:
+  mmkvflutter:
     # When depending on this package from a real application you should use:
     #   mmkv: ^x.y.z
     # See https://dart.dev/tools/pub/dependencies#version-constraints
