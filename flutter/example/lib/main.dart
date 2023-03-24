@@ -24,7 +24,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:mmkv/mmkv.dart';
+import 'package:mmkvflutter/mmkv.dart';
 
 void main() async {
   // must wait for MMKV to finish initialization
