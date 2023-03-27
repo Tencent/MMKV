@@ -65,6 +65,9 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  # https://github.com/Tencent/MMKV/issues/669
+  # https://blog.cocoapods.org/CocoaPods-1.4.0/
+  script_phase :name => 'Fix MMKV Plugin Name', :script => 'sed -i "" "s/@import mmkv;/@import mmkvflutter;/g" ${SRCROOT}/Runner/GeneratedPluginRegistrant.m', :execution_position=>:before_compile
 end
 
 post_install do |installer|
