@@ -52,6 +52,7 @@ static void freeStringArray(GoStringWrap_t *a, size_t size) {
 */
 import "C"
 import "unsafe"
+import "math"
 
 const (
 	MMKVLogDebug = iota // not available for release/product build
@@ -205,12 +206,14 @@ func Version() string {
 	return goStr
 }
 
-/* MMKV must be initialized before any usage.
- * Generally speaking you should do this inside main():
-func main() {
-	mmkv.InitializeMMKV("/path/to/my/working/dir")
-	// other logic
-}
+/*
+MMKV must be initialized before any usage.
+* Generally speaking you should do this inside main():
+
+	func main() {
+		mmkv.InitializeMMKV("/path/to/my/working/dir")
+		// other logic
+	}
 */
 func InitializeMMKV(rootDir string) {
 	C.mmkvInitialize(C.wrapGoString(rootDir), MMKVLogInfo, C.bool(false))
@@ -224,7 +227,7 @@ func InitializeMMKVWithLogLevel(rootDir string, logLevel int) {
 
 // Same as the function InitializeMMKVWithLogLevel() above, except that you can provide a logHandler at the very beginning.
 func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandler LogHandler) {
-    gLogHandler = logHandler
+	gLogHandler = logHandler
 	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(true))
 }
 
@@ -470,7 +473,7 @@ func (kv ctorMMKV) AllKeys() []string {
 		return []string{}
 	}
 	// turn C array into go slice with offset(0), length(count) & capacity(count)
-	keys := (*[1 << 30]C.struct_GoStringWrap)(unsafe.Pointer(keyArray))[0:count:count]
+	keys := (*[math.MaxInt32 / unsafe.Sizeof(C.struct_GoStringWrap{})]C.struct_GoStringWrap)(unsafe.Pointer(keyArray))[0:count:count]
 
 	// Actually the keys IS a go string slice, but we need to COPY the elements for the caller to use.
 	// Too bad go doesn't has destructors, hence we can't simply TRANSFER ownership of C memory.
