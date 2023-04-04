@@ -116,11 +116,6 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *ro
     m_sharedProcessLock->m_enable = m_isInterProcess;
     m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
-    // sensitive zone
-    {
-        SCOPED_LOCK(m_sharedProcessLock);
-        loadFromFile();
-    }
 }
 #endif
 
