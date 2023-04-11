@@ -302,6 +302,7 @@ void MMKV::clearMemoryCache() {
     m_output = nullptr;
 
     m_file->clearMemoryCache();
+    m_metaFile->clearMemoryCache();
     m_actualSize = 0;
     m_metaInfo->m_crcDigest = 0;
 }
