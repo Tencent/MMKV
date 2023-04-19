@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
   path_provider: ^2.0.1
   ffi: ^2.0.0
-  device_info_plus: ^4.0.0
 
 dev_dependencies:
   test:
