@@ -34,7 +34,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v1.2.15";
+constexpr auto MMKV_VERSION = "v1.2.16";
 
 #ifdef DEBUG
 #    define MMKV_DEBUG
@@ -84,7 +84,7 @@ constexpr auto MMKV_VERSION = "v1.2.15";
 #    include <windows.h>
 
 constexpr auto MMKV_PATH_SLASH = L"\\";
-#    define MMKV_PATH_FORMAT "%ws"
+#    define MMKV_PATH_FORMAT "%ls"
 using MMKVFileHandle_t = HANDLE;
 using MMKVPath_t = std::wstring;
 extern MMKVPath_t string2MMKVPath_t(const std::string &str);

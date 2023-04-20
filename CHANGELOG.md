@@ -1,5 +1,24 @@
 # MMKV Change Log
 
+## v1.2.16 / 2023-04-20
+### Changes for All platforms
+* Optimization: The actual file content is lazy loaded now, saving time on MMKV instance creation, and avoiding lock waiting when a lot of instances are created at the same time.
+* Fix a bug when restoring a loaded MMKV instance the meta file might mistakenly report corrupted.
+
+### Android
+* Optimization: Remove unnecessary binder call on main process instantiation.
+
+### Flutter
+* Fix a crash on decoding an empty list.
+* Remove deprecated dependence.
+* Make the script more robust to fix the iOS Flutter plugin name.
+
+### Win32
+* Fix a string format bug on the MinGW64 environment.
+
+### golang
+* Fix a build error on 32-bit OS.
+
 ## v1.2.15 / 2023-01-12
 ### Changes for All platforms
 * Log handler now handles all logs from the very beginning, especially the logs in initialization.
@@ -13,6 +32,7 @@
 * Fix a compile error on macOS.
 * Fix a bug that some ObjC exceptions are not being caught.
 * Add assert on nil MMKV base path, protect from mis-using MMKV in global variable initialization.
+* Starting from v1.2.15, one must call `+[MMKV initializeMMKV:]` manually before calling any MMKV methods.
 
 ### golang
 * Fix a compile error on GCC.

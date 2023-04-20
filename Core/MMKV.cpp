@@ -116,11 +116,6 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *ro
     m_sharedProcessLock->m_enable = m_isInterProcess;
     m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
-    // sensitive zone
-    {
-        SCOPED_LOCK(m_sharedProcessLock);
-        loadFromFile();
-    }
 }
 #endif
 
@@ -307,6 +302,7 @@ void MMKV::clearMemoryCache() {
     m_output = nullptr;
 
     m_file->clearMemoryCache();
+    m_metaFile->clearMemoryCache();
     m_actualSize = 0;
     m_metaInfo->m_crcDigest = 0;
 }
@@ -999,7 +995,7 @@ static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath
     bool ret = false;
     {
 #ifdef MMKV_WIN32
-        MMKVInfo("backup one mmkv[%s] from [%ws] to [%ws]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
+        MMKVInfo("backup one mmkv[%s] from [%ls] to [%ls]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #else
         MMKVInfo("backup one mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #endif
@@ -1039,7 +1035,7 @@ bool MMKV::backupOneToDirectory(const string &mmapKey, const MMKVPath_t &dstPath
     // get one in cache, do it the easy way
     if (kv) {
 #ifdef MMKV_WIN32
-        MMKVInfo("backup one cached mmkv[%s] from [%ws] to [%ws]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
+        MMKVInfo("backup one cached mmkv[%s] from [%ls] to [%ls]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #else
         MMKVInfo("backup one cached mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #endif
@@ -1113,7 +1109,7 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &sr
             auto srcCRCPath = srcPath + CRC_SUFFIX;
             if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
 #ifdef MMKV_WIN32
-                MMKVWarning("crc not exist [%ws]", srcCRCPath.c_str());
+                MMKVWarning("crc not exist [%ls]", srcCRCPath.c_str());
 #else
                 MMKVWarning("crc not exist [%s]", srcCRCPath.c_str());
 #endif
@@ -1158,7 +1154,7 @@ static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVP
     bool ret = false;
     {
 #ifdef MMKV_WIN32
-        MMKVInfo("restore one mmkv[%s] from [%ws] to [%ws]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
+        MMKVInfo("restore one mmkv[%s] from [%ls] to [%ls]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #else
         MMKVInfo("restore one mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #endif
@@ -1200,7 +1196,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
     // get one in cache, do it the easy way
     if (kv) {
 #ifdef MMKV_WIN32
-        MMKVInfo("restore one cached mmkv[%s] from [%ws] to [%ws]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
+        MMKVInfo("restore one cached mmkv[%s] from [%ls] to [%ls]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #else
         MMKVInfo("restore one cached mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
 #endif
@@ -1267,7 +1263,7 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
             auto srcCRCPath = srcPath + CRC_SUFFIX;
             if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
 #ifdef MMKV_WIN32
-                MMKVWarning("crc not exist [%ws]", srcCRCPath.c_str());
+                MMKVWarning("crc not exist [%ls]", srcCRCPath.c_str());
 #else
                 MMKVWarning("crc not exist [%s]", srcCRCPath.c_str());
 #endif

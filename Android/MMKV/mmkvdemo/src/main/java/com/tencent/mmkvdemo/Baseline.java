@@ -148,8 +148,8 @@ public final class Baseline {
     public void sharedPreferencesBaselineTest() {
         spBatchWriteInt();
         spBatchReadInt();
-        spBatchWrieString();
-        spBatchReadStrinfg();
+        spBatchWriteString();
+        spBatchReadString();
     }
 
     private void spBatchWriteInt() {
@@ -181,7 +181,7 @@ public final class Baseline {
         Log.i(TAG, "SharedPreferences read int: loop[" + m_loops + "]: " + m_formatter.format(endTime) + " ms");
     }
 
-    private void spBatchWrieString() {
+    private void spBatchWriteString() {
         long startTime = System.nanoTime();
 
         SharedPreferences preferences = m_context.getSharedPreferences(MMKV_ID, MODE_PRIVATE);
@@ -197,7 +197,7 @@ public final class Baseline {
         Log.i(TAG, "SharedPreferences write String: loop[" + m_loops + "]: " + m_formatter.format(endTime) + " ms");
     }
 
-    private void spBatchReadStrinfg() {
+    private void spBatchReadString() {
         long startTime = System.nanoTime();
 
         SharedPreferences preferences = m_context.getSharedPreferences(MMKV_ID, MODE_PRIVATE);
@@ -220,17 +220,17 @@ public final class Baseline {
         Random r = new Random();
         long startTime = System.nanoTime();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(m_context);
+        SQLiteKV sqliteKV = new SQLiteKV(m_context);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
-            sqlIteKV.putInt(key, tmp);
+            sqliteKV.putInt(key, tmp);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         double endTime = (System.nanoTime() - startTime) / 1000000.0;
         final String msg = useTransaction ? "sqlite transaction" : "sqlite";
@@ -240,16 +240,16 @@ public final class Baseline {
     private void sqliteReadInt(boolean useTransaction) {
         long startTime = System.nanoTime();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(m_context);
+        SQLiteKV sqliteKV = new SQLiteKV(m_context);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
-            int tmp = sqlIteKV.getInt(key);
+            int tmp = sqliteKV.getInt(key);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         double endTime = (System.nanoTime() - startTime) / 1000000.0;
         final String msg = useTransaction ? "sqlite transaction" : "sqlite";
@@ -259,17 +259,17 @@ public final class Baseline {
     private void sqliteWriteString(boolean useTransaction) {
         long startTime = System.nanoTime();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(m_context);
+        SQLiteKV sqliteKV = new SQLiteKV(m_context);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             final String value = m_arrStrings[index];
             final String key = m_arrKeys[index];
-            sqlIteKV.putString(key, value);
+            sqliteKV.putString(key, value);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         double endTime = (System.nanoTime() - startTime) / 1000000.0;
         final String msg = useTransaction ? "sqlite transaction" : "sqlite";
@@ -279,16 +279,16 @@ public final class Baseline {
     private void sqliteReadString(boolean useTransaction) {
         long startTime = System.nanoTime();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(m_context);
+        SQLiteKV sqliteKV = new SQLiteKV(m_context);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             final String key = m_arrKeys[index];
-            final String tmp = sqlIteKV.getString(key);
+            final String tmp = sqliteKV.getString(key);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         double endTime = (System.nanoTime() - startTime) / 1000000.0;
         final String msg = useTransaction ? "sqlite transaction" : "sqlite";

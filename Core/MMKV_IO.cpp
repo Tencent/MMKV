@@ -57,7 +57,12 @@ constexpr uint32_t Fixed32Size = pbFixed32Size();
 MMKV_NAMESPACE_BEGIN
 
 void MMKV::loadFromFile() {
-    if (m_metaFile->isFileValid()) {
+    if (!m_metaFile->isFileValid()) {
+        m_metaFile->reloadFromFile();
+    }
+    if (!m_metaFile->isFileValid()) {
+        MMKVError("file [%s] not valid", m_metaFile->getPath().c_str());
+    } else {
         m_metaInfo->read(m_metaFile->getMemory());
     }
 #ifndef MMKV_DISABLE_CRYPT

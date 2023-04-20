@@ -94,14 +94,6 @@ public class MMKVContentProvider extends ContentProvider {
         if (context == null) {
             return false;
         }
-        String authority = queryAuthority(context);
-        if (authority == null) {
-            return false;
-        }
-
-        if (MMKVContentProvider.gUri == null) {
-            MMKVContentProvider.gUri = Uri.parse(ContentResolver.SCHEME_CONTENT + "://" + authority);
-        }
 
         return true;
     }

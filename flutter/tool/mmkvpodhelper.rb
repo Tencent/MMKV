@@ -18,10 +18,21 @@
 # limitations under the License.
 #
 
+# from ruby 3.2  File.exists is broken, we need compat function
+def mmkv_file_exists(file)
+  is_exist = false
+  if File.methods.include?(:exists?)
+    is_exist = File.exists? file
+  else
+    is_exist = File.exist? file
+  end
+  return is_exist
+end
+
 # to avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to change the plugin name 'mmkv' to 'mmkvflutter'
 def fix_mmkv_plugin_name_inside_dependencies(plugin_deps_file)
   plugin_deps_file = File.expand_path(plugin_deps_file)
-  unless File.exists?(plugin_deps_file)
+  unless mmkv_file_exists(plugin_deps_file)
     raise "#{plugin_deps_file} must exist. If you're running pod install manually, make sure flutter pub get is executed first.(mmkvpodhelper.rb)"
   end
 
@@ -41,7 +52,7 @@ end
 def fix_mmkv_plugin_name_inside_registrant(plugin_registrant_path, is_module)
   if is_module
     plugin_registrant_file = File.expand_path(File.join(plugin_registrant_path, 'FlutterPluginRegistrant.podspec'))
-    if File.exists?(plugin_registrant_file)
+    if mmkv_file_exists(plugin_registrant_file)
       registrant = File.read(plugin_registrant_file)
       if registrant.sub!("dependency 'mmkv'", "dependency 'mmkvflutter'")
         File.write(plugin_registrant_file, registrant)
@@ -51,7 +62,7 @@ def fix_mmkv_plugin_name_inside_registrant(plugin_registrant_path, is_module)
 
   plugin_registrant_source = is_module ? File.expand_path(File.join(plugin_registrant_path, 'Classes', 'GeneratedPluginRegistrant.m'))
     : File.expand_path(File.join(plugin_registrant_path, 'GeneratedPluginRegistrant.m'))
-  if File.exists?(plugin_registrant_source)
+  if mmkv_file_exists(plugin_registrant_source)
     registrant_source = File.read(plugin_registrant_source)
     if registrant_source.gsub!(/\bmmkv\b/, 'mmkvflutter')
       File.write(plugin_registrant_source, registrant_source)
