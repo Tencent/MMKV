@@ -22,7 +22,7 @@
 #define AES_CRYPT_H_
 #ifdef __cplusplus
 
-#include "MMKVPredef.h"
+#include "../MMKVPredef.h"
 #include <cstddef>
 
 #ifdef MMKV_DISABLE_CRYPT
