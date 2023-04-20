@@ -70,20 +70,20 @@ bool File::open() {
     m_fd = CreateFile(m_path.c_str(), pair.first, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                       pair.second, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (!isFileValid()) {
-        MMKVError("fail to open:[%ws], %d", m_path.c_str(), GetLastError());
+        MMKVError("fail to open:[%ls], %d", m_path.c_str(), GetLastError());
         return false;
     }
-    MMKVInfo("open fd[%p], %ws", m_fd, m_path.c_str());
+    MMKVInfo("open fd[%p], %ls", m_fd, m_path.c_str());
     return true;
 }
 
 void File::close() {
     if (isFileValid()) {
-        MMKVInfo("closing fd[%p], %ws", m_fd, m_path.c_str());
+        MMKVInfo("closing fd[%p], %ls", m_fd, m_path.c_str());
         if (CloseHandle(m_fd)) {
             m_fd = INVALID_HANDLE_VALUE;
         } else {
-            MMKVError("fail to close [%ws], %d", m_path.c_str(), GetLastError());
+            MMKVError("fail to close [%ls], %d", m_path.c_str(), GetLastError());
         }
     }
 }
@@ -118,13 +118,13 @@ bool MemoryFile::truncate(size_t size) {
     }
 
     if (!ftruncate(m_diskFile.getFd(), m_size)) {
-        MMKVError("fail to truncate [%ws] to size %zu", m_diskFile.m_path.c_str(), m_size);
+        MMKVError("fail to truncate [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
         m_size = oldSize;
         return false;
     }
     if (m_size > oldSize) {
         if (!zeroFillFile(m_diskFile.getFd(), oldSize, m_size - oldSize)) {
-            MMKVError("fail to zeroFile [%ws] to size %zu", m_diskFile.m_path.c_str(), m_size);
+            MMKVError("fail to zeroFile [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
             m_size = oldSize;
             return false;
         }
@@ -132,7 +132,7 @@ bool MemoryFile::truncate(size_t size) {
 
     if (m_ptr) {
         if (!UnmapViewOfFile(m_ptr)) {
-            MMKVError("fail to munmap [%ws], %d", m_diskFile.m_path.c_str(), GetLastError());
+            MMKVError("fail to munmap [%ls], %d", m_diskFile.m_path.c_str(), GetLastError());
         }
         m_ptr = nullptr;
     }
@@ -152,13 +152,13 @@ bool MemoryFile::msync(SyncFlag syncFlag) {
         if (FlushViewOfFile(m_ptr, m_size)) {
             if (syncFlag == MMKV_SYNC) {
                 if (!FlushFileBuffers(m_diskFile.getFd())) {
-                    MMKVError("fail to FlushFileBuffers [%ws]:%d", m_diskFile.m_path.c_str(), GetLastError());
+                    MMKVError("fail to FlushFileBuffers [%ls]:%d", m_diskFile.m_path.c_str(), GetLastError());
                     return false;
                 }
             }
             return true;
         }
-        MMKVError("fail to FlushViewOfFile [%ws]:%d", m_diskFile.m_path.c_str(), GetLastError());
+        MMKVError("fail to FlushViewOfFile [%ls]:%d", m_diskFile.m_path.c_str(), GetLastError());
         return false;
     }
     return false;
@@ -167,12 +167,12 @@ bool MemoryFile::msync(SyncFlag syncFlag) {
 bool MemoryFile::mmap() {
     m_fileMapping = CreateFileMapping(m_diskFile.getFd(), nullptr, PAGE_READWRITE, 0, 0, nullptr);
     if (!m_fileMapping) {
-        MMKVError("fail to CreateFileMapping [%ws], %d", m_diskFile.m_path.c_str(), GetLastError());
+        MMKVError("fail to CreateFileMapping [%ls], %d", m_diskFile.m_path.c_str(), GetLastError());
         return false;
     } else {
         m_ptr = (char *) MapViewOfFile(m_fileMapping, FILE_MAP_ALL_ACCESS, 0, 0, 0);
         if (!m_ptr) {
-            MMKVError("fail to mmap [%ws], %d", m_diskFile.m_path.c_str(), GetLastError());
+            MMKVError("fail to mmap [%ls], %d", m_diskFile.m_path.c_str(), GetLastError());
             return false;
         }
     }
@@ -182,7 +182,7 @@ bool MemoryFile::mmap() {
 
 void MemoryFile::reloadFromFile() {
     if (isFileValid()) {
-        MMKVWarning("calling reloadFromFile while the cache [%ws] is still valid", m_diskFile.m_path.c_str());
+        MMKVWarning("calling reloadFromFile while the cache [%ls] is still valid", m_diskFile.m_path.c_str());
         assert(0);
         clearMemoryCache();
     }
@@ -248,12 +248,12 @@ bool mkPath(const MMKVPath_t &str) {
         auto attribute = GetFileAttributes(path);
         if (attribute == INVALID_FILE_ATTRIBUTES) {
             if (!CreateDirectory(path, nullptr)) {
-                MMKVError("fail to create dir:%ws, %d", str.c_str(), GetLastError());
+                MMKVError("fail to create dir:%ls, %d", str.c_str(), GetLastError());
                 free(path);
                 return false;
             }
         } else if (!(attribute & FILE_ATTRIBUTE_DIRECTORY)) {
-            MMKVError("%ws attribute:%d not a directry", str.c_str(), attribute);
+            MMKVError("%ls attribute:%d not a directry", str.c_str(), attribute);
             free(path);
             return false;
         }
@@ -279,14 +279,14 @@ MMBuffer *readWholeFile(const MMKVPath_t &nsFilePath) {
             if (ReadFile(fd, buffer->getPtr(), fileLength, &readSize, nullptr)) {
                 //fileSize = readSize;
             } else {
-                MMKVWarning("fail to read %ws: %d", nsFilePath.c_str(), GetLastError());
+                MMKVWarning("fail to read %ls: %d", nsFilePath.c_str(), GetLastError());
                 delete buffer;
                 buffer = nullptr;
             }
         }
         CloseHandle(fd);
     } else {
-        MMKVWarning("fail to open %ws: %d", nsFilePath.c_str(), GetLastError());
+        MMKVWarning("fail to open %ls: %d", nsFilePath.c_str(), GetLastError());
     }
     return buffer;
 }
@@ -365,16 +365,16 @@ static pair<MMKVPath_t, MMKVFileHandle_t> createUniqueTempFile(const wchar_t *pr
     }
     auto hTempFile = CreateFile(szTempFileName, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hTempFile == INVALID_HANDLE_VALUE) {
-        MMKVError("fail to create unique temp file [%ws], %d", szTempFileName, GetLastError());
+        MMKVError("fail to create unique temp file [%ls], %d", szTempFileName, GetLastError());
         return {L"", INVALID_HANDLE_VALUE};
     }
-    MMKVDebug("create unique temp file [%ws] with fd[%p]", szTempFileName, hTempFile);
+    MMKVDebug("create unique temp file [%ls] with fd[%p]", szTempFileName, hTempFile);
     return {MMKVPath_t(szTempFileName), hTempFile};
 }
 
 bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     if (MoveFileEx(srcPath.c_str(), dstPath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED) == 0) {
-        MMKVError("MoveFileEx [%ws] to [%ws] failed %d", srcPath.c_str(), dstPath.c_str(), GetLastError());
+        MMKVError("MoveFileEx [%ls] to [%ls] failed %d", srcPath.c_str(), dstPath.c_str(), GetLastError());
         return false;
     }
     return true;
@@ -401,7 +401,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
     while (true) {
         DWORD sizeRead = 0;
         if (!ReadFile(srcFile.getFd(), buffer, bufferSize, &sizeRead, nullptr)) {
-            MMKVError("fail to read %ws: %d", srcPath.c_str(), GetLastError());
+            MMKVError("fail to read %ls: %d", srcPath.c_str(), GetLastError());
             goto errorOut;
         }
 
@@ -426,7 +426,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
     }
 
     ret = true;
-    MMKVInfo("copy content from %ws to fd[%d] finish", srcPath.c_str(), dstFD);
+    MMKVInfo("copy content from %ls to fd[%d] finish", srcPath.c_str(), dstFD);
 
 errorOut:
     free(buffer);
@@ -445,11 +445,11 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
 
     bool renamed = false;
     if (copyFileContent(srcPath, tmpFD, false)) {
-        MMKVInfo("copyed file [%ws] to [%ws]", srcPath.c_str(), tmpPath.c_str());
+        MMKVInfo("copyed file [%ls] to [%ls]", srcPath.c_str(), tmpPath.c_str());
         CloseHandle(tmpFD);
         renamed = tryAtomicRename(tmpPath.c_str(), dstPath.c_str());
         if (renamed) {
-            MMKVInfo("copyfile [%ws] to [%ws] finish.", srcPath.c_str(), dstPath.c_str());
+            MMKVInfo("copyfile [%ls] to [%ls] finish.", srcPath.c_str(), dstPath.c_str());
         }
     } else {
         CloseHandle(tmpFD);
@@ -468,9 +468,9 @@ bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     }
     auto ret = copyFileContent(srcPath, dstFile.getFd(), false);
     if (!ret) {
-        MMKVError("fail to copyfile(): target file %ws", dstPath.c_str());
+        MMKVError("fail to copyfile(): target file %ls", dstPath.c_str());
     } else {
-        MMKVInfo("copy content from %ws to [%ws] finish", srcPath.c_str(), dstPath.c_str());
+        MMKVInfo("copy content from %ls to [%ls] finish", srcPath.c_str(), dstPath.c_str());
     }
     return ret;
 }
