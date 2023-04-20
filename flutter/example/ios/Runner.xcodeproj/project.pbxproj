@@ -146,6 +146,7 @@
 			buildPhases = (
 				19FB7C13A6F154DB79BFE09E /* [CP] Check Pods Manifest.lock */,
 				9740EEB61CF901F6004384FC /* Run Script */,
+				DBADF7DE4086731B8B058FA4 /* [CP-User] Fix MMKV Plugin Name */,
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
@@ -257,6 +258,16 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build\n";
+		};
+		DBADF7DE4086731B8B058FA4 /* [CP-User] Fix MMKV Plugin Name */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "[CP-User] Fix MMKV Plugin Name";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "sed -i \"\" \"s/@import mmkv;/@import mmkvflutter;/g\" ${SRCROOT}/Runner/GeneratedPluginRegistrant.m";
 		};
 /* End PBXShellScriptBuildPhase section */
 

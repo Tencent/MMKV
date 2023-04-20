@@ -76,9 +76,9 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(':mmkv')
-//    implementation 'com.tencent:mmkv:1.2.15'
-//    implementation 'com.tencent:mmkv-static:1.2.15' // this is identical to 'com.tencent:mmkv'
-//    implementation 'com.tencent:mmkv-shared:1.2.15'
+//    implementation 'com.tencent:mmkv:1.2.16'
+//    implementation 'com.tencent:mmkv-static:1.2.16' // this is identical to 'com.tencent:mmkv'
+//    implementation 'com.tencent:mmkv-shared:1.2.16'
     implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.13.2'
