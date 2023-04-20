@@ -1,5 +1,13 @@
 # MMKV for Flutter Change Log
 
+## v1.2.17 / 2023-04-20
+* Optimization: The actual file content is lazy loaded now, saving time on MMKV instance creation, and avoiding lock waiting when a lot of instances are created at the same time.
+* Fix a bug when restoring a loaded MMKV instance the meta file might mistakenly report corrupted.
+* Fix a crash on decoding an empty list.
+* Remove deprecated dependence.
+* Make the script more robust to fix the iOS Flutter plugin name.
+* Keep up with MMKV native lib v1.2.16.
+
 ## v1.2.16 / 2023-01-12
 * Reduce the privacy info needed to obtain android sdkInt, avoid unnecessary risk on Android App Review.
 * Log handler now handles all logs from the very beginning, especially the logs in initialization.

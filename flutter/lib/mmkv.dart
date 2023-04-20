@@ -22,6 +22,7 @@ import "dart:async";
 import "dart:convert";
 import "dart:ffi"; // For FFI
 import "dart:io"; // For Platform.isX
+import "dart:typed_data";
 
 import "package:ffi/ffi.dart";
 import "package:flutter/cupertino.dart";
