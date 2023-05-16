@@ -125,7 +125,7 @@ bool MMKV::isInBackground() {
 pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
     if (g_isInBackground) {
         MLockPtr mlockPtr(ptr, size);
-        return make_pair(mlockPtr.isLocked(), move(mlockPtr));
+        return make_pair(mlockPtr.isLocked(), std::move(mlockPtr));
     } else {
         return make_pair(true, MLockPtr(nullptr, 0));
     }

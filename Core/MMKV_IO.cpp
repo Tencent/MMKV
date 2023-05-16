@@ -340,7 +340,7 @@ static pair<MMBuffer, size_t> prepareEncode(const MMKVMapCrypt &dic) {
     // skip the pb size of buffer
     auto sizeOfMap = CodedInputData(buffer.getPtr(), buffer.length()).readUInt32();
     totalSize += sizeOfMap;
-    return make_pair(move(buffer), totalSize);
+    return make_pair(std::move(buffer), totalSize);
 }
 #endif
 
@@ -382,7 +382,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
                 return false;
             }
         }
-        return doFullWriteBack(move(preparedData), nullptr);
+        return doFullWriteBack(std::move(preparedData), nullptr);
     }
     return true;
 }
@@ -530,9 +530,9 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
             if (KeyValueHolderCrypt::isValueStoredAsOffset(ret.second.valueSize)) {
                 KeyValueHolderCrypt kvHolder(ret.second.keySize, ret.second.valueSize, ret.second.offset);
                 memcpy(&kvHolder.cryptStatus, &t_status, sizeof(t_status));
-                itr->second = move(kvHolder);
+                itr->second = std::move(kvHolder);
             } else {
-                itr->second = KeyValueHolderCrypt(move(data));
+                itr->second = KeyValueHolderCrypt(std::move(data));
             }
         } else {
             auto ret = appendDataWithKey(data, key, isDataHolder);
@@ -546,7 +546,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                     memcpy(&(r.first->second.cryptStatus), &t_status, sizeof(t_status));
                 }
             } else {
-                m_dicCrypt->emplace(key, KeyValueHolderCrypt(move(data)));
+                m_dicCrypt->emplace(key, KeyValueHolderCrypt(std::move(data)));
             }
         }
     } else
@@ -742,7 +742,7 @@ bool MMKV::fullWriteback(AESCrypt *newCrypter) {
     if (sizeOfDic > 0) {
         auto fileSize = m_file->getFileSize();
         if (sizeOfDic + Fixed32Size <= fileSize) {
-            return doFullWriteBack(move(preparedData), newCrypter);
+            return doFullWriteBack(std::move(preparedData), newCrypter);
         } else {
             assert(0);
             assert(newCrypter == nullptr);
