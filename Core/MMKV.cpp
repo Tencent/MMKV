@@ -423,7 +423,7 @@ bool MMKV::set(bool value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeBool(value);
 
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 bool MMKV::set(int32_t value, MMKVKey_t key) {
@@ -435,7 +435,7 @@ bool MMKV::set(int32_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeInt32(value);
 
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 bool MMKV::set(uint32_t value, MMKVKey_t key) {
@@ -447,7 +447,7 @@ bool MMKV::set(uint32_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt32(value);
 
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 bool MMKV::set(int64_t value, MMKVKey_t key) {
@@ -459,7 +459,7 @@ bool MMKV::set(int64_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeInt64(value);
 
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 bool MMKV::set(uint64_t value, MMKVKey_t key) {
@@ -471,7 +471,7 @@ bool MMKV::set(uint64_t value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt64(value);
 
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 bool MMKV::set(float value, MMKVKey_t key) {
@@ -483,7 +483,7 @@ bool MMKV::set(float value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeFloat(value);
 
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 bool MMKV::set(double value, MMKVKey_t key) {
@@ -495,7 +495,7 @@ bool MMKV::set(double value, MMKVKey_t key) {
     CodedOutputData output(data.getPtr(), size);
     output.writeDouble(value);
 
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 #ifndef MMKV_APPLE
@@ -529,7 +529,7 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(v);
-    return setDataForKey(move(data), key);
+    return setDataForKey(std::move(data), key);
 }
 
 bool MMKV::getString(MMKVKey_t key, string &result) {
@@ -561,7 +561,7 @@ bool MMKV::getBytes(MMKVKey_t key, mmkv::MMBuffer &result) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
-            result = move(input.readData());
+            result = std::move(input.readData());
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
@@ -1146,7 +1146,7 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *sr
 
 static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     auto dstCRCPath = dstPath + CRC_SUFFIX;
-    File dstCRCFile(move(dstCRCPath), OpenFlag::ReadWrite | OpenFlag::Create);
+    File dstCRCFile(std::move(dstCRCPath), OpenFlag::ReadWrite | OpenFlag::Create);
     if (!dstCRCFile.isFileValid()) {
         return false;
     }

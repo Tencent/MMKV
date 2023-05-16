@@ -90,7 +90,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
                 auto itr = dictionary.find(key);
                 if (itr != dictionary.end()) {
                     if (kvHolder.valueSize > 0) {
-                        itr->second = move(kvHolder);
+                        itr->second = std::move(kvHolder);
                     } else {
                         auto oldKey = itr->first;
                         dictionary.erase(itr);
@@ -98,7 +98,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
                     }
                 } else {
                     if (kvHolder.valueSize > 0) {
-                        dictionary.emplace(key, move(kvHolder));
+                        dictionary.emplace(key, std::move(kvHolder));
                         [key retain];
                     }
                 }
@@ -143,7 +143,7 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
                 auto itr = dictionary.find(key);
                 if (itr != dictionary.end()) {
                     if (kvHolder.realValueSize() > 0) {
-                        itr->second = move(kvHolder);
+                        itr->second = std::move(kvHolder);
                     } else {
                         auto oldKey = itr->first;
                         dictionary.erase(itr);
@@ -151,7 +151,7 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
                     }
                 } else {
                     if (kvHolder.realValueSize() > 0) {
-                        dictionary.emplace(key, move(kvHolder));
+                        dictionary.emplace(key, std::move(kvHolder));
                         [key retain];
                     }
                 }

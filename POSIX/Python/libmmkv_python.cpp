@@ -116,7 +116,7 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsMMKV.def_static("initializeMMKV", [](const string &rootDir, MMKVLogLevel logLevel, decltype(g_logHandler) logHandler) {
             if (logHandler) {
-                g_logHandler = move(logHandler);
+                g_logHandler = std::move(logHandler);
                 MMKV::initializeMMKV(rootDir, logLevel, MyLogHandler);
             } else {
                 MMKV::initializeMMKV(rootDir, logLevel, nullptr);
@@ -227,7 +227,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "registerLogHandler",
         [](decltype(g_logHandler) callback) {
-            g_logHandler = move(callback);
+            g_logHandler = std::move(callback);
             MMKV::registerLogHandler(MyLogHandler);
         },
         "call this method to redirect MMKV's log,\n"
@@ -248,7 +248,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "registerErrorHandler",
         [](decltype(g_errorHandler) callback) {
-            g_errorHandler = move(callback);
+            g_errorHandler = std::move(callback);
             MMKV::registerErrorHandler(MyErrorHandler);
         },
         "call this method to handle MMKV failure,\n"
@@ -270,7 +270,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "registerContentChangeHandler",
         [](decltype(g_contentHandler) callback) {
-            g_contentHandler = move(callback);
+            g_contentHandler = std::move(callback);
             MMKV::registerContentChangeHandler(MyContentChangeHandler);
         },
         "register a content change handler,\n"
