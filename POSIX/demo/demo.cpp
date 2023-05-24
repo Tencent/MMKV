@@ -340,6 +340,30 @@ void testRestore() {
     }
 }
 
+void testAutoExpiration() {
+    string mmapID = "testAutoExpire";
+    auto mmkv = MMKV::mmkvWithID(mmapID);
+    mmkv->clearAll();
+    mmkv->trim();
+    mmkv->disableAutoKeyExpire();
+
+    mmkv->set(true, "auto_expire_key_1");
+    mmkv->enableAutoKeyExpire(1);
+    mmkv->set("never_expire_key_1", "never_expire_key_1", 0);
+
+    sleep(2);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+
+    mmkv->removeValueForKey("never_expire_key_1");
+    mmkv->enableAutoKeyExpire(0);
+    mmkv->set("never_expire_key_1", "never_expire_key_1");
+    mmkv->set(true, "auto_expire_key_1", 1);
+    sleep(2);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -389,4 +413,5 @@ int main() {
     testInterProcessLock();
     testBackup();
     testRestore();
+    testAutoExpiration();
 }

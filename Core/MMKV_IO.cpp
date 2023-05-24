@@ -1381,7 +1381,7 @@ bool MMKV::disableAutoKeyExpire() {
     m_metaInfo->m_version = MMKVVersionFlag;
 
     if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
-        MMKVInfo("file is new, don't need a full writeback [%s], just update meta file", m_mmapID.c_str());
+        MMKVInfo("file is new, don't need a full write-back [%s], just update meta file", m_mmapID.c_str());
         writeActualSize(0, 0, nullptr, IncreaseSequence);
         m_metaFile->msync(MMKV_SYNC);
         return true;
