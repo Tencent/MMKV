@@ -1334,7 +1334,7 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     }
 
     MMKVVector vec;
-    auto packKeyValue = [&](MMKVKey_t &key, const MMBuffer &value) {
+    auto packKeyValue = [&](const MMKVKey_t &key, const MMBuffer &value) {
         MMBuffer data(value.length() + Fixed32Size);
         auto ptr = (uint8_t *)data.getPtr();
         memcpy(ptr, value.getPtr(), value.length());
@@ -1388,7 +1388,7 @@ bool MMKV::disableAutoKeyExpire() {
     }
 
     MMKVVector vec;
-    auto packKeyValue = [&](MMKVKey_t &key, const MMBuffer &value) {
+    auto packKeyValue = [&](const MMKVKey_t &key, const MMBuffer &value) {
         assert(value.length() >= Fixed32Size);
         MMBuffer data(value.length() - Fixed32Size);
         auto ptr = (uint8_t *)data.getPtr();
