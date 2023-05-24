@@ -102,8 +102,8 @@ class MMKV {
     using MMKVKey_t = const std::string &;
     static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
 #  define key_length(key) key.length()
-#  define retain_key(key) (void)
-#  define release_key(key) (void)
+#  define retain_key(key) ((void)0)
+#  define release_key(key) ((void)0)
 #endif
 
     void loadFromFile();
@@ -138,7 +138,7 @@ class MMKV {
 
     bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter);
 
-    bool doFullWriteBack(MMKVVector &&vec);
+    bool doFullWriteBack(mmkv::MMKVVector &&vec);
 
     mmkv::MMBuffer getRawDataForKey(MMKVKey_t key);
 

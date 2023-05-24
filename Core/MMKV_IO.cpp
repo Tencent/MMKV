@@ -52,8 +52,6 @@ using namespace std;
 using namespace mmkv;
 using KVHolderRet_t = std::pair<bool, KeyValueHolder>;
 
-constexpr uint32_t Fixed32Size = pbFixed32Size();
-
 MMKV_NAMESPACE_BEGIN
 
 void MMKV::loadFromFile() {
@@ -1336,7 +1334,7 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     }
 
     MMKVVector vec;
-    auto packKeyValue = [&](const MMKVKey_t &key, const MMBuffer &value) {
+    auto packKeyValue = [&](MMKVKey_t &key, const MMBuffer &value) {
         MMBuffer data(value.length() + Fixed32Size);
         auto ptr = (uint8_t *)data.getPtr();
         memcpy(ptr, value.getPtr(), value.length());
@@ -1373,7 +1371,7 @@ bool MMKV::disableAutoKeyExpire() {
     checkLoadData();
 
     m_expiredInSeconds = 0;
-    m_enableKeyExipre = NO;
+    m_enableKeyExipre = false;
     if (!m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
         return true;
     }
@@ -1390,7 +1388,7 @@ bool MMKV::disableAutoKeyExpire() {
     }
 
     MMKVVector vec;
-    auto packKeyValue = [&](const MMKVKey_t &key, const MMBuffer &value) {
+    auto packKeyValue = [&](MMKVKey_t &key, const MMBuffer &value) {
         assert(value.length() >= Fixed32Size);
         MMBuffer data(value.length() - Fixed32Size);
         auto ptr = (uint8_t *)data.getPtr();
