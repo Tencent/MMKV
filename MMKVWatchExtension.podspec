@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.license      = { :type => "BSD 3-Clause", :file => "LICENSE.TXT"}
   s.author       = { "guoling" => "guoling@tencent.com" }
 
-  s.watchos.deployment_target = "2.0"
+  s.watchos.deployment_target = "4.0"
 
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
