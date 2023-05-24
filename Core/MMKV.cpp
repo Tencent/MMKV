@@ -40,6 +40,7 @@
 #include <cstring>
 #include <unordered_set>
 //#include <unistd.h>
+#include <cassert>
 
 #if defined(__aarch64__) && defined(__linux)
 #    include <asm/hwcap.h>
