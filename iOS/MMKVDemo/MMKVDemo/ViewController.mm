@@ -75,6 +75,8 @@
     // [self testFastRemoveCornerSize];
     // [self testChineseCharKey];
     // [self testItemSizeHolderOverride];
+    [self testAutoExpire];
+    // [self testAutoExpireWildPtr];
 
     DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
     [swiftUsageDemo testSwiftFunctionality];
@@ -241,7 +243,7 @@
     NSLog(@"double:%f", [mmkv getDoubleForKey:@"double"]);
 
     if (!decodeOnly) {
-        [mmkv setObject:@"hello, mmkv" forKey:@"string"];
+        [mmkv setObject:@"An efficient, small mobile key-value storage framework developed by WeChat. Works on Android, iOS, macOS, Windows, and POSIX." forKey:@"string"];
     }
     NSLog(@"string:%@", [mmkv getObjectOfClass:NSString.class forKey:@"string"]);
 
@@ -251,7 +253,7 @@
     NSLog(@"date:%@", [mmkv getObjectOfClass:NSDate.class forKey:@"date"]);
 
     if (!decodeOnly) {
-        [mmkv setObject:[@"hello, mmkv again and again" dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
+        [mmkv setObject:[@"An efficient, small mobile key-value storage framework developed by WeChat(微信). Works on Android, iOS, macOS, Windows, and POSIX." dataUsingEncoding:NSUTF8StringEncoding] forKey:@"data"];
     }
     NSData *data = [mmkv getObjectOfClass:NSData.class forKey:@"data"];
     NSLog(@"data:%@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
@@ -378,6 +380,32 @@
     NSLog(@"migrate from NSUserDefault end");
 }
 
+- (void)testAutoExpire {
+    NSString *mmapID = @"testAutoExpire";
+    auto mmkv = [MMKV mmkvWithID:mmapID];
+    [mmkv clearAll];
+    [mmkv trim];
+    [mmkv disableAutoKeyExpire];
+
+    [self testMMKV:mmapID withCryptKey:nil decodeOnly:NO];
+    [mmkv setBool:YES forKey:@"auto_expire_key_1"];
+    [mmkv enableAutoKeyExpire:1];
+    [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1" expireDuration:0];
+
+    sleep(2);
+    assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
+    assert([mmkv containsKey:@"never_expire_key_1"] == YES);
+    [self testMMKV:mmapID withCryptKey:nil decodeOnly:YES];
+
+    [mmkv removeValueForKey:@"never_expire_key_1"];
+    [mmkv enableAutoKeyExpire:0];
+    [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1"];
+    [mmkv setBool:YES forKey:@"auto_expire_key_1" expireDuration:1];
+    sleep(2);
+    assert([mmkv containsKey:@"never_expire_key_1"] == YES);
+    assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
+}
+
 - (IBAction)onBtnClick:(id)sender {
     [self.m_loading startAnimating];
     self.m_btn.enabled = NO;
@@ -440,6 +468,7 @@ MMKV *getMMKVForBatchTest() {
         for (int index = 0; index < loops; index++) {
             int32_t tmp = rand();
             NSString *intKey = m_arrIntKeys[index];
+            // NSString *intKey = [NSString stringWithFormat:@"6AB741D2-426B-4CC2-918B-EC910753FF74-%d", index];
             [mmkv setInt32:tmp forKey:intKey];
         }
         NSDate *endDate = [NSDate date];
@@ -467,6 +496,7 @@ MMKV *getMMKVForBatchTest() {
         MMKV *mmkv = getMMKVForBatchTest();
         for (int index = 0; index < loops; index++) {
             NSString *intKey = m_arrIntKeys[index];
+            // NSString *intKey = [NSString stringWithFormat:@"6AB741D2-426B-4CC2-918B-EC910753FF74-%d", index];
             [mmkv getInt32ForKey:intKey];
         }
         NSDate *endDate = [NSDate date];

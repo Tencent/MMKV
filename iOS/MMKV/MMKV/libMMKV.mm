@@ -360,44 +360,88 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return m_mmkv->set(object, key);
 }
 
+- (BOOL)setObject:(nullable NSObject<NSCoding> *)object forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set(object, key, seconds);
+}
+
 - (BOOL)setBool:(BOOL)value forKey:(NSString *)key {
     return m_mmkv->set((bool) value, key);
+}
+
+- (BOOL)setBool:(BOOL)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set((bool) value, key, seconds);
 }
 
 - (BOOL)setInt32:(int32_t)value forKey:(NSString *)key {
     return m_mmkv->set(value, key);
 }
 
+- (BOOL)setInt32:(int32_t)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set(value, key, seconds);
+}
+
 - (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key {
     return m_mmkv->set(value, key);
+}
+
+- (BOOL)setUInt32:(uint32_t)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set(value, key, seconds);
 }
 
 - (BOOL)setInt64:(int64_t)value forKey:(NSString *)key {
     return m_mmkv->set(value, key);
 }
 
+- (BOOL)setInt64:(int64_t)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set(value, key, seconds);
+}
+
 - (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key {
     return m_mmkv->set(value, key);
+}
+
+- (BOOL)setUInt64:(uint64_t)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set(value, key, seconds);
 }
 
 - (BOOL)setFloat:(float)value forKey:(NSString *)key {
     return m_mmkv->set(value, key);
 }
 
+- (BOOL)setFloat:(float)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set(value, key, seconds);
+}
+
 - (BOOL)setDouble:(double)value forKey:(NSString *)key {
     return m_mmkv->set(value, key);
+}
+
+- (BOOL)setDouble:(double)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return m_mmkv->set(value, key, seconds);
 }
 
 - (BOOL)setString:(NSString *)value forKey:(NSString *)key {
     return [self setObject:value forKey:key];
 }
 
+- (BOOL)setString:(NSString *)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return [self setObject:value forKey:key expireDuration:seconds];
+}
+
 - (BOOL)setDate:(NSDate *)value forKey:(NSString *)key {
     return [self setObject:value forKey:key];
 }
 
+- (BOOL)setDate:(NSDate *)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return [self setObject:value forKey:key expireDuration:seconds];
+}
+
 - (BOOL)setData:(NSData *)value forKey:(NSString *)key {
     return [self setObject:value forKey:key];
+}
+
+- (BOOL)setData:(NSData *)value forKey:(NSString *)key expireDuration:(uint32_t)seconds {
+    return [self setObject:value forKey:key expireDuration:seconds];
 }
 
 - (id)getObjectOfClass:(Class)cls forKey:(NSString *)key {
@@ -574,6 +618,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (NSArray *)allKeys {
     return m_mmkv->allKeys();
+}
+
+- (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds {
+    return m_mmkv->enableAutoKeyExpire(expiredInSeconds);
+}
+
+- (BOOL)disableAutoKeyExpire {
+    return m_mmkv->disableAutoKeyExpire();
 }
 
 - (void)removeValueForKey:(NSString *)key {

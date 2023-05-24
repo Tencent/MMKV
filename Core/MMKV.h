@@ -89,17 +89,28 @@ class MMKV {
     mmkv::InterProcessLock *m_sharedProcessLock;
     mmkv::InterProcessLock *m_exclusiveProcessLock;
 
+    bool m_enableKeyExipre = false;
+    uint32_t m_expiredInSeconds = 0;
+
 #ifdef MMKV_APPLE
     using MMKVKey_t = NSString *__unsafe_unretained;
     static bool isKeyEmpty(MMKVKey_t key) { return key.length <= 0; }
+#  define key_length(key) key.length
+#  define retain_key(key) [key retain]
+#  define release_key(key) [key release]
 #else
     using MMKVKey_t = const std::string &;
     static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
+#  define key_length(key) key.length()
+#  define retain_key(key) (void)
+#  define release_key(key) (void)
 #endif
 
     void loadFromFile();
 
     void partialLoadFromFile();
+
+    void loadMetaInfoAndCheck();
 
     void checkDataValid(bool &loadFromFile, bool &needFullWriteback);
 
@@ -121,9 +132,15 @@ class MMKV {
 
     bool ensureMemorySize(size_t newSize);
 
+    bool expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData);
+
     bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr);
 
     bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter);
+
+    bool doFullWriteBack(MMKVVector &&vec);
+
+    mmkv::MMBuffer getRawDataForKey(MMKVKey_t key);
 
     mmkv::MMBuffer getDataForKey(MMKVKey_t key);
 
@@ -153,6 +170,11 @@ class MMKV {
     static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool isInSpecialDir);
     static bool restoreOneFromDirectory(const std::string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath);
     static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir);
+
+    static uint32_t getCurrentTimeInSecond();
+    uint32_t getExpireTimeForKey(MMKVKey_t key);
+    mmkv::MMBuffer getDataWithoutMTimeForKey(MMKVKey_t key);
+    size_t filterExpiredKeys();
 
 public:
     // call this before getting any MMKV instance
@@ -216,35 +238,49 @@ public:
 #endif
 
     bool set(bool value, MMKVKey_t key);
+    bool set(bool value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(int32_t value, MMKVKey_t key);
+    bool set(int32_t value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(uint32_t value, MMKVKey_t key);
+    bool set(uint32_t value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(int64_t value, MMKVKey_t key);
+    bool set(int64_t value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(uint64_t value, MMKVKey_t key);
+    bool set(uint64_t value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(float value, MMKVKey_t key);
+    bool set(float value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(double value, MMKVKey_t key);
+    bool set(double value, MMKVKey_t key, uint32_t expireDuration);
 
     // avoid unexpected type conversion (pointer to bool, etc)
     template <typename T>
     bool set(T value, MMKVKey_t key) = delete;
+    template <typename T>
+    bool set(T value, MMKVKey_t key, uint32_t expireDuration) = delete;
 
 #ifdef MMKV_APPLE
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key);
+    bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint32_t expireDuration);
 
     NSObject *getObject(MMKVKey_t key, Class cls);
 #else  // !defined(MMKV_APPLE)
     bool set(const char *value, MMKVKey_t key);
+    bool set(const char *value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(const std::string &value, MMKVKey_t key);
+    bool set(const std::string &value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(const mmkv::MMBuffer &value, MMKVKey_t key);
+    bool set(const mmkv::MMBuffer &value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(const std::vector<std::string> &vector, MMKVKey_t key);
+    bool set(const std::vector<std::string> &vector, MMKVKey_t key, uint32_t expireDuration);
 
     bool getString(MMKVKey_t key, std::string &result);
 
@@ -284,6 +320,12 @@ public:
     size_t totalSize();
 
     size_t actualSize();
+
+    // all keys created (or last modified) longger than expiredInSeconds will be deleted on next full-write-back
+    // expiredInSeconds = 0 means no common expiration duration for all keys, aka each key will have it's own expiration duration
+    bool enableAutoKeyExpire(uint32_t expiredInSeconds = 0);
+
+    bool disableAutoKeyExpire();
 
 #ifdef MMKV_APPLE
     NSArray *allKeys();

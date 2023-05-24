@@ -39,6 +39,15 @@ enum MMKVVersion : uint32_t {
 
     // store actual size together with crc checksum, try to reduce file corruption
     MMKVVersionActualSize = 3,
+
+    // store extra flags
+    MMKVVersionFlag = 4,
+
+    // preserved for next use
+    MMKVVersionNext = 5,
+
+    // always large than next, a placeholder for error check
+    MMKVVersionHolder = MMKVVersionNext + 1,
 };
 
 struct MMKVMetaInfo {
@@ -54,6 +63,15 @@ struct MMKVMetaInfo {
         uint32_t lastCRCDigest = 0;
         uint32_t _reserved[16] = {};
     } m_lastConfirmedMetaInfo;
+
+    uint64_t m_flags = 0;
+
+    enum MMKVMetaInfoFlag : uint64_t {
+        EnableKeyExipre = 1 << 0,
+    };
+    bool hasFlag(MMKVMetaInfoFlag flag) { return m_flags & flag; }
+    void setFlag(MMKVMetaInfoFlag flag) { m_flags |= flag; }
+    void unsetFlag(MMKVMetaInfoFlag flag) { m_flags &= ~flag; }
 
     void write(void *ptr) const {
         MMKV_ASSERT(ptr);
