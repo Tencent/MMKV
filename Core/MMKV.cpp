@@ -653,11 +653,11 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key, uint32_t expireDuration) 
     }
     auto data = MiniPBCoder::encodeDataWithObject(v);
     if (unlikely(m_enableKeyExipre) && data.length() > 0) {
-        auto tmp = MMBuffer(data.length + Fixed32Size);
+        auto tmp = MMBuffer(data.length() + Fixed32Size);
         auto ptr = (uint8_t *)tmp.getPtr();
-        memcpy(ptr, data.getPtr(), data.length);
+        memcpy(ptr, data.getPtr(), data.length());
         auto time = (expireDuration != 0) ? getCurrentTimeInSecond() + expireDuration : 0;
-        memcpy(ptr + data.length, &time, Fixed32Size);
+        memcpy(ptr + data.length(), &time, Fixed32Size);
         data = std::move(tmp);
     }
     return setDataForKey(std::move(data), key);
