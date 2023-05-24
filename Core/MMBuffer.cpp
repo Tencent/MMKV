@@ -107,6 +107,21 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
     }
 }
 
+MMBuffer::MMBuffer(MMBuffer &&other, size_t length) noexcept : type(other.type) {
+    if (type == MMBufferType_Normal) {
+        size = std::min(other.size, length);
+        ptr = other.ptr;
+        isNoCopy = other.isNoCopy;
+#ifdef MMKV_APPLE
+        m_data = other.m_data;
+#endif
+        other.detach();
+    } else {
+        paddedSize = std::min(other.paddedSize, static_cast<uint8_t>(length));
+        memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
+    }
+}
+
 MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
     if (type == MMBufferType_Normal) {
         if (other.type == MMBufferType_Normal) {

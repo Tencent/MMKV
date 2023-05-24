@@ -77,6 +77,7 @@ public:
 #endif
 
     MMBuffer(MMBuffer &&other) noexcept;
+    MMBuffer(MMBuffer &&other, size_t length) noexcept;
     MMBuffer &operator=(MMBuffer &&other) noexcept;
 
     ~MMBuffer();
