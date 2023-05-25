@@ -29,6 +29,8 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -615,6 +617,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeBool(nativeHandle, key, value);
     }
 
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, boolean value, int expireDurationInSecond) {
+        return encodeBool_2(nativeHandle, key, value, expireDurationInSecond);
+    }
+
     public boolean decodeBool(String key) {
         return decodeBool(nativeHandle, key, false);
     }
@@ -625,6 +635,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public boolean encode(String key, int value) {
         return encodeInt(nativeHandle, key, value);
+    }
+
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, int value, int expireDurationInSecond) {
+        return encodeInt_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     public int decodeInt(String key) {
@@ -639,6 +657,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeLong(nativeHandle, key, value);
     }
 
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, long value, int expireDurationInSecond) {
+        return encodeLong_2(nativeHandle, key, value, expireDurationInSecond);
+    }
+
     public long decodeLong(String key) {
         return decodeLong(nativeHandle, key, 0);
     }
@@ -649,6 +675,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public boolean encode(String key, float value) {
         return encodeFloat(nativeHandle, key, value);
+    }
+
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, float value, int expireDurationInSecond) {
+        return encodeFloat_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     public float decodeFloat(String key) {
@@ -663,6 +697,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeDouble(nativeHandle, key, value);
     }
 
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, double value, int expireDurationInSecond) {
+        return encodeDouble_2(nativeHandle, key, value, expireDurationInSecond);
+    }
+
     public double decodeDouble(String key) {
         return decodeDouble(nativeHandle, key, 0);
     }
@@ -673,6 +715,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public boolean encode(String key, @Nullable String value) {
         return encodeString(nativeHandle, key, value);
+    }
+
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, @Nullable String value, int expireDurationInSecond) {
+        return encodeString_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     @Nullable
@@ -687,6 +737,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public boolean encode(String key, @Nullable Set<String> value) {
         return encodeSet(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]));
+    }
+
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, @Nullable Set<String> value, int expireDurationInSecond) {
+        return encodeSet_2(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]), expireDurationInSecond);
     }
 
     @Nullable
@@ -722,6 +780,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeBytes(nativeHandle, key, value);
     }
 
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, @Nullable byte[] value, int expireDurationInSecond) {
+        return encodeBytes_2(nativeHandle, key, value, expireDurationInSecond);
+    }
+
     @Nullable
     public byte[] decodeBytes(String key) {
         return decodeBytes(key, null);
@@ -735,17 +801,32 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static final HashMap<String, Parcelable.Creator<?>> mCreators = new HashMap<>();
 
-    public boolean encode(String key, @Nullable Parcelable value) {
-        if (value == null) {
-            return encodeBytes(nativeHandle, key, null);
-        }
-
+    private byte[] getParcelableByte(@NonNull Parcelable value) {
         Parcel source = Parcel.obtain();
         value.writeToParcel(source, 0);
         byte[] bytes = source.marshall();
         source.recycle();
+        return bytes;
+    }
 
+    public boolean encode(String key, @Nullable Parcelable value) {
+        if (value == null) {
+            return encodeBytes(nativeHandle, key, null);
+        }
+        byte[] bytes = getParcelableByte(value);
         return encodeBytes(nativeHandle, key, bytes);
+    }
+
+    /**
+     * Set value with customize expiration in sections.
+     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     */
+    public boolean encode(String key, @Nullable Parcelable value, int expireDurationInSecond) {
+        if (value == null) {
+            return encodeBytes_2(nativeHandle, key, null, expireDurationInSecond);
+        }
+        byte[] bytes = getParcelableByte(value);
+        return encodeBytes_2(nativeHandle, key, bytes, expireDurationInSecond);
     }
 
     @SuppressWarnings("unchecked")
@@ -991,6 +1072,18 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static native long restoreAllFromDirectory(String srcDir);
 
     /**
+     * Enable auto key expiration. This is a upgrade operation, the file format will change.
+     * And the file won't be accessed correctly by older version (v1.2.16) of MMKV.
+     * @param expireDurationInSecond the expire duration for all keys, 0 means no default duration (aka each key will have it's own expire date)
+     */
+    public native boolean enableAutoKeyExpire(int expireDurationInSecond);
+
+    /**
+     * Disable auto key expiration. This is a downgrade operation.
+     */
+    public native boolean disableAutoKeyExpire();
+
+    /**
      * Intentionally Not Supported. Because MMKV does type-eraser inside to get better performance.
      */
     @Override
@@ -1011,6 +1104,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return this;
     }
 
+    public Editor putString(String key, @Nullable String value, int expireDurationInSecond) {
+        encodeString_2(nativeHandle, key, value, expireDurationInSecond);
+        return this;
+    }
+
     @Nullable
     @Override
     public Set<String> getStringSet(String key, @Nullable Set<String> defValues) {
@@ -1023,8 +1121,18 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return this;
     }
 
+    public Editor putStringSet(String key, @Nullable Set<String> values, int expireDurationInSecond) {
+        encode(key, values, expireDurationInSecond);
+        return this;
+    }
+
     public Editor putBytes(String key, @Nullable byte[] bytes) {
         encode(key, bytes);
+        return this;
+    }
+
+    public Editor putBytes(String key, @Nullable byte[] bytes, int expireDurationInSecond) {
+        encode(key, bytes, expireDurationInSecond);
         return this;
     }
 
@@ -1043,6 +1151,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return this;
     }
 
+    public Editor putInt(String key, int value, int expireDurationInSecond) {
+        encodeInt_2(nativeHandle, key, value, expireDurationInSecond);
+        return this;
+    }
+
     @Override
     public long getLong(String key, long defValue) {
         return decodeLong(nativeHandle, key, defValue);
@@ -1051,6 +1164,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Override
     public Editor putLong(String key, long value) {
         encodeLong(nativeHandle, key, value);
+        return this;
+    }
+
+    public Editor putLong(String key, long value, int expireDurationInSecond) {
+        encodeLong_2(nativeHandle, key, value, expireDurationInSecond);
         return this;
     }
 
@@ -1065,6 +1183,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return this;
     }
 
+    public Editor putFloat(String key, float value, int expireDurationInSecond) {
+        encodeFloat_2(nativeHandle, key, value, expireDurationInSecond);
+        return this;
+    }
+
     @Override
     public boolean getBoolean(String key, boolean defValue) {
         return decodeBool(nativeHandle, key, defValue);
@@ -1073,6 +1196,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Override
     public Editor putBoolean(String key, boolean value) {
         encodeBool(nativeHandle, key, value);
+        return this;
+    }
+
+    public Editor putBoolean(String key, boolean value, int expireDurationInSecond) {
+        encodeBool_2(nativeHandle, key, value, expireDurationInSecond);
         return this;
     }
 
@@ -1328,36 +1456,44 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native static long getMMKVWithAshmemFD(String mmapID, int fd, int metaFD, @Nullable String cryptKey);
 
     private native boolean encodeBool(long handle, String key, boolean value);
+    private native boolean encodeBool_2(long handle, String key, boolean value, int expireDurationInSecond);
 
     private native boolean decodeBool(long handle, String key, boolean defaultValue);
 
     private native boolean encodeInt(long handle, String key, int value);
+    private native boolean encodeInt_2(long handle, String key, int value, int expireDurationInSecond);
 
     private native int decodeInt(long handle, String key, int defaultValue);
 
     private native boolean encodeLong(long handle, String key, long value);
+    private native boolean encodeLong_2(long handle, String key, long value, int expireDurationInSecond);
 
     private native long decodeLong(long handle, String key, long defaultValue);
 
     private native boolean encodeFloat(long handle, String key, float value);
+    private native boolean encodeFloat_2(long handle, String key, float value, int expireDurationInSecond);
 
     private native float decodeFloat(long handle, String key, float defaultValue);
 
     private native boolean encodeDouble(long handle, String key, double value);
+    private native boolean encodeDouble_2(long handle, String key, double value, int expireDurationInSecond);
 
     private native double decodeDouble(long handle, String key, double defaultValue);
 
     private native boolean encodeString(long handle, String key, @Nullable String value);
+    private native boolean encodeString_2(long handle, String key, @Nullable String value, int expireDurationInSecond);
 
     @Nullable
     private native String decodeString(long handle, String key, @Nullable String defaultValue);
 
     private native boolean encodeSet(long handle, String key, @Nullable String[] value);
+    private native boolean encodeSet_2(long handle, String key, @Nullable String[] value, int expireDurationInSecond);
 
     @Nullable
     private native String[] decodeStringSet(long handle, String key);
 
     private native boolean encodeBytes(long handle, String key, @Nullable byte[] value);
+    private native boolean encodeBytes_2(long handle, String key, @Nullable byte[] value, int expireDurationInSecond);
 
     @Nullable
     private native byte[] decodeBytes(long handle, String key);
