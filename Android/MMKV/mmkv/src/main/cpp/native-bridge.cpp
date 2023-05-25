@@ -422,6 +422,15 @@ MMKV_JNI jboolean encodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, j
     return (jboolean) false;
 }
 
+MMKV_JNI jboolean encodeBool_2(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean value, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return (jboolean) kv->set((bool) value, key, (uint32_t) expiration);
+    }
+    return (jboolean) false;
+}
+
 MMKV_JNI jboolean decodeBool(JNIEnv *env, jobject, jlong handle, jstring oKey, jboolean defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -436,6 +445,15 @@ MMKV_JNI jboolean encodeInt(JNIEnv *env, jobject obj, jlong handle, jstring oKey
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
         return (jboolean) kv->set((int32_t) value, key);
+    }
+    return (jboolean) false;
+}
+
+MMKV_JNI jboolean encodeInt_2(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jint value, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return (jboolean) kv->set((int32_t) value, key, (uint32_t) expiration);
     }
     return (jboolean) false;
 }
@@ -458,6 +476,15 @@ MMKV_JNI jboolean encodeLong(JNIEnv *env, jobject obj, jlong handle, jstring oKe
     return (jboolean) false;
 }
 
+MMKV_JNI jboolean encodeLong_2(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong value, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return (jboolean) kv->set((int64_t) value, key, (uint32_t) expiration);
+    }
+    return (jboolean) false;
+}
+
 MMKV_JNI jlong decodeLong(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jlong defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -472,6 +499,15 @@ MMKV_JNI jboolean encodeFloat(JNIEnv *env, jobject obj, jlong handle, jstring oK
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
         return (jboolean) kv->set((float) value, key);
+    }
+    return (jboolean) false;
+}
+
+MMKV_JNI jboolean encodeFloat_2(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jfloat value, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return (jboolean) kv->set((float) value, key, (uint32_t) expiration);
     }
     return (jboolean) false;
 }
@@ -494,6 +530,15 @@ MMKV_JNI jboolean encodeDouble(JNIEnv *env, jobject obj, jlong handle, jstring o
     return (jboolean) false;
 }
 
+MMKV_JNI jboolean encodeDouble_2(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jdouble value, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return (jboolean) kv->set((double) value, key, (uint32_t) expiration);
+    }
+    return (jboolean) false;
+}
+
 MMKV_JNI jdouble decodeDouble(JNIEnv *env, jobject, jlong handle, jstring oKey, jdouble defaultValue) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -510,6 +555,21 @@ MMKV_JNI jboolean encodeString(JNIEnv *env, jobject, jlong handle, jstring oKey,
         if (oValue) {
             string value = jstring2string(env, oValue);
             return (jboolean) kv->set(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
+        }
+    }
+    return (jboolean) false;
+}
+
+MMKV_JNI jboolean encodeString_2(JNIEnv *env, jobject, jlong handle, jstring oKey, jstring oValue, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        if (oValue) {
+            string value = jstring2string(env, oValue);
+            return (jboolean) kv->set(value, key, (uint32_t) expiration);
         } else {
             kv->removeValueForKey(key);
             return (jboolean) true;
@@ -548,6 +608,31 @@ MMKV_JNI jboolean encodeBytes(JNIEnv *env, jobject, jlong handle, jstring oKey, 
                 }
             }
             return (jboolean) kv->set(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
+        }
+    }
+    return (jboolean) false;
+}
+
+MMKV_JNI jboolean encodeBytes_2(JNIEnv *env, jobject, jlong handle, jstring oKey, jbyteArray oValue, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        if (oValue) {
+            MMBuffer value(0);
+            {
+                jsize len = env->GetArrayLength(oValue);
+                void *bufferPtr = env->GetPrimitiveArrayCritical(oValue, nullptr);
+                if (bufferPtr) {
+                    value = MMBuffer(bufferPtr, len);
+                    env->ReleasePrimitiveArrayCritical(oValue, bufferPtr, JNI_ABORT);
+                } else {
+                    MMKVError("fail to get array: %s=%p", key.c_str(), oValue);
+                }
+            }
+            return (jboolean) kv->set(value, key, (uint32_t) expiration);
         } else {
             kv->removeValueForKey(key);
             return (jboolean) true;
@@ -667,6 +752,21 @@ MMKV_JNI jboolean encodeSet(JNIEnv *env, jobject, jlong handle, jstring oKey, jo
         if (arrStr) {
             vector<string> value = jarray2vector(env, arrStr);
             return (jboolean) kv->set(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return (jboolean) true;
+        }
+    }
+    return (jboolean) false;
+}
+
+MMKV_JNI jboolean encodeSet_2(JNIEnv *env, jobject, jlong handle, jstring oKey, jobjectArray arrStr, jint expiration) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        if (arrStr) {
+            vector<string> value = jarray2vector(env, arrStr);
+            return (jboolean) kv->set(value, key, (uint32_t) expiration);
         } else {
             kv->removeValueForKey(key);
             return (jboolean) true;
@@ -897,6 +997,22 @@ MMKV_JNI jlong restoreAll(JNIEnv *env, jobject obj, jstring srcDir/*, jstring ro
     return (jlong) MMKV::restoreAllFromDirectory(jstring2string(env, srcDir));
 }
 
+MMKV_JNI jboolean enableAutoExpire(JNIEnv *env, jobject instance, jint expireDuration) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return (jboolean) kv->enableAutoKeyExpire(expireDuration);
+    }
+    return (jboolean) false;
+}
+
+MMKV_JNI jboolean disableAutoExpire(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return (jboolean) kv->disableAutoKeyExpire();
+    }
+    return (jboolean) false;
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -929,20 +1045,28 @@ static JNINativeMethod g_methods[] = {
     {"getDefaultMMKV", "(ILjava/lang/String;)J", (void *) mmkv::getDefaultMMKV},
     {"getMMKVWithAshmemFD", "(Ljava/lang/String;IILjava/lang/String;)J", (void *) mmkv::getMMKVWithAshmemFD},
     {"encodeBool", "(JLjava/lang/String;Z)Z", (void *) mmkv::encodeBool},
+    {"encodeBool_2", "(JLjava/lang/String;ZI)Z", (void *) mmkv::encodeBool_2},
     {"decodeBool", "(JLjava/lang/String;Z)Z", (void *) mmkv::decodeBool},
     {"encodeInt", "(JLjava/lang/String;I)Z", (void *) mmkv::encodeInt},
+    {"encodeInt_2", "(JLjava/lang/String;II)Z", (void *) mmkv::encodeInt_2},
     {"decodeInt", "(JLjava/lang/String;I)I", (void *) mmkv::decodeInt},
     {"encodeLong", "(JLjava/lang/String;J)Z", (void *) mmkv::encodeLong},
+    {"encodeLong_2", "(JLjava/lang/String;JI)Z", (void *) mmkv::encodeLong_2},
     {"decodeLong", "(JLjava/lang/String;J)J", (void *) mmkv::decodeLong},
     {"encodeFloat", "(JLjava/lang/String;F)Z", (void *) mmkv::encodeFloat},
+    {"encodeFloat_2", "(JLjava/lang/String;FI)Z", (void *) mmkv::encodeFloat_2},
     {"decodeFloat", "(JLjava/lang/String;F)F", (void *) mmkv::decodeFloat},
     {"encodeDouble", "(JLjava/lang/String;D)Z", (void *) mmkv::encodeDouble},
+    {"encodeDouble_2", "(JLjava/lang/String;DI)Z", (void *) mmkv::encodeDouble_2},
     {"decodeDouble", "(JLjava/lang/String;D)D", (void *) mmkv::decodeDouble},
     {"encodeString", "(JLjava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::encodeString},
+    {"encodeString_2", "(JLjava/lang/String;Ljava/lang/String;I)Z", (void *) mmkv::encodeString_2},
     {"decodeString", "(JLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", (void *) mmkv::decodeString},
     {"encodeSet", "(JLjava/lang/String;[Ljava/lang/String;)Z", (void *) mmkv::encodeSet},
+    {"encodeSet_2", "(JLjava/lang/String;[Ljava/lang/String;I)Z", (void *) mmkv::encodeSet_2},
     {"decodeStringSet", "(JLjava/lang/String;)[Ljava/lang/String;", (void *) mmkv::decodeStringSet},
     {"encodeBytes", "(JLjava/lang/String;[B)Z", (void *) mmkv::encodeBytes},
+    {"encodeBytes_2", "(JLjava/lang/String;[BI)Z", (void *) mmkv::encodeBytes_2},
     {"decodeBytes", "(JLjava/lang/String;)[B", (void *) mmkv::decodeBytes},
     {"containsKey", "(JLjava/lang/String;)Z", (void *) mmkv::containsKey},
     {"count", "(J)J", (void *) mmkv::count},
@@ -962,6 +1086,8 @@ static JNINativeMethod g_methods[] = {
     {"restoreOneMMKVFromDirectory", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::restoreOne},
     {"backupAllToDirectory", "(Ljava/lang/String;)J", (void *) mmkv::backupAll},
     {"restoreAllFromDirectory", "(Ljava/lang/String;)J", (void *) mmkv::restoreAll},
+    {"enableAutoKeyExpire", "(I)Z", (void *) mmkv::enableAutoExpire},
+    {"disableAutoKeyExpire", "()Z", (void *) mmkv::disableAutoExpire},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {
