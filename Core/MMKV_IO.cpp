@@ -195,7 +195,7 @@ void MMKV::loadMetaInfoAndCheck() {
     }
 
     if (m_metaInfo->m_version >= MMKVVersionFlag) {
-        m_enableKeyExipre = m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre);
+        m_enableKeyExpire = m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre);
         MMKVInfo("meta file [%s] has flag [%llu]", m_mmapID.c_str(), m_metaInfo->m_flags);
     } else {
         if (m_metaInfo->m_flags != 0) {
@@ -386,7 +386,7 @@ bool MMKV::ensureMemorySize(size_t newSize) {
 
     if (newSize >= m_output->spaceLeft() || (m_crypter ? m_dicCrypt->empty() : m_dic->empty())) {
         // remove expired keys
-        if (m_enableKeyExipre) {
+        if (m_enableKeyExpire) {
             filterExpiredKeys();
         }
         // try a full rewrite to make space
@@ -538,7 +538,7 @@ MMBuffer MMKV::getRawDataForKey(MMKVKey_t key) {
 }
 
 mmkv::MMBuffer MMKV::getDataForKey(MMKVKey_t key) {
-    if (unlikely(m_enableKeyExipre)) {
+    if (unlikely(m_enableKeyExpire)) {
         return getDataWithoutMTimeForKey(key);
     }
     return getRawDataForKey(key);
@@ -587,7 +587,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
             } else {
                 kvHolder = KeyValueHolderCrypt(std::move(data));
             }
-            if (likely(!m_enableKeyExipre)) {
+            if (likely(!m_enableKeyExpire)) {
                 itr->second = std::move(kvHolder);
             } else {
                 itr = m_dicCrypt->find(key);
@@ -620,7 +620,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     {
         auto itr = m_dic->find(key);
         if (itr != m_dic->end()) {
-            if (likely(!m_enableKeyExipre)) {
+            if (likely(!m_enableKeyExpire)) {
                 auto ret = appendDataWithKey(data, itr->second, isDataHolder);
                 if (!ret.first) {
                     return false;
@@ -666,7 +666,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 #    ifdef MMKV_APPLE
             auto ret = appendDataWithKey(nan, key, itr->second);
             if (ret.first) {
-                if (unlikely(m_enableKeyExipre)) {
+                if (unlikely(m_enableKeyExpire)) {
                     // filterExpiredKeys() may invalid itr
                     itr = m_dicCrypt->find(key);
                     if (itr == m_dicCrypt->end()) {
@@ -680,7 +680,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 #    else
             auto ret = appendDataWithKey(nan, key);
             if (ret.first) {
-                if (unlikely(m_enableKeyExipre)) {
+                if (unlikely(m_enableKeyExpire)) {
                     m_dicCrypt->erase(key);
                 } else {
                     m_dicCrypt->erase(itr);
@@ -696,10 +696,10 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
         if (itr != m_dic->end()) {
             m_hasFullWriteback = false;
             static MMBuffer nan;
-            auto ret = likely(!m_enableKeyExipre) ? appendDataWithKey(nan, itr->second) : appendDataWithKey(nan, key);
+            auto ret = likely(!m_enableKeyExpire) ? appendDataWithKey(nan, itr->second) : appendDataWithKey(nan, key);
             if (ret.first) {
 #ifdef MMKV_APPLE
-                if (unlikely(m_enableKeyExipre)) {
+                if (unlikely(m_enableKeyExpire)) {
                     // filterExpiredKeys() may invalid itr
                     itr = m_dic->find(key);
                     if (itr == m_dic->end()) {
@@ -710,7 +710,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
                 m_dic->erase(itr);
                 [oldKey release];
 #else
-                if (unlikely(m_enableKeyExipre)) {
+                if (unlikely(m_enableKeyExpire)) {
                     // filterExpiredKeys() may invalid itr
                     m_dic->erase(key);
                 } else {
@@ -833,7 +833,7 @@ bool MMKV::fullWriteback(AESCrypt *newCrypter) {
         return false;
     }
 
-    if (unlikely(m_enableKeyExipre)) {
+    if (unlikely(m_enableKeyExpire)) {
         filterExpiredKeys();
     }
 
@@ -1315,7 +1315,7 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
         MMKVInfo("expiredInSeconds: %u", expiredInSeconds);
         m_expiredInSeconds = expiredInSeconds;
     }
-    m_enableKeyExipre = true;
+    m_enableKeyExpire = true;
     if (m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
         return true;
     }
@@ -1371,7 +1371,7 @@ bool MMKV::disableAutoKeyExpire() {
     checkLoadData();
 
     m_expiredInSeconds = 0;
-    m_enableKeyExipre = false;
+    m_enableKeyExpire = false;
     if (!m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
         return true;
     }
@@ -1424,7 +1424,7 @@ uint32_t MMKV::getExpireTimeForKey(MMKVKey_t key) {
     SCOPED_LOCK(m_sharedProcessLock);
     checkLoadData();
 
-    if (!m_enableKeyExipre || key_length(key) == 0) {
+    if (!m_enableKeyExpire || key_length(key) == 0) {
         return 0;
     }
     auto raw = getRawDataForKey(key);
@@ -1448,10 +1448,10 @@ mmkv::MMBuffer MMKV::getDataWithoutMTimeForKey(MMKVKey_t key) {
         return raw;
     }
     auto newLength = raw.length() - Fixed32Size;
-    if (m_enableKeyExipre) {
+    if (m_enableKeyExpire) {
         auto ptr = (const uint8_t *)raw.getPtr() + newLength;
         auto time = *(const uint32_t *)ptr;
-        if (time != 0 && time <= getCurrentTimeInSecond()) {
+        if (time != ExpireNever && time <= getCurrentTimeInSecond()) {
 #ifdef MMKV_APPLE
             MMKVInfo("deleting expired key [%@] in mmkv [%s], due date %u", key, m_mmapID.c_str(), time);
 #else
@@ -1467,7 +1467,7 @@ mmkv::MMBuffer MMKV::getDataWithoutMTimeForKey(MMKVKey_t key) {
 #define NOOP ((void)0)
 
 size_t MMKV::filterExpiredKeys() {
-    if (!m_enableKeyExipre || (m_crypter ? m_dicCrypt->empty() : m_dic->empty())) {
+    if (!m_enableKeyExpire || (m_crypter ? m_dicCrypt->empty() : m_dic->empty())) {
         return 0;
     }
     auto now = getCurrentTimeInSecond();
@@ -1484,7 +1484,7 @@ size_t MMKV::filterExpiredKeys() {
             auto ptr = (uint8_t*) buffer.getPtr();
             ptr += buffer.length() - Fixed32Size;
             auto time = *(const uint32_t *)ptr;
-            if (time != 0 && time <= now) {
+            if (time != ExpireNever && time <= now) {
                 auto oldKey = itr->first;
                 itr = m_dicCrypt->erase(itr);
 #ifdef MMKV_APPLE
@@ -1507,7 +1507,7 @@ size_t MMKV::filterExpiredKeys() {
             auto ptr = basePtr + kvHolder.offset + kvHolder.computedKVSize;
             ptr += kvHolder.valueSize - Fixed32Size;
             auto time = *(const uint32_t *)ptr;
-            if (time != 0 && time <= now) {
+            if (time != ExpireNever && time <= now) {
                 auto oldKey = itr->first;
                 itr = m_dic->erase(itr);
 #ifdef MMKV_APPLE

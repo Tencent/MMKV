@@ -619,7 +619,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, boolean value, int expireDurationInSecond) {
         return encodeBool_2(nativeHandle, key, value, expireDurationInSecond);
@@ -639,7 +639,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, int value, int expireDurationInSecond) {
         return encodeInt_2(nativeHandle, key, value, expireDurationInSecond);
@@ -659,7 +659,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, long value, int expireDurationInSecond) {
         return encodeLong_2(nativeHandle, key, value, expireDurationInSecond);
@@ -679,7 +679,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, float value, int expireDurationInSecond) {
         return encodeFloat_2(nativeHandle, key, value, expireDurationInSecond);
@@ -699,7 +699,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, double value, int expireDurationInSecond) {
         return encodeDouble_2(nativeHandle, key, value, expireDurationInSecond);
@@ -719,7 +719,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, @Nullable String value, int expireDurationInSecond) {
         return encodeString_2(nativeHandle, key, value, expireDurationInSecond);
@@ -741,7 +741,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, @Nullable Set<String> value, int expireDurationInSecond) {
         return encodeSet_2(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]), expireDurationInSecond);
@@ -782,7 +782,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, @Nullable byte[] value, int expireDurationInSecond) {
         return encodeBytes_2(nativeHandle, key, value, expireDurationInSecond);
@@ -819,7 +819,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Set value with customize expiration in sections.
-     * @param expireDurationInSecond override the default duration, 0 means never expire.
+     * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, @Nullable Parcelable value, int expireDurationInSecond) {
         if (value == null) {
@@ -1071,10 +1071,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static native long restoreAllFromDirectory(String srcDir);
 
+    public static final int ExpireNever = 0;
+    public static final int ExpireInMinute = 60;
+    public static final int ExpireInHour = 60 * 60;
+    public static final int ExpireInDay = 24 * 60 * 60;
+    public static final int ExpireInMonth = 30 * 24 * 60 * 60;
+    public static final int ExpireInYear = 365 * 30 * 24 * 60 * 60;
+
     /**
      * Enable auto key expiration. This is a upgrade operation, the file format will change.
      * And the file won't be accessed correctly by older version (v1.2.16) of MMKV.
-     * @param expireDurationInSecond the expire duration for all keys, 0 means no default duration (aka each key will have it's own expire date)
+     * @param expireDurationInSecond the expire duration for all keys, {@link #ExpireNever} (0) means no default duration (aka each key will have it's own expire date)
      */
     public native boolean enableAutoKeyExpire(int expireDurationInSecond);
 

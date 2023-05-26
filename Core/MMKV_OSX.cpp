@@ -156,7 +156,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
     if (tmpData) {
         // delay write the size needed for encoding tmpData
         // avoid memory copying
-        if (likely(!m_enableKeyExipre)) {
+        if (likely(!m_enableKeyExpire)) {
             return setDataForKey(MMBuffer(tmpData, MMBufferNoCopy), key, true);
         } else {
             MMBuffer data(tmpData, MMBufferNoCopy);
@@ -184,7 +184,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
                     return false;
                 }
                 if (archived.length > 0) {
-                    if (likely(!m_enableKeyExipre)) {
+                    if (likely(!m_enableKeyExpire)) {
                         return setDataForKey(MMBuffer(archived, MMBufferNoCopy), key);
                     } else {
                         MMBuffer data(archived, MMBufferNoCopy);

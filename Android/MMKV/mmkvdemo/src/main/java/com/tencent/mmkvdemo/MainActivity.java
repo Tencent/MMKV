@@ -636,7 +636,7 @@ public class MainActivity extends AppCompatActivity {
 
         mmkv.enableAutoKeyExpire(1);
         mmkv.encode("auto_expire_key_1", true);
-        mmkv.encode("never_expire_key_1", true, 0);
+        mmkv.encode("never_expire_key_1", true, MMKV.ExpireNever);
 
         testAutoExpire(mmkv, false, 1);
         SystemClock.sleep(1000 * 2);

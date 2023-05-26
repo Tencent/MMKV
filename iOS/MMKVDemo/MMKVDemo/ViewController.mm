@@ -80,6 +80,7 @@
 
     DemoSwiftUsage *swiftUsageDemo = [[DemoSwiftUsage alloc] init];
     [swiftUsageDemo testSwiftFunctionality];
+    [swiftUsageDemo testSwiftAutoExpire];
 
     [self testMultiProcess];
     // [self testMultiProcess];
@@ -390,7 +391,7 @@
     [self testMMKV:mmapID withCryptKey:nil decodeOnly:NO];
     [mmkv setBool:YES forKey:@"auto_expire_key_1"];
     [mmkv enableAutoKeyExpire:1];
-    [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1" expireDuration:0];
+    [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1" expireDuration:MMKVExpireNever];
 
     sleep(2);
     assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
@@ -398,7 +399,7 @@
     [self testMMKV:mmapID withCryptKey:nil decodeOnly:YES];
 
     [mmkv removeValueForKey:@"never_expire_key_1"];
-    [mmkv enableAutoKeyExpire:0];
+    [mmkv enableAutoKeyExpire:MMKVExpireNever];
     [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1"];
     [mmkv setBool:YES forKey:@"auto_expire_key_1" expireDuration:1];
     sleep(2);
