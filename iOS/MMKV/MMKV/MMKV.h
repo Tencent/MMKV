@@ -27,6 +27,15 @@ typedef NS_ENUM(NSUInteger, MMKVMode) {
     MMKVMultiProcess = 0x2,
 };
 
+typedef NS_ENUM(UInt32, MMKVExpireDuration) {
+    MMKVExpireNever = 0,
+    MMKVExpireInMinute = 60,
+    MMKVExpireInHour = 60 * 60,
+    MMKVExpireInDay = 24 * 60 * 60,
+    MMKVExpireInMonth = 30 * 24 * 60 * 60,
+    MMKVExpireInYear = 365 * 30 * 24 * 60 * 60,
+};
+
 @interface MMKV : NSObject
 
 NS_ASSUME_NONNULL_BEGIN
@@ -225,7 +234,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray *)allKeys;
 
 /// all keys created (or last modified) longger than expiredInSeconds will be deleted on next full-write-back
-/// @param expiredInSeconds = 0 means no common expiration duration for all keys, aka each key will have it's own expiration duration
+/// @param expiredInSeconds = MMKVExpireNever (0) means no common expiration duration for all keys, aka each key will have it's own expiration duration
 - (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds NS_SWIFT_NAME(enableAutoKeyExpire(expiredInSeconds:));
 
 - (BOOL)disableAutoKeyExpire;

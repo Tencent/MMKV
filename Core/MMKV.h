@@ -89,8 +89,8 @@ class MMKV {
     mmkv::InterProcessLock *m_sharedProcessLock;
     mmkv::InterProcessLock *m_exclusiveProcessLock;
 
-    bool m_enableKeyExipre = false;
-    uint32_t m_expiredInSeconds = 0;
+    bool m_enableKeyExpire = false;
+    uint32_t m_expiredInSeconds = ExpireNever;
 
 #ifdef MMKV_APPLE
     using MMKVKey_t = NSString *__unsafe_unretained;
@@ -321,10 +321,10 @@ public:
 
     size_t actualSize();
 
-    static constexpr uint32_t NeverExpire = 0;
+    static constexpr uint32_t ExpireNever = 0;
 
-    // all keys created (or last modified) longger than expiredInSeconds will be deleted on next full-write-back
-    // expiredInSeconds = MMKV::NeverExpire (0) means no common expiration duration for all keys, aka each key will have it's own expiration duration
+    // all keys created (or last modified) longer than expiredInSeconds will be deleted on next full-write-back
+    // expiredInSeconds = MMKV::ExpireNever (0) means no common expiration duration for all keys, aka each key will have it's own expiration duration
     bool enableAutoKeyExpire(uint32_t expiredInSeconds = 0);
 
     bool disableAutoKeyExpire();

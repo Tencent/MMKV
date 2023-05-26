@@ -319,7 +319,7 @@ class _MyAppState extends State<MyApp> {
       mmkv.encodeBytes("auto_expire_key_6", bytes, 1);
       bytes.destroy();
     }
-    mmkv.encodeBool("never_expire_key_1", true, MMKV.NeverExpire);
+    mmkv.encodeBool("never_expire_key_1", true, MMKV.ExpireNever);
 
     final duration = const Duration(seconds: 2);
     sleep(duration);

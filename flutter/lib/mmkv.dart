@@ -237,10 +237,15 @@ class MMKV {
     return _pointer2String(_mmapID(_handle))!;
   }
 
-  static const int NeverExpire = 0;
+  static const int ExpireNever = 0;
+  static const int ExpireInMinute = 60;
+  static const int ExpireInHour = 60 * 60;
+  static const int ExpireInDay = 24 * 60 * 60;
+  static const int ExpireInMonth = 30 * 24 * 60 * 60;
+  static const int ExpireInYear = 365 * 30 * 24 * 60 * 60;
 
   /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
-  /// * Passing [MMKV.NeverExpire] (aka 0) will never expire.
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
   bool encodeBool(String key, bool value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
     final ret = (expireDurationInSecond == null)
@@ -261,7 +266,7 @@ class MMKV {
   /// Use this when the [value] won't be larger than a normal int32.
   /// It's more efficient & cost less space.
   /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
-  /// * Passing [MMKV.NeverExpire] (aka 0) will never expire.
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
   bool encodeInt32(String key, int value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
     final ret = (expireDurationInSecond == null)
@@ -281,7 +286,7 @@ class MMKV {
   }
 
   /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
-  /// * Passing [MMKV.NeverExpire] (aka 0) will never expire.
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
   bool encodeInt(String key, int value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
     final ret = (expireDurationInSecond == null)
@@ -299,7 +304,7 @@ class MMKV {
   }
 
   /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
-  /// * Passing [MMKV.NeverExpire] (aka 0) will never expire.
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
   bool encodeDouble(String key, double value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
     final ret = (expireDurationInSecond == null)
@@ -318,7 +323,7 @@ class MMKV {
 
   /// Encode an utf-8 string.
   /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
-  /// * Passing [MMKV.NeverExpire] (aka 0) will never expire.
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
   bool encodeString(String key, String? value, [int? expireDurationInSecond]) {
     if (value == null) {
       removeValue(key);
@@ -373,7 +378,7 @@ class MMKV {
   /// buffer.destroy();
   /// ```
   /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
-  /// * Passing [MMKV.NeverExpire] (aka 0) will never expire.
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
   bool encodeBytes(String key, MMBuffer? value, [int? expireDurationInSecond]) {
     if (value == null) {
       removeValue(key);
@@ -667,7 +672,7 @@ class MMKV {
 
   /// Enable auto key expiration. This is a upgrade operation, the file format will change.
   /// And the file won't be accessed correctly by older version (v1.2.17) of MMKV.
-  /// [expireDurationInSecond] the expire duration for all keys, [MMKV.NeverExpire] (0) means no default duration (aka each key will have it's own expire date)
+  /// [expireDurationInSecond] the expire duration for all keys, [MMKV.ExpireNever] (0) means no default duration (aka each key will have it's own expire date)
   bool enableAutoKeyExpire(int expiredInSeconds) {
     return _enableAutoExpire(_handle, expiredInSeconds);
   }

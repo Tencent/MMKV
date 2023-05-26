@@ -20,7 +20,6 @@
 
 import Foundation
 
-
 class DemoSwiftUsage : NSObject {
 	@objc func testSwiftFunctionality() {
 
@@ -71,4 +70,11 @@ class DemoSwiftUsage : NSObject {
         mmkv.removeValue(forKey: "bool")
         print("Swift: after delete bool = \(mmkv.bool(forKey: "bool"))")
 	}
+
+    @objc func testSwiftAutoExpire() {
+        guard let mmkv = MMKV(mmapID: "testAutoExpire") else { return }
+
+        mmkv.enableAutoKeyExpire(expiredInSeconds: MMKVExpireDuration.never.rawValue)
+        mmkv.set(true, forKey: "key", expireDuration: MMKVExpireDuration.never.rawValue)
+    }
 }
