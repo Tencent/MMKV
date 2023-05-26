@@ -69,7 +69,7 @@ struct MMKVMetaInfo {
     enum MMKVMetaInfoFlag : uint64_t {
         EnableKeyExipre = 1 << 0,
     };
-    bool hasFlag(MMKVMetaInfoFlag flag) { return m_flags & flag; }
+    bool hasFlag(MMKVMetaInfoFlag flag) { return (m_flags & flag) != 0; }
     void setFlag(MMKVMetaInfoFlag flag) { m_flags |= flag; }
     void unsetFlag(MMKVMetaInfoFlag flag) { m_flags &= ~flag; }
 

@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <ctime>
 
 #ifdef MMKV_IOS
 #    include "MMKV_OSX.h"

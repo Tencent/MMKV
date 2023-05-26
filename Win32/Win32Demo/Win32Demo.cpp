@@ -23,6 +23,7 @@
 #include <MMKV/MMKV.h>
 #include <iostream>
 #include <string>
+#include <cassert>
 
 using namespace std;
 
@@ -87,8 +88,8 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
         mmkv->set(numeric_limits<double>::max(), "double");
     }
     cout << "double = " << mmkv->getDouble("double") << endl;
-
     if (!decodeOnly) {
+
         mmkv->set("Hello, MMKV-н╒пе for Win32", "string");
     }
     string result;
@@ -290,6 +291,30 @@ void testRestore() {
     }
 }
 
+void testAutoExpire() {
+    string mmapID = "testAutoExpire";
+    auto mmkv = MMKV::mmkvWithID(mmapID);
+    mmkv->clearAll();
+    mmkv->trim();
+    mmkv->disableAutoKeyExpire();
+
+    mmkv->set(true, "auto_expire_key_1");
+    mmkv->enableAutoKeyExpire(1);
+    mmkv->set("never_expire_key_1", "never_expire_key_1", MMKV::ExpireNever);
+
+    Sleep(2 * 1000);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+
+    mmkv->removeValueForKey("never_expire_key_1");
+    mmkv->enableAutoKeyExpire(MMKV::ExpireNever);
+    mmkv->set("never_expire_key_1", "never_expire_key_1");
+    mmkv->set(true, "auto_expire_key_1", 1);
+    Sleep(2 * 1000);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -337,4 +362,5 @@ int main() {
     processTest();
     testBackup();
     testRestore();
+    testAutoExpire();
 }
