@@ -18,12 +18,15 @@
  * limitations under the License.
  */
 
+#define NOMINMAX // undefine max/min
+
 #include "MMBuffer.h"
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <utility>
 #include <stdexcept>
+#include <algorithm>
 
 #ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
