@@ -350,7 +350,7 @@ void testAutoExpiration() {
 
     mmkv->set(true, "auto_expire_key_1");
     mmkv->enableAutoKeyExpire(1);
-    mmkv->set("never_expire_key_1", "never_expire_key_1", MMKV::ExpireNever);
+    mmkv->set("never_expire_value_1", "never_expire_key_1", MMKV::ExpireNever);
 
     sleep(2);
     assert(mmkv->containsKey("auto_expire_key_1") == false);
@@ -358,7 +358,7 @@ void testAutoExpiration() {
 
     mmkv->removeValueForKey("never_expire_key_1");
     mmkv->enableAutoKeyExpire(MMKV::ExpireNever);
-    mmkv->set("never_expire_key_1", "never_expire_key_1");
+    mmkv->set("never_expire_value_1", "never_expire_key_1");
     mmkv->set(true, "auto_expire_key_1", 1);
     sleep(2);
     assert(mmkv->containsKey("never_expire_key_1") == true);
