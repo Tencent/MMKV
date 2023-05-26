@@ -321,8 +321,10 @@ public:
 
     size_t actualSize();
 
+    static constexpr uint32_t NeverExpire = 0;
+
     // all keys created (or last modified) longger than expiredInSeconds will be deleted on next full-write-back
-    // expiredInSeconds = 0 means no common expiration duration for all keys, aka each key will have it's own expiration duration
+    // expiredInSeconds = MMKV::NeverExpire (0) means no common expiration duration for all keys, aka each key will have it's own expiration duration
     bool enableAutoKeyExpire(uint32_t expiredInSeconds = 0);
 
     bool disableAutoKeyExpire();
