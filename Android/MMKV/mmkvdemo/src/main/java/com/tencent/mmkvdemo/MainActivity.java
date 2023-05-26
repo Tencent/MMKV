@@ -642,6 +642,10 @@ public class MainActivity extends AppCompatActivity {
         SystemClock.sleep(1000 * 2);
         testAutoExpire(mmkv, true, 1);
 
+        // mmkv.encode("string", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJFbHFTUjB");
+        // mmkv.clearMemoryCache();
+        // Log.i("MMKV", "space string = " + mmkv.decodeString("string", ""));
+
         if (mmkv.contains("auto_expire_key_1")) {
             Log.e("MMKV", "auto key expiration auto_expire_key_1");
         } else {
