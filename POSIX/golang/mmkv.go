@@ -67,6 +67,15 @@ const (
 	MMKV_MULTI_PROCESS
 )
 
+const (
+	MMKV_Expire_Never = iota
+	MMKV_Expire_Minute = 60
+	MMKV_Expire_Hour = 60 * 60
+	MMKV_Expire_Day = 24 * 60 * 60
+	MMKV_Expire_Month = 30 * 24 * 60 * 60
+	MMKV_Expire_Year = 365 * 30 * 24 * 60 * 60
+)
+
 // a wrapper of native C memory, efficient for simple usage
 // must call MMBuffer.Destroy() after no longer usage
 type MMBuffer struct {
@@ -104,40 +113,49 @@ func (buffer MMBuffer) Destroy() {
 
 type MMKV interface {
 	SetBool(value bool, key string) bool
+	SetBoolExpire(value bool, key string, expireDuration uint32) bool
 	GetBool(key string) bool
 	GetBoolWithDefault(key string, defaultValue bool) bool
 
 	SetInt32(value int32, key string) bool
+	SetInt32Expire(value int32, key string, expireDuration uint32) bool
 	GetInt32(key string) int32
 	GetInt32WithDefault(key string, defaultValue int32) int32
 
 	SetInt64(value int64, key string) bool
+	SetInt64Expire(value int64, key string, expireDuration uint32) bool
 	GetInt64(key string) int64
 	GetInt64WithDefault(key string, defaultValue int64) int64
 
 	SetUInt32(value uint32, key string) bool
+	SetUInt32Expire(value uint32, key string, expireDuration uint32) bool
 	GetUInt32(key string) uint32
 	GetUInt32WithDefault(key string, defaultValue uint32) uint32
 
 	SetUInt64(value uint64, key string) bool
+	SetUInt64Expire(value uint64, key string, expireDuration uint32) bool
 	GetUInt64(key string) uint64
 	GetUInt64WithDefault(key string, defaultValue uint64) uint64
 
 	SetFloat32(value float32, key string) bool
+	SetFloat32Expire(value float32, key string, expireDuration uint32) bool
 	GetFloat32(key string) float32
 	GetFloat32WithDefault(key string, defaultValue float32) float32
 
 	SetFloat64(value float64, key string) bool
+	SetFloat64Expire(value float64, key string, expireDuration uint32) bool
 	GetFloat64(key string) float64
 	GetFloat64WithDefault(key string, defaultValue float64) float64
 
 	// string value should be utf-8 encoded
 	SetString(value string, key string) bool
+	SetStringExpire(value string, key string, expireDuration uint32) bool
 	GetString(key string) string
 	// get C memory directly (without memcpy), much more efferent for large value
 	GetStringBuffer(key string) MMBuffer
 
 	SetBytes(value []byte, key string) bool
+	SetBytesExpire(value []byte, key string, expireDuration uint32) bool
 	GetBytes(key string) []byte
 	// get C memory directly (without memcpy), much more efferent for large value
 	GetBytesBuffer(key string) MMBuffer
@@ -195,6 +213,11 @@ type MMKV interface {
 
 	// See also reKey().
 	CryptKey() string
+
+	// passing MMKV_Expire_Never (0) means never expire
+	EnableAutoKeyExpire(expireDurationInSecond uint32) bool
+
+	DisableAutoKeyExpire() bool
 }
 
 type ctorMMKV uintptr
@@ -315,6 +338,11 @@ func (kv ctorMMKV) SetBool(value bool, key string) bool {
 	return bool(ret)
 }
 
+func (kv ctorMMKV) SetBoolExpire(value bool, key string, expireDuration uint32) bool {
+	ret := C.encodeBool_v2(unsafe.Pointer(kv), C.wrapGoString(key), C.bool(value), C.uint32_t(expireDuration))
+	return bool(ret)
+}
+
 func (kv ctorMMKV) GetBool(key string) bool {
 	return kv.GetBoolWithDefault(key, false)
 }
@@ -326,6 +354,11 @@ func (kv ctorMMKV) GetBoolWithDefault(key string, defaultValue bool) bool {
 
 func (kv ctorMMKV) SetInt32(value int32, key string) bool {
 	ret := C.encodeInt32(unsafe.Pointer(kv), C.wrapGoString(key), C.int32_t(value))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) SetInt32Expire(value int32, key string, expireDuration uint32) bool {
+	ret := C.encodeInt32_v2(unsafe.Pointer(kv), C.wrapGoString(key), C.int32_t(value), C.uint32_t(expireDuration))
 	return bool(ret)
 }
 
@@ -343,6 +376,11 @@ func (kv ctorMMKV) SetUInt32(value uint32, key string) bool {
 	return bool(ret)
 }
 
+func (kv ctorMMKV) SetUInt32Expire(value uint32, key string, expireDuration uint32) bool {
+	ret := C.encodeUInt32_v2(unsafe.Pointer(kv), C.wrapGoString(key), C.uint32_t(value), C.uint32_t(expireDuration))
+	return bool(ret)
+}
+
 func (kv ctorMMKV) GetUInt32(key string) uint32 {
 	return kv.GetUInt32WithDefault(key, 0)
 }
@@ -354,6 +392,11 @@ func (kv ctorMMKV) GetUInt32WithDefault(key string, defaultValue uint32) uint32 
 
 func (kv ctorMMKV) SetInt64(value int64, key string) bool {
 	ret := C.encodeInt64(unsafe.Pointer(kv), C.wrapGoString(key), C.int64_t(value))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) SetInt64Expire(value int64, key string, expireDuration uint32) bool {
+	ret := C.encodeInt64_v2(unsafe.Pointer(kv), C.wrapGoString(key), C.int64_t(value), C.uint32_t(expireDuration))
 	return bool(ret)
 }
 
@@ -371,6 +414,11 @@ func (kv ctorMMKV) SetUInt64(value uint64, key string) bool {
 	return bool(ret)
 }
 
+func (kv ctorMMKV) SetUInt64Expire(value uint64, key string, expireDuration uint32) bool {
+	ret := C.encodeUInt64_v2(unsafe.Pointer(kv), C.wrapGoString(key), C.uint64_t(value), C.uint32_t(expireDuration))
+	return bool(ret)
+}
+
 func (kv ctorMMKV) GetUInt64(key string) uint64 {
 	return kv.GetUInt64WithDefault(key, 0)
 }
@@ -382,6 +430,11 @@ func (kv ctorMMKV) GetUInt64WithDefault(key string, defaultValue uint64) uint64 
 
 func (kv ctorMMKV) SetFloat32(value float32, key string) bool {
 	ret := C.encodeFloat(unsafe.Pointer(kv), C.wrapGoString(key), C.float(value))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) SetFloat32Expire(value float32, key string, expireDuration uint32) bool {
+	ret := C.encodeFloat_v2(unsafe.Pointer(kv), C.wrapGoString(key), C.float(value), C.uint32_t(expireDuration))
 	return bool(ret)
 }
 
@@ -399,6 +452,11 @@ func (kv ctorMMKV) SetFloat64(value float64, key string) bool {
 	return bool(ret)
 }
 
+func (kv ctorMMKV) SetFloat64Expire(value float64, key string, expireDuration uint32) bool {
+	ret := C.encodeDouble_v2(unsafe.Pointer(kv), C.wrapGoString(key), C.double(value), C.uint32_t(expireDuration))
+	return bool(ret)
+}
+
 func (kv ctorMMKV) GetFloat64(key string) float64 {
 	return kv.GetFloat64WithDefault(key, 0)
 }
@@ -411,6 +469,12 @@ func (kv ctorMMKV) GetFloat64WithDefault(key string, defaultValue float64) float
 func (kv ctorMMKV) SetString(value string, key string) bool {
 	cValue := C.wrapGoString(value)
 	ret := C.encodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), cValue)
+	return bool(ret)
+}
+
+func (kv ctorMMKV) SetStringExpire(value string, key string, expireDuration uint32) bool {
+	cValue := C.wrapGoString(value)
+	ret := C.encodeBytes_v2(unsafe.Pointer(kv), C.wrapGoString(key), cValue, C.uint32_t(expireDuration))
 	return bool(ret)
 }
 
@@ -431,6 +495,12 @@ func (kv ctorMMKV) GetStringBuffer(key string) MMBuffer {
 func (kv ctorMMKV) SetBytes(value []byte, key string) bool {
 	cValue := C.wrapGoByteSlice(unsafe.Pointer(&value[0]), C.size_t(len(value)))
 	ret := C.encodeBytes(unsafe.Pointer(kv), C.wrapGoString(key), cValue)
+	return bool(ret)
+}
+
+func (kv ctorMMKV) SetBytesExpire(value []byte, key string, expireDuration uint32) bool {
+	cValue := C.wrapGoByteSlice(unsafe.Pointer(&value[0]), C.size_t(len(value)))
+	ret := C.encodeBytes_v2(unsafe.Pointer(kv), C.wrapGoString(key), cValue, C.uint32_t(expireDuration))
 	return bool(ret)
 }
 
@@ -544,4 +614,14 @@ func (kv ctorMMKV) CryptKey() string {
 	result := C.GoStringN((*C.char)(cStr), C.int(cLen))
 	C.free(unsafe.Pointer(cStr))
 	return result
+}
+
+func (kv ctorMMKV) EnableAutoKeyExpire(expireDurationInSecond uint32) bool {
+	ret := C.enableAutoExpire(unsafe.Pointer(kv), C.uint32_t(expireDurationInSecond))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) DisableAutoKeyExpire() bool {
+	ret := C.disableAutoExpire(unsafe.Pointer(kv))
+	return bool(ret)
 }
