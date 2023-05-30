@@ -4,7 +4,7 @@ IndentWidth: 4
 TabWidth: 4
 AlwaysBreakTemplateDeclarations: true
 AllowShortFunctionsOnASingleLine: InlineOnly
-AllowShortLambdasOnASingleLine: Inline
+#AllowShortLambdasOnASingleLine: Inline
 BreakAfterJavaFieldAnnotations: true
 BreakBeforeBraces: Linux
 SpaceAfterCStyleCast: true

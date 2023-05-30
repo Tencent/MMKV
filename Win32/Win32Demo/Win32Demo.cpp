@@ -356,7 +356,7 @@ int main() {
     }
 
     //fastRemoveCornetSizeTest();
-    //cornetSizeTest();
+    cornetSizeTest();
     //brutleTest();
     threadTest();
     processTest();
