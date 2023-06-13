@@ -161,6 +161,7 @@ AES_Te:
 
 /* void openssl_aes_arm_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
 */
+.type openssl_aes_arm_encrypt, %function
 #ifndef __linux__
 .globl	_openssl_aes_arm_encrypt
 #ifdef __thumb2__
@@ -422,6 +423,7 @@ Lenc_loop:
 	ldr	pc,[sp],#4		// pop and return
 
 
+.type openssl_aes_arm_set_encrypt_key, %function
 #ifndef __linux__
 .globl	_openssl_aes_arm_set_encrypt_key
 #ifdef __thumb2__
@@ -735,6 +737,7 @@ Labrt:
 .word	0xe12fff1e			// interoperable with Thumb ISA:-)
 #endif
 
+.type     openssl_aes_arm_set_decrypt_key, %function
 #ifndef __linux__
 .globl    _openssl_aes_arm_set_decrypt_key
 #ifdef __thumb2__
@@ -954,6 +957,7 @@ AES_Td:
 .byte    0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 
 
+.type openssl_aes_arm_decrypt, %function
 // void AES_decrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
 #ifndef __linux__
 .globl    _openssl_aes_arm_decrypt
