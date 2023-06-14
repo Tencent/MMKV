@@ -481,7 +481,7 @@ MMKV_EXPORT bool MMKV_FUNC(enableAutoExpire)(const void *handle, uint32_t expira
     return false;
 }
 
-MMKV_EXPORT void MMKV_FUNC(disableAutoExpire)(const void *handle) {
+MMKV_EXPORT bool MMKV_FUNC(disableAutoExpire)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         return [kv disableAutoKeyExpire];
