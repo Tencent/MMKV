@@ -1,5 +1,11 @@
 # MMKV for Flutter Change Log
 
+## v1.3.0 / 2023-06-14
+* Add auto key expiration feature. Note that this is a breaking change, once upgrade to auto expiration, the MMKV file is not valid for older versions of MMKV (v1.2.16 and below) to correctly operate.
+* Roll back the lazy load optimization due to reported ANR issues. It was introduced in v1.2.16.
+* The version is now the same as the MMKV native library.
+* Starting from v1.3.0, Flutter for Android will use `com.tencent:mmkv`. Previously it's `com.tencent:mmkv-static`. It's the same as `com.tencent:mmkv` starting from v1.2.11.
+
 ## v1.2.17 / 2023-04-20
 * Optimization: The actual file content is lazy loaded now, saving time on MMKV instance creation, and avoiding lock waiting when a lot of instances are created at the same time.
 * Fix a bug when restoring a loaded MMKV instance the meta file might mistakenly report corrupted.
