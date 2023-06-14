@@ -240,7 +240,7 @@ vector<string> MiniPBCoder::decodeOneVector() {
 
     while (!m_inputData->isAtEnd()) {
         auto value = m_inputData->readString();
-        v.push_back(move(value));
+        v.push_back(std::move(value));
     }
 
     return v;
@@ -259,7 +259,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
             if (key.length() > 0) {
                 m_inputData->readData(kvHolder);
                 if (kvHolder.valueSize > 0) {
-                    dictionary[key] = move(kvHolder);
+                    dictionary[key] = std::move(kvHolder);
                 } else {
                     auto itr = dictionary.find(key);
                     if (itr != dictionary.end()) {
@@ -302,7 +302,7 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
             if (key.length() > 0) {
                 m_inputDataDecrpt->readData(kvHolder);
                 if (kvHolder.realValueSize() > 0) {
-                    dictionary[key] = move(kvHolder);
+                    dictionary[key] = std::move(kvHolder);
                 } else {
                     auto itr = dictionary.find(key);
                     if (itr != dictionary.end()) {

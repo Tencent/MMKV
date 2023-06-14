@@ -237,9 +237,21 @@ class MMKV {
     return _pointer2String(_mmapID(_handle))!;
   }
 
-  bool encodeBool(String key, bool value) {
+  static const int ExpireNever = 0;
+  static const int ExpireInMinute = 60;
+  static const int ExpireInHour = 60 * 60;
+  static const int ExpireInDay = 24 * 60 * 60;
+  static const int ExpireInMonth = 30 * 24 * 60 * 60;
+  static const int ExpireInYear = 365 * 30 * 24 * 60 * 60;
+
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeBool(String key, bool value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
-    final ret = _encodeBool(_handle, keyPtr, _bool2Int(value));
+    final ret = (expireDurationInSecond == null)
+        ? _encodeBool(_handle, keyPtr, _bool2Int(value))
+        : _encodeBoolV2(
+            _handle, keyPtr, _bool2Int(value), expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
@@ -253,9 +265,13 @@ class MMKV {
 
   /// Use this when the [value] won't be larger than a normal int32.
   /// It's more efficient & cost less space.
-  bool encodeInt32(String key, int value) {
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeInt32(String key, int value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
-    final ret = _encodeInt32(_handle, keyPtr, value);
+    final ret = (expireDurationInSecond == null)
+        ? _encodeInt32(_handle, keyPtr, value)
+        : _encodeInt32V2(_handle, keyPtr, value, expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
@@ -269,9 +285,13 @@ class MMKV {
     return ret;
   }
 
-  bool encodeInt(String key, int value) {
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeInt(String key, int value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
-    final ret = _encodeInt64(_handle, keyPtr, value);
+    final ret = (expireDurationInSecond == null)
+        ? _encodeInt64(_handle, keyPtr, value)
+        : _encodeInt64V2(_handle, keyPtr, value, expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
@@ -283,9 +303,13 @@ class MMKV {
     return ret;
   }
 
-  bool encodeDouble(String key, double value) {
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeDouble(String key, double value, [int? expireDurationInSecond]) {
     final keyPtr = key.toNativeUtf8();
-    final ret = _encodeDouble(_handle, keyPtr, value);
+    final ret = (expireDurationInSecond == null)
+        ? _encodeDouble(_handle, keyPtr, value)
+        : _encodeDoubleV2(_handle, keyPtr, value, expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
@@ -298,7 +322,9 @@ class MMKV {
   }
 
   /// Encode an utf-8 string.
-  bool encodeString(String key, String? value) {
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeString(String key, String? value, [int? expireDurationInSecond]) {
     if (value == null) {
       removeValue(key);
       return true;
@@ -307,7 +333,10 @@ class MMKV {
     final keyPtr = key.toNativeUtf8();
     final bytes = MMBuffer.fromList(const Utf8Encoder().convert(value))!;
 
-    final ret = _encodeBytes(_handle, keyPtr, bytes.pointer!, bytes.length);
+    final ret = (expireDurationInSecond == null)
+        ? _encodeBytes(_handle, keyPtr, bytes.pointer!, bytes.length)
+        : _encodeBytesV2(_handle, keyPtr, bytes.pointer!, bytes.length,
+            expireDurationInSecond);
 
     calloc.free(keyPtr);
     bytes.destroy();
@@ -348,14 +377,19 @@ class MMKV {
   ///
   /// buffer.destroy();
   /// ```
-  bool encodeBytes(String key, MMBuffer? value) {
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeBytes(String key, MMBuffer? value, [int? expireDurationInSecond]) {
     if (value == null) {
       removeValue(key);
       return true;
     }
 
     final keyPtr = key.toNativeUtf8();
-    final ret = _encodeBytes(_handle, keyPtr, value.pointer!, value.length);
+    final ret = (expireDurationInSecond == null)
+        ? _encodeBytes(_handle, keyPtr, value.pointer!, value.length)
+        : _encodeBytesV2(_handle, keyPtr, value.pointer!, value.length,
+            expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
@@ -443,7 +477,7 @@ class MMKV {
     return ret;
   }
 
-  /// Write the value to a pre-allocateallocated native buffer.
+  /// Write the value to a pre-allocated native buffer.
   ///
   /// * Return size written into buffer.
   /// * Return -1 on any error, such as [buffer] not large enough.
@@ -635,6 +669,18 @@ class MMKV {
 
     return ret;
   }
+
+  /// Enable auto key expiration. This is a upgrade operation, the file format will change.
+  /// And the file won't be accessed correctly by older version (v1.2.17) of MMKV.
+  /// [expireDurationInSecond] the expire duration for all keys, [MMKV.ExpireNever] (0) means no default duration (aka each key will have it's own expire date)
+  bool enableAutoKeyExpire(int expiredInSeconds) {
+    return _enableAutoExpire(_handle, expiredInSeconds);
+  }
+
+  /// Disable auto key expiration. This is a downgrade operation.
+  bool disableAutoKeyExpire() {
+    return _disableAutoExpire(_handle);
+  }
 }
 
 /* Looks like Dart:ffi's async callback not working perfectly
@@ -774,6 +820,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool = _nativeLib
         _nativeFuncName("encodeBool"))
     .asFunction();
 
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeBoolV2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8,
+                    Uint32)>>(_nativeFuncName("encodeBool_v2"))
+        .asFunction();
+
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeBool = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(
         _nativeFuncName("decodeBool"))
@@ -783,6 +837,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt32 = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(
         _nativeFuncName("encodeInt32"))
     .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt32V2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32,
+                    Uint32)>>(_nativeFuncName("encodeInt32_v2"))
+        .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt32 = _nativeLib
     .lookup<
@@ -795,6 +857,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt64 = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(
         _nativeFuncName("encodeInt64"))
     .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt64V2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64,
+                    Uint32)>>(_nativeFuncName("encodeInt64_v2"))
+        .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt64 = _nativeLib
     .lookup<
@@ -811,6 +881,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, double) _encodeDouble =
                     Double)>>(_nativeFuncName("encodeDouble"))
         .asFunction();
 
+final int Function(Pointer<Void>, Pointer<Utf8>, double, int) _encodeDoubleV2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Double,
+                    Uint32)>>(_nativeFuncName("encodeDouble_v2"))
+        .asFunction();
+
 final double Function(Pointer<Void>, Pointer<Utf8>, double) _decodeDouble =
     _nativeLib
         .lookup<
@@ -825,6 +903,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int)
             NativeFunction<
                 Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>,
                     Uint64)>>(_nativeFuncName("encodeBytes"))
+        .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int, int)
+    _encodeBytesV2 = _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>,
+                    Uint64, Uint32)>>(_nativeFuncName("encodeBytes_v2"))
         .asFunction();
 
 final Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>)
@@ -983,4 +1069,14 @@ final int Function(Pointer<Utf8> dstDir) _backupAll = _nativeLib
 final int Function(Pointer<Utf8> srcDir) _restoreAll = _nativeLib
     .lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(
         _nativeFuncName("restoreAll"))
+    .asFunction();
+
+final bool Function(Pointer<Void>, int) _enableAutoExpire = _nativeLib
+    .lookup<NativeFunction<Bool Function(Pointer<Void>, Uint32)>>(
+        _nativeFuncName("enableAutoExpire"))
+    .asFunction();
+
+final bool Function(Pointer<Void>) _disableAutoExpire = _nativeLib
+    .lookup<NativeFunction<Bool Function(Pointer<Void>)>>(
+        _nativeFuncName("disableAutoExpire"))
     .asFunction();

@@ -3,6 +3,7 @@
 
 import sys
 import mmkv
+import time
 
 
 def functional_test(mmap_id, decode_only):
@@ -92,6 +93,28 @@ def test_restore():
         print("check on restore [", backup_mmkv.mmapID(), "] allKeys: ", backup_mmkv.keys())
 
 
+def test_auto_expire():
+    kv = mmkv.MMKV("test_auto_expire")
+    kv.clearAll()
+    kv.disableAutoKeyExpire()
+
+    kv.set(True, "auto_expire_key_1")
+    kv.enableAutoKeyExpire(1)
+    kv.set("never_expire_value_1", "never_expire_key_1", 0)
+
+    time.sleep(2)
+    print("contains auto_expire_key_1:", "auto_expire_key_1" in kv)
+    print("contains never_expire_key_1:", "never_expire_key_1" in kv)
+
+    kv.remove("never_expire_key_1")
+    kv.enableAutoKeyExpire(0)
+    kv.set("never_expire_value_1", "never_expire_key_1")
+    kv.set(True, "auto_expire_key_1", 1)
+    time.sleep(2)
+    print("contains never_expire_key_1:", "never_expire_key_1" in kv)
+    print("contains auto_expire_key_1:", "auto_expire_key_1" in kv)
+
+
 def logger(log_level, file, line, function, message):
     level = {mmkv.MMKVLogLevel.NoLog: 'N',
              mmkv.MMKVLogLevel.Debug: 'D',
@@ -129,6 +152,8 @@ if __name__ == '__main__':
     test_backup()
 
     test_restore()
+
+    test_auto_expire()
 
     # mmkv.MMKV.unRegisterLogHandler()
     # mmkv.MMKV.unRegisterErrorHandler()

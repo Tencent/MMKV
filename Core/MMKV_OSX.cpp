@@ -125,7 +125,7 @@ bool MMKV::isInBackground() {
 pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
     if (g_isInBackground) {
         MLockPtr mlockPtr(ptr, size);
-        return make_pair(mlockPtr.isLocked(), move(mlockPtr));
+        return make_pair(mlockPtr.isLocked(), std::move(mlockPtr));
     } else {
         return make_pair(true, MLockPtr(nullptr, 0));
     }
@@ -134,6 +134,10 @@ pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
 #    endif // MMKV_IOS
 
 bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
+    return set(obj, key, m_expiredInSeconds);
+}
+
+bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
@@ -152,20 +156,74 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
     if (tmpData) {
         // delay write the size needed for encoding tmpData
         // avoid memory copying
-        return setDataForKey(MMBuffer(tmpData, MMBufferNoCopy), key, true);
+        if (likely(!m_enableKeyExpire)) {
+            return setDataForKey(MMBuffer(tmpData, MMBufferNoCopy), key, true);
+        } else {
+            MMBuffer data(tmpData, MMBufferNoCopy);
+            if (data.length() > 0) {
+                auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
+                CodedOutputData output(tmp.getPtr(), tmp.length());
+                output.writeData(data);
+                auto time = (expireDuration != 0) ? getCurrentTimeInSecond() + expireDuration : 0;
+                output.writeRawLittleEndian32(UInt32ToInt32(time));
+                data = std::move(tmp);
+            }
+            return setDataForKey(std::move(data), key);
+        }
     } else if ([obj isKindOfClass:NSDate.class]) {
         NSDate *oDate = (NSDate *) obj;
         double time = oDate.timeIntervalSince1970;
-        return set(time, key);
+        return set(time, key, expireDuration);
     } else {
         /*if ([object conformsToProtocol:@protocol(NSCoding)])*/ {
-            auto tmp = [NSKeyedArchiver archivedDataWithRootObject:obj];
-            if (tmp.length > 0) {
-                return setDataForKey(MMBuffer(tmp, MMBufferNoCopy), key);
+            @try {
+                NSError *error = nil;
+                auto archived = [NSKeyedArchiver archivedDataWithRootObject:obj requiringSecureCoding:NO error:&error];
+                if (error) {
+                    MMKVError("fail to archive: %@", error);
+                    return false;
+                }
+                if (archived.length > 0) {
+                    if (likely(!m_enableKeyExpire)) {
+                        return setDataForKey(MMBuffer(archived, MMBufferNoCopy), key);
+                    } else {
+                        MMBuffer data(archived, MMBufferNoCopy);
+                        if (data.length() > 0) {
+                            auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
+                            CodedOutputData output(tmp.getPtr(), tmp.length());
+                            output.writeData(data);
+                            auto time = (expireDuration != 0) ? getCurrentTimeInSecond() + expireDuration : 0;
+                            output.writeRawLittleEndian32(UInt32ToInt32(time));
+                            data = std::move(tmp);
+                        }
+                        return setDataForKey(std::move(data), key);
+                    }
+                }
+            } @catch (NSException *exception) {
+                MMKVError("exception: %@", exception.reason);
             }
         }
     }
     return false;
+}
+
+static id unSecureUnArchiveObjectWithData(NSData *data) {
+    @try {
+        NSError *error = nil;
+        auto unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
+        if (error) {
+            MMKVError("fail to init unarchiver %@", error);
+            return nil;
+        }
+
+        unarchiver.requiresSecureCoding = NO;
+        id result = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+        [unarchiver release];
+        return result;
+    } @catch (NSException *exception) {
+        MMKVError("exception: %@", exception.reason);
+    }
+    return nil;
 }
 
 NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
@@ -186,12 +244,7 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
         } else {
             if ([cls conformsToProtocol:@protocol(NSCoding)]) {
                 auto tmp = [NSData dataWithBytesNoCopy:data.getPtr() length:data.length() freeWhenDone:NO];
-                @try {
-                    id result = [NSKeyedUnarchiver unarchiveObjectWithData:tmp];
-                    return result;
-                } @catch (NSException *exception) {
-                    MMKVError("%s", exception.reason);
-                }
+                return unSecureUnArchiveObjectWithData(tmp);
             }
         }
     }
@@ -199,8 +252,6 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
 }
 
 #    ifndef MMKV_DISABLE_CRYPT
-
-constexpr uint32_t Fixed32Size = pbFixed32Size();
 
 pair<bool, KeyValueHolder>
 MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {

@@ -117,19 +117,6 @@ bool MemoryFile::truncate(size_t size) {
         m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
     }
 
-    if (!ftruncate(m_diskFile.getFd(), m_size)) {
-        MMKVError("fail to truncate [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
-        m_size = oldSize;
-        return false;
-    }
-    if (m_size > oldSize) {
-        if (!zeroFillFile(m_diskFile.getFd(), oldSize, m_size - oldSize)) {
-            MMKVError("fail to zeroFile [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
-            m_size = oldSize;
-            return false;
-        }
-    }
-
     if (m_ptr) {
         if (!UnmapViewOfFile(m_ptr)) {
             MMKVError("fail to munmap [%ls], %d", m_diskFile.m_path.c_str(), GetLastError());
@@ -140,6 +127,22 @@ bool MemoryFile::truncate(size_t size) {
         CloseHandle(m_fileMapping);
         m_fileMapping = nullptr;
     }
+
+    if (!ftruncate(m_diskFile.getFd(), m_size)) {
+        MMKVError("fail to truncate [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
+        m_size = oldSize;
+        mmap();
+        return false;
+    }
+    if (m_size > oldSize) {
+        if (!zeroFillFile(m_diskFile.getFd(), oldSize, m_size - oldSize)) {
+            MMKVError("fail to zeroFile [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
+            m_size = oldSize;
+            mmap();
+            return false;
+        }
+    }
+
     auto ret = mmap();
     if (!ret) {
         doCleanMemoryCache(true);
@@ -363,7 +366,8 @@ static pair<MMKVPath_t, MMKVFileHandle_t> createUniqueTempFile(const wchar_t *pr
         MMKVError("GetTempFileName failed %d", GetLastError());
         return {L"", INVALID_HANDLE_VALUE};
     }
-    auto hTempFile = CreateFile(szTempFileName, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    auto hTempFile =
+        CreateFile(szTempFileName, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hTempFile == INVALID_HANDLE_VALUE) {
         MMKVError("fail to create unique temp file [%ls], %d", szTempFileName, GetLastError());
         return {L"", INVALID_HANDLE_VALUE};

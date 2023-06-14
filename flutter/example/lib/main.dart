@@ -78,6 +78,11 @@ class _MyAppState extends State<MyApp> {
               child: Text("Encryption Test", style: TextStyle(fontSize: 18))),
           TextButton(
               onPressed: () {
+                testAutoExpire();
+              },
+              child: Text("Auto Expiration Test", style: TextStyle(fontSize: 18))),
+          TextButton(
+              onPressed: () {
                 testBackup();
                 testRestore();
               },
@@ -297,5 +302,35 @@ class _MyAppState extends State<MyApp> {
       mmkv = MMKV("testAES_reKey1");
       print("check on restore file[${mmkv.mmapID}] allKeys: ${mmkv.allKeys}");
     }
+  }
+
+  void testAutoExpire() {
+    final mmkv = MMKV("test_auto_expire");
+    mmkv.clearAll();
+    mmkv.disableAutoKeyExpire();
+
+    mmkv.enableAutoKeyExpire(1);
+    mmkv.encodeBool("auto_expire_key_1", true);
+    mmkv.encodeInt32("auto_expire_key_2", 1, 1);
+    mmkv.encodeInt("auto_expire_key_3", 2, 1);
+    mmkv.encodeDouble("auto_expire_key_4", 3.0, 1);
+    mmkv.encodeString("auto_expire_key_5", "hello auto expire", 1);
+    {
+      final bytes = MMBuffer.fromList(Utf8Encoder().convert("hello auto expire"))!;
+      mmkv.encodeBytes("auto_expire_key_6", bytes, 1);
+      bytes.destroy();
+    }
+    mmkv.encodeBool("never_expire_key_1", true, MMKV.ExpireNever);
+
+    final duration = const Duration(seconds: 2);
+    sleep(duration);
+
+    print("auto_expire_key_1: ${mmkv.containsKey("auto_expire_key_1")}");
+    print("auto_expire_key_2: ${mmkv.containsKey("auto_expire_key_2")}");
+    print("auto_expire_key_3: ${mmkv.containsKey("auto_expire_key_3")}");
+    print("auto_expire_key_4: ${mmkv.containsKey("auto_expire_key_4")}");
+    print("auto_expire_key_5: ${mmkv.containsKey("auto_expire_key_5")}");
+    print("auto_expire_key_6: ${mmkv.containsKey("auto_expire_key_6")}");
+    print("never_expire_key_1: ${mmkv.containsKey("never_expire_key_1")}");
   }
 }

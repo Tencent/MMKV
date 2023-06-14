@@ -47,27 +47,35 @@ void *getDefaultMMKV(int32_t mode, GoStringWrap_t cryptKey);
 const char *mmapID(void *handle);
 
 bool encodeBool(void *handle, GoStringWrap_t oKey, bool value);
+bool encodeBool_v2(void *handle, GoStringWrap_t oKey, bool value, uint32_t expireDuration);
 bool decodeBool(void *handle, GoStringWrap_t oKey, bool defaultValue);
 
 bool encodeInt32(void *handle, GoStringWrap_t oKey, int32_t value);
+bool encodeInt32_v2(void *handle, GoStringWrap_t oKey, int32_t value, uint32_t expireDuration);
 int32_t decodeInt32(void *handle, GoStringWrap_t oKey, int32_t defaultValue);
 
 bool encodeUInt32(void *handle, GoStringWrap_t oKey, uint32_t value);
+bool encodeUInt32_v2(void *handle, GoStringWrap_t oKey, uint32_t value, uint32_t expireDuration);
 uint32_t decodeUInt32(void *handle, GoStringWrap_t oKey, uint32_t defaultValue);
 
 bool encodeInt64(void *handle, GoStringWrap_t oKey, int64_t value);
+bool encodeInt64_v2(void *handle, GoStringWrap_t oKey, int64_t value, uint32_t expireDuration);
 int64_t decodeInt64(void *handle, GoStringWrap_t oKey, int64_t defaultValue);
 
 bool encodeUInt64(void *handle, GoStringWrap_t oKey, uint64_t value);
+bool encodeUInt64_v2(void *handle, GoStringWrap_t oKey, uint64_t value, uint32_t expireDuration);
 uint64_t decodeUInt64(void *handle, GoStringWrap_t oKey, uint64_t defaultValue);
 
 bool encodeFloat(void *handle, GoStringWrap_t oKey, float value);
+bool encodeFloat_v2(void *handle, GoStringWrap_t oKey, float value, uint32_t expireDuration);
 float decodeFloat(void *handle, GoStringWrap_t oKey, float defaultValue);
 
 bool encodeDouble(void *handle, GoStringWrap_t oKey, double value);
+bool encodeDouble_v2(void *handle, GoStringWrap_t oKey, double value, uint32_t expireDuration);
 double decodeDouble(void *handle, GoStringWrap_t oKey, double defaultValue);
 
 bool encodeBytes(void *handle, GoStringWrap_t oKey, GoStringWrap_t oValue);
+bool encodeBytes_v2(void *handle, GoStringWrap_t oKey, GoStringWrap_t oValue, uint32_t expireDuration);
 void *decodeBytes(void *handle, GoStringWrap_t oKey, uint64_t *lengthPtr);
 
 bool reKey(void *handle, GoStringWrap_t oKey);
@@ -93,6 +101,9 @@ bool backupOneToDirectory(GoStringWrap_t mmapID, GoStringWrap_t dstDir, GoString
 bool restoreOneFromDirectory(GoStringWrap_t mmapID, GoStringWrap_t srcDir, GoStringWrap_t dstDir);
 uint64_t backupAllToDirectory(GoStringWrap_t dstDir, GoStringWrap_t srcDir);
 uint64_t restoreAllFromDirectory(GoStringWrap_t srcDir, GoStringWrap_t dstDir);
+
+bool enableAutoExpire(void *handle, uint32_t expireDuration);
+bool disableAutoExpire(void *handle);
 
 int32_t pageSize();
 const char *version();

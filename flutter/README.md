@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.2.17-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-1.3.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android** and **iOS**.
@@ -26,11 +26,11 @@ Add the following lines to `pubspec.yaml` on your app module. Then run `flutter 
 
 ```yaml
 dependencies:
-  mmkv: ">=1.2.17"
+  mmkv: ">=1.3.0"
   ...
 ```
 
-If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.2.16.  
+If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.3.0.  
 
 #### iOS  
 To avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to **change the plugin name 'mmkv' to 'mmkvflutter'**.  
@@ -82,16 +82,19 @@ fix_mmkv_plugin_name(flutter_application_path)
 **Note**: You can find the [script](https://github.com/Tencent/MMKV/blob/master/flutter/tool/fix_mmkv_plugin_name.rb) inside mmkv plugin under path `tool/fix_mmkv_plugin_name.rb`.
 
 #### Android  
-If you previously use `com.tencent.mmkv` in your Android App, you should move to `com.tencent.mmkv-static`.
-And if your App depends on any 3rd SDK that embeds `com.tencent.mmkv`, you can add this lines to your `build.gradle` to avoid conflict:
+If you previously use `com.tencent.mmkv-static` or `com.tencent.mmkv-shared` in your Android App, you should move to `com.tencent.mmkv`.
+And if your App depends on any 3rd SDK that embeds `com.tencent.mmkv-static` or `com.tencent.mmkv-shared`, you can add this lines to your `build.gradle` to avoid conflict:
 
 ```gradle
     dependencies {
         ...
 
         modules {
-            module("com.tencent:mmkv") {
-                replacedBy("com.tencent:mmkv-static", "Using mmkv-static for flutter")
+            module("com.tencent:mmkv-static") {
+                replacedBy("com.tencent:mmkv", "Using mmkv for flutter")
+            }
+            module("com.tencent:mmkv-shared") {
+                replacedBy("com.tencent:mmkv", "Using mmkv for flutter")
             }
         }
     }
@@ -242,6 +245,8 @@ Due to the current limitation of Flutter runtime, we can't redirect log on the F
     ```
   **Note:** It's recommended to store MMKV files **inside** your App's sandbox path. **DO NOT** store them on external storage(aka SD card). If you have to do it, you should  follow Android's [scoped storage](https://developer.android.com/preview/privacy/storage) enforcement.
 
+### Additional docs
+For additional documents, checkout the [wiki](https://github.com/Tencent/MMKV/wiki/flutter_setup).
 
 ## License
 MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).

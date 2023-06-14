@@ -124,6 +124,15 @@ MMKV_EXPORT bool encodeBool(void *handle, const char *oKey, bool value) {
     return false;
 }
 
+MMKV_EXPORT bool encodeBool_v2(void *handle, const char *oKey, bool value, uint32_t expiration) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->set((bool) value, key, expiration);
+    }
+    return false;
+}
+
 MMKV_EXPORT bool decodeBool(void *handle, const char *oKey, bool defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -138,6 +147,15 @@ MMKV_EXPORT bool encodeInt32(void *handle, const char *oKey, int32_t value) {
     if (kv && oKey) {
         auto key = string(oKey);
         return kv->set((int32_t) value, key);
+    }
+    return false;
+}
+
+MMKV_EXPORT bool encodeInt32_v2(void *handle, const char *oKey, int32_t value, uint32_t expiration) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->set((int32_t) value, key, expiration);
     }
     return false;
 }
@@ -160,6 +178,15 @@ MMKV_EXPORT bool encodeInt64(void *handle, const char *oKey, int64_t value) {
     return false;
 }
 
+MMKV_EXPORT bool encodeInt64_v2(void *handle, const char *oKey, int64_t value, uint32_t expiration) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->set((int64_t) value, key, expiration);
+    }
+    return false;
+}
+
 MMKV_EXPORT int64_t decodeInt64(void *handle, const char *oKey, int64_t defaultValue) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -174,6 +201,15 @@ MMKV_EXPORT bool encodeDouble(void *handle, const char *oKey, double value) {
     if (kv && oKey) {
         auto key = string(oKey);
         return kv->set((double) value, key);
+    }
+    return false;
+}
+
+MMKV_EXPORT bool encodeDouble_v2(void *handle, const char *oKey, double value, uint32_t expiration) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        return kv->set((double) value, key, expiration);
     }
     return false;
 }
@@ -194,6 +230,21 @@ MMKV_EXPORT bool encodeBytes(void *handle, const char *oKey, void *oValue, uint6
         if (oValue) {
             auto value = MMBuffer(oValue, static_cast<size_t>(length), MMBufferNoCopy);
             return kv->set(value, key);
+        } else {
+            kv->removeValueForKey(key);
+            return true;
+        }
+    }
+    return false;
+}
+
+MMKV_EXPORT bool encodeBytes_v2(void *handle, const char *oKey, void *oValue, uint64_t length, uint32_t expiration) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        auto key = string(oKey);
+        if (oValue) {
+            auto value = MMBuffer(oValue, static_cast<size_t>(length), MMBufferNoCopy);
+            return kv->set(value, key, expiration);
         } else {
             kv->removeValueForKey(key);
             return true;
@@ -471,6 +522,22 @@ MMKV_EXPORT uint64_t restoreAll(const char *srcDir/*, const char *rootPath*/) {
         }
     }*/
     return MMKV::restoreAllFromDirectory(srcDir);
+}
+
+MMKV_EXPORT bool enableAutoExpire(void *handle, uint32_t expireDuration) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->enableAutoKeyExpire(expireDuration);
+    }
+    return false;
+}
+
+MMKV_EXPORT bool disableAutoExpire(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->disableAutoKeyExpire();
+    }
+    return false;
 }
 
 #endif // MMKV_DISABLE_FLUTTER

@@ -94,6 +94,15 @@ MMKV_EXPORT bool MMKV_FUNC(encodeBool)(const void *handle, const char *oKey, boo
     return false;
 }
 
+MMKV_EXPORT bool MMKV_FUNC(encodeBool_v2)(const void *handle, const char *oKey, bool value, uint32_t expiration) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv && oKey) {
+        auto key = [NSString stringWithUTF8String:oKey];
+        return [kv setBool:value forKey:key expireDuration:expiration];
+    }
+    return false;
+}
+
 MMKV_EXPORT bool MMKV_FUNC(decodeBool)(const void *handle, const char *oKey, bool defaultValue) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
@@ -108,6 +117,15 @@ MMKV_EXPORT bool MMKV_FUNC(encodeInt32)(const void *handle, const char *oKey, in
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
         return [kv setInt32:value forKey:key];
+    }
+    return false;
+}
+
+MMKV_EXPORT bool MMKV_FUNC(encodeInt32_v2)(const void *handle, const char *oKey, int32_t value, uint32_t expiration) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv && oKey) {
+        auto key = [NSString stringWithUTF8String:oKey];
+        return [kv setInt32:value forKey:key expireDuration:expiration];
     }
     return false;
 }
@@ -130,6 +148,15 @@ MMKV_EXPORT bool MMKV_FUNC(encodeInt64)(const void *handle, const char *oKey, in
     return false;
 }
 
+MMKV_EXPORT bool MMKV_FUNC(encodeInt64_v2)(const void *handle, const char *oKey, int64_t value, uint32_t expiration) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv && oKey) {
+        auto key = [NSString stringWithUTF8String:oKey];
+        return [kv setInt64:value forKey:key expireDuration:expiration];
+    }
+    return false;
+}
+
 MMKV_EXPORT int64_t MMKV_FUNC(decodeInt64)(const void *handle, const char *oKey, int64_t defaultValue) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {
@@ -144,6 +171,15 @@ MMKV_EXPORT bool MMKV_FUNC(encodeDouble)(const void *handle, const char *oKey, d
     if (kv && oKey) {
         auto key = [NSString stringWithUTF8String:oKey];
         return [kv setDouble:value forKey:key];
+    }
+    return false;
+}
+
+MMKV_EXPORT bool MMKV_FUNC(encodeDouble_v2)(const void *handle, const char *oKey, double value, uint32_t expiration) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv && oKey) {
+        auto key = [NSString stringWithUTF8String:oKey];
+        return [kv setDouble:value forKey:key expireDuration:expiration];
     }
     return false;
 }
@@ -164,6 +200,21 @@ MMKV_EXPORT bool MMKV_FUNC(encodeBytes)(const void *handle, const char *oKey, vo
         if (oValue) {
             auto value = [NSData dataWithBytesNoCopy:oValue length:static_cast<NSUInteger>(length) freeWhenDone:NO];
             return [kv setData:value forKey:key];
+        } else {
+            [kv removeValueForKey:key];
+            return true;
+        }
+    }
+    return false;
+}
+
+MMKV_EXPORT bool MMKV_FUNC(encodeBytes_v2)(const void *handle, const char *oKey, void *oValue, uint64_t length, uint32_t expiration) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv && oKey) {
+        auto key = [NSString stringWithUTF8String:oKey];
+        if (oValue) {
+            auto value = [NSData dataWithBytesNoCopy:oValue length:static_cast<NSUInteger>(length) freeWhenDone:NO];
+            return [kv setData:value forKey:key expireDuration:expiration];
         } else {
             [kv removeValueForKey:key];
             return true;
@@ -420,6 +471,22 @@ MMKV_EXPORT uint64_t MMKV_FUNC(backupAll)(const char *dstDir/*, const char *root
 MMKV_EXPORT uint64_t MMKV_FUNC(restoreAll)(const char *srcDir/*, const char *rootPath*/) {
     auto strSrcDir = [NSString stringWithUTF8String:srcDir];
     return [MMKV restoreAll:nil fromDirectory:strSrcDir];
+}
+
+MMKV_EXPORT bool MMKV_FUNC(enableAutoExpire)(const void *handle, uint32_t expiration) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv) {
+        return [kv enableAutoKeyExpire:expiration];
+    }
+    return false;
+}
+
+MMKV_EXPORT void MMKV_FUNC(disableAutoExpire)(const void *handle) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv) {
+        return [kv disableAutoKeyExpire];
+    }
+    return false;
 }
 
 /* Looks like Dart:ffi's async callback not working perfectly
