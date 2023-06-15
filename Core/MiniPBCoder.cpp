@@ -127,8 +127,6 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMBuffer &buffer) {
     return index;
 }
 
-#ifndef MMKV_DISABLE_CRYPT
-
 size_t MiniPBCoder::prepareObjectForEncode(const MMKVVector &vec) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
@@ -166,8 +164,6 @@ size_t MiniPBCoder::prepareObjectForEncode(const MMKVVector &vec) {
 
     return index;
 }
-
-#endif // MMKV_DISABLE_CRYPT
 
 MMBuffer MiniPBCoder::writePreparedItems(size_t index) {
     PBEncodeItem *oItem = (index < m_encodeItems->size()) ? &(*m_encodeItems)[index] : nullptr;
