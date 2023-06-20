@@ -623,9 +623,9 @@ public class MainActivity extends AppCompatActivity {
         Log.i("MMKV", "string after set null: " + kv.decodeString("null string")
                 + ", containsKey:" + kv.contains("null string"));
 
-        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
+        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allNonExpireKeys()));
         Log.i("MMKV",
-                "count = " + kv.count() + ", totalSize = " + kv.totalSize() + ", actualSize = " + kv.actualSize());
+                "count = " + kv.countNonExpiredKeys() + ", totalSize = " + kv.totalSize() + ", actualSize = " + kv.actualSize());
         Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
     }
 
