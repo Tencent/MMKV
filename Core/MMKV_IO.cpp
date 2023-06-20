@@ -822,7 +822,7 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
 }
 
-bool MMKV::fullWriteback(AESCrypt *newCrypter) {
+bool MMKV::fullWriteback(AESCrypt *newCrypter, bool onlyWhileExpire) {
     if (m_hasFullWriteback) {
         return true;
     }
@@ -835,10 +835,14 @@ bool MMKV::fullWriteback(AESCrypt *newCrypter) {
     }
 
     if (unlikely(m_enableKeyExpire)) {
-        filterExpiredKeys();
+        auto expiredCount = filterExpiredKeys();
+        if (onlyWhileExpire && expiredCount == 0) {
+            return true;
+        }
     }
 
-    if (m_crypter ? m_dicCrypt->empty() : m_dic->empty()) {
+    auto isEmpty = m_crypter ? m_dicCrypt->empty() : m_dic->empty();
+    if (isEmpty) {
         clearAll();
         return true;
     }
@@ -1471,6 +1475,8 @@ size_t MMKV::filterExpiredKeys() {
     if (!m_enableKeyExpire || (m_crypter ? m_dicCrypt->empty() : m_dic->empty())) {
         return 0;
     }
+    SCOPED_LOCK(m_sharedProcessLock);
+
     auto now = getCurrentTimeInSecond();
     MMKVInfo("filtering expired keys inside [%s] now: %u, m_expiredInSeconds: %u", m_mmapID.c_str(), now, m_expiredInSeconds);
 

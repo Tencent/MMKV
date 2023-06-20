@@ -620,6 +620,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return m_mmkv->allKeys();
 }
 
+- (size_t)countNonExpiredKeys {
+    return m_mmkv->count(true);
+}
+
+- (NSArray *)allNonExpiredKeys {
+    return m_mmkv->allKeys(true);
+}
+
 - (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds {
     return m_mmkv->enableAutoKeyExpire(expiredInSeconds);
 }
