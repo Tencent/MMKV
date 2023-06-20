@@ -233,6 +233,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
 - (NSArray *)allKeys;
 
+/// return count of non-expired keys, keep in mind that it comes with cost
+- (size_t)countNonExpiredKeys;
+
+/// return all non-expired keys, keep in mind that it comes with cost
+- (NSArray *)allNonExpiredKeys;
+
 /// all keys created (or last modified) longger than expiredInSeconds will be deleted on next full-write-back
 /// @param expiredInSeconds = MMKVExpireNever (0) means no common expiration duration for all keys, aka each key will have it's own expiration duration
 - (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds NS_SWIFT_NAME(enableAutoKeyExpire(expiredInSeconds:));

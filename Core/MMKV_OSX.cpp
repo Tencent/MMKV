@@ -273,9 +273,14 @@ MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolde
 }
 #    endif
 
-NSArray *MMKV::allKeys() {
+NSArray *MMKV::allKeys(bool filterExpire) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
+
+    if (unlikely(filterExpire && m_enableKeyExpire)) {
+        SCOPED_LOCK(m_exclusiveProcessLock);
+        fullWriteback(nullptr, true);
+    }
 
     NSMutableArray *keys = [NSMutableArray array];
     if (m_crypter) {

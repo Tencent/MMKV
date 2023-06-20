@@ -1011,9 +1011,15 @@ bool MMKV::containsKey(MMKVKey_t key) {
     return raw.length() != 0;
 }
 
-size_t MMKV::count() {
+size_t MMKV::count(bool filterExpire) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
+
+    if (unlikely(filterExpire && m_enableKeyExpire)) {
+        SCOPED_LOCK(m_exclusiveProcessLock);
+        fullWriteback(nullptr, true);
+    }
+
     if (m_crypter) {
         return m_dicCrypt->size();
     } else {
@@ -1046,9 +1052,14 @@ void MMKV::removeValueForKey(MMKVKey_t key) {
 
 #ifndef MMKV_APPLE
 
-vector<string> MMKV::allKeys() {
+vector<string> MMKV::allKeys(bool filterExpire) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
+
+    if (unlikely(filterExpire && m_enableKeyExpire)) {
+        SCOPED_LOCK(m_exclusiveProcessLock);
+        fullWriteback(nullptr, true);
+    }
 
     vector<string> keys;
     if (m_crypter) {
