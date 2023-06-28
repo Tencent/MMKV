@@ -68,6 +68,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateTodayContent)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
+
     [self funcionalTest:NO];
     [self testReKey];
     [self testImportFromUserDefault];
@@ -771,6 +776,14 @@ MMKV *getMMKVForBatchTest() {
     NSLog(@"allKeys %@", [mmkv allKeys]);
 
     [mmkv close];
+}
+
+- (void)updateTodayContent {
+    static int count = 0;
+    NSData *key_1 = [@"multi_process" dataUsingEncoding:NSUTF8StringEncoding];
+    auto mmkv = [MMKV mmkvWithID:@"multi_process" cryptKey:key_1 mode:MMKVMultiProcess];
+    NSString *content = [NSString stringWithFormat:@"count: %d", count++];
+    [mmkv setString:content forKey:@"content"];
 }
 
 #pragma mark - backup & restore

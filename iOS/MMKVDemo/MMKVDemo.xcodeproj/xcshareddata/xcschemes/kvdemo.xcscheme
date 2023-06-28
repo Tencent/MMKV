@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CB1FD41F20455E2D00931B5F"
-               BuildableName = "MMKVDemo.app"
-               BlueprintName = "MMKVDemo"
+               BlueprintIdentifier = "CB3166F92A4C6B5F0003221B"
+               BuildableName = "kvdemo.app"
+               BlueprintName = "kvdemo"
                ReferencedContainer = "container:MMKVDemo.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,16 +28,6 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "CB36F24820F8A20C009AF46F"
-               BuildableName = "MMKVDemoTests.xctest"
-               BlueprintName = "MMKVDemoTests"
-               ReferencedContainer = "container:MMKVDemo.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
@@ -54,9 +44,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD41F20455E2D00931B5F"
-            BuildableName = "MMKVDemo.app"
-            BlueprintName = "MMKVDemo"
+            BlueprintIdentifier = "CB3166F92A4C6B5F0003221B"
+            BuildableName = "kvdemo.app"
+            BlueprintName = "kvdemo"
             ReferencedContainer = "container:MMKVDemo.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -71,9 +61,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "CB1FD41F20455E2D00931B5F"
-            BuildableName = "MMKVDemo.app"
-            BlueprintName = "MMKVDemo"
+            BlueprintIdentifier = "CB3166F92A4C6B5F0003221B"
+            BuildableName = "kvdemo.app"
+            BlueprintName = "kvdemo"
             ReferencedContainer = "container:MMKVDemo.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
