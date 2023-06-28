@@ -16,6 +16,15 @@
 		CB1FD42D20455E2D00931B5F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42C20455E2D00931B5F /* Assets.xcassets */; };
 		CB1FD43020455E2D00931B5F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */; };
 		CB1FD43320455E2D00931B5F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD43220455E2D00931B5F /* main.m */; };
+		CB3166FE2A4C6B5F0003221B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB3166FD2A4C6B5F0003221B /* AppDelegate.m */; };
+		CB3167012A4C6B5F0003221B /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB3167002A4C6B5F0003221B /* SceneDelegate.m */; };
+		CB3167042A4C6B5F0003221B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB3167032A4C6B5F0003221B /* ViewController.m */; };
+		CB3167072A4C6B5F0003221B /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB3167052A4C6B5F0003221B /* Main.storyboard */; };
+		CB3167092A4C6B600003221B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB3167082A4C6B600003221B /* Assets.xcassets */; };
+		CB31670C2A4C6B600003221B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB31670A2A4C6B600003221B /* LaunchScreen.storyboard */; };
+		CB31670F2A4C6B600003221B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB31670E2A4C6B600003221B /* main.m */; };
+		CB3167142A4C6B7D0003221B /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; };
+		CB3167172A4C6E450003221B /* MMKV.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
 		CB467FBC2431EE3000FD7421 /* MMKVAppExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; };
@@ -133,6 +142,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		CB3167162A4C6E380003221B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				CB3167172A4C6E450003221B /* MMKV.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CB6180E926E90493003FF912 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -203,6 +222,19 @@
 		CB1FD43220455E2D00931B5F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MMKV.xcodeproj; path = ../MMKV/MMKV.xcodeproj; sourceTree = "<group>"; };
 		CB1FD4D12046AF2300931B5F /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		CB3166FA2A4C6B5F0003221B /* kvdemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kvdemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB3166FC2A4C6B5F0003221B /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		CB3166FD2A4C6B5F0003221B /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		CB3166FF2A4C6B5F0003221B /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
+		CB3167002A4C6B5F0003221B /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
+		CB3167022A4C6B5F0003221B /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		CB3167032A4C6B5F0003221B /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		CB3167062A4C6B5F0003221B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		CB3167082A4C6B600003221B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CB31670B2A4C6B600003221B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		CB31670D2A4C6B600003221B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CB31670E2A4C6B600003221B /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		CB3167152A4C6BA90003221B /* kvdemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = kvdemo.entitlements; sourceTree = "<group>"; };
 		CB36F24920F8A20C009AF46F /* MMKVDemoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MMKVDemoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = MMKVDemoTests.mm; sourceTree = "<group>"; };
 		CB36F24D20F8A20C009AF46F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -257,6 +289,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB3166F72A4C6B5F0003221B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB3167142A4C6B7D0003221B /* MMKV.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CB36F24620F8A20C009AF46F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -304,6 +344,7 @@
 				CB6D44CD23B3A44400F369AA /* MMKVTodayExtensionDemo */,
 				CBF19013243D6F59001C82ED /* WatchApp */,
 				CBF19022243D6F5A001C82ED /* WatchApp Extension */,
+				CB3166FB2A4C6B5F0003221B /* kvdemo */,
 				CB1FD42120455E2D00931B5F /* Products */,
 				CB1FD45720455F3500931B5F /* Frameworks */,
 			);
@@ -319,6 +360,7 @@
 				CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */,
 				CBF19012243D6F59001C82ED /* WatchApp.app */,
 				CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */,
+				CB3166FA2A4C6B5F0003221B /* kvdemo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -365,6 +407,25 @@
 				CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CB3166FB2A4C6B5F0003221B /* kvdemo */ = {
+			isa = PBXGroup;
+			children = (
+				CB3167152A4C6BA90003221B /* kvdemo.entitlements */,
+				CB3166FC2A4C6B5F0003221B /* AppDelegate.h */,
+				CB3166FD2A4C6B5F0003221B /* AppDelegate.m */,
+				CB3166FF2A4C6B5F0003221B /* SceneDelegate.h */,
+				CB3167002A4C6B5F0003221B /* SceneDelegate.m */,
+				CB3167022A4C6B5F0003221B /* ViewController.h */,
+				CB3167032A4C6B5F0003221B /* ViewController.m */,
+				CB3167052A4C6B5F0003221B /* Main.storyboard */,
+				CB3167082A4C6B600003221B /* Assets.xcassets */,
+				CB31670A2A4C6B600003221B /* LaunchScreen.storyboard */,
+				CB31670D2A4C6B600003221B /* Info.plist */,
+				CB31670E2A4C6B600003221B /* main.m */,
+			);
+			path = kvdemo;
 			sourceTree = "<group>";
 		};
 		CB36F24A20F8A20C009AF46F /* MMKVDemoTests */ = {
@@ -455,6 +516,24 @@
 			name = MMKVDemo;
 			productName = MMKVDemo;
 			productReference = CB1FD42020455E2D00931B5F /* MMKVDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CB3166F92A4C6B5F0003221B /* kvdemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB3167132A4C6B600003221B /* Build configuration list for PBXNativeTarget "kvdemo" */;
+			buildPhases = (
+				CB3166F62A4C6B5F0003221B /* Sources */,
+				CB3166F72A4C6B5F0003221B /* Frameworks */,
+				CB3166F82A4C6B5F0003221B /* Resources */,
+				CB3167162A4C6E380003221B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = kvdemo;
+			productName = kvdemo;
+			productReference = CB3166FA2A4C6B5F0003221B /* kvdemo.app */;
 			productType = "com.apple.product-type.application";
 		};
 		CB36F24820F8A20C009AF46F /* MMKVDemoTests */ = {
@@ -566,6 +645,10 @@
 							};
 						};
 					};
+					CB3166F92A4C6B5F0003221B = {
+						CreatedOnToolsVersion = 14.2;
+						ProvisioningStyle = Manual;
+					};
 					CB36F24820F8A20C009AF46F = {
 						CreatedOnToolsVersion = 9.4.1;
 						ProvisioningStyle = Automatic;
@@ -614,6 +697,7 @@
 				CB6D44C923B3A44400F369AA /* MMKVTodayExtensionDemo */,
 				CBF19011243D6F59001C82ED /* WatchApp */,
 				CBF1901D243D6F5A001C82ED /* WatchApp Extension */,
+				CB3166F92A4C6B5F0003221B /* kvdemo */,
 			);
 		};
 /* End PBXProject section */
@@ -657,6 +741,16 @@
 				CB1FD43020455E2D00931B5F /* LaunchScreen.storyboard in Resources */,
 				CB1FD42D20455E2D00931B5F /* Assets.xcassets in Resources */,
 				CB1FD42B20455E2D00931B5F /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB3166F82A4C6B5F0003221B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB31670C2A4C6B600003221B /* LaunchScreen.storyboard in Resources */,
+				CB3167092A4C6B600003221B /* Assets.xcassets in Resources */,
+				CB3167072A4C6B5F0003221B /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -713,6 +807,17 @@
 				CB1FD43320455E2D00931B5F /* main.m in Sources */,
 				CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */,
 				CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB3166F62A4C6B5F0003221B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB3167042A4C6B5F0003221B /* ViewController.m in Sources */,
+				CB3166FE2A4C6B5F0003221B /* AppDelegate.m in Sources */,
+				CB31670F2A4C6B600003221B /* main.m in Sources */,
+				CB3167012A4C6B5F0003221B /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -811,6 +916,22 @@
 			isa = PBXVariantGroup;
 			children = (
 				CB1FD42F20455E2D00931B5F /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		CB3167052A4C6B5F0003221B /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CB3167062A4C6B5F0003221B /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		CB31670A2A4C6B600003221B /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CB31670B2A4C6B600003221B /* Base */,
 			);
 			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
@@ -991,6 +1112,71 @@
 				PROVISIONING_PROFILE_SPECIFIER = MMKVDemo;
 				SWIFT_OBJC_BRIDGING_HEADER = "MMKVDemo/MMKVDemo-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CB3167102A4C6B600003221B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = kvdemo/kvdemo.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = SG5PVJM4JW;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = kvdemo/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.kvdemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = mmkvdemo2;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CB3167112A4C6B600003221B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = kvdemo/kvdemo.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = SG5PVJM4JW;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = kvdemo/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.kvdemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = mmkvdemo2;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -1224,6 +1410,15 @@
 			buildConfigurations = (
 				CB1FD43720455E2D00931B5F /* Debug */,
 				CB1FD43820455E2D00931B5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CB3167132A4C6B600003221B /* Build configuration list for PBXNativeTarget "kvdemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB3167102A4C6B600003221B /* Debug */,
+				CB3167112A4C6B600003221B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
