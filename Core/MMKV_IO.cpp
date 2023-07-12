@@ -392,13 +392,14 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         }
         // try a full rewrite to make space
         auto preparedData = m_crypter ? prepareEncode(*m_dicCrypt) : prepareEncode(*m_dic);
-        return expandAndWriteBack(newSize, std::move(preparedData));
+        // m_actualSize == 0 means inserting key-vakue for the first time, no need to call msync()
+        return expandAndWriteBack(newSize, std::move(preparedData), m_actualSize > 0);
     }
     return true;
 }
 
 // try a full rewrite to make space
-bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData) {
+bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData, bool needSync) {
     auto fileSize = m_file->getFileSize();
     auto sizeOfDic = preparedData.second;
     size_t lenNeeded = sizeOfDic + Fixed32Size + newSize;
@@ -426,7 +427,7 @@ bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> 
             return false;
         }
     }
-    return doFullWriteBack(std::move(preparedData), nullptr);
+    return doFullWriteBack(std::move(preparedData), nullptr, needSync);
 }
 
 size_t MMKV::readActualSize() {
@@ -1026,7 +1027,7 @@ static void fullWriteBackWholeData(MMBuffer allData, size_t totalSize, CodedOutp
 }
 
 #ifndef MMKV_DISABLE_CRYPT
-bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter) {
+bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
 #ifdef MMKV_IOS
@@ -1065,14 +1066,16 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
         recaculateCRCDigestWithIV(nullptr);
     }
     m_hasFullWriteback = true;
-    // make sure lastConfirmedMetaInfo is saved
-    sync(MMKV_SYNC);
+    // make sure lastConfirmedMetaInfo is saved if needed
+    if (needSync) {
+        sync(MMKV_SYNC);
+    }
     return true;
 }
 
 #else // MMKV_DISABLE_CRYPT
 
-bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *) {
+bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
 #ifdef MMKV_IOS
@@ -1095,8 +1098,10 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *) {
     m_actualSize = totalSize;
     recaculateCRCDigestWithIV(nullptr);
     m_hasFullWriteback = true;
-    // make sure lastConfirmedMetaInfo is saved
-    sync(MMKV_SYNC);
+    // make sure lastConfirmedMetaInfo is saved if needed
+    if (needSync) {
+        sync(MMKV_SYNC);
+    }
     return true;
 }
 #endif // MMKV_DISABLE_CRYPT

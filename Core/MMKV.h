@@ -132,11 +132,11 @@ class MMKV {
 
     bool ensureMemorySize(size_t newSize);
 
-    bool expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData);
+    bool expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData, bool needSync = true);
 
     bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr, bool onlyWhileExpire = false);
 
-    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter);
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter, bool needSync = true);
 
     bool doFullWriteBack(mmkv::MMKVVector &&vec);
 
