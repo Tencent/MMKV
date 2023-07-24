@@ -365,6 +365,30 @@ void testAutoExpiration() {
     assert(mmkv->containsKey("auto_expire_key_1") == false);
 }
 
+void testExpectedCapacity() {
+    auto mmkv0 = MMKV::mmkvWithID("testExpectedCapacity0", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE);
+    assert(mmkv0->totalSize() == DEFAULT_MMAP_SIZE);
+
+    auto mmkv1 = MMKV::mmkvWithID("testExpectedCapacity1", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE + 1);
+    assert(mmkv1->totalSize() == DEFAULT_MMAP_SIZE << 1);
+
+    auto mmkv2 = MMKV::mmkvWithID("testExpectedCapacity2", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE - 1);
+    assert(mmkv2->totalSize() == DEFAULT_MMAP_SIZE);
+
+    auto mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3");
+    mmkv3->clearAll();
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE);
+    mmkv3->close();
+    // expand it
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 100 * DEFAULT_MMAP_SIZE + 100);
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE * 101);
+
+    // if new size is smaller than file size, keep file its origin size
+    mmkv3->close();
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 0);
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE * 101);
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -415,4 +439,5 @@ int main() {
     testBackup();
     testRestore();
     testAutoExpiration();
+    testExpectedCapacity();
 }

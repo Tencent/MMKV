@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
         testRestore();
 
         testAutoExpire();
+        testExpectedCapacity();
     }
 
     private void testInterProcessLogic() {
@@ -656,5 +657,14 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.e("MMKV", "auto key expiration never_expire_key_1");
         }
+    }
+
+    private void testExpectedCapacity() {
+        MMKV mmkv = MMKV.mmkvWithID("test_expected_capacity", MMKV.SINGLE_PROCESS_MODE, 4097);
+        mmkv.encode("test_expected_capacity_1", true);
+        Log.i("MMKV", "test_expected_capacity count = " + mmkv.count() + ", totalSize = " + mmkv.totalSize()
+                        + ", actualSize = " + mmkv.actualSize());
+
+
     }
 }

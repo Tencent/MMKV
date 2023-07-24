@@ -70,10 +70,10 @@ File::File(MMKVFileHandle_t ashmemFD)
     }
 }
 
-MemoryFile::MemoryFile(string path, size_t size, FileType fileType)
+MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expectedCapacity)
     : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create, size, fileType), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
     if (m_fileType == MMFILE_TYPE_FILE) {
-        reloadFromFile();
+        reloadFromFile(expectedCapacity);
     } else {
         if (m_diskFile.isFileValid()) {
             m_size = m_diskFile.m_size;

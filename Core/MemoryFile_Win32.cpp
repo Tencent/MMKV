@@ -94,12 +94,12 @@ size_t File::getActualFileSize() const {
     return size;
 }
 
-MemoryFile::MemoryFile(MMKVPath_t path)
+MemoryFile::MemoryFile(MMKVPath_t path, size_t expectedCapacity)
     : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create)
     , m_fileMapping(nullptr)
     , m_ptr(nullptr)
     , m_size(0) {
-    reloadFromFile();
+    reloadFromFile(expectedCapacity);
 }
 
 bool MemoryFile::truncate(size_t size) {
@@ -183,7 +183,7 @@ bool MemoryFile::mmap() {
     return true;
 }
 
-void MemoryFile::reloadFromFile() {
+void MemoryFile::reloadFromFile(size_t expectedCapacity) {
     if (isFileValid()) {
         MMKVWarning("calling reloadFromFile while the cache [%ls] is still valid", m_diskFile.m_path.c_str());
         assert(0);
@@ -196,9 +196,13 @@ void MemoryFile::reloadFromFile() {
         SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_diskFile.getFd(), m_size);
+        size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, expectedCapacity);
         // round up to (n * pagesize)
-        if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
-            size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+        expectedSize = (expectedSize + DEFAULT_MMAP_SIZE - 1) / DEFAULT_MMAP_SIZE * DEFAULT_MMAP_SIZE;
+        // round up to (n * pagesize)
+        if (m_size < expectedSize || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+            size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;;
+            roundSize = std::max<size_t>(expectedSize, roundSize);
             truncate(roundSize);
         } else {
             auto ret = mmap();

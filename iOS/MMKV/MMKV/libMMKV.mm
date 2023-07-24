@@ -155,6 +155,11 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:nil mode:MMKVSingleProcess];
 }
 
++ (instancetype)mmkvWithID:(NSString *)mmapID expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:nil mode:MMKVSingleProcess
+           expectedCapacity: expectedCapacity];
+}
+
 + (instancetype)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode {
     auto rootPath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:rootPath mode:mode];
@@ -162,6 +167,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:nil mode:MMKVSingleProcess];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:nil mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode {
@@ -173,6 +182,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:rootPath mode:MMKVSingleProcess];
 }
 
++ (instancetype)mmkvWithID:(NSString *)mmapID rootPath:(nullable NSString *)rootPath expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:rootPath mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
+}
+
 + (instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:relativePath mode:MMKVSingleProcess];
 }
@@ -181,12 +194,20 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:MMKVSingleProcess];
 }
 
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
+}
+
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:relativePath mode:MMKVSingleProcess];
 }
 
 // relatePath and MMKVMultiProcess mode can't be set at the same time, so we hide this method from public
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode {
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:MMKVSingleProcess expectedCapacity: 0];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
     NSAssert(g_hasCalledInitializeMMKV, @"MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
     if (mmapID.length <= 0) {
         return nil;
@@ -206,7 +227,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID rootPath:rootPath];
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
-        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode];
+        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode expectedCapacity:expectedCapacity];
         if (!kv->m_mmkv) {
             [kv release];
             return nil;
@@ -219,7 +240,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return kv;
 }
 
-- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(NSString *)rootPath mode:(MMKVMode)mode {
+- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
     if (self = [super init]) {
         string pathTmp;
         if (rootPath.length > 0) {
@@ -231,7 +252,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         }
         string *rootPathPtr = pathTmp.empty() ? nullptr : &pathTmp;
         string *cryptKeyPtr = cryptKeyTmp.empty() ? nullptr : &cryptKeyTmp;
-        m_mmkv = mmkv::MMKV::mmkvWithID(mmapID.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, rootPathPtr);
+        m_mmkv = mmkv::MMKV::mmkvWithID(mmapID.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, rootPathPtr, expectedCapacity);
         if (!m_mmkv) {
             return self;
         }

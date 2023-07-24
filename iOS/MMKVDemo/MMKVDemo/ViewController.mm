@@ -91,6 +91,7 @@
     // [self testMultiProcess];
     [self testBackup];
     [self testRestore];
+    [self testExpectedCapacity];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -854,6 +855,23 @@ MMKV *getMMKVForBatchTest() {
         restoredKV = [MMKV mmkvWithID:@"testSwift"];
         NSLog(@"check on restore file[%@] keys:%@", restoredKV.mmapID, [restoredKV allKeys]);
     }
+}
+
+
+#pragma mark - expected capacity
+- (void)testExpectedCapacity {
+    
+    auto mmkv = [MMKV mmkvWithID:@"expectedCapacityTest0"];
+    size_t size = [mmkv totalSize];
+    
+    auto mmkv0 = [MMKV mmkvWithID:@"expectedCapacityTest0" expectedCapacity:0];
+    NSLog(@"MMKV file totalSize = %ld", [mmkv0 totalSize]);
+    
+    auto mmkv1 = [MMKV mmkvWithID:@"expectedCapacityTest1" expectedCapacity:size + 1];
+    NSLog(@"MMKV file totalSize = %ld", [mmkv1 totalSize]);
+    
+    auto mmkv3 = [MMKV mmkvWithID:@"expectedCapacityTest3" expectedCapacity:size - 1];
+    NSLog(@"MMKV file totalSize = %ld", [mmkv3 totalSize]);
 }
 
 @end

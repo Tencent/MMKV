@@ -70,6 +70,14 @@ def test_backup():
     print("backup all count: ", count)
 
 
+def test_expectedCapacity():
+    mmap_id = "mmkv_capacity"
+
+    kv = mmkv.MMKV(mmap_id, mmkv.MMKVMode.SingleProcess, "", "", 4097)
+    kv.set("data with capacity", "key")
+    print("test_expectedCapacity,  ", kv.getString("key"))
+
+
 def test_restore():
     root_dir = "/tmp/mmkv_backup"
     mmap_id = "test/Encrypt"
@@ -147,6 +155,7 @@ if __name__ == '__main__':
     # get notified after content changed by other process
     # mmkv.MMKV.registerContentChangeHandler(content_change_handler)
 
+    test_expectedCapacity()
     functional_test('test_python', False)
 
     test_backup()

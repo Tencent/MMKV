@@ -77,13 +77,14 @@ bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix);
 MMKVPath_t filename(const MMKVPath_t &path);
 
 #ifndef MMKV_ANDROID
-MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath)
+MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath,
+           size_t expectedCapacity)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
-    , m_file(new MemoryFile(m_path))
+    , m_file(new MemoryFile(m_path, expectedCapacity))
     , m_metaFile(new MemoryFile(m_crcPath))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
@@ -212,7 +213,7 @@ const MMKVPath_t &MMKV::getRootDir() {
 }
 
 #ifndef MMKV_ANDROID
-MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity) {
 
     if (mmapID.empty()) {
         return nullptr;
@@ -234,7 +235,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
         MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
 
-    auto kv = new MMKV(mmapID, mode, cryptKey, rootPath);
+    auto kv = new MMKV(mmapID, mode, cryptKey, rootPath, expectedCapacity);
     kv->m_mmapKey = mmapKey;
     (*g_instanceDic)[mmapKey] = kv;
     return kv;

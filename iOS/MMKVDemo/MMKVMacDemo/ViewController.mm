@@ -19,6 +19,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    [self expectedCapacityTest];
 
     [self funcionalTest:NO];
     [self testNeedLoadFromFile];
@@ -37,6 +39,18 @@
         NSString *intKey = [NSString stringWithFormat:@"int-%zu", index];
         [m_arrIntKeys addObject:intKey];
     }
+}
+
+- (void)expectedCapacityTest {
+    auto mmkv0 = [MMKV mmkvWithID:@"expectedCapacityTest0" expectedCapacity:0];
+    NSAssert([mmkv0 totalSize] == PAGE_SIZE, @"expectedCapacityTest Failed to set capacity for mmkv0");
+    
+    auto mmkv1 = [MMKV mmkvWithID:@"expectedCapacityTest1" expectedCapacity:PAGE_SIZE + 1];
+    NSAssert([mmkv1 totalSize] == PAGE_SIZE << 1, @"expectedCapacityTest Failed to set capacity for mmkv1");
+
+    auto mmkv3 = [MMKV mmkvWithID:@"expectedCapacityTest3" expectedCapacity:PAGE_SIZE];
+    NSAssert([mmkv3 totalSize] == PAGE_SIZE, @"expectedCapacityTest Failed to set capacity for mmkv31");
+
 }
 
 - (void)funcionalTest:(BOOL)decodeOnly {

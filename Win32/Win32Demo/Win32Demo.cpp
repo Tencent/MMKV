@@ -315,6 +315,31 @@ void testAutoExpire() {
     assert(mmkv->containsKey("auto_expire_key_1") == false);
 }
 
+void testExpectedCapacity() {
+    size_t defaultPageSize = getpagesize();
+    auto mmkv0 = MMKV::mmkvWithID("testExpectedCapacity0", MMKV_SINGLE_PROCESS, nullptr, nullptr, defaultPageSize);
+    assert(mmkv0->totalSize() == defaultPageSize);
+
+    auto mmkv1 = MMKV::mmkvWithID("testExpectedCapacity1", MMKV_SINGLE_PROCESS, nullptr, nullptr, defaultPageSize + 1);
+    assert(mmkv1->totalSize() == defaultPageSize << 1);
+
+    auto mmkv2 = MMKV::mmkvWithID("testExpectedCapacity2", MMKV_SINGLE_PROCESS, nullptr, nullptr, defaultPageSize - 1);
+    assert(mmkv2->totalSize() == defaultPageSize);
+
+    auto mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3");
+    mmkv3->clearAll();
+    assert(mmkv3->totalSize() == defaultPageSize);
+    mmkv3->close();
+    // expand it
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 100 * defaultPageSize + 100);
+    assert(mmkv3->totalSize() == defaultPageSize * 101);
+
+    // if new size is smaller than file size, keep file its origin size
+    mmkv3->close();
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 0);
+    assert(mmkv3->totalSize() == defaultPageSize * 101);
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -363,4 +388,5 @@ int main() {
     testBackup();
     testRestore();
     testAutoExpire();
+    testExpectedCapacity();
 }
