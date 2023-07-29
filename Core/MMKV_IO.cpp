@@ -403,12 +403,14 @@ bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> 
     auto fileSize = m_file->getFileSize();
     auto sizeOfDic = preparedData.second;
     size_t lenNeeded = sizeOfDic + Fixed32Size + newSize;
-    size_t dicCount = m_crypter ? m_dicCrypt->size() : m_dic->size();
-    size_t avgItemSize = lenNeeded / std::max<size_t>(1, dicCount);
-    size_t futureUsage = avgItemSize * std::max<size_t>(8, (dicCount + 1) / 2);
+    size_t nowDicCount = m_crypter ? m_dicCrypt->size() : m_dic->size();
+    size_t laterDicCount = std::max<size_t>(1, nowDicCount + 1);
+    // or use <cmath> ceil()
+    size_t avgItemSize = (lenNeeded + laterDicCount - 1) / laterDicCount;
+    size_t futureUsage = avgItemSize * std::max<size_t>(8, laterDicCount / 2);
     // 1. no space for a full rewrite, double it
     // 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
-    if (lenNeeded >= fileSize || (lenNeeded + futureUsage) >= fileSize) {
+    if (lenNeeded >= fileSize || (needSync && (lenNeeded + futureUsage) >= fileSize)) {
         size_t oldSize = fileSize;
         do {
             fileSize *= 2;
