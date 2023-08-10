@@ -82,9 +82,9 @@ bool reKey(void *handle, GoStringWrap_t oKey);
 void *cryptKey(void *handle, uint32_t *lengthPtr);
 void checkReSetCryptKey(void *handle, GoStringWrap_t oKey);
 
-GoStringWrap_t *allKeys(void *handle, uint64_t *lengthPtr);
+GoStringWrap_t *allKeys(void *handle, uint64_t *lengthPtr, bool filterExpire);
 bool containsKey(void *handle, GoStringWrap_t oKey);
-uint64_t count(void *handle);
+uint64_t count(void *handle, bool filterExpire);
 uint64_t totalSize(void *handle);
 uint64_t actualSize(void *handle);
 

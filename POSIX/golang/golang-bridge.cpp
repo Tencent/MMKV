@@ -391,10 +391,10 @@ MMKV_EXPORT void checkReSetCryptKey(void *handle, GoStringWrap oKey) {
 
 #    endif // MMKV_DISABLE_CRYPT
 
-MMKV_EXPORT GoStringWrap *allKeys(void *handle, uint64_t *lengthPtr) {
+MMKV_EXPORT GoStringWrap *allKeys(void *handle, uint64_t *lengthPtr, bool filterExpire) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        auto keys = kv->allKeys();
+        auto keys = kv->allKeys(filterExpire);
         if (!keys.empty()) {
             auto keyArray = (GoStringWrap *) calloc(keys.size(), sizeof(GoStringWrap));
             if (!keyArray) {
@@ -426,10 +426,10 @@ MMKV_EXPORT bool containsKey(void *handle, GoStringWrap oKey) {
     return false;
 }
 
-MMKV_EXPORT uint64_t count(void *handle) {
+MMKV_EXPORT uint64_t count(void *handle, bool filterExpire) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        return kv->count();
+        return kv->count(filterExpire);
     }
     return 0;
 }

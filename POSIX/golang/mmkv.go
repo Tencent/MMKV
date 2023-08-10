@@ -76,37 +76,37 @@ const (
 	MMKV_Expire_Year = 365 * 30 * 24 * 60 * 60
 )
 
-// a wrapper of native C memory, efficient for simple usage
+// MMBuffer a wrapper of native C memory, efficient for simple usage
 // must call MMBuffer.Destroy() after no longer usage
 type MMBuffer struct {
 	ptr    uintptr
 	length int
 }
 
-// the address of underlying memory
+// Pointer the address of underlying memory
 func (buffer MMBuffer) Pointer() uintptr {
 	return buffer.ptr
 }
 
-// the size of underlying memory
+// Length the size of underlying memory
 func (buffer MMBuffer) Length() int {
 	return buffer.length
 }
 
-// get byte slice view of underlying memory
+// ByteSliceView get byte slice view of underlying memory
 // the slice is valid as long as MMBuffer.Destroy() not called
 func (buffer MMBuffer) ByteSliceView() []byte {
 	bytes := (*[1 << 30]byte)(unsafe.Pointer(buffer.ptr))[0:buffer.length:buffer.length]
 	return bytes
 }
 
-// get string view of underlying memory
+// StringView get string view of underlying memory
 // the string is valid as long as MMBuffer.Destroy() not called
 func (buffer MMBuffer) StringView() string {
 	return *((*string)(unsafe.Pointer(&buffer)))
 }
 
-// must call Destroy() after no longer usage
+// Destroy must call Destroy() after no longer usage
 func (buffer MMBuffer) Destroy() {
 	C.free(unsafe.Pointer(buffer.ptr))
 }
@@ -147,46 +147,48 @@ type MMKV interface {
 	GetFloat64(key string) float64
 	GetFloat64WithDefault(key string, defaultValue float64) float64
 
-	// string value should be utf-8 encoded
+	// SetString string value should be utf-8 encoded
 	SetString(value string, key string) bool
 	SetStringExpire(value string, key string, expireDuration uint32) bool
 	GetString(key string) string
-	// get C memory directly (without memcpy), much more efferent for large value
+	// GetStringBuffer get C memory directly (without memcpy), much more efferent for large value
 	GetStringBuffer(key string) MMBuffer
 
 	SetBytes(value []byte, key string) bool
 	SetBytesExpire(value []byte, key string, expireDuration uint32) bool
 	GetBytes(key string) []byte
-	// get C memory directly (without memcpy), much more efferent for large value
+	// GetBytesBuffer get C memory directly (without memcpy), much more efferent for large value
 	GetBytesBuffer(key string) MMBuffer
 
 	RemoveKey(key string)
 	RemoveKeys(keys []string)
 
-	// clear all key-values
+	// ClearAll clear all key-values
 	ClearAll()
 
-	// return count of keys
+	// Count return count of keys
 	Count() uint64
+	// CountNonExpiredKeys same as Count() except that it filters expired keys
+	CountNonExpiredKeys() uint64
 
 	AllKeys() []string
+	// AllNonExpireKeys same as AllKeys() except that it filters expired keys
+	AllNonExpireKeys() []string
+
 	Contains(key string) bool
 
-	// total size of the file
+	// TotalSize total size of the file
 	TotalSize() uint64
 
-	// actual used size of the file
+	// ActualSize actual used size of the file
 	ActualSize() uint64
 
-	// the mmapID of the instance
+	// MMAP_ID the mmapID of the instance
 	MMAP_ID() string
 
-	/* Synchronize memory to file. You don't need to call this, really, I mean it. Unless you worry about running out of battery.
-	 * Pass true to perform synchronous write.
-	 * Pass false to perform asynchronous write, return immediately.
-	 */
+	// Sync Synchronize memory to file. You don't need to call this, really, I mean it. Unless you worry about running out of battery.
 	Sync(sync bool)
-	// Clear all caches (on memory warning).
+	// ClearMemoryCache Clear all caches (on memory warning).
 	ClearMemoryCache()
 
 	/* Trim the file size to minimal.
@@ -200,21 +202,21 @@ type MMKV interface {
 	// Any subsequent call to the instance is undefined behavior.
 	Close()
 
-	/* Change encryption key for the MMKV instance.
+	/* ReKey Change encryption key for the MMKV instance.
 	 * The cryptKey is 16 bytes limited.
 	 * You can transfer a plain-text MMKV into encrypted by setting an non-null, non-empty cryptKey.
 	 * Or vice versa by passing cryptKey with null. See also checkReSetCryptKey().
 	 */
 	ReKey(newKey string) bool
 
-	// Just reset the cryptKey (will not encrypt or decrypt anything).
+	// CheckReSetCryptKey Just reset the cryptKey (will not encrypt or decrypt anything).
 	// Usually you should call this method after other process reKey() the multi-process mmkv.
 	CheckReSetCryptKey(key string)
 
 	// See also reKey().
 	CryptKey() string
 
-	// passing MMKV_Expire_Never (0) means never expire
+	// EnableAutoKeyExpire passing MMKV_Expire_Never (0) means never expire
 	EnableAutoKeyExpire(expireDurationInSecond uint32) bool
 
 	DisableAutoKeyExpire() bool
@@ -222,7 +224,7 @@ type MMKV interface {
 
 type ctorMMKV uintptr
 
-// return the version of MMKV
+// Version return the version of MMKV
 func Version() string {
 	version := C.version()
 	goStr := C.GoString(version)
@@ -254,70 +256,70 @@ func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandl
 	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(true))
 }
 
-// Call before App exists, it's just fine not calling it on most case (except when the device shutdown suddenly).
+// OnExit Call before App exists, it's just fine not calling it on most case (except when the device shutdown suddenly).
 func OnExit() {
 	C.onExit()
 }
 
-// return the page size of memory
+// PageSize return the page size of memory
 func PageSize() int32 {
 	return int32(C.pageSize())
 }
 
-// a generic purpose instance in single-process mode.
+// DefaultMMKV a generic purpose instance in single-process mode.
 func DefaultMMKV() MMKV {
 	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.GoStringWrapNil()))
 	return MMKV(mmkv)
 }
 
-// a generic purpose instance in single-process or multi-process mode.
+// DefaultMMKVWithMode a generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithMode(mode int) MMKV {
 	mmkv := ctorMMKV(C.getDefaultMMKV(C.int(mode), C.GoStringWrapNil()))
 	return MMKV(mmkv)
 }
 
-// an encrypted generic purpose instance in single-process or multi-process mode.
+// DefaultMMKVWithModeAndCryptKey an encrypted generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithModeAndCryptKey(mode int, cryptKey string) MMKV {
 	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.wrapGoString(cryptKey)))
 	return MMKV(mmkv)
 }
 
-// an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
+// MMKVWithID an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithID(mmapID string) MMKV {
 	cStrNull := C.GoStringWrapNil()
 	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull))
 	return MMKV(mmkv)
 }
 
-// an instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
+// MMKVWithIDAndMode an instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndMode(mmapID string, mode int) MMKV {
 	cStrNull := C.GoStringWrapNil()
 	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, cStrNull))
 	return MMKV(mmkv)
 }
 
-// an encrypted instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
+// MMKVWithIDAndModeAndCryptKey an encrypted instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string) MMKV {
 	cStrNull := C.GoStringWrapNil()
 	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), cStrNull))
 	return MMKV(mmkv)
 }
 
-// backup one MMKV instance (from the root dir of MMKV) to dstDir
+// BackupOneToDirectory backup one MMKV instance (from the root dir of MMKV) to dstDir
 func BackupOneToDirectory(mmapID string, dstDir string) bool {
 	cStrNull := C.GoStringWrapNil()
 	ret := C.backupOneToDirectory(C.wrapGoString(mmapID), C.wrapGoString(dstDir), cStrNull)
 	return bool(ret)
 }
 
-// restore one MMKV instance from srcDir (to the root dir of MMKV)
+// RestoreOneFromDirectory restore one MMKV instance from srcDir (to the root dir of MMKV)
 func RestoreOneFromDirectory(mmapID string, srcDir string) bool {
 	cStrNull := C.GoStringWrapNil()
 	ret := C.restoreOneFromDirectory(C.wrapGoString(mmapID), C.wrapGoString(srcDir), cStrNull)
 	return bool(ret)
 }
 
-// backup all MMKV instance (from the root dir of MMKV) to dstDir
+// BackupAllToDirectory backup all MMKV instance (from the root dir of MMKV) to dstDir
 // return count of MMKV successfully backup-ed
 func BackupAllToDirectory(dstDir string) uint64 {
 	cStrNull := C.GoStringWrapNil()
@@ -325,7 +327,7 @@ func BackupAllToDirectory(dstDir string) uint64 {
 	return uint64(ret)
 }
 
-// restore all MMKV instance from srcDir (to the root dir of MMKV)
+// RestoreAllFromDirectory restore all MMKV instance from srcDir (to the root dir of MMKV)
 // return count of MMKV successfully restored
 func RestoreAllFromDirectory(srcDir string) uint64 {
 	cStrNull := C.GoStringWrapNil()
@@ -533,12 +535,16 @@ func (kv ctorMMKV) RemoveKeys(keys []string) {
 }
 
 func (kv ctorMMKV) Count() uint64 {
-	return uint64(C.count(unsafe.Pointer(kv)))
+	return uint64(C.count(unsafe.Pointer(kv), C.bool(false)))
 }
 
-func (kv ctorMMKV) AllKeys() []string {
+func (kv ctorMMKV) CountNonExpiredKeys() uint64 {
+	return uint64(C.count(unsafe.Pointer(kv), C.bool(true)))
+}
+
+func (kv ctorMMKV) allKeys(filterExpire bool) []string {
 	count := uint64(0)
-	keyArray := C.allKeys(unsafe.Pointer(kv), (*C.uint64_t)(&count))
+	keyArray := C.allKeys(unsafe.Pointer(kv), (*C.uint64_t)(&count), C.bool(filterExpire))
 	if keyArray == nil || count == 0 {
 		return []string{}
 	}
@@ -556,6 +562,14 @@ func (kv ctorMMKV) AllKeys() []string {
 	C.freeStringArray(keyArray, C.size_t(count))
 	C.free(unsafe.Pointer(keyArray))
 	return result
+}
+
+func (kv ctorMMKV) AllKeys() []string {
+	return kv.allKeys(false)
+}
+
+func (kv ctorMMKV) AllNonExpireKeys() []string {
+	return kv.allKeys(true)
 }
 
 func (kv ctorMMKV) Contains(key string) bool {
