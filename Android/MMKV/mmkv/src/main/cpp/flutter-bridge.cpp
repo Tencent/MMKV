@@ -347,10 +347,10 @@ MMKV_EXPORT int32_t writeValueToNB(void *handle, char *oKey, void *pointer, uint
     return -1;
 }
 
-MMKV_EXPORT uint64_t allKeys(void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr) {
+MMKV_EXPORT uint64_t allKeys(void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr, bool filterExpire) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        auto keys = kv->allKeys();
+        auto keys = kv->allKeys(filterExpire);
         if (!keys.empty()) {
             auto keyArray = (char **) malloc(keys.size() * sizeof(void *));
             auto sizeArray = (uint32_t *) malloc(keys.size() * sizeof(uint32_t *));
@@ -385,10 +385,10 @@ MMKV_EXPORT bool containsKey(void *handle, char *oKey) {
     return false;
 }
 
-MMKV_EXPORT uint64_t count(void *handle) {
+MMKV_EXPORT uint64_t count(void *handle, bool filterExpire) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        return kv->count();
+        return kv->count(filterExpire);
     }
     return 0;
 }
