@@ -363,6 +363,7 @@ void testAutoExpiration() {
     sleep(2);
     assert(mmkv->containsKey("never_expire_key_1") == true);
     assert(mmkv->containsKey("auto_expire_key_1") == false);
+
     auto count = mmkv->count(true);
     cout << "count all non expire keys: " << count << endl;
     auto allKeys = mmkv->allKeys(true);
