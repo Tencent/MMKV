@@ -42,7 +42,8 @@ typedef struct GoSliceWrap GoSliceWrap_t;
 void mmkvInitialize(GoStringWrap_t rootDir, int32_t logLevel, bool redirect);
 void onExit();
 
-void *getMMKVWithID(GoStringWrap_t mmapID, int32_t mode, GoStringWrap_t cryptKey, GoStringWrap_t rootPath);
+void *getMMKVWithID(GoStringWrap_t mmapID, int32_t mode, GoStringWrap_t cryptKey, 
+                    GoStringWrap_t rootPath, uint64_t expectedCapacity);
 void *getDefaultMMKV(int32_t mode, GoStringWrap_t cryptKey);
 const char *mmapID(void *handle);
 

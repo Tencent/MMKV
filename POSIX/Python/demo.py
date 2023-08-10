@@ -69,6 +69,32 @@ def test_backup():
     count = mmkv.MMKV.backupAllToDirectory(root_dir)
     print("backup all count: ", count)
 
+# just for testing
+def utf8len(s):
+    return len(s.encode('utf-8'))
+
+def test_expected_capacity():
+    key = "key0"
+    value = "🏊🏻®4️⃣🐅_"
+    dataLen = 10000
+    for i in range(dataLen):
+        value += "0"
+
+    print("value size =", utf8len(value))
+    expectedSize = utf8len(key) + utf8len(value)
+    # if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    kv = mmkv.MMKV("mmkv_capacity0", mmkv.MMKVMode.SingleProcess, "", "", expectedSize)
+    # 0 times expand
+    kv.set(value, key)
+    print("data size from MMKV =", len(kv.getString(key)))
+
+    countTick = 10
+    expectedSize *= countTick
+    kv = mmkv.MMKV("mmkv_capacity1", mmkv.MMKVMode.SingleProcess, "", "", expectedSize)
+    for i in range(countTick):
+        key1 = "key" + str(i)
+        # 0 times expand
+        kv.set(value, key1)
 
 def test_restore():
     root_dir = "/tmp/mmkv_backup"
@@ -146,6 +172,8 @@ if __name__ == '__main__':
 
     # get notified after content changed by other process
     # mmkv.MMKV.registerContentChangeHandler(content_change_handler)
+
+    test_expected_capacity()
 
     functional_test('test_python', False)
 

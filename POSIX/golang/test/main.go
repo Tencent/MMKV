@@ -20,7 +20,8 @@ func main() {
 	mmkv.RegisterErrorHandler(errorHandler)
 	// you can get notify content change by other process (not in realtime)
 	mmkv.RegisterContentChangeHandler(contentChangeNotify)
-
+       
+	testExpectedCapacity()
 	functionalTest()
 	testReKey()
 
@@ -176,6 +177,33 @@ func testBackup() {
 
 	count := mmkv.BackupAllToDirectory(rootDir)
 	fmt.Println("backup all count: ", count)
+}
+
+func testExpectedCapacity() {
+    key := "key0"
+    value := "🏊🏻®4️⃣🐅_"
+    dataLen := 10000
+    for i := 0; i < dataLen; i++ {
+        value = value + string('0')
+    }
+    fmt.Println("value size = ", len(value))
+    expectedSize := uint64(len(key) + len(value))
+    // if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    kv := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest0", expectedSize)
+    // 0 times expand
+    kv.SetString(value, key)
+//     fmt.Println("string =", bytes.Count([]byte(kv.GetString("key0")), nil))
+
+    count := 10
+    expectedSize1 := uint64(expectedSize * count)
+    fmt.Println("expectedSize1 =", expectedSize1)
+    kv1 := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest1", expectedSize1)
+    for i := 0; i < count; i++ {
+        key := "key" + string(i)
+        // 0 times expand
+        kv1.SetString(value, key)
+    }
+
 }
 
 func testRestore() {
