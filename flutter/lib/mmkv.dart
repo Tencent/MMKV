@@ -22,7 +22,6 @@ import "dart:async";
 import "dart:convert";
 import "dart:ffi"; // For FFI
 import "dart:io"; // For Platform.isX
-import "dart:typed_data";
 
 import "package:ffi/ffi.dart";
 import "package:flutter/cupertino.dart";
@@ -491,11 +490,20 @@ class MMKV {
 
   /// Get all the keys (_unsorted_).
   List<String> get allKeys {
+    return _allKeysImp(false);
+  }
+
+  /// Get all non-expired keys (_unsorted_). Note that this call has costs.
+  List<String> get allNonExpiredKeys {
+    return _allKeysImp(true);
+  }
+
+  List<String> _allKeysImp(bool filterExpire) {
     final keyArrayPtr = calloc<Pointer<Pointer<Utf8>>>();
     final sizeArrayPtr = calloc<Pointer<Uint32>>();
     final List<String> keys = [];
 
-    final count = _allKeys(_handle, keyArrayPtr, sizeArrayPtr);
+    final count = _allKeys(_handle, keyArrayPtr, sizeArrayPtr, _bool2Int(filterExpire));
     if (count > 0) {
       final keyArray = keyArrayPtr[0];
       final sizeArray = sizeArrayPtr[0];
@@ -528,7 +536,12 @@ class MMKV {
   }
 
   int get count {
-    return _count(_handle);
+    return _count(_handle, _bool2Int(false));
+  }
+
+  /// Get non-expired keys. Note that this call has costs.
+  int get countNonExpiredKeys {
+    return _count(_handle, _bool2Int(true));
   }
 
   /// Get the file size. See also [actualSize].
@@ -960,12 +973,12 @@ final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int)
         .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
-        Pointer<Pointer<Uint32>>) _allKeys =
+        Pointer<Pointer<Uint32>>, int) _allKeys =
     _nativeLib
         .lookup<
             NativeFunction<
                 Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
-                    Pointer<Pointer<Uint32>>)>>(_nativeFuncName("allKeys"))
+                    Pointer<Pointer<Uint32>>, Int8)>>(_nativeFuncName("allKeys"))
         .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
@@ -973,8 +986,8 @@ final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
         _nativeFuncName("containsKey"))
     .asFunction();
 
-final int Function(Pointer<Void>) _count = _nativeLib
-    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(
+final int Function(Pointer<Void>, int) _count = _nativeLib
+    .lookup<NativeFunction<Uint64 Function(Pointer<Void>, Int8)>>(
         _nativeFuncName("count"))
     .asFunction();
 

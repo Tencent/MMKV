@@ -8,7 +8,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath 'com.android.tools.build:gradle:7.4.1'
     }
 }
 
@@ -16,7 +16,7 @@ rootProject.allprojects {
     repositories {
         google()
         mavenCentral()
-//        mavenLocal()
+        mavenLocal()
     }
 }
 
@@ -33,6 +33,6 @@ android {
     }
 
     dependencies {
-        implementation 'com.tencent:mmkv:1.3.0'
+        implementation 'com.tencent:mmkv:1.3.1'
     }
 }
