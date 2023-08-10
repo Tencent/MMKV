@@ -227,6 +227,8 @@ func testAutoExpire()  {
 	time.Sleep(2 * time.Second)
 	fmt.Println("contains never_expire_key_1:", kv.Contains("never_expire_key_1"))
 	fmt.Println("contains auto_expire_key_1:", kv.Contains("auto_expire_key_1"))
+	fmt.Println("count non expire keys", kv.CountNonExpiredKeys())
+	fmt.Println("all non expire keys", kv.AllNonExpireKeys())
 }
 
 func logHandler(level int, file string, line int, function string, message string) {
