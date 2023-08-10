@@ -189,9 +189,9 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
                     } else {
                         MMBuffer data(archived, MMBufferNoCopy);
                         if (data.length() > 0) {
-                            auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
+                            auto tmp = MMBuffer(data.length() + Fixed32Size);
                             CodedOutputData output(tmp.getPtr(), tmp.length());
-                            output.writeData(data);
+                            output.writeRawData(data); // NSKeyedArchiver has its own size management
                             auto time = (expireDuration != 0) ? getCurrentTimeInSecond() + expireDuration : 0;
                             output.writeRawLittleEndian32(UInt32ToInt32(time));
                             data = std::move(tmp);
