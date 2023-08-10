@@ -398,6 +398,11 @@
     [mmkv enableAutoKeyExpire:1];
     [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1" expireDuration:MMKVExpireNever];
 
+    auto arr = @[@"str1", @"str2"];
+    [mmkv setObject:arr forKey:@"arr" expireDuration:0];
+    NSArray *newArr = [mmkv getObjectOfClass:NSArray.class forKey:@"arr"];
+    assert([arr isEqualToArray:newArr]);
+
     sleep(2);
     assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
     assert([mmkv containsKey:@"never_expire_key_1"] == YES);
