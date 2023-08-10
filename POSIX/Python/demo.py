@@ -113,6 +113,8 @@ def test_auto_expire():
     time.sleep(2)
     print("contains never_expire_key_1:", "never_expire_key_1" in kv)
     print("contains auto_expire_key_1:", "auto_expire_key_1" in kv)
+    print("count filter expire key:", kv.count(True))
+    print("all non expire keys:", kv.keys(True))
 
 
 def logger(log_level, file, line, function, message):

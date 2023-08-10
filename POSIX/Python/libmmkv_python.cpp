@@ -223,9 +223,9 @@ PYBIND11_MODULE(mmkv, m) {
         "decode a bytes value", py::arg("key"), py::arg("defaultValue") = py::bytes());
 
     clsMMKV.def("__contains__", &MMKV::containsKey, py::arg("key"));
-    clsMMKV.def("keys", &MMKV::allKeys);
+    clsMMKV.def("keys", &MMKV::allKeys, py::arg("filterExpire") = false);
 
-    clsMMKV.def("count", &MMKV::count);
+    clsMMKV.def("count", &MMKV::count, py::arg("filterExpire") = false);
     clsMMKV.def("totalSize", &MMKV::totalSize);
     clsMMKV.def("actualSize", &MMKV::actualSize);
 
