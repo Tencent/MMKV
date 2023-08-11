@@ -43,6 +43,7 @@ cmake-build-release/
 build/
 dist/
 *.egg-info/
+.cmake
 
 #CLion
 .idea
