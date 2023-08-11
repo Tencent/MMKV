@@ -392,22 +392,25 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         }
         // try a full rewrite to make space
         auto preparedData = m_crypter ? prepareEncode(*m_dicCrypt) : prepareEncode(*m_dic);
-        return expandAndWriteBack(newSize, std::move(preparedData));
+        // m_actualSize == 0 means inserting key-vakue for the first time, no need to call msync()
+        return expandAndWriteBack(newSize, std::move(preparedData), m_actualSize > 0);
     }
     return true;
 }
 
 // try a full rewrite to make space
-bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData) {
+bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData, bool needSync) {
     auto fileSize = m_file->getFileSize();
     auto sizeOfDic = preparedData.second;
     size_t lenNeeded = sizeOfDic + Fixed32Size + newSize;
-    size_t dicCount = m_crypter ? m_dicCrypt->size() : m_dic->size();
-    size_t avgItemSize = lenNeeded / std::max<size_t>(1, dicCount);
-    size_t futureUsage = avgItemSize * std::max<size_t>(8, (dicCount + 1) / 2);
+    size_t nowDicCount = m_crypter ? m_dicCrypt->size() : m_dic->size();
+    size_t laterDicCount = std::max<size_t>(1, nowDicCount + 1);
+    // or use <cmath> ceil()
+    size_t avgItemSize = (lenNeeded + laterDicCount - 1) / laterDicCount;
+    size_t futureUsage = avgItemSize * std::max<size_t>(8, laterDicCount / 2);
     // 1. no space for a full rewrite, double it
     // 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
-    if (lenNeeded >= fileSize || (lenNeeded + futureUsage) >= fileSize) {
+    if (lenNeeded >= fileSize || (needSync && (lenNeeded + futureUsage) >= fileSize)) {
         size_t oldSize = fileSize;
         do {
             fileSize *= 2;
@@ -426,7 +429,7 @@ bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> 
             return false;
         }
     }
-    return doFullWriteBack(std::move(preparedData), nullptr);
+    return doFullWriteBack(std::move(preparedData), nullptr, needSync);
 }
 
 size_t MMKV::readActualSize() {
@@ -822,7 +825,7 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
 }
 
-bool MMKV::fullWriteback(AESCrypt *newCrypter) {
+bool MMKV::fullWriteback(AESCrypt *newCrypter, bool onlyWhileExpire) {
     if (m_hasFullWriteback) {
         return true;
     }
@@ -835,10 +838,14 @@ bool MMKV::fullWriteback(AESCrypt *newCrypter) {
     }
 
     if (unlikely(m_enableKeyExpire)) {
-        filterExpiredKeys();
+        auto expiredCount = filterExpiredKeys();
+        if (onlyWhileExpire && expiredCount == 0) {
+            return true;
+        }
     }
 
-    if (m_crypter ? m_dicCrypt->empty() : m_dic->empty()) {
+    auto isEmpty = m_crypter ? m_dicCrypt->empty() : m_dic->empty();
+    if (isEmpty) {
         clearAll();
         return true;
     }
@@ -1022,7 +1029,7 @@ static void fullWriteBackWholeData(MMBuffer allData, size_t totalSize, CodedOutp
 }
 
 #ifndef MMKV_DISABLE_CRYPT
-bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter) {
+bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
 #ifdef MMKV_IOS
@@ -1061,14 +1068,16 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
         recaculateCRCDigestWithIV(nullptr);
     }
     m_hasFullWriteback = true;
-    // make sure lastConfirmedMetaInfo is saved
-    sync(MMKV_SYNC);
+    // make sure lastConfirmedMetaInfo is saved if needed
+    if (needSync) {
+        sync(MMKV_SYNC);
+    }
     return true;
 }
 
 #else // MMKV_DISABLE_CRYPT
 
-bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *) {
+bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
 #ifdef MMKV_IOS
@@ -1091,8 +1100,10 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *) {
     m_actualSize = totalSize;
     recaculateCRCDigestWithIV(nullptr);
     m_hasFullWriteback = true;
-    // make sure lastConfirmedMetaInfo is saved
-    sync(MMKV_SYNC);
+    // make sure lastConfirmedMetaInfo is saved if needed
+    if (needSync) {
+        sync(MMKV_SYNC);
+    }
     return true;
 }
 #endif // MMKV_DISABLE_CRYPT
@@ -1471,6 +1482,8 @@ size_t MMKV::filterExpiredKeys() {
     if (!m_enableKeyExpire || (m_crypter ? m_dicCrypt->empty() : m_dic->empty())) {
         return 0;
     }
+    SCOPED_LOCK(m_sharedProcessLock);
+
     auto now = getCurrentTimeInSecond();
     MMKVInfo("filtering expired keys inside [%s] now: %u, m_expiredInSeconds: %u", m_mmapID.c_str(), now, m_expiredInSeconds);
 
@@ -1523,7 +1536,9 @@ size_t MMKV::filterExpiredKeys() {
             }
         }
     }
-    MMKVInfo("deleted %zu expired keys inside [%s]", count, m_mmapID.c_str());
+    if (count != 0) {
+        MMKVInfo("deleted %zu expired keys inside [%s]", count, m_mmapID.c_str());
+    }
     return count;
 }
 

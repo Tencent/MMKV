@@ -36,7 +36,7 @@
 using namespace std;
 using namespace mmkv;
 
-string to_string(vector<string> &&arr, const char* sp = ", ") {
+string to_string(const vector<string> &arr, const char* sp = ", ") {
     string str;
     for (const auto &element : arr) {
         str += element;
@@ -363,6 +363,11 @@ void testAutoExpiration() {
     sleep(2);
     assert(mmkv->containsKey("never_expire_key_1") == true);
     assert(mmkv->containsKey("auto_expire_key_1") == false);
+
+    auto count = mmkv->count(true);
+    cout << "count all non expire keys: " << count << endl;
+    auto allKeys = mmkv->allKeys(true);
+    cout << "all non expire keys: " << ::to_string(allKeys) << endl;
 }
 
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {

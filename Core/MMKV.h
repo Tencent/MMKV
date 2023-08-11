@@ -132,11 +132,11 @@ class MMKV {
 
     bool ensureMemorySize(size_t newSize);
 
-    bool expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData);
+    bool expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData, bool needSync = true);
 
-    bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr);
+    bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr, bool onlyWhileExpire = false);
 
-    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter);
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter, bool needSync = true);
 
     bool doFullWriteBack(mmkv::MMKVVector &&vec);
 
@@ -315,7 +315,8 @@ public:
 
     bool containsKey(MMKVKey_t key);
 
-    size_t count();
+    // filterExpire: return count of all non-expired keys, keep in mind it comes with cost
+    size_t count(bool filterExpire = false);
 
     size_t totalSize();
 
@@ -330,7 +331,8 @@ public:
     bool disableAutoKeyExpire();
 
 #ifdef MMKV_APPLE
-    NSArray *allKeys();
+    // filterExpire: return all non-expired keys, keep in mind it comes with cost
+    NSArray *allKeys(bool filterExpire = false);
 
     void removeValuesForKeys(NSArray *arrKeys);
 
@@ -342,7 +344,8 @@ public:
     static bool isInBackground();
 #    endif
 #else  // !defined(MMKV_APPLE)
-    std::vector<std::string> allKeys();
+    // filterExpire: return all non-expired keys, keep in mind it comes with cost
+    std::vector<std::string> allKeys(bool filterExpire = false);
 
     void removeValuesForKeys(const std::vector<std::string> &arrKeys);
 #endif // MMKV_APPLE

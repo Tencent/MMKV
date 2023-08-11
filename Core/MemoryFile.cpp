@@ -201,7 +201,7 @@ void MemoryFile::reloadFromFile() {
     if (isFileValid()) {
         MMKVWarning("calling reloadFromFile while the cache [%s] is still valid", m_diskFile.m_path.c_str());
         MMKV_ASSERT(0);
-        clearMemoryCache();
+        doCleanMemoryCache(false);
     }
 
     if (!m_diskFile.open()) {
@@ -271,15 +271,19 @@ extern bool mkPath(const MMKVPath_t &str) {
         if (stat(path, &sb) != 0) {
             if (errno != ENOENT || mkdir(path, 0777) != 0) {
                 MMKVWarning("%s : %s", path, strerror(errno));
-                free(path);
-                return false;
+                // there's report that some Android devices might not have access permission on parent dir
+                if (done) {
+                    free(path);
+                    return false;
+                }
+                goto LContinue;
             }
         } else if (!S_ISDIR(sb.st_mode)) {
             MMKVWarning("%s: %s", path, strerror(ENOTDIR));
             free(path);
             return false;
         }
-
+LContinue:
         *slash = '/';
     }
     free(path);

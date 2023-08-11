@@ -655,10 +655,10 @@ MMKV_JNI jbyteArray decodeBytes(JNIEnv *env, jobject obj, jlong handle, jstring 
     return nullptr;
 }
 
-MMKV_JNI jobjectArray allKeys(JNIEnv *env, jobject instance) {
-    MMKV *kv = getMMKV(env, instance);
+MMKV_JNI jobjectArray allKeys(JNIEnv *env, jobject instance, jlong handle, jboolean filterExpire) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
-        vector<string> keys = kv->allKeys();
+        vector<string> keys = kv->allKeys((bool) filterExpire);
         return vector2jarray(env, keys);
     }
     return nullptr;
@@ -673,10 +673,10 @@ MMKV_JNI jboolean containsKey(JNIEnv *env, jobject instance, jlong handle, jstri
     return (jboolean) false;
 }
 
-MMKV_JNI jlong count(JNIEnv *env, jobject instance, jlong handle) {
+MMKV_JNI jlong count(JNIEnv *env, jobject instance, jlong handle, jboolean filterExpire) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
-        jlong size = kv->count();
+        jlong size = kv->count((bool) filterExpire);
         return size;
     }
     return 0;
@@ -1028,7 +1028,7 @@ static JNINativeMethod g_methods[] = {
     {"lock", "()V", (void *) mmkv::lock},
     {"unlock", "()V", (void *) mmkv::unlock},
     {"tryLock", "()Z", (void *) mmkv::tryLock},
-    {"allKeys", "()[Ljava/lang/String;", (void *) mmkv::allKeys},
+    {"allKeys", "(JZ)[Ljava/lang/String;", (void *) mmkv::allKeys},
     {"removeValuesForKeys", "([Ljava/lang/String;)V", (void *) mmkv::removeValuesForKeys},
     {"clearAll", "()V", (void *) mmkv::clearAll},
     {"trim", "()V", (void *) mmkv::trim},
@@ -1069,7 +1069,7 @@ static JNINativeMethod g_methods[] = {
     {"encodeBytes_2", "(JLjava/lang/String;[BI)Z", (void *) mmkv::encodeBytes_2},
     {"decodeBytes", "(JLjava/lang/String;)[B", (void *) mmkv::decodeBytes},
     {"containsKey", "(JLjava/lang/String;)Z", (void *) mmkv::containsKey},
-    {"count", "(J)J", (void *) mmkv::count},
+    {"count", "(JZ)J", (void *) mmkv::count},
     {"totalSize", "(J)J", (void *) mmkv::totalSize},
     {"actualSize", "(J)J", (void *) mmkv::actualSize},
     {"removeValueForKey", "(JLjava/lang/String;)V", (void *) mmkv::removeValueForKey},

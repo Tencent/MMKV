@@ -68,6 +68,11 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updateTodayContent)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
+
     [self funcionalTest:NO];
     [self testReKey];
     [self testImportFromUserDefault];
@@ -392,6 +397,11 @@
     [mmkv setBool:YES forKey:@"auto_expire_key_1"];
     [mmkv enableAutoKeyExpire:1];
     [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1" expireDuration:MMKVExpireNever];
+
+    auto arr = @[@"str1", @"str2"];
+    [mmkv setObject:arr forKey:@"arr" expireDuration:0];
+    NSArray *newArr = [mmkv getObjectOfClass:NSArray.class forKey:@"arr"];
+    assert([arr isEqualToArray:newArr]);
 
     sleep(2);
     assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
@@ -771,6 +781,14 @@ MMKV *getMMKVForBatchTest() {
     NSLog(@"allKeys %@", [mmkv allKeys]);
 
     [mmkv close];
+}
+
+- (void)updateTodayContent {
+    static int count = 0;
+    NSData *key_1 = [@"multi_process" dataUsingEncoding:NSUTF8StringEncoding];
+    auto mmkv = [MMKV mmkvWithID:@"multi_process" cryptKey:key_1 mode:MMKVMultiProcess];
+    NSString *content = [NSString stringWithFormat:@"count: %d", count++];
+    [mmkv setString:content forKey:@"content"];
 }
 
 #pragma mark - backup & restore
