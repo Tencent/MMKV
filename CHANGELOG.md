@@ -1,5 +1,12 @@
 # MMKV Change Log
 
+## v1.3.1 / 2023-8-11
+This is a hotfix version. It's highly recommended that v1.2.16 & v1.3.0 users upgrade as soon as possible.
+### Changes for All platforms
+* Fix a critical bug that might cause multi-process MMKV corrupt. This bug was introduced in v1.2.16.
+* Add the ability to filter expired keys on `count()` & `allKeys()` methods when auto key expiration is turn on.
+* Reduce the `msync()` call on newly created MMKV instances.
+
 ## v1.3.0 / 2023-06-14
 ### Changes for All platforms
 * Add auto key expiration feature. Note that this is a breaking change, once upgrade to auto expiration, the MMKV file is not valid for older versions of MMKV (v1.2.16 and below) to correctly operate.
