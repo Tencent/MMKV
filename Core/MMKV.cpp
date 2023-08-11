@@ -306,7 +306,8 @@ void MMKV::clearMemoryCache() {
     m_output = nullptr;
 
     m_file->clearMemoryCache();
-    m_metaFile->clearMemoryCache();
+    // inter-process lock rely on MetaFile's fd, never close it
+    // m_metaFile->clearMemoryCache();
     m_actualSize = 0;
     m_metaInfo->m_crcDigest = 0;
 }
@@ -1362,7 +1363,17 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         auto ret = copyFileContent(srcPath, kv->m_file->getFd());
         if (ret) {
             auto srcCRCPath = srcPath + CRC_SUFFIX;
-            ret = copyFileContent(srcCRCPath, kv->m_metaFile->getFd());
+            // ret = copyFileContent(srcCRCPath, kv->m_metaFile->getFd());
+#ifndef MMKV_ANDROID
+            MemoryFile srcCRCFile(srcCRCPath);
+#else
+            MemoryFile srcCRCFile(srcCRCPath, DEFAULT_MMAP_SIZE, MMFILE_TYPE_FILE);
+#endif
+            if (srcCRCFile.isFileValid()) {
+                memcpy(kv->m_metaFile->getMemory(), srcCRCFile.getMemory(), sizeof(MMKVMetaInfo));
+            } else {
+                ret = false;
+            }
         }
 
         // reload data after restore

@@ -201,7 +201,7 @@ void MemoryFile::reloadFromFile() {
     if (isFileValid()) {
         MMKVWarning("calling reloadFromFile while the cache [%s] is still valid", m_diskFile.m_path.c_str());
         MMKV_ASSERT(0);
-        clearMemoryCache();
+        doCleanMemoryCache(false);
     }
 
     if (!m_diskFile.open()) {
