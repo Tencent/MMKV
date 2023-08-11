@@ -60,8 +60,11 @@ android {
         }
 
         modules {
-            module("com.tencent:mmkv") {
-                replacedBy("com.tencent:mmkv-static", "Using mmkv-static for flutter")
+            module("com.tencent:mmkv-static") {
+                replacedBy("com.tencent:mmkv", "Using mmkv for flutter")
+            }
+            module("com.tencent:mmkv-shared") {
+                replacedBy("com.tencent:mmkv", "Using mmkv for flutter")
             }
         }
     }
