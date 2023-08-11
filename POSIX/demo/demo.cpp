@@ -370,6 +370,50 @@ void testAutoExpiration() {
     cout << "all non expire keys: " << ::to_string(allKeys) << endl;
 }
 
+void testExpectedCapacity() {
+    auto mmkv0 = MMKV::mmkvWithID("testExpectedCapacity0", MMKV_SINGLE_PROCESS, nullptr, nullptr, 0);
+    assert(mmkv0->totalSize() == DEFAULT_MMAP_SIZE);
+
+    auto mmkv1 = MMKV::mmkvWithID("testExpectedCapacity1", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE + 1);
+    assert(mmkv1->totalSize() == DEFAULT_MMAP_SIZE << 1);
+
+    auto mmkv2 = MMKV::mmkvWithID("testExpectedCapacity2", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE >> 1);
+    assert(mmkv2->totalSize() == DEFAULT_MMAP_SIZE);
+
+    auto mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3");
+    mmkv3->clearAll();
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE);
+    mmkv3->close();
+    // expand it
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 100 * DEFAULT_MMAP_SIZE + 100);
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE * 101);
+
+    // if new size is smaller than file size, keep file its origin size
+    mmkv3->close();
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 0);
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE * 101);
+
+    int len = 10000;
+    std::string value(len, '0');
+    value = "🏊🏻®4️⃣🐅_" + value;
+    cout << "value length = " << value.size() << endl;
+    std::string key = "key";
+    // if you know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    size_t expectedSize = key.size() + value.size();
+    auto mmkv4 = MMKV::mmkvWithID("testExpectedCapacity4", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    // 0 times expand
+    mmkv4->set(value, key);
+
+    int count = 10;
+    expectedSize = (key.size() + value.size()) * count;
+    auto mmkv5 = MMKV::mmkvWithID("testExpectedCapacity5", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    for (int i = 0; i < count; i++) {
+        key[0] = static_cast<char>('a' + i);
+        // 0 times expand
+        mmkv5->set(value, key);
+    }
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -417,6 +461,7 @@ int main() {
     threadTest();
     processTest();
     testInterProcessLock();
+    testExpectedCapacity();
     testBackup();
     testRestore();
     testAutoExpiration();

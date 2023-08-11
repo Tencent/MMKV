@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
         testRestore();
 
         testAutoExpire();
+        testExpectedCapacity();
     }
 
     private void testInterProcessLogic() {
@@ -655,6 +656,39 @@ public class MainActivity extends AppCompatActivity {
             Log.i("MMKV", "auto key expiration never_expire_key_1");
         } else {
             Log.e("MMKV", "auto key expiration never_expire_key_1");
+        }
+    }
+
+    private int addExtraRoundUp(int len) {
+        int pageSize = MMKV.pageSize();
+        int rest = len % pageSize;
+        return rest == 0 ? len + pageSize :  (2 + len / pageSize) * pageSize;
+    }
+
+    private void testExpectedCapacity() {
+        String key = "key0";
+        String value = "🏊🏻®4️⃣🐅_";
+        int len = 10000;
+        for (int i = 0; i < len; i++) {
+            value += "0";
+        }
+        Log.i("MMKV", "value size = " + value.getBytes().length);
+        int expectedSize = key.getBytes().length + value.getBytes().length;
+        // if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+        // extra space can be added to round up
+        MMKV mmkv = MMKV.mmkvWithID("test_expected_capacity0", MMKV.SINGLE_PROCESS_MODE,
+                addExtraRoundUp(len));
+        // 0 times expand
+        mmkv.encode(key, value);
+
+        int count = 10;
+        expectedSize = expectedSize * count;
+        MMKV mmkv1 = MMKV.mmkvWithID("test_expected_capacity1", MMKV.SINGLE_PROCESS_MODE,
+                addExtraRoundUp(expectedSize));
+        for (int i = 0; i < count; i++) {
+            String k = "key" + i;
+            // 0 times expand
+            mmkv1.encode(k, value);
         }
     }
 }

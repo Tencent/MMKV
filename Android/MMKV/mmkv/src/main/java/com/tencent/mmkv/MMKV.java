@@ -340,7 +340,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, null);
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, null, 0);
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
@@ -356,7 +356,24 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, null, null);
+        long handle = getMMKVWithID(mmapID, mode, null, null, 0);
+        return checkProcessMode(handle, mmapID, mode);
+    }
+
+    /**
+     * Create an MMKV instance in single-process or multi-process mode.
+     *
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode   The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param expectedCapacity The file size you expected when opening or creating file
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, int mode, long expectedCapacity) throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
+        long handle = getMMKVWithID(mmapID, mode, null, null, expectedCapacity);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -373,7 +390,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, null);
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, null, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -389,8 +406,45 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath);
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, 0);
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
+    }
+
+    /**
+     * Create an MMKV instance in customize folder.
+     *
+     * @param mmapID   The unique ID of the MMKV instance.
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @param expectedCapacity The file size you expected when opening or creating file
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, String rootPath, long expectedCapacity) throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, expectedCapacity);
+        return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
+    }
+
+    /**
+     * Create an MMKV instance with customize settings all in one.
+     *
+     * @param mmapID   The unique ID of the MMKV instance.
+     * @param mode     The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @param expectedCapacity The file size you expected when opening or creating file
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath, long expectedCapacity)
+            throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, expectedCapacity);
+        return checkProcessMode(handle, mmapID, mode);
     }
 
     /**
@@ -408,7 +462,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath);
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -428,7 +482,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
 
         mode |= BACKUP_MODE;
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath);
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -1522,7 +1576,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting);
 
     private native static long
-    getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath);
+    getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath,
+                  long expectedCapacity);
 
     private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, @Nullable String cryptKey);
 
