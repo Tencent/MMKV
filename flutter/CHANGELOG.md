@@ -1,6 +1,6 @@
 # MMKV for Flutter Change Log
 ## v1.3.1 / 2023-8-11
-This is a hotfix version. It's highly recommended that v1.2.16 & v1.3.0 users upgrade as soon as possible.
+This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 users upgrade as soon as possible.
 * Fix a critical bug that might cause multi-process MMKV corrupt. This bug was introduced in v1.2.16.
 * Add the ability to filter expired keys on `count()` & `allKeys()` methods when auto key expiration is turn on.
 * Reduce the `msync()` call on newly created MMKV instances.
