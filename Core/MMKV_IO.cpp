@@ -1536,7 +1536,9 @@ size_t MMKV::filterExpiredKeys() {
             }
         }
     }
-    MMKVInfo("deleted %zu expired keys inside [%s]", count, m_mmapID.c_str());
+    if (count != 0) {
+        MMKVInfo("deleted %zu expired keys inside [%s]", count, m_mmapID.c_str());
+    }
     return count;
 }
 

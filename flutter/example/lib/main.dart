@@ -332,5 +332,8 @@ class _MyAppState extends State<MyApp> {
     print("auto_expire_key_5: ${mmkv.containsKey("auto_expire_key_5")}");
     print("auto_expire_key_6: ${mmkv.containsKey("auto_expire_key_6")}");
     print("never_expire_key_1: ${mmkv.containsKey("never_expire_key_1")}");
+
+    print("count non-expired keys: ${mmkv.countNonExpiredKeys}");
+    print("all non-expired keys: ${mmkv.allNonExpiredKeys}");
   }
 }

@@ -300,10 +300,10 @@ MMKV_EXPORT int32_t MMKV_FUNC(writeValueToNB)(const void *handle, char *oKey, vo
     return -1;
 }
 
-MMKV_EXPORT uint64_t MMKV_FUNC(allKeys)(const void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr) {
+MMKV_EXPORT uint64_t MMKV_FUNC(allKeys)(const void *handle, char ***keyArrayPtr, uint32_t **sizeArrayPtr, bool filterExpire) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
-        auto keys = [kv allKeys];
+        auto keys = filterExpire ? [kv allNonExpiredKeys] : [kv allKeys];
         if (keys.count > 0) {
             auto keyArray = (char **) malloc(keys.count * sizeof(void *));
             auto sizeArray = (uint32_t *) malloc(keys.count * sizeof(uint32_t *));
@@ -336,10 +336,10 @@ MMKV_EXPORT bool MMKV_FUNC(containsKey)(const void *handle, char *oKey) {
     return false;
 }
 
-MMKV_EXPORT uint64_t MMKV_FUNC(count)(const void *handle) {
+MMKV_EXPORT uint64_t MMKV_FUNC(count)(const void *handle, bool filterExpire) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
-        return [kv count];
+        return filterExpire ? [kv countNonExpiredKeys] : [kv count];
     }
     return 0;
 }
