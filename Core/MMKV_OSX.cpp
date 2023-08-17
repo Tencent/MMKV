@@ -271,6 +271,39 @@ MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolde
 
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
 }
+
+pair<bool, KeyValueHolder>
+MMKV::overrideDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {
+    size_t old_actualSize = m_actualSize;
+    size_t old_position = m_output->getPosition();
+    // only one key in dict, do not append, just rewrite from beginning
+    m_actualSize = 0;
+    m_output->setPosition(0);
+
+    auto m_tmpDic = m_dic;
+    auto m_tmpDicCrypt = m_dicCrypt;
+    if (m_crypter) {
+        m_dicCrypt = new MMKVMapCrypt();
+    } else {
+        m_dic = new MMKVMap();
+    }
+
+    auto ret = appendDataWithKey(data, key, kvHolder, isDataHolder);
+    if (!ret.first) {
+        // rollback
+        m_actualSize = old_actualSize;
+        m_output->setPosition(old_position);
+    }
+
+    if (m_crypter) {
+        delete m_dicCrypt;
+        m_dicCrypt = m_tmpDicCrypt;
+    } else {
+        delete m_dic;
+        m_dic = m_tmpDic;
+    }
+    return ret;
+}
 #    endif
 
 NSArray *MMKV::allKeys(bool filterExpire) {

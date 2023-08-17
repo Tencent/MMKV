@@ -1118,6 +1118,7 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
 // file
 
 void MMKV::sync(SyncFlag flag) {
+    MMKVInfo("MMKV::sync, SyncFlag = %d", flag);
     SCOPED_LOCK(m_lock);
     if (m_needLoadFromFile || !isFileValid()) {
         return;

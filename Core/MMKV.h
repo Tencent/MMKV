@@ -156,8 +156,15 @@ class MMKV {
     KVHolderRet_t doAppendDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder, uint32_t keyLength);
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
+
+    KVHolderRet_t overrideDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
+    KVHolderRet_t overrideDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
 #ifdef MMKV_APPLE
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data,
+                                    MMKVKey_t key,
+                                    const mmkv::KeyValueHolderCrypt &kvHolder,
+                                    bool isDataHolder = false);
+    KVHolderRet_t overrideDataWithKey(const mmkv::MMBuffer &data,
                                     MMKVKey_t key,
                                     const mmkv::KeyValueHolderCrypt &kvHolder,
                                     bool isDataHolder = false);
