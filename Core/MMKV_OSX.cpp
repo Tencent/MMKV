@@ -33,9 +33,10 @@
 #    include "ThreadLock.h"
 #    include "aes/AESCrypt.h"
 #    include <sys/utsname.h>
+#    include <sys/sysctl.h>
+#    include "MMKV_OSX.h"
 
 #    ifdef MMKV_IOS
-#        include "MMKV_OSX.h"
 #        include <sys/mman.h>
 #    endif
 
@@ -52,9 +53,6 @@ using namespace mmkv;
 
 extern ThreadLock *g_instanceLock;
 extern MMKVPath_t g_rootDir;
-
-enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
-static void GetAppleMachineInfo(int &device, int &version);
 
 MMKV_NAMESPACE_BEGIN
 
@@ -87,23 +85,6 @@ MLockPtr::~MLockPtr() {
 }
 
 #    endif
-
-extern ThreadOnceToken_t once_control;
-extern void initialize();
-
-void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
-    ThreadLock::ThreadOnce(&once_control, initialize);
-
-    // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
-    int device = 0, version = 0;
-    GetAppleMachineInfo(device, version);
-    MMKVInfo("Apple Device:%d, version:%d", device, version);
-
-    g_rootDir = defaultRootDir;
-    mkPath(g_rootDir);
-
-    MMKVInfo("default root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
-}
 
 #    ifdef MMKV_IOS
 
@@ -364,11 +345,7 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     MMKVInfo("enumerate [%s] finish", m_mmapID.c_str());
 }
 
-MMKV_NAMESPACE_END
-
-#    include <sys/sysctl.h>
-
-static void GetAppleMachineInfo(int &device, int &version) {
+void GetAppleMachineInfo(int &device, int &version) {
     device = UnKnown;
     version = 0;
 
@@ -405,5 +382,7 @@ static void GetAppleMachineInfo(int &device, int &version) {
         version = std::atoi(machine.substr(pos).c_str());
     }
 }
+
+MMKV_NAMESPACE_END
 
 #endif // MMKV_APPLE

@@ -26,6 +26,7 @@
 #include "MMKVLog.h"
 #include "MMKVMetaInfo.hpp"
 #include "MMKV_IO.h"
+#include "MMKV_OSX.h"
 #include "MemoryFile.h"
 #include "MiniPBCoder.h"
 #include "PBUtility.h"
@@ -201,6 +202,13 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
     g_logHandler = handler;
 
     ThreadLock::ThreadOnce(&once_control, initialize);
+
+#ifdef MMKV_APPLE
+    // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
+    int device = 0, version = 0;
+    GetAppleMachineInfo(device, version);
+    MMKVInfo("Apple Device: %d, version: %d", device, version);
+#endif
 
     g_rootDir = rootDir;
     mkPath(g_rootDir);

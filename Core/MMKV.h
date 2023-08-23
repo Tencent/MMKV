@@ -182,11 +182,6 @@ public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo, mmkv::LogHandler handler = nullptr);
 
-#ifdef MMKV_APPLE
-    // protect from some old code that don't call initializeMMKV()
-    static void minimalInit(MMKVPath_t defaultRootDir);
-#endif
-
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
 
