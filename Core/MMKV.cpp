@@ -195,7 +195,7 @@ void initialize() {
 #endif
 }
 
-ThreadOnceToken_t once_control = ThreadOnceUninitialized;
+static ThreadOnceToken_t once_control = ThreadOnceUninitialized;
 
 void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::LogHandler handler) {
     g_currentLogLevel = logLevel;
@@ -1527,8 +1527,8 @@ static MMKVPath_t encodeFilePath(const string &mmapID) {
         }
     }
     if (hasSpecialCharacter) {
-        static ThreadOnceToken_t once_control = ThreadOnceUninitialized;
-        ThreadLock::ThreadOnce(&once_control, mkSpecialCharacterFileDirectory);
+        static ThreadOnceToken_t once = ThreadOnceUninitialized;
+        ThreadLock::ThreadOnce(&once, mkSpecialCharacterFileDirectory);
         return MMKVPath_t(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKVPath_t(encodedID);
     } else {
         return string2MMKVPath_t(mmapID);
