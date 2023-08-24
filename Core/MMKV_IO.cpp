@@ -392,8 +392,9 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         }
         // try a full rewrite to make space
         auto preparedData = m_crypter ? prepareEncode(*m_dicCrypt) : prepareEncode(*m_dic);
-        // m_actualSize == 0 means inserting key-vakue for the first time, no need to call msync()
-        return expandAndWriteBack(newSize, std::move(preparedData), m_actualSize > 0);
+        // dic.empty() means inserting key-value for the first time, no need to call msync()
+        return expandAndWriteBack(newSize, std::move(preparedData),
+                                  m_crypter ? !m_dicCrypt->empty() : !m_dic->empty());
     }
     return true;
 }
@@ -419,6 +420,7 @@ bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> 
                  oldSize, fileSize, newSize, futureUsage);
 
         // if we can't extend size, rollback to old state
+        // this is a good place to mock enlarging file failure
         if (!m_file->truncate(fileSize)) {
             return false;
         }
@@ -576,10 +578,21 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
         }
         auto itr = m_dicCrypt->find(key);
         if (itr != m_dicCrypt->end()) {
+            bool onlyOneKey = !m_isInterProcess && m_dicCrypt->size() == 1;
 #    ifdef MMKV_APPLE
-            auto ret = appendDataWithKey(data, key, itr->second, isDataHolder);
+            KVHolderRet_t ret;
+            if (onlyOneKey) {
+                ret = overrideDataWithKey(data, key, itr->second, isDataHolder);
+            } else {
+                ret = appendDataWithKey(data, key, itr->second, isDataHolder);
+            }
 #    else
-            auto ret = appendDataWithKey(data, key, isDataHolder);
+            KVHolderRet_t ret;
+            if (onlyOneKey) {
+                ret = overrideDataWithKey(data, key, isDataHolder);
+            } else {
+                ret = appendDataWithKey(data, key, isDataHolder);
+            }
 #    endif
             if (!ret.first) {
                 return false;
@@ -624,14 +637,25 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     {
         auto itr = m_dic->find(key);
         if (itr != m_dic->end()) {
+            bool onlyOneKey = !m_isInterProcess && m_dic->size() == 1;
             if (likely(!m_enableKeyExpire)) {
-                auto ret = appendDataWithKey(data, itr->second, isDataHolder);
+                KVHolderRet_t ret;
+                if (onlyOneKey) {
+                    ret = overrideDataWithKey(data, itr->second, isDataHolder);
+                } else {
+                    ret = appendDataWithKey(data, itr->second, isDataHolder);
+                }
                 if (!ret.first) {
                     return false;
                 }
                 itr->second = std::move(ret.second);
             } else {
-                auto ret = appendDataWithKey(data, key, isDataHolder);
+                KVHolderRet_t ret;
+                if (onlyOneKey) {
+                    ret = overrideDataWithKey(data, key, isDataHolder);
+                } else {
+                    ret = appendDataWithKey(data, key, isDataHolder);
+                }
                 if (!ret.first) {
                     return false;
                 }
@@ -790,6 +814,38 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
     return make_pair(true, KeyValueHolder(originKeyLength, valueLength, offset));
 }
 
+KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
+    size_t old_actualSize = m_actualSize;
+    size_t old_position = m_output->getPosition();
+    // only one key in dict, do not append, just rewrite from beginning
+    m_actualSize = 0;
+    m_output->setPosition(0);
+
+    auto m_tmpDic = m_dic;
+    auto m_tmpDicCrypt = m_dicCrypt;
+    if (m_crypter) {
+        m_dicCrypt = new MMKVMapCrypt();
+    } else {
+        m_dic = new MMKVMap();
+    }
+
+    auto ret = appendDataWithKey(data, key, isDataHolder);
+    if (!ret.first) {
+        // rollback
+        m_actualSize = old_actualSize;
+        m_output->setPosition(old_position);
+    }
+
+    if (m_crypter) {
+        delete m_dicCrypt;
+        m_dicCrypt = m_tmpDicCrypt;
+    } else {
+        delete m_dic;
+        m_dic = m_tmpDic;
+    }
+    return ret;
+}
+
 KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
 #ifdef MMKV_APPLE
     auto oData = [key dataUsingEncoding:NSUTF8StringEncoding];
@@ -823,6 +879,26 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder
     MMBuffer keyData(basePtr + kvHolder.offset, rawKeySize, MMBufferNoCopy);
 
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
+}
+
+KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bool isDataHolder) {
+    size_t old_actualSize = m_actualSize;
+    size_t old_position = m_output->getPosition();
+    // only one key in dict, do not append, just rewrite from beginning
+    m_actualSize = 0;
+    m_output->setPosition(0);
+    auto m_tmpDic = m_dic;
+    m_dic = new MMKVMap();
+    auto ret = appendDataWithKey(data, kvHolder, isDataHolder);
+    if (!ret.first) {
+        // rollback
+        m_actualSize = old_actualSize;
+        m_output->setPosition(old_position);
+    }
+
+    delete m_dic;
+    m_dic = m_tmpDic;
+    return ret;
 }
 
 bool MMKV::fullWriteback(AESCrypt *newCrypter, bool onlyWhileExpire) {

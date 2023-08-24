@@ -20,6 +20,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    [self onlyOneKeyTest];
+    
     [self expectedCapacityTest];
 
     [self funcionalTest:NO];
@@ -38,6 +40,65 @@
 
         NSString *intKey = [NSString stringWithFormat:@"int-%zu", index];
         [m_arrIntKeys addObject:intKey];
+    }
+}
+
+- (void) onlyOneKeyTest {
+    {
+        auto mmkv0 = [MMKV mmkvWithID:@"onlyOneKeyTest"];
+        NSString *key = [NSString stringWithFormat:@"hello"];
+        NSString *value = [NSString stringWithFormat:@"world"];
+        auto v = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v);
+        
+        [mmkv0 setString:value forKey:key];
+        auto v2 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v2);
+        
+        for (int i = 0; i < 10; i++) {
+            NSString * value2 = [NSString stringWithFormat:@"world_%d", i];
+            [mmkv0 setString:value2 forKey:key];
+            auto v2 = [mmkv0 getStringForKey:key];
+            NSLog(@"value = %@", v2);
+        }
+        
+        int len = 10000;
+        NSString *bigValue = [NSString stringWithFormat:@"🏊🏻®4️⃣🐅_"];
+        for (int i = 0; i < len; i++) {
+            bigValue = [bigValue stringByAppendingString:@"0"];
+        }
+        [mmkv0 setString:bigValue forKey:key];
+        auto v3 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v3);
+        
+        [mmkv0 setString:@"OK" forKey:key];
+        auto v4 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v4);
+        
+        [mmkv0 setInt32:12345 forKey:@"int"];
+        auto v5 = [mmkv0 getInt32ForKey:key];
+        NSLog(@"int value = %d", v5);
+        [mmkv0 removeValueForKey:@"int"];
+    }
+    
+    {
+        NSString *crypt = [NSString stringWithFormat:@"fastest"];
+        auto mmkv0 = [MMKV mmkvWithID:@"onlyOneKeyCryptTest" cryptKey:[crypt dataUsingEncoding:NSUTF8StringEncoding] mode:MMKVSingleProcess];
+        NSString *key = [NSString stringWithFormat:@"hello"];
+        NSString *value = [NSString stringWithFormat:@"cryptworld"];
+        auto v = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v);
+        
+        [mmkv0 setString:value forKey:key];
+        auto v2 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v2);
+        
+        for (int i = 0; i < 10; i++) {
+            NSString * value2 = [NSString stringWithFormat:@"cryptworld_%d", i];
+            [mmkv0 setString:value2 forKey:key];
+            auto v2 = [mmkv0 getStringForKey:key];
+            NSLog(@"value = %@", v2);
+        }
     }
 }
 
