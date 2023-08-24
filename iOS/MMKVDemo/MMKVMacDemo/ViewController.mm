@@ -63,14 +63,17 @@
         }
         
         int len = 10000;
-        NSString *bigValue = [NSString stringWithFormat:@"🏊🏻®4️⃣🐅_"];
+        NSMutableString *bigValue = [NSMutableString stringWithFormat:@"🏊🏻®4️⃣🐅_"];
         for (int i = 0; i < len; i++) {
-            bigValue = [bigValue stringByAppendingString:@"0"];
+            [bigValue appendString:@"0"];
         }
         [mmkv0 setString:bigValue forKey:key];
         auto v3 = [mmkv0 getStringForKey:key];
-        NSLog(@"value = %@", v3);
-        
+        // NSLog(@"value = %@", v3);
+        if (![bigValue isEqualToString:v3]) {
+            abort();
+        }
+
         [mmkv0 setString:@"OK" forKey:key];
         auto v4 = [mmkv0 getStringForKey:key];
         NSLog(@"value = %@", v4);
