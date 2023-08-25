@@ -116,7 +116,7 @@ public final class SQLiteKV {
         Cursor cursor = getReadableDatabase().rawQuery(
             "select v from " + SQLiteKVDBHelper.TABLE_NAME_INT + " where k=?", new String[] {key});
         if (cursor.moveToFirst()) {
-            value = cursor.getInt(cursor.getColumnIndex("v"));
+            value = cursor.getInt(cursor.getColumnIndexOrThrow("v"));
         }
         cursor.close();
         return value;
@@ -135,7 +135,7 @@ public final class SQLiteKV {
         Cursor cursor = getReadableDatabase().rawQuery(
             "select v from " + SQLiteKVDBHelper.TABLE_NAME_STR + " where k=?", new String[] {key});
         if (cursor.moveToFirst()) {
-            value = cursor.getString(cursor.getColumnIndex("v"));
+            value = cursor.getString(cursor.getColumnIndexOrThrow("v"));
         }
         cursor.close();
         return value;
