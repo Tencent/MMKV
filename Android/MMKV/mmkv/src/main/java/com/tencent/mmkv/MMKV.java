@@ -35,7 +35,6 @@ import androidx.annotation.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -47,26 +46,9 @@ import java.util.Set;
  */
 public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
-    private static final EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
-    private static final EnumMap<MMKVLogLevel, Integer> logLevel2Index;
-    private static final MMKVLogLevel[] index2LogLevel;
     private static final Set<Long> checkedHandleSet;
 
     static {
-        recoverIndex = new EnumMap<>(MMKVRecoverStrategic.class);
-        recoverIndex.put(MMKVRecoverStrategic.OnErrorDiscard, 0);
-        recoverIndex.put(MMKVRecoverStrategic.OnErrorRecover, 1);
-
-        logLevel2Index = new EnumMap<>(MMKVLogLevel.class);
-        logLevel2Index.put(MMKVLogLevel.LevelDebug, 0);
-        logLevel2Index.put(MMKVLogLevel.LevelInfo, 1);
-        logLevel2Index.put(MMKVLogLevel.LevelWarning, 2);
-        logLevel2Index.put(MMKVLogLevel.LevelError, 3);
-        logLevel2Index.put(MMKVLogLevel.LevelNone, 4);
-
-        index2LogLevel = new MMKVLogLevel[]{MMKVLogLevel.LevelDebug, MMKVLogLevel.LevelInfo, MMKVLogLevel.LevelWarning,
-                MMKVLogLevel.LevelError, MMKVLogLevel.LevelNone};
-
         checkedHandleSet = new HashSet<Long>();
     }
 
@@ -195,35 +177,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             enableProcessModeChecker();
         }
         String cacheDir = context.getCacheDir().getAbsolutePath();
-
-        gCallbackHandler = handler;
-        if (gCallbackHandler != null && gCallbackHandler.wantLogRedirecting()) {
-            gWantLogReDirecting = true;
-        }
-
-        String ret = doInitialize(rootDir, cacheDir, loader, logLevel, gWantLogReDirecting);
-
-        if (gCallbackHandler != null) {
-            setCallbackHandler(gWantLogReDirecting, true);
-        }
-        return ret;
-    }
-
-    private static String doInitialize(String rootDir, String cacheDir, LibLoader loader, MMKVLogLevel logLevel, boolean wantLogReDirecting) {
-        if (loader != null) {
-            if (BuildConfig.FLAVOR.equals("SharedCpp")) {
-                loader.loadLibrary("c++_shared");
-            }
-            loader.loadLibrary("mmkv");
-        } else {
-            if (BuildConfig.FLAVOR.equals("SharedCpp")) {
-                System.loadLibrary("c++_shared");
-            }
-            System.loadLibrary("mmkv");
-        }
-        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel), wantLogReDirecting);
-        MMKV.rootDir = rootDir;
-        return MMKV.rootDir;
+        return JNIDelegate.doInitialize(rootDir, cacheDir, loader, logLevel, handler);
     }
 
     /**
@@ -233,7 +187,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
+        return JNIDelegate.doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
     }
 
     /**
@@ -242,7 +196,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
+        return JNIDelegate.doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
     }
 
     /**
@@ -252,7 +206,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
+        return JNIDelegate.doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
     }
 
     /**
@@ -261,39 +215,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
+        return JNIDelegate.doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
     }
-
-    static private String rootDir = null;
 
     /**
      * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      */
     public static String getRootDir() {
-        return rootDir;
-    }
-
-    private static int logLevel2Int(MMKVLogLevel level) {
-        int realLevel;
-        switch (level) {
-            case LevelDebug:
-                realLevel = 0;
-                break;
-            case LevelWarning:
-                realLevel = 2;
-                break;
-            case LevelError:
-                realLevel = 3;
-                break;
-            case LevelNone:
-                realLevel = 4;
-                break;
-            case LevelInfo:
-            default:
-                realLevel = 1;
-                break;
-        }
-        return realLevel;
+        return JNIDelegate.getRootDir();
     }
 
     /**
@@ -302,14 +231,15 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param level Defaults to {@link MMKVLogLevel#LevelInfo}.
      */
     public static void setLogLevel(MMKVLogLevel level) {
-        int realLevel = logLevel2Int(level);
-        setLogLevel(realLevel);
+        JNIDelegate.setLogLevel(level);
     }
 
     /**
      * Notify MMKV that App is about to exit. It's totally fine not calling it at all.
      */
-    public static native void onExit();
+    public static void onExit() {
+        JNIDelegate.onExit();
+    }
 
     /**
      * Single-process mode. The default mode on an MMKV instance.
@@ -336,11 +266,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithID(String mmapID) throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, null, 0);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, null, 0);
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
@@ -352,11 +282,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithID(String mmapID, int mode) throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, null, null, 0);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, mode, null, null, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -369,11 +299,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithID(String mmapID, int mode, long expectedCapacity) throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, null, null, expectedCapacity);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, mode, null, null, expectedCapacity);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -386,11 +316,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, null, 0);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, mode, cryptKey, null, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -402,11 +332,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithID(String mmapID, String rootPath) throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, 0);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, 0);
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
@@ -419,11 +349,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV mmkvWithID(String mmapID, String rootPath, long expectedCapacity) throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, expectedCapacity);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, expectedCapacity);
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
@@ -439,11 +369,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath, long expectedCapacity)
             throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, expectedCapacity);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, mode, cryptKey, rootPath, expectedCapacity);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -458,11 +388,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath)
             throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -477,12 +407,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static MMKV backedUpMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath)
             throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
         mode |= BACKUP_MODE;
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
+        long handle = JNIDelegate.getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -499,7 +429,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public static MMKV mmkvWithAshmemID(Context context, String mmapID, int size, int mode, @Nullable String cryptKey)
             throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
@@ -542,7 +472,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         simpleLog(MMKVLogLevel.LevelInfo, "getting mmkv in main process");
 
         mode = mode | ASHMEM_MODE;
-        long handle = getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
+        long handle = JNIDelegate.getMMKVWithIDAndSize(mmapID, size, mode, cryptKey);
         if (handle != 0) {
             return new MMKV(handle);
         }
@@ -555,11 +485,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV defaultMMKV() throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getDefaultMMKV(SINGLE_PROCESS_MODE, null);
+        long handle = JNIDelegate.getDefaultMMKV(SINGLE_PROCESS_MODE, null);
         return checkProcessMode(handle, "DefaultMMKV", SINGLE_PROCESS_MODE);
     }
 
@@ -571,11 +501,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @throws RuntimeException if there's an runtime error.
      */
     public static MMKV defaultMMKV(int mode, @Nullable String cryptKey) throws RuntimeException {
-        if (rootDir == null) {
+        if (getRootDir() == null) {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getDefaultMMKV(mode, cryptKey);
+        long handle = JNIDelegate.getDefaultMMKV(mode, cryptKey);
         return checkProcessMode(handle, "DefaultMMKV", mode);
     }
 
@@ -588,7 +518,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
         synchronized (checkedHandleSet) {
             if (!checkedHandleSet.contains(handle)) {
-                if (!checkProcessMode(handle)) {
+                if (!JNIDelegate.checkProcessMode(handle)) {
                     String message;
                     if (mode == SINGLE_PROCESS_MODE) {
                         message = "Opening a multi-process MMKV instance [" + mmapID + "] with SINGLE_PROCESS_MODE!";
@@ -635,7 +565,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @return The encryption key (no more than 16 bytes).
      */
     @Nullable
-    public native String cryptKey();
+    public String cryptKey() {
+        return jniDelegate.cryptKey();
+    }
 
     /**
      * Transform plain text into encrypted text, or vice versa by passing a null encryption key.
@@ -644,7 +576,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param cryptKey The new encryption key (no more than 16 bytes).
      * @return True if success, otherwise False.
      */
-    public native boolean reKey(@Nullable String cryptKey);
+    public boolean reKey(@Nullable String cryptKey) {
+        return jniDelegate.reKey(cryptKey);
+    }
 
     /**
      * Just reset the encryption key (will not encrypt or decrypt anything).
@@ -652,35 +586,47 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      *
      * @param cryptKey The new encryption key (no more than 16 bytes).
      */
-    public native void checkReSetCryptKey(@Nullable String cryptKey);
+    public void checkReSetCryptKey(@Nullable String cryptKey) {
+        jniDelegate.checkReSetCryptKey(cryptKey);
+    }
 
     /**
      * @return The device's memory page size.
      */
-    public static native int pageSize();
+    public static int pageSize() {
+        return JNIDelegate.pageSize();
+    }
 
     /**
      * @return The version of MMKV.
      */
-    public static native String version();
+    public static String version() {
+        return JNIDelegate.version();
+    }
 
     /**
      * @return The unique ID of the MMKV instance.
      */
-    public native String mmapID();
+    public String mmapID() {
+        return jniDelegate.mmapID();
+    }
 
     /**
      * Exclusively inter-process lock the MMKV instance.
      * It will block and wait until it successfully locks the file.
      * It will make no effect if the MMKV instance is created with {@link #SINGLE_PROCESS_MODE}.
      */
-    public native void lock();
+    public void lock() {
+        jniDelegate.lock();
+    }
 
     /**
      * Exclusively inter-process unlock the MMKV instance.
      * It will make no effect if the MMKV instance is created with {@link #SINGLE_PROCESS_MODE}.
      */
-    public native void unlock();
+    public void unlock() {
+        jniDelegate.unlock();
+    }
 
     /**
      * Try exclusively inter-process lock the MMKV instance.
@@ -689,10 +635,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      *
      * @return True if successfully locked, otherwise return immediately with False.
      */
-    public native boolean tryLock();
+    public boolean tryLock() {
+        return jniDelegate.tryLock();
+    }
 
     public boolean encode(String key, boolean value) {
-        return encodeBool(nativeHandle, key, value);
+        return jniDelegate.encodeBool(nativeHandle, key, value);
     }
 
     /**
@@ -701,19 +649,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, boolean value, int expireDurationInSecond) {
-        return encodeBool_2(nativeHandle, key, value, expireDurationInSecond);
+        return jniDelegate.encodeBool_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     public boolean decodeBool(String key) {
-        return decodeBool(nativeHandle, key, false);
+        return jniDelegate.decodeBool(nativeHandle, key, false);
     }
 
     public boolean decodeBool(String key, boolean defaultValue) {
-        return decodeBool(nativeHandle, key, defaultValue);
+        return jniDelegate.decodeBool(nativeHandle, key, defaultValue);
     }
 
     public boolean encode(String key, int value) {
-        return encodeInt(nativeHandle, key, value);
+        return jniDelegate.encodeInt(nativeHandle, key, value);
     }
 
     /**
@@ -722,19 +670,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, int value, int expireDurationInSecond) {
-        return encodeInt_2(nativeHandle, key, value, expireDurationInSecond);
+        return jniDelegate.encodeInt_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     public int decodeInt(String key) {
-        return decodeInt(nativeHandle, key, 0);
+        return jniDelegate.decodeInt(nativeHandle, key, 0);
     }
 
     public int decodeInt(String key, int defaultValue) {
-        return decodeInt(nativeHandle, key, defaultValue);
+        return jniDelegate.decodeInt(nativeHandle, key, defaultValue);
     }
 
     public boolean encode(String key, long value) {
-        return encodeLong(nativeHandle, key, value);
+        return jniDelegate.encodeLong(nativeHandle, key, value);
     }
 
     /**
@@ -743,19 +691,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, long value, int expireDurationInSecond) {
-        return encodeLong_2(nativeHandle, key, value, expireDurationInSecond);
+        return jniDelegate.encodeLong_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     public long decodeLong(String key) {
-        return decodeLong(nativeHandle, key, 0);
+        return jniDelegate.decodeLong(nativeHandle, key, 0);
     }
 
     public long decodeLong(String key, long defaultValue) {
-        return decodeLong(nativeHandle, key, defaultValue);
+        return jniDelegate.decodeLong(nativeHandle, key, defaultValue);
     }
 
     public boolean encode(String key, float value) {
-        return encodeFloat(nativeHandle, key, value);
+        return jniDelegate.encodeFloat(nativeHandle, key, value);
     }
 
     /**
@@ -764,19 +712,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, float value, int expireDurationInSecond) {
-        return encodeFloat_2(nativeHandle, key, value, expireDurationInSecond);
+        return jniDelegate.encodeFloat_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     public float decodeFloat(String key) {
-        return decodeFloat(nativeHandle, key, 0);
+        return jniDelegate.decodeFloat(nativeHandle, key, 0);
     }
 
     public float decodeFloat(String key, float defaultValue) {
-        return decodeFloat(nativeHandle, key, defaultValue);
+        return jniDelegate.decodeFloat(nativeHandle, key, defaultValue);
     }
 
     public boolean encode(String key, double value) {
-        return encodeDouble(nativeHandle, key, value);
+        return jniDelegate.encodeDouble(nativeHandle, key, value);
     }
 
     /**
@@ -785,19 +733,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, double value, int expireDurationInSecond) {
-        return encodeDouble_2(nativeHandle, key, value, expireDurationInSecond);
+        return jniDelegate.encodeDouble_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     public double decodeDouble(String key) {
-        return decodeDouble(nativeHandle, key, 0);
+        return jniDelegate.decodeDouble(nativeHandle, key, 0);
     }
 
     public double decodeDouble(String key, double defaultValue) {
-        return decodeDouble(nativeHandle, key, defaultValue);
+        return jniDelegate.decodeDouble(nativeHandle, key, defaultValue);
     }
 
     public boolean encode(String key, @Nullable String value) {
-        return encodeString(nativeHandle, key, value);
+        return jniDelegate.encodeString(nativeHandle, key, value);
     }
 
     /**
@@ -806,21 +754,21 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, @Nullable String value, int expireDurationInSecond) {
-        return encodeString_2(nativeHandle, key, value, expireDurationInSecond);
+        return jniDelegate.encodeString_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     @Nullable
     public String decodeString(String key) {
-        return decodeString(nativeHandle, key, null);
+        return jniDelegate.decodeString(nativeHandle, key, null);
     }
 
     @Nullable
     public String decodeString(String key, @Nullable String defaultValue) {
-        return decodeString(nativeHandle, key, defaultValue);
+        return jniDelegate.decodeString(nativeHandle, key, defaultValue);
     }
 
     public boolean encode(String key, @Nullable Set<String> value) {
-        return encodeSet(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]));
+        return jniDelegate.encodeSet(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]));
     }
 
     /**
@@ -829,7 +777,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, @Nullable Set<String> value, int expireDurationInSecond) {
-        return encodeSet_2(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]), expireDurationInSecond);
+        return jniDelegate.encodeSet_2(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]), expireDurationInSecond);
     }
 
     @Nullable
@@ -845,7 +793,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @SuppressWarnings("unchecked")
     @Nullable
     public Set<String> decodeStringSet(String key, @Nullable Set<String> defaultValue, Class<? extends Set> cls) {
-        String[] result = decodeStringSet(nativeHandle, key);
+        String[] result = jniDelegate.decodeStringSet(nativeHandle, key);
         if (result == null) {
             return defaultValue;
         }
@@ -862,7 +810,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public boolean encode(String key, @Nullable byte[] value) {
-        return encodeBytes(nativeHandle, key, value);
+        return jniDelegate.encodeBytes(nativeHandle, key, value);
     }
 
     /**
@@ -871,7 +819,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
     public boolean encode(String key, @Nullable byte[] value, int expireDurationInSecond) {
-        return encodeBytes_2(nativeHandle, key, value, expireDurationInSecond);
+        return jniDelegate.encodeBytes_2(nativeHandle, key, value, expireDurationInSecond);
     }
 
     @Nullable
@@ -881,7 +829,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @Nullable
     public byte[] decodeBytes(String key, @Nullable byte[] defaultValue) {
-        byte[] ret = decodeBytes(nativeHandle, key);
+        byte[] ret = jniDelegate.decodeBytes(nativeHandle, key);
         return (ret != null) ? ret : defaultValue;
     }
 
@@ -897,10 +845,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     public boolean encode(String key, @Nullable Parcelable value) {
         if (value == null) {
-            return encodeBytes(nativeHandle, key, null);
+            return jniDelegate.encodeBytes(nativeHandle, key, null);
         }
         byte[] bytes = getParcelableByte(value);
-        return encodeBytes(nativeHandle, key, bytes);
+        return jniDelegate.encodeBytes(nativeHandle, key, bytes);
     }
 
     /**
@@ -910,10 +858,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     public boolean encode(String key, @Nullable Parcelable value, int expireDurationInSecond) {
         if (value == null) {
-            return encodeBytes_2(nativeHandle, key, null, expireDurationInSecond);
+            return jniDelegate.encodeBytes_2(nativeHandle, key, null, expireDurationInSecond);
         }
         byte[] bytes = getParcelableByte(value);
-        return encodeBytes_2(nativeHandle, key, bytes, expireDurationInSecond);
+        return jniDelegate.encodeBytes_2(nativeHandle, key, bytes, expireDurationInSecond);
     }
 
     @SuppressWarnings("unchecked")
@@ -929,7 +877,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             return defaultValue;
         }
 
-        byte[] bytes = decodeBytes(nativeHandle, key);
+        byte[] bytes = jniDelegate.decodeBytes(nativeHandle, key);
         if (bytes == null) {
             return defaultValue;
         }
@@ -973,7 +921,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param key The key of the value.
      */
     public int getValueSize(String key) {
-        return valueSize(nativeHandle, key, false);
+        return jniDelegate.valueSize(nativeHandle, key, false);
     }
 
     /**
@@ -982,7 +930,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param key The key of the value.
      */
     public int getValueActualSize(String key) {
-        return valueSize(nativeHandle, key, true);
+        return jniDelegate.valueSize(nativeHandle, key, true);
     }
 
     /**
@@ -991,7 +939,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param key The key of the value.
      */
     public boolean containsKey(String key) {
-        return containsKey(nativeHandle, key);
+        return jniDelegate.containsKey(nativeHandle, key);
     }
 
     /**
@@ -999,7 +947,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Nullable
     public String[] allKeys() {
-        return allKeys(nativeHandle, false);
+        return jniDelegate.allKeys(nativeHandle, false);
     }
 
     /**
@@ -1007,28 +955,28 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Nullable
     public String[] allNonExpireKeys() {
-        return allKeys(nativeHandle, true);
+        return jniDelegate.allKeys(nativeHandle, true);
     }
 
     /**
      * @return The total count of all the keys.
      */
     public long count() {
-        return count(nativeHandle, false);
+        return jniDelegate.count(nativeHandle, false);
     }
 
     /**
      * @return The total count of all non-expired keys. Note that this call has costs.
      */
     public long countNonExpiredKeys() {
-        return count(nativeHandle, true);
+        return jniDelegate.count(nativeHandle, true);
     }
 
     /**
      * Get the size of the underlying file. Align to the disk block size, typically 4K for an Android device.
      */
     public long totalSize() {
-        return totalSize(nativeHandle);
+        return jniDelegate.totalSize(nativeHandle);
     }
 
     /**
@@ -1036,11 +984,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * This size might increase and decrease as MMKV doing insertion and full write back.
      */
     public long actualSize() {
-        return actualSize(nativeHandle);
+        return jniDelegate.actualSize(nativeHandle);
     }
 
     public void removeValueForKey(String key) {
-        removeValueForKey(nativeHandle, key);
+        jniDelegate.removeValueForKey(nativeHandle, key);
     }
 
     /**
@@ -1048,32 +996,42 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      *
      * @param arrKeys The keys to be removed.
      */
-    public native void removeValuesForKeys(String[] arrKeys);
+    public void removeValuesForKeys(String[] arrKeys) {
+        jniDelegate.removeValuesForKeys(arrKeys);
+    }
 
     /**
      * Clear all the key-values inside the MMKV instance.
      */
-    public native void clearAll();
+    public void clearAll() {
+        jniDelegate.clearAll();
+    }
 
     /**
      * The {@link #totalSize()} of an MMKV instance won't reduce after deleting key-values,
      * call this method after lots of deleting if you care about disk usage.
      * Note that {@link #clearAll()}  has a similar effect.
      */
-    public native void trim();
+    public void trim() {
+        jniDelegate.trim();
+    }
 
     /**
      * Call this method if the MMKV instance is no longer needed in the near future.
      * Any subsequent call to any MMKV instances with the same ID is undefined behavior.
      */
-    public native void close();
+    public void close() {
+        jniDelegate.close();
+    }
 
     /**
      * Clear memory cache of the MMKV instance.
      * You can call it on memory warning.
      * Any subsequent call to the MMKV instance will trigger all key-values loading from the file again.
      */
-    public native void clearMemoryCache();
+    public void clearMemoryCache() {
+        jniDelegate.clearMemoryCache();
+    }
 
     /**
      * Save all mmap memory to file synchronously.
@@ -1081,7 +1039,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Unless you worry about the device running out of battery.
      */
     public void sync() {
-        sync(true);
+        jniDelegate.sync(true);
     }
 
     /**
@@ -1089,10 +1047,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * No need to call this unless you worry about the device running out of battery.
      */
     public void async() {
-        sync(false);
+        jniDelegate.sync(false);
     }
-
-    private native void sync(boolean sync);
 
     /**
      * Check whether the MMKV file is valid or not.
@@ -1108,7 +1064,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param mmapID   The unique ID of the MMKV instance.
      * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
      */
-    public static native boolean isFileValid(String mmapID, @Nullable String rootPath);
+    public static boolean isFileValid(String mmapID, @Nullable String rootPath) {
+        return JNIDelegate.isFileValid(mmapID, rootPath);
+    }
 
     /**
      * Atomically migrate all key-values from an existent SharedPreferences to the MMKV instance.
@@ -1131,17 +1089,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             }
 
             if (value instanceof Boolean) {
-                encodeBool(nativeHandle, key, (boolean) value);
+                jniDelegate.encodeBool(nativeHandle, key, (boolean) value);
             } else if (value instanceof Integer) {
-                encodeInt(nativeHandle, key, (int) value);
+                jniDelegate.encodeInt(nativeHandle, key, (int) value);
             } else if (value instanceof Long) {
-                encodeLong(nativeHandle, key, (long) value);
+                jniDelegate.encodeLong(nativeHandle, key, (long) value);
             } else if (value instanceof Float) {
-                encodeFloat(nativeHandle, key, (float) value);
+                jniDelegate.encodeFloat(nativeHandle, key, (float) value);
             } else if (value instanceof Double) {
-                encodeDouble(nativeHandle, key, (double) value);
+                jniDelegate.encodeDouble(nativeHandle, key, (double) value);
             } else if (value instanceof String) {
-                encodeString(nativeHandle, key, (String) value);
+                jniDelegate.encodeString(nativeHandle, key, (String) value);
             } else if (value instanceof Set) {
                 encode(key, (Set<String>) value);
             } else {
@@ -1158,7 +1116,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param rootPath the customize root path of the MMKV, if null then backup from the root dir of MMKV
      * @param dstDir   the backup destination directory
      */
-    public static native boolean backupOneToDirectory(String mmapID, String dstDir, @Nullable String rootPath);
+    public static boolean backupOneToDirectory(String mmapID, String dstDir, @Nullable String rootPath) {
+        return JNIDelegate.backupOneToDirectory(mmapID, dstDir, rootPath);
+    }
 
     /**
      * restore one MMKV instance from srcDir
@@ -1167,7 +1127,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param srcDir   the restore source directory
      * @param rootPath the customize root path of the MMKV, if null then restore to the root dir of MMKV
      */
-    public static native boolean restoreOneMMKVFromDirectory(String mmapID, String srcDir, @Nullable String rootPath);
+    public static boolean restoreOneMMKVFromDirectory(String mmapID, String srcDir, @Nullable String rootPath) {
+        return JNIDelegate.restoreOneMMKVFromDirectory(mmapID, srcDir, rootPath);
+    }
 
     /**
      * backup all MMKV instance to dstDir
@@ -1175,7 +1137,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param dstDir the backup destination directory
      * @return count of MMKV successfully backuped
      */
-    public static native long backupAllToDirectory(String dstDir);
+    public static long backupAllToDirectory(String dstDir) {
+        return JNIDelegate.backupAllToDirectory(dstDir);
+    }
 
     /**
      * restore all MMKV instance from srcDir
@@ -1183,7 +1147,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param srcDir the restore source directory
      * @return count of MMKV successfully restored
      */
-    public static native long restoreAllFromDirectory(String srcDir);
+    public static long restoreAllFromDirectory(String srcDir) {
+        return JNIDelegate.restoreAllFromDirectory(srcDir);
+    }
 
     public static final int ExpireNever = 0;
     public static final int ExpireInMinute = 60;
@@ -1198,12 +1164,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      *
      * @param expireDurationInSecond the expire duration for all keys, {@link #ExpireNever} (0) means no default duration (aka each key will have it's own expire date)
      */
-    public native boolean enableAutoKeyExpire(int expireDurationInSecond);
+    public boolean enableAutoKeyExpire(int expireDurationInSecond) {
+        return jniDelegate.enableAutoKeyExpire(expireDurationInSecond);
+    }
 
     /**
      * Disable auto key expiration. This is a downgrade operation.
      */
-    public native boolean disableAutoKeyExpire();
+    public boolean disableAutoKeyExpire() {
+        return jniDelegate.disableAutoKeyExpire();
+    }
 
     /**
      * Intentionally Not Supported. Because MMKV does type-eraser inside to get better performance.
@@ -1217,17 +1187,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Nullable
     @Override
     public String getString(String key, @Nullable String defValue) {
-        return decodeString(nativeHandle, key, defValue);
+        return jniDelegate.decodeString(nativeHandle, key, defValue);
     }
 
     @Override
     public Editor putString(String key, @Nullable String value) {
-        encodeString(nativeHandle, key, value);
+        jniDelegate.encodeString(nativeHandle, key, value);
         return this;
     }
 
     public Editor putString(String key, @Nullable String value, int expireDurationInSecond) {
-        encodeString_2(nativeHandle, key, value, expireDurationInSecond);
+        jniDelegate.encodeString_2(nativeHandle, key, value, expireDurationInSecond);
         return this;
     }
 
@@ -1264,65 +1234,65 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @Override
     public int getInt(String key, int defValue) {
-        return decodeInt(nativeHandle, key, defValue);
+        return jniDelegate.decodeInt(nativeHandle, key, defValue);
     }
 
     @Override
     public Editor putInt(String key, int value) {
-        encodeInt(nativeHandle, key, value);
+        jniDelegate.encodeInt(nativeHandle, key, value);
         return this;
     }
 
     public Editor putInt(String key, int value, int expireDurationInSecond) {
-        encodeInt_2(nativeHandle, key, value, expireDurationInSecond);
+        jniDelegate.encodeInt_2(nativeHandle, key, value, expireDurationInSecond);
         return this;
     }
 
     @Override
     public long getLong(String key, long defValue) {
-        return decodeLong(nativeHandle, key, defValue);
+        return jniDelegate.decodeLong(nativeHandle, key, defValue);
     }
 
     @Override
     public Editor putLong(String key, long value) {
-        encodeLong(nativeHandle, key, value);
+        jniDelegate.encodeLong(nativeHandle, key, value);
         return this;
     }
 
     public Editor putLong(String key, long value, int expireDurationInSecond) {
-        encodeLong_2(nativeHandle, key, value, expireDurationInSecond);
+        jniDelegate.encodeLong_2(nativeHandle, key, value, expireDurationInSecond);
         return this;
     }
 
     @Override
     public float getFloat(String key, float defValue) {
-        return decodeFloat(nativeHandle, key, defValue);
+        return jniDelegate.decodeFloat(nativeHandle, key, defValue);
     }
 
     @Override
     public Editor putFloat(String key, float value) {
-        encodeFloat(nativeHandle, key, value);
+        jniDelegate.encodeFloat(nativeHandle, key, value);
         return this;
     }
 
     public Editor putFloat(String key, float value, int expireDurationInSecond) {
-        encodeFloat_2(nativeHandle, key, value, expireDurationInSecond);
+        jniDelegate.encodeFloat_2(nativeHandle, key, value, expireDurationInSecond);
         return this;
     }
 
     @Override
     public boolean getBoolean(String key, boolean defValue) {
-        return decodeBool(nativeHandle, key, defValue);
+        return jniDelegate.decodeBool(nativeHandle, key, defValue);
     }
 
     @Override
     public Editor putBoolean(String key, boolean value) {
-        encodeBool(nativeHandle, key, value);
+        jniDelegate.encodeBool(nativeHandle, key, value);
         return this;
     }
 
     public Editor putBoolean(String key, boolean value, int expireDurationInSecond) {
-        encodeBool_2(nativeHandle, key, value, expireDurationInSecond);
+        jniDelegate.encodeBool_2(nativeHandle, key, value, expireDurationInSecond);
         return this;
     }
 
@@ -1349,7 +1319,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Override
     @Deprecated
     public boolean commit() {
-        sync(true);
+        jniDelegate.sync(true);
         return true;
     }
 
@@ -1361,7 +1331,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Override
     @Deprecated
     public void apply() {
-        sync(false);
+        jniDelegate.sync(false);
     }
 
     @Override
@@ -1403,7 +1373,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     // Parcelable
     public static MMKV mmkvWithAshmemFD(String mmapID, int fd, int metaFD, String cryptKey) throws RuntimeException {
-        long handle = getMMKVWithAshmemFD(mmapID, fd, metaFD, cryptKey);
+        long handle = JNIDelegate.getMMKVWithAshmemFD(mmapID, fd, metaFD, cryptKey);
         if (handle == 0) {
             throw new RuntimeException("Fail to create an ashmem MMKV instance [" + mmapID + "] in JNI");
         }
@@ -1413,12 +1383,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * @return The file descriptor of the ashmem of the MMKV file.
      */
-    public native int ashmemFD();
+    public int ashmemFD() {
+        return jniDelegate.ashmemFD();
+    }
 
     /**
      * @return The file descriptor of the ashmem of the MMKV crc file.
      */
-    public native int ashmemMetaFD();
+    public int ashmemMetaFD() {
+        return jniDelegate.ashmemMetaFD();
+    }
 
     /**
      * Create an native buffer, whose underlying memory can be directly transferred to another JNI method.
@@ -1429,7 +1403,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Nullable
     public static NativeBuffer createNativeBuffer(int size) {
-        long pointer = createNB(size);
+        long pointer = JNIDelegate.createNB(size);
         if (pointer <= 0) {
             return null;
         }
@@ -1440,7 +1414,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Destroy the native buffer. An NativeBuffer must be manually destroy to avoid memory leak.
      */
     public static void destroyNativeBuffer(NativeBuffer buffer) {
-        destroyNB(buffer.pointer, buffer.size);
+        JNIDelegate.destroyNB(buffer.pointer, buffer.size);
     }
 
     /**
@@ -1449,12 +1423,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @return The size written. Return -1 on any error.
      */
     public int writeValueToNativeBuffer(String key, NativeBuffer buffer) {
-        return writeValueToNB(nativeHandle, key, buffer.pointer, buffer.size);
+        return jniDelegate.writeValueToNB(nativeHandle, key, buffer.pointer, buffer.size);
     }
-
-    // callback handler
-    private static MMKVHandler gCallbackHandler;
-    private static boolean gWantLogReDirecting = false;
 
     /**
      * Register a handler for MMKV log redirecting, and error handling.
@@ -1463,75 +1433,19 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Use the {@link #initialize(Context, String, LibLoader, MMKVLogLevel, MMKVHandler)} method instead.
      */
     public static void registerHandler(MMKVHandler handler) {
-        gCallbackHandler = handler;
-        gWantLogReDirecting = gCallbackHandler.wantLogRedirecting();
-        setCallbackHandler(gWantLogReDirecting, true);
+        JNIDelegate.registerHandler(handler);
     }
 
     /**
      * Unregister the handler for MMKV.
      */
     public static void unregisterHandler() {
-        gCallbackHandler = null;
-
-        setCallbackHandler(false, false);
-        gWantLogReDirecting = false;
-    }
-
-    private static int onMMKVCRCCheckFail(String mmapID) {
-        MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
-        if (gCallbackHandler != null) {
-            strategic = gCallbackHandler.onMMKVCRCCheckFail(mmapID);
-        }
-        simpleLog(MMKVLogLevel.LevelInfo, "Recover strategic for " + mmapID + " is " + strategic);
-        Integer value = recoverIndex.get(strategic);
-        return (value == null) ? 0 : value;
-    }
-
-    private static int onMMKVFileLengthError(String mmapID) {
-        MMKVRecoverStrategic strategic = MMKVRecoverStrategic.OnErrorDiscard;
-        if (gCallbackHandler != null) {
-            strategic = gCallbackHandler.onMMKVFileLengthError(mmapID);
-        }
-        simpleLog(MMKVLogLevel.LevelInfo, "Recover strategic for " + mmapID + " is " + strategic);
-        Integer value = recoverIndex.get(strategic);
-        return (value == null) ? 0 : value;
-    }
-
-    private static void mmkvLogImp(int level, String file, int line, String function, String message) {
-        if (gCallbackHandler != null && gWantLogReDirecting) {
-            gCallbackHandler.mmkvLog(index2LogLevel[level], file, line, function, message);
-        } else {
-            switch (index2LogLevel[level]) {
-                case LevelDebug:
-                    Log.d("MMKV", message);
-                    break;
-                case LevelInfo:
-                    Log.i("MMKV", message);
-                    break;
-                case LevelWarning:
-                    Log.w("MMKV", message);
-                    break;
-                case LevelError:
-                    Log.e("MMKV", message);
-                    break;
-                case LevelNone:
-                    break;
-            }
-        }
+        JNIDelegate.unregisterHandler();
     }
 
     private static void simpleLog(MMKVLogLevel level, String message) {
-        StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
-        StackTraceElement e = stacktrace[stacktrace.length - 1];
-        Integer i = logLevel2Index.get(level);
-        int intLevel = (i == null) ? 0 : i;
-        mmkvLogImp(intLevel, e.getFileName(), e.getLineNumber(), e.getMethodName(), message);
+        JNIDelegate.simpleLog(level, message);
     }
-
-    // content change notification of other process
-    // trigger by getXXX() or setXXX() or checkContentChangedByOuterProcess()
-    private static MMKVContentChangeNotification gContentChangeNotify;
 
     /**
      * Register for MMKV inter-process content change notification.
@@ -1541,124 +1455,29 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * @param notify The notification handler.
      */
     public static void registerContentChangeNotify(MMKVContentChangeNotification notify) {
-        gContentChangeNotify = notify;
-        setWantsContentChangeNotify(gContentChangeNotify != null);
+        JNIDelegate.registerContentChangeNotify(notify);
     }
 
     /**
      * Unregister for MMKV inter-process content change notification.
      */
     public static void unregisterContentChangeNotify() {
-        gContentChangeNotify = null;
-        setWantsContentChangeNotify(false);
+        JNIDelegate.unregisterContentChangeNotify();
     }
-
-    private static void onContentChangedByOuterProcess(String mmapID) {
-        if (gContentChangeNotify != null) {
-            gContentChangeNotify.onContentChangedByOuterProcess(mmapID);
-        }
-    }
-
-    private static native void setWantsContentChangeNotify(boolean needsNotify);
 
     /**
      * Check inter-process content change manually.
      */
-    public native void checkContentChangedByOuterProcess();
+    public void checkContentChangedByOuterProcess() {
+        jniDelegate.checkContentChangedByOuterProcess();
+    }
 
     // jni
     private final long nativeHandle;
+    private final JNIDelegate jniDelegate;
 
     private MMKV(long handle) {
         nativeHandle = handle;
+        jniDelegate = new JNIDelegate(handle);
     }
-
-    private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting);
-
-    private native static long
-    getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath,
-                  long expectedCapacity);
-
-    private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, @Nullable String cryptKey);
-
-    private native static long getDefaultMMKV(int mode, @Nullable String cryptKey);
-
-    private native static long getMMKVWithAshmemFD(String mmapID, int fd, int metaFD, @Nullable String cryptKey);
-
-    private native boolean encodeBool(long handle, String key, boolean value);
-
-    private native boolean encodeBool_2(long handle, String key, boolean value, int expireDurationInSecond);
-
-    private native boolean decodeBool(long handle, String key, boolean defaultValue);
-
-    private native boolean encodeInt(long handle, String key, int value);
-
-    private native boolean encodeInt_2(long handle, String key, int value, int expireDurationInSecond);
-
-    private native int decodeInt(long handle, String key, int defaultValue);
-
-    private native boolean encodeLong(long handle, String key, long value);
-
-    private native boolean encodeLong_2(long handle, String key, long value, int expireDurationInSecond);
-
-    private native long decodeLong(long handle, String key, long defaultValue);
-
-    private native boolean encodeFloat(long handle, String key, float value);
-
-    private native boolean encodeFloat_2(long handle, String key, float value, int expireDurationInSecond);
-
-    private native float decodeFloat(long handle, String key, float defaultValue);
-
-    private native boolean encodeDouble(long handle, String key, double value);
-
-    private native boolean encodeDouble_2(long handle, String key, double value, int expireDurationInSecond);
-
-    private native double decodeDouble(long handle, String key, double defaultValue);
-
-    private native boolean encodeString(long handle, String key, @Nullable String value);
-
-    private native boolean encodeString_2(long handle, String key, @Nullable String value, int expireDurationInSecond);
-
-    @Nullable
-    private native String decodeString(long handle, String key, @Nullable String defaultValue);
-
-    private native boolean encodeSet(long handle, String key, @Nullable String[] value);
-
-    private native boolean encodeSet_2(long handle, String key, @Nullable String[] value, int expireDurationInSecond);
-
-    @Nullable
-    private native String[] decodeStringSet(long handle, String key);
-
-    private native boolean encodeBytes(long handle, String key, @Nullable byte[] value);
-
-    private native boolean encodeBytes_2(long handle, String key, @Nullable byte[] value, int expireDurationInSecond);
-
-    @Nullable
-    private native byte[] decodeBytes(long handle, String key);
-
-    private native boolean containsKey(long handle, String key);
-
-    private native String[] allKeys(long handle, boolean filterExpire);
-
-    private native long count(long handle, boolean filterExpire);
-
-    private native long totalSize(long handle);
-
-    private native long actualSize(long handle);
-
-    private native void removeValueForKey(long handle, String key);
-
-    private native int valueSize(long handle, String key, boolean actualSize);
-
-    private static native void setLogLevel(int level);
-
-    private static native void setCallbackHandler(boolean logReDirecting, boolean hasCallback);
-
-    private static native long createNB(int size);
-
-    private static native void destroyNB(long pointer, int size);
-
-    private native int writeValueToNB(long handle, String key, long pointer, int size);
-
-    private static native boolean checkProcessMode(long handle);
 }

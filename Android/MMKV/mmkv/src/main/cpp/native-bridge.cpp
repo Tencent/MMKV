@@ -65,7 +65,7 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     if (g_cls) {
         env->DeleteGlobalRef(g_cls);
     }
-    static const char *clsName = "com/tencent/mmkv/MMKV";
+    static const char *clsName = "com/tencent/mmkv/JNIDelegate";
     jclass instance = env->FindClass(clsName);
     if (!instance) {
         MMKVError("fail to locate class: %s", clsName);
