@@ -617,7 +617,13 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 }
             }
         } else {
-            auto ret = appendDataWithKey(data, key, isDataHolder);
+            bool needOverride = !m_isInterProcess && m_dicCrypt->empty() && m_actualSize > 0;
+            KVHolderRet_t ret;
+            if (needOverride) {
+                ret = overrideDataWithKey(data, key, isDataHolder);
+            } else {
+                ret = appendDataWithKey(data, key, isDataHolder);
+            }
             if (!ret.first) {
                 return false;
             }
@@ -669,7 +675,13 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 }
             }
         } else {
-            auto ret = appendDataWithKey(data, key, isDataHolder);
+            bool needOverride = !m_isInterProcess && m_dic->empty() && m_actualSize > 0;
+            KVHolderRet_t ret;
+            if (needOverride) {
+                ret = overrideDataWithKey(data, key, isDataHolder);
+            } else {
+                ret = appendDataWithKey(data, key, isDataHolder);
+            }
             if (!ret.first) {
                 return false;
             }
