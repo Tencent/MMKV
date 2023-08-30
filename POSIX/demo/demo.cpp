@@ -517,6 +517,109 @@ void testOnlyOneKey() {
     }
 }
 
+void testOverride() {
+    string key1 = "key1";
+    string key2 = "key2";
+    string key3 = "key3";
+    string s;
+    {
+        s = "";
+        auto mmkv = MMKV::mmkvWithID("testOverride");
+
+        mmkv->set("world1", key1);
+        mmkv->getString(key1, s);
+        printf("testOverride: key1 = %s\n", s.c_str());
+
+        mmkv->set("world2", key2);
+        mmkv->getString(key2, s);
+        printf("testOverride: key2 = %s\n", s.c_str());
+
+        mmkv->removeValueForKey(key1);
+        mmkv->removeValueForKey(key2);
+
+        printf("testOverride: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->set("world3", key3);
+        mmkv->getString(key3, s);
+        printf("testOverride: key3 = %s\n", s.c_str());
+        printf("testOverride: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->removeValueForKey(key3);
+
+        // test file expanding
+        string bigValue(100000, '0');
+        mmkv->set(bigValue, key1);
+        mmkv->getString(key1, s);
+        assert(s == bigValue);
+
+        mmkv->removeValueForKey(key1);
+
+        mmkv->set("OK", key2);
+        mmkv->getString(key2, s);
+        printf("testOverride: value = %s\n", s.c_str());
+
+        // close it and reopen it
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testOverride");
+        mmkv->getString(key2, s);
+        printf("testOverride: after reopen key2 = %s\n", s.c_str());
+        assert(s == "OK");
+
+        mmkv->removeValueForKey(key2);
+        mmkv->trim();
+    }
+
+    {
+        s = "";
+        string cryptKey = "fastest2";
+        auto mmkv = MMKV::mmkvWithID("testOverrideCrypt", MMKV_SINGLE_PROCESS, &cryptKey);
+        mmkv->enableAutoKeyExpire(24 * 60 * 60);
+
+        mmkv->set("world1", key1);
+        mmkv->getString(key1, s);
+        printf("testOverrideCrypt: key1 = %s\n", s.c_str());
+
+        mmkv->set("world2", key2);
+        mmkv->getString(key2, s);
+        printf("testOverrideCrypt: key2 = %s\n", s.c_str());
+
+        mmkv->removeValueForKey(key1);
+        mmkv->removeValueForKey(key2);
+
+        printf("testOverrideCrypt: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->set("world3", key3);
+        mmkv->getString(key3, s);
+        printf("testOverrideCrypt: key3 = %s\n", s.c_str());
+        printf("testOverrideCrypt: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->removeValueForKey(key3);
+
+        // test file expanding
+        string bigValue(100000, '0');
+        mmkv->set(bigValue, key1);
+        mmkv->getString(key1, s);
+        assert(s == bigValue);
+
+        mmkv->removeValueForKey(key1);
+
+        mmkv->set("OK", key2);
+        mmkv->getString(key2, s);
+        printf("testOverrideCrypt: value = %s\n", s.c_str());
+
+        // close it and reopen it
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testOverrideCrypt", MMKV_SINGLE_PROCESS, &cryptKey);
+        mmkv->getString(key2, s);
+        printf("testOverrideCrypt: after reopen key2 = %s\n", s.c_str());
+        assert(s == "OK");
+
+        mmkv->removeValueForKey(key2);
+        mmkv->trim();
+    }
+
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -566,6 +669,7 @@ int main() {
     testInterProcessLock();
     testExpectedCapacity();
     testOnlyOneKey();
+    testOverride();
     testBackup();
     testRestore();
     testAutoExpiration();
