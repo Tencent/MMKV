@@ -711,7 +711,7 @@ bool MMKV::getBytes(MMKVKey_t key, mmkv::MMBuffer &result) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
-            result = std::move(input.readData());
+            result = input.readData();
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
