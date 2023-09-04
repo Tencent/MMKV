@@ -23,10 +23,12 @@
 #import <NotificationCenter/NotificationCenter.h>
 
 @interface TodayViewController () <NCWidgetProviding>
-
+@property (nonatomic) IBOutlet UILabel *m_label;
 @end
 
-@implementation TodayViewController
+@implementation TodayViewController {
+    NSData *m_encryptionKey;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -34,8 +36,9 @@
 
     NSString *groupDir = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:@"group.tencent.mmkv"].path;
     [MMKV initializeMMKV:nil groupDir:groupDir logLevel:MMKVLogInfo];
+    m_encryptionKey = [@"multi_process" dataUsingEncoding:NSUTF8StringEncoding];
 
-    [self testMultiProcess];
+    // [self testMultiProcess];
 }
 
 - (void)widgetPerformUpdateWithCompletionHandler:(void (^)(NCUpdateResult))completionHandler {
@@ -44,13 +47,15 @@
     // If an error is encountered, use NCUpdateResultFailed
     // If there's no update required, use NCUpdateResultNoData
     // If there's an update, use NCUpdateResultNewData
+    MMKV *mmkv = [MMKV mmkvWithID:@"multi_process" cryptKey:m_encryptionKey mode:MMKVMultiProcess];
+    NSString *newContent = [mmkv getStringForKey:@"content"];
+    _m_label.text = newContent;
 
     completionHandler(NCUpdateResultNewData);
 }
 
 - (void)testMultiProcess {
-    NSData *key_1 = [@"multi_process" dataUsingEncoding:NSUTF8StringEncoding];
-    MMKV *mmkv = [MMKV mmkvWithID:@"multi_process" cryptKey:key_1 mode:MMKVMultiProcess];
+    MMKV *mmkv = [MMKV mmkvWithID:@"multi_process" cryptKey:m_encryptionKey mode:MMKVMultiProcess];
 
     [mmkv setBool:YES forKey:@"bool"];
     NSLog(@"bool:%d", [mmkv getBoolForKey:@"bool"]);

@@ -1,4 +1,38 @@
 # MMKV for Flutter Change Log
+## v1.3.1 / 2023-8-11
+This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 users upgrade as soon as possible.
+* Fix a critical bug that might cause multi-process MMKV corrupt. This bug was introduced in v1.2.16.
+* Add the ability to filter expired keys on `count()` & `allKeys()` methods when auto key expiration is turn on.
+* Reduce the `msync()` call on newly created MMKV instances.
+
+## v1.3.0 / 2023-06-14
+* Add auto key expiration feature. Note that this is a breaking change, once upgrade to auto expiration, the MMKV file is not valid for older versions of MMKV (v1.2.16 and below) to correctly operate.
+* Roll back the lazy load optimization due to reported ANR issues. It was introduced in v1.2.16.
+* The version is now the same as the MMKV native library.
+* Starting from v1.3.0, Flutter for Android will use `com.tencent:mmkv`. Previously it's `com.tencent:mmkv-static`. It's the same as `com.tencent:mmkv` starting from v1.2.11.
+
+## v1.2.17 / 2023-04-20
+* Optimization: The actual file content is lazy loaded now, saving time on MMKV instance creation, and avoiding lock waiting when a lot of instances are created at the same time.
+* Fix a bug when restoring a loaded MMKV instance the meta file might mistakenly report corrupted.
+* Fix a crash on decoding an empty list.
+* Remove deprecated dependence.
+* Make the script more robust to fix the iOS Flutter plugin name.
+* Keep up with MMKV native lib v1.2.16.
+
+## v1.2.16 / 2023-01-12
+* Reduce the privacy info needed to obtain android sdkInt, avoid unnecessary risk on Android App Review.
+* Log handler now handles all logs from the very beginning, especially the logs in initialization.
+* Log handler register method is now deprecated. It's integrated with initialize().
+* Keep up with MMKV native lib v1.2.15.
+
+## v1.2.15 / 2022-08-10
+* Fix a bug that `MMKV.decodeXXX()` may return invalid results in multi-process mode.
+* Upgrade to Flutter 3.0.
+* Keep up with MMKV native lib v1.2.14.
+
+## v1.2.14 / 2022-03-30
+* Replace the deprecated `device_info` package with `device_info_plus`.
+* Keep up with MMKV native lib v1.2.13.
 
 ## v1.2.13 / 2022-01-17
 * Fix a bug that a subsequential `clearAll()` call may fail to take effect in multi-process mode.

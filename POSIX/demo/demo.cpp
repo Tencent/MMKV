@@ -31,11 +31,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstring>
+#include <cassert>
 
 using namespace std;
 using namespace mmkv;
 
-string to_string(vector<string> &&arr, const char* sp = ", ") {
+string to_string(const vector<string> &arr, const char* sp = ", ") {
     string str;
     for (const auto &element : arr) {
         str += element;
@@ -340,6 +341,285 @@ void testRestore() {
     }
 }
 
+void testAutoExpiration() {
+    string mmapID = "testAutoExpire";
+    auto mmkv = MMKV::mmkvWithID(mmapID);
+    mmkv->clearAll();
+    mmkv->trim();
+    mmkv->disableAutoKeyExpire();
+
+    mmkv->set(true, "auto_expire_key_1");
+    mmkv->enableAutoKeyExpire(1);
+    mmkv->set("never_expire_value_1", "never_expire_key_1", MMKV::ExpireNever);
+
+    sleep(2);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+
+    mmkv->removeValueForKey("never_expire_key_1");
+    mmkv->enableAutoKeyExpire(MMKV::ExpireNever);
+    mmkv->set("never_expire_value_1", "never_expire_key_1");
+    mmkv->set(true, "auto_expire_key_1", 1);
+    sleep(2);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+
+    auto count = mmkv->count(true);
+    cout << "count all non expire keys: " << count << endl;
+    auto allKeys = mmkv->allKeys(true);
+    cout << "all non expire keys: " << ::to_string(allKeys) << endl;
+}
+
+void testExpectedCapacity() {
+    auto mmkv0 = MMKV::mmkvWithID("testExpectedCapacity0", MMKV_SINGLE_PROCESS, nullptr, nullptr, 0);
+    assert(mmkv0->totalSize() == DEFAULT_MMAP_SIZE);
+
+    auto mmkv1 = MMKV::mmkvWithID("testExpectedCapacity1", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE + 1);
+    assert(mmkv1->totalSize() == DEFAULT_MMAP_SIZE << 1);
+
+    auto mmkv2 = MMKV::mmkvWithID("testExpectedCapacity2", MMKV_SINGLE_PROCESS, nullptr, nullptr, DEFAULT_MMAP_SIZE >> 1);
+    assert(mmkv2->totalSize() == DEFAULT_MMAP_SIZE);
+
+    auto mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3");
+    mmkv3->clearAll();
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE);
+    mmkv3->close();
+    // expand it
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 100 * DEFAULT_MMAP_SIZE + 100);
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE * 101);
+
+    // if new size is smaller than file size, keep file its origin size
+    mmkv3->close();
+    mmkv3 = MMKV::mmkvWithID("testExpectedCapacity3", MMKV_SINGLE_PROCESS, nullptr, nullptr, 0);
+    assert(mmkv3->totalSize() == DEFAULT_MMAP_SIZE * 101);
+
+    int len = 10000;
+    std::string value(len, '0');
+    value = "🏊🏻®4️⃣🐅_" + value;
+    cout << "value length = " << value.size() << endl;
+    std::string key = "key";
+    // if you know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    size_t expectedSize = key.size() + value.size();
+    auto mmkv4 = MMKV::mmkvWithID("testExpectedCapacity4", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    // 0 times expand
+    mmkv4->set(value, key);
+
+    int count = 10;
+    expectedSize = (key.size() + value.size()) * count;
+    auto mmkv5 = MMKV::mmkvWithID("testExpectedCapacity5", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    for (int i = 0; i < count; i++) {
+        key[0] = static_cast<char>('a' + i);
+        // 0 times expand
+        mmkv5->set(value, key);
+    }
+}
+
+void testOnlyOneKey() {
+    string key = "name";
+    string s;
+    {
+        s = "";
+        auto mmkv = MMKV::mmkvWithID("testOneKey");
+
+        mmkv->getString(key, s);
+        printf("testOneKey: value = %s\n", s.c_str());
+
+        mmkv->set("world", key);
+        mmkv->getString(key, s);
+        printf("testOneKey: value = %s\n", s.c_str());
+
+        for (int i = 0; i < 10; i++) {
+            string value = "world_";
+            value += to_string(i);
+            mmkv->set(value, key);
+            mmkv->getString(key, s);
+            printf("testOneKey: value = %s\n", s.c_str());
+        }
+
+        // test file expanding
+        string bigValue(100000, '0');
+        mmkv->set(bigValue, key);
+        mmkv->getString(key, s);
+        printf("testOneKey: value = %s\n", s.c_str());
+
+        mmkv->set("OK", key);
+        mmkv->getString(key, s);
+        printf("testOneKey: value = %s\n", s.c_str());
+
+        // close it and reopen it
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testOneKey");
+        mmkv->getString(key, s);
+        printf("testOneKey: after reopen value = %s\n", s.c_str());
+        assert(s == "OK");
+    }
+
+    {
+        s = "";
+        string cryptKey = "fastest";
+        auto mmkv = MMKV::mmkvWithID("testOneKeyCrypt", MMKV_SINGLE_PROCESS, &cryptKey);
+
+        mmkv->getString(key, s);
+        printf("testOneKeyCrypt: value = %s\n", s.c_str());
+
+        mmkv->set("cryptworld", key);
+        mmkv->getString(key, s);
+        printf("testOneKeyCrypt: value = %s\n", s.c_str());
+
+        for (int i = 0; i < 10; i++) {
+            string value = "cryptworld_";
+            value += to_string(i);
+            mmkv->set(value, key);
+            mmkv->getString(key, s);
+            printf("testOneKeyCrypt: value = %s\n", s.c_str());
+        }
+
+        // close it and reopen it
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testOneKeyCrypt", MMKV_SINGLE_PROCESS, &cryptKey);
+        mmkv->getString(key, s);
+        printf("testOneKeyCrypt: after reopen value = %s\n", s.c_str());
+        assert(s == "cryptworld_9");
+
+        mmkv->set("cryptworld_good", key);
+        mmkv->getString(key, s);
+        printf("testOneKeyCrypt: value = %s\n", s.c_str());
+        assert(s == "cryptworld_good");
+    }
+
+    {
+        string cryptKey = "expiretest";
+        auto mmkv = MMKV::mmkvWithID("testOneKeyCryptExpire", MMKV_SINGLE_PROCESS, &cryptKey);
+        mmkv->enableAutoKeyExpire(24 * 60 * 60);
+
+        s = "";
+        mmkv->getString(key, s);
+        printf("testOneKeyCryptExpire: value = %s\n", s.c_str());
+
+        mmkv->set("expire", key, 1000);
+        mmkv->getString(key, s);
+        printf("testOneKeyCryptExpire: value = %s\n", s.c_str());
+
+        for (int i = 0; i < 10; i++) {
+            string value = "expire_";
+            value += to_string(i);
+            mmkv->set(value, key);
+            mmkv->getString(key, s);
+            printf("testOneKeyCryptExpire: value = %s\n", s.c_str());
+        }
+
+        // close it and reopen it
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testOneKeyCryptExpire", MMKV_SINGLE_PROCESS, &cryptKey);
+        mmkv->getString(key, s);
+        printf("testOneKeyCryptExpire: after reopen value = %s\n", s.c_str());
+        assert(s == "expire_9");
+    }
+}
+
+void testOverride() {
+    string key1 = "key1";
+    string key2 = "key2";
+    string key3 = "key3";
+    string s;
+    {
+        s = "";
+        auto mmkv = MMKV::mmkvWithID("testOverride");
+
+        mmkv->set("world1", key1);
+        mmkv->getString(key1, s);
+        printf("testOverride: key1 = %s\n", s.c_str());
+
+        mmkv->set("world2", key2);
+        mmkv->getString(key2, s);
+        printf("testOverride: key2 = %s\n", s.c_str());
+
+        mmkv->removeValueForKey(key1);
+        mmkv->removeValueForKey(key2);
+
+        printf("testOverride: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->set("world3", key3);
+        mmkv->getString(key3, s);
+        printf("testOverride: key3 = %s\n", s.c_str());
+        printf("testOverride: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->removeValueForKey(key3);
+
+        // test file expanding
+        string bigValue(100000, '0');
+        mmkv->set(bigValue, key1);
+        mmkv->getString(key1, s);
+        assert(s == bigValue);
+
+        mmkv->removeValueForKey(key1);
+
+        mmkv->set("OK", key2);
+        mmkv->getString(key2, s);
+        printf("testOverride: value = %s\n", s.c_str());
+
+        // close it and reopen it
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testOverride");
+        mmkv->getString(key2, s);
+        printf("testOverride: after reopen key2 = %s\n", s.c_str());
+        assert(s == "OK");
+
+        mmkv->removeValueForKey(key2);
+        mmkv->trim();
+    }
+
+    {
+        s = "";
+        string cryptKey = "fastest2";
+        auto mmkv = MMKV::mmkvWithID("testOverrideCrypt", MMKV_SINGLE_PROCESS, &cryptKey);
+        mmkv->enableAutoKeyExpire(24 * 60 * 60);
+
+        mmkv->set("world1", key1);
+        mmkv->getString(key1, s);
+        printf("testOverrideCrypt: key1 = %s\n", s.c_str());
+
+        mmkv->set("world2", key2);
+        mmkv->getString(key2, s);
+        printf("testOverrideCrypt: key2 = %s\n", s.c_str());
+
+        mmkv->removeValueForKey(key1);
+        mmkv->removeValueForKey(key2);
+
+        printf("testOverrideCrypt: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->set("world3", key3);
+        mmkv->getString(key3, s);
+        printf("testOverrideCrypt: key3 = %s\n", s.c_str());
+        printf("testOverrideCrypt: actualSize = %lu\n", mmkv->actualSize());
+
+        mmkv->removeValueForKey(key3);
+
+        // test file expanding
+        string bigValue(100000, '0');
+        mmkv->set(bigValue, key1);
+        mmkv->getString(key1, s);
+        assert(s == bigValue);
+
+        mmkv->removeValueForKey(key1);
+
+        mmkv->set("OK", key2);
+        mmkv->getString(key2, s);
+        printf("testOverrideCrypt: value = %s\n", s.c_str());
+
+        // close it and reopen it
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testOverrideCrypt", MMKV_SINGLE_PROCESS, &cryptKey);
+        mmkv->getString(key2, s);
+        printf("testOverrideCrypt: after reopen key2 = %s\n", s.c_str());
+        assert(s == "OK");
+
+        mmkv->removeValueForKey(key2);
+        mmkv->trim();
+    }
+
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -366,9 +646,9 @@ int main() {
     srand((uint64_t) &c);
 
     string rootDir = "/tmp/mmkv";
-    MMKV::initializeMMKV(rootDir);
-    //MMKV::setLogLevel(MMKVLogNone);
-    MMKV::registerLogHandler(MyLogHandler);
+    MMKV::initializeMMKV(rootDir, MMKVLogInfo, MyLogHandler);
+    // MMKV::setLogLevel(MMKVLogNone);
+    // MMKV::registerLogHandler(MyLogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
     string aesKey = "cryptKey";
@@ -387,6 +667,10 @@ int main() {
     threadTest();
     processTest();
     testInterProcessLock();
+    testExpectedCapacity();
+    testOnlyOneKey();
+    testOverride();
     testBackup();
     testRestore();
+    testAutoExpiration();
 }

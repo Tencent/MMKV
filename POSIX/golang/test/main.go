@@ -4,27 +4,31 @@ import (
 	"fmt"
 	//"log"
 	"math"
+	"time"
 
 	"tencent.com/mmkv"
 )
 
 func main() {
-	// init MMKV with root dir
-	mmkv.InitializeMMKV("/tmp/mmkv")
+	// init MMKV with root dir and log redirecting
+	mmkv.InitializeMMKVWithLogLevelAndHandler("/tmp/mmkv", mmkv.MMKVLogInfo, logHandler)
 
 	// you can set log redirecting
-	mmkv.RegisterLogHandler(logHandler)
+	// mmkv.RegisterLogHandler(logHandler)
+
 	// you can set error handler
 	mmkv.RegisterErrorHandler(errorHandler)
 	// you can get notify content change by other process (not in realtime)
 	mmkv.RegisterContentChangeHandler(contentChangeNotify)
-
+       
+	testExpectedCapacity()
 	functionalTest()
 	testReKey()
 
 	testMMKV("test/Encrypt", "cryptKey", false)
 	testBackup()
 	testRestore()
+	testAutoExpire()
 }
 
 func functionalTest() {
@@ -175,6 +179,33 @@ func testBackup() {
 	fmt.Println("backup all count: ", count)
 }
 
+func testExpectedCapacity() {
+    key := "key0"
+    value := "🏊🏻®4️⃣🐅_"
+    dataLen := 10000
+    for i := 0; i < dataLen; i++ {
+        value = value + string('0')
+    }
+    fmt.Println("value size = ", len(value))
+    expectedSize := uint64(len(key) + len(value))
+    // if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    kv := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest0", expectedSize)
+    // 0 times expand
+    kv.SetString(value, key)
+//     fmt.Println("string =", bytes.Count([]byte(kv.GetString("key0")), nil))
+
+    count := 10
+    expectedSize1 := uint64(expectedSize * count)
+    fmt.Println("expectedSize1 =", expectedSize1)
+    kv1 := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest1", expectedSize1)
+    for i := 0; i < count; i++ {
+        key := "key" + string(i)
+        // 0 times expand
+        kv1.SetString(value, key)
+    }
+
+}
+
 func testRestore() {
 	rootDir := "/tmp/mmkv_backup"
 	mmapID := "test/Encrypt"
@@ -201,6 +232,31 @@ func testRestore() {
 		backupMMKV = mmkv.DefaultMMKV()
 		fmt.Println("check on restore [", backupMMKV.MMAP_ID(), "] allKeys: ", backupMMKV.AllKeys())
 	}
+}
+
+func testAutoExpire()  {
+	kv := mmkv.MMKVWithID("testAutoExpire")
+	kv.ClearAll()
+	kv.Trim()
+	kv.DisableAutoKeyExpire()
+
+	kv.SetBool(true, "auto_expire_key_1")
+	kv.EnableAutoKeyExpire(1)
+	kv.SetBoolExpire(true, "never_expire_key_1", mmkv.MMKV_Expire_Never)
+
+	time.Sleep(2 * time.Second)
+	fmt.Println("contains auto_expire_key_1:", kv.Contains("auto_expire_key_1"))
+	fmt.Println("contains never_expire_key_1:", kv.Contains("never_expire_key_1"))
+
+	kv.RemoveKey("never_expire_key_1")
+	kv.EnableAutoKeyExpire(mmkv.MMKV_Expire_Never)
+	kv.SetBool(true, "never_expire_key_1")
+	kv.SetBoolExpire(true, "auto_expire_key_1", 1)
+	time.Sleep(2 * time.Second)
+	fmt.Println("contains never_expire_key_1:", kv.Contains("never_expire_key_1"))
+	fmt.Println("contains auto_expire_key_1:", kv.Contains("auto_expire_key_1"))
+	fmt.Println("count non expire keys", kv.CountNonExpiredKeys())
+	fmt.Println("all non expire keys", kv.AllNonExpireKeys())
 }
 
 func logHandler(level int, file string, line int, function string, message string) {

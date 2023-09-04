@@ -121,8 +121,6 @@ add_library(core
         aes/openssl/openssl_md5_one.cpp
         aes/openssl/openssl_md5.h
         aes/openssl/openssl_md32_common.h
-        aes/openssl/openssl_aesv8-armx.S
-        aes/openssl/openssl_aes-armv4.S
         aes/openssl/openssl_arm_arch.h
         crc32/Checksum.h
         crc32/crc32_armv8.cpp
@@ -133,7 +131,20 @@ add_library(core
         MMKVPredef.h
         )
 
+IF (NOT MSVC)
+    # .S files is not supported by MSVC.
+    target_sources(core PRIVATE 
+        aes/openssl/openssl_aesv8-armx.S
+        aes/openssl/openssl_aes-armv4.S)
+ENDIF()
+
 target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+IF (WIN32)
+    # MMKV can be used only with Unicode on Windows.
+    target_compile_definitions(core PUBLIC UNICODE)
+    target_compile_definitions(core PUBLIC _UNICODE)
+ENDIF()
 
 set_target_properties(core PROPERTIES
         CXX_STANDARD 17

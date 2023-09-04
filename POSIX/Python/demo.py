@@ -3,6 +3,7 @@
 
 import sys
 import mmkv
+import time
 
 
 def functional_test(mmap_id, decode_only):
@@ -68,6 +69,32 @@ def test_backup():
     count = mmkv.MMKV.backupAllToDirectory(root_dir)
     print("backup all count: ", count)
 
+# just for testing
+def utf8len(s):
+    return len(s.encode('utf-8'))
+
+def test_expected_capacity():
+    key = "key0"
+    value = "🏊🏻®4️⃣🐅_"
+    dataLen = 10000
+    for i in range(dataLen):
+        value += "0"
+
+    print("value size =", utf8len(value))
+    expectedSize = utf8len(key) + utf8len(value)
+    # if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    kv = mmkv.MMKV("mmkv_capacity0", mmkv.MMKVMode.SingleProcess, "", "", expectedSize)
+    # 0 times expand
+    kv.set(value, key)
+    print("data size from MMKV =", len(kv.getString(key)))
+
+    countTick = 10
+    expectedSize *= countTick
+    kv = mmkv.MMKV("mmkv_capacity1", mmkv.MMKVMode.SingleProcess, "", "", expectedSize)
+    for i in range(countTick):
+        key1 = "key" + str(i)
+        # 0 times expand
+        kv.set(value, key1)
 
 def test_restore():
     root_dir = "/tmp/mmkv_backup"
@@ -92,6 +119,30 @@ def test_restore():
         print("check on restore [", backup_mmkv.mmapID(), "] allKeys: ", backup_mmkv.keys())
 
 
+def test_auto_expire():
+    kv = mmkv.MMKV("test_auto_expire")
+    kv.clearAll()
+    kv.disableAutoKeyExpire()
+
+    kv.set(True, "auto_expire_key_1")
+    kv.enableAutoKeyExpire(1)
+    kv.set("never_expire_value_1", "never_expire_key_1", 0)
+
+    time.sleep(2)
+    print("contains auto_expire_key_1:", "auto_expire_key_1" in kv)
+    print("contains never_expire_key_1:", "never_expire_key_1" in kv)
+
+    kv.remove("never_expire_key_1")
+    kv.enableAutoKeyExpire(0)
+    kv.set("never_expire_value_1", "never_expire_key_1")
+    kv.set(True, "auto_expire_key_1", 1)
+    time.sleep(2)
+    print("contains never_expire_key_1:", "never_expire_key_1" in kv)
+    print("contains auto_expire_key_1:", "auto_expire_key_1" in kv)
+    print("count filter expire key:", kv.count(True))
+    print("all non expire keys:", kv.keys(True))
+
+
 def logger(log_level, file, line, function, message):
     level = {mmkv.MMKVLogLevel.NoLog: 'N',
              mmkv.MMKVLogLevel.Debug: 'D',
@@ -111,8 +162,8 @@ def content_change_handler(mmap_id):
 
 
 if __name__ == '__main__':
-    # you can enable logging
-    # mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info)
+    # you can enable logging & log handler
+    # mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info, logger)
     mmkv.MMKV.initializeMMKV('/tmp/mmkv')
 
     # redirect logging
@@ -124,11 +175,15 @@ if __name__ == '__main__':
     # get notified after content changed by other process
     # mmkv.MMKV.registerContentChangeHandler(content_change_handler)
 
+    test_expected_capacity()
+
     functional_test('test_python', False)
 
     test_backup()
 
     test_restore()
+
+    test_auto_expire()
 
     # mmkv.MMKV.unRegisterLogHandler()
     # mmkv.MMKV.unRegisterErrorHandler()

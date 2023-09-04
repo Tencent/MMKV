@@ -167,4 +167,34 @@
     }
 }
 
+- (void)testAutoExpireWildPtr {
+    NSString *mmapID = @"testAutoExpire";
+    auto mmkv = [MMKV mmkvWithID:mmapID];
+    [mmkv clearAll];
+    [mmkv trim];
+    [mmkv enableAutoKeyExpire:1];
+
+    auto size = getpagesize() - 4;
+    size -= 4;
+    NSString *key = @"key";
+    auto keySize = 3 + 1;
+    size -= keySize;
+    auto valueSize = 3;
+    size -= valueSize;
+    // size -= (keySize + 1); // total size of fast remove
+    size /= 16;
+    NSMutableData *value = [NSMutableData dataWithLength:size];
+    auto ptr = (char *) value.mutableBytes;
+    for (int i = 0; i < value.length; i++) {
+        ptr[i] = 'A';
+    }
+    for (int i = 0; i < 15; i++) {
+        [mmkv setObject:value forKey:key]; // when a full write back is occur, here's corruption happens
+    }
+
+    sleep(2);
+    [mmkv setObject:value forKey:key];
+    assert([mmkv containsKey:key]);
+}
+
 @end

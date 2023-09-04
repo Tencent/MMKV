@@ -21,9 +21,9 @@
 #pragma once
 #include "MMKVPredef.h"
 
-#if defined(MMKV_IOS) && defined(__cplusplus)
-
 MMKV_NAMESPACE_BEGIN
+
+#if defined(MMKV_IOS) && defined(__cplusplus)
 
 class MLockPtr {
     size_t m_lockDownSize;
@@ -46,6 +46,10 @@ public:
 
 std::pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size);
 
-MMKV_NAMESPACE_END
-
 #endif
+
+enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
+
+void GetAppleMachineInfo(int &device, int &version);
+
+MMKV_NAMESPACE_END

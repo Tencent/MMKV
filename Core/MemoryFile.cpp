@@ -49,8 +49,8 @@ File::File(MMKVPath_t path, OpenFlag flag) : m_path(std::move(path)), m_fd(-1), 
     open();
 }
 
-MemoryFile::MemoryFile(MMKVPath_t path) : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create), m_ptr(nullptr), m_size(0) {
-    reloadFromFile();
+MemoryFile::MemoryFile(MMKVPath_t path, size_t expectedCapacity) : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create), m_ptr(nullptr), m_size(0) {
+    reloadFromFile(expectedCapacity);
 }
 #    endif // !defined(MMKV_ANDROID)
 
@@ -192,7 +192,7 @@ bool MemoryFile::mmap() {
     return true;
 }
 
-void MemoryFile::reloadFromFile() {
+void MemoryFile::reloadFromFile(size_t expectedCapacity) {
 #    ifdef MMKV_ANDROID
     if (m_fileType == MMFILE_TYPE_ASHMEM) {
         return;
@@ -201,7 +201,7 @@ void MemoryFile::reloadFromFile() {
     if (isFileValid()) {
         MMKVWarning("calling reloadFromFile while the cache [%s] is still valid", m_diskFile.m_path.c_str());
         MMKV_ASSERT(0);
-        clearMemoryCache();
+        doCleanMemoryCache(false);
     }
 
     if (!m_diskFile.open()) {
@@ -212,9 +212,13 @@ void MemoryFile::reloadFromFile() {
         SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_diskFile.m_fd, m_size);
+        size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, expectedCapacity);
         // round up to (n * pagesize)
-        if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
-            size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+        expectedSize = (expectedSize + DEFAULT_MMAP_SIZE - 1) / DEFAULT_MMAP_SIZE * DEFAULT_MMAP_SIZE;
+        
+        if (m_size < expectedSize || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+            size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;;
+            roundSize = std::max<size_t>(expectedSize, roundSize);
             truncate(roundSize);
         } else {
             auto ret = mmap();
@@ -271,15 +275,19 @@ extern bool mkPath(const MMKVPath_t &str) {
         if (stat(path, &sb) != 0) {
             if (errno != ENOENT || mkdir(path, 0777) != 0) {
                 MMKVWarning("%s : %s", path, strerror(errno));
-                free(path);
-                return false;
+                // there's report that some Android devices might not have access permission on parent dir
+                if (done) {
+                    free(path);
+                    return false;
+                }
+                goto LContinue;
             }
         } else if (!S_ISDIR(sb.st_mode)) {
             MMKVWarning("%s: %s", path, strerror(ENOTDIR));
             free(path);
             return false;
         }
-
+LContinue:
         *slash = '/';
     }
     free(path);

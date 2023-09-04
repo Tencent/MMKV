@@ -27,7 +27,6 @@ import android.os.IBinder;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import com.tencent.mmkv.MMKV;
-import com.tencent.mmkv.MMKVLogLevel;
 import com.tencent.mmkv.ParcelableMMKV;
 import java.util.Random;
 
@@ -104,6 +103,7 @@ public abstract class BenchMarkBaseService extends Service {
 
     private void mmkvBatchWriteInt(String caller) {
         Random r = new Random();
+        Log.i(TAG, caller + " mmkv write int: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
@@ -120,17 +120,17 @@ public abstract class BenchMarkBaseService extends Service {
         Random r = new Random();
         long startTime = System.currentTimeMillis();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(this);
+        SQLiteKV sqliteKV = new SQLiteKV(this);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
-            sqlIteKV.putInt(key, tmp);
+            sqliteKV.putInt(key, tmp);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         long endTime = System.currentTimeMillis();
         final String msg = useTransaction ? " sqlite transaction " : " sqlite ";
@@ -162,6 +162,7 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     private void mmkvBatchReadInt(String caller) {
+        Log.i(TAG, caller + " mmkv read int: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
@@ -176,16 +177,16 @@ public abstract class BenchMarkBaseService extends Service {
     private void sqliteReadInt(String caller, boolean useTransaction) {
         long startTime = System.currentTimeMillis();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(this);
+        SQLiteKV sqliteKV = new SQLiteKV(this);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             String key = m_arrIntKeys[index];
-            int tmp = sqlIteKV.getInt(key);
+            int tmp = sqliteKV.getInt(key);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         long endTime = System.currentTimeMillis();
         final String msg = useTransaction ? " sqlite transaction " : " sqlite ";
@@ -212,6 +213,7 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     private void mmkvBatchWriteString(String caller) {
+        Log.i(TAG, caller + " mmkv write String: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
@@ -227,17 +229,17 @@ public abstract class BenchMarkBaseService extends Service {
     private void sqliteWriteString(String caller, boolean useTransaction) {
         long startTime = System.currentTimeMillis();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(this);
+        SQLiteKV sqliteKV = new SQLiteKV(this);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             final String value = m_arrStrings[index];
             final String key = m_arrKeys[index];
-            sqlIteKV.putString(key, value);
+            sqliteKV.putString(key, value);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         long endTime = System.currentTimeMillis();
         final String msg = useTransaction ? " sqlite transaction " : " sqlite ";
@@ -268,6 +270,7 @@ public abstract class BenchMarkBaseService extends Service {
     }
 
     private void mmkvBatchReadString(String caller) {
+        Log.i(TAG, caller + " mmkv read String: loop[" + m_loops + "] star.");
         long startTime = System.currentTimeMillis();
 
         MMKV mmkv = GetMMKV();
@@ -282,16 +285,16 @@ public abstract class BenchMarkBaseService extends Service {
     private void sqliteReadString(String caller, boolean useTransaction) {
         long startTime = System.currentTimeMillis();
 
-        SQLIteKV sqlIteKV = new SQLIteKV(this);
+        SQLiteKV sqliteKV = new SQLiteKV(this);
         if (useTransaction) {
-            sqlIteKV.beginTransaction();
+            sqliteKV.beginTransaction();
         }
         for (int index = 0; index < m_loops; index++) {
             final String key = m_arrKeys[index];
-            final String tmp = sqlIteKV.getString(key);
+            final String tmp = sqliteKV.getString(key);
         }
         if (useTransaction) {
-            sqlIteKV.endTransaction();
+            sqliteKV.endTransaction();
         }
         long endTime = System.currentTimeMillis();
         final String msg = useTransaction ? " sqlite transaction " : " sqlite ";

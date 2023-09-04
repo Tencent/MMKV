@@ -120,7 +120,10 @@ public class MainActivity extends AppCompatActivity {
         //testItemSizeHolderOverride();
 
         testBackup();
-        testRestore();;
+        testRestore();
+
+        testAutoExpire();
+        testExpectedCapacity();
     }
 
     private void testInterProcessLogic() {
@@ -549,6 +552,143 @@ public class MainActivity extends AppCompatActivity {
 
             mmkv = MMKV.mmkvWithID("benchmark_interprocess", MMKV.MULTI_PROCESS_MODE);
             Log.i("MMKV", "check on restore file[" + mmkv.mmapID() + "] allKeys count: " + mmkv.count());
+        }
+    }
+
+    private void testAutoExpire(MMKV kv, boolean decodeOnly, int expiration) {
+        if (!decodeOnly) {
+            kv.encode("bool", true, expiration);
+        }
+        Log.i("MMKV", "bool: " + kv.decodeBool("bool"));
+
+        if (!decodeOnly) {
+            kv.encode("int", Integer.MIN_VALUE, expiration);
+        }
+        Log.i("MMKV", "int: " + kv.decodeInt("int"));
+
+        if (!decodeOnly) {
+            kv.encode("long", Long.MAX_VALUE, expiration);
+        }
+        Log.i("MMKV", "long: " + kv.decodeLong("long"));
+
+        if (!decodeOnly) {
+            kv.encode("float", -3.14f, expiration);
+        }
+        Log.i("MMKV", "float: " + kv.decodeFloat("float"));
+
+        if (!decodeOnly) {
+            kv.encode("double", Double.MIN_VALUE, expiration);
+        }
+        Log.i("MMKV", "double: " + kv.decodeDouble("double"));
+
+        if (!decodeOnly) {
+            kv.encode("string", "Hello from mmkv", expiration);
+        }
+        Log.i("MMKV", "string: " + kv.decodeString("string"));
+
+        if (!decodeOnly) {
+            byte[] bytes = {'m', 'm', 'k', 'v'};
+            kv.encode("bytes", bytes, expiration);
+        }
+        byte[] bytes = kv.decodeBytes("bytes");
+        if (bytes != null) {
+            Log.i("MMKV", "bytes: " + new String(bytes));
+            Log.i("MMKV", "bytes length = " + bytes.length + ", value size consumption = " + kv.getValueSize("bytes")
+                    + ", value size = " + kv.getValueActualSize("bytes"));
+
+            int sizeNeeded = kv.getValueActualSize("bytes");
+            NativeBuffer nativeBuffer = MMKV.createNativeBuffer(sizeNeeded);
+            if (nativeBuffer != null) {
+                int size = kv.writeValueToNativeBuffer("bytes", nativeBuffer);
+                Log.i("MMKV", "size Needed = " + sizeNeeded + " written size = " + size);
+                MMKV.destroyNativeBuffer(nativeBuffer);
+            }
+        }
+
+        if (!decodeOnly) {
+            TestParcelable testParcelable = new TestParcelable(1024, "Hi Parcelable");
+            kv.encode("parcel", testParcelable, expiration);
+        }
+        TestParcelable result = kv.decodeParcelable("parcel", TestParcelable.class);
+        if (result != null) {
+            Log.i("MMKV", "parcel: " + result.iValue + ", " + result.sValue + ", " + result.list);
+        }
+
+        if (!decodeOnly) {
+            kv.encode("null string", "some string", expiration);
+        }
+        Log.i("MMKV", "string before set null: " + kv.decodeString("null string"));
+        if (!decodeOnly) {
+            kv.encode("null string", (String) null, expiration);
+        }
+        Log.i("MMKV", "string after set null: " + kv.decodeString("null string")
+                + ", containsKey:" + kv.contains("null string"));
+
+        Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allNonExpireKeys()));
+        Log.i("MMKV",
+                "count = " + kv.countNonExpiredKeys() + ", totalSize = " + kv.totalSize() + ", actualSize = " + kv.actualSize());
+        Log.i("MMKV", "containsKey[string]: " + kv.containsKey("string"));
+    }
+
+    private void testAutoExpire() {
+        MMKV mmkv = MMKV.mmkvWithID("test_auto_expire");
+        mmkv.clearAll();
+        mmkv.disableAutoKeyExpire();
+
+        mmkv.enableAutoKeyExpire(1);
+        mmkv.encode("auto_expire_key_1", true);
+        mmkv.encode("never_expire_key_1", true, MMKV.ExpireNever);
+
+        testAutoExpire(mmkv, false, 1);
+        SystemClock.sleep(1000 * 2);
+        testAutoExpire(mmkv, true, 1);
+
+        // mmkv.encode("string", "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJFbHFTUjB");
+        // mmkv.clearMemoryCache();
+        // Log.i("MMKV", "space string = " + mmkv.decodeString("string", ""));
+
+        if (mmkv.contains("auto_expire_key_1")) {
+            Log.e("MMKV", "auto key expiration auto_expire_key_1");
+        } else {
+            Log.i("MMKV", "auto key expiration auto_expire_key_1");
+        }
+        if (mmkv.contains("never_expire_key_1")) {
+            Log.i("MMKV", "auto key expiration never_expire_key_1");
+        } else {
+            Log.e("MMKV", "auto key expiration never_expire_key_1");
+        }
+    }
+
+    private int addExtraRoundUp(int len) {
+        int pageSize = MMKV.pageSize();
+        int rest = len % pageSize;
+        return rest == 0 ? len + pageSize :  (2 + len / pageSize) * pageSize;
+    }
+
+    private void testExpectedCapacity() {
+        String key = "key0";
+        String value = "🏊🏻®4️⃣🐅_";
+        int len = 10000;
+        for (int i = 0; i < len; i++) {
+            value += "0";
+        }
+        Log.i("MMKV", "value size = " + value.getBytes().length);
+        int expectedSize = key.getBytes().length + value.getBytes().length;
+        // if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+        // extra space can be added to round up
+        MMKV mmkv = MMKV.mmkvWithID("test_expected_capacity0", MMKV.SINGLE_PROCESS_MODE,
+                addExtraRoundUp(len));
+        // 0 times expand
+        mmkv.encode(key, value);
+
+        int count = 10;
+        expectedSize = expectedSize * count;
+        MMKV mmkv1 = MMKV.mmkvWithID("test_expected_capacity1", MMKV.SINGLE_PROCESS_MODE,
+                addExtraRoundUp(expectedSize));
+        for (int i = 0; i < count; i++) {
+            String k = "key" + i;
+            // 0 times expand
+            mmkv1.encode(k, value);
         }
     }
 }

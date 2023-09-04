@@ -18,12 +18,15 @@
  * limitations under the License.
  */
 
+#define NOMINMAX // undefine max/min
+
 #include "MMBuffer.h"
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <utility>
 #include <stdexcept>
+#include <algorithm>
 
 #ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
@@ -103,6 +106,21 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
         other.detach();
     } else {
         paddedSize = other.paddedSize;
+        memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
+    }
+}
+
+MMBuffer::MMBuffer(MMBuffer &&other, size_t length) noexcept : type(other.type) {
+    if (type == MMBufferType_Normal) {
+        size = std::min(other.size, length);
+        ptr = other.ptr;
+        isNoCopy = other.isNoCopy;
+#ifdef MMKV_APPLE
+        m_data = other.m_data;
+#endif
+        other.detach();
+    } else {
+        paddedSize = std::min(other.paddedSize, static_cast<uint8_t>(length));
         memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
     }
 }

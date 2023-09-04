@@ -110,9 +110,9 @@ class MemoryFile {
 
 public:
 #ifndef MMKV_ANDROID
-    explicit MemoryFile(MMKVPath_t path);
+    explicit MemoryFile(MMKVPath_t path, size_t expectedCapacity = 0);
 #else
-    MemoryFile(MMKVPath_t path, size_t size, FileType fileType);
+    MemoryFile(MMKVPath_t path, size_t size, FileType fileType, size_t expectedCapacity = 0);
     explicit MemoryFile(MMKVFileHandle_t ashmemFD);
 
     const FileType m_fileType;
@@ -137,7 +137,7 @@ public:
     bool msync(SyncFlag syncFlag);
 
     // call this if clearMemoryCache() has been called
-    void reloadFromFile();
+    void reloadFromFile(size_t expectedCapacity = 0);
 
     void clearMemoryCache() { doCleanMemoryCache(false); }
 

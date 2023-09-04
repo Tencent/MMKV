@@ -1,5 +1,97 @@
 # MMKV Change Log
 
+## v1.3.1 / 2023-8-11
+This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 users upgrade as soon as possible.
+
+### Changes for All platforms
+* Fix a critical bug that might cause multi-process MMKV corrupt. This bug was introduced in v1.2.16.
+* Add the ability to filter expired keys on `count()` & `allKeys()` methods when auto key expiration is turn on.
+* Reduce the `msync()` call on newly created MMKV instances.
+
+### iOS & macOS
+* Fix a bug that NSKeyedArchive object might fail to decode when auto key expiration is turn on.
+
+## v1.3.0 / 2023-06-14
+### Changes for All platforms
+* Add auto key expiration feature. Note that this is a breaking change, once upgrade to auto expiration, the MMKV file is not valid for older versions of MMKV (v1.2.16 and below) to correctly operate.
+* Roll back the lazy load optimization due to reported ANR issues. It was introduced in v1.2.16.
+
+### iOS & macOS
+* Fix a potential memory leak on setting a new value for an existing key.
+* Upgrade min support target to iOS 11 / macOS 10.13 / tvOS 13 / watchOS 4.
+
+### Win32
+* Fix a bug that might fail to truncate the file size to a smaller size in some cases.
+
+### Flutter
+* The version of MMKV for Flutter is now the same as the MMKV native library.
+* Starting from v1.3.0, Flutter for Android will use `com.tencent:mmkv`. Previously it's `com.tencent:mmkv-static`. It's the same as `com.tencent:mmkv` starting from v1.2.11.
+
+## v1.2.16 / 2023-04-20
+### Changes for All platforms
+* Optimization: The actual file content is lazy loaded now, saving time on MMKV instance creation, and avoiding lock waiting when a lot of instances are created at the same time.
+* Fix a bug when restoring a loaded MMKV instance the meta file might mistakenly report corrupted.
+
+### Android
+* Optimization: Remove unnecessary binder call on main process instantiation.
+
+### Flutter
+* Fix a crash on decoding an empty list.
+* Remove deprecated dependence.
+* Make the script more robust to fix the iOS Flutter plugin name.
+
+### Win32
+* Fix a string format bug on the MinGW64 environment.
+
+### golang
+* Fix a build error on 32-bit OS.
+
+## v1.2.15 / 2023-01-12
+### Changes for All platforms
+* Log handler now handles all logs from the very beginning, especially the logs in initialization.
+* Log handler register method is now deprecated. It's integrated with `initialize()`.
+* Fix a bug that `lock()`/`unlock()`/`try_lock()` is not thread-safe.
+
+### Flutter
+* Reduce the privacy info needed to obtain android `sdkInt`, avoid unnecessary risk on Android App Review.
+
+### iOS & macOS
+* Fix a compile error on macOS.
+* Fix a bug that some ObjC exceptions are not being caught.
+* Add assert on nil MMKV base path, protect from mis-using MMKV in global variable initialization.
+* Starting from v1.2.15, one must call `+[MMKV initializeMMKV:]` manually before calling any MMKV methods.
+
+### golang
+* Fix a compile error on GCC.
+
+### Win32
+* Support CMake project on Windows.
+
+## v1.2.14 / 2022-08-10
+### Changes for All platforms
+* Fix a bug that `MMKV.getXXX()` may return invalid results in multi-process mode.
+
+### Android
+* Return `[]` instead of `null` on empty `StringSet` from `MMKV.decodeStringSet()` methods.
+* Upgrade Android Compile & Target SDK to `32`.
+
+### iOS
+* Protect from the crash in `-[MMKV getObject:forKey:]` method when the key-value doesn't exist.
+
+## v1.2.13 / 2022-03-30
+
+### Android
+* Fix crash on using Ashmem while `MMKV_DISABLE_CRYPT` macro is defined.
+
+### iOS
+* Add ability to retrieve key existece while getting value, aka `-[MMKV getXXX:forKey:hasValue:]` methods.
+
+### POSIX
+* Add ability to retrieve key existece while getting value, aka `MMKV::getXXX(key, defaultValue, hasValue)` methods.
+
+### Win32
+* Add ability to retrieve key existece while getting value, aka `MMKV::getXXX(key, defaultValue, hasValue)` methods.
+
 ## v1.2.12 / 2022-01-17
 ### Changes for All platforms
 * Fix a bug that a subsequential `clearAll()` call may fail to take effect in multi-process mode.

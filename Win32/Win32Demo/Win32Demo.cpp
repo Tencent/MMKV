@@ -23,6 +23,7 @@
 #include <MMKV/MMKV.h>
 #include <iostream>
 #include <string>
+#include <cassert>
 
 using namespace std;
 
@@ -40,7 +41,7 @@ wstring getAppDataRoaming(const wstring &company, const wstring &appName) {
     }
 }
 
-string to_string(vector<string> &&arr, const char *sp = ", ") {
+string to_string(const vector<string> &arr, const char *sp = ", ") {
     string str;
     for (const auto &element : arr) {
         str += element;
@@ -87,8 +88,8 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
         mmkv->set(numeric_limits<double>::max(), "double");
     }
     cout << "double = " << mmkv->getDouble("double") << endl;
-
     if (!decodeOnly) {
+
         mmkv->set("Hello, MMKV-Î¢ÐÅ for Win32", "string");
     }
     string result;
@@ -290,6 +291,57 @@ void testRestore() {
     }
 }
 
+void testAutoExpire() {
+    string mmapID = "testAutoExpire";
+    auto mmkv = MMKV::mmkvWithID(mmapID);
+    mmkv->clearAll();
+    mmkv->trim();
+    mmkv->disableAutoKeyExpire();
+
+    mmkv->set(true, "auto_expire_key_1");
+    mmkv->enableAutoKeyExpire(1);
+    mmkv->set("never_expire_key_1", "never_expire_key_1", MMKV::ExpireNever);
+
+    Sleep(2 * 1000);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+
+    mmkv->removeValueForKey("never_expire_key_1");
+    mmkv->enableAutoKeyExpire(MMKV::ExpireNever);
+    mmkv->set("never_expire_key_1", "never_expire_key_1");
+    mmkv->set(true, "auto_expire_key_1", 1);
+    Sleep(2 * 1000);
+    assert(mmkv->containsKey("never_expire_key_1") == true);
+    assert(mmkv->containsKey("auto_expire_key_1") == false);
+
+    auto count = mmkv->count(true);
+    cout << "count all non expire keys: " << count << endl;
+    auto allKeys = mmkv->allKeys(true);
+    cout << "all non expire keys: " << ::to_string(allKeys) << endl;
+}
+
+void testExpectedCapacity() {
+    int len = 10000;
+    std::string value(len, '0');
+    value = "¿¿®4¿¿¿_" + value;
+    cout << "value length = " << value.size() << endl;
+    std::string key = "key";
+    // if you know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    size_t expectedSize = key.size() + value.size();
+    auto mmkv4 = MMKV::mmkvWithID("testExpectedCapacity4", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    // 0 times expand
+    mmkv4->set(value, key);
+
+    int count = 10;
+    expectedSize = (key.size() + value.size()) * count;
+    auto mmkv5 = MMKV::mmkvWithID("testExpectedCapacity5", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    for (int i = 0; i < count; i++) {
+        key[0] = static_cast<char>('a' + i);
+        // 0 times expand
+        mmkv5->set(value, key);
+    }
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -316,9 +368,9 @@ int main() {
     srand(GetTickCount());
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"Î¢ÐÅ-MMKV");
-    MMKV::initializeMMKV(rootDir);
+    MMKV::initializeMMKV(rootDir, MMKVLogInfo, LogHandler);
     //MMKV::setLogLevel(MMKVLogNone);
-    MMKV::registerLogHandler(LogHandler);
+    //MMKV::registerLogHandler(LogHandler);
 
     //auto mmkv = MMKV::defaultMMKV();
     auto cryptKey = string("cryptKey");
@@ -331,10 +383,12 @@ int main() {
     }
 
     //fastRemoveCornetSizeTest();
-    //cornetSizeTest();
+    cornetSizeTest();
     //brutleTest();
     threadTest();
     processTest();
     testBackup();
     testRestore();
+    testAutoExpire();
+    testExpectedCapacity();
 }

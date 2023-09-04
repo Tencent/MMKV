@@ -18,18 +18,16 @@
  * limitations under the License.
  */
 
-import 'dart:async';
-import 'dart:convert';
-import 'dart:ffi'; // For FFI
-import 'dart:io'; // For Platform.isX
-import 'dart:typed_data';
+import "dart:async";
+import "dart:convert";
+import "dart:ffi"; // For FFI
+import "dart:io"; // For Platform.isX
 
-import 'package:device_info/device_info.dart';
-import 'package:ffi/ffi.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
+import "package:ffi/ffi.dart";
+import "package:flutter/cupertino.dart";
+import "package:flutter/material.dart";
+import "package:flutter/services.dart";
+import "package:path_provider/path_provider.dart";
 
 /// Log level for MMKV.
 enum MMKVLogLevel { Debug, Info, Warning, Error, None }
@@ -69,8 +67,8 @@ class MMBuffer {
       return null;
     }
 
-    var buffer = MMBuffer(list.length);
-    if (list.length == 0) {
+    final buffer = MMBuffer(list.length);
+    if (list.isEmpty) {
       buffer._ptr = malloc<Uint8>();
     }
     buffer.asList()!.setAll(0, list);
@@ -80,7 +78,7 @@ class MMBuffer {
   /// Create a wrapper of native pointer [ptr] with size [length].
   /// DON'T [destroy()] the result because it's not a copy.
   static MMBuffer _fromPointer(Pointer<Uint8> ptr, int length) {
-    var buffer = MMBuffer(0);
+    final buffer = MMBuffer(0);
     buffer._length = length;
     buffer._ptr = ptr;
     return buffer;
@@ -89,8 +87,11 @@ class MMBuffer {
   /// Create a wrapper of native pointer [ptr] with size [length].
   /// DO remember to [destroy()] the result because it's a COPY.
   static MMBuffer _copyFromPointer(Pointer<Uint8> ptr, int length) {
-    var buffer = MMBuffer(length);
+    final buffer = MMBuffer(length);
     buffer._length = length;
+    if (length == 0 && ptr != nullptr) {
+      buffer._ptr = malloc<Uint8>();
+    }
     _memcpy(buffer.pointer!.cast(), ptr.cast(), length);
     return buffer;
   }
@@ -117,7 +118,7 @@ class MMBuffer {
   /// And [destroy()] itself at the same time.
   Uint8List? takeList() {
     if (_ptr != null && _ptr != nullptr) {
-      var list = Uint8List.fromList(asList()!);
+      final list = Uint8List.fromList(asList()!);
       destroy();
       return list;
     }
@@ -131,7 +132,7 @@ class MMKV {
   Pointer<Void> _handle = nullptr;
   static String _rootDir = "";
 
-  static const MethodChannel _channel = const MethodChannel('mmkv');
+  static const MethodChannel _channel = MethodChannel("mmkv");
 
   /// MMKV must be initialized before any usage.
   ///
@@ -159,24 +160,23 @@ class MMKV {
 
     if (rootDir == null) {
       final path = await getApplicationDocumentsDirectory();
-      rootDir = path.path + '/mmkv';
+      rootDir = "${path.path}/mmkv";
     }
     _rootDir = rootDir;
 
     if (Platform.isIOS) {
       final Map<String, dynamic> params = {
-        'rootDir': rootDir,
-        'logLevel': logLevel.index,
+        "rootDir": rootDir,
+        "logLevel": logLevel.index,
       };
       if (groupDir != null) {
-        params['groupDir'] = groupDir;
+        params["groupDir"] = groupDir;
       }
-      final ret = await _channel.invokeMethod('initializeMMKV', params);
+      final ret = await _channel.invokeMethod("initializeMMKV", params);
       return ret;
     } else {
       final rootDirPtr = _string2Pointer(rootDir);
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      final sdkInt = androidInfo.version.sdkInt;
+      final sdkInt = await _channel.invokeMethod("getSdkVersion") ?? 0;
       final cacheDir = await getTemporaryDirectory();
       final cacheDirPtr = _string2Pointer(cacheDir.path);
 
@@ -201,9 +201,9 @@ class MMKV {
   /// var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
   /// ```
   static MMKV defaultMMKV({String? cryptKey}) {
-    var mmkv = MMKV("");
+    final mmkv = MMKV("");
     final cryptKeyPtr = _string2Pointer(cryptKey);
-    final mode = MMKVMode.SINGLE_PROCESS_MODE;
+    const mode = MMKVMode.SINGLE_PROCESS_MODE;
     mmkv._handle = _getDefaultMMKV(mode.index, cryptKeyPtr);
     calloc.free(cryptKeyPtr);
     return mmkv;
@@ -236,25 +236,41 @@ class MMKV {
     return _pointer2String(_mmapID(_handle))!;
   }
 
-  bool encodeBool(String key, bool value) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _encodeBool(_handle, keyPtr, _bool2Int(value));
+  static const int ExpireNever = 0;
+  static const int ExpireInMinute = 60;
+  static const int ExpireInHour = 60 * 60;
+  static const int ExpireInDay = 24 * 60 * 60;
+  static const int ExpireInMonth = 30 * 24 * 60 * 60;
+  static const int ExpireInYear = 365 * 30 * 24 * 60 * 60;
+
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeBool(String key, bool value, [int? expireDurationInSecond]) {
+    final keyPtr = key.toNativeUtf8();
+    final ret = (expireDurationInSecond == null)
+        ? _encodeBool(_handle, keyPtr, _bool2Int(value))
+        : _encodeBoolV2(
+            _handle, keyPtr, _bool2Int(value), expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
 
   bool decodeBool(String key, {bool defaultValue = false}) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _decodeBool(_handle, keyPtr, _bool2Int(defaultValue));
+    final keyPtr = key.toNativeUtf8();
+    final ret = _decodeBool(_handle, keyPtr, _bool2Int(defaultValue));
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
 
   /// Use this when the [value] won't be larger than a normal int32.
   /// It's more efficient & cost less space.
-  bool encodeInt32(String key, int value) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _encodeInt32(_handle, keyPtr, value);
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeInt32(String key, int value, [int? expireDurationInSecond]) {
+    final keyPtr = key.toNativeUtf8();
+    final ret = (expireDurationInSecond == null)
+        ? _encodeInt32(_handle, keyPtr, value)
+        : _encodeInt32V2(_handle, keyPtr, value, expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
@@ -262,51 +278,64 @@ class MMKV {
   /// Use this when the value won't be larger than a normal int32.
   /// It's more efficient & cost less space.
   int decodeInt32(String key, {int defaultValue = 0}) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _decodeInt32(_handle, keyPtr, defaultValue);
+    final keyPtr = key.toNativeUtf8();
+    final ret = _decodeInt32(_handle, keyPtr, defaultValue);
     calloc.free(keyPtr);
     return ret;
   }
 
-  bool encodeInt(String key, int value) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _encodeInt64(_handle, keyPtr, value);
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeInt(String key, int value, [int? expireDurationInSecond]) {
+    final keyPtr = key.toNativeUtf8();
+    final ret = (expireDurationInSecond == null)
+        ? _encodeInt64(_handle, keyPtr, value)
+        : _encodeInt64V2(_handle, keyPtr, value, expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
 
   int decodeInt(String key, {int defaultValue = 0}) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _decodeInt64(_handle, keyPtr, defaultValue);
+    final keyPtr = key.toNativeUtf8();
+    final ret = _decodeInt64(_handle, keyPtr, defaultValue);
     calloc.free(keyPtr);
     return ret;
   }
 
-  bool encodeDouble(String key, double value) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _encodeDouble(_handle, keyPtr, value);
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeDouble(String key, double value, [int? expireDurationInSecond]) {
+    final keyPtr = key.toNativeUtf8();
+    final ret = (expireDurationInSecond == null)
+        ? _encodeDouble(_handle, keyPtr, value)
+        : _encodeDoubleV2(_handle, keyPtr, value, expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
 
   double decodeDouble(String key, {double defaultValue = 0}) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _decodeDouble(_handle, keyPtr, defaultValue);
+    final keyPtr = key.toNativeUtf8();
+    final ret = _decodeDouble(_handle, keyPtr, defaultValue);
     calloc.free(keyPtr);
     return ret;
   }
 
   /// Encode an utf-8 string.
-  bool encodeString(String key, String? value) {
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeString(String key, String? value, [int? expireDurationInSecond]) {
     if (value == null) {
       removeValue(key);
       return true;
     }
 
     final keyPtr = key.toNativeUtf8();
-    final bytes = MMBuffer.fromList(Utf8Encoder().convert(value))!;
+    final bytes = MMBuffer.fromList(const Utf8Encoder().convert(value))!;
 
-    var ret = _encodeBytes(_handle, keyPtr, bytes.pointer!, bytes.length);
+    final ret = (expireDurationInSecond == null)
+        ? _encodeBytes(_handle, keyPtr, bytes.pointer!, bytes.length)
+        : _encodeBytesV2(_handle, keyPtr, bytes.pointer!, bytes.length,
+            expireDurationInSecond);
 
     calloc.free(keyPtr);
     bytes.destroy();
@@ -315,16 +344,16 @@ class MMKV {
 
   /// Decode as an utf-8 string.
   String? decodeString(String key) {
-    var keyPtr = key.toNativeUtf8();
+    final keyPtr = key.toNativeUtf8();
     final lengthPtr = calloc<Uint64>();
 
-    var ret = _decodeBytes(_handle, keyPtr, lengthPtr);
+    final ret = _decodeBytes(_handle, keyPtr, lengthPtr);
     calloc.free(keyPtr);
 
     if (ret != nullptr) {
-      var length = lengthPtr.value;
+      final length = lengthPtr.value;
       calloc.free(lengthPtr);
-      var result = _buffer2String(ret, length);
+      final result = _buffer2String(ret, length);
       if (!Platform.isIOS && length > 0) {
         calloc.free(ret);
       }
@@ -347,14 +376,19 @@ class MMKV {
   ///
   /// buffer.destroy();
   /// ```
-  bool encodeBytes(String key, MMBuffer? value) {
+  /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
+  /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.
+  bool encodeBytes(String key, MMBuffer? value, [int? expireDurationInSecond]) {
     if (value == null) {
       removeValue(key);
       return true;
     }
 
-    var keyPtr = key.toNativeUtf8();
-    var ret = _encodeBytes(_handle, keyPtr, value.pointer!, value.length);
+    final keyPtr = key.toNativeUtf8();
+    final ret = (expireDurationInSecond == null)
+        ? _encodeBytes(_handle, keyPtr, value.pointer!, value.length)
+        : _encodeBytesV2(_handle, keyPtr, value.pointer!, value.length,
+            expireDurationInSecond);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
@@ -374,16 +408,16 @@ class MMKV {
   /// }
   /// ```
   MMBuffer? decodeBytes(String key) {
-    var keyPtr = key.toNativeUtf8();
+    final keyPtr = key.toNativeUtf8();
     final lengthPtr = calloc<Uint64>();
 
-    var ret = _decodeBytes(_handle, keyPtr, lengthPtr);
+    final ret = _decodeBytes(_handle, keyPtr, lengthPtr);
     calloc.free(keyPtr);
 
     if (/*ret != null && */ ret != nullptr) {
-      var length = lengthPtr.value;
+      final length = lengthPtr.value;
       calloc.free(lengthPtr);
-      if (Platform.isIOS) {
+      if (Platform.isIOS || length == 0) {
         return MMBuffer._copyFromPointer(ret, length);
       } else {
         return MMBuffer._fromPointer(ret, length);
@@ -400,13 +434,13 @@ class MMKV {
   /// * Or vice versa by passing [cryptKey] with null.
   /// See also [checkReSetCryptKey()].
   bool reKey(String? cryptKey) {
-    if (cryptKey != null && cryptKey.length > 0) {
-      var bytes = MMBuffer.fromList(Utf8Encoder().convert(cryptKey))!;
-      var ret = _reKey(_handle, bytes.pointer!, bytes.length);
+    if (cryptKey != null && cryptKey.isNotEmpty) {
+      final bytes = MMBuffer.fromList(const Utf8Encoder().convert(cryptKey))!;
+      final ret = _reKey(_handle, bytes.pointer!, bytes.length);
       bytes.destroy();
       return _int2Bool(ret);
     } else {
-      var ret = _reKey(_handle, nullptr, 0);
+      final ret = _reKey(_handle, nullptr, 0);
       return _int2Bool(ret);
     }
   }
@@ -414,11 +448,11 @@ class MMKV {
   /// See also [reKey()].
   String? get cryptKey {
     final lengthPtr = calloc<Uint64>();
-    var ret = _cryptKey(_handle, lengthPtr);
+    final ret = _cryptKey(_handle, lengthPtr);
     if (/*ret != null && */ ret != nullptr) {
-      var length = lengthPtr.value;
+      final length = lengthPtr.value;
       calloc.free(lengthPtr);
-      var result = _buffer2String(ret, length);
+      final result = _buffer2String(ret, length);
       calloc.free(ret);
       return result;
     }
@@ -428,7 +462,7 @@ class MMKV {
   /// Just reset the [cryptKey] (will not encrypt or decrypt anything).
   /// Usually you should call this method after other process [reKey()] the multi-process mmkv.
   void checkReSetCryptKey(String cryptKey) {
-    var bytes = MMBuffer.fromList(Utf8Encoder().convert(cryptKey))!;
+    final bytes = MMBuffer.fromList(const Utf8Encoder().convert(cryptKey))!;
     _checkReSetCryptKey(_handle, bytes.pointer!, bytes.length);
     bytes.destroy();
   }
@@ -436,19 +470,19 @@ class MMKV {
   /// Get the actual size consumption of the key's value.
   /// Pass [actualSize] with true to get value's length.
   int valueSize(String key, bool actualSize) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _valueSize(_handle, keyPtr, _bool2Int(actualSize));
+    final keyPtr = key.toNativeUtf8();
+    final ret = _valueSize(_handle, keyPtr, _bool2Int(actualSize));
     calloc.free(keyPtr);
     return ret;
   }
 
-  /// Write the value to a pre-allocateallocated native buffer.
+  /// Write the value to a pre-allocated native buffer.
   ///
   /// * Return size written into buffer.
   /// * Return -1 on any error, such as [buffer] not large enough.
   int writeValueToNativeBuffer(String key, MMBuffer buffer) {
-    var keyPtr = key.toNativeUtf8();
-    var ret =
+    final keyPtr = key.toNativeUtf8();
+    final ret =
         _writeValueToNB(_handle, keyPtr, buffer.pointer!.cast(), buffer.length);
     calloc.free(keyPtr);
     return ret;
@@ -456,11 +490,20 @@ class MMKV {
 
   /// Get all the keys (_unsorted_).
   List<String> get allKeys {
+    return _allKeysImp(false);
+  }
+
+  /// Get all non-expired keys (_unsorted_). Note that this call has costs.
+  List<String> get allNonExpiredKeys {
+    return _allKeysImp(true);
+  }
+
+  List<String> _allKeysImp(bool filterExpire) {
     final keyArrayPtr = calloc<Pointer<Pointer<Utf8>>>();
     final sizeArrayPtr = calloc<Pointer<Uint32>>();
-    List<String> keys = [];
+    final List<String> keys = [];
 
-    final count = _allKeys(_handle, keyArrayPtr, sizeArrayPtr);
+    final count = _allKeys(_handle, keyArrayPtr, sizeArrayPtr, _bool2Int(filterExpire));
     if (count > 0) {
       final keyArray = keyArrayPtr[0];
       final sizeArray = sizeArrayPtr[0];
@@ -486,14 +529,19 @@ class MMKV {
   }
 
   bool containsKey(String key) {
-    var keyPtr = key.toNativeUtf8();
-    var ret = _containsKey(_handle, keyPtr);
+    final keyPtr = key.toNativeUtf8();
+    final ret = _containsKey(_handle, keyPtr);
     calloc.free(keyPtr);
     return _int2Bool(ret);
   }
 
   int get count {
-    return _count(_handle);
+    return _count(_handle, _bool2Int(false));
+  }
+
+  /// Get non-expired keys. Note that this call has costs.
+  int get countNonExpiredKeys {
+    return _count(_handle, _bool2Int(true));
   }
 
   /// Get the file size. See also [actualSize].
@@ -507,7 +555,7 @@ class MMKV {
   }
 
   void removeValue(String key) {
-    var keyPtr = key.toNativeUtf8();
+    final keyPtr = key.toNativeUtf8();
     _removeValueForKey(_handle, keyPtr);
     calloc.free(keyPtr);
   }
@@ -517,11 +565,11 @@ class MMKV {
     if (keys.isEmpty) {
       return;
     }
-    Pointer<Pointer<Utf8>> keyArray = calloc<Pointer<Utf8>>(keys.length);
-    Pointer<Uint32> sizeArray = malloc<Uint32>(keys.length);
+    final Pointer<Pointer<Utf8>> keyArray = calloc<Pointer<Utf8>>(keys.length);
+    final Pointer<Uint32> sizeArray = malloc<Uint32>(keys.length);
     for (int index = 0; index < keys.length; index++) {
       final key = keys[index];
-      var bytes = MMBuffer.fromList(Utf8Encoder().convert(key))!;
+      final bytes = MMBuffer.fromList(const Utf8Encoder().convert(key))!;
       sizeArray[index] = bytes.length;
       keyArray[index] = bytes.pointer!.cast();
     }
@@ -582,11 +630,11 @@ class MMKV {
   /// * [rootDir] the customize root path of the MMKV, if null then backup from the root dir of MMKV
   static bool backupOneToDirectory(String mmapID, String dstDir,
       {String? rootDir}) {
-    var mmapIDPtr = mmapID.toNativeUtf8();
-    var dstDirPtr = dstDir.toNativeUtf8();
-    var rootDirPtr = _string2Pointer(rootDir);
+    final mmapIDPtr = mmapID.toNativeUtf8();
+    final dstDirPtr = dstDir.toNativeUtf8();
+    final rootDirPtr = _string2Pointer(rootDir);
 
-    var ret = _backupOne(mmapIDPtr, dstDirPtr, rootDirPtr);
+    final ret = _backupOne(mmapIDPtr, dstDirPtr, rootDirPtr);
 
     calloc.free(mmapIDPtr);
     calloc.free(dstDirPtr);
@@ -600,11 +648,11 @@ class MMKV {
   /// * [rootDir] the customize root path of the MMKV, if null then restore to the root dir of MMKV
   static bool restoreOneMMKVFromDirectory(String mmapID, String srcDir,
       {String? rootDir}) {
-    var mmapIDPtr = mmapID.toNativeUtf8();
-    var srcDirPtr = srcDir.toNativeUtf8();
-    var rootDirPtr = _string2Pointer(rootDir);
+    final mmapIDPtr = mmapID.toNativeUtf8();
+    final srcDirPtr = srcDir.toNativeUtf8();
+    final rootDirPtr = _string2Pointer(rootDir);
 
-    var ret = _restoreOne(mmapIDPtr, srcDirPtr, rootDirPtr);
+    final ret = _restoreOne(mmapIDPtr, srcDirPtr, rootDirPtr);
 
     calloc.free(mmapIDPtr);
     calloc.free(srcDirPtr);
@@ -615,9 +663,9 @@ class MMKV {
 
   /// backup all MMKV instance to [dstDir]
   static int backupAllToDirectory(String dstDir) {
-    var dstDirPtr = dstDir.toNativeUtf8();
+    final dstDirPtr = dstDir.toNativeUtf8();
 
-    var ret = _backupAll(dstDirPtr);
+    final ret = _backupAll(dstDirPtr);
 
     calloc.free(dstDirPtr);
 
@@ -626,13 +674,25 @@ class MMKV {
 
   /// restore all MMKV instance from [srcDir]
   static int restoreAllFromDirectory(String srcDir) {
-    var srcDirPtr = srcDir.toNativeUtf8();
+    final srcDirPtr = srcDir.toNativeUtf8();
 
-    var ret = _restoreAll(srcDirPtr);
+    final ret = _restoreAll(srcDirPtr);
 
     calloc.free(srcDirPtr);
 
     return ret;
+  }
+
+  /// Enable auto key expiration. This is a upgrade operation, the file format will change.
+  /// And the file won't be accessed correctly by older version (v1.2.17) of MMKV.
+  /// [expireDurationInSecond] the expire duration for all keys, [MMKV.ExpireNever] (0) means no default duration (aka each key will have it's own expire date)
+  bool enableAutoKeyExpire(int expiredInSeconds) {
+    return _enableAutoExpire(_handle, expiredInSeconds);
+  }
+
+  /// Disable auto key expiration. This is a downgrade operation.
+  bool disableAutoKeyExpire() {
+    return _disableAutoExpire(_handle);
   }
 }
 
@@ -720,8 +780,8 @@ String? _pointer2String(Pointer<Utf8>? ptr) {
 
 String? _buffer2String(Pointer<Uint8>? ptr, int length) {
   if (ptr != null && ptr != nullptr) {
-    var listView = ptr.asTypedList(length);
-    return Utf8Decoder().convert(listView);
+    final listView = ptr.asTypedList(length);
+    return const Utf8Decoder().convert(listView);
   }
   return null;
 }
@@ -730,7 +790,7 @@ String _nativeFuncName(String name) {
   if (!Platform.isIOS) {
     return name;
   }
-  return "mmkv_" + name;
+  return "mmkv_$name";
 }
 
 final DynamicLibrary _nativeLib = Platform.isAndroid
@@ -773,6 +833,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool = _nativeLib
         _nativeFuncName("encodeBool"))
     .asFunction();
 
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeBoolV2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8,
+                    Uint32)>>(_nativeFuncName("encodeBool_v2"))
+        .asFunction();
+
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeBool = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(
         _nativeFuncName("decodeBool"))
@@ -782,6 +850,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt32 = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(
         _nativeFuncName("encodeInt32"))
     .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt32V2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32,
+                    Uint32)>>(_nativeFuncName("encodeInt32_v2"))
+        .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt32 = _nativeLib
     .lookup<
@@ -794,6 +870,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt64 = _nativeLib
     .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(
         _nativeFuncName("encodeInt64"))
     .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt64V2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64,
+                    Uint32)>>(_nativeFuncName("encodeInt64_v2"))
+        .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt64 = _nativeLib
     .lookup<
@@ -810,6 +894,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, double) _encodeDouble =
                     Double)>>(_nativeFuncName("encodeDouble"))
         .asFunction();
 
+final int Function(Pointer<Void>, Pointer<Utf8>, double, int) _encodeDoubleV2 =
+    _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Double,
+                    Uint32)>>(_nativeFuncName("encodeDouble_v2"))
+        .asFunction();
+
 final double Function(Pointer<Void>, Pointer<Utf8>, double) _decodeDouble =
     _nativeLib
         .lookup<
@@ -824,6 +916,14 @@ final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int)
             NativeFunction<
                 Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>,
                     Uint64)>>(_nativeFuncName("encodeBytes"))
+        .asFunction();
+
+final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int, int)
+    _encodeBytesV2 = _nativeLib
+        .lookup<
+            NativeFunction<
+                Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>,
+                    Uint64, Uint32)>>(_nativeFuncName("encodeBytes_v2"))
         .asFunction();
 
 final Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>)
@@ -873,12 +973,12 @@ final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int)
         .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
-        Pointer<Pointer<Uint32>>) _allKeys =
+        Pointer<Pointer<Uint32>>, int) _allKeys =
     _nativeLib
         .lookup<
             NativeFunction<
                 Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
-                    Pointer<Pointer<Uint32>>)>>(_nativeFuncName("allKeys"))
+                    Pointer<Pointer<Uint32>>, Int8)>>(_nativeFuncName("allKeys"))
         .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
@@ -886,8 +986,8 @@ final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
         _nativeFuncName("containsKey"))
     .asFunction();
 
-final int Function(Pointer<Void>) _count = _nativeLib
-    .lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(
+final int Function(Pointer<Void>, int) _count = _nativeLib
+    .lookup<NativeFunction<Uint64 Function(Pointer<Void>, Int8)>>(
         _nativeFuncName("count"))
     .asFunction();
 
@@ -982,4 +1082,14 @@ final int Function(Pointer<Utf8> dstDir) _backupAll = _nativeLib
 final int Function(Pointer<Utf8> srcDir) _restoreAll = _nativeLib
     .lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(
         _nativeFuncName("restoreAll"))
+    .asFunction();
+
+final bool Function(Pointer<Void>, int) _enableAutoExpire = _nativeLib
+    .lookup<NativeFunction<Bool Function(Pointer<Void>, Uint32)>>(
+        _nativeFuncName("enableAutoExpire"))
+    .asFunction();
+
+final bool Function(Pointer<Void>) _disableAutoExpire = _nativeLib
+    .lookup<NativeFunction<Bool Function(Pointer<Void>)>>(
+        _nativeFuncName("disableAutoExpire"))
     .asFunction();

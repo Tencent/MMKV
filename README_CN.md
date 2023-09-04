@@ -22,11 +22,10 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.2.12'
-    // replace "1.2.12" with any available version
+    implementation 'com.tencent:mmkv:1.3.1'
+    // replace "1.3.1" with any available version
 }
 ```
-从 v1.2.8 起, MMKV **迁移到 Maven Central**。  
 更多安装指引参考 [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup_cn)。
 
 ### 快速上手
@@ -242,3 +241,6 @@ MMKV 以 BSD 3-Clause 证书开源，详情参见 [LICENSE.TXT](./LICENSE.TXT)�
 
 ## 问题 & 反馈
 常见问题参见 [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ_cn)，欢迎提 [issues](https://github.com/Tencent/MMKV/issues) 提问反馈。
+
+## 个人信息处理规则
+MMKV 不收集、获取或上传任何个人信息，详情参考[《MMKV SDK个人信息保护规则》](https://support.weixin.qq.com/cgi-bin/mmsupportacctnodeweb-bin/pages/aY5BAtRiO1BpoHxo)。

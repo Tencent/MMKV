@@ -1,7 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.6.10'
+    ext.kotlin_version = '1.8.0'
 
     repositories {
         google()
@@ -26,7 +26,7 @@ task clean(type: Delete) {
 
 ext {
     minSdkVersion = 16
-    compileSdkVersion = 31
+    compileSdkVersion = 33
     targetSdkVersion = compileSdkVersion
     supportLibVersion = "25.4.0"
     javaVersion = JavaVersion.VERSION_1_7
