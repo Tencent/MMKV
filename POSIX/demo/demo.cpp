@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <cassert>
-
+#include <time.h>
 using namespace std;
 using namespace mmkv;
 
@@ -620,6 +620,48 @@ void testOverride() {
 
 }
 
+uint64_t getTimeInMs() {
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+void testGetStringSpeed() {
+    string bigValue(100000, '0');
+    string key = "key1";
+    auto mmkv = MMKV::mmkvWithID("testGetStringSpeed");
+    mmkv->set(bigValue, key);
+
+    string result;
+    uint64_t start1, end1, start2, end2;
+
+    start2 = getTimeInMs();
+    for (int i = 0; i < 2000000; i++) {
+        mmkv->getString("key1", result, true);
+    }
+    end2 = getTimeInMs();
+
+    start1 = getTimeInMs();
+    for (int i = 0; i < 2000000; i++) {
+        mmkv->getString("key1", result, false);
+    }
+    end1 = getTimeInMs();
+
+    printf("old_method = %lld, new_method = %lld\n", end1 - start1, end2 - start2);
+
+    start1 = getTimeInMs();
+    for (int i = 0; i < 2000000; i++) {
+        mmkv->getString("key1", result, false);
+    }
+    end1 = getTimeInMs();
+
+    start2 = getTimeInMs();
+    for (int i = 0; i < 2000000; i++) {
+        mmkv->getString("key1", result, true);
+    }
+    end2 = getTimeInMs();
+    printf("old_method = %lld, new_method = %lld\n", end1 - start1, end2 - start2);
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -670,6 +712,7 @@ int main() {
     testExpectedCapacity();
     testOnlyOneKey();
     testOverride();
+//    testGetStringSpeed();
     testBackup();
     testRestore();
     testAutoExpiration();
