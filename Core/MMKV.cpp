@@ -682,7 +682,7 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key, uint32_t expireDuration) 
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::getString(MMKVKey_t key, string &result) {
+bool MMKV::getString(MMKVKey_t key, string &result, bool inplaceModification) {
     if (isKeyEmpty(key)) {
         return false;
     }
@@ -692,7 +692,11 @@ bool MMKV::getString(MMKVKey_t key, string &result) {
     if (data.length() > 0) {
         try {
             CodedInputData input(data.getPtr(), data.length());
-            result = input.readString();
+            if (inplaceModification) {
+                input.readString(result);
+            } else {
+                result = input.readString();
+            }
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());

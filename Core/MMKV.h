@@ -288,7 +288,8 @@ public:
     bool set(const std::vector<std::string> &vector, MMKVKey_t key);
     bool set(const std::vector<std::string> &vector, MMKVKey_t key, uint32_t expireDuration);
 
-    bool getString(MMKVKey_t key, std::string &result);
+    // inplaceModification is recommended for faster speed
+    bool getString(MMKVKey_t key, std::string &result, bool inplaceModification = true);
 
     mmkv::MMBuffer getBytes(MMKVKey_t key);
 

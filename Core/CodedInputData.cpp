@@ -100,6 +100,22 @@ string CodedInputData::readString() {
     }
 }
 
+void CodedInputData::readString(string &s) {
+    int32_t size = readRawVarint32();
+    if (size < 0) {
+        throw length_error("InvalidProtocolBuffer negativeSize");
+    }
+
+    auto s_size = static_cast<size_t>(size);
+    if (s_size <= m_size - m_position) {
+        s.resize(s_size);
+        memcpy((void *) s.data(), (char *) (m_ptr + m_position), s_size);
+        m_position += s_size;
+    } else {
+        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
+    }
+}
+
 string CodedInputData::readString(KeyValueHolder &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
