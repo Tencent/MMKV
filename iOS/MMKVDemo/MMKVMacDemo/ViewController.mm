@@ -20,6 +20,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    [self testCompareBeforeSet];
+    
     [self onlyOneKeyTest];
     [self overrideTest];
     [self expectedCapacityTest];
@@ -151,6 +153,7 @@
     {
         NSString *crypt = [NSString stringWithFormat:@"fastestCrypt"];
         auto mmkv0 = [MMKV mmkvWithID:@"overrideCryptTest" cryptKey:[crypt dataUsingEncoding:NSUTF8StringEncoding] mode:MMKVSingleProcess];
+//        [mmkv0 enableCompareBeforeSet];
         NSString *key = [NSString stringWithFormat:@"hello"];
         NSString *key2 = [NSString stringWithFormat:@"hello2"];
         NSString *value = [NSString stringWithFormat:@"cryptworld"];
@@ -192,6 +195,48 @@
     for (int i = 0; i < count; i++) {
         // 0 times expand
         [mmkv1 setString:value forKey:[NSString stringWithFormat:@"key%d", i]];
+    }
+}
+
+- (void) testCompareBeforeSet {
+    auto mmkv = [MMKV mmkvWithID:@"testCompareBeforeSet"];
+    [mmkv enableCompareBeforeSet];
+    [mmkv setBool:true forKey:@"extra"];
+    
+    {
+        NSString *key = @"int64";
+        int64_t v = 123456L;
+        [mmkv setInt64:v forKey:key];
+        long actualSize = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize);
+        NSLog(@"testCompareBeforeSet v = %lld", [mmkv getInt64ForKey:key]);
+        [mmkv setInt64:v forKey:key];
+        long actualSize2 = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize2);
+        if (actualSize != actualSize2) {
+            abort();
+        }
+        [mmkv setInt64:v << 1 forKey:key];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", [mmkv actualSize]);
+        NSLog(@"testCompareBeforeSet v = %lld", [mmkv getInt64ForKey:key]);
+    }
+    
+    {
+        NSString *key = @"string";
+        NSString *v = [NSString stringWithFormat:@"w012A🏊🏻good"];
+        [mmkv setString:v forKey:key];
+        long actualSize = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize);
+        NSLog(@"testCompareBeforeSet v = %@", [mmkv getStringForKey:key]);
+        [mmkv setString:v forKey:key];
+        long actualSize2 = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize2);
+        if (actualSize != actualSize2) {
+            abort();
+        }
+        [mmkv setString:@"another string" forKey:key];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", [mmkv actualSize]);
+        NSLog(@"testCompareBeforeSet v = %@", [mmkv getStringForKey:key]);
     }
 }
 

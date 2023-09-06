@@ -440,7 +440,7 @@ void testOnlyOneKey() {
         string bigValue(100000, '0');
         mmkv->set(bigValue, key);
         mmkv->getString(key, s);
-        printf("testOneKey: value = %s\n", s.c_str());
+        assert(s == bigValue);
 
         mmkv->set("OK", key);
         mmkv->getString(key, s);
@@ -662,6 +662,324 @@ void testGetStringSpeed() {
     printf("old_method = %lld, new_method = %lld\n", end1 - start1, end2 - start2);
 }
 
+void printVector(vector<string> &v) {
+    printf("testCompareBeforeSet: string<vector>: ");
+    if (v.empty()) {
+        return;
+    }
+    for (int i = 0; i < v.size() - 1; i++) {
+        printf("%s, ", v[i].c_str());
+    }
+    if (!v.empty()) {
+        printf("%s\n", v[v.size() - 1].c_str());
+    } else {
+        printf("\n");
+    }
+}
+
+void testCompareBeforeSet() {
+    auto mmkv = MMKV::mmkvWithID("testCompareBeforeSet", MMKV_SINGLE_PROCESS);
+    mmkv->enableCompareBeforeSet();
+    mmkv->set("extraValue", "extraKey");
+
+    size_t actualSize1 = -1;
+    size_t actualSize2 = -1;
+
+    string key;
+    {
+        key = "bool";
+        mmkv->set(true, key);
+        printf("testCompareBeforeSet: bool value = %d\n", mmkv->getBool(key));
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        printf("testCompareBeforeSet: bool value = %d\n", mmkv->getBool(key));
+        mmkv->set(true, key);
+        actualSize2 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize2 = %lu\n", actualSize2);
+        assert(actualSize1 == actualSize2);
+        mmkv->set(false, key);
+        printf("testCompareBeforeSet: bool value = %d\n", mmkv->getBool(key));
+        assert(mmkv->getBool(key) == false);
+    }
+    {
+        key = "int32_t";
+        int32_t v = 12345;
+        mmkv->set(v, key);
+        printf("testCompareBeforeSet: int32 value = %d\n", mmkv->getInt32(key));
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        printf("testCompareBeforeSet: int32 value = %d\n", mmkv->getInt32(key));
+        mmkv->set(v, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(v << 1, key);
+        printf("testCompareBeforeSet: int32 value = %d\n", mmkv->getInt32(key));
+        assert(mmkv->getInt32(key)  == v << 1);
+    }
+
+    {
+        key = "uint32_t";
+        uint32_t v32u = 6379;
+        mmkv->set(v32u, key);
+        printf("testCompareBeforeSet: uint32_t value = %d\n", mmkv->getUInt32(key));
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        printf("testCompareBeforeSet: uint32_t value = %d\n", mmkv->getUInt32(key));
+        mmkv->set(v32u, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(v32u >> 1, key);
+        printf("testCompareBeforeSet: uint32_t value = %d\n", mmkv->getUInt32(key));
+        assert(mmkv->getUInt32(key) == v32u >> 1);
+    }
+    {
+        key = "int64_t";
+        int64_t v64 = 8080;
+        mmkv->set(v64, key);
+        printf("testCompareBeforeSet: int64_t value = %lld\n", mmkv->getInt64(key));
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        printf("testCompareBeforeSet: int64_t value = %lld\n", mmkv->getInt64(key));
+        mmkv->set(v64, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(v64 >> 1, key);
+        printf("testCompareBeforeSet: int64_t value = %lld\n", mmkv->getInt64(key));
+        assert(mmkv->getInt64(key) == v64 >> 1);
+    }
+
+    {
+        key = "uint64_t";
+        uint64_t v64u = 8848;
+        mmkv->set(v64u, key);
+        printf("testCompareBeforeSet: uint64_t value = %lld\n", mmkv->getUInt64(key));
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        printf("testCompareBeforeSet: uint64_t value = %lld\n", mmkv->getUInt64(key));
+        mmkv->set(v64u, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(v64u >> 1, key);
+        printf("testCompareBeforeSet: uint64_t value = %lld\n", mmkv->getUInt64(key));
+        assert(mmkv->getUInt64(key) == v64u >> 1);
+    }
+
+    {
+        key = "float";
+        float flt = -987.012f;
+        mmkv->set(flt, key);
+        printf("testCompareBeforeSet: float value = %lf\n", mmkv->getFloat(key));
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        printf("testCompareBeforeSet: float value = %lf\n", mmkv->getFloat(key));
+        mmkv->set(flt, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(flt * 12.56f, key);
+        printf("testCompareBeforeSet: float value = %lf\n", mmkv->getFloat(key));
+        assert(fabs(mmkv->getFloat(key) - flt * 12.56f) <= 1e-6);
+    }
+
+    {
+        key = "double";
+        double db = 8888987.012f;
+        mmkv->set(db, key);
+        printf("testCompareBeforeSet: double value = %lf\n", mmkv->getDouble(key));
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        printf("testCompareBeforeSet: double value = %lf\n", mmkv->getDouble(key));
+        mmkv->set(db, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(db * -12.56f, key);
+        printf("testCompareBeforeSet: double value = %lf\n", mmkv->getDouble(key));
+        assert(fabs(mmkv->getDouble(key) - db * -12.56f) <= 1e-6);
+    }
+
+    bool ret = false;
+    string resultString;
+    const char* raws = "🏊🏻®4️⃣🐅_";
+    const char* raws2 = "12🏊🏻e®4️⃣🐅_34)(*()";
+    {
+        key = "char*";
+        mmkv->set(raws, key);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: char* = %s\n", resultString.c_str());
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: char* = %s\n", resultString.c_str());
+        mmkv->set(raws, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(raws2, key);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: char* = %s\n", resultString.c_str());
+        assert(resultString == raws2);
+    }
+
+    string s1 = "🏊🏻®hhh4️⃣🐅_yyy";
+    string s2 = "0aA🏊🏻®hhh4️⃣🐅_zzz";
+
+    {
+        key = "string";
+        mmkv->set(s1, key);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: string = %s\n", resultString.c_str());
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: string = %s\n", resultString.c_str());
+        mmkv->set(s1, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(s2, key);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: string = %s\n", resultString.c_str());
+        assert(resultString == s2);
+    }
+
+    {
+        s1 = "buffer_🏊🏻®hhh4️⃣🐅_yyy";
+        s2 = "buffer_0aA🏊🏻®hhh4️⃣🐅_zzz";
+        MMBuffer buffer1((void *) s1.c_str(), s1.size());
+        MMBuffer buffer2((void *) s2.c_str(), s2.size());
+        key = "mmbuffer";
+        mmkv->set(buffer1, key);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: MMBuffer = %s\n", resultString.c_str());
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: MMBuffer = %lu\n", actualSize1);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: MMBuffer = %s\n", resultString.c_str());
+        mmkv->set(buffer1, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(buffer2, key);
+        ret = mmkv->getString(key, resultString);
+        printf("testCompareBeforeSet: MMBuffer = %s\n", resultString.c_str());
+        assert(resultString == s2);
+    }
+
+    {
+        key = "string<vector>";
+        vector<string> v1 = {"1", s1, s2};
+        vector<string> v2 = {"2", s1, s2};
+        vector<string> vectorResult;
+        mmkv->set(v1, key);
+        ret = mmkv->getVector(key, vectorResult);
+        printVector(vectorResult);
+        actualSize1 = mmkv->actualSize();
+        printf("testCompareBeforeSet: string<vector> size = %lu\n", actualSize1);
+        ret = mmkv->getVector(key, vectorResult);
+        printVector(vectorResult);
+        mmkv->set(v1, key);
+        actualSize2 = mmkv->actualSize();
+        assert(actualSize1 == actualSize2);
+        mmkv->set(v2, key);
+        ret = mmkv->getVector(key, vectorResult);
+        printVector(vectorResult);
+        assert(vectorResult == v2);
+    }
+
+//    {
+//        string key = "keyyy";
+//        auto mmkv1 = MMKV::mmkvWithID("testCompareBeforeSet1", MMKV_SINGLE_PROCESS, &key);
+//        mmkv1->enableCompareBeforeSet();
+//    }
+
+//    {
+//        auto mmkv2 = MMKV::mmkvWithID("testCompareBeforeSet2", MMKV_SINGLE_PROCESS);
+//        mmkv2->enableAutoKeyExpire();
+//        mmkv2->enableCompareBeforeSet();
+//    }
+//
+//    {
+//        auto mmkv3 = MMKV::mmkvWithID("testCompareBeforeSet3", MMKV_SINGLE_PROCESS);
+//        mmkv3->enableCompareBeforeSet();
+//        mmkv3->enableAutoKeyExpire();
+//    }
+
+    {
+        actualSize1 = -1;
+        auto mmkv1 = MMKV::mmkvWithID("differentType2");
+        mmkv1->clearAll();
+        mmkv1->enableCompareBeforeSet();
+        mmkv1->set("xxx", "yyy");
+        actualSize1 = mmkv1->actualSize();
+
+        mmkv1->set("value1", "key1");
+        actualSize2 = mmkv1->actualSize();
+        assert(actualSize2 > actualSize1);
+        actualSize1 = actualSize2;
+        printf("%d\n", mmkv1->getBool("key1", false));
+        printf("actualSize = %lu\n", mmkv1->actualSize());
+        assert( mmkv1->getBool("key1", false));
+        mmkv1->set(true, "key1");
+        actualSize2 = mmkv1->actualSize();
+        assert(actualSize2 > actualSize1);
+        actualSize1 = actualSize2;
+
+        mmkv1->set(false, "key1");
+        actualSize2 = mmkv1->actualSize();
+        assert(actualSize2 > actualSize1);
+        actualSize1 = actualSize2;
+
+        printf("%d\n", mmkv1->getBool("key1", false)); // print 1
+        printf("actualSize = %lu\n", mmkv1->actualSize());
+        mmkv1->set("value1", "key1");
+        actualSize2 = mmkv1->actualSize();
+        assert(actualSize2 > actualSize1);
+        actualSize1 = actualSize2;
+
+        string v;
+        mmkv1->getString("key1", v);
+        printf("%s\n", v.c_str()); // print value1
+
+        vector<string> v1 = {"1", s1, s2};
+        vector<string> v2 = {"2", s1, s2};
+        mmkv1->set(v1, "key1");
+        actualSize2 = mmkv1->actualSize();
+        assert(actualSize2 > actualSize1);
+        actualSize1 = actualSize2;
+        vector<string> vectorResult;
+        ret = mmkv1->getVector("key1", vectorResult);
+        printVector(vectorResult);
+
+        // test exception
+        mmkv1->set(12345, "key2");
+        actualSize1 = mmkv1->actualSize();
+        // "<MMKV_IO.cpp::setDataForKey> compareBeforeSet exception: InvalidProtocolBuffer truncatedMessage" from log
+        string vv = "abcdefg";
+        mmkv1->set(vv, "key2");
+        actualSize2 = mmkv1->actualSize();
+        string vv2(vv.size(), 0);
+        mmkv1->getString("key2", vv2, true);
+        assert(vv == vv2);
+        assert(actualSize2 > actualSize1);
+    }
+
+    {
+        key = "key";
+        auto mmkv1 = MMKV::mmkvWithID("compareEmpty");
+        mmkv1->enableCompareBeforeSet();
+        mmkv1->set("", key);
+        actualSize1 = mmkv1->actualSize();
+        mmkv1->set("", key);
+        actualSize2 = mmkv1->actualSize();
+        assert(actualSize1 == actualSize2);
+
+        string vv = "abcdefG";
+        actualSize1 = mmkv1->actualSize();
+        mmkv1->set(vv, key);
+        actualSize2 = mmkv1->actualSize();
+        assert(actualSize2 > actualSize1);
+        string result;
+        mmkv1->getString(key, result, true);
+        assert(result == vv);
+    }
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -713,6 +1031,7 @@ int main() {
     testOnlyOneKey();
     testOverride();
 //    testGetStringSpeed();
+    testCompareBeforeSet();
     testBackup();
     testRestore();
     testAutoExpiration();

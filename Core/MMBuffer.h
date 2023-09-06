@@ -91,6 +91,9 @@ public:
     // transfer ownership to others
     void detach();
 
+    // compare two MMBuffer
+    bool operator==(const MMBuffer& other) const;
+
     // those are expensive, just forbid it for possibly misuse
     explicit MMBuffer(const MMBuffer &other) = delete;
     MMBuffer &operator=(const MMBuffer &other) = delete;

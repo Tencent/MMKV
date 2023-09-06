@@ -197,6 +197,10 @@ void MMKV::loadMetaInfoAndCheck() {
 
     if (m_metaInfo->m_version >= MMKVVersionFlag) {
         m_enableKeyExpire = m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre);
+        if (m_enableKeyExpire && m_enableCompareBeforeSet) {
+            MMKVError("enableCompareBeforeSet will be invalid when Expiration is on");
+            m_enableCompareBeforeSet = false;
+        }
         MMKVInfo("meta file [%s] has flag [%llu]", m_mmapID.c_str(), m_metaInfo->m_flags);
     } else {
         if (m_metaInfo->m_flags != 0) {
@@ -643,6 +647,31 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     {
         auto itr = m_dic->find(key);
         if (itr != m_dic->end()) {
+
+            // compare data before appending to file
+            if (isCompareBeforeSetEnabled()) {
+                auto basePtr = (uint8_t *) (m_file->getMemory()) + Fixed32Size;
+                MMBuffer oldValueData = std::move(itr->second.toMMBuffer(basePtr));
+                if (isDataHolder) {
+                    CodedInputData inputData(oldValueData.getPtr(), oldValueData.length());
+                    try {
+                        // read extra holder header bytes and to real MMBuffer
+                        oldValueData = std::move(CodedInputData::readRealData(oldValueData));
+                        if (oldValueData == data) {
+                            // MMKVInfo("[key] %s, set the same data", key.c_str());
+                            return true;
+                        }
+                    } catch (std::exception &exception) {
+                        MMKVError("compareBeforeSet exception: %s", exception.what());
+                    }
+                } else {
+                    if (oldValueData == data) {
+                        //  MMKVInfo("[key] %s, set the same data", key.c_str());
+                        return true;
+                    }
+                }
+            }
+
             bool onlyOneKey = !m_isInterProcess && m_dic->size() == 1;
             if (likely(!m_enableKeyExpire)) {
                 KVHolderRet_t ret;
@@ -1411,6 +1440,11 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
 
+    if (m_enableCompareBeforeSet) {
+        MMKVError("enableCompareBeforeSet will be invalid when Expiration is on");
+        m_enableCompareBeforeSet = false;
+    }
+
     if (m_expiredInSeconds != expiredInSeconds) {
         MMKVInfo("expiredInSeconds: %u", expiredInSeconds);
         m_expiredInSeconds = expiredInSeconds;
@@ -1628,6 +1662,24 @@ size_t MMKV::filterExpiredKeys() {
         MMKVInfo("deleted %zu expired keys inside [%s]", count, m_mmapID.c_str());
     }
     return count;
+}
+
+void MMKV::enableCompareBeforeSet() {
+    MMKVInfo("enableCompareBeforeSet for [%s]", m_mmapID.c_str());
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+
+    assert(!m_enableKeyExpire && "enableCompareBeforeSet is invalid when Expiration is on");
+    assert(!m_dicCrypt && "enableCompareBeforeSet is invalid when key encryption is on");
+
+    m_enableCompareBeforeSet = true;
+}
+
+void MMKV::disableCompareBeforeSet() {
+    MMKVInfo("disableCompareBeforeSet for [%s]", m_mmapID.c_str());
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    m_enableCompareBeforeSet = false;
 }
 
 MMKV_NAMESPACE_END

@@ -1195,7 +1195,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * Enable auto key expiration. This is a upgrade operation, the file format will change.
      * And the file won't be accessed correctly by older version (v1.2.16) of MMKV.
-     *
+     * NOTICE: enableCompareBeforeSet will be invalid when Expiration is on
      * @param expireDurationInSecond the expire duration for all keys, {@link #ExpireNever} (0) means no default duration (aka each key will have it's own expire date)
      */
     public native boolean enableAutoKeyExpire(int expireDurationInSecond);
@@ -1204,6 +1204,37 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Disable auto key expiration. This is a downgrade operation.
      */
     public native boolean disableAutoKeyExpire();
+
+    /**
+     * Enable data compare before set, for better performance
+     * If data for key seldom changes, use it
+     * When encryption or expiration is on, compare-before-set will be invalid.
+     * For encryption, compare operation must decrypt data which is time consuming
+     * For expiration, compare is useless because in most cases the expiration time changes every time.
+     */
+    public void enableCompareBeforeSet() {
+        if (isExpirationEnabled()) {
+            Log.e("MMKV", "enableCompareBeforeSet is invalid when Expiration is on");
+            if (BuildConfig.DEBUG) {
+                throw new RuntimeException("enableCompareBeforeSet is invalid when Expiration is on");
+            }
+        }
+        if (isEncryptionEnabled()) {
+            Log.e("MMKV", "enableCompareBeforeSet is invalid when key encryption is on");
+            if (BuildConfig.DEBUG) {
+                throw new RuntimeException("enableCompareBeforeSet is invalid when Expiration is on");
+            }
+        }
+        nativeEnableCompareBeforeSet();
+    }
+
+    private native void nativeEnableCompareBeforeSet();
+
+    /**
+     * Disable data compare before set
+     * disabled at default
+     */
+    public native void disableCompareBeforeSet();
 
     /**
      * Intentionally Not Supported. Because MMKV does type-eraser inside to get better performance.
@@ -1659,6 +1690,12 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static native void destroyNB(long pointer, int size);
 
     private native int writeValueToNB(long handle, String key, long pointer, int size);
+
+    private native boolean isCompareBeforeSetEnabled();
+
+    private native boolean isEncryptionEnabled();
+
+    private native boolean isExpirationEnabled();
 
     private static native boolean checkProcessMode(long handle);
 }

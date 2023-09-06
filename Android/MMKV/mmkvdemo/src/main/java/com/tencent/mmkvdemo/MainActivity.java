@@ -124,6 +124,52 @@ public class MainActivity extends AppCompatActivity {
 
         testAutoExpire();
         testExpectedCapacity();
+        testCompareBeforeSet();
+    }
+
+    private void testCompareBeforeSet() {
+        MMKV mmkv = MMKV.mmkvWithID("testCompareBeforeSet");
+        mmkv.enableCompareBeforeSet();
+
+        mmkv.encode("key", "extra");
+
+        {
+            String key = "int";
+            int v = 12345;
+            mmkv.encode(key, v);
+            long actualSize = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize);
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getInt(key, -1));
+            mmkv.encode(key, v);
+            long actualSize2 = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize2);
+            if (actualSize2 != actualSize) {
+                Log.e("mmkv", "testCompareBeforeSet fail");
+            }
+
+            mmkv.encode(key, v * 23);
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + mmkv.actualSize());
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getInt(key, -1));
+        }
+
+        {
+            String key = "string";
+            String v = "w012A🏊🏻good";
+            mmkv.encode(key, v);
+            long actualSize = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize);
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getString(key, ""));
+            mmkv.encode(key, v);
+            long actualSize2 = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize2);
+            if (actualSize2 != actualSize) {
+                Log.e("mmkv", "testCompareBeforeSet fail");
+            }
+
+            mmkv.encode(key, "temp data 👩🏻‍🏫");
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + mmkv.actualSize());
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getString(key, ""));
+        }
     }
 
     private void testInterProcessLogic() {
@@ -638,6 +684,8 @@ public class MainActivity extends AppCompatActivity {
         mmkv.enableAutoKeyExpire(1);
         mmkv.encode("auto_expire_key_1", true);
         mmkv.encode("never_expire_key_1", true, MMKV.ExpireNever);
+
+//        mmkv.enableCompareBeforeSet();
 
         testAutoExpire(mmkv, false, 1);
         SystemClock.sleep(1000 * 2);

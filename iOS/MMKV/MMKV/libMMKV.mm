@@ -650,11 +650,40 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds {
+    if (m_mmkv->isCompareBeforeSetEnabled()) {
+        MMKVWarning("enableCompareBeforeSet will be invalid when Expiration is on");
+# if DEBUG
+        MMKV_ASSERT(0);
+# endif
+    }
     return m_mmkv->enableAutoKeyExpire(expiredInSeconds);
 }
 
 - (BOOL)disableAutoKeyExpire {
     return m_mmkv->disableAutoKeyExpire();
+}
+
+- (void)enableCompareBeforeSet {
+    if (m_mmkv->isExpirationEnabled()) {
+        MMKVWarning("enableCompareBeforeSet is invalid when Expiration is on");
+# if DEBUG
+        MMKV_ASSERT(0);
+# endif
+        return;
+    }
+    if (m_mmkv->isEncryptionEnabled()) {
+        MMKVWarning("enableCompareBeforeSet is invalid when key encryption is on");
+# if DEBUG
+        MMKV_ASSERT(0);
+# endif
+        return;
+    }
+    
+    return m_mmkv->enableCompareBeforeSet();
+}
+
+- (void)disableCompareBeforeSet {
+    return m_mmkv->disableCompareBeforeSet();
 }
 
 - (void)removeValueForKey:(NSString *)key {
