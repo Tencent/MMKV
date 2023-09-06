@@ -819,6 +819,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return decodeString(nativeHandle, key, defaultValue);
     }
 
+    @Nullable
+    public String decodeString2(String key, @Nullable String defaultValue) {
+        return decodeString2(nativeHandle, key, defaultValue);
+    }
+
     public boolean encode(String key, @Nullable Set<String> value) {
         return encodeSet(nativeHandle, key, (value == null) ? null : value.toArray(new String[0]));
     }
@@ -1621,6 +1626,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @Nullable
     private native String decodeString(long handle, String key, @Nullable String defaultValue);
+
+    private native String decodeString2(long handle, String key, @Nullable String defaultValue);
 
     private native boolean encodeSet(long handle, String key, @Nullable String[] value);
 

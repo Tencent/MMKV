@@ -188,6 +188,10 @@ static jstring string2jstring(JNIEnv *env, const string &str) {
     return env->NewStringUTF(str.c_str());
 }
 
+static jstring string2jstring(JNIEnv *env, const string *str) {
+    return env->NewStringUTF(str->c_str());
+}
+
 static vector<string> jarray2vector(JNIEnv *env, jobjectArray array) {
     vector<string> keys;
     if (array) {
@@ -587,6 +591,19 @@ MMKV_JNI jstring decodeString(JNIEnv *env, jobject obj, jlong handle, jstring oK
         bool hasValue = kv->getString(key, value);
         if (hasValue) {
             return string2jstring(env, value);
+        }
+    }
+    return oDefaultValue;
+}
+
+MMKV_JNI jstring decodeString2(JNIEnv *env, jobject obj, jlong handle, jstring oKey, jstring oDefaultValue) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        auto ret = kv->getString(key);
+        // maybe a lock here?
+        if (ret.first) {
+            return string2jstring(env, ret.second);
         }
     }
     return oDefaultValue;
@@ -1063,6 +1080,7 @@ static JNINativeMethod g_methods[] = {
     {"encodeString", "(JLjava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::encodeString},
     {"encodeString_2", "(JLjava/lang/String;Ljava/lang/String;I)Z", (void *) mmkv::encodeString_2},
     {"decodeString", "(JLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", (void *) mmkv::decodeString},
+    {"decodeString2", "(JLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;", (void *) mmkv::decodeString2},
     {"encodeSet", "(JLjava/lang/String;[Ljava/lang/String;)Z", (void *) mmkv::encodeSet},
     {"encodeSet_2", "(JLjava/lang/String;[Ljava/lang/String;I)Z", (void *) mmkv::encodeSet_2},
     {"decodeStringSet", "(JLjava/lang/String;)[Ljava/lang/String;", (void *) mmkv::decodeStringSet},

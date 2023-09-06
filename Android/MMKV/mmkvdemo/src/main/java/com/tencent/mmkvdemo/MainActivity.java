@@ -53,6 +53,36 @@ public class MainActivity extends AppCompatActivity {
         String rootDir = MMKV.getRootDir();
         tv.setText(rootDir);
 
+        MMKV mmkv = MMKV.defaultMMKV();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < 1000; i++) {
+            builder.append("0");
+        }
+        String s = builder.toString();
+
+        long start1, end1, start2, end2;
+        mmkv.encode("key1", s);
+
+
+        start2 = System.currentTimeMillis();
+        for (int i = 0; i < 2000000; i++) {
+            mmkv.decodeString2("key1", null);
+        }
+        end2 = System.currentTimeMillis();
+
+        start1 = System.currentTimeMillis();
+        for (int i = 0; i < 2000000; i++) {
+            mmkv.decodeString("key1");
+        }
+        end1 = System.currentTimeMillis();
+
+        Log.e("MMKV", "before = " + (end1 - start1) + ", after = " + (end2 - start2));
+
+        if (1 + 1 == 2) {
+            return;
+        }
+
+
         final Button button = findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             final Baseline baseline = new Baseline(getApplicationContext(), 1000);
