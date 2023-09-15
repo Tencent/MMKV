@@ -155,12 +155,8 @@ MMBuffer CodedInputData::readData(bool copy, bool exactly) {
     if (isSizeValid) {
         size_t pos = m_position;
         m_position += s_size;
-        if (!copy) {
-            // for setAfterCompare now
-            return MMBuffer(((int8_t *) m_ptr) + pos, s_size, MMBufferNoCopy);
-        } else {
-            return MMBuffer(((int8_t *) m_ptr) + pos, s_size);
-        }
+        auto copyFlag = copy ? MMBufferCopy : MMBufferNoCopy;
+        return MMBuffer(((int8_t *) m_ptr) + pos, s_size, copyFlag);
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }
