@@ -261,10 +261,20 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray *)allNonExpiredKeys;
 
 /// all keys created (or last modified) longger than expiredInSeconds will be deleted on next full-write-back
+/// enableCompareBeforeSet will be invalid when Expiration is on
 /// @param expiredInSeconds = MMKVExpireNever (0) means no common expiration duration for all keys, aka each key will have it's own expiration duration
 - (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds NS_SWIFT_NAME(enableAutoKeyExpire(expiredInSeconds:));
 
 - (BOOL)disableAutoKeyExpire;
+
+/// Enable data compare before set, for better performance
+/// If data for key seldom changes, use it
+/// Notice: When encryption or expiration is on, compare-before-set will be invalid.
+/// For encryption, compare operation must decrypt data which is time consuming
+/// For expiration, compare is useless because in most cases the expiration time changes every time.
+- (void)enableCompareBeforeSet;
+
+- (void)disableCompareBeforeSet;
 
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 

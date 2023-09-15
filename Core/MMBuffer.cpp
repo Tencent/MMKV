@@ -84,6 +84,13 @@ MMBuffer::MMBuffer(void *source, size_t length, MMBufferCopyFlag flag) : isNoCop
     }
 }
 
+bool MMBuffer::operator==(const MMBuffer& other) const {
+    if (this->length() != other.length()) {
+        return false;
+    }
+    return !memcmp((uint8_t*)this->getPtr(), (uint8_t*)other.getPtr(), this->length());
+}
+
 #ifdef MMKV_APPLE
 MMBuffer::MMBuffer(NSData *data, MMBufferCopyFlag flag)
     : type(MMBufferType_Normal), ptr((void *) data.bytes), size(data.length), isNoCopy(flag) {

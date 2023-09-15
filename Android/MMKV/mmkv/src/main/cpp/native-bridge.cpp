@@ -1014,6 +1014,44 @@ MMKV_JNI jboolean disableAutoExpire(JNIEnv *env, jobject instance) {
     return (jboolean) false;
 }
 
+MMKV_JNI void enableCompareBeforeSet(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->enableCompareBeforeSet();
+    }
+}
+
+MMKV_JNI void disableCompareBeforeSet(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->disableCompareBeforeSet();
+    }
+}
+
+MMKV_JNI bool isCompareBeforeSetEnabled(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return kv->isCompareBeforeSetEnabled();
+    }
+    return false;
+}
+
+MMKV_JNI bool isEncryptionEnabled(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return kv->isEncryptionEnabled();
+    }
+    return false;
+}
+
+MMKV_JNI bool isExpirationEnabled(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return kv->isExpirationEnabled();
+    }
+    return false;
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -1089,6 +1127,11 @@ static JNINativeMethod g_methods[] = {
     {"restoreAllFromDirectory", "(Ljava/lang/String;)J", (void *) mmkv::restoreAll},
     {"enableAutoKeyExpire", "(I)Z", (void *) mmkv::enableAutoExpire},
     {"disableAutoKeyExpire", "()Z", (void *) mmkv::disableAutoExpire},
+    {"nativeEnableCompareBeforeSet", "()V", (void *) mmkv::enableCompareBeforeSet},
+    {"disableCompareBeforeSet", "()V", (void *) mmkv::disableCompareBeforeSet},
+    {"isCompareBeforeSetEnabled", "()Z", (void *) mmkv::isCompareBeforeSetEnabled},
+    {"isEncryptionEnabled", "()Z", (void *) mmkv::isEncryptionEnabled},
+    {"isExpirationEnabled", "()Z", (void *) mmkv::isExpirationEnabled},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

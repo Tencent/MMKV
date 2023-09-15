@@ -23,6 +23,7 @@
 #ifdef  __cplusplus
 
 #include "MMBuffer.h"
+#include "PBUtility.h"
 #include <cstdint>
 
 namespace mmkv {
@@ -93,6 +94,8 @@ class MMKV {
 
     bool m_enableKeyExpire = false;
     uint32_t m_expiredInSeconds = ExpireNever;
+
+    bool m_enableCompareBeforeSet = false;
 
 #ifdef MMKV_APPLE
     using MMKVKey_t = NSString *__unsafe_unretained;
@@ -336,6 +339,15 @@ public:
     bool enableAutoKeyExpire(uint32_t expiredInSeconds = 0);
 
     bool disableAutoKeyExpire();
+
+
+    // compare value for key before set, to reduce the possibility of file expanding
+    void enableCompareBeforeSet();
+    void disableCompareBeforeSet();
+    
+    bool isExpirationEnabled() { return m_enableKeyExpire; }
+    bool isEncryptionEnabled() { return m_dicCrypt; }
+    bool isCompareBeforeSetEnabled() { return m_enableCompareBeforeSet && likely(!m_enableKeyExpire) && likely(!m_dicCrypt); }
 
 #ifdef MMKV_APPLE
     // filterExpire: return all non-expired keys, keep in mind it comes with cost
