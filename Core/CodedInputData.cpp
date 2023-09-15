@@ -151,8 +151,8 @@ MMBuffer CodedInputData::readData(bool copy, bool exactly) {
     }
 
     auto s_size = static_cast<size_t>(size);
-    bool flag = exactly ? (s_size == m_size - m_position) : (s_size <= m_size - m_position);
-    if (flag) {
+    bool isSizeValid = exactly ? (s_size == m_size - m_position) : (s_size <= m_size - m_position);
+    if (isSizeValid) {
         size_t pos = m_position;
         m_position += s_size;
         if (!copy) {

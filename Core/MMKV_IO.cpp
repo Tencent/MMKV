@@ -647,16 +647,15 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     {
         auto itr = m_dic->find(key);
         if (itr != m_dic->end()) {
-
             // compare data before appending to file
             if (isCompareBeforeSetEnabled()) {
                 auto basePtr = (uint8_t *) (m_file->getMemory()) + Fixed32Size;
-                MMBuffer oldValueData = std::move(itr->second.toMMBuffer(basePtr));
+                MMBuffer oldValueData = itr->second.toMMBuffer(basePtr);
                 if (isDataHolder) {
                     CodedInputData inputData(oldValueData.getPtr(), oldValueData.length());
                     try {
                         // read extra holder header bytes and to real MMBuffer
-                        oldValueData = std::move(CodedInputData::readRealData(oldValueData));
+                        oldValueData = CodedInputData::readRealData(oldValueData);
                         if (oldValueData == data) {
                             // MMKVInfo("[key] %s, set the same data", key.c_str());
                             return true;
