@@ -32,6 +32,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import dalvik.annotation.optimization.FastNative;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -1228,6 +1229,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         nativeEnableCompareBeforeSet();
     }
 
+    @FastNative
     private native void nativeEnableCompareBeforeSet();
 
     /**
@@ -1693,8 +1695,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private native boolean isCompareBeforeSetEnabled();
 
+    @FastNative
     private native boolean isEncryptionEnabled();
 
+    @FastNative
     private native boolean isExpirationEnabled();
 
     private static native boolean checkProcessMode(long handle);

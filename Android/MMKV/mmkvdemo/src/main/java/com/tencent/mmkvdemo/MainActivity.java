@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
         testAutoExpire();
         testExpectedCapacity();
         testCompareBeforeSet();
+//        testFastNativeSpeed();
     }
 
     private void testCompareBeforeSet() {
@@ -170,6 +171,23 @@ public class MainActivity extends AppCompatActivity {
             Log.d("mmkv", "testCompareBeforeSet actualSize = " + mmkv.actualSize());
             Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getString(key, ""));
         }
+    }
+
+    /**
+     * <a href="https://developer.android.com/reference/dalvik/annotation/optimization/FastNative">FastNative</a>
+     * Before Test, remove `MMKVInfo` log print in `enableCompareBeforeSet` function
+     */
+    private void testFastNativeSpeed() {
+        int repeatCount = 5000000;
+        MMKV mmkv = MMKV.mmkvWithID("test_fastnative_speed");
+        long start, end;
+        start = System.currentTimeMillis();
+        for (int i = 0; i < repeatCount; i++) {
+            mmkv.enableCompareBeforeSet();
+        }
+        end = System.currentTimeMillis();
+
+        Log.e("MMKV", "testFastNativeSpeed： " + (end - start));
     }
 
     private void testInterProcessLogic() {
