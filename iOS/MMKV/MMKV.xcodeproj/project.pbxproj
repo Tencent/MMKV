@@ -489,10 +489,12 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
 				PRODUCT_NAME = MMKVAppExtension;
@@ -531,10 +533,12 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVAppExtension;
 				PRODUCT_NAME = MMKVAppExtension;
@@ -731,10 +735,12 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKV;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -768,10 +774,12 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKV;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -811,10 +819,12 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVWatchExtension;
 				PRODUCT_NAME = MMKVWatchExtension;
@@ -855,10 +865,12 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				"OTHER_LDFLAGS[sdk=iphonesimulator*]" = (
 					"-framework",
 					UIKit,
+					"-Wl,-ld_classic",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVWatchExtension;
 				PRODUCT_NAME = MMKVWatchExtension;

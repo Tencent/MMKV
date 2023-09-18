@@ -28,6 +28,8 @@
 		CB36F24C20F8A20C009AF46F /* MMKVDemoTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F24B20F8A20C009AF46F /* MMKVDemoTests.mm */; };
 		CB36F25A20F8D728009AF46F /* MMKVPerformanceTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB36F25920F8D728009AF46F /* MMKVPerformanceTest.mm */; };
 		CB467FBC2431EE3000FD7421 /* MMKVAppExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; };
+		CB4A59482AB803A9001BD793 /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; };
+		CB4A59492AB803B6001BD793 /* MMKV.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CB5C469724AB87F3001B25B8 /* MMKVWatchExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF1907C243D7116001C82ED /* MMKVWatchExtension.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CB6180EA26E904AC003FF912 /* MMKVAppExtension.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB467FBB2431EE2D00FD7421 /* MMKVAppExtension.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6D44CB23B3A44400F369AA /* NotificationCenter.framework */; };
@@ -42,7 +44,6 @@
 		CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C827215CDB9600487192 /* Assets.xcassets */; };
 		CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C829215CDB9600487192 /* Main.storyboard */; };
 		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
-		CBD5359023B46E8500D3A404 /* libMMKV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV.a */; };
 		CBF19016243D6F59001C82ED /* Interface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBF19014243D6F59001C82ED /* Interface.storyboard */; };
 		CBF19018243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF19017243D6F5A001C82ED /* Assets.xcassets */; };
 		CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -158,6 +159,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				CB4A59492AB803B6001BD793 /* MMKV.framework in CopyFiles */,
 				CB6180EA26E904AC003FF912 /* MMKVAppExtension.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -284,8 +286,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB4A59482AB803A9001BD793 /* MMKV.framework in Frameworks */,
 				CB1E0659242B8E3F00F2FD42 /* libz.tbd in Frameworks */,
-				CBD5359023B46E8500D3A404 /* libMMKV.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
