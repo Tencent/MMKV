@@ -52,6 +52,7 @@
 #    if __has_feature(objc_arc)
 #        error This file must be compiled with MRC. Use -fno-objc-arc flag.
 #    endif
+#    include "MMKV_OSX.h"
 #endif // MMKV_APPLE
 
 using namespace std;
@@ -78,8 +79,7 @@ bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix);
 MMKVPath_t filename(const MMKVPath_t &path);
 
 #ifndef MMKV_ANDROID
-MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath,
-           size_t expectedCapacity)
+MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
@@ -207,7 +207,14 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
     // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
     int device = 0, version = 0;
     GetAppleMachineInfo(device, version);
+#    ifndef MMKV_IOS
     MMKVInfo("Apple Device: %d, version: %d", device, version);
+#    else
+    if (@available(iOS 13, *)) {
+        MLockPtr::isMLockPtrEnabled = false;
+    }
+    MMKVInfo("Apple Device: %d, version: %d, mlock enabled: %d", device, version, MLockPtr::isMLockPtrEnabled);
+#    endif
 #endif
 
     g_rootDir = rootDir;
@@ -673,7 +680,7 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key, uint32_t expireDuration) 
     auto data = MiniPBCoder::encodeDataWithObject(v);
     if (unlikely(m_enableKeyExpire) && data.length() > 0) {
         auto tmp = MMBuffer(data.length() + Fixed32Size);
-        auto ptr = (uint8_t *)tmp.getPtr();
+        auto ptr = (uint8_t *) tmp.getPtr();
         memcpy(ptr, data.getPtr(), data.length());
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         memcpy(ptr + data.length(), &time, Fixed32Size);

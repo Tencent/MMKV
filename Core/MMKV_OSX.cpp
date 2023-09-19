@@ -84,6 +84,8 @@ MLockPtr::~MLockPtr() {
     }
 }
 
+bool MLockPtr::isMLockPtrEnabled = true;
+
 #    endif
 
 #    ifdef MMKV_IOS
@@ -104,7 +106,7 @@ bool MMKV::isInBackground() {
 }
 
 pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
-    if (g_isInBackground) {
+    if (g_isInBackground && MLockPtr::isMLockPtrEnabled) {
         MLockPtr mlockPtr(ptr, size);
         return make_pair(mlockPtr.isLocked(), std::move(mlockPtr));
     } else {

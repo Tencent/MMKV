@@ -39,6 +39,8 @@ public:
         return (m_lockedPtr != nullptr);
     }
 
+    static bool isMLockPtrEnabled;
+
     // just forbid it for possibly misuse
     explicit MLockPtr(const MLockPtr &other) = delete;
     MLockPtr &operator=(const MLockPtr &other) = delete;
