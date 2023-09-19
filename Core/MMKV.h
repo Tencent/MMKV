@@ -395,6 +395,13 @@ public:
     void unlock();
     bool try_lock();
 
+    // get thread lock
+#ifndef MMKV_WIN32
+    void lock_thread();
+    void unlock_thread();
+    bool try_lock_thread();
+#endif
+
     static const MMKVPath_t &getRootDir();
 
     // backup one MMKV instance from srcDir to dstDir

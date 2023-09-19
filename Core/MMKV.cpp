@@ -1180,6 +1180,18 @@ bool MMKV::try_lock() {
     return m_exclusiveProcessLock->try_lock();
 }
 
+#ifndef MMKV_WIN32
+void MMKV::lock_thread() {
+    m_lock->lock();
+}
+void MMKV::unlock_thread() {
+    m_lock->unlock();
+}
+bool MMKV::try_lock_thread() {
+    return m_lock->try_lock();
+}
+#endif
+
 // backup
 
 static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
