@@ -700,6 +700,8 @@ bool MMKV::getString(MMKVKey_t key, string &result, bool inplaceModification) {
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     return false;
@@ -719,6 +721,8 @@ bool MMKV::getBytes(MMKVKey_t key, mmkv::MMBuffer &result) {
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     return false;
@@ -737,6 +741,8 @@ MMBuffer MMKV::getBytes(MMKVKey_t key) {
             return input.readData();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     return MMBuffer();
@@ -755,6 +761,8 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
             return true;
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     return false;
@@ -781,6 +789,8 @@ bool MMKV::getBool(MMKVKey_t key, bool defaultValue, bool *hasValue) {
             return input.readBool();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     if (hasValue != nullptr) {
@@ -808,6 +818,8 @@ int32_t MMKV::getInt32(MMKVKey_t key, int32_t defaultValue, bool *hasValue) {
             return input.readInt32();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     if (hasValue != nullptr) {
@@ -835,6 +847,8 @@ uint32_t MMKV::getUInt32(MMKVKey_t key, uint32_t defaultValue, bool *hasValue) {
             return input.readUInt32();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     if (hasValue != nullptr) {
@@ -862,6 +876,8 @@ int64_t MMKV::getInt64(MMKVKey_t key, int64_t defaultValue, bool *hasValue) {
             return input.readInt64();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     if (hasValue != nullptr) {
@@ -889,6 +905,8 @@ uint64_t MMKV::getUInt64(MMKVKey_t key, uint64_t defaultValue, bool *hasValue) {
             return input.readUInt64();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     if (hasValue != nullptr) {
@@ -916,6 +934,8 @@ float MMKV::getFloat(MMKVKey_t key, float defaultValue, bool *hasValue) {
             return input.readFloat();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     if (hasValue != nullptr) {
@@ -943,6 +963,8 @@ double MMKV::getDouble(MMKVKey_t key, double defaultValue, bool *hasValue) {
             return input.readDouble();
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     if (hasValue != nullptr) {
@@ -970,6 +992,8 @@ size_t MMKV::getValueSize(MMKVKey_t key, bool actualSize) {
             }
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
     return data.length();
@@ -1004,6 +1028,8 @@ int32_t MMKV::writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size) {
         }
     } catch (std::exception &exception) {
         MMKVError("%s", exception.what());
+    } catch (...) {
+        MMKVError("encode fail");
     }
     return -1;
 }

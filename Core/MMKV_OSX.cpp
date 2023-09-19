@@ -221,6 +221,8 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
                 return result;
             } catch (std::exception &exception) {
                 MMKVError("%s", exception.what());
+            } catch (...) {
+                MMKVError("decode fail");
             }
         } else {
             if ([cls conformsToProtocol:@protocol(NSCoding)]) {

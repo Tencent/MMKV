@@ -662,6 +662,8 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                         }
                     } catch (std::exception &exception) {
                         MMKVError("compareBeforeSet exception: %s", exception.what());
+                    } catch (...) {
+                        MMKVError("compareBeforeSet fail");
                     }
                 } else {
                     if (oldValueData == data) {
@@ -838,6 +840,9 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
         m_output->writeData(data); // note: write size of data
     } catch (std::exception &e) {
         MMKVError("%s", e.what());
+        return make_pair(false, KeyValueHolder());
+    } catch (...) {
+        MMKVError("append fail");
         return make_pair(false, KeyValueHolder());
     }
 
