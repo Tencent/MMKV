@@ -210,6 +210,8 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
 #    ifndef MMKV_IOS
     MMKVInfo("Apple Device: %d, version: %d", device, version);
 #    else
+    // we have verified that on iOS 13+, the mlock() protection in background is no longer needed
+    // this may be true as well on iOS 12 or even iOS 11, sadly we can't verify that on WeChat
     if (@available(iOS 13, *)) {
         MLockPtr::isMLockPtrEnabled = false;
     }
