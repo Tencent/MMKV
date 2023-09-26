@@ -154,6 +154,16 @@ bool MemoryFile::truncate(size_t size) {
         if (!zeroFillFile(m_diskFile.m_fd, oldSize, m_size - oldSize)) {
             MMKVError("fail to zeroFile [%s] to size %zu, %s", m_diskFile.m_path.c_str(), m_size, strerror(errno));
             m_size = oldSize;
+
+            // redo ftruncate to its previous size
+            int status = ::ftruncate(m_diskFile.m_fd, static_cast<off_t>(m_size));
+            if (status != 0) {
+                MMKVError("failed to truncate back [%s] to size %zu, %s", m_diskFile.m_path.c_str(), m_size, strerror(errno));
+            } else {
+                MMKVError("success to truncate [%s] back to size %zu", m_diskFile.m_path.c_str(), m_size);
+                MMKVError("after truncate, file size = %zu", getActualFileSize());
+            }
+
             return false;
         }
     }
