@@ -980,6 +980,27 @@ void testCompareBeforeSet() {
     }
 }
 
+void testFtruncateFail() {
+    auto mmkv = MMKV::mmkvWithID("testFtruncateFail");
+    signal(SIGXFSZ, SIG_IGN);
+    struct rlimit rlim_new,rlim;
+    string bigValue(1000, '0');
+    if (getrlimit(RLIMIT_FSIZE, &rlim) == 0) {
+        rlim_new.rlim_cur = rlim_new.rlim_max = 5000 * 1024;
+        int ret = setrlimit(RLIMIT_FSIZE, &rlim_new);
+        printf("setrlimit ret = %d\n", ret);
+
+        for (int i = 0; i < 1000000; i++) {
+            string key = "qwerttt" + to_string(i);
+//            fail to truncate [/tmp/mmkv/testFtruncateFail] to size 8388608, File too large
+            bool ret = mmkv->set(bigValue, key);
+            if (!ret) {
+                break;
+            }
+        }
+    }
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -1035,4 +1056,5 @@ int main() {
     testBackup();
     testRestore();
     testAutoExpiration();
+//    testFtruncateFail();
 }

@@ -119,6 +119,8 @@ public class MainActivity extends AppCompatActivity {
         //testTrimNonEmptyInterProcess();
         //testItemSizeHolderOverride();
 
+//        testDiskFull();
+
         testBackup();
         testRestore();
 
@@ -729,6 +731,26 @@ public class MainActivity extends AppCompatActivity {
         int pageSize = MMKV.pageSize();
         int rest = len % pageSize;
         return rest == 0 ? len + pageSize :  (2 + len / pageSize) * pageSize;
+    }
+
+    private void testDiskFull() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                MMKV mmkv = MMKV.mmkvWithID("disk_full");
+                long i = 0;
+                StringBuilder value = new StringBuilder();
+                for (int j = 0; j < 100000; j++) {
+                    value.append("a");
+                }
+                while (true) {
+                    boolean ret = mmkv.encode(i++ + "", value.toString());
+                    if (!ret) {
+                        break;
+                    }
+                }
+            }
+        }).start();
     }
 
     private void testExpectedCapacity() {
