@@ -1052,6 +1052,13 @@ MMKV_JNI bool isExpirationEnabled(JNIEnv *env, jobject instance) {
     return false;
 }
 
+MMKV_JNI void clearAllWithKeepingSpace(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        kv->clearAll(true);
+    }
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -1132,6 +1139,7 @@ static JNINativeMethod g_methods[] = {
     {"isCompareBeforeSetEnabled", "()Z", (void *) mmkv::isCompareBeforeSetEnabled},
     {"isEncryptionEnabled", "()Z", (void *) mmkv::isEncryptionEnabled},
     {"isExpirationEnabled", "()Z", (void *) mmkv::isExpirationEnabled},
+    {"clearAllWithKeepingSpace", "()V", (void *) mmkv::clearAllWithKeepingSpace},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

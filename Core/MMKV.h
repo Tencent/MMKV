@@ -371,7 +371,8 @@ public:
 
     void removeValueForKey(MMKVKey_t key);
 
-    void clearAll();
+    // keepSpace: remove all keys but keep the file size not changed, running faster
+    void clearAll(bool keepSpace = false);
 
     // MMKV's size won't reduce after deleting key-values
     // call this method after lots of deleting if you care about disk usage
@@ -384,7 +385,8 @@ public:
 
     // call this method if you are facing memory-warning
     // any subsequent call to the instance will load all key-values from file again
-    void clearMemoryCache();
+    // keepSpace: remove all keys but keep the file size not changed, running faster
+    void clearMemoryCache(bool keepSpace = false);
 
     // you don't need to call this, really, I mean it
     // unless you worry about running out of battery

@@ -1053,8 +1053,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Clear all the key-values inside the MMKV instance.
+     * The data file will be trimmed down to `pageSize`, and some sync operations will be called
+     * If you do not want to trim the file, use {@link #clearAllWithKeepingSpace()} instead for better performance
      */
     public native void clearAll();
+
+    /**
+     * Faster {@link #clearAll()} implementation
+     * The file size is kept as previous for later use
+     */
+    public native void clearAllWithKeepingSpace();
 
     /**
      * The {@link #totalSize()} of an MMKV instance won't reduce after deleting key-values,

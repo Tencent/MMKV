@@ -280,6 +280,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
 
+- (void)clearAllWithKeepingSpace;
+
 - (void)clearAll;
 
 // MMKV's size won't reduce after deleting key-values

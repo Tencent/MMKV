@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         testAutoExpire();
         testExpectedCapacity();
         testCompareBeforeSet();
+        testClearAllKeepSpace();
 //        testFastNativeSpeed();
     }
 
@@ -751,6 +752,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }).start();
+    }
+
+    private void testClearAllKeepSpace() {
+        MMKV mmkv = MMKV.mmkvWithID("testClearAllKeepSpace");
+        mmkv.encode("key", "value");
+        mmkv.encode("key2", "value2");
+        mmkv.clearAllWithKeepingSpace();
+        mmkv.encode("key3", "value3");
+        mmkv.clearAll();
+        mmkv.encode("key4", "value4");
     }
 
     private void testExpectedCapacity() {
