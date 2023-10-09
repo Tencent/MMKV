@@ -299,7 +299,7 @@ void MMKV::unRegisterContentChangeHandler() {
     g_contentChangeHandler = nullptr;
 }
 
-void MMKV::clearMemoryCache() {
+void MMKV::clearMemoryCache(bool keepSpace) {
     SCOPED_LOCK(m_lock);
     if (m_needLoadFromFile) {
         return;
@@ -323,7 +323,9 @@ void MMKV::clearMemoryCache() {
     delete m_output;
     m_output = nullptr;
 
-    m_file->clearMemoryCache();
+    if (!keepSpace) {
+        m_file->clearMemoryCache();
+    }
     // inter-process lock rely on MetaFile's fd, never close it
     // m_metaFile->clearMemoryCache();
     m_actualSize = 0;

@@ -25,6 +25,7 @@
     [self onlyOneKeyTest];
     [self overrideTest];
     [self expectedCapacityTest];
+    [self testClearAllWithKeepingSpace];
 
     [self funcionalTest:NO];
     [self testNeedLoadFromFile];
@@ -42,6 +43,41 @@
 
         NSString *intKey = [NSString stringWithFormat:@"int-%zu", index];
         [m_arrIntKeys addObject:intKey];
+    }
+}
+
+- (void) testClearAllWithKeepingSpace {
+    {
+        auto mmkv = [MMKV mmkvWithID:@"testClearAllWithKeepingSpace"];
+        [mmkv setFloat:123.456f forKey:@"key1"];
+        for (int i = 0; i < 10000; i++) {
+            [mmkv setFloat:123.456f forKey:[NSString stringWithFormat:@"key_%d", i]];
+        }
+        auto previousSize =[mmkv totalSize];
+        assert(previousSize > PAGE_SIZE);
+        [mmkv clearAllWithKeepingSpace];
+        assert([mmkv totalSize] == previousSize);
+        assert([mmkv count] == 0);
+        [mmkv setFloat:123.4567f forKey:@"key2"];
+        [mmkv setFloat:223.47f forKey:@"key3"];
+        assert([mmkv count] == 2);
+    }
+    
+    {
+        NSString *crypt = [NSString stringWithFormat:@"Crypt123"];
+        auto mmkv = [MMKV mmkvWithID:@"testClearAllWithKeepingSpaceCrypt" cryptKey:[crypt dataUsingEncoding:NSUTF8StringEncoding] mode:MMKVSingleProcess];
+        [mmkv setFloat:123.456f forKey:@"key1"];
+        for (int i = 0; i < 10000; i++) {
+            [mmkv setFloat:123.456f forKey:[NSString stringWithFormat:@"key_%d", i]];
+        }
+        auto previousSize =[mmkv totalSize];
+        assert(previousSize > PAGE_SIZE);
+        [mmkv clearAllWithKeepingSpace];
+        assert([mmkv totalSize] == previousSize);
+        assert([mmkv count] == 0);
+        [mmkv setFloat:123.4567f forKey:@"key2"];
+        [mmkv setFloat:223.47f forKey:@"key3"];
+        assert([mmkv count] == 2);
     }
 }
 

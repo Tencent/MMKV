@@ -282,6 +282,83 @@ void testClearEmptyMMKV() {
     mmkv->clearAll();
 }
 
+void testClearAllKeepSpace() {
+    {
+        auto mmkv = MMKV::mmkvWithID("testClearAllKeepSpace");
+        string big(10, '0');
+        for (int i = 0; i < 100; i++) {
+            mmkv->set(big, to_string(i));
+        }
+        size_t size0 = mmkv->totalSize();
+
+        mmkv->clearAll(true);
+        size_t size1 = mmkv->totalSize();
+        assert(size0 == size1);
+        assert(mmkv->count() == 0);
+        string key1 = "key1";
+        string key2 = "key2";
+        mmkv->set(123, key1);
+        assert(mmkv->getInt32(key1, 0) == 123);
+
+        mmkv->set(456, key2);
+        assert(mmkv->getInt32(key2, 0) == 456);
+
+        // test normal clearAll
+        assert(mmkv->count() == 2);
+        mmkv->clearAll();
+        assert(mmkv->count() == 0);
+
+        // test reopen
+        mmkv->set(1234, key1);
+        mmkv->set(12345, key2);
+        mmkv->clearAll(true);
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testClearAllKeepSpace");
+        assert(mmkv->count() == 0);
+
+        mmkv->set(456, key2);
+        assert(mmkv->getInt32(key2, 0) == 456);
+    }
+
+    {
+        string aesKey = "cryptKey111";
+        auto mmkv = MMKV::mmkvWithID("testClearAllKeepSpaceWithCrypt", MMKV_SINGLE_PROCESS, &aesKey);
+        string big(10, '0');
+        for (int i = 0; i < 100; i++) {
+            mmkv->set(big, to_string(i));
+        }
+        size_t size0 = mmkv->totalSize();
+
+        mmkv->clearAll(true);
+        size_t size1 = mmkv->totalSize();
+        assert(size0 == size1);
+        assert(mmkv->count() == 0);
+        string key1 = "key1";
+        string key2 = "key2";
+        mmkv->set(123, key1);
+        assert(mmkv->getInt32(key1, 0) == 123);
+
+        mmkv->set(456, key2);
+        assert(mmkv->getInt32(key2, 0) == 456);
+
+        // test normal clearAll
+        assert(mmkv->count() == 2);
+        mmkv->clearAll();
+        assert(mmkv->count() == 0);
+
+        // test reopen
+        mmkv->set(1234, key1);
+        mmkv->set(12345, key2);
+        mmkv->clearAll(true);
+        mmkv->close();
+        mmkv = MMKV::mmkvWithID("testClearAllKeepSpaceWithCrypt");
+        assert(mmkv->count() == 0);
+
+        mmkv->set(456, key2);
+        assert(mmkv->getInt32(key2, 0) == 456);
+    }
+}
+
 void testBackup() {
     string rootDir = "/tmp/mmkv_backup";
     string mmapID = "test/Encrypt";
@@ -1051,6 +1128,7 @@ int main() {
     testExpectedCapacity();
     testOnlyOneKey();
     testOverride();
+    testClearAllKeepSpace();
 //    testGetStringSpeed();
     testCompareBeforeSet();
     testBackup();

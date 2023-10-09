@@ -319,6 +319,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->clearAll();
 }
 
+- (void)clearAllWithKeepingSpace {
+    m_mmkv->clearAll(true);
+}
+
 - (void)clearMemoryCache {
     if (m_mmkv) {
         m_mmkv->clearMemoryCache();

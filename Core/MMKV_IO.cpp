@@ -1334,7 +1334,7 @@ void MMKV::trim() {
     MMKVInfo("finish trim %s from %zu to %zu", m_mmapID.c_str(), oldSize, fileSize);
 }
 
-void MMKV::clearAll() {
+void MMKV::clearAll(bool keepSpace) {
     MMKVInfo("cleaning all key-values from [%s]", m_mmapID.c_str());
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
@@ -1345,7 +1345,10 @@ void MMKV::clearAll() {
         MMKVInfo("nothing to clear for [%s]", m_mmapID.c_str());
         return;
     }
-    m_file->truncate(DEFAULT_MMAP_SIZE);
+
+    if (!keepSpace) {
+        m_file->truncate(DEFAULT_MMAP_SIZE);
+    }
 
 #ifndef MMKV_DISABLE_CRYPT
     uint8_t newIV[AES_KEY_LEN];
@@ -1357,9 +1360,12 @@ void MMKV::clearAll() {
 #else
     writeActualSize(0, 0, nullptr, IncreaseSequence);
 #endif
-    m_metaFile->msync(MMKV_SYNC);
 
-    clearMemoryCache();
+    if (!keepSpace) {
+        m_metaFile->msync(MMKV_SYNC);
+    }
+
+    clearMemoryCache(keepSpace);
     loadFromFile();
 }
 
