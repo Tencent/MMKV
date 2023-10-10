@@ -1361,9 +1361,7 @@ void MMKV::clearAll(bool keepSpace) {
     writeActualSize(0, 0, nullptr, IncreaseSequence);
 #endif
 
-    if (!keepSpace) {
-        m_metaFile->msync(MMKV_SYNC);
-    }
+    m_metaFile->msync(MMKV_SYNC);
 
     clearMemoryCache(keepSpace);
     loadFromFile();
