@@ -740,7 +740,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 static bool g_isAutoCleanUpEnabled = false;
 static uint32_t g_maxIdleMS = 0;
-constexpr int DoCleanUpDurationMS = 5 * 1000;
+constexpr int DoCleanUpDurationMS = 2 * 1000;
 static dispatch_source_t g_autoCleanUpTimer = nullptr;
 static AutoCleanInfoQueue_t g_cleanQueue = {};
 
