@@ -476,10 +476,10 @@ MMKV_EXPORT void removeValuesForKeys(void *handle, GoStringWrap *keyArray, uint6
     }
 }
 
-MMKV_EXPORT void clearAll(void *handle) {
+MMKV_EXPORT void clearAll(void *handle, bool keepSpace) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        kv->clearAll();
+        kv->clearAll(keepSpace);
     }
 }
 

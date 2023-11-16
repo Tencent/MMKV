@@ -237,7 +237,7 @@ func testRestore() {
 
 func testAutoExpire()  {
 	kv := mmkv.MMKVWithID("testAutoExpire")
-	kv.ClearAll()
+	kv.ClearAllKeepSpace()
 	kv.Trim()
 	kv.DisableAutoKeyExpire()
 

@@ -165,6 +165,7 @@ type MMKV interface {
 
 	// ClearAll clear all key-values
 	ClearAll()
+	ClearAllKeepSpace()
 
 	// Count return count of keys
 	Count() uint64
@@ -589,7 +590,11 @@ func (kv ctorMMKV) Contains(key string) bool {
 }
 
 func (kv ctorMMKV) ClearAll() {
-	C.clearAll(unsafe.Pointer(kv))
+	C.clearAll(unsafe.Pointer(kv), false)
+}
+
+func (kv ctorMMKV) ClearAllKeepSpace() {
+	C.clearAll(unsafe.Pointer(kv), true)
 }
 
 func (kv ctorMMKV) TotalSize() uint64 {

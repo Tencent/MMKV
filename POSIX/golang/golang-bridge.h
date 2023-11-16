@@ -91,7 +91,7 @@ uint64_t actualSize(void *handle);
 
 void removeValueForKey(void *handle, GoStringWrap_t oKey);
 void removeValuesForKeys(void *handle, GoStringWrap_t *keyArray, uint64_t count);
-void clearAll(void *handle);
+void clearAll(void *handle, bool keepSpace);
 
 void mmkvSync(void *handle, bool sync);
 void clearMemoryCache(void *handle);
