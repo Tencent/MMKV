@@ -1234,6 +1234,10 @@ bool MMKV::reKey(const string &cryptKey) {
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
+    if (!isFileValid()) {
+        MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return false;
+    }
 
     bool ret = false;
     if (m_crypter) {
@@ -1299,6 +1303,10 @@ void MMKV::trim() {
     MMKVInfo("prepare to trim %s", m_mmapID.c_str());
 
     checkLoadData();
+    if (!isFileValid()) {
+        MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return;
+    }
 
     if (m_actualSize == 0) {
         clearAll();
@@ -1340,6 +1348,10 @@ void MMKV::clearAll(bool keepSpace) {
     SCOPED_LOCK(m_exclusiveProcessLock);
 
     checkLoadData();
+    if (!isFileValid()) {
+        MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return;
+    }
 
     if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
         MMKVInfo("nothing to clear for [%s]", m_mmapID.c_str());
@@ -1447,6 +1459,10 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
+    if (!isFileValid() || !m_metaFile->isFileValid()) {
+        MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return false;
+    }
 
     if (m_enableCompareBeforeSet) {
         MMKVError("enableCompareBeforeSet will be invalid when Expiration is on");
@@ -1511,6 +1527,10 @@ bool MMKV::disableAutoKeyExpire() {
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
+    if (!isFileValid() || !m_metaFile->isFileValid()) {
+        MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return false;
+    }
 
     m_expiredInSeconds = 0;
     m_enableKeyExpire = false;
