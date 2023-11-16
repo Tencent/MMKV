@@ -27,7 +27,7 @@
 
 using namespace std;
 
-MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *cryptKey, const char *rootPath) {
+MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity) {
     MMKV *kv = nil;
     if (!mmapID) {
         return (__bridge void *) kv;
@@ -41,7 +41,7 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *c
             auto cryptKeyData = [crypt dataUsingEncoding:NSUTF8StringEncoding];
             if (rootPath) {
                 auto path = [NSString stringWithUTF8String:rootPath];
-                kv = [MMKV mmkvWithID:str cryptKey:cryptKeyData rootPath:path];
+                kv = [MMKV mmkvWithID:str cryptKey:cryptKeyData rootPath:path expectedCapacity:expectedCapacity];
             } else {
                 kv = [MMKV mmkvWithID:str cryptKey:cryptKeyData mode:(MMKVMode) mode];
             }
@@ -51,7 +51,7 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *c
     if (!done) {
         if (rootPath) {
             auto path = [NSString stringWithUTF8String:rootPath];
-            kv = [MMKV mmkvWithID:str rootPath:path];
+            kv = [MMKV mmkvWithID:str rootPath:path expectedCapacity:expectedCapacity];
         } else {
             kv = [MMKV mmkvWithID:str mode:(MMKVMode) mode];
         }
@@ -387,10 +387,14 @@ MMKV_EXPORT void MMKV_FUNC(removeValuesForKeys)(const void *handle, char **keyAr
     }
 }
 
-MMKV_EXPORT void MMKV_FUNC(clearAll)(const void *handle) {
+MMKV_EXPORT void MMKV_FUNC(clearAll)(const void *handle, bool keepSpace) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
-        [kv clearAll];
+        if (keepSpace) {
+            [kv clearAllWithKeepingSpace];
+        } else {
+            [kv clearAll];
+        }
     }
 }
 
@@ -485,6 +489,22 @@ MMKV_EXPORT bool MMKV_FUNC(disableAutoExpire)(const void *handle) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv) {
         return [kv disableAutoKeyExpire];
+    }
+    return false;
+}
+
+MMKV_EXPORT bool MMKV_FUNC(enableCompareBeforeSet)(const void *handle) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv) {
+        return [kv enableCompareBeforeSet];
+    }
+    return false;
+}
+
+MMKV_EXPORT bool MMKV_FUNC(disableCompareBeforeSet)(const void *handle) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv) {
+        return [kv disableCompareBeforeSet];
     }
     return false;
 }

@@ -59,7 +59,7 @@ MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
     mmkvInitialize_v1(rootDir, nullptr, 0, logLevel);
 }
 
-MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath) {
+MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return kv;
@@ -72,9 +72,9 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
         if (crypt.length() > 0) {
             if (rootPath) {
                 string path = rootPath;
-                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, &path);
+                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, &path, expectedCapacity);
             } else {
-                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, nullptr);
+                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, nullptr, expectedCapacity);
             }
             done = true;
         }
@@ -82,9 +82,9 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
     if (!done) {
         if (rootPath) {
             string path = rootPath;
-            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, &path);
+            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, &path, expectedCapacity);
         } else {
-            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, nullptr);
+            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, nullptr, expectedCapacity);
         }
     }
 
@@ -433,10 +433,10 @@ MMKV_EXPORT void removeValuesForKeys(void *handle, char **keyArray, uint32_t *si
     }
 }
 
-MMKV_EXPORT void clearAll(void *handle) {
+MMKV_EXPORT void clearAll(void *handle, bool keepSpace) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        kv->clearAll();
+        kv->clearAll(keepSpace);
     }
 }
 
@@ -536,6 +536,22 @@ MMKV_EXPORT bool disableAutoExpire(void *handle) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
         return kv->disableAutoKeyExpire();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool enableCompareBeforeSet(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->enableCompareBeforeSet();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool disableCompareBeforeSet(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->disableCompareBeforeSet();
     }
     return false;
 }
