@@ -232,7 +232,7 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsMMKV.def("remove", &MMKV::removeValueForKey, py::arg("key"));
     clsMMKV.def("remove", &MMKV::removeValuesForKeys, py::arg("keys"));
-    clsMMKV.def("clearAll", &MMKV::clearAll, "remove all key-values");
+    clsMMKV.def("clearAll", &MMKV::clearAll, py::arg("keepSpace") = false, "remove all key-values");
     clsMMKV.def("trim", &MMKV::trim, "call this method after lots of removing if you care about disk usage");
     clsMMKV.def("clearMemoryCache", &MMKV::clearMemoryCache, "call this method if you are facing memory-warning");
 
@@ -243,6 +243,9 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("enableAutoKeyExpire", &MMKV::enableAutoKeyExpire, py::arg("expireDurationInSecond"),
                 "turn on auto key expiration, passing 0 means never expire");
     clsMMKV.def("disableAutoKeyExpire", &MMKV::disableAutoKeyExpire, "turn off auto key expiration");
+
+    clsMMKV.def("enableCompareBeforeSet", &MMKV::enableCompareBeforeSet, "turn on compare before set/update");
+    clsMMKV.def("disableCompareBeforeSet", &MMKV::disableCompareBeforeSet, "turn off compare before set/update");
 
     clsMMKV.def("lock", &MMKV::lock, "get exclusive access, won't return until the lock is obtained");
     clsMMKV.def("unlock", &MMKV::unlock);
