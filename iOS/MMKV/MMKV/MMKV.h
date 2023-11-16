@@ -272,9 +272,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Notice: When encryption or expiration is on, compare-before-set will be invalid.
 /// For encryption, compare operation must decrypt data which is time consuming
 /// For expiration, compare is useless because in most cases the expiration time changes every time.
-- (void)enableCompareBeforeSet;
+- (BOOL)enableCompareBeforeSet;
 
-- (void)disableCompareBeforeSet;
+- (BOOL)disableCompareBeforeSet;
 
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 

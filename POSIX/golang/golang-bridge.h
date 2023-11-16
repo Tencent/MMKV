@@ -105,6 +105,8 @@ uint64_t restoreAllFromDirectory(GoStringWrap_t srcDir, GoStringWrap_t dstDir);
 
 bool enableAutoExpire(void *handle, uint32_t expireDuration);
 bool disableAutoExpire(void *handle);
+bool enableCompareBeforeSet(void *handle);
+bool disableCompareBeforeSet(void *handle);
 
 int32_t pageSize();
 const char *version();

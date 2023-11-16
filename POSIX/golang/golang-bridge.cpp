@@ -587,6 +587,22 @@ MMKV_EXPORT bool disableAutoExpire(void *handle) {
     return false;
 }
 
+MMKV_EXPORT bool enableCompareBeforeSet(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->enableCompareBeforeSet();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool disableCompareBeforeSet(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->disableCompareBeforeSet();
+    }
+    return false;
+}
+
 extern "C" void myLogHandler(int64_t level, GoStringWrap file, int64_t line, GoStringWrap function, GoStringWrap message);
 
 void cLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {

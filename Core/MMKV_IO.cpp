@@ -1692,22 +1692,34 @@ size_t MMKV::filterExpiredKeys() {
     return count;
 }
 
-void MMKV::enableCompareBeforeSet() {
+bool MMKV::enableCompareBeforeSet() {
     MMKVInfo("enableCompareBeforeSet for [%s]", m_mmapID.c_str());
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
 
     assert(!m_enableKeyExpire && "enableCompareBeforeSet is invalid when Expiration is on");
     assert(!m_dicCrypt && "enableCompareBeforeSet is invalid when key encryption is on");
+    if (m_enableKeyExpire || m_dicCrypt) {
+        return false;
+    }
 
     m_enableCompareBeforeSet = true;
+    return true;
 }
 
-void MMKV::disableCompareBeforeSet() {
+bool MMKV::disableCompareBeforeSet() {
     MMKVInfo("disableCompareBeforeSet for [%s]", m_mmapID.c_str());
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
+
+    assert(!m_enableKeyExpire && "disableCompareBeforeSet is invalid when Expiration is on");
+    assert(!m_dicCrypt && "disableCompareBeforeSet is invalid when key encryption is on");
+    if (m_enableKeyExpire || m_dicCrypt) {
+        return false;
+    }
+
     m_enableCompareBeforeSet = false;
+    return true;
 }
 
 MMKV_NAMESPACE_END

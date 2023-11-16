@@ -220,6 +220,9 @@ type MMKV interface {
 	EnableAutoKeyExpire(expireDurationInSecond uint32) bool
 
 	DisableAutoKeyExpire() bool
+
+	EnableCompareBeforeSet() bool
+	DisableCompareBeforeSet() bool
 }
 
 type ctorMMKV uintptr
@@ -645,5 +648,15 @@ func (kv ctorMMKV) EnableAutoKeyExpire(expireDurationInSecond uint32) bool {
 
 func (kv ctorMMKV) DisableAutoKeyExpire() bool {
 	ret := C.disableAutoExpire(unsafe.Pointer(kv))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) EnableCompareBeforeSet() bool {
+	ret := C.enableCompareBeforeSet(unsafe.Pointer(kv))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) DisableCompareBeforeSet() bool {
+	ret := C.disableCompareBeforeSet(unsafe.Pointer(kv))
 	return bool(ret)
 }

@@ -672,26 +672,26 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return m_mmkv->disableAutoKeyExpire();
 }
 
-- (void)enableCompareBeforeSet {
+- (BOOL)enableCompareBeforeSet {
     if (m_mmkv->isExpirationEnabled()) {
         MMKVWarning("enableCompareBeforeSet is invalid when Expiration is on");
 #if DEBUG
         MMKV_ASSERT(0);
 #endif
-        return;
+        return NO;
     }
     if (m_mmkv->isEncryptionEnabled()) {
         MMKVWarning("enableCompareBeforeSet is invalid when key encryption is on");
 #if DEBUG
         MMKV_ASSERT(0);
 #endif
-        return;
+        return NO;
     }
 
     return m_mmkv->enableCompareBeforeSet();
 }
 
-- (void)disableCompareBeforeSet {
+- (BOOL)disableCompareBeforeSet {
     return m_mmkv->disableCompareBeforeSet();
 }
 

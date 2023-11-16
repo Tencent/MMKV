@@ -342,8 +342,8 @@ public:
 
 
     // compare value for key before set, to reduce the possibility of file expanding
-    void enableCompareBeforeSet();
-    void disableCompareBeforeSet();
+    bool enableCompareBeforeSet();
+    bool disableCompareBeforeSet();
     
     bool isExpirationEnabled() { return m_enableKeyExpire; }
     bool isEncryptionEnabled() { return m_dicCrypt; }
