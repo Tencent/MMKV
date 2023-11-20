@@ -1,6 +1,6 @@
 # MMKV Change Log
 
-## v1.3.2 / 2023-11-16
+## v1.3.2 / 2023-11-20
 Among most of the features added in this version, the credit goes to @kaitian521.
 ### Changes for All platforms
 * Add the feature of customizing the **initial file size** of an MMKV instance.
