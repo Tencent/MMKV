@@ -225,7 +225,8 @@ class MMKV {
       final cryptKeyPtr = _string2Pointer(cryptKey);
       final rootDirPtr = _string2Pointer(rootDir);
 
-      _handle = _getMMKVWithID(mmapIDPtr, mode.index, cryptKeyPtr, rootDirPtr, expectedCapacity);
+      _handle = _getMMKVWithID(
+          mmapIDPtr, mode.index, cryptKeyPtr, rootDirPtr, expectedCapacity);
 
       calloc.free(mmapIDPtr);
       calloc.free(cryptKeyPtr);
@@ -504,7 +505,8 @@ class MMKV {
     final sizeArrayPtr = calloc<Pointer<Uint32>>();
     final List<String> keys = [];
 
-    final count = _allKeys(_handle, keyArrayPtr, sizeArrayPtr, _bool2Int(filterExpire));
+    final count =
+        _allKeys(_handle, keyArrayPtr, sizeArrayPtr, _bool2Int(filterExpire));
     if (count > 0) {
       final keyArray = keyArrayPtr[0];
       final sizeArray = sizeArrayPtr[0];
@@ -988,8 +990,11 @@ final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
     _nativeLib
         .lookup<
             NativeFunction<
-                Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
-                    Pointer<Pointer<Uint32>>, Int8)>>(_nativeFuncName("allKeys"))
+                Uint64 Function(
+                    Pointer<Void>,
+                    Pointer<Pointer<Pointer<Utf8>>>,
+                    Pointer<Pointer<Uint32>>,
+                    Int8)>>(_nativeFuncName("allKeys"))
         .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
@@ -1107,10 +1112,10 @@ final bool Function(Pointer<Void>) _disableAutoExpire = _nativeLib
 
 final bool Function(Pointer<Void>) _enableCompareBeforeSet = _nativeLib
     .lookup<NativeFunction<Bool Function(Pointer<Void>)>>(
-    _nativeFuncName("enableCompareBeforeSet"))
+        _nativeFuncName("enableCompareBeforeSet"))
     .asFunction();
 
 final bool Function(Pointer<Void>) _disableCompareBeforeSet = _nativeLib
     .lookup<NativeFunction<Bool Function(Pointer<Void>)>>(
-    _nativeFuncName("disableCompareBeforeSet"))
+        _nativeFuncName("disableCompareBeforeSet"))
     .asFunction();

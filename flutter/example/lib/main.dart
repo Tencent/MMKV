@@ -80,12 +80,14 @@ class _MyAppState extends State<MyApp> {
               onPressed: () {
                 testAutoExpire();
               },
-              child: Text("Auto Expiration Test", style: TextStyle(fontSize: 18))),
-              TextButton(
-                  onPressed: () {
-                    testCompareBeforeSet();
-                  },
-                  child: Text("Compare Before Insert/Update Test", style: TextStyle(fontSize: 18))),
+              child:
+                  Text("Auto Expiration Test", style: TextStyle(fontSize: 18))),
+          TextButton(
+              onPressed: () {
+                testCompareBeforeSet();
+              },
+              child: Text("Compare Before Insert/Update Test",
+                  style: TextStyle(fontSize: 18))),
           TextButton(
               onPressed: () {
                 testBackup();
@@ -321,7 +323,8 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeDouble("auto_expire_key_4", 3.0, 1);
     mmkv.encodeString("auto_expire_key_5", "hello auto expire", 1);
     {
-      final bytes = MMBuffer.fromList(Utf8Encoder().convert("hello auto expire"))!;
+      final bytes =
+          MMBuffer.fromList(Utf8Encoder().convert("hello auto expire"))!;
       mmkv.encodeBytes("auto_expire_key_6", bytes, 1);
       bytes.destroy();
     }
