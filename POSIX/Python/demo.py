@@ -70,6 +70,35 @@ def test_backup():
     print("backup all count: ", count)
 
 
+# just for testing
+def utf8len(s):
+    return len(s.encode('utf-8'))
+
+
+def test_expected_capacity():
+    key = "key0"
+    value = "🏊🏻®4️⃣🐅_"
+    dataLen = 10000
+    for i in range(dataLen):
+        value += "0"
+
+    print("value size =", utf8len(value))
+    expectedSize = utf8len(key) + utf8len(value)
+    # if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    kv = mmkv.MMKV("mmkv_capacity0", mmkv.MMKVMode.SingleProcess, "", "", expectedSize)
+    # 0 times expand
+    kv.set(value, key)
+    print("data size from MMKV =", len(kv.getString(key)))
+
+    countTick = 10
+    expectedSize *= countTick
+    kv = mmkv.MMKV("mmkv_capacity1", mmkv.MMKVMode.SingleProcess, "", "", expectedSize)
+    for i in range(countTick):
+        key1 = "key" + str(i)
+        # 0 times expand
+        kv.set(value, key1)
+
+
 def test_restore():
     root_dir = "/tmp/mmkv_backup"
     mmap_id = "test/Encrypt"
@@ -95,7 +124,7 @@ def test_restore():
 
 def test_auto_expire():
     kv = mmkv.MMKV("test_auto_expire")
-    kv.clearAll()
+    kv.clearAll(True)
     kv.disableAutoKeyExpire()
 
     kv.set(True, "auto_expire_key_1")
@@ -115,6 +144,52 @@ def test_auto_expire():
     print("contains auto_expire_key_1:", "auto_expire_key_1" in kv)
     print("count filter expire key:", kv.count(True))
     print("all non expire keys:", kv.keys(True))
+
+
+def test_compare_before_set():
+    kv = mmkv.MMKV("testCompareBeforeSet")
+    kv.enableCompareBeforeSet()
+    kv.set("extraValue", "extraKey")
+
+    key = "bool"
+    kv.set(True, key)
+    print("testCompareBeforeSet: bool value = ", kv.getBool(key))
+    actualSize1 = kv.actualSize()
+    print("testCompareBeforeSet: actualSize = ", actualSize1)
+    print("testCompareBeforeSet: bool value = ", kv.getBool(key))
+    kv.set(True, key)
+    actualSize2 = kv.actualSize()
+    print("testCompareBeforeSet: actualSize2 = ", actualSize2)
+    if actualSize1 != actualSize2:
+        panic("size not match")
+
+    kv.set(False, key)
+    print("testCompareBeforeSet: bool value = ", kv.getBool(key))
+    if kv.getBool(key):
+        print("value not update")
+
+    s1 = "🏊🏻®hhh4️⃣🐅_yyy"
+    s2 = "0aA🏊🏻®hhh4️⃣🐅_zzz"
+    key = "string"
+    kv.set(s1, key)
+    resultString = kv.getString(key)
+    print("testCompareBeforeSet: string = ", resultString)
+    actualSize1 = kv.actualSize()
+    print("testCompareBeforeSet: actualSize = ", actualSize1)
+    resultString = kv.getString(key)
+    print("testCompareBeforeSet: string = ", resultString)
+    kv.set(s1, key)
+    actualSize2 = kv.actualSize()
+    if actualSize1 != actualSize2:
+        print("size not match")
+
+    kv.set(s2, key)
+    resultString = kv.getString(key)
+    print("testCompareBeforeSet: string = ", resultString)
+    if resultString != s2:
+        print("value not update")
+
+    kv.disableCompareBeforeSet()
 
 
 def logger(log_level, file, line, function, message):
@@ -149,6 +224,8 @@ if __name__ == '__main__':
     # get notified after content changed by other process
     # mmkv.MMKV.registerContentChangeHandler(content_change_handler)
 
+    test_expected_capacity()
+
     functional_test('test_python', False)
 
     test_backup()
@@ -156,6 +233,7 @@ if __name__ == '__main__':
     test_restore()
 
     test_auto_expire()
+    test_compare_before_set()
 
     # mmkv.MMKV.unRegisterLogHandler()
     # mmkv.MMKV.unRegisterErrorHandler()

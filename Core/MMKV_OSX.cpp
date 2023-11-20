@@ -33,9 +33,10 @@
 #    include "ThreadLock.h"
 #    include "aes/AESCrypt.h"
 #    include <sys/utsname.h>
+#    include <sys/sysctl.h>
+#    include "MMKV_OSX.h"
 
 #    ifdef MMKV_IOS
-#        include "MMKV_OSX.h"
 #        include <sys/mman.h>
 #    endif
 
@@ -52,9 +53,6 @@ using namespace mmkv;
 
 extern ThreadLock *g_instanceLock;
 extern MMKVPath_t g_rootDir;
-
-enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
-static void GetAppleMachineInfo(int &device, int &version);
 
 MMKV_NAMESPACE_BEGIN
 
@@ -86,24 +84,9 @@ MLockPtr::~MLockPtr() {
     }
 }
 
+bool MLockPtr::isMLockPtrEnabled = true;
+
 #    endif
-
-extern ThreadOnceToken_t once_control;
-extern void initialize();
-
-void MMKV::minimalInit(MMKVPath_t defaultRootDir) {
-    ThreadLock::ThreadOnce(&once_control, initialize);
-
-    // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
-    int device = 0, version = 0;
-    GetAppleMachineInfo(device, version);
-    MMKVInfo("Apple Device:%d, version:%d", device, version);
-
-    g_rootDir = defaultRootDir;
-    mkPath(g_rootDir);
-
-    MMKVInfo("default root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
-}
 
 #    ifdef MMKV_IOS
 
@@ -123,7 +106,7 @@ bool MMKV::isInBackground() {
 }
 
 pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
-    if (g_isInBackground) {
+    if (g_isInBackground && MLockPtr::isMLockPtrEnabled) {
         MLockPtr mlockPtr(ptr, size);
         return make_pair(mlockPtr.isLocked(), std::move(mlockPtr));
     } else {
@@ -240,6 +223,8 @@ NSObject *MMKV::getObject(MMKVKey_t key, Class cls) {
                 return result;
             } catch (std::exception &exception) {
                 MMKVError("%s", exception.what());
+            } catch (...) {
+                MMKVError("decode fail");
             }
         } else {
             if ([cls conformsToProtocol:@protocol(NSCoding)]) {
@@ -270,6 +255,39 @@ MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolde
     decrypter.decrypt(basePtr + kvHolder.offset, keyData.getPtr(), rawKeySize);
 
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
+}
+
+pair<bool, KeyValueHolder>
+MMKV::overrideDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHolderCrypt &kvHolder, bool isDataHolder) {
+    size_t old_actualSize = m_actualSize;
+    size_t old_position = m_output->getPosition();
+    // only one key in dict, do not append, just rewrite from beginning
+    m_actualSize = 0;
+    m_output->setPosition(0);
+
+    auto m_tmpDic = m_dic;
+    auto m_tmpDicCrypt = m_dicCrypt;
+    if (m_crypter) {
+        m_dicCrypt = new MMKVMapCrypt();
+    } else {
+        m_dic = new MMKVMap();
+    }
+
+    auto ret = appendDataWithKey(data, key, kvHolder, isDataHolder);
+    if (!ret.first) {
+        // rollback
+        m_actualSize = old_actualSize;
+        m_output->setPosition(old_position);
+    }
+
+    if (m_crypter) {
+        delete m_dicCrypt;
+        m_dicCrypt = m_tmpDicCrypt;
+    } else {
+        delete m_dic;
+        m_dic = m_tmpDic;
+    }
+    return ret;
 }
 #    endif
 
@@ -364,11 +382,7 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     MMKVInfo("enumerate [%s] finish", m_mmapID.c_str());
 }
 
-MMKV_NAMESPACE_END
-
-#    include <sys/sysctl.h>
-
-static void GetAppleMachineInfo(int &device, int &version) {
+void GetAppleMachineInfo(int &device, int &version) {
     device = UnKnown;
     version = 0;
 
@@ -405,5 +419,7 @@ static void GetAppleMachineInfo(int &device, int &version) {
         version = std::atoi(machine.substr(pos).c_str());
     }
 }
+
+MMKV_NAMESPACE_END
 
 #endif // MMKV_APPLE

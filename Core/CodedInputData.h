@@ -64,11 +64,15 @@ public:
 
     uint32_t readUInt32();
 
-    MMBuffer readData();
+    // exactly is like getValueSize(actualSize = true)
+    MMBuffer readData(bool copy = true, bool exactly = false);
     void readData(KeyValueHolder &kvHolder);
+
+    static MMBuffer readRealData(mmkv::MMBuffer & data);
 
 #ifndef MMKV_APPLE
     std::string readString();
+    void readString(std::string &s);
     std::string readString(KeyValueHolder &kvHolder);
 #else
     NSString *readString();

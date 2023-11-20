@@ -165,6 +165,7 @@ type MMKV interface {
 
 	// ClearAll clear all key-values
 	ClearAll()
+	ClearAllKeepSpace()
 
 	// Count return count of keys
 	Count() uint64
@@ -220,6 +221,9 @@ type MMKV interface {
 	EnableAutoKeyExpire(expireDurationInSecond uint32) bool
 
 	DisableAutoKeyExpire() bool
+
+	EnableCompareBeforeSet() bool
+	DisableCompareBeforeSet() bool
 }
 
 type ctorMMKV uintptr
@@ -287,21 +291,29 @@ func DefaultMMKVWithModeAndCryptKey(mode int, cryptKey string) MMKV {
 // MMKVWithID an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithID(mmapID string) MMKV {
 	cStrNull := C.GoStringWrapNil()
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull))
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull, 0))
 	return MMKV(mmkv)
+}
+
+// MMKVWithIDAndExpectedCapacity an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
+func MMKVWithIDAndExpectedCapacity(mmapID string, expectedCapacity uint64) MMKV {
+        cStrNull := C.GoStringWrapNil()
+        mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull, 
+                         C.uint64_t(expectedCapacity)))
+        return MMKV(mmkv)
 }
 
 // MMKVWithIDAndMode an instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndMode(mmapID string, mode int) MMKV {
 	cStrNull := C.GoStringWrapNil()
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, cStrNull))
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, cStrNull, 0))
 	return MMKV(mmkv)
 }
 
 // MMKVWithIDAndModeAndCryptKey an encrypted instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string) MMKV {
 	cStrNull := C.GoStringWrapNil()
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), cStrNull))
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), cStrNull, 0))
 	return MMKV(mmkv)
 }
 
@@ -578,7 +590,11 @@ func (kv ctorMMKV) Contains(key string) bool {
 }
 
 func (kv ctorMMKV) ClearAll() {
-	C.clearAll(unsafe.Pointer(kv))
+	C.clearAll(unsafe.Pointer(kv), false)
+}
+
+func (kv ctorMMKV) ClearAllKeepSpace() {
+	C.clearAll(unsafe.Pointer(kv), true)
 }
 
 func (kv ctorMMKV) TotalSize() uint64 {
@@ -637,5 +653,15 @@ func (kv ctorMMKV) EnableAutoKeyExpire(expireDurationInSecond uint32) bool {
 
 func (kv ctorMMKV) DisableAutoKeyExpire() bool {
 	ret := C.disableAutoExpire(unsafe.Pointer(kv))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) EnableCompareBeforeSet() bool {
+	ret := C.enableCompareBeforeSet(unsafe.Pointer(kv))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) DisableCompareBeforeSet() bool {
+	ret := C.disableCompareBeforeSet(unsafe.Pointer(kv))
 	return bool(ret)
 }

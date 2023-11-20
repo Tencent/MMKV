@@ -100,6 +100,22 @@ string CodedInputData::readString() {
     }
 }
 
+void CodedInputData::readString(string &s) {
+    int32_t size = readRawVarint32();
+    if (size < 0) {
+        throw length_error("InvalidProtocolBuffer negativeSize");
+    }
+
+    auto s_size = static_cast<size_t>(size);
+    if (s_size <= m_size - m_position) {
+        s.resize(s_size);
+        memcpy((void *) s.data(), (char *) (m_ptr + m_position), s_size);
+        m_position += s_size;
+    } else {
+        throw out_of_range("InvalidProtocolBuffer truncatedMessage");
+    }
+}
+
 string CodedInputData::readString(KeyValueHolder &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
@@ -123,17 +139,24 @@ string CodedInputData::readString(KeyValueHolder &kvHolder) {
 
 #endif
 
-MMBuffer CodedInputData::readData() {
+MMBuffer CodedInputData::readRealData(mmkv::MMBuffer & data) {
+    CodedInputData input(data.getPtr(), data.length());
+    return input.readData(false, true);
+}
+
+MMBuffer CodedInputData::readData(bool copy, bool exactly) {
     int32_t size = this->readRawVarint32();
     if (size < 0) {
         throw length_error("InvalidProtocolBuffer negativeSize");
     }
 
     auto s_size = static_cast<size_t>(size);
-    if (s_size <= m_size - m_position) {
-        MMBuffer data(((int8_t *) m_ptr) + m_position, s_size);
+    bool isSizeValid = exactly ? (s_size == m_size - m_position) : (s_size <= m_size - m_position);
+    if (isSizeValid) {
+        size_t pos = m_position;
         m_position += s_size;
-        return data;
+        auto copyFlag = copy ? MMBufferCopy : MMBufferNoCopy;
+        return MMBuffer(((int8_t *) m_ptr) + pos, s_size, copyFlag);
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }

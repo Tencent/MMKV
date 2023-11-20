@@ -32,6 +32,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import dalvik.annotation.optimization.FastNative;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -340,7 +341,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, null);
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, null, 0);
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
     }
 
@@ -356,7 +357,24 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, null, null);
+        long handle = getMMKVWithID(mmapID, mode, null, null, 0);
+        return checkProcessMode(handle, mmapID, mode);
+    }
+
+    /**
+     * Create an MMKV instance in single-process or multi-process mode.
+     *
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode   The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param expectedCapacity The file size you expected when opening or creating file
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, int mode, long expectedCapacity) throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
+        long handle = getMMKVWithID(mmapID, mode, null, null, expectedCapacity);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -373,7 +391,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, null);
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, null, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -389,8 +407,45 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath);
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, 0);
         return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
+    }
+
+    /**
+     * Create an MMKV instance in customize folder.
+     *
+     * @param mmapID   The unique ID of the MMKV instance.
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @param expectedCapacity The file size you expected when opening or creating file
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, String rootPath, long expectedCapacity) throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
+        long handle = getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootPath, expectedCapacity);
+        return checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
+    }
+
+    /**
+     * Create an MMKV instance with customize settings all in one.
+     *
+     * @param mmapID   The unique ID of the MMKV instance.
+     * @param mode     The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     * @param expectedCapacity The file size you expected when opening or creating file
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, String rootPath, long expectedCapacity)
+            throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, expectedCapacity);
+        return checkProcessMode(handle, mmapID, mode);
     }
 
     /**
@@ -408,7 +463,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             throw new IllegalStateException("You should Call MMKV.initialize() first.");
         }
 
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath);
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -428,7 +483,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
 
         mode |= BACKUP_MODE;
-        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath);
+        long handle = getMMKVWithID(mmapID, mode, cryptKey, rootPath, 0);
         return checkProcessMode(handle, mmapID, mode);
     }
 
@@ -998,8 +1053,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * Clear all the key-values inside the MMKV instance.
+     * The data file will be trimmed down to `pageSize`, and some sync operations will be called
+     * If you do not want to trim the file, use {@link #clearAllWithKeepingSpace()} instead for better performance
      */
     public native void clearAll();
+
+    /**
+     * Faster {@link #clearAll()} implementation
+     * The file size is kept as previous for later use
+     */
+    public native void clearAllWithKeepingSpace();
 
     /**
      * The {@link #totalSize()} of an MMKV instance won't reduce after deleting key-values,
@@ -1141,7 +1204,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * Enable auto key expiration. This is a upgrade operation, the file format will change.
      * And the file won't be accessed correctly by older version (v1.2.16) of MMKV.
-     *
+     * NOTICE: enableCompareBeforeSet will be invalid when Expiration is on
      * @param expireDurationInSecond the expire duration for all keys, {@link #ExpireNever} (0) means no default duration (aka each key will have it's own expire date)
      */
     public native boolean enableAutoKeyExpire(int expireDurationInSecond);
@@ -1150,6 +1213,38 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Disable auto key expiration. This is a downgrade operation.
      */
     public native boolean disableAutoKeyExpire();
+
+    /**
+     * Enable data compare before set, for better performance
+     * If data for key seldom changes, use it
+     * When encryption or expiration is on, compare-before-set will be invalid.
+     * For encryption, compare operation must decrypt data which is time consuming
+     * For expiration, compare is useless because in most cases the expiration time changes every time.
+     */
+    public void enableCompareBeforeSet() {
+        if (isExpirationEnabled()) {
+            Log.e("MMKV", "enableCompareBeforeSet is invalid when Expiration is on");
+            if (BuildConfig.DEBUG) {
+                throw new RuntimeException("enableCompareBeforeSet is invalid when Expiration is on");
+            }
+        }
+        if (isEncryptionEnabled()) {
+            Log.e("MMKV", "enableCompareBeforeSet is invalid when key encryption is on");
+            if (BuildConfig.DEBUG) {
+                throw new RuntimeException("enableCompareBeforeSet is invalid when Expiration is on");
+            }
+        }
+        nativeEnableCompareBeforeSet();
+    }
+
+    @FastNative
+    private native void nativeEnableCompareBeforeSet();
+
+    /**
+     * Disable data compare before set
+     * disabled at default
+     */
+    public native void disableCompareBeforeSet();
 
     /**
      * Intentionally Not Supported. Because MMKV does type-eraser inside to get better performance.
@@ -1522,7 +1617,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting);
 
     private native static long
-    getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath);
+    getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath,
+                  long expectedCapacity);
 
     private native static long getMMKVWithIDAndSize(String mmapID, int size, int mode, @Nullable String cryptKey);
 
@@ -1604,6 +1700,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static native void destroyNB(long pointer, int size);
 
     private native int writeValueToNB(long handle, String key, long pointer, int size);
+
+    private native boolean isCompareBeforeSetEnabled();
+
+    @FastNative
+    private native boolean isEncryptionEnabled();
+
+    @FastNative
+    private native boolean isExpirationEnabled();
 
     private static native boolean checkProcessMode(long handle);
 }

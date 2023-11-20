@@ -119,10 +119,78 @@ public class MainActivity extends AppCompatActivity {
         //testTrimNonEmptyInterProcess();
         //testItemSizeHolderOverride();
 
+//        testDiskFull();
+
         testBackup();
         testRestore();
 
         testAutoExpire();
+        testExpectedCapacity();
+        testCompareBeforeSet();
+        testClearAllKeepSpace();
+//        testFastNativeSpeed();
+    }
+
+    private void testCompareBeforeSet() {
+        MMKV mmkv = MMKV.mmkvWithID("testCompareBeforeSet");
+        mmkv.enableCompareBeforeSet();
+
+        mmkv.encode("key", "extra");
+
+        {
+            String key = "int";
+            int v = 12345;
+            mmkv.encode(key, v);
+            long actualSize = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize);
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getInt(key, -1));
+            mmkv.encode(key, v);
+            long actualSize2 = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize2);
+            if (actualSize2 != actualSize) {
+                Log.e("mmkv", "testCompareBeforeSet fail");
+            }
+
+            mmkv.encode(key, v * 23);
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + mmkv.actualSize());
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getInt(key, -1));
+        }
+
+        {
+            String key = "string";
+            String v = "w012A🏊🏻good";
+            mmkv.encode(key, v);
+            long actualSize = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize);
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getString(key, ""));
+            mmkv.encode(key, v);
+            long actualSize2 = mmkv.actualSize();
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + actualSize2);
+            if (actualSize2 != actualSize) {
+                Log.e("mmkv", "testCompareBeforeSet fail");
+            }
+
+            mmkv.encode(key, "temp data 👩🏻‍🏫");
+            Log.d("mmkv", "testCompareBeforeSet actualSize = " + mmkv.actualSize());
+            Log.d("mmkv", "testCompareBeforeSet v = " + mmkv.getString(key, ""));
+        }
+    }
+
+    /**
+     * <a href="https://developer.android.com/reference/dalvik/annotation/optimization/FastNative">FastNative</a>
+     * Before Test, remove `MMKVInfo` log print in `enableCompareBeforeSet` function
+     */
+    private void testFastNativeSpeed() {
+        int repeatCount = 5000000;
+        MMKV mmkv = MMKV.mmkvWithID("test_fastnative_speed");
+        long start, end;
+        start = System.currentTimeMillis();
+        for (int i = 0; i < repeatCount; i++) {
+            mmkv.enableCompareBeforeSet();
+        }
+        end = System.currentTimeMillis();
+
+        Log.e("MMKV", "testFastNativeSpeed： " + (end - start));
     }
 
     private void testInterProcessLogic() {
@@ -638,6 +706,8 @@ public class MainActivity extends AppCompatActivity {
         mmkv.encode("auto_expire_key_1", true);
         mmkv.encode("never_expire_key_1", true, MMKV.ExpireNever);
 
+//        mmkv.enableCompareBeforeSet();
+
         testAutoExpire(mmkv, false, 1);
         SystemClock.sleep(1000 * 2);
         testAutoExpire(mmkv, true, 1);
@@ -655,6 +725,69 @@ public class MainActivity extends AppCompatActivity {
             Log.i("MMKV", "auto key expiration never_expire_key_1");
         } else {
             Log.e("MMKV", "auto key expiration never_expire_key_1");
+        }
+    }
+
+    private int addExtraRoundUp(int len) {
+        int pageSize = MMKV.pageSize();
+        int rest = len % pageSize;
+        return rest == 0 ? len + pageSize :  (2 + len / pageSize) * pageSize;
+    }
+
+    private void testDiskFull() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                MMKV mmkv = MMKV.mmkvWithID("disk_full");
+                long i = 0;
+                StringBuilder value = new StringBuilder();
+                for (int j = 0; j < 100000; j++) {
+                    value.append("a");
+                }
+                while (true) {
+                    boolean ret = mmkv.encode(i++ + "", value.toString());
+                    if (!ret) {
+                        break;
+                    }
+                }
+            }
+        }).start();
+    }
+
+    private void testClearAllKeepSpace() {
+        MMKV mmkv = MMKV.mmkvWithID("testClearAllKeepSpace");
+        mmkv.encode("key", "value");
+        mmkv.encode("key2", "value2");
+        mmkv.clearAllWithKeepingSpace();
+        mmkv.encode("key3", "value3");
+        mmkv.clearAll();
+        mmkv.encode("key4", "value4");
+    }
+
+    private void testExpectedCapacity() {
+        String key = "key0";
+        String value = "🏊🏻®4️⃣🐅_";
+        int len = 10000;
+        for (int i = 0; i < len; i++) {
+            value += "0";
+        }
+        Log.i("MMKV", "value size = " + value.getBytes().length);
+        int expectedSize = key.getBytes().length + value.getBytes().length;
+        // if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+        // extra space can be added to round up
+        MMKV mmkv = MMKV.mmkvWithID("test_expected_capacity0", MMKV.SINGLE_PROCESS_MODE,
+                addExtraRoundUp(len));
+        // 0 times expand
+        mmkv.encode(key, value);
+
+        int count = 10;
+        expectedSize = expectedSize * count;
+        MMKV mmkv1 = MMKV.mmkvWithID("test_expected_capacity1", MMKV.SINGLE_PROCESS_MODE,
+                addExtraRoundUp(expectedSize));
+        for (int i = 0; i < count; i++) {
+            String k = "key" + i;
+            // 0 times expand
+            mmkv1.encode(k, value);
         }
     }
 }

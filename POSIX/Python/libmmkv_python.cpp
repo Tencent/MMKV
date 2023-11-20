@@ -99,18 +99,19 @@ PYBIND11_MODULE(mmkv, m) {
     //             py::arg("cryptKey") = (string*) nullptr,
     //             py::arg("rootDir") = (string*) nullptr);
 
-    clsMMKV.def(py::init([](const string &mmapID, MMKVMode mode, const string &cryptKey, const string &rootDir) {
+    clsMMKV.def(py::init([](const string &mmapID, MMKVMode mode, const string &cryptKey, const string &rootDir, const size_t expectedCapacity) {
                     string *cryptKeyPtr = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
                     string *rootDirPtr = (rootDir.length() > 0) ? (string *) &rootDir : nullptr;
-                    return MMKV::mmkvWithID(mmapID, mode, cryptKeyPtr, rootDirPtr);
+                    return MMKV::mmkvWithID(mmapID, mode, cryptKeyPtr, rootDirPtr, expectedCapacity);
                 }),
                 "Parameters:\n"
                 "  mmapID: all instances of the same mmapID share the same data and file storage\n"
                 "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
                 "  cryptKey: pass a non-empty string for an encrypted MMKV, 16 bytes at most\n"
                 "  rootDir: custom root directory",
+                "  expectedCapacity: the file size you expected when opening or creating file",
                 py::arg("mmapID"), py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string(),
-                py::arg("rootDir") = string());
+                py::arg("rootDir") = string(), py::arg("expectedCapacity") = 0);
 
     clsMMKV.def("__eq__", [](MMKV &kv, const MMKV &other) { return kv.mmapID() == other.mmapID(); });
 
@@ -231,7 +232,7 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsMMKV.def("remove", &MMKV::removeValueForKey, py::arg("key"));
     clsMMKV.def("remove", &MMKV::removeValuesForKeys, py::arg("keys"));
-    clsMMKV.def("clearAll", &MMKV::clearAll, "remove all key-values");
+    clsMMKV.def("clearAll", &MMKV::clearAll, py::arg("keepSpace") = false, "remove all key-values");
     clsMMKV.def("trim", &MMKV::trim, "call this method after lots of removing if you care about disk usage");
     clsMMKV.def("clearMemoryCache", &MMKV::clearMemoryCache, "call this method if you are facing memory-warning");
 
@@ -242,6 +243,9 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("enableAutoKeyExpire", &MMKV::enableAutoKeyExpire, py::arg("expireDurationInSecond"),
                 "turn on auto key expiration, passing 0 means never expire");
     clsMMKV.def("disableAutoKeyExpire", &MMKV::disableAutoKeyExpire, "turn off auto key expiration");
+
+    clsMMKV.def("enableCompareBeforeSet", &MMKV::enableCompareBeforeSet, "turn on compare before set/update");
+    clsMMKV.def("disableCompareBeforeSet", &MMKV::disableCompareBeforeSet, "turn off compare before set/update");
 
     clsMMKV.def("lock", &MMKV::lock, "get exclusive access, won't return until the lock is obtained");
     clsMMKV.def("unlock", &MMKV::unlock);

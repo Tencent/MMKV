@@ -218,13 +218,15 @@ class MMKV {
   MMKV(String mmapID,
       {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE,
       String? cryptKey,
-      String? rootDir}) {
+      String? rootDir,
+      int expectedCapacity = 0}) {
     if (mmapID.isNotEmpty) {
       final mmapIDPtr = _string2Pointer(mmapID);
       final cryptKeyPtr = _string2Pointer(cryptKey);
       final rootDirPtr = _string2Pointer(rootDir);
 
-      _handle = _getMMKVWithID(mmapIDPtr, mode.index, cryptKeyPtr, rootDirPtr);
+      _handle = _getMMKVWithID(
+          mmapIDPtr, mode.index, cryptKeyPtr, rootDirPtr, expectedCapacity);
 
       calloc.free(mmapIDPtr);
       calloc.free(cryptKeyPtr);
@@ -503,7 +505,8 @@ class MMKV {
     final sizeArrayPtr = calloc<Pointer<Uint32>>();
     final List<String> keys = [];
 
-    final count = _allKeys(_handle, keyArrayPtr, sizeArrayPtr, _bool2Int(filterExpire));
+    final count =
+        _allKeys(_handle, keyArrayPtr, sizeArrayPtr, _bool2Int(filterExpire));
     if (count > 0) {
       final keyArray = keyArrayPtr[0];
       final sizeArray = sizeArrayPtr[0];
@@ -583,8 +586,8 @@ class MMKV {
     calloc.free(sizeArray);
   }
 
-  void clearAll() {
-    _clearAll(_handle);
+  void clearAll({bool keepSpace = false}) {
+    _clearAll(_handle, _bool2Int(keepSpace));
   }
 
   /// Synchronize memory to file.
@@ -693,6 +696,16 @@ class MMKV {
   /// Disable auto key expiration. This is a downgrade operation.
   bool disableAutoKeyExpire() {
     return _disableAutoExpire(_handle);
+  }
+
+  /// Enable compare value before update/insert.
+  bool enableCompareBeforeSet() {
+    return _enableCompareBeforeSet(_handle);
+  }
+
+  /// Disable compare value before update/insert.
+  bool disableCompareBeforeSet() {
+    return _disableCompareBeforeSet(_handle);
   }
 }
 
@@ -809,12 +822,12 @@ final void Function(Pointer<Utf8> rootDir, Pointer<Utf8> cacheDir, int sdkInt,
             .asFunction();
 
 final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey,
-        Pointer<Utf8> rootDir) _getMMKVWithID =
+        Pointer<Utf8> rootDir, int expectedCapacity) _getMMKVWithID =
     _nativeLib
         .lookup<
             NativeFunction<
                 Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>,
-                    Pointer<Utf8>)>>("getMMKVWithID")
+                    Pointer<Utf8>, Uint32)>>("getMMKVWithID")
         .asFunction();
 
 final Pointer<Void> Function(int, Pointer<Utf8> cryptKey) _getDefaultMMKV =
@@ -977,8 +990,11 @@ final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
     _nativeLib
         .lookup<
             NativeFunction<
-                Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>,
-                    Pointer<Pointer<Uint32>>, Int8)>>(_nativeFuncName("allKeys"))
+                Uint64 Function(
+                    Pointer<Void>,
+                    Pointer<Pointer<Pointer<Utf8>>>,
+                    Pointer<Pointer<Uint32>>,
+                    Int8)>>(_nativeFuncName("allKeys"))
         .asFunction();
 
 final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _nativeLib
@@ -1018,8 +1034,8 @@ final void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int)
                     Uint64)>>(_nativeFuncName("removeValuesForKeys"))
         .asFunction();
 
-final void Function(Pointer<Void>) _clearAll = _nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>)>>(
+final void Function(Pointer<Void>, int) _clearAll = _nativeLib
+    .lookup<NativeFunction<Void Function(Pointer<Void>, Uint32)>>(
         _nativeFuncName("clearAll"))
     .asFunction();
 
@@ -1092,4 +1108,14 @@ final bool Function(Pointer<Void>, int) _enableAutoExpire = _nativeLib
 final bool Function(Pointer<Void>) _disableAutoExpire = _nativeLib
     .lookup<NativeFunction<Bool Function(Pointer<Void>)>>(
         _nativeFuncName("disableAutoExpire"))
+    .asFunction();
+
+final bool Function(Pointer<Void>) _enableCompareBeforeSet = _nativeLib
+    .lookup<NativeFunction<Bool Function(Pointer<Void>)>>(
+        _nativeFuncName("enableCompareBeforeSet"))
+    .asFunction();
+
+final bool Function(Pointer<Void>) _disableCompareBeforeSet = _nativeLib
+    .lookup<NativeFunction<Bool Function(Pointer<Void>)>>(
+        _nativeFuncName("disableCompareBeforeSet"))
     .asFunction();

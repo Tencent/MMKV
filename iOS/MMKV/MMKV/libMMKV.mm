@@ -25,6 +25,8 @@
 #import <MMKVCore/ThreadLock.h>
 #import <MMKVCore/openssl_md5.h>
 
+#import "AutoCleanInfo.hpp"
+
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION)
 #import <UIKit/UIKit.h>
 #endif
@@ -155,6 +157,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:nil mode:MMKVSingleProcess];
 }
 
++ (instancetype)mmkvWithID:(NSString *)mmapID expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID
+                   cryptKey:nil
+                   rootPath:nil
+                       mode:MMKVSingleProcess
+           expectedCapacity:expectedCapacity];
+}
+
 + (instancetype)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode {
     auto rootPath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:rootPath mode:mode];
@@ -162,6 +172,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey {
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:nil mode:MMKVSingleProcess];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:nil mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode {
@@ -173,6 +187,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:rootPath mode:MMKVSingleProcess];
 }
 
++ (instancetype)mmkvWithID:(NSString *)mmapID rootPath:(nullable NSString *)rootPath expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:rootPath mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
+}
+
 + (instancetype)mmkvWithID:(NSString *)mmapID relativePath:(nullable NSString *)relativePath {
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:relativePath mode:MMKVSingleProcess];
 }
@@ -181,12 +199,20 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:MMKVSingleProcess];
 }
 
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
+}
+
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath {
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:relativePath mode:MMKVSingleProcess];
 }
 
 // relatePath and MMKVMultiProcess mode can't be set at the same time, so we hide this method from public
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode {
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:MMKVSingleProcess expectedCapacity:0];
+}
+
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
     NSAssert(g_hasCalledInitializeMMKV, @"MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
     if (mmapID.length <= 0) {
         return nil;
@@ -206,7 +232,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID rootPath:rootPath];
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
-        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode];
+        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode expectedCapacity:expectedCapacity];
         if (!kv->m_mmkv) {
             [kv release];
             return nil;
@@ -215,11 +241,11 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         [g_instanceDic setObject:kv forKey:kvKey];
         [kv release];
     }
-    kv->m_lastAccessTime = [NSDate timeIntervalSinceReferenceDate];
+    kv->m_lastAccessTime = llround([NSDate timeIntervalSinceReferenceDate] * 1000);
     return kv;
 }
 
-- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(NSString *)rootPath mode:(MMKVMode)mode {
+- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
     if (self = [super init]) {
         string pathTmp;
         if (rootPath.length > 0) {
@@ -231,7 +257,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         }
         string *rootPathPtr = pathTmp.empty() ? nullptr : &pathTmp;
         string *cryptKeyPtr = cryptKeyTmp.empty() ? nullptr : &cryptKeyTmp;
-        m_mmkv = mmkv::MMKV::mmkvWithID(mmapID.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, rootPathPtr);
+        m_mmkv = mmkv::MMKV::mmkvWithID(mmapID.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, rootPathPtr, expectedCapacity);
         if (!m_mmkv) {
             return self;
         }
@@ -291,6 +317,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (void)clearAll {
     m_mmkv->clearAll();
+}
+
+- (void)clearAllWithKeepingSpace {
+    m_mmkv->clearAll(true);
 }
 
 - (void)clearMemoryCache {
@@ -628,12 +658,41 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return m_mmkv->allKeys(true);
 }
 
-- (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds {
+- (BOOL)enableAutoKeyExpire:(uint32_t)expiredInSeconds {
+    if (m_mmkv->isCompareBeforeSetEnabled()) {
+        MMKVWarning("enableCompareBeforeSet will be invalid when Expiration is on");
+#if DEBUG
+        MMKV_ASSERT(0);
+#endif
+    }
     return m_mmkv->enableAutoKeyExpire(expiredInSeconds);
 }
 
 - (BOOL)disableAutoKeyExpire {
     return m_mmkv->disableAutoKeyExpire();
+}
+
+- (BOOL)enableCompareBeforeSet {
+    if (m_mmkv->isExpirationEnabled()) {
+        MMKVWarning("enableCompareBeforeSet is invalid when Expiration is on");
+#if DEBUG
+        MMKV_ASSERT(0);
+#endif
+        return NO;
+    }
+    if (m_mmkv->isEncryptionEnabled()) {
+        MMKVWarning("enableCompareBeforeSet is invalid when key encryption is on");
+#if DEBUG
+        MMKV_ASSERT(0);
+#endif
+        return NO;
+    }
+
+    return m_mmkv->enableCompareBeforeSet();
+}
+
+- (BOOL)disableCompareBeforeSet {
+    return m_mmkv->disableCompareBeforeSet();
 }
 
 - (void)removeValueForKey:(NSString *)key {
@@ -680,15 +739,17 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 static bool g_isAutoCleanUpEnabled = false;
-static uint32_t g_maxIdleSeconds = 0;
+static uint32_t g_maxIdleMS = 0;
+constexpr int DoCleanUpDurationMS = 2 * 1000;
 static dispatch_source_t g_autoCleanUpTimer = nullptr;
+static AutoCleanInfoQueue_t g_cleanQueue = {};
 
 + (void)enableAutoCleanUp:(uint32_t)maxIdleMinutes {
     MMKVInfo("enable auto clean up with maxIdleMinutes:%zu", maxIdleMinutes);
     SCOPED_LOCK(g_lock);
 
     g_isAutoCleanUpEnabled = true;
-    g_maxIdleSeconds = maxIdleMinutes * 60;
+    g_maxIdleMS = maxIdleMinutes * 60 * 1000;
 
     if (!g_autoCleanUpTimer) {
         g_autoCleanUpTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
@@ -698,7 +759,10 @@ static dispatch_source_t g_autoCleanUpTimer = nullptr;
     } else {
         dispatch_suspend(g_autoCleanUpTimer);
     }
-    dispatch_source_set_timer(g_autoCleanUpTimer, dispatch_time(DISPATCH_TIME_NOW, g_maxIdleSeconds * NSEC_PER_SEC), g_maxIdleSeconds * NSEC_PER_SEC, 0);
+    dispatch_source_set_timer(g_autoCleanUpTimer,
+                              dispatch_time(DISPATCH_TIME_NOW, g_maxIdleMS * NSEC_PER_MSEC),
+                              g_maxIdleMS * NSEC_PER_MSEC,
+                              0);
     dispatch_resume(g_autoCleanUpTimer);
 }
 
@@ -707,7 +771,7 @@ static dispatch_source_t g_autoCleanUpTimer = nullptr;
     SCOPED_LOCK(g_lock);
 
     g_isAutoCleanUpEnabled = false;
-    g_maxIdleSeconds = 0;
+    g_maxIdleMS = 0;
 
     if (g_autoCleanUpTimer) {
         dispatch_source_cancel(g_autoCleanUpTimer);
@@ -716,6 +780,10 @@ static dispatch_source_t g_autoCleanUpTimer = nullptr;
     }
 }
 
+/// clean up mmkv instance that not been access lately
+///   There are two phases of auto clean:
+///   1. check-cleanup phase with longer duration: CleanUpDurationMS
+///   2. do-cleanup phase with faster duration: DoCleanUpDurationSecends
 + (void)tryAutoCleanUpInstances {
     SCOPED_LOCK(g_lock);
 
@@ -726,18 +794,63 @@ static dispatch_source_t g_autoCleanUpTimer = nullptr;
     }
 #endif
 
-    uint64_t now = [NSDate timeIntervalSinceReferenceDate];
-    NSMutableArray *arrKeys = [NSMutableArray array];
+    const uint64_t now = llround([NSDate timeIntervalSinceReferenceDate] * 1000);
+
+    // mark that we were once in do-cleanup phase and maybe needs reset timer
+    bool inDoCleanupPhase = !g_cleanQueue.empty();
+    while (!g_cleanQueue.empty()) {
+        auto &info = g_cleanQueue.top();
+        auto mmkv = (MMKV *) [g_instanceDic objectForKey:info.m_key];
+        if (mmkv) {
+            if (mmkv->m_mmkv->try_lock_thread()) {
+                // check m_lastAccessTime again
+                if (mmkv->m_lastAccessTime + g_maxIdleMS <= now && mmkv.retainCount == 1) {
+                    // clean one at a time, prevent from holding g_lock for too long
+                    @autoreleasepool {
+                        MMKVInfo("auto cleanup mmkv [%@], m_time: %llu", info.m_key, info.m_time);
+                        [g_instanceDic removeObjectForKey:info.m_key];
+                        g_cleanQueue.pop();
+                        // enumerate & check again if hit the bottom
+                        if (g_cleanQueue.empty()) {
+                            break;
+                        }
+                        return;
+                    }
+                }
+                MMKVInfo("ignore auto cleanup mmkv [%@], m_lastAccessTime: %llu", info.m_key, mmkv->m_lastAccessTime);
+                mmkv->m_mmkv->unlock_thread();
+            }
+            // if we reach here, it's must have been access by someone, ignore it
+            g_cleanQueue.pop();
+        } else {
+            // someone else has closed it
+            MMKVInfo("ignore already closed mmkv [%@]", info.m_key);
+            g_cleanQueue.pop();
+        }
+    }
+
     [g_instanceDic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
         auto mmkv = (MMKV *) obj;
-        if (mmkv->m_lastAccessTime + g_maxIdleSeconds <= now && mmkv.retainCount == 1) {
-            [arrKeys addObject:key];
+        if (mmkv->m_lastAccessTime + g_maxIdleMS <= now && mmkv.retainCount == 1) {
+            MMKVInfo("adding to cleanup queue mmkv [%@], m_lastAccessTime: %llu", key, mmkv->m_lastAccessTime);
+            g_cleanQueue.emplace((NSString *) key, mmkv->m_lastAccessTime);
         }
     }];
-    if (arrKeys.count > 0) {
-        auto msg = [NSString stringWithFormat:@"auto cleanup mmkv %@", arrKeys];
-        MMKVInfo(msg.UTF8String);
-        [g_instanceDic removeObjectsForKeys:arrKeys];
+
+    if (g_autoCleanUpTimer) {
+        if (!inDoCleanupPhase && !g_cleanQueue.empty()) {
+            MMKVInfo("switch to do-cleanup phase with faster duration");
+            dispatch_source_set_timer(g_autoCleanUpTimer,
+                                      dispatch_time(DISPATCH_TIME_NOW, DoCleanUpDurationMS * NSEC_PER_MSEC),
+                                      DoCleanUpDurationMS * NSEC_PER_MSEC,
+                                      60 * NSEC_PER_SEC);
+        } else if (inDoCleanupPhase && g_cleanQueue.empty()) {
+            MMKVInfo("switch back to check-cleanup phase with longer duration");
+            dispatch_source_set_timer(g_autoCleanUpTimer,
+                                      dispatch_time(DISPATCH_TIME_NOW, g_maxIdleMS * NSEC_PER_MSEC),
+                                      g_maxIdleMS * NSEC_PER_MSEC,
+                                      60 * NSEC_PER_SEC);
+        }
     }
 }
 

@@ -47,7 +47,8 @@ MMKV_EXPORT void onExit() {
     MMKV::onExit();
 }
 
-MMKV_EXPORT void *getMMKVWithID(GoStringWrap mmapID, int32_t mode, GoStringWrap cryptKey, GoStringWrap rootPath) {
+MMKV_EXPORT void *getMMKVWithID(GoStringWrap mmapID, int32_t mode, GoStringWrap cryptKey, 
+                                GoStringWrap rootPath, uint64_t expectedCapacity) {
     MMKV *kv = nullptr;
     if (!mmapID.ptr) {
         return kv;
@@ -60,9 +61,9 @@ MMKV_EXPORT void *getMMKVWithID(GoStringWrap mmapID, int32_t mode, GoStringWrap 
         if (crypt.length() > 0) {
             if (rootPath.ptr) {
                 auto path = string(rootPath.ptr, rootPath.length);
-                kv = MMKV::mmkvWithID(str, (MMKVMode) mode, &crypt, &path);
+                kv = MMKV::mmkvWithID(str, (MMKVMode) mode, &crypt, &path, expectedCapacity);
             } else {
-                kv = MMKV::mmkvWithID(str, (MMKVMode) mode, &crypt, nullptr);
+                kv = MMKV::mmkvWithID(str, (MMKVMode) mode, &crypt, nullptr, expectedCapacity);
             }
             done = true;
         }
@@ -70,9 +71,9 @@ MMKV_EXPORT void *getMMKVWithID(GoStringWrap mmapID, int32_t mode, GoStringWrap 
     if (!done) {
         if (rootPath.ptr) {
             auto path = string(rootPath.ptr, rootPath.length);
-            kv = MMKV::mmkvWithID(str, (MMKVMode) mode, nullptr, &path);
+            kv = MMKV::mmkvWithID(str, (MMKVMode) mode, nullptr, &path, expectedCapacity);
         } else {
-            kv = MMKV::mmkvWithID(str, (MMKVMode) mode, nullptr, nullptr);
+            kv = MMKV::mmkvWithID(str, (MMKVMode) mode, nullptr, nullptr, expectedCapacity);
         }
     }
 
@@ -475,10 +476,10 @@ MMKV_EXPORT void removeValuesForKeys(void *handle, GoStringWrap *keyArray, uint6
     }
 }
 
-MMKV_EXPORT void clearAll(void *handle) {
+MMKV_EXPORT void clearAll(void *handle, bool keepSpace) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
-        kv->clearAll();
+        kv->clearAll(keepSpace);
     }
 }
 
@@ -582,6 +583,22 @@ MMKV_EXPORT bool disableAutoExpire(void *handle) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
         return kv->disableAutoKeyExpire();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool enableCompareBeforeSet(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->enableCompareBeforeSet();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool disableCompareBeforeSet(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->disableCompareBeforeSet();
     }
     return false;
 }

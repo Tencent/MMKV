@@ -111,6 +111,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
             block(dic);
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     } else {
         try {
@@ -122,6 +124,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
             }
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
 }
@@ -164,6 +168,8 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
             block(dic);
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     } else {
         try {
@@ -175,6 +181,8 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
             }
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("decode fail");
         }
     }
 }

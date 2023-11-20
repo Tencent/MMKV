@@ -188,6 +188,9 @@ MMBuffer MiniPBCoder::encodeDataWithObject(const MMBuffer &obj) {
     } catch (const std::exception &exception) {
         MMKVError("%s", exception.what());
         return MMBuffer();
+    } catch (...) {
+        MMKVError("prepare encode fail");
+        return MMBuffer();
     }
 }
 
@@ -271,6 +274,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
             block(dic);
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("prepare encode fail");
         }
     } else {
         try {
@@ -279,6 +284,8 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
             dic.swap(tmpDic);
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("prepare encode fail");
         }
     }
 }
@@ -314,6 +321,8 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
             block(dic);
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("prepare encode fail");
         }
     } else {
         try {
@@ -322,6 +331,8 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
             dic.swap(tmpDic);
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
+        } catch (...) {
+            MMKVError("prepare encode fail");
         }
     }
 }

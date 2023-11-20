@@ -89,6 +89,9 @@ public:
         } catch (const std::exception &exception) {
             MMKVError("%s", exception.what());
             return MMBuffer();
+        } catch (...) {
+            MMKVError("encode fail");
+            return MMBuffer();
         }
     }
 

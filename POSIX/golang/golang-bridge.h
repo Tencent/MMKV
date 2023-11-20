@@ -42,7 +42,8 @@ typedef struct GoSliceWrap GoSliceWrap_t;
 void mmkvInitialize(GoStringWrap_t rootDir, int32_t logLevel, bool redirect);
 void onExit();
 
-void *getMMKVWithID(GoStringWrap_t mmapID, int32_t mode, GoStringWrap_t cryptKey, GoStringWrap_t rootPath);
+void *getMMKVWithID(GoStringWrap_t mmapID, int32_t mode, GoStringWrap_t cryptKey, 
+                    GoStringWrap_t rootPath, uint64_t expectedCapacity);
 void *getDefaultMMKV(int32_t mode, GoStringWrap_t cryptKey);
 const char *mmapID(void *handle);
 
@@ -90,7 +91,7 @@ uint64_t actualSize(void *handle);
 
 void removeValueForKey(void *handle, GoStringWrap_t oKey);
 void removeValuesForKeys(void *handle, GoStringWrap_t *keyArray, uint64_t count);
-void clearAll(void *handle);
+void clearAll(void *handle, bool keepSpace);
 
 void mmkvSync(void *handle, bool sync);
 void clearMemoryCache(void *handle);
@@ -104,6 +105,8 @@ uint64_t restoreAllFromDirectory(GoStringWrap_t srcDir, GoStringWrap_t dstDir);
 
 bool enableAutoExpire(void *handle, uint32_t expireDuration);
 bool disableAutoExpire(void *handle);
+bool enableCompareBeforeSet(void *handle);
+bool disableCompareBeforeSet(void *handle);
 
 int32_t pageSize();
 const char *version();

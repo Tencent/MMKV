@@ -49,8 +49,8 @@ File::File(MMKVPath_t path, OpenFlag flag) : m_path(std::move(path)), m_fd(-1), 
     open();
 }
 
-MemoryFile::MemoryFile(MMKVPath_t path) : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create), m_ptr(nullptr), m_size(0) {
-    reloadFromFile();
+MemoryFile::MemoryFile(MMKVPath_t path, size_t expectedCapacity) : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create), m_ptr(nullptr), m_size(0) {
+    reloadFromFile(expectedCapacity);
 }
 #    endif // !defined(MMKV_ANDROID)
 
@@ -154,6 +154,16 @@ bool MemoryFile::truncate(size_t size) {
         if (!zeroFillFile(m_diskFile.m_fd, oldSize, m_size - oldSize)) {
             MMKVError("fail to zeroFile [%s] to size %zu, %s", m_diskFile.m_path.c_str(), m_size, strerror(errno));
             m_size = oldSize;
+
+            // redo ftruncate to its previous size
+            int status = ::ftruncate(m_diskFile.m_fd, static_cast<off_t>(m_size));
+            if (status != 0) {
+                MMKVError("failed to truncate back [%s] to size %zu, %s", m_diskFile.m_path.c_str(), m_size, strerror(errno));
+            } else {
+                MMKVError("success to truncate [%s] back to size %zu", m_diskFile.m_path.c_str(), m_size);
+                MMKVError("after truncate, file size = %zu", getActualFileSize());
+            }
+
             return false;
         }
     }
@@ -192,7 +202,7 @@ bool MemoryFile::mmap() {
     return true;
 }
 
-void MemoryFile::reloadFromFile() {
+void MemoryFile::reloadFromFile(size_t expectedCapacity) {
 #    ifdef MMKV_ANDROID
     if (m_fileType == MMFILE_TYPE_ASHMEM) {
         return;
@@ -212,9 +222,13 @@ void MemoryFile::reloadFromFile() {
         SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_diskFile.m_fd, m_size);
+        size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, expectedCapacity);
         // round up to (n * pagesize)
-        if (m_size < DEFAULT_MMAP_SIZE || (m_size % DEFAULT_MMAP_SIZE != 0)) {
-            size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
+        expectedSize = (expectedSize + DEFAULT_MMAP_SIZE - 1) / DEFAULT_MMAP_SIZE * DEFAULT_MMAP_SIZE;
+        
+        if (m_size < expectedSize || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+            size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;;
+            roundSize = std::max<size_t>(expectedSize, roundSize);
             truncate(roundSize);
         } else {
             auto ret = mmap();

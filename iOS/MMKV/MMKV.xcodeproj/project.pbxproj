@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB042EEF2AB9970500F8DD8C /* AutoCleanInfo.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB042EEE2AB9970500F8DD8C /* AutoCleanInfo.hpp */; };
+		CB042EF02AB9970500F8DD8C /* AutoCleanInfo.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB042EEE2AB9970500F8DD8C /* AutoCleanInfo.hpp */; };
+		CB042EF12AB9970500F8DD8C /* AutoCleanInfo.hpp in Headers */ = {isa = PBXBuildFile; fileRef = CB042EEE2AB9970500F8DD8C /* AutoCleanInfo.hpp */; };
 		CB0DCC78242B5AAF009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
 		CB1E0645242B84D800F2FD42 /* libMMKV.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD4952046984F00931B5F /* libMMKV.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CB1E0647242B84D800F2FD42 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBC1A90320DA94A000AD5087 /* libz.tbd */; };
@@ -85,6 +88,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CB042EEE2AB9970500F8DD8C /* AutoCleanInfo.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AutoCleanInfo.hpp; sourceTree = "<group>"; };
 		CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKVAppExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "MMKV copy-Info.plist"; path = "/Users/lingol/Developer/mmkv/iOS/MMKV/MMKV copy-Info.plist"; sourceTree = "<absolute>"; };
 		CB1FD4912046984F00931B5F /* libMMKV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMMKV.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -171,6 +175,7 @@
 		CB1FD4932046984F00931B5F /* MMKV */ = {
 			isa = PBXGroup;
 			children = (
+				CB042EEE2AB9970500F8DD8C /* AutoCleanInfo.hpp */,
 				CB1FD4942046984F00931B5F /* MMKV.h */,
 				CB1FD4952046984F00931B5F /* libMMKV.mm */,
 				CBDF328F2192C0000028DB4D /* MMKVHandler.h */,
@@ -213,6 +218,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB042EF02AB9970500F8DD8C /* AutoCleanInfo.hpp in Headers */,
 				CB1E064B242B84D800F2FD42 /* MMKVHandler.h in Headers */,
 				CB1E064C242B84D800F2FD42 /* MMKV.h in Headers */,
 			);
@@ -222,6 +228,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB042EEF2AB9970500F8DD8C /* AutoCleanInfo.hpp in Headers */,
 				CBDF32902192C0000028DB4D /* MMKVHandler.h in Headers */,
 				CBC1A90C20DA97DF00AD5087 /* MMKV.h in Headers */,
 			);
@@ -231,6 +238,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB042EF12AB9970500F8DD8C /* AutoCleanInfo.hpp in Headers */,
 				CBF19046243D706D001C82ED /* MMKVHandler.h in Headers */,
 				CBF19047243D706D001C82ED /* MMKV.h in Headers */,
 			);
@@ -485,7 +493,7 @@
 				INFOPLIST_FILE = "MMKV copy-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -527,7 +535,7 @@
 				INFOPLIST_FILE = "MMKV copy-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -727,7 +735,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -764,7 +772,7 @@
 				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -807,7 +815,7 @@
 				INFOPLIST_FILE = "MMKVAppExtension copy-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,
@@ -851,7 +859,7 @@
 				INFOPLIST_FILE = "MMKVAppExtension copy-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.3.1;
+				MARKETING_VERSION = 1.3.2;
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
 					UIKit,

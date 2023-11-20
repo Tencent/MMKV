@@ -81,12 +81,21 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(init(mmapID:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param expectedCapacity the file size you expected when opening or creating file
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:expectedCapacity:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param mode MMKVMultiProcess for multi-process MMKV
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(init(mmapID:mode:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(init(mmapID:cryptKey:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 bytes at most
+/// @param expectedCapacity the file size you expected when opening or creating file
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:cryptKey:expectedCapacity:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
@@ -102,6 +111,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID rootPath:(nullable NSString *)rootPath NS_SWIFT_NAME(init(mmapID:rootPath:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param rootPath custom path of the file, `NSDocumentDirectory/mmkv` by default
+/// @param expectedCapacity the file size you expected when opening or creating file
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID rootPath:(nullable NSString *)rootPath expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:rootPath:expectedCapacity:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
 /// @param relativePath custom path of the file, `NSDocumentDirectory/mmkv` by default
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey relativePath:(nullable NSString *)relativePath NS_SWIFT_NAME(init(mmapID:cryptKey:relativePath:)) __attribute__((deprecated("use +mmkvWithID:cryptKey:rootPath: instead")));
@@ -110,6 +124,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param cryptKey 16 bytes at most
 /// @param rootPath custom path of the file, `NSDocumentDirectory/mmkv` by default
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath NS_SWIFT_NAME(init(mmapID:cryptKey:rootPath:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 bytes at most
+/// @param rootPath custom path of the file, `NSDocumentDirectory/mmkv` by default
+/// @param expectedCapacity the file size you expected when opening or creating file
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:cryptKey:rootPath:expectedCapacity:));
+
 
 /// you can call this on applicationWillTerminate, it's totally fine if you don't call
 + (void)onAppTerminate;
@@ -240,14 +261,26 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray *)allNonExpiredKeys;
 
 /// all keys created (or last modified) longger than expiredInSeconds will be deleted on next full-write-back
+/// enableCompareBeforeSet will be invalid when Expiration is on
 /// @param expiredInSeconds = MMKVExpireNever (0) means no common expiration duration for all keys, aka each key will have it's own expiration duration
 - (BOOL)enableAutoKeyExpire:(uint32_t) expiredInSeconds NS_SWIFT_NAME(enableAutoKeyExpire(expiredInSeconds:));
 
 - (BOOL)disableAutoKeyExpire;
 
+/// Enable data compare before set, for better performance
+/// If data for key seldom changes, use it
+/// Notice: When encryption or expiration is on, compare-before-set will be invalid.
+/// For encryption, compare operation must decrypt data which is time consuming
+/// For expiration, compare is useless because in most cases the expiration time changes every time.
+- (BOOL)enableCompareBeforeSet;
+
+- (BOOL)disableCompareBeforeSet;
+
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 
 - (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
+
+- (void)clearAllWithKeepingSpace;
 
 - (void)clearAll;
 

@@ -91,6 +91,12 @@
     // [self testMultiProcess];
     [self testBackup];
     [self testRestore];
+    [self testExpectedCapacity];
+    [self onlyOneKeyTest];
+    [self overrideTest];
+    [self testCompareBeforeSet];
+    
+    [self testClearAllWithKeepingSpace];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -858,6 +864,253 @@ MMKV *getMMKVForBatchTest() {
 
         restoredKV = [MMKV mmkvWithID:@"testSwift"];
         NSLog(@"check on restore file[%@] keys:%@", restoredKV.mmapID, [restoredKV allKeys]);
+    }
+}
+
+
+#pragma mark - expected capacity
+- (void)testExpectedCapacity {
+    
+    int len = 10000;
+    NSString *value = [NSString stringWithFormat:@"🏊🏻®4️⃣🐅_"];
+    for (int i = 0; i < len; i++) {
+        value = [value stringByAppendingString:@"0"];
+    }
+    NSLog(@"value size = %ld", [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+    NSString *key = [NSString stringWithFormat:@"key0"];
+    
+    // if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    size_t expectedSize = [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]
+                        + [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    auto mmkv0 = [MMKV mmkvWithID:@"expectedCapacityTest0" expectedCapacity:expectedSize];
+    // 0 times expand
+    [mmkv0 setString:value forKey:key];
+    
+    
+    int count = 10;
+    expectedSize *= count;
+    auto mmkv1 = [MMKV mmkvWithID:@"expectedCapacityTest1" expectedCapacity:expectedSize];
+    for (int i = 0; i < count; i++) {
+        // 0 times expand
+        [mmkv1 setString:value forKey:[NSString stringWithFormat:@"key%d", i]];
+    }
+}
+
+
+- (void) overrideTest {
+    {
+        auto mmkv0 = [MMKV mmkvWithID:@"overrideTest"];
+        NSString *key = [NSString stringWithFormat:@"hello"];
+        NSString *key2 = [NSString stringWithFormat:@"hello2"];
+        NSString *value = [NSString stringWithFormat:@"world"];
+        
+        [mmkv0 setString:value forKey:key];
+        auto v2 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v2);
+        [mmkv0 removeValueForKey:key];
+        
+        [mmkv0 setString:value forKey:key2];
+        v2 = [mmkv0 getStringForKey:key2];
+        NSLog(@"value = %@", v2);
+        [mmkv0 removeValueForKey:key2];
+        
+        int len = 10000;
+        NSMutableString *bigValue = [NSMutableString stringWithFormat:@"🏊🏻®4️⃣🐅_"];
+        for (int i = 0; i < len; i++) {
+            [bigValue appendString:@"0"];
+        }
+        [mmkv0 setString:bigValue forKey:key];
+        auto v3 = [mmkv0 getStringForKey:key];
+        // NSLog(@"value = %@", v3);
+        if (![bigValue isEqualToString:v3]) {
+            abort();
+        }
+
+        // rewrite
+        [mmkv0 setString:@"OK" forKey:key];
+        auto v4 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v4);
+        
+        [mmkv0 setInt32:12345 forKey:@"int"];
+        auto v5 = [mmkv0 getInt32ForKey:key];
+        NSLog(@"int value = %d", v5);
+        [mmkv0 removeValueForKey:@"int"];
+        
+        [mmkv0 clearAll];
+    
+    }
+    
+    {
+        NSString *crypt = [NSString stringWithFormat:@"fastestCrypt"];
+        auto mmkv0 = [MMKV mmkvWithID:@"overrideCryptTest" cryptKey:[crypt dataUsingEncoding:NSUTF8StringEncoding] mode:MMKVSingleProcess];
+        NSString *key = [NSString stringWithFormat:@"hello"];
+        NSString *key2 = [NSString stringWithFormat:@"hello2"];
+        NSString *value = [NSString stringWithFormat:@"cryptworld"];
+        
+        [mmkv0 setString:value forKey:key];
+        auto v2 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v2);
+        
+        [mmkv0 removeValueForKey:key];
+        [mmkv0 setString:value forKey:key2];
+        v2 = [mmkv0 getStringForKey:key2];
+        NSLog(@"value = %@", v2);
+        [mmkv0 removeValueForKey:key2];
+        
+        [mmkv0 clearAll];
+    }
+}
+
+- (void)onlyOneKeyTest {
+    {
+        auto mmkv0 = [MMKV mmkvWithID:@"onlyOneKeyTest"];
+        NSString *key = [NSString stringWithFormat:@"hello"];
+        NSString *value = [NSString stringWithFormat:@"world"];
+        auto v = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v);
+
+        [mmkv0 setString:value forKey:key];
+        auto v2 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v2);
+
+        for (int i = 0; i < 10; i++) {
+            NSString * value2 = [NSString stringWithFormat:@"world_%d", i];
+            [mmkv0 setString:value2 forKey:key];
+            auto v2 = [mmkv0 getStringForKey:key];
+            NSLog(@"value = %@", v2);
+        }
+
+        int len = 10000;
+        NSMutableString *bigValue = [NSMutableString stringWithFormat:@"🏊🏻®4️⃣🐅_"];
+        for (int i = 0; i < len; i++) {
+            [bigValue appendString:@"0"];
+        }
+        [mmkv0 setString:bigValue forKey:key];
+        auto v3 = [mmkv0 getStringForKey:key];
+        // NSLog(@"value = %@", v3);
+        if (![bigValue isEqualToString:v3]) {
+            abort();
+        }
+
+        [mmkv0 setString:@"OK" forKey:key];
+        auto v4 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v4);
+
+        [mmkv0 setInt32:12345 forKey:@"int"];
+        auto v5 = [mmkv0 getInt32ForKey:key];
+        NSLog(@"int value = %d", v5);
+        [mmkv0 removeValueForKey:@"int"];
+    }
+
+    {
+        NSString *crypt = [NSString stringWithFormat:@"fastest"];
+        auto mmkv0 = [MMKV mmkvWithID:@"onlyOneKeyCryptTest" cryptKey:[crypt dataUsingEncoding:NSUTF8StringEncoding] mode:MMKVSingleProcess];
+        NSString *key = [NSString stringWithFormat:@"hello"];
+        NSString *value = [NSString stringWithFormat:@"cryptworld"];
+        auto v = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v);
+
+        [mmkv0 setString:value forKey:key];
+        auto v2 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v2);
+
+        [mmkv0 setString:@"hello, cryptworld" forKey:key];
+        auto v3 = [mmkv0 getStringForKey:key];
+        NSLog(@"value = %@", v3);
+
+        [mmkv0 close];
+        mmkv0 = nil;
+
+        auto mmkv1 = [MMKV mmkvWithID:@"onlyOneKeyCryptTest" cryptKey:[crypt dataUsingEncoding:NSUTF8StringEncoding] mode:MMKVSingleProcess];
+        auto v4 = [mmkv1 getStringForKey:key];
+        NSLog(@"value = %@", v4);
+        if (![v3 isEqualToString:v4]) {
+            abort();
+        }
+
+        for (int i = 0; i < 10; i++) {
+            NSString * value2 = [NSString stringWithFormat:@"cryptworld_%d", i];
+            [mmkv1 setString:value2 forKey:key];
+            auto v2 = [mmkv1 getStringForKey:key];
+            NSLog(@"value = %@", v2);
+        }
+    }
+}
+
+- (void) testClearAllWithKeepingSpace {
+    {
+        auto mmkv = [MMKV mmkvWithID:@"testClearAllWithKeepingSpace"];
+        [mmkv setFloat:123.456f forKey:@"key1"];
+        for (int i = 0; i < 10000; i++) {
+            [mmkv setFloat:123.456f forKey:[NSString stringWithFormat:@"key_%d", i]];
+        }
+        auto previousSize =[mmkv totalSize];
+        //    assert(previousSize > [PAGE_SIZE]);
+        [mmkv clearAllWithKeepingSpace];
+        assert([mmkv totalSize] == previousSize);
+        NSLog(@"testClearAllWithKeepingSpace, size = %zu", previousSize);
+        assert([mmkv count] == 0);
+        [mmkv setFloat:123.4567f forKey:@"key2"];
+        assert([mmkv count] == 1);
+    }
+    
+    {
+        NSString *crypt = [NSString stringWithFormat:@"Crypt123"];
+        auto mmkv = [MMKV mmkvWithID:@"testClearAllWithKeepingSpaceCrypt" cryptKey:[crypt dataUsingEncoding:NSUTF8StringEncoding] mode:MMKVSingleProcess];
+        [mmkv setFloat:123.456f forKey:@"key1"];
+        for (int i = 0; i < 10000; i++) {
+            [mmkv setFloat:123.456f forKey:[NSString stringWithFormat:@"key_%d", i]];
+        }
+        auto previousSize =[mmkv totalSize];
+//        assert(previousSize > PAGE_SIZE);
+        [mmkv clearAllWithKeepingSpace];
+        assert([mmkv totalSize] == previousSize);
+        assert([mmkv count] == 0);
+        [mmkv setFloat:123.4567f forKey:@"key2"];
+        [mmkv setFloat:223.47f forKey:@"key3"];
+        assert([mmkv count] == 2);
+    }
+}
+
+- (void) testCompareBeforeSet {
+    auto mmkv = [MMKV mmkvWithID:@"testCompareBeforeSet"];
+    [mmkv enableCompareBeforeSet];
+    [mmkv setBool:true forKey:@"extra"];
+    
+    {
+        NSString *key = @"int64";
+        int64_t v = 123456L;
+        [mmkv setInt64:v forKey:key];
+        long actualSize = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize);
+        NSLog(@"testCompareBeforeSet v = %lld", [mmkv getInt64ForKey:key]);
+        [mmkv setInt64:v forKey:key];
+        long actualSize2 = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize2);
+        if (actualSize != actualSize2) {
+            abort();
+        }
+        [mmkv setInt64:v << 1 forKey:key];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", [mmkv actualSize]);
+        NSLog(@"testCompareBeforeSet v = %lld", [mmkv getInt64ForKey:key]);
+    }
+    
+    {
+        NSString *key = @"string";
+        NSString *v = [NSString stringWithFormat:@"w012A🏊🏻good"];
+        [mmkv setString:v forKey:key];
+        long actualSize = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize);
+        NSLog(@"testCompareBeforeSet v = %@", [mmkv getStringForKey:key]);
+        [mmkv setString:v forKey:key];
+        long actualSize2 = [mmkv actualSize];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", actualSize2);
+        if (actualSize != actualSize2) {
+            abort();
+        }
+        [mmkv setString:@"another string" forKey:key];
+        NSLog(@"testCompareBeforeSet actualSize = %ld", [mmkv actualSize]);
+        NSLog(@"testCompareBeforeSet v = %@", [mmkv getStringForKey:key]);
     }
 }
 

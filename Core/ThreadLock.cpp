@@ -59,6 +59,11 @@ void ThreadLock::unlock() {
     }
 }
 
+bool ThreadLock::try_lock() {
+    auto ret = pthread_mutex_trylock(&m_lock);
+    return (ret == 0);
+}
+
 void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) {
     pthread_once(onceToken, callback);
 }

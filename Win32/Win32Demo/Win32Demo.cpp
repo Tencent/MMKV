@@ -320,6 +320,28 @@ void testAutoExpire() {
     cout << "all non expire keys: " << ::to_string(allKeys) << endl;
 }
 
+void testExpectedCapacity() {
+    int len = 10000;
+    std::string value(len, '0');
+    value = "¿¿®4¿¿¿_" + value;
+    cout << "value length = " << value.size() << endl;
+    std::string key = "key";
+    // if you know exactly the sizes of key and value, set expectedCapacity for performance improvement
+    size_t expectedSize = key.size() + value.size();
+    auto mmkv4 = MMKV::mmkvWithID("testExpectedCapacity4", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    // 0 times expand
+    mmkv4->set(value, key);
+
+    int count = 10;
+    expectedSize = (key.size() + value.size()) * count;
+    auto mmkv5 = MMKV::mmkvWithID("testExpectedCapacity5", MMKV_SINGLE_PROCESS, nullptr, nullptr, expectedSize);
+    for (int i = 0; i < count; i++) {
+        key[0] = static_cast<char>('a' + i);
+        // 0 times expand
+        mmkv5->set(value, key);
+    }
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -368,4 +390,5 @@ int main() {
     testBackup();
     testRestore();
     testAutoExpire();
+    testExpectedCapacity();
 }

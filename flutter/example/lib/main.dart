@@ -80,7 +80,14 @@ class _MyAppState extends State<MyApp> {
               onPressed: () {
                 testAutoExpire();
               },
-              child: Text("Auto Expiration Test", style: TextStyle(fontSize: 18))),
+              child:
+                  Text("Auto Expiration Test", style: TextStyle(fontSize: 18))),
+          TextButton(
+              onPressed: () {
+                testCompareBeforeSet();
+              },
+              child: Text("Compare Before Insert/Update Test",
+                  style: TextStyle(fontSize: 18))),
           TextButton(
               onPressed: () {
                 testBackup();
@@ -306,7 +313,7 @@ class _MyAppState extends State<MyApp> {
 
   void testAutoExpire() {
     final mmkv = MMKV("test_auto_expire");
-    mmkv.clearAll();
+    mmkv.clearAll(keepSpace: true);
     mmkv.disableAutoKeyExpire();
 
     mmkv.enableAutoKeyExpire(1);
@@ -316,7 +323,8 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeDouble("auto_expire_key_4", 3.0, 1);
     mmkv.encodeString("auto_expire_key_5", "hello auto expire", 1);
     {
-      final bytes = MMBuffer.fromList(Utf8Encoder().convert("hello auto expire"))!;
+      final bytes =
+          MMBuffer.fromList(Utf8Encoder().convert("hello auto expire"))!;
       mmkv.encodeBytes("auto_expire_key_6", bytes, 1);
       bytes.destroy();
     }
@@ -335,5 +343,50 @@ class _MyAppState extends State<MyApp> {
 
     print("count non-expired keys: ${mmkv.countNonExpiredKeys}");
     print("all non-expired keys: ${mmkv.allNonExpiredKeys}");
+  }
+
+  void testCompareBeforeSet() {
+    final mmkv = MMKV("testCompareBeforeSet", expectedCapacity: 4096 * 2);
+    mmkv.enableCompareBeforeSet();
+
+    mmkv.encodeString("key", "extra");
+
+    {
+      final String key = "int";
+      final int v = 12345;
+      mmkv.encodeInt32(key, v);
+      final actualSize = mmkv.actualSize;
+      print("testCompareBeforeSet actualSize = $actualSize");
+      print("testCompareBeforeSet v = ${mmkv.decodeInt(key)}");
+      mmkv.encodeInt32(key, v);
+      final actualSize2 = mmkv.actualSize;
+      print("testCompareBeforeSet actualSize = $actualSize2");
+      if (actualSize2 != actualSize) {
+        print("testCompareBeforeSet fail");
+      }
+
+      mmkv.encodeInt32(key, v * 23);
+      print("testCompareBeforeSet actualSize = ${mmkv.actualSize}");
+      print("testCompareBeforeSet v = ${mmkv.decodeInt32(key)}");
+    }
+
+    {
+      final key = "string";
+      final v = "w012A🏊🏻good";
+      mmkv.encodeString(key, v);
+      final actualSize = mmkv.actualSize;
+      print("testCompareBeforeSet actualSize = $actualSize");
+      print("testCompareBeforeSet v = ${mmkv.decodeString(key)}");
+      mmkv.encodeString(key, v);
+      final actualSize2 = mmkv.actualSize;
+      print("testCompareBeforeSet actualSize = $actualSize2");
+      if (actualSize2 != actualSize) {
+        print("testCompareBeforeSet fail");
+      }
+
+      mmkv.encodeString(key, "temp data 👩🏻‍🏫");
+      print("testCompareBeforeSet actualSize = ${mmkv.actualSize}");
+      print("testCompareBeforeSet v = ${mmkv.decodeString(key)}");
+    }
   }
 }

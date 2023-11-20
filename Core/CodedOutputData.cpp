@@ -109,6 +109,18 @@ void CodedOutputData::seek(size_t addedSize) {
     }
 }
 
+void CodedOutputData::reset() {
+    m_position = 0;
+}
+
+size_t CodedOutputData::getPosition() {
+    return m_position;
+}
+
+void CodedOutputData::setPosition(size_t position) {
+    m_position = position;
+}
+
 void CodedOutputData::writeRawByte(uint8_t value) {
     if (m_position == m_size) {
         throw out_of_range("m_position: " + to_string(m_position) + " m_size: " + to_string(m_size));

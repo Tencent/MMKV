@@ -61,6 +61,10 @@ public:
     void lock();
     void unlock();
 
+#ifndef MMKV_WIN32
+    bool try_lock();
+#endif
+
     static void ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)(void));
 
 #ifdef MMKV_WIN32
