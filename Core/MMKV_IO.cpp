@@ -65,7 +65,7 @@ void MMKV::loadFromFile() {
     }
 #endif
     if (!m_file->isFileValid()) {
-        m_file->reloadFromFile();
+        m_file->reloadFromFile(m_expectedCapacity);
     }
     if (!m_file->isFileValid()) {
         MMKVError("file [%s] not valid", m_path.c_str());
@@ -1311,7 +1311,7 @@ void MMKV::trim() {
     if (m_actualSize == 0) {
         clearAll();
         return;
-    } else if (m_file->getFileSize() <= DEFAULT_MMAP_SIZE) {
+    } else if (m_file->getFileSize() <= m_expectedCapacity) {
         return;
     }
     SCOPED_LOCK(m_exclusiveProcessLock);
@@ -1322,7 +1322,7 @@ void MMKV::trim() {
     while (fileSize > (m_actualSize + Fixed32Size) * 2) {
         fileSize /= 2;
     }
-    fileSize = std::max<size_t>(fileSize, DEFAULT_MMAP_SIZE);
+    fileSize = std::max<size_t>(fileSize, m_expectedCapacity);
     if (oldSize == fileSize) {
         MMKVInfo("there's no need to trim %s with size %zu, actualSize %zu", m_mmapID.c_str(), fileSize, m_actualSize);
         return;
@@ -1353,13 +1353,13 @@ void MMKV::clearAll(bool keepSpace) {
         return;
     }
 
-    if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
+    if (m_file->getFileSize() == m_expectedCapacity && m_actualSize == 0) {
         MMKVInfo("nothing to clear for [%s]", m_mmapID.c_str());
         return;
     }
 
     if (!keepSpace) {
-        m_file->truncate(DEFAULT_MMAP_SIZE);
+        m_file->truncate(m_expectedCapacity);
     }
 
 #ifndef MMKV_DISABLE_CRYPT
@@ -1484,7 +1484,7 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     m_metaInfo->setFlag(MMKVMetaInfo::EnableKeyExipre);
     m_metaInfo->m_version = MMKVVersionFlag;
 
-    if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
+    if (m_file->getFileSize() == m_expectedCapacity && m_actualSize == 0) {
         MMKVInfo("file is new, don't need a full writeback [%s], just update meta file", m_mmapID.c_str());
         writeActualSize(0, 0, nullptr, IncreaseSequence);
         m_metaFile->msync(MMKV_SYNC);
@@ -1542,7 +1542,7 @@ bool MMKV::disableAutoKeyExpire() {
     m_metaInfo->unsetFlag(MMKVMetaInfo::EnableKeyExipre);
     m_metaInfo->m_version = MMKVVersionFlag;
 
-    if (m_file->getFileSize() == DEFAULT_MMAP_SIZE && m_actualSize == 0) {
+    if (m_file->getFileSize() == m_expectedCapacity && m_actualSize == 0) {
         MMKVInfo("file is new, don't need a full write-back [%s], just update meta file", m_mmapID.c_str());
         writeActualSize(0, 0, nullptr, IncreaseSequence);
         m_metaFile->msync(MMKV_SYNC);

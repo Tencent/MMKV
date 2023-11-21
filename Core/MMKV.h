@@ -74,6 +74,8 @@ class MMKV {
     mmkv::MMKVMap *m_dic;
     mmkv::MMKVMapCrypt *m_dicCrypt;
 
+    size_t m_expectedCapacity;
+
     mmkv::MemoryFile *m_file;
     size_t m_actualSize;
     mmkv::CodedOutputData *m_output;
