@@ -132,6 +132,9 @@ void MMKV::loadFromFile() {
 
 // read from last m_position
 void MMKV::partialLoadFromFile() {
+    if (!m_file->isFileValid()) {
+        return;
+    }
     m_metaInfo->read(m_metaFile->getMemory());
 
     size_t oldActualSize = m_actualSize;
