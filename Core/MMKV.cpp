@@ -429,6 +429,15 @@ void MMKV::recaculateCRCDigestWithIV(const void *iv) {
     }
 }
 
+void MMKV::recaculateCRCDigestOnly() {
+    auto ptr = (const uint8_t *) m_file->getMemory();
+    if (ptr) {
+        m_crcDigest = 0;
+        m_crcDigest = (uint32_t) CRC32(0, ptr + Fixed32Size, (uint32_t) m_actualSize);
+        writeActualSize(m_actualSize, m_crcDigest, nullptr, KeepSequence);
+    }
+}
+
 void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
     if (ptr == nullptr) {
         return;

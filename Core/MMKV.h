@@ -128,6 +128,7 @@ class MMKV {
     bool checkFileCRCValid(size_t actualSize, uint32_t crcDigest);
 
     void recaculateCRCDigestWithIV(const void *iv);
+    void recaculateCRCDigestOnly();
 
     void updateCRCDigest(const uint8_t *ptr, size_t length);
 
@@ -162,8 +163,10 @@ class MMKV {
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
 
+    KVHolderRet_t doOverrideDataWithKey(const mmkv::MMBuffer &data, const mmkv::MMBuffer &key, bool isDataHolder, uint32_t keyLength);
     KVHolderRet_t overrideDataWithKey(const mmkv::MMBuffer &data, const mmkv::KeyValueHolder &kvHolder, bool isDataHolder = false);
     KVHolderRet_t overrideDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
+    bool checkSizeForOverride(size_t size);
 #ifdef MMKV_APPLE
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data,
                                     MMKVKey_t key,

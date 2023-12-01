@@ -862,36 +862,93 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
     return make_pair(true, KeyValueHolder(originKeyLength, valueLength, offset));
 }
 
-KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
-    size_t old_actualSize = m_actualSize;
-    size_t old_position = m_output->getPosition();
-    // only one key in dict, do not append, just rewrite from beginning
-    m_actualSize = 0;
-    m_output->setPosition(0);
+KVHolderRet_t
+MMKV::doOverrideDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
+    auto isKeyEncoded = (originKeyLength < keyData.length());
+    auto keyLength = static_cast<uint32_t>(keyData.length());
+    auto valueLength = static_cast<uint32_t>(data.length());
+    if (isDataHolder) {
+        valueLength += pbRawVarint32Size(valueLength);
+    }
+    // size needed to encode the key
+    size_t size = isKeyEncoded ? keyLength : (keyLength + pbRawVarint32Size(keyLength));
+    // size needed to encode the value
+    size += valueLength + pbRawVarint32Size(valueLength);
 
-    auto m_tmpDic = m_dic;
-    auto m_tmpDicCrypt = m_dicCrypt;
-    if (m_crypter) {
-        m_dicCrypt = new MMKVMapCrypt();
-    } else {
-        m_dic = new MMKVMap();
+    if (!checkSizeForOverride(size)) {
+        return doAppendDataWithKey(data, keyData, isDataHolder, originKeyLength);
     }
 
-    auto ret = appendDataWithKey(data, key, isDataHolder);
+    // we don't not support override in multi-process mode
+    // SCOPED_LOCK(m_exclusiveProcessLock);
+
+#ifdef MMKV_IOS
+    auto ret = guardForBackgroundWriting(m_output->curWritePointer(), size);
     if (!ret.first) {
-        // rollback
-        m_actualSize = old_actualSize;
-        m_output->setPosition(old_position);
+        return make_pair(false, KeyValueHolder());
+    }
+#endif
+#ifndef MMKV_DISABLE_CRYPT
+    if (m_crypter) {
+        if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
+            m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
+        } else {
+            m_crypter->resetIV();
+        }
+        if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
+            m_crypter->getCurStatus(t_status);
+        }
+    }
+#endif
+    try {
+        // write ItemSizeHolder
+        m_output->setPosition(0);
+        m_output->writeRawVarint32(ItemSizeHolder);
+        m_actualSize = ItemSizeHolderSize;
+
+        if (isKeyEncoded) {
+            m_output->writeRawData(keyData);
+        } else {
+            m_output->writeData(keyData);
+        }
+        if (isDataHolder) {
+            m_output->writeRawVarint32((int32_t) valueLength);
+        }
+        m_output->writeData(data); // note: write size of data
+    } catch (std::exception &e) {
+        MMKVError("%s", e.what());
+        return make_pair(false, KeyValueHolder());
+    } catch (...) {
+        MMKVError("append fail");
+        return make_pair(false, KeyValueHolder());
     }
 
+    auto offset = static_cast<uint32_t>(m_actualSize);
+    m_actualSize += size;
+    auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+#ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
-        delete m_dicCrypt;
-        m_dicCrypt = m_tmpDicCrypt;
-    } else {
-        delete m_dic;
-        m_dic = m_tmpDic;
+        m_crypter->encrypt(ptr, ptr, m_actualSize);
     }
-    return ret;
+#endif
+    recaculateCRCDigestOnly();
+
+    return make_pair(true, KeyValueHolder(originKeyLength, valueLength, offset));
+}
+
+bool MMKV::checkSizeForOverride(size_t size) {
+    if (!isFileValid()) {
+        MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return false;
+    }
+
+    // only override if the file can hole it without ftruncate()
+    auto fileSize = m_file->getFileSize();
+    auto spaceNeededForOverride = size + Fixed32Size + ItemSizeHolderSize;
+    if (size > fileSize || spaceNeededForOverride > fileSize) {
+        return false;
+    }
+    return true;
 }
 
 KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
@@ -902,6 +959,16 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, bool 
     auto keyData = MMBuffer((void *) key.data(), key.size(), MMBufferNoCopy);
 #endif
     return doAppendDataWithKey(data, keyData, isDataHolder, static_cast<uint32_t>(keyData.length()));
+}
+
+KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, MMKVKey_t key, bool isDataHolder) {
+#ifdef MMKV_APPLE
+    auto oData = [key dataUsingEncoding:NSUTF8StringEncoding];
+    auto keyData = MMBuffer(oData, MMBufferNoCopy);
+#else
+    auto keyData = MMBuffer((void *) key.data(), key.size(), MMBufferNoCopy);
+#endif
+    return doOverrideDataWithKey(data, keyData, isDataHolder, static_cast<uint32_t>(keyData.length()));
 }
 
 KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bool isDataHolder) {
@@ -929,24 +996,32 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder
     return doAppendDataWithKey(data, keyData, isDataHolder, keyLength);
 }
 
+// only one key in dict, do not append, just rewrite from beginning
 KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, const KeyValueHolder &kvHolder, bool isDataHolder) {
-    size_t old_actualSize = m_actualSize;
-    size_t old_position = m_output->getPosition();
-    // only one key in dict, do not append, just rewrite from beginning
-    m_actualSize = 0;
-    m_output->setPosition(0);
-    auto m_tmpDic = m_dic;
-    m_dic = new MMKVMap();
-    auto ret = appendDataWithKey(data, kvHolder, isDataHolder);
-    if (!ret.first) {
-        // rollback
-        m_actualSize = old_actualSize;
-        m_output->setPosition(old_position);
-    }
+    // we don't not support override in multi-process mode
+    // SCOPED_LOCK(m_exclusiveProcessLock);
 
-    delete m_dic;
-    m_dic = m_tmpDic;
-    return ret;
+    uint32_t keyLength = kvHolder.keySize;
+    // size needed to encode the key
+    size_t rawKeySize = keyLength + pbRawVarint32Size(keyLength);
+
+    // ensureMemorySize() (inside doAppendDataWithKey() which be called from doOverrideDataWithKey())
+    // might change kvHolder.offset, so have to do it early
+    {
+        auto valueLength = static_cast<uint32_t>(data.length());
+        if (isDataHolder) {
+            valueLength += pbRawVarint32Size(valueLength);
+        }
+        auto size = rawKeySize + valueLength + pbRawVarint32Size(valueLength);
+        bool hasEnoughSize = checkSizeForOverride(size);
+        if (!hasEnoughSize) {
+            return appendDataWithKey(data, kvHolder, isDataHolder);
+        }
+    }
+    auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+    MMBuffer keyData(basePtr + kvHolder.offset, rawKeySize, MMBufferNoCopy);
+
+    return doOverrideDataWithKey(data, keyData, isDataHolder, keyLength);
 }
 
 bool MMKV::fullWriteback(AESCrypt *newCrypter, bool onlyWhileExpire) {
