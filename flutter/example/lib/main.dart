@@ -80,21 +80,23 @@ class _MyAppState extends State<MyApp> {
               onPressed: () {
                 testAutoExpire();
               },
-              child:
-                  Text("Auto Expiration Test", style: TextStyle(fontSize: 18))),
+              child: Text("Auto Expiration Test", style: TextStyle(fontSize: 18))),
           TextButton(
               onPressed: () {
                 testCompareBeforeSet();
               },
-              child: Text("Compare Before Insert/Update Test",
-                  style: TextStyle(fontSize: 18))),
+              child: Text("Compare Before Insert/Update Test", style: TextStyle(fontSize: 18))),
           TextButton(
               onPressed: () {
                 testBackup();
                 testRestore();
               },
-              child: Text("Backup & Restore Test",
-                  style: TextStyle(fontSize: 18))),
+              child: Text("Backup & Restore Test", style: TextStyle(fontSize: 18))),
+          TextButton(
+              onPressed: () {
+                testRemoveStorage();
+              },
+              child: Text("Remove Storage Test", style: TextStyle(fontSize: 18))),
         ])),
       ),
     );
@@ -184,8 +186,7 @@ class _MyAppState extends State<MyApp> {
     // mmkv.close();
   }
 
-  MMKV testMMKV(
-      String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {
+  MMKV testMMKV(String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {
     final mmkv = MMKV(mmapID, cryptKey: cryptKey, rootDir: rootPath);
 
     if (!decodeOnly) {
@@ -273,8 +274,7 @@ class _MyAppState extends State<MyApp> {
     final String otherDir = rootDir + "/mmkv_3";
     testMMKV(mmapID, cryptKey, false, otherDir);
 
-    final ret =
-        MMKV.backupOneToDirectory(mmapID, backupRootDir, rootDir: otherDir);
+    final ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, rootDir: otherDir);
     print("backup one [$mmapID] return: $ret");
 
     backupRootDir = rootDir + "/mmkv_backup";
@@ -292,8 +292,7 @@ class _MyAppState extends State<MyApp> {
     final kv = MMKV(mmapID, cryptKey: cryptKey, rootDir: otherDir);
     kv.encodeString("test_restore", "value before restore");
     print("before restore [${kv.mmapID}] allKeys: ${kv.allKeys}");
-    final ret = MMKV.restoreOneMMKVFromDirectory(mmapID, backupRootDir,
-        rootDir: otherDir);
+    final ret = MMKV.restoreOneMMKVFromDirectory(mmapID, backupRootDir, rootDir: otherDir);
     print("restore one [${kv.mmapID}] ret = $ret");
     if (ret) {
       print("after restore [${kv.mmapID}] allKeys: ${kv.allKeys}");
@@ -323,8 +322,7 @@ class _MyAppState extends State<MyApp> {
     mmkv.encodeDouble("auto_expire_key_4", 3.0, 1);
     mmkv.encodeString("auto_expire_key_5", "hello auto expire", 1);
     {
-      final bytes =
-          MMBuffer.fromList(Utf8Encoder().convert("hello auto expire"))!;
+      final bytes = MMBuffer.fromList(Utf8Encoder().convert("hello auto expire"))!;
       mmkv.encodeBytes("auto_expire_key_6", bytes, 1);
       bytes.destroy();
     }
@@ -387,6 +385,31 @@ class _MyAppState extends State<MyApp> {
       mmkv.encodeString(key, "temp data 👩🏻‍🏫");
       print("testCompareBeforeSet actualSize = ${mmkv.actualSize}");
       print("testCompareBeforeSet v = ${mmkv.decodeString(key)}");
+    }
+  }
+
+  void testRemoveStorage() {
+    var mmapID = "test_remove";
+    {
+      final mmkv = MMKV(mmapID, mode: MMKVMode.MULTI_PROCESS_MODE);
+      mmkv.encodeBool("bool", true);
+    }
+    MMKV.removeStorage(mmapID);
+    {
+      final mmkv = MMKV(mmapID, mode: MMKVMode.MULTI_PROCESS_MODE);
+      if (mmkv.count != 0) {
+        print("storage not successfully removed");
+      }
+    }
+
+    mmapID = "test_remove/sg";
+    final rootDir = MMKV.rootDir + "_sg";
+    var mmkv = MMKV(mmapID, rootDir: rootDir);
+    mmkv.encodeBool("bool", true);
+    MMKV.removeStorage(mmapID, rootDir: rootDir);
+    mmkv = MMKV(mmapID, rootDir: rootDir);
+    if (mmkv.count != 0) {
+      print("storage not successfully removed");
     }
   }
 }
