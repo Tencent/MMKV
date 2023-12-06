@@ -509,6 +509,18 @@ MMKV_EXPORT bool MMKV_FUNC(disableCompareBeforeSet)(const void *handle) {
     return false;
 }
 
+MMKV_EXPORT bool MMKV_FUNC(removeStorage)(const char *mmapID, const char *rootDir) {
+    auto strID = [NSString stringWithUTF8String:mmapID];
+
+    if (rootDir) {
+        auto root = [NSString stringWithUTF8String:rootDir];
+        if (root.length > 0) {
+            return [MMKV removeStorage:strID rootPath:root];
+        }
+    }
+    return [MMKV removeStorage:strID rootPath:nil];
+}
+
 /* Looks like Dart:ffi's async callback not working perfectly
  * We don't support them for the moment.
  * https://github.com/dart-lang/sdk/issues/37022
