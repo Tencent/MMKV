@@ -129,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
         testCompareBeforeSet();
         testClearAllKeepSpace();
 //        testFastNativeSpeed();
+        testRemoveStorage();
     }
 
     private void testCompareBeforeSet() {
@@ -788,6 +789,31 @@ public class MainActivity extends AppCompatActivity {
             String k = "key" + i;
             // 0 times expand
             mmkv1.encode(k, value);
+        }
+    }
+
+    private void testRemoveStorage() {
+        String mmapID = "test_remove";
+        {
+            MMKV mmkv = MMKV.mmkvWithID(mmapID, MMKV.MULTI_PROCESS_MODE);
+            mmkv.encode("bool", true);
+        }
+        MMKV.removeStorage(mmapID);
+        {
+            MMKV mmkv = MMKV.mmkvWithID(mmapID, MMKV.MULTI_PROCESS_MODE);
+            if (mmkv.count() != 0) {
+                Log.e("MMKV", "storage not successfully removed");
+            }
+        }
+
+        mmapID = "test_remove/sg";
+        String rootDir = getFilesDir().getAbsolutePath() + "/mmkv_sg";
+        MMKV mmkv = MMKV.mmkvWithID(mmapID, rootDir);
+        mmkv.encode("bool", true);
+        MMKV.removeStorage(mmapID, rootDir);
+        mmkv = MMKV.mmkvWithID(mmapID, rootDir);
+        if (mmkv.count() != 0) {
+            Log.e("MMKV", "storage not successfully removed");
         }
     }
 }

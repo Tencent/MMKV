@@ -746,6 +746,19 @@ MMKV_JNI jboolean isFileValid(JNIEnv *env, jclass type, jstring oMmapID, jstring
     return (jboolean) false;
 }
 
+MMKV_JNI jboolean removeStorage(JNIEnv *env, jclass type, jstring oMmapID, jstring rootPath) {
+    if (oMmapID) {
+        string mmapID = jstring2string(env, oMmapID);
+        if (!rootPath) {
+            return (jboolean) MMKV::removeStorage(mmapID, nullptr);
+        } else {
+            auto root = jstring2string(env, rootPath);
+            return (jboolean) MMKV::removeStorage(mmapID, &root);
+        }
+    }
+    return (jboolean) false;
+}
+
 MMKV_JNI jboolean encodeSet(JNIEnv *env, jobject, jlong handle, jstring oKey, jobjectArray arrStr) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -1082,6 +1095,7 @@ static JNINativeMethod g_methods[] = {
     {"clearMemoryCache", "()V", (void *) mmkv::clearMemoryCache},
     {"sync", "(Z)V", (void *) mmkv::sync},
     {"isFileValid", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::isFileValid},
+    {"removeStorage", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::removeStorage},
     {"ashmemFD", "()I", (void *) mmkv::ashmemFD},
     {"ashmemMetaFD", "()I", (void *) mmkv::ashmemMetaFD},
     //{"jniInitialize", "(Ljava/lang/String;Ljava/lang/String;I)V", (void *) mmkv::jniInitialize},
