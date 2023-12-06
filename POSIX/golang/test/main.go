@@ -30,6 +30,7 @@ func main() {
 	testRestore()
 	testAutoExpire()
 	testCompareBeforeSet()
+	testRemoveStorage()
 }
 
 func functionalTest() {
@@ -311,6 +312,26 @@ func testCompareBeforeSet() {
     }
 
     kv.DisableCompareBeforeSet()
+}
+
+func testRemoveStorage()  {
+	kv := mmkv.MMKVWithIDAndMode("test_remove", mmkv.MMKV_MULTI_PROCESS)
+	kv.SetBool(true, "bool")
+
+	mmkv.RemoveStorage("test_remove")
+	kv = mmkv.MMKVWithIDAndMode("test_remove", mmkv.MMKV_MULTI_PROCESS)
+	if kv.Count() != 0 {
+	    panic("storage not successfully remove")
+	}
+
+	kv = mmkv.MMKVWithIDAndMode("test_remove/sg", mmkv.MMKV_SINGLE_PROCESS)
+	kv.SetBool(true, "bool")
+
+	mmkv.RemoveStorage("test_remove/sg")
+	kv = mmkv.MMKVWithIDAndMode("test_remove/sg", mmkv.MMKV_SINGLE_PROCESS)
+	if kv.Count() != 0 {
+	    panic("storage not successfully remove")
+	}
 }
 
 func logHandler(level int, file string, line int, function string, message string) {

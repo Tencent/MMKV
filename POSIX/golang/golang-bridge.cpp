@@ -653,4 +653,16 @@ void setWantsContentChangeHandle(bool errorHandle) {
     }
 }
 
+MMKV_EXPORT bool removeStorage(GoStringWrap_t mmapID, GoStringWrap_t rootPath) {
+    if (!mmapID.ptr) {
+        return false;
+    }
+    auto id = string(mmapID.ptr, mmapID.length);
+    if (rootPath.ptr) {
+        auto path = string(rootPath.ptr, rootPath.length);
+        return MMKV::removeStorage(id, &path);
+    }
+    return MMKV::removeStorage(id, nullptr);
+}
+
 #endif // CGO
