@@ -263,8 +263,8 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             loadFromFile = true;
         } else {
             checkLastConfirmedInfo();
-
             if (!loadFromFile) {
+
                 auto strategic = onMMKVCRCCheckFail(m_mmapID);
                 if (strategic == OnErrorRecover) {
                     loadFromFile = true;
@@ -1547,7 +1547,6 @@ bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
     ::unlink(crcPath.c_str());
 #else
     DeleteFile(kvPath.c_str());
-    // TODO: check this on Win32
     DeleteFile(crcPath.c_str());
 #endif
 

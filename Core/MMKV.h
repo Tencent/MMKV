@@ -23,7 +23,6 @@
 #ifdef __cplusplus
 
 #include "MMBuffer.h"
-#include "PBUtility.h"
 #include <cstdint>
 
 namespace mmkv {
@@ -349,7 +348,7 @@ public:
 
     bool isExpirationEnabled() { return m_enableKeyExpire; }
     bool isEncryptionEnabled() { return m_dicCrypt; }
-    bool isCompareBeforeSetEnabled() { return m_enableCompareBeforeSet && likely(!m_enableKeyExpire) && likely(!m_dicCrypt); }
+    bool isCompareBeforeSetEnabled() { return m_enableCompareBeforeSet && !m_enableKeyExpire && !m_dicCrypt; }
 
 #ifdef MMKV_APPLE
     // filterExpire: return all non-expired keys, keep in mind it comes with cost

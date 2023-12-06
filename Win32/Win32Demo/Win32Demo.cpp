@@ -323,7 +323,7 @@ void testAutoExpire() {
 void testExpectedCapacity() {
     int len = 10000;
     std::string value(len, '0');
-    value = "¿¿®4¿¿¿_" + value;
+    value = "¿¿?¿¿¿_" + value;
     cout << "value length = " << value.size() << endl;
     std::string key = "key";
     // if you know exactly the sizes of key and value, set expectedCapacity for performance improvement
@@ -339,6 +339,31 @@ void testExpectedCapacity() {
         key[0] = static_cast<char>('a' + i);
         // 0 times expand
         mmkv5->set(value, key);
+    }
+}
+
+void testRemoveStorage() {
+    string mmapID = "test_remove";
+    {
+        auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_MULTI_PROCESS);
+        mmkv->set(true, "bool");
+    }
+    MMKV::removeStorage(mmapID);
+    {
+        auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_MULTI_PROCESS);
+        if (mmkv->count() != 0) {
+            abort();
+        }
+    }
+
+    mmapID = "test_remove/sg";
+    auto rootDir = MMKV::getRootDir() + L"_1";
+    auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, nullptr, &rootDir);
+    mmkv->set(true, "bool");
+    MMKV::removeStorage(mmapID, &rootDir);
+    mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, nullptr, &rootDir);
+    if (mmkv->count() != 0) {
+        abort();
     }
 }
 
@@ -391,4 +416,5 @@ int main() {
     testRestore();
     testAutoExpire();
     testExpectedCapacity();
+    testRemoveStorage();
 }
