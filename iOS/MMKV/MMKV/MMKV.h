@@ -373,6 +373,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
 + (BOOL)isFileValid:(NSString *)mmapID rootPath:(nullable NSString *)path NS_SWIFT_NAME(isFileValid(for:rootPath:));
 
+/// remove the storage of the MMKV, including the data file & meta file (.crc)
+/// Note: the existing instance (if any) will be closed & destroyed
++ (BOOL)removeStorage:(NSString *)mmapID rootPath:(nullable NSString *)path NS_SWIFT_NAME(removeStorage(for:rootPath:));
++ (BOOL)removeStorage:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(removeStorage(for:mode:));
+
 NS_ASSUME_NONNULL_END
 
 @end

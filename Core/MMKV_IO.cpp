@@ -52,6 +52,8 @@
 using namespace std;
 using namespace mmkv;
 using KVHolderRet_t = std::pair<bool, KeyValueHolder>;
+extern ThreadLock *g_instanceLock;
+extern unordered_map<string, MMKV *> *g_instanceDic;
 
 MMKV_NAMESPACE_BEGIN
 
@@ -1499,6 +1501,46 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
     } else {
         return false;
     }
+}
+
+bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
+    MMKVPath_t kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
+    if (!isFileExist(kvPath)) {
+        return false;
+    }
+    MMKVPath_t crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
+    if (!isFileExist(crcPath)) {
+        return false;
+    }
+
+    MMKVInfo("remove storage [%s]", mmapID.c_str());
+    SCOPED_LOCK(g_instanceLock);
+
+    File crcFile(crcPath, OpenFlag::ReadOnly);
+    if (!crcFile.isFileValid()) {
+        return false;
+    }
+    FileLock fileLock(crcFile.getFd());
+    InterProcessLock lock(&fileLock, ExclusiveLockType);
+    SCOPED_LOCK(&lock);
+
+    auto mmapKey = mmapedKVKey(mmapID, relatePath);
+    auto itr = g_instanceDic->find(mmapKey);
+    if (itr != g_instanceDic->end()) {
+        itr->second->close();
+        // itr is not valid after this
+    }
+
+#ifndef MMKV_WIN32
+    ::unlink(kvPath.c_str());
+    ::unlink(crcPath.c_str());
+#else
+    DeleteFile(kvPath.c_str());
+    // TODO: check this on Win32
+    DeleteFile(crcPath.c_str());
+#endif
+
+    return true;
 }
 
 // ---- auto expire ----

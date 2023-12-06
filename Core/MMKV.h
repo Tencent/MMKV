@@ -20,7 +20,7 @@
 
 #ifndef MMKV_MMKV_H
 #define MMKV_MMKV_H
-#ifdef  __cplusplus
+#ifdef __cplusplus
 
 #include "MMBuffer.h"
 #include "PBUtility.h"
@@ -53,15 +53,13 @@ enum MMKVMode : uint32_t {
 class MMKV {
 #ifndef MMKV_ANDROID
     std::string m_mmapKey;
-    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath,
-         size_t expectedCapacity = 0);
+    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
 
-    MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath,
-         size_t expectedCapacity = 0);
+    MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 
     MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
 #endif
@@ -109,8 +107,8 @@ class MMKV {
     using MMKVKey_t = const std::string &;
     static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
 #  define key_length(key) key.length()
-#  define retain_key(key) ((void)0)
-#  define release_key(key) ((void)0)
+#  define retain_key(key) ((void) 0)
+#  define release_key(key) ((void) 0)
 #endif
 
     void loadFromFile();
@@ -173,9 +171,9 @@ class MMKV {
                                     const mmkv::KeyValueHolderCrypt &kvHolder,
                                     bool isDataHolder = false);
     KVHolderRet_t overrideDataWithKey(const mmkv::MMBuffer &data,
-                                    MMKVKey_t key,
-                                    const mmkv::KeyValueHolderCrypt &kvHolder,
-                                    bool isDataHolder = false);
+                                      MMKVKey_t key,
+                                      const mmkv::KeyValueHolderCrypt &kvHolder,
+                                      bool isDataHolder = false);
 #endif
 
     void notifyContentChanged();
@@ -345,11 +343,10 @@ public:
 
     bool disableAutoKeyExpire();
 
-
     // compare value for key before set, to reduce the possibility of file expanding
     bool enableCompareBeforeSet();
     bool disableCompareBeforeSet();
-    
+
     bool isExpirationEnabled() { return m_enableKeyExpire; }
     bool isEncryptionEnabled() { return m_dicCrypt; }
     bool isCompareBeforeSetEnabled() { return m_enableCompareBeforeSet && likely(!m_enableKeyExpire) && likely(!m_dicCrypt); }
@@ -454,6 +451,10 @@ public:
     // detect if the MMKV file is valid or not
     // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
     static bool isFileValid(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+
+    // remove the storage of the MMKV, including the data file & meta file (.crc)
+    // Note: the existing instance (if any) will be closed & destroyed
+    static bool removeStorage(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
 
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;

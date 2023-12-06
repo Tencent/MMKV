@@ -334,6 +334,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     MMKVInfo("closing %@", m_mmapID);
 
     [g_instanceDic removeObjectForKey:m_mmapKey];
+
+    if (self.retainCount > 1) {
+        MMKVWarning("There's still reference on this kv: %@", m_mmapID);
+    }
 }
 
 - (void)trim {
@@ -1093,6 +1097,36 @@ static NSString *md5(NSString *value) {
         MMKVWarning("unknown type of key:%@", key);
     }
     return NO;
+}
+
++ (BOOL)removeStorage:(NSString *)mmapID rootPath:(nullable NSString *)path NS_SWIFT_NAME(removeStorage(for:rootPath:)) {
+    SCOPED_LOCK(g_lock);
+    NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID rootPath:path];
+    MMKV *kv = [[g_instanceDic objectForKey:kvKey] retain];
+    if (kv != nil) {
+        [g_instanceDic removeObjectForKey:kvKey];
+        if (kv.retainCount > 1) {
+            MMKVWarning("There's still reference on this kv: %@", mmapID);
+            // we can't wait for dealloc
+            kv->m_mmkv = nullptr;
+        }
+        [kv release];
+    }
+
+    if (mmapID.length > 0) {
+        if (path.length > 0) {
+            string rootPath(path.UTF8String);
+            return mmkv::MMKV::removeStorage(mmapID.UTF8String, &rootPath);
+        } else {
+            return mmkv::MMKV::removeStorage(mmapID.UTF8String, nullptr);
+        }
+    }
+    return NO;
+}
+
++ (BOOL)removeStorage:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(removeStorage(for:mode:)) {
+    auto rootPath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
+    return [self removeStorage:mmapID rootPath:rootPath];
 }
 
 @end
