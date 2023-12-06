@@ -1,6 +1,6 @@
 name: mmkv
 description: An efficient, small mobile key-value storage framework developed by WeChat. Works on Android & iOS.
-version: 1.3.2
+version: 1.3.3
 homepage: https://github.com/Tencent/mmkv
 
 environment:

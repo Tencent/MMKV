@@ -1,4 +1,6 @@
 # MMKV Change Log
+## v1.3.3 / 2023-12-xx
+TBD
 
 ## v1.3.2 / 2023-11-20
 Among most of the features added in this version, the credit goes to @kaitian521.
