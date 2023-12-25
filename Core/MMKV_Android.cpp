@@ -81,10 +81,10 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
-    {
+    /*{
         SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
-    }
+    }*/
 }
 
 MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
@@ -130,10 +130,10 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
-    {
+    /*{
         SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
-    }
+    }*/
 }
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath,
