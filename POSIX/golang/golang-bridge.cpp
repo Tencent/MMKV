@@ -390,6 +390,18 @@ MMKV_EXPORT void checkReSetCryptKey(void *handle, GoStringWrap oKey) {
     }
 }
 
+#    else // fix cgo cannot find function reference.
+
+MMKV_EXPORT bool reKey(void *handle, GoStringWrap oKey) {
+    return false;
+}
+
+MMKV_EXPORT void *cryptKey(void *handle, uint32_t *lengthPtr) {
+    return nullptr;
+}
+
+MMKV_EXPORT void checkReSetCryptKey(void *handle, GoStringWrap oKey) {}
+
 #    endif // MMKV_DISABLE_CRYPT
 
 MMKV_EXPORT GoStringWrap *allKeys(void *handle, uint64_t *lengthPtr, bool filterExpire) {
