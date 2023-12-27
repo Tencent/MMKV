@@ -21,6 +21,7 @@
 #include "CodedInputData.h"
 #include "PBUtility.h"
 #include <stdexcept>
+#include <cstring>
 
 #ifdef MMKV_APPLE
 #    if __has_feature(objc_arc)
