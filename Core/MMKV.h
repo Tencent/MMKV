@@ -47,7 +47,7 @@ enum MMKVMode : uint32_t {
 #endif
 };
 
-#define OUT
+#define MMKV_OUT
 
 class MMKV {
 #ifndef MMKV_ANDROID
@@ -99,15 +99,15 @@ class MMKV {
 #ifdef MMKV_APPLE
     using MMKVKey_t = NSString *__unsafe_unretained;
     static bool isKeyEmpty(MMKVKey_t key) { return key.length <= 0; }
-#  define key_length(key) key.length
-#  define retain_key(key) [key retain]
-#  define release_key(key) [key release]
+#  define mmkv_key_length(key) key.length
+#  define mmkv_retain_key(key) [key retain]
+#  define mmkv_release_key(key) [key release]
 #else
     using MMKVKey_t = const std::string &;
     static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
-#  define key_length(key) key.length()
-#  define retain_key(key) ((void) 0)
-#  define release_key(key) ((void) 0)
+#  define mmkv_key_length(key) key.length()
+#  define mmkv_retain_key(key) ((void) 0)
+#  define mmkv_release_key(key) ((void) 0)
 #endif
 
     void loadFromFile();
@@ -303,19 +303,19 @@ public:
     bool getVector(MMKVKey_t key, std::vector<std::string> &result);
 #endif // MMKV_APPLE
 
-    bool getBool(MMKVKey_t key, bool defaultValue = false, OUT bool *hasValue = nullptr);
+    bool getBool(MMKVKey_t key, bool defaultValue = false, MMKV_OUT bool *hasValue = nullptr);
 
-    int32_t getInt32(MMKVKey_t key, int32_t defaultValue = 0, OUT bool *hasValue = nullptr);
+    int32_t getInt32(MMKVKey_t key, int32_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
 
-    uint32_t getUInt32(MMKVKey_t key, uint32_t defaultValue = 0, OUT bool *hasValue = nullptr);
+    uint32_t getUInt32(MMKVKey_t key, uint32_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
 
-    int64_t getInt64(MMKVKey_t key, int64_t defaultValue = 0, OUT bool *hasValue = nullptr);
+    int64_t getInt64(MMKVKey_t key, int64_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
 
-    uint64_t getUInt64(MMKVKey_t key, uint64_t defaultValue = 0, OUT bool *hasValue = nullptr);
+    uint64_t getUInt64(MMKVKey_t key, uint64_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
 
-    float getFloat(MMKVKey_t key, float defaultValue = 0, OUT bool *hasValue = nullptr);
+    float getFloat(MMKVKey_t key, float defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
 
-    double getDouble(MMKVKey_t key, double defaultValue = 0, OUT bool *hasValue = nullptr);
+    double getDouble(MMKVKey_t key, double defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
 
     // return the actual size consumption of the key's value
     // pass actualSize = true to get value's length

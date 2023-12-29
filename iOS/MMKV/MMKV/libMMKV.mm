@@ -488,7 +488,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
     return [self getBoolForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (BOOL)getBoolForKey:(NSString *)key defaultValue:(BOOL)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     return m_mmkv->getBool(key, defaultValue, (bool *) hasValue);
 }
 
@@ -498,7 +498,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue {
     return [self getInt32ForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (int32_t)getInt32ForKey:(NSString *)key defaultValue:(int32_t)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     return m_mmkv->getInt32(key, defaultValue, (bool *) hasValue);
 }
 
@@ -508,7 +508,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue {
     return [self getUInt32ForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (uint32_t)getUInt32ForKey:(NSString *)key defaultValue:(uint32_t)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     return m_mmkv->getUInt32(key, defaultValue, (bool *) hasValue);
 }
 
@@ -518,7 +518,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue {
     return [self getInt64ForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (int64_t)getInt64ForKey:(NSString *)key defaultValue:(int64_t)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     return m_mmkv->getInt64(key, defaultValue, (bool *) hasValue);
 }
 
@@ -528,7 +528,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue {
     return [self getUInt64ForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (uint64_t)getUInt64ForKey:(NSString *)key defaultValue:(uint64_t)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     return m_mmkv->getUInt64(key, defaultValue, (bool *) hasValue);
 }
 
@@ -538,7 +538,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue {
     return [self getFloatForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (float)getFloatForKey:(NSString *)key defaultValue:(float)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     return m_mmkv->getFloat(key, defaultValue, (bool *) hasValue);
 }
 
@@ -548,7 +548,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue {
     return [self getDoubleForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (double)getDoubleForKey:(NSString *)key defaultValue:(double)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     return m_mmkv->getDouble(key, defaultValue, (bool *) hasValue);
 }
 
@@ -558,7 +558,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue {
     return [self getStringForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (nullable NSString *)getStringForKey:(NSString *)key defaultValue:(nullable NSString *)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
@@ -578,7 +578,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue {
     return [self getDateForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (nullable NSDate *)getDateForKey:(NSString *)key defaultValue:(nullable NSDate *)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }
@@ -598,7 +598,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue {
     return [self getDataForKey:key defaultValue:defaultValue hasValue:nil];
 }
-- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue hasValue:(OUT BOOL *)hasValue {
+- (nullable NSData *)getDataForKey:(NSString *)key defaultValue:(nullable NSData *)defaultValue hasValue:(MMKV_OUT BOOL *)hasValue {
     if (key.length <= 0) {
         return defaultValue;
     }

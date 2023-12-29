@@ -622,7 +622,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 } else {
                     // in case filterExpiredKeys() is triggered
                     m_dicCrypt->emplace(key, std::move(kvHolder));
-                    retain_key(key);
+                    mmkv_retain_key(key);
                 }
             }
         } else {
@@ -645,7 +645,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
             } else {
                 m_dicCrypt->emplace(key, KeyValueHolderCrypt(std::move(data)));
             }
-            retain_key(key);
+            mmkv_retain_key(key);
         }
     } else
 #endif // MMKV_DISABLE_CRYPT
@@ -706,7 +706,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 } else {
                     // in case filterExpiredKeys() is triggered
                     m_dic->emplace(key, std::move(ret.second));
-                    retain_key(key);
+                    mmkv_retain_key(key);
                 }
             }
         } else {
@@ -721,7 +721,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 return false;
             }
             m_dic->emplace(key, std::move(ret.second));
-            retain_key(key);
+            mmkv_retain_key(key);
         }
     }
     m_hasFullWriteback = false;
@@ -1716,7 +1716,7 @@ uint32_t MMKV::getExpireTimeForKey(MMKVKey_t key) {
     SCOPED_LOCK(m_sharedProcessLock);
     checkLoadData();
 
-    if (!m_enableKeyExpire || key_length(key) == 0) {
+    if (!m_enableKeyExpire || mmkv_key_length(key) == 0) {
         return 0;
     }
     auto raw = getRawDataForKey(key);
