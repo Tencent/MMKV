@@ -207,9 +207,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:relativePath mode:MMKVSingleProcess];
 }
 
-// relatePath and MMKVMultiProcess mode can't be set at the same time, so we hide this method from public
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode {
-    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:MMKVSingleProcess expectedCapacity:0];
+    return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode expectedCapacity:0];
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
