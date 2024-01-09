@@ -178,6 +178,7 @@ bool MemoryFile::mmap() {
             MMKVError("fail to mmap [%ls], %d", m_diskFile.m_path.c_str(), GetLastError());
             return false;
         }
+        MMKVInfo("mmap to address [%p], [%ls]", m_ptr, m_diskFile.m_path.c_str());
     }
 
     return true;
