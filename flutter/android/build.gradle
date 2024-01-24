@@ -23,7 +23,8 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 33
+    namespace "com.tencent.mmkvflutter"
+    compileSdkVersion 34
 
     defaultConfig {
         minSdkVersion 16

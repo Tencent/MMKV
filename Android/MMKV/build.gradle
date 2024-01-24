@@ -26,7 +26,7 @@ task clean(type: Delete) {
 
 ext {
     minSdkVersion = 16
-    compileSdkVersion = 33
+    compileSdkVersion = 34
     targetSdkVersion = compileSdkVersion
     supportLibVersion = "25.4.0"
     javaVersion = JavaVersion.VERSION_1_7
