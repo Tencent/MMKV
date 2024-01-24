@@ -43,9 +43,12 @@ fun kotlinFunctionalTest() {
     mmkv.encode("string", "Hello from mmkv")
     println("string: " + mmkv.decodeString("string"))
 
-    val bytes = byteArrayOf('m'.toByte(), 'm'.toByte(), 'k'.toByte(), 'v'.toByte())
+    val bytes = byteArrayOf('m'.code.toByte(), 'm'.code.toByte(), 'k'.code.toByte(), 'v'.code.toByte())
     mmkv.encode("bytes", bytes)
     println("bytes: " + mmkv.decodeBytes("bytes")?.let { String(it) })
+
+    mmkv.encode("empty_bytes", "".toByteArray());
+    println("empty_bytes: " + mmkv.decodeBytes("empty_bytes")?.let { String(it) })
 
     mmkv.encode("stringSet", HashSet<String>())
     println("empty string set: " + mmkv.decodeStringSet("stringSet"))

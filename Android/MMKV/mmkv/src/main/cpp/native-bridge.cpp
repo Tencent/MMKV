@@ -646,8 +646,9 @@ MMKV_JNI jbyteArray decodeBytes(JNIEnv *env, jobject obj, jlong handle, jstring 
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
         string key = jstring2string(env, oKey);
-        MMBuffer value = kv->getBytes(key);
-        if (value.length() > 0) {
+        mmkv::MMBuffer value;
+        auto hasValue = kv->getBytes(key, value);
+        if (hasValue) {
             jbyteArray result = env->NewByteArray(value.length());
             env->SetByteArrayRegion(result, 0, value.length(), (const jbyte *) value.getPtr());
             return result;
