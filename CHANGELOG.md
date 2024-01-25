@@ -1,6 +1,30 @@
 # MMKV Change Log
-## v1.3.3 / 2023-12-xx
-TBD
+## v1.3.3 / 2024-01-25
+### Changes for All platforms
+* Add `removeStorage()` static method to safely delete underlying files of an MMKV instance.
+* Add protection from a potential crash of a multi-process MMKV loading due to the MMKV file not being valid.
+* Add back the lazy load feature. It was first introduced in v1.2.16. But it was rollbacked in v1.3.0 of potential ANR & file corruption. Now it's clear that the bug was caused by something else, it's time to bring it back.
+* **Optimize loading speed** by using shared inter-process lock unless there's a need to truncate the file size, which is rare.
+* Make these two lately added features **more robust**: customizing the initial file size & optimizing write speed when there's only one key inside MMKV.
+
+### Android
+* Fix a bug that `null` is returned when the value is in fact an empty ByteArray.
+* Fix AGP >= 8 package namespace error.
+* Fix the `FastNative` naming conflict.
+* Upgrade to SDK 34.
+* Upgrade `androidx.annotation`  to v1.7.1.
+
+### iOS & macOS
+* On the Xcode 15 build, an App will crash on iOS 14 and below. Previously we have recommended some workarounds (check the v1.3.2 release note for details). Now you can use Xcode 15.1 to fix this issue.
+* Fix a bug that the multi-process mode won't configure correctly. It was introduced in v1.3.2.
+* Fix a macro naming conflict.
+* Avoid using a so-called privacy API when creating temp files.
+
+### POSIX
+* Fix a compile error on `memcpy()`.
+
+### Golang
+* Fix a compile error when `MMKV_DISABLE_CRYPT` is on.
 
 ## v1.3.2 / 2023-11-20
 Among most of the features added in this version, the credit goes to @kaitian521.
