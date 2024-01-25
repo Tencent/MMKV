@@ -1,0 +1,36 @@
+apply plugin: 'com.android.library'
+
+android {
+    namespace "com.tencent.mmkv"
+
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            consumerProguardFiles 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        tasks.lint.enabled = false
+    }
+
+}
+
+configurations {
+    javadocDeps
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'androidx.annotation:annotation:1.7.1'
+    javadocDeps 'androidx.annotation:annotation:1.7.1'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
