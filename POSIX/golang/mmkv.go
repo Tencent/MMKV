@@ -347,6 +347,14 @@ func RestoreAllFromDirectory(srcDir string) uint64 {
 	return uint64(ret)
 }
 
+// remove the storage of the MMKV, including the data file & meta file (.crc)
+// Note: the existing instance (if any) will be closed & destroyed
+func RemoveStorage(mmapID string) bool {
+	cStrNull := C.GoStringWrapNil()
+	ret := C.removeStorage(C.wrapGoString(mmapID), cStrNull)
+	return bool(ret)
+}
+
 func (kv ctorMMKV) SetBool(value bool, key string) bool {
 	ret := C.encodeBool(unsafe.Pointer(kv), C.wrapGoString(key), C.bool(value))
 	return bool(ret)

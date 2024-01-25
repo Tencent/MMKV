@@ -115,6 +115,8 @@ void setWantsLogRedirect(bool redirect);
 void setWantsErrorHandle(bool errorHandle);
 void setWantsContentChangeHandle(bool contentChange);
 
+bool removeStorage(GoStringWrap_t mmapID, GoStringWrap_t rootPath);
+
 #ifdef __cplusplus
 }
 #endif

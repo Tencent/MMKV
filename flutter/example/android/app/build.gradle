@@ -25,7 +25,8 @@ apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 33
+    namespace "com.tencent.mmkv_example"
+    compileSdkVersion 34
 
     lintOptions {
         disable 'InvalidPackage'
@@ -34,7 +35,7 @@ android {
     defaultConfig {
         applicationId "com.tencent.mmkv_example"
         minSdkVersion 16
-        targetSdkVersion 33
+        targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -48,7 +49,7 @@ android {
     }
 
     dependencies {
-        implementation('com.tencent:mmkv:1.3.1')
+        implementation('com.tencent:mmkv:1.3.3')
 
         constraints {
             implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {

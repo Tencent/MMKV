@@ -178,6 +178,7 @@ bool MemoryFile::mmap() {
             MMKVError("fail to mmap [%ls], %d", m_diskFile.m_path.c_str(), GetLastError());
             return false;
         }
+        MMKVInfo("mmap to address [%p], [%ls]", m_ptr, m_diskFile.m_path.c_str());
     }
 
     return true;
@@ -196,9 +197,7 @@ void MemoryFile::reloadFromFile(size_t expectedCapacity) {
         SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_diskFile.getFd(), m_size);
-        size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, expectedCapacity);
-        // round up to (n * pagesize)
-        expectedSize = (expectedSize + DEFAULT_MMAP_SIZE - 1) / DEFAULT_MMAP_SIZE * DEFAULT_MMAP_SIZE;
+        size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE));
         // round up to (n * pagesize)
         if (m_size < expectedSize || (m_size % DEFAULT_MMAP_SIZE != 0)) {
             size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;;

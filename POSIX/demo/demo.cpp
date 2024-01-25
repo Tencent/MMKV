@@ -1078,6 +1078,31 @@ void testFtruncateFail() {
     }
 }
 
+void testRemoveStorage() {
+    string mmapID = "test_remove";
+    {
+        auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_MULTI_PROCESS);
+        mmkv->set(true, "bool");
+    }
+    MMKV::removeStorage(mmapID);
+    {
+        auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_MULTI_PROCESS);
+        if (mmkv->count() != 0) {
+            abort();
+        }
+    }
+
+    mmapID = "test_remove/sg";
+    string rootDir = "/tmp/mmkv_1";
+    auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, nullptr, &rootDir);
+    mmkv->set(true, "bool");
+    MMKV::removeStorage(mmapID, &rootDir);
+    mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, nullptr, &rootDir);
+    if (mmkv->count() != 0) {
+        abort();
+    }
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -1135,4 +1160,5 @@ int main() {
     testRestore();
     testAutoExpiration();
 //    testFtruncateFail();
+    testRemoveStorage();
 }

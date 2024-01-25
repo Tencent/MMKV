@@ -192,6 +192,25 @@ def test_compare_before_set():
     kv.disableCompareBeforeSet()
 
 
+def test_remove_storage():
+    kv = mmkv.MMKV("test_remove", mmkv.MMKVMode.MultiProcess)
+    kv.set(True, "bool")
+
+    mmkv.MMKV.removeStorage("test_remove")
+    kv = mmkv.MMKV("test_remove", mmkv.MMKVMode.MultiProcess)
+    if kv.count() != 0:
+        print("storage not successfully remove")
+
+    rootDir = "/dev/mmkv_sg"
+    kv = mmkv.MMKV("test_remove/sg", rootDir = rootDir)
+    kv.set(True, "bool")
+
+    mmkv.MMKV.removeStorage("test_remove/sg")
+    kv = mmkv.MMKV("test_remove/sg", rootDir = rootDir)
+    if kv.count() != 0:
+        print("storage not successfully remove")
+
+
 def logger(log_level, file, line, function, message):
     level = {mmkv.MMKVLogLevel.NoLog: 'N',
              mmkv.MMKVLogLevel.Debug: 'D',
@@ -234,6 +253,7 @@ if __name__ == '__main__':
 
     test_auto_expire()
     test_compare_before_set()
+    test_remove_storage()
 
     # mmkv.MMKV.unRegisterLogHandler()
     # mmkv.MMKV.unRegisterErrorHandler()

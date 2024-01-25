@@ -55,6 +55,11 @@ static inline bool operator & (OpenFlag left, OpenFlag right) {
     return ((static_cast<uint32_t>(left) & static_cast<uint32_t>(right)) != 0);
 }
 
+template <typename T>
+T roundUp(T numToRound, T multiple) {
+    return ((numToRound + multiple - 1) / multiple) * multiple;
+}
+
 class File {
     MMKVPath_t m_path;
     MMKVFileHandle_t m_fd;

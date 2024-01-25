@@ -192,13 +192,14 @@ bool MemoryFile::msync(SyncFlag syncFlag) {
 }
 
 bool MemoryFile::mmap() {
+    auto oldPtr = m_ptr;
     m_ptr = (char *) ::mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_diskFile.m_fd, 0);
     if (m_ptr == MAP_FAILED) {
         MMKVError("fail to mmap [%s], %s", m_diskFile.m_path.c_str(), strerror(errno));
         m_ptr = nullptr;
         return false;
     }
-
+    MMKVInfo("mmap to address [%p], oldPtr [%p], [%s]", m_ptr, oldPtr, m_diskFile.m_path.c_str());
     return true;
 }
 
@@ -218,15 +219,16 @@ void MemoryFile::reloadFromFile(size_t expectedCapacity) {
         MMKVError("fail to open:%s, %s", m_diskFile.m_path.c_str(), strerror(errno));
     } else {
         FileLock fileLock(m_diskFile.m_fd);
-        InterProcessLock lock(&fileLock, ExclusiveLockType);
+        InterProcessLock lock(&fileLock, SharedLockType);
         SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_diskFile.m_fd, m_size);
-        size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, expectedCapacity);
+        size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE));
         // round up to (n * pagesize)
-        expectedSize = (expectedSize + DEFAULT_MMAP_SIZE - 1) / DEFAULT_MMAP_SIZE * DEFAULT_MMAP_SIZE;
-        
         if (m_size < expectedSize || (m_size % DEFAULT_MMAP_SIZE != 0)) {
+            InterProcessLock exclusiveLock(&fileLock, ExclusiveLockType);
+            SCOPED_LOCK(&exclusiveLock);
+
             size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;;
             roundSize = std::max<size_t>(expectedSize, roundSize);
             truncate(roundSize);

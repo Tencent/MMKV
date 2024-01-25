@@ -1,1 +1,1 @@
-include ':mmkv', ':mmkvdemo'
+include ':mmkv', ':mmkvdemo', 'mmkvannotation'

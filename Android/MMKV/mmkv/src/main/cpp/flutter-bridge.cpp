@@ -556,4 +556,14 @@ MMKV_EXPORT bool disableCompareBeforeSet(void *handle) {
     return false;
 }
 
+MMKV_EXPORT bool removeStorage(const char *mmapID, const char *rootPath) {
+    if (rootPath) {
+        auto root = string(rootPath);
+        if (root.length() > 0) {
+            return MMKV::removeStorage(mmapID, &root);
+        }
+    }
+    return MMKV::removeStorage(mmapID, nullptr);
+}
+
 #endif // MMKV_DISABLE_FLUTTER

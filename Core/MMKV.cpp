@@ -85,7 +85,8 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *ro
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
-    , m_file(new MemoryFile(m_path, expectedCapacity))
+    , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
+    , m_file(new MemoryFile(m_path, m_expectedCapacity))
     , m_metaFile(new MemoryFile(m_crcPath))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
@@ -118,10 +119,10 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *ro
     m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
-    {
+    /*{
         SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
-    }
+    }*/
 }
 #endif
 
@@ -425,6 +426,15 @@ void MMKV::recaculateCRCDigestWithIV(const void *iv) {
         m_crcDigest = 0;
         m_crcDigest = (uint32_t) CRC32(0, ptr + Fixed32Size, (uint32_t) m_actualSize);
         writeActualSize(m_actualSize, m_crcDigest, iv, IncreaseSequence);
+    }
+}
+
+void MMKV::recaculateCRCDigestOnly() {
+    auto ptr = (const uint8_t *) m_file->getMemory();
+    if (ptr) {
+        m_crcDigest = 0;
+        m_crcDigest = (uint32_t) CRC32(0, ptr + Fixed32Size, (uint32_t) m_actualSize);
+        writeActualSize(m_actualSize, m_crcDigest, nullptr, KeepSequence);
     }
 }
 

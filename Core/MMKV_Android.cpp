@@ -44,7 +44,8 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
-    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, expectedCapacity))
+    , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
+    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity))
     , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
@@ -80,10 +81,10 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
-    {
+    /*{
         SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
-    }
+    }*/
 }
 
 MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
@@ -129,10 +130,10 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     m_exclusiveProcessLock->m_enable = m_isInterProcess;
 
     // sensitive zone
-    {
+    /*{
         SCOPED_LOCK(m_sharedProcessLock);
         loadFromFile();
-    }
+    }*/
 }
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath,

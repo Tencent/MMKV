@@ -53,7 +53,6 @@ void tryResetFileProtection(const string &path) {
 #ifdef MMKV_APPLE
 
 #include <copyfile.h>
-#include <mach/mach_time.h>
 
 namespace mmkv {
 
@@ -85,7 +84,7 @@ bool tryAtomicRename(const char *src, const char *dst) {
 
 bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     // prepare a temp file for atomic rename, avoid data corruption of suddent crash
-    NSString *uniqueFileName = [NSString stringWithFormat:@"mmkv_%llu", mach_absolute_time()];
+    NSString *uniqueFileName = [NSString stringWithFormat:@"mmkv_%zu", (size_t) NSDate.timeIntervalSinceReferenceDate];
     NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:uniqueFileName];
     if (copyfile(srcPath.c_str(), tmpFile.UTF8String, nullptr, COPYFILE_UNLINK | COPYFILE_CLONE) != 0) {
         MMKVError("fail to copyfile [%s] to [%s], %s", srcPath.c_str(), tmpFile.UTF8String, strerror(errno));
@@ -125,7 +124,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
     }
 
     // sendfile() equivalent
-    if (::fcopyfile(srcFile.getFd(), dstFD, nullptr, COPYFILE_ACL | COPYFILE_STAT | COPYFILE_XATTR | COPYFILE_DATA) == 0) {
+    if (::fcopyfile(srcFile.getFd(), dstFD, nullptr, COPYFILE_ALL) == 0) {
         MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
         return true;
     }
