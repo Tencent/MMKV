@@ -25,10 +25,19 @@ import "dart:typed_data";
 
 import "package:flutter/material.dart";
 import "package:mmkv/mmkv.dart";
+import "package:path_provider_foundation/path_provider_foundation.dart";
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  var groupDir = null;
+  if (Platform.isIOS) {
+    final PathProviderFoundation provider = PathProviderFoundation();
+    groupDir = await provider.getContainerPath(appGroupIdentifier: "group.com.lingol.mmkvdemo");
+  }
+
   // must wait for MMKV to finish initialization
-  final rootDir = await MMKV.initialize();
+  final rootDir = await MMKV.initialize(groupDir: groupDir);
   print("MMKV for flutter with rootDir = $rootDir");
 
   runApp(MyApp());
