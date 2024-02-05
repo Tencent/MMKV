@@ -53,6 +53,7 @@ void tryResetFileProtection(const string &path) {
 #ifdef MMKV_APPLE
 
 #include <copyfile.h>
+#include <unistd.h>
 
 namespace mmkv {
 
@@ -77,7 +78,7 @@ bool tryAtomicRename(const char *src, const char *dst) {
         }
     }
 
-    unlink(src);
+    ::unlink(src);
 
     return true;
 }

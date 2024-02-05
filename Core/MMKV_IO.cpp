@@ -49,6 +49,10 @@
 #    endif
 #endif // MMKV_APPLE
 
+#ifndef MMKV_WIN32
+#    include <unistd.h>
+#endif
+
 using namespace std;
 using namespace mmkv;
 using KVHolderRet_t = std::pair<bool, KeyValueHolder>;
