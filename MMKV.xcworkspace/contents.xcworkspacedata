@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:iOS/MMKVDemo/MMKVDemo.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:iOS/MMKV/MMKV.xcodeproj">
    </FileRef>
 </Workspace>
