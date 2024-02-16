@@ -7,9 +7,13 @@
 //
 
 import SwiftUI
+import MMKV
 
 @main
 struct MMKVVisionDemoApp: App {
+    init() {
+        MMKV.initialize(rootDir: nil)
+    }
     var body: some Scene {
         WindowGroup {
             ContentView()
