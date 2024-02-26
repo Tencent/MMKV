@@ -124,11 +124,11 @@ MMKV 支持**多进程访问**，更详细的用法参考 [iOS/macOS Tutorial](h
      git clone https://github.com/Tencent/MMKV.git
      ```
   
-  2. 添加工程 `Win32/MMKV/MMKV.vcxproj` 到你的项目里；
+  2. 添加工程 `Core/core.vcxproj` 到你的项目里；
   3. 设置你的主工程依赖于 `MMKV` 工程;
   4. 添加目录 `$(OutDir)include` 到你主工程的 `C/C++` -> `常规` -> `附加包含目录`;
   5. 添加目录 `$(OutDir)` 到你主工程的 `链接器` -> `常规` -> `附加库目录`;
-  6. 添加 `MMKV.lib` 到你主工程的 `链接器` -> `输入` -> `附加依赖项`;
+  6. 添加 `mmkv.lib` 到你主工程的 `链接器` -> `输入` -> `附加依赖项`;
   7. 添加头文件 `#include <MMKV/MMKV.h>`，就可以愉快地开始你的 MMKV 之旅了。
 
 注意：
