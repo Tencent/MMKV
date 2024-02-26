@@ -157,11 +157,11 @@ For more benchmark data, please refer to [our benchmark](https://github.com/Tenc
    git clone https://github.com/Tencent/MMKV.git
    ```
   
-2. Add `Win32/MMKV/MMKV.vcxproj` to your solution;
+2. Add `Core/core.vcxproj` to your solution;
 3. Add `MMKV` project to your project's dependencies;
 4. Add `$(OutDir)include` to your project's `C/C++` -> `General` -> `Additional Include Directories`;
 5. Add `$(OutDir)` to your project's `Linker` -> `General` -> `Additional Library Directories`;
-6. Add `MMKV.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
+6. Add `mmkv.lib` to your project's `Linker` -> `Input` -> `Additional Dependencies`;
 7. Add `#include <MMKV/MMKV.h>` to your source file and we are done.
 
 
