@@ -1,4 +1,14 @@
 # MMKV Change Log
+## v1.3.4 / 2024-03-15
+### Changes for All platforms
+* Make `trim()` more robust in multi-process mode.
+
+### iOS & macOS
+* Support visionOS.
+
+### POSIX
+* Fix a compile error on `::unlink()`.
+
 ## v1.3.3 / 2024-01-25
 ### Changes for All platforms
 * Add `removeStorage()` static method to safely delete underlying files of an MMKV instance.
