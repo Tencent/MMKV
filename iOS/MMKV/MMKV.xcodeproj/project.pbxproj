@@ -90,7 +90,6 @@
 /* Begin PBXFileReference section */
 		CB042EEE2AB9970500F8DD8C /* AutoCleanInfo.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = AutoCleanInfo.hpp; sourceTree = "<group>"; };
 		CB1E0651242B84D800F2FD42 /* MMKVAppExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKVAppExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "MMKV copy-Info.plist"; path = "/Users/lingol/Developer/mmkv/iOS/MMKV/MMKV copy-Info.plist"; sourceTree = "<absolute>"; };
 		CB1FD4912046984F00931B5F /* libMMKV.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libMMKV.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB1FD4942046984F00931B5F /* MMKV.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKV.h; sourceTree = "<group>"; };
 		CB1FD4952046984F00931B5F /* libMMKV.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = libMMKV.mm; sourceTree = "<group>"; };
@@ -102,7 +101,6 @@
 		CBC1A90A20DA95E100AD5087 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CBDF328F2192C0000028DB4D /* MMKVHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MMKVHandler.h; sourceTree = "<group>"; };
 		CBF1904C243D706D001C82ED /* MMKVWatchExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MMKVWatchExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		CBF1904D243D706D001C82ED /* MMKVAppExtension copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "MMKVAppExtension copy-Info.plist"; path = "/Users/lingol/Developer/mmkv/iOS/MMKV/MMKVAppExtension copy-Info.plist"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,8 +153,6 @@
 				CB1FD4932046984F00931B5F /* MMKV */,
 				CB1FD4922046984F00931B5F /* Products */,
 				CB1FD4C92046ACB200931B5F /* Frameworks */,
-				CB1E0652242B84D800F2FD42 /* MMKV copy-Info.plist */,
-				CBF1904D243D706D001C82ED /* MMKVAppExtension copy-Info.plist */,
 			);
 			indentWidth = 4;
 			sourceTree = "<group>";
@@ -490,7 +486,7 @@
 					MMKV_IOS_EXTENSION,
 				);
 				GENERATE_MASTER_OBJECT_FILE = NO;
-				INFOPLIST_FILE = "MMKV copy-Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MARKETING_VERSION = 1.3.4;
@@ -532,7 +528,7 @@
 					MMKV_IOS_EXTENSION,
 				);
 				GENERATE_MASTER_OBJECT_FILE = NO;
-				INFOPLIST_FILE = "MMKV copy-Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MARKETING_VERSION = 1.3.4;
@@ -816,7 +812,7 @@
 					MMKV_IOS_EXTENSION,
 				);
 				GENERATE_MASTER_OBJECT_FILE = NO;
-				INFOPLIST_FILE = "MMKVAppExtension copy-Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MARKETING_VERSION = 1.3.4;
@@ -860,7 +856,7 @@
 					MMKV_IOS_EXTENSION,
 				);
 				GENERATE_MASTER_OBJECT_FILE = NO;
-				INFOPLIST_FILE = "MMKVAppExtension copy-Info.plist";
+				INFOPLIST_FILE = "$(SRCROOT)/MMKV/Resources/Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				MARKETING_VERSION = 1.3.4;
