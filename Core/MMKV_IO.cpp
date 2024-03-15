@@ -49,6 +49,10 @@
 #    endif
 #endif // MMKV_APPLE
 
+#ifndef MMKV_WIN32
+#    include <unistd.h>
+#endif
+
 using namespace std;
 using namespace mmkv;
 using KVHolderRet_t = std::pair<bool, KeyValueHolder>;
@@ -1384,6 +1388,7 @@ void MMKV::trim() {
     SCOPED_LOCK(m_lock);
     MMKVInfo("prepare to trim %s", m_mmapID.c_str());
 
+    SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
     if (!isFileValid()) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
@@ -1396,7 +1401,6 @@ void MMKV::trim() {
     } else if (m_file->getFileSize() <= m_expectedCapacity) {
         return;
     }
-    SCOPED_LOCK(m_exclusiveProcessLock);
 
     fullWriteback();
     auto oldSize = m_file->getFileSize();

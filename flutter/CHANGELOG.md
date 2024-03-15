@@ -1,4 +1,8 @@
 # MMKV for Flutter Change Log
+
+## v1.3.4 / 2024-03-15
+* Make `trim()` more robust in multi-process mode.
+
 ## v1.3.3 / 2024-01-25
 * Add `removeStorage()` static method to safely delete underlying files of an MMKV instance.
 * Add protection from a potential crash of a multi-process MMKV loading due to the MMKV file not being valid.

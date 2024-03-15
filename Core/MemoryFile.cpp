@@ -35,6 +35,7 @@
 #    include <sys/file.h>
 #    include <dirent.h>
 #    include <cstring>
+#    include <unistd.h>
 
 using namespace std;
 

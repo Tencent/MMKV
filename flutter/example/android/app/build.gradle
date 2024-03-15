@@ -34,7 +34,7 @@ android {
 
     defaultConfig {
         applicationId "com.tencent.mmkv_example"
-        minSdkVersion 16
+        minSdkVersion flutter.minSdkVersion
         targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -49,7 +49,7 @@ android {
     }
 
     dependencies {
-        implementation('com.tencent:mmkv:1.3.3')
+        implementation('com.tencent:mmkv:1.3.4')
 
         constraints {
             implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
