@@ -267,8 +267,7 @@ bool isFileExist(const string &nsFilePath) {
         return false;
     }
 
-    struct stat temp = {};
-    return lstat(nsFilePath.c_str(), &temp) == 0;
+    return access(nsFilePath.c_str(), F_OK) == 0;
 }
 
 extern bool mkPath(const MMKVPath_t &str) {
