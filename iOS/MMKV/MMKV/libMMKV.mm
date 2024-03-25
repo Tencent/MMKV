@@ -1036,13 +1036,13 @@ static NSString *md5(NSString *value) {
     mmkv::MMKV::setLogLevel((mmkv::MMKVLogLevel) logLevel);
 }
 
-- (uint32_t)migrateFromUserDefaultsDictionaryRepresentation:(NSDictionary *)dic {
+- (uint64_t)migrateFromUserDefaultsDictionaryRepresentation:(NSDictionary *)dic {
     if (dic.count <= 0) {
-        MMKVInfo("migrate data fail, userDaults is nil or empty");
+        MMKVInfo("migrate data fail, dic is nil or empty");
         return 0;
     }
     @autoreleasepool {
-        __block uint32_t count = 0;
+        __block uint64_t count = 0;
         [dic enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
             if ([key isKindOfClass:[NSString class]]) {
                 NSString *stringKey = key;

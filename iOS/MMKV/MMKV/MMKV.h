@@ -368,9 +368,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// Migrate NSUserDefault data to MMKV
 /// @param userDaults the dictionaryRepresentation of the NSUserDefaults instance to be imported
 /// @return imported count of key-values
-- (uint32_t)migrateFromUserDefaultsDictionaryRepresentation:(NSDictionary *)userDaults NS_SWIFT_NAME(migrateFrom(userDefaultsDictionaryRepresentation:));
+- (uint64_t)migrateFromUserDefaultsDictionaryRepresentation:(NSDictionary *)userDaults NS_SWIFT_NAME(migrateFrom(userDefaultsDictionaryRepresentation:));
 // use [MMKV migrateFromUserDefaultsDictionaryRepresentation:] instead
-- (uint32_t)migrateFromUserDefaults:(id) userDaults NS_SWIFT_NAME(migrateFrom(userDefaults:)) UNAVAILABLE_ATTRIBUTE;
+- (uint32_t)migrateFromUserDefaults:(id) userDaults NS_SWIFT_NAME(migrateFrom(userDefaults:)) NS_UNAVAILABLE;
 
 /// detect if the MMKV file is valid or not
 /// Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
