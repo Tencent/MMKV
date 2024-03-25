@@ -360,7 +360,7 @@
     [userDefault setObject:number forKey:@"number_NSUInteger"];
 
     auto mmkv = [MMKV mmkvWithID:@"testImportNSUserDefaults1"];
-    [mmkv migrateFromUserDefaults:userDefault];
+    [mmkv migrateFromUserDefaultsDictionaryRepresentation:userDefault.dictionaryRepresentation];
     [mmkv clearMemoryCache];
     NSLog(@"%@", [mmkv allKeys]);
 
