@@ -280,7 +280,8 @@ public:
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint32_t expireDuration);
 
     NSObject *getObject(MMKVKey_t key, Class cls);
-#else  // !defined(MMKV_APPLE)
+#endif // MMKV_APPLE
+
     bool set(const char *value, MMKVKey_t key);
     bool set(const char *value, MMKVKey_t key, uint32_t expireDuration);
 
@@ -301,7 +302,6 @@ public:
     bool getBytes(MMKVKey_t key, mmkv::MMBuffer &result);
 
     bool getVector(MMKVKey_t key, std::vector<std::string> &result);
-#endif // MMKV_APPLE
 
     bool getBool(MMKVKey_t key, bool defaultValue = false, MMKV_OUT bool *hasValue = nullptr);
 
@@ -462,5 +462,5 @@ public:
 
 MMKV_NAMESPACE_END
 
-#endif
+#endif // __cplusplus
 #endif // MMKV_MMKV_H
