@@ -10,13 +10,12 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                // uncomment this line to support armeabi
-                // abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                // uncomment this line to support 32-bit ABIs (armeabi-v7a & x86)
+                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                abiFilters 'arm64-v8a', 'x86_64'
             }
         }
-        // change this line to next line to support armeabi by using android-ndk-r16b
-        ndkVersion = '25.0.8775105'
-        // ndkVersion = '16.1.4479499'
+        ndkVersion = '26.2.11394342'
     }
     buildTypes {
         release {
