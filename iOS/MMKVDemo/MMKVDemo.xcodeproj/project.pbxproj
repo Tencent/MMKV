@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 48;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -39,7 +39,7 @@
 		CB6D44CC23B3A44400F369AA /* NotificationCenter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB6D44CB23B3A44400F369AA /* NotificationCenter.framework */; };
 		CB6D44D023B3A44400F369AA /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB6D44CF23B3A44400F369AA /* TodayViewController.m */; };
 		CB6D44D323B3A44400F369AA /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB6D44D123B3A44400F369AA /* MainInterface.storyboard */; };
-		CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CB9C2731215E5DF000448B6C /* libMMKV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV.a */; };
 		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
 		CBB306612435E8F200CB593E /* ViewController+TestCaseBad.mm in Sources */ = {isa = PBXBuildFile; fileRef = CBB306602435E8F200CB593E /* ViewController+TestCaseBad.mm */; };
@@ -51,7 +51,7 @@
 		CBD5359023B46E8500D3A404 /* libMMKV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV.a */; };
 		CBF19016243D6F59001C82ED /* Interface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBF19014243D6F59001C82ED /* Interface.storyboard */; };
 		CBF19018243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF19017243D6F5A001C82ED /* Assets.xcassets */; };
-		CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CBF19025243D6F5A001C82ED /* InterfaceController.m in Sources */ = {isa = PBXBuildFile; fileRef = CBF19024243D6F5A001C82ED /* InterfaceController.m */; };
 		CBF19028243D6F5A001C82ED /* ExtensionDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = CBF19027243D6F5A001C82ED /* ExtensionDelegate.mm */; };
 		CBF1902B243D6F5A001C82ED /* NotificationController.m in Sources */ = {isa = PBXBuildFile; fileRef = CBF1902A243D6F5A001C82ED /* NotificationController.m */; };
@@ -179,15 +179,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		CB6D44DB23B3A44400F369AA /* Embed App Extensions */ = {
+		CB6D44DB23B3A44400F369AA /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed App Extensions */,
+				CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CBF19033243D6F5A001C82ED /* Embed Watch Content */ = {
@@ -201,15 +201,15 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		CBF19036243D6F5A001C82ED /* Embed App Extensions */ = {
+		CBF19036243D6F5A001C82ED /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed App Extensions */,
+				CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CBF190AE243D78D4001C82ED /* Frameworks */ = {
@@ -577,7 +577,7 @@
 				CB1FD41C20455E2D00931B5F /* Sources */,
 				CB1FD41D20455E2D00931B5F /* Frameworks */,
 				CB1FD41E20455E2D00931B5F /* Resources */,
-				CB6D44DB23B3A44400F369AA /* Embed App Extensions */,
+				CB6D44DB23B3A44400F369AA /* Embed Foundation Extensions */,
 				CBF19033243D6F5A001C82ED /* Embed Watch Content */,
 				CB6180E926E90493003FF912 /* CopyFiles */,
 			);
@@ -670,7 +670,7 @@
 			buildConfigurationList = CBF1903B243D6F5A001C82ED /* Build configuration list for PBXNativeTarget "WatchApp" */;
 			buildPhases = (
 				CBF19010243D6F59001C82ED /* Resources */,
-				CBF19036243D6F5A001C82ED /* Embed App Extensions */,
+				CBF19036243D6F5A001C82ED /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -707,8 +707,9 @@
 		CB1FD41820455E2D00931B5F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1520;
-				LastUpgradeCheck = 1200;
+				LastUpgradeCheck = 1530;
 				ORGANIZATIONNAME = Lingol;
 				TargetAttributes = {
 					70A6308F2B7E7EC9003AB1DF = {
@@ -1078,7 +1079,10 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -1112,7 +1116,10 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
@@ -1131,6 +1138,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1189,6 +1197,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1247,8 +1256,10 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = MMKVDemo;
@@ -1268,8 +1279,10 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1299,8 +1312,10 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -1332,8 +1347,10 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.kvdemo;
@@ -1356,8 +1373,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 52LMU3A345;
 				INFOPLIST_FILE = MMKVDemoTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1376,8 +1396,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 52LMU3A345;
 				INFOPLIST_FILE = MMKVDemoTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1394,9 +1417,12 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVTodayExtensionDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1417,9 +1443,12 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = MMKVTodayExtensionDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.MMKVTodayExtensionDemo;
@@ -1439,11 +1468,15 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvmacdemo;
@@ -1462,11 +1495,15 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = MMKVMacDemo/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvmacdemo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1524,7 +1561,11 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = "WatchApp Extension/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.watchkitapp.watchkitextension;
@@ -1545,7 +1586,11 @@
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
 				INFOPLIST_FILE = "WatchApp Extension/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.mmkvdemo.watchkitapp.watchkitextension;
 				PRODUCT_NAME = "${TARGET_NAME}";
