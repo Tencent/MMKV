@@ -19,26 +19,15 @@
 #
 
 # Sets the minimum version of CMake required to build the native library.
+
 cmake_minimum_required(VERSION 3.10.0)
 
-project(mmkv)
+project(z)
 
 IF(APPLE)
     add_compile_definitions(FORCE_POSIX)
 ENDIF()
 
-add_subdirectory(../../Core Core)
-
-find_library(zlib
-        z
-        )
-
-IF (NOT zlib)
-    message(STATUS "Zlib library not found. Using internal zlib.")
-    add_subdirectory(../../Core/crc32/zlib zlib)
-ELSE()
-    message(STATUS "Zlib library found. ${zlib}")
-ENDIF()
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -46,20 +35,20 @@ ENDIF()
 # Gradle automatically packages shared libraries with your APK.
 
 add_library( # Sets the name of the library.
-             mmkv
+             z
 
              # Sets the library as a shared library.
              STATIC
 
              # Provides a relative path to your source file(s).
-             golang-bridge.h
-             golang-bridge.cpp
+             crc32.h
+             crc32.cpp
+             zconf.h
+             zutil.h
         )
 
-target_include_directories(mmkv PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR})
 
-set_target_properties(mmkv PROPERTIES
+set_target_properties(z PROPERTIES
             CXX_STANDARD 17
             CXX_EXTENSIONS OFF
             )
@@ -68,20 +57,4 @@ set_target_properties(mmkv PROPERTIES
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
-target_link_libraries( mmkv
-                       core
-                       pthread
-        )
 
-# Install source file & library to tencent.com/mmkv dir
-
-install(FILES mmkv.go callback.go go.mod mmkv_test.go golang-bridge.h golang-bridge.cpp
-  DESTINATION "tencent.com/mmkv")
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libmmkv.a ${CMAKE_CURRENT_BINARY_DIR}/Core/libcore.a
-  DESTINATION "tencent.com/mmkv/lib")
-
-IF (NOT zlib)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/zlib/libz.a
-  DESTINATION "tencent.com/mmkv/lib")
-ENDIF()
