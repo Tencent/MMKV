@@ -27,39 +27,57 @@
 #include "napi/native_api.h"
 #include <cstdint>
 #include <string>
+#include <system_error>
 
 using namespace std;
 using namespace mmkv;
+
+// assuming env is defined
+#define NAPI_CALL(call)                                                                                                \
+    do {                                                                                                               \
+        napi_status status = (call);                                                                                   \
+        if (status != napi_ok) {                                                                                       \
+            const napi_extended_error_info *error_info = nullptr;                                                      \
+            napi_get_last_error_info(env, &error_info);                                                                \
+            printf("NAPI Error: code %d, msg %s\n", error_info->error_code, error_info->error_message);                \
+            bool is_pending;                                                                                           \
+            napi_is_exception_pending(env, &is_pending);                                                               \
+            if (!is_pending) {                                                                                         \
+                auto message = error_info->error_message ? error_info->error_message : "null";                         \
+                napi_throw_error(env, nullptr, message);                                                               \
+                return nullptr;                                                                                        \
+            }                                                                                                          \
+        }                                                                                                              \
+    } while (0)
 
 static napi_value Add(napi_env env, napi_callback_info info) {
     size_t requireArgc = 2;
     size_t argc = 2;
     napi_value args[2] = {nullptr};
 
-    napi_get_cb_info(env, info, &argc, args , nullptr, nullptr);
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args , nullptr, nullptr));
 
     napi_valuetype valuetype0;
-    napi_typeof(env, args[0], &valuetype0);
+    NAPI_CALL(napi_typeof(env, args[0], &valuetype0));
 
     napi_valuetype valuetype1;
-    napi_typeof(env, args[1], &valuetype1);
+    NAPI_CALL(napi_typeof(env, args[1], &valuetype1));
 
     double value0;
-    napi_get_value_double(env, args[0], &value0);
+    NAPI_CALL(napi_get_value_double(env, args[0], &value0));
 
     double value1;
-    napi_get_value_double(env, args[1], &value1);
+    NAPI_CALL(napi_get_value_double(env, args[1], &value1));
 
     napi_value sum;
-    napi_create_double(env, value0 + value1, &sum);
+    NAPI_CALL(napi_create_double(env, value0 + value1, &sum));
 
     return sum;
-
 }
 
 static napi_value Version(napi_env env, napi_callback_info info) {
     napi_value sum;
-    napi_create_string_latin1(env, MMKV_VERSION, strlen(MMKV_VERSION), &sum);
+    NAPI_CALL(napi_create_string_latin1(env, MMKV_VERSION, strlen(MMKV_VERSION), &sum));
 
     return sum;
 }
