@@ -47,8 +47,14 @@ ELSEIF("${ANDROID_ABI}" STREQUAL "armeabi")
 ENDIF()
 
 #include(CMakePrintHelpers)
-#cmake_print_variables(CMAKE_SYSTEM_PROCESSOR)
-IF(UNIX AND (NOT APPLE))
+#cmake_print_variables(CMAKE_SYSTEM_PROCESSOR OHOS OHOS_ARCH CFLAGS ASM_OPTIONS CMAKE_ASM_FLAGS)
+
+IF(OHOS)
+    IF("${OHOS_ARCH}" STREQUAL "arm64-v8a")
+        SET(ASM_OPTIONS "-x assembler-with-cpp")
+        SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8+crypto -D__MUSL__")
+    ENDIF()
+ELSEIF(UNIX AND (NOT APPLE))
     IF("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
         SET(ASM_OPTIONS "-x assembler-with-cpp")
         SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8-a+crypto")
@@ -131,9 +137,11 @@ add_library(core
         MMKVPredef.h
         )
 
-IF (NOT MSVC)
+IF (MSVC OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"))
     # .S files is not supported by MSVC.
-    target_sources(core PRIVATE 
+    # x86_64 asm not supported in OHOS
+ELSE()
+    target_sources(core PRIVATE
         aes/openssl/openssl_aesv8-armx.S
         aes/openssl/openssl_aes-armv4.S)
 ENDIF()

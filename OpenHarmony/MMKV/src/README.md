@@ -1,0 +1,1 @@
+This is a OpenHarmony port of MMKV.

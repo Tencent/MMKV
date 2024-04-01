@@ -1,0 +1,62 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/lingol/.ohos/config/default_MMKVDemo_N7nGq6Xy1YJ-mYxSsdPb4jpp6CpBheypbD1hxfC2xU0=.cer",
+          "storePassword": "0000001940EBB031F520CECE6DA62F5F63FF955391CED6BA71B86C0C14DDAAEE46EAD1401630FE9387",
+          "keyAlias": "debugKey",
+          "keyPassword": "00000019FA389C36437FA737216E2684E7058F4AFEE6E4463CE7792C8A2AC173D67DE488E72966FD96",
+          "profile": "/Users/lingol/.ohos/config/default_MMKVDemo_N7nGq6Xy1YJ-mYxSsdPb4jpp6CpBheypbD1hxfC2xU0=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/lingol/.ohos/config/default_MMKVDemo_N7nGq6Xy1YJ-mYxSsdPb4jpp6CpBheypbD1hxfC2xU0=.p12"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compileSdkVersion": "4.1.0(11)",
+        "compatibleSdkVersion": "4.1.0(11)",
+        "runtimeOS": "HarmonyOS",
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MMKV",
+      "srcPath": "./MMKV",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

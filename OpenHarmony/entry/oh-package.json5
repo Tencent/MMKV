@@ -1,0 +1,12 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "A demo for MMKV in OpenHarmony OS.",
+  "main": "",
+  "author": "guoling",
+  "license": "BSD 3-Clause",
+  "dependencies": {
+    "mmkv": "file:../MMKV"
+  }
+}
+
