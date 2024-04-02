@@ -19,7 +19,7 @@
  */
 
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { nativeAdd, version } from 'mmkv';
+import { MMKV, MMKVLogLevel } from 'mmkv';
 
 @Entry
 @Component
@@ -29,7 +29,7 @@ struct Index {
   build() {
     Row() {
       Column() {
-        Text('mmkv version: ' + version())
+        Text('mmkv version: ' + MMKV.version())
           .fontSize(28)
           .fontWeight(FontWeight.Bold)
         Blank()
@@ -39,7 +39,10 @@ struct Index {
           .fontWeight(FontWeight.Regular)
           .fontColor(Color.Blue)
           .onClick(() => {
-              hilog.info(0, "mmkvdemo", 'Test NAPI 2 + 3 = %{public}d', nativeAdd(2, 3))
+              // hilog.info(0, "mmkvdemo", 'Test NAPI 2 + 3 = %{public}d', 5)
+              let kv = MMKV.defaultMMKV();
+              kv.encodeBool('bool', true);
+              hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
             }
           )
       }

@@ -23,4 +23,5 @@ set_target_properties(mmkv PROPERTIES
 
 target_link_libraries(mmkv PUBLIC
     libace_napi.z.so
+    libhilog_ndk.z.so
     core)

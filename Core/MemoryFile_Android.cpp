@@ -114,7 +114,9 @@ constexpr auto ASHMEM_IOC = 0x77;
 #    define ASHMEM_SET_SIZE _IOW(ASHMEM_IOC, 3, size_t)
 #    define ASHMEM_GET_SIZE _IO(ASHMEM_IOC, 4)
 
+#ifndef MMKV_OHOS
 int g_android_api = __ANDROID_API_L__;
+#endif
 std::string g_android_tmpDir = "/data/local/tmp/";
 
 void *loadLibrary() {
@@ -130,7 +132,10 @@ typedef int (*AShmem_create_t)(const char *name, size_t size);
 
 int ASharedMemory_create(const char *name, size_t size) {
     int fd = -1;
-    if (g_android_api >= __ANDROID_API_O__) {
+#ifndef MMKV_OHOS
+    if (g_android_api >= __ANDROID_API_O__)
+#endif
+    {
         static auto handle = loadLibrary();
         static AShmem_create_t funcPtr =
             (handle != nullptr) ? reinterpret_cast<AShmem_create_t>(dlsym(handle, "ASharedMemory_create")) : nullptr;
@@ -162,7 +167,10 @@ typedef size_t (*AShmem_getSize_t)(int fd);
 
 size_t ASharedMemory_getSize(int fd) {
     size_t size = 0;
-    if (g_android_api >= __ANDROID_API_O__) {
+#ifndef MMKV_OHOS
+    if (g_android_api >= __ANDROID_API_O__)
+#endif
+    {
         static auto handle = loadLibrary();
         static AShmem_getSize_t funcPtr =
             (handle != nullptr) ? reinterpret_cast<AShmem_getSize_t>(dlsym(handle, "ASharedMemory_getSize")) : nullptr;
@@ -190,7 +198,10 @@ string ASharedMemory_getName(int fd) {
     // Android Q doesn't have ASharedMemory_getName()
     // I've make a request to Google, https://issuetracker.google.com/issues/130741665
     // There's nothing we can do before it's supported officially by Google
-    if (g_android_api >= __ANDROID_API_Q__) {
+#ifndef MMKV_OHOS
+    if (g_android_api >= __ANDROID_API_O__)
+#endif
+    {
         return "";
     }
 

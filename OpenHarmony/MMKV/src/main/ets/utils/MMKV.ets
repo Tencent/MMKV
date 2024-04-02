@@ -19,15 +19,45 @@
  */
 
 import native from 'libmmkv.so';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { MMKVLogLevel } from './MMKVLogLevel';
 
-export function add(a:number, b:number) {
-    return a + b;
-}
+export class MMKV {
+    static SINGLE_PROCESS_MODE: number = 1 << 0
+    static MULTI_PROCESS_MODE: number = 1 << 1
+    private static ASHMEM_MODE: number = 1 << 3
+    private static BACKUP_MODE: number = 1 << 4
 
-export function nativeAdd(a:number, b:number) {
-    return native.add(a, b);
-}
+    private static initData() {
+        // MMKV.checkedHandleSet = new Set<string>()
+    }
 
-export function version():string {
-    return native.version();
+    static initialize(rootDir:string, cacheDir:string, logLevel?:MMKVLogLevel) {
+        MMKV.initData();
+        // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
+        native.initialize(rootDir, cacheDir, logLevel);
+    }
+
+    static version():string {
+        return native.version();
+    }
+
+    private nativeHandle: BigInt;
+    private constructor(handle: BigInt) {
+        this.nativeHandle = handle;
+    }
+
+    static defaultMMKV(): MMKV {
+        let handle = native.getDefaultMMKV(MMKV.SINGLE_PROCESS_MODE);
+        // hilog.info(0x0000, 'mmkv', 'default mmkv: %{public}i', handle);
+        return new MMKV(handle);
+    }
+
+    encodeBool(key: string, value: boolean, expiration?: number) {
+        return native.encodeBool(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeBool(key: string, defaultValue?: boolean) {
+        return native.decodeBool(this.nativeHandle, key, defaultValue ?? false);
+    }
 }

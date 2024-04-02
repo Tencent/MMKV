@@ -21,11 +21,19 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { MMKV, MMKVLogLevel } from 'mmkv';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, 'mmkvdemo', '%{public}s', 'Ability onCreate');
+
+    let appContext = this.context.getApplicationContext();
+    let rootDir = appContext.filesDir + "/mmkv";
+    let cacheDir = appContext.cacheDir;
+    // hilog.info(0x0000, 'mmkvdemo', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, MMKVLogLevel.LevelInfo);
+    MMKV.initialize(rootDir, cacheDir, MMKVLogLevel.LevelInfo);
   }
+
 
   onDestroy(): void {
     hilog.info(0x0000, 'mmkvdemo', '%{public}s', 'Ability onDestroy');
