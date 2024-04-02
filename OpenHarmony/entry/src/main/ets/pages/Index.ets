@@ -24,7 +24,7 @@ import { MMKV, MMKVLogLevel } from 'mmkv';
 @Entry
 @Component
 struct Index {
-  @State message: string = 'Native Add';
+  @State message: string = 'Functionality Test';
 
   build() {
     Row() {
@@ -39,7 +39,6 @@ struct Index {
           .fontWeight(FontWeight.Regular)
           .fontColor(Color.Blue)
           .onClick(() => {
-              // hilog.info(0, "mmkvdemo", 'Test NAPI 2 + 3 = %{public}d', 5)
               let kv = MMKV.defaultMMKV();
               kv.encodeBool('bool', true);
               hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
