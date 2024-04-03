@@ -479,6 +479,54 @@ static napi_value decodeString(napi_env env, napi_callback_info info) {
     return args[2];
 }
 
+static napi_value encodeBytes(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        void *data = nullptr;
+        size_t length = 0;
+        if (napi_get_arraybuffer_info(env, args[2], &data, &length) != napi_ok) {
+            return BoolToNValue(env, false);
+        }
+        auto value = MMBuffer(data, length, mmkv::MMBufferNoCopy);
+        if (IsNValueUndefined(env, args[3])) {
+            auto ret = kv->set(value, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[3]);
+        auto ret = kv->set(value, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value decodeBytes(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        MMBuffer result;
+        if (kv->getBytes(key, result)) {
+            napi_value arrBuffer = nullptr;
+            void *data = nullptr;
+            if (napi_create_arraybuffer(env, result.length(), &data, &arrBuffer) == napi_ok) {
+                memcpy(data, result.getPtr(), result.length());
+                return arrBuffer;
+            }
+        }
+    }
+    return args[2];
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -499,6 +547,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeDouble", nullptr, decodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeString", nullptr, encodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeString", nullptr, decodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeBytes", nullptr, encodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeBytes", nullptr, decodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

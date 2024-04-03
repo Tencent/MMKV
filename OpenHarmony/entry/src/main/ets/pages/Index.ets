@@ -20,6 +20,7 @@
 
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { MMKV, MMKVLogLevel } from 'mmkv';
+import util from '@ohos.util';
 
 @Entry
 @Component
@@ -92,5 +93,14 @@ struct Index {
 
     hilog.info(0, "mmkvdemo", 'decode non-exist string = %{public}s', kv.decodeString('non-exist'));
     hilog.info(0, "mmkvdemo", 'decode non-exist string = %{public}s', kv.decodeString('non-exist', 'default_value'));
+
+    let enc = new util.TextEncoder(); // always utf-8
+    let i8Arr = enc.encodeInto("This is a string 转换成 a Uint8Array 💯");
+    let arrayBuffer = i8Arr.buffer.slice(i8Arr.byteOffset, i8Arr.byteLength + i8Arr.byteOffset);
+    kv.encodeBytes('bytes', arrayBuffer);
+    let bytes = kv.decodeBytes('bytes');
+    let out8Arr = new Uint8Array(bytes);
+    let dnc = util.TextDecoder.create("utf-8");
+    hilog.info(0, "mmkvdemo", 'decode bytes = %{public}s', dnc.decodeWithStream(out8Arr));
   }
 }

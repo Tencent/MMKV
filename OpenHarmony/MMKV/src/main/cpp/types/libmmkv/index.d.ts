@@ -15,3 +15,5 @@ export const encodeDouble: (handle: bigint, key: string, value: number, expirati
 export const decodeDouble: (handle: bigint, key: string, defaultValue: number) => number;
 export const encodeString: (handle: bigint, key: string, value: string, expiration?: number) => boolean;
 export const decodeString: (handle: bigint, key: string, defaultValue?: string) => string;
+export const encodeBytes: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
+export const decodeBytes: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
