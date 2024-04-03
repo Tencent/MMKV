@@ -41,11 +41,11 @@ export class MMKV {
         return MMKV.g_rootDir;
     }
 
-    static version() {
+    static get version() {
         return native.version();
     }
 
-    static rootDir() {
+    static get rootDir() {
         return MMKV.g_rootDir;
     }
 

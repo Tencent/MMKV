@@ -38,10 +38,10 @@ struct Index {
             kv.encodeBool('bool', true);
             hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
           })
-        Text('mmkv version: ' + MMKV.version())
+        Text('mmkv version: ' + MMKV.version)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
-        Text(MMKV.rootDir())
+        Text(MMKV.rootDir)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
       }
