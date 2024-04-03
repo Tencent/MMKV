@@ -67,4 +67,44 @@ export class MMKV {
     decodeBool(key: string, defaultValue?: boolean) {
         return native.decodeBool(this.nativeHandle, key, defaultValue ?? false);
     }
+
+    encodeInt32(key: string, value: number, expiration?: number) {
+        return native.encodeInt32(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeInt32(key: string, defaultValue?: number) {
+        return native.decodeInt32(this.nativeHandle, key, defaultValue ?? 0);
+    }
+
+    encodeUInt32(key: string, value: number, expiration?: number) {
+        return native.encodeUInt32(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeUInt32(key: string, defaultValue?: number) {
+        return native.decodeUInt32(this.nativeHandle, key, defaultValue ?? 0);
+    }
+
+    encodeInt64(key: string, value: BigInt, expiration?: number) {
+        return native.encodeInt64(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeInt64(key: string, defaultValue?: BigInt) {
+        return native.decodeInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
+    }
+
+    encodeUInt64(key: string, value: BigInt, expiration?: number) {
+        return native.encodeUInt64(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeUInt64(key: string, defaultValue?: BigInt) {
+        return native.decodeUInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
+    }
+
+    encodeDouble(key: string, value: number, expiration?: number) {
+        return native.encodeDouble(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeDouble(key: string, defaultValue?: number) {
+        return native.decodeDouble(this.nativeHandle, key, defaultValue ?? 0);
+    }
 }

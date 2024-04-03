@@ -34,9 +34,7 @@ struct Index {
           .buttonStyle(ButtonStyleMode.TEXTUAL)
           .fontSize(18)
           .onClick(() => {
-            let kv = MMKV.defaultMMKV();
-            kv.encodeBool('bool', true);
-            hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
+            this.functionalTest();
           })
         Text('mmkv version: ' + MMKV.version)
           .fontSize(16)
@@ -48,5 +46,45 @@ struct Index {
       .width('100%')
     }
     .height('100%')
+  }
+
+  functionalTest() {
+    let kv = MMKV.defaultMMKV();
+    kv.encodeBool('bool', true);
+    hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
+
+    let pow31 = Math.pow(2, 31);
+    kv.encodeInt32('int32', pow31 - 1);
+    hilog.info(0, "mmkvdemo", 'decode int32 max = %{public}d', kv.decodeInt32('int32'));
+
+    kv.encodeInt32('int32', -pow31);
+    hilog.info(0, "mmkvdemo", 'decode int32 min = %{public}d', kv.decodeInt32('int32'));
+
+    let pow32 = Math.pow(2, 32);
+    kv.encodeUInt32('uint32', pow32 - 1);
+    hilog.info(0, "mmkvdemo", 'decode uint32 max = %{public}d', kv.decodeUInt32('uint32'));
+
+    kv.encodeUInt32('uint32', 0);
+    hilog.info(0, "mmkvdemo", 'decode uint32 min = %{public}d', kv.decodeUInt32('uint32'));
+
+    let pow63 = BigInt(2 ** 63);
+    kv.encodeInt64('int64', pow63 - BigInt(1));
+    hilog.info(0, "mmkvdemo", 'decode int64 max = %{public}i', kv.decodeInt64('int64'));
+
+    kv.encodeInt64('int64', -pow63);
+    hilog.info(0, "mmkvdemo", 'decode int64 min = %{public}i', kv.decodeInt64('int64'));
+
+    let pow64 = BigInt(2 ** 64);
+    kv.encodeUInt64('uint64', pow64 - BigInt(1));
+    hilog.info(0, "mmkvdemo", 'decode uint64 max = %{public}i', kv.decodeUInt64('uint64'));
+
+    kv.encodeUInt64('uint64', BigInt(0));
+    hilog.info(0, "mmkvdemo", 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
+
+    kv.encodeDouble('double', Number.MAX_VALUE);
+    hilog.info(0, "mmkvdemo", 'decode double max = %{public}d', kv.decodeDouble('double'));
+
+    kv.encodeDouble('double', Number.MIN_VALUE);
+    hilog.info(0, "mmkvdemo", 'decode double min = %{public}d', kv.decodeDouble('double'));
   }
 }
