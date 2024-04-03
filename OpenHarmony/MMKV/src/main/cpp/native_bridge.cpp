@@ -89,6 +89,11 @@ static napi_value StringToNValue(napi_env env, const string &value) {
     return result;
 }
 
+static void my_finalizer(napi_env env, void *finalize_data, void *finalize_hint) {
+//     MMKVInfo("free %p", finalize_data);
+    free(finalize_data);
+}
+
 static MMBuffer NValueToMMBuffer(napi_env env, napi_value value, bool maybeUndefined = false) {
     if (maybeUndefined && IsNValueUndefined(env, value)) {
         return MMBuffer();
@@ -109,6 +114,19 @@ static napi_value MMBufferToNValue(napi_env env, const MMBuffer &value) {
         memcpy(data, value.getPtr(), value.length());
     }
     return result;
+}
+
+static napi_value MMBufferToNValue(napi_env env, MMBuffer &&value) {
+    if (!value.isStoredOnStack()) {
+        napi_value result = nullptr;
+        auto ret = napi_create_external_arraybuffer(env, value.getPtr(), value.length(), my_finalizer, nullptr, &result);
+        if (ret == napi_ok) {
+//             MMKVInfo("using napi_create_external_arraybuffer %p", value.getPtr());
+            value.detach();
+            return result;
+        }
+    }
+    return MMBufferToNValue(env, (const MMBuffer &) value);
 }
 
 static napi_value NAPIUndefined(napi_env env) {
@@ -533,7 +551,7 @@ static napi_value decodeBytes(napi_env env, napi_callback_info info) {
     if (kv && key.length() > 0) {
         MMBuffer result;
         if (kv->getBytes(key, result)) {
-            return MMBufferToNValue(env, result);
+            return MMBufferToNValue(env, std::move(result));
         }
     }
     return args[2];
