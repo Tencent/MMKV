@@ -69,7 +69,7 @@ bool IsNValueUndefined(napi_env env, napi_value value) {
     return false;
 }
 
-static string NAPIString2String(napi_env env, napi_value value, bool maybeUndefined = false) {
+static string NValueToString(napi_env env, napi_value value, bool maybeUndefined = false) {
     if (maybeUndefined && IsNValueUndefined(env, value)) {
         return "";
     }
@@ -83,7 +83,7 @@ static string NAPIString2String(napi_env env, napi_value value, bool maybeUndefi
     return result;
 }
 
-static napi_value String2NAPIString(napi_env env, const string &value) {
+static napi_value StringToNValue(napi_env env, const string &value) {
     napi_value result;
     napi_create_string_utf8(env, value.data(), value.size(), &result);
     return result;
@@ -182,8 +182,8 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     napi_value args[3] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args , nullptr, nullptr));
 
-    auto rootDir = NAPIString2String(env, args[0]);
-    auto cacheDir = NAPIString2String(env, args[1]);
+    auto rootDir = NValueToString(env, args[0]);
+    auto cacheDir = NValueToString(env, args[1]);
 
     int32_t logLevel;
     NAPI_CALL(napi_get_value_int32(env, args[2], &logLevel));
@@ -194,7 +194,7 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
     g_android_tmpDir = cacheDir;
 
-    return String2NAPIString(env, MMKV::getRootDir());
+    return StringToNValue(env, MMKV::getRootDir());
 }
 
 static napi_value version(napi_env env, napi_callback_info info) {
@@ -211,7 +211,7 @@ static napi_value getDefaultMMKV(napi_env env, napi_callback_info info) {
 
     int32_t mode;
     NAPI_CALL(napi_get_value_int32(env, args[0], &mode));
-    auto crypt = NAPIString2String(env, args[1], true);
+    auto crypt = NValueToString(env, args[1], true);
 
     MMKV *kv = nullptr;
     if (crypt.length() > 0) {
@@ -231,7 +231,7 @@ static napi_value encodeBool(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToBool(env,args[2]);
@@ -252,7 +252,7 @@ static napi_value decodeBool(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     auto defaultValue = NValueToBool(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
@@ -267,7 +267,7 @@ static napi_value encodeInt32(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToInt32(env, args[2]);
@@ -288,7 +288,7 @@ static napi_value decodeInt32(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     auto defaultValue = NValueToInt32(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
@@ -303,7 +303,7 @@ static napi_value encodeUInt32(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToUInt32(env, args[2]);
@@ -324,7 +324,7 @@ static napi_value decodeUInt32(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     auto defaultValue = NValueToUInt32(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
@@ -339,7 +339,7 @@ static napi_value encodeInt64(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToInt64(env, args[2]);
@@ -360,7 +360,7 @@ static napi_value decodeInt64(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     auto defaultValue = NValueToInt64(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
@@ -375,7 +375,7 @@ static napi_value encodeUInt64(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToUInt64(env, args[2]);
@@ -396,7 +396,7 @@ static napi_value decodeUInt64(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     auto defaultValue = NValueToUInt64(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
@@ -411,7 +411,7 @@ static napi_value encodeDouble(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToDouble(env, args[2]);
@@ -432,13 +432,51 @@ static napi_value decodeDouble(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
-    auto key = NAPIString2String(env, args[1]);
+    auto key = NValueToString(env, args[1]);
     auto defaultValue = NValueToDouble(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         return DoubleToNValue(env, kv->getDouble(key, defaultValue));
     }
     return DoubleToNValue(env, defaultValue);
+}
+
+static napi_value encodeString(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        auto value = NValueToString(env, args[2]);
+        if (IsNValueUndefined(env, args[3])) {
+            auto ret = kv->set(value, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[3]);
+        auto ret = kv->set(value, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value decodeString(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        string result;
+        if (kv->getString(key, result)) {
+            return StringToNValue(env, result);
+        }
+    }
+    return args[2];
 }
 
 EXTERN_C_START
@@ -459,6 +497,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeUInt64", nullptr, decodeUInt64, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeDouble", nullptr, encodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeDouble", nullptr, decodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeString", nullptr, encodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeString", nullptr, decodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

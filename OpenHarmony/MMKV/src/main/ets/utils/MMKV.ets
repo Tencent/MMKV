@@ -107,4 +107,12 @@ export class MMKV {
     decodeDouble(key: string, defaultValue?: number) {
         return native.decodeDouble(this.nativeHandle, key, defaultValue ?? 0);
     }
+
+    encodeString(key: string, value: string, expiration?: number) {
+        return native.encodeString(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeString(key: string, defaultValue?: string) {
+        return native.decodeString(this.nativeHandle, key, defaultValue);
+    }
 }

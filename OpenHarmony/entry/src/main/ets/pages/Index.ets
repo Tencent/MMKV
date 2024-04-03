@@ -86,5 +86,11 @@ struct Index {
 
     kv.encodeDouble('double', Number.MIN_VALUE);
     hilog.info(0, "mmkvdemo", 'decode double min = %{public}d', kv.decodeDouble('double'));
+
+    kv.encodeString('string', 'Hello world to OpenHarmony!');
+    hilog.info(0, "mmkvdemo", 'decode string = %{public}s', kv.decodeString('string'));
+
+    hilog.info(0, "mmkvdemo", 'decode non-exist string = %{public}s', kv.decodeString('non-exist'));
+    hilog.info(0, "mmkvdemo", 'decode non-exist string = %{public}s', kv.decodeString('non-exist', 'default_value'));
   }
 }

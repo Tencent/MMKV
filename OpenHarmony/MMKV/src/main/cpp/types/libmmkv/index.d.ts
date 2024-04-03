@@ -13,3 +13,5 @@ export const encodeUInt64: (handle: BigInt, key: string, value: BigInt, expirati
 export const decodeUInt64: (handle: BigInt, key: string, defaultValue: BigInt) => BigInt;
 export const encodeDouble: (handle: BigInt, key: string, value: number, expiration?: number) => boolean;
 export const decodeDouble: (handle: BigInt, key: string, defaultValue: number) => number;
+export const encodeString: (handle: BigInt, key: string, value: string, expiration?: number) => boolean;
+export const decodeString: (handle: BigInt, key: string, defaultValue?: string) => string;
