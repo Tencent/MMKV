@@ -17,3 +17,6 @@ export const encodeString: (handle: bigint, key: string, value: string, expirati
 export const decodeString: (handle: bigint, key: string, defaultValue?: string) => string;
 export const encodeBytes: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
 export const decodeBytes: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
+export const containsKey: (handle: bigint, key: string) => string;
+export const removeValueForKey: (handle: bigint, key: string) => void;
+export const count: (handle: bigint) => bigint;

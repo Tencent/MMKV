@@ -68,14 +68,14 @@ struct Index {
     kv.encodeUInt32('uint32', 0);
     hilog.info(0, "mmkvdemo", 'decode uint32 min = %{public}d', kv.decodeUInt32('uint32'));
 
-    let pow63 = BigInt(2 ** 63);
+    let pow63 = BigInt(2**63);
     kv.encodeInt64('int64', pow63 - BigInt(1));
     hilog.info(0, "mmkvdemo", 'decode int64 max = %{public}i', kv.decodeInt64('int64'));
 
     kv.encodeInt64('int64', -pow63);
     hilog.info(0, "mmkvdemo", 'decode int64 min = %{public}i', kv.decodeInt64('int64'));
 
-    let pow64 = BigInt(2 ** 64);
+    let pow64 = BigInt(2**64);
     kv.encodeUInt64('uint64', pow64 - BigInt(1));
     hilog.info(0, "mmkvdemo", 'decode uint64 max = %{public}i', kv.decodeUInt64('uint64'));
 
@@ -98,6 +98,14 @@ struct Index {
     kv.encodeBytes('bytes', arrayBuffer);
     let bytes = kv.decodeBytes('bytes');
     hilog.info(0, "mmkvdemo", 'decode bytes = %{public}s', ArrayBufferToString(bytes));
+
+    hilog.info(0, "mmkvdemo", 'contains bytes = %{public}s, contains bytes_not_exit = %{public}s',
+      kv.containsKey('bytes'), kv.containsKey('bytes_not_exit'));
+
+    kv.removeValueForKey('bytes');
+    hilog.info(0, "mmkvdemo", 'after remove, contains bytes = %{public}s', kv.containsKey('bytes'));
+
+    hilog.info(0, "mmkvdemo", 'total count = %{public}i', kv.count());
   }
 }
 

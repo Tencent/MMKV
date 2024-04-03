@@ -123,4 +123,16 @@ export class MMKV {
     decodeBytes(key: string, defaultValue?: ArrayBuffer) {
         return native.decodeBytes(this.nativeHandle, key, defaultValue);
     }
+
+    containsKey(key: string) {
+        return native.containsKey(this.nativeHandle, key);
+    }
+
+    removeValueForKey(key: string) {
+        native.removeValueForKey(this.nativeHandle, key);
+    }
+
+    count() {
+        return native.count(this.nativeHandle);
+    }
 }

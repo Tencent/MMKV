@@ -90,7 +90,7 @@ static napi_value StringToNValue(napi_env env, const string &value) {
 }
 
 static void my_finalizer(napi_env env, void *finalize_data, void *finalize_hint) {
-//     MMKVInfo("free %p", finalize_data);
+    // MMKVInfo("free %p", finalize_data);
     free(finalize_data);
 }
 
@@ -121,7 +121,7 @@ static napi_value MMBufferToNValue(napi_env env, MMBuffer &&value) {
         napi_value result = nullptr;
         auto ret = napi_create_external_arraybuffer(env, value.getPtr(), value.length(), my_finalizer, nullptr, &result);
         if (ret == napi_ok) {
-//             MMKVInfo("using napi_create_external_arraybuffer %p", value.getPtr());
+            // MMKVInfo("using napi_create_external_arraybuffer %p", value.getPtr());
             value.detach();
             return result;
         }
@@ -151,8 +151,10 @@ static napi_value BoolToNValue(napi_env env, bool value) {
 
 static bool NValueToBool(napi_env env, napi_value value) {
     bool result;
-    napi_get_value_bool(env, value, &result);
-    return result;
+    if (napi_get_value_bool(env, value, &result) == napi_ok) {
+        return result;
+    }
+    return false;
 }
 
 static napi_value Int32ToNValue(napi_env env, int32_t value) {
@@ -557,6 +559,48 @@ static napi_value decodeBytes(napi_env env, napi_callback_info info) {
     return args[2];
 }
 
+static napi_value containsKey(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+       return BoolToNValue(env, kv->containsKey(key));
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value removeValueForKey(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+       kv->removeValueForKey(key);
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value count(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto filterExpire = NValueToBool(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+       return UInt64ToNValue(env, kv->count(filterExpire));
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -579,6 +623,9 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeString", nullptr, decodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeBytes", nullptr, encodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeBytes", nullptr, decodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "containsKey", nullptr, containsKey, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "removeValueForKey", nullptr, removeValueForKey, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "count", nullptr, count, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
