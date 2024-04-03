@@ -28,22 +28,22 @@ struct Index {
 
   build() {
     Row() {
-      Column() {
-        Text('mmkv version: ' + MMKV.version())
-          .fontSize(28)
-          .fontWeight(FontWeight.Bold)
-        Blank()
-          .height(40)
-        Text(this.message)
+      Column({ space: 20 }) {
+        Button(this.message)
+          .type(ButtonType.Normal)
+          .buttonStyle(ButtonStyleMode.TEXTUAL)
           .fontSize(18)
-          .fontWeight(FontWeight.Regular)
-          .fontColor(Color.Blue)
           .onClick(() => {
-              let kv = MMKV.defaultMMKV();
-              kv.encodeBool('bool', true);
-              hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
-            }
-          )
+            let kv = MMKV.defaultMMKV();
+            kv.encodeBool('bool', true);
+            hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
+          })
+        Text('mmkv version: ' + MMKV.version())
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+        Text(MMKV.rootDir())
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
       }
       .width('100%')
     }

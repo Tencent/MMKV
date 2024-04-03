@@ -28,6 +28,8 @@ export class MMKV {
     private static ASHMEM_MODE: number = 1 << 3
     private static BACKUP_MODE: number = 1 << 4
 
+    private  static g_rootDir: string
+
     private static initData() {
         // MMKV.checkedHandleSet = new Set<string>()
     }
@@ -35,11 +37,16 @@ export class MMKV {
     static initialize(rootDir:string, cacheDir:string, logLevel?:MMKVLogLevel) {
         MMKV.initData();
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
-        native.initialize(rootDir, cacheDir, logLevel);
+        MMKV.g_rootDir = native.initialize(rootDir, cacheDir, logLevel);
+        return MMKV.g_rootDir;
     }
 
-    static version():string {
+    static version() {
         return native.version();
+    }
+
+    static rootDir() {
+        return MMKV.g_rootDir;
     }
 
     private nativeHandle: BigInt;
@@ -47,7 +54,7 @@ export class MMKV {
         this.nativeHandle = handle;
     }
 
-    static defaultMMKV(): MMKV {
+    static defaultMMKV() {
         let handle = native.getDefaultMMKV(MMKV.SINGLE_PROCESS_MODE);
         // hilog.info(0x0000, 'mmkv', 'default mmkv: %{public}i', handle);
         return new MMKV(handle);

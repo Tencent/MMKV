@@ -83,19 +83,25 @@ static string NAPIString2String(napi_env env, napi_value value, bool maybeUndefi
     return result;
 }
 
-napi_value NAPIUndefined(napi_env env) {
+static napi_value String2NAPIString(napi_env env, const string &value) {
+    napi_value result;
+    napi_create_string_utf8(env, value.data(), value.size(), &result);
+    return result;
+}
+
+static napi_value NAPIUndefined(napi_env env) {
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
     return result;
 }
 
-napi_value NAPINull(napi_env env) {
+static napi_value NAPINull(napi_env env) {
     napi_value result;
     napi_get_null(env, &result);
     return result;
 }
 
-napi_value NAPIBool(napi_env env, double resultDoubleValue) {
+static napi_value NAPIBool(napi_env env, double resultDoubleValue) {
     napi_value result;
     napi_value resultBool;
     napi_create_double(env, resultDoubleValue, &result);
@@ -103,25 +109,25 @@ napi_value NAPIBool(napi_env env, double resultDoubleValue) {
     return resultBool;
 }
 
-bool NValueToBool(napi_env env, napi_value value) {
+static bool NValueToBool(napi_env env, napi_value value) {
     bool result;
     napi_get_value_bool(env, value, &result);
     return result;
 }
 
-uint32_t NValueToUInt32(napi_env env, napi_value value) {
+static uint32_t NValueToUInt32(napi_env env, napi_value value) {
     uint32_t result;
     napi_get_value_uint32(env, value, &result);
     return result;
 }
 
-napi_value UInt64ToNValue(napi_env env, uint64_t value) {
+static napi_value UInt64ToNValue(napi_env env, uint64_t value) {
     napi_value result;
     napi_create_bigint_uint64(env, value, &result);
     return result;
 }
 
-uint64_t NValueToUInt64(napi_env env, napi_value value) {
+static uint64_t NValueToUInt64(napi_env env, napi_value value) {
     uint64_t result;
     bool lossless;
     napi_get_value_bigint_uint64(env, value, &result, &lossless);
@@ -145,7 +151,7 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
     g_android_tmpDir = cacheDir;
 
-    return NAPIUndefined(env);
+    return String2NAPIString(env, MMKV::getRootDir());
 }
 
 static napi_value version(napi_env env, napi_callback_info info) {

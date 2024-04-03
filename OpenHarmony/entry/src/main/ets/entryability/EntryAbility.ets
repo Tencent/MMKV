@@ -31,7 +31,8 @@ export default class EntryAbility extends UIAbility {
     let rootDir = appContext.filesDir + "/mmkv";
     let cacheDir = appContext.cacheDir;
     // hilog.info(0x0000, 'mmkvdemo', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, MMKVLogLevel.LevelInfo);
-    MMKV.initialize(rootDir, cacheDir, MMKVLogLevel.LevelInfo);
+    let result = MMKV.initialize(rootDir, cacheDir, MMKVLogLevel.LevelInfo);
+    // hilog.info(0x0000, 'mmkvdemo', 'rootDir: %{public}s', result);
   }
 
 

@@ -13,7 +13,7 @@ endif()
 include_directories(${NATIVERENDER_ROOT_PATH}
                     ${NATIVERENDER_ROOT_PATH}/include)
 
-add_library(mmkv SHARED napi_init.cpp)
+add_library(mmkv SHARED native_bridge.cpp)
 
 set_target_properties(mmkv PROPERTIES
         CXX_STANDARD 17
