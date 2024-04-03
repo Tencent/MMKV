@@ -49,8 +49,8 @@ export class MMKV {
         return MMKV.g_rootDir;
     }
 
-    private nativeHandle: BigInt;
-    private constructor(handle: BigInt) {
+    private nativeHandle: bigint;
+    private constructor(handle: bigint) {
         this.nativeHandle = handle;
     }
 
@@ -84,19 +84,19 @@ export class MMKV {
         return native.decodeUInt32(this.nativeHandle, key, defaultValue ?? 0);
     }
 
-    encodeInt64(key: string, value: BigInt, expiration?: number) {
+    encodeInt64(key: string, value: bigint, expiration?: number) {
         return native.encodeInt64(this.nativeHandle, key, value, expiration);
     }
 
-    decodeInt64(key: string, defaultValue?: BigInt) {
+    decodeInt64(key: string, defaultValue?: bigint) {
         return native.decodeInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
     }
 
-    encodeUInt64(key: string, value: BigInt, expiration?: number) {
+    encodeUInt64(key: string, value: bigint, expiration?: number) {
         return native.encodeUInt64(this.nativeHandle, key, value, expiration);
     }
 
-    decodeUInt64(key: string, defaultValue?: BigInt) {
+    decodeUInt64(key: string, defaultValue?: bigint) {
         return native.decodeUInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
     }
 
