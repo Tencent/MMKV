@@ -89,6 +89,28 @@ static napi_value StringToNValue(napi_env env, const string &value) {
     return result;
 }
 
+static MMBuffer NValueToMMBuffer(napi_env env, napi_value value, bool maybeUndefined = false) {
+    if (maybeUndefined && IsNValueUndefined(env, value)) {
+        return MMBuffer();
+    }
+
+    void *data = nullptr;
+    size_t length = 0;
+    if (napi_get_arraybuffer_info(env, value, &data, &length) == napi_ok) {
+        return MMBuffer(data, length, mmkv::MMBufferNoCopy);
+    }
+    return MMBuffer();
+}
+
+static napi_value MMBufferToNValue(napi_env env, const MMBuffer &value) {
+    napi_value result = nullptr;
+    void *data = nullptr;
+    if (napi_create_arraybuffer(env, value.length(), &data, &result) == napi_ok) {
+        memcpy(data, value.getPtr(), value.length());
+    }
+    return result;
+}
+
 static napi_value NAPIUndefined(napi_env env) {
     napi_value result = nullptr;
     napi_get_undefined(env, &result);
@@ -488,12 +510,7 @@ static napi_value encodeBytes(napi_env env, napi_callback_info info) {
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        void *data = nullptr;
-        size_t length = 0;
-        if (napi_get_arraybuffer_info(env, args[2], &data, &length) != napi_ok) {
-            return BoolToNValue(env, false);
-        }
-        auto value = MMBuffer(data, length, mmkv::MMBufferNoCopy);
+        auto value = NValueToMMBuffer(env, args[2]);
         if (IsNValueUndefined(env, args[3])) {
             auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
@@ -516,12 +533,7 @@ static napi_value decodeBytes(napi_env env, napi_callback_info info) {
     if (kv && key.length() > 0) {
         MMBuffer result;
         if (kv->getBytes(key, result)) {
-            napi_value arrBuffer = nullptr;
-            void *data = nullptr;
-            if (napi_create_arraybuffer(env, result.length(), &data, &arrBuffer) == napi_ok) {
-                memcpy(data, result.getPtr(), result.length());
-                return arrBuffer;
-            }
+            return MMBufferToNValue(env, result);
         }
     }
     return args[2];
