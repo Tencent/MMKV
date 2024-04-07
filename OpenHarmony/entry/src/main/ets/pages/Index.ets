@@ -37,7 +37,7 @@ struct Index {
           .onClick(() => {
             this.functionalTest();
           })
-        Text('mmkv version: ' + MMKV.version)
+        Text('mmkv version: ' + MMKV.version + ' pagesize: ' + MMKV.pageSize.toString())
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
         Text(MMKV.rootDir)
@@ -50,7 +50,7 @@ struct Index {
   }
 
   functionalTest() {
-    let kv = MMKV.defaultMMKV();
+    let kv = MMKV.defaultMMKV(MMKV.MULTI_PROCESS_MODE);
     kv.encodeBool('bool', true);
     hilog.info(0, "mmkvdemo", 'decode bool = %{public}s', kv.decodeBool('bool'));
 
@@ -99,7 +99,7 @@ struct Index {
     let bytes = kv.decodeBytes('bytes');
     hilog.info(0, "mmkvdemo", 'decode bytes = %{public}s', ArrayBufferToString(bytes));
 
-    let strArr: string[] = ['abc', 'dec', 'hij'];
+    let strArr: string[] = ['abc', 'defg', 'hijk'];
     kv.encodeStringSet('string-set', strArr);
     let newStrArr = kv.decodeStringSet('string-set');
     hilog.info(0, "mmkvdemo", 'string-set = %{public}s', StringArrayToString(newStrArr));
@@ -116,12 +116,22 @@ struct Index {
     kv.removeValueForKey('bytes');
     hilog.info(0, "mmkvdemo", 'after remove, contains bytes = %{public}s', kv.containsKey('bytes'));
 
-    hilog.info(0, "mmkvdemo", 'total count = %{public}i', kv.count());
+    hilog.info(0, "mmkvdemo", 'total count = %{public}i, total size = %{public}i, actual size = %{public}i',
+      kv.count(), kv.totalSize(), kv.actualSize());
 
-    hilog.info(0, "mmkvdemo", 'allKeys = %{public}s', kv.allKeys().join());
+    kv.lock();
+    kv.sync(true);
+    kv.unlock();
+    hilog.info(0, "mmkvdemo", 'tryLock = %{public}s', kv.tryLock());
+
+    kv.clearMemoryCache();
+    hilog.info(0, "mmkvdemo", 'allKeys = %{public}s', StringArrayToString(kv.allKeys()));
 
     kv.removeValuesForKeys(['bool', 'int32']);
-    hilog.info(0, "mmkvdemo", 'after remove "bool" & "int32", allKeys = %{public}s', kv.allKeys().join());
+    hilog.info(0, "mmkvdemo", 'remove "bool" & "int32", allKeys = %{public}s', StringArrayToString(kv.allKeys()));
+
+    kv.clearAll();
+    hilog.info(0, "mmkvdemo", 'clearAll(), allKeys = %{public}s', StringArrayToString(kv.allKeys()));
   }
 }
 

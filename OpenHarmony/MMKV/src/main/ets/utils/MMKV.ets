@@ -45,6 +45,10 @@ export class MMKV {
         return native.version();
     }
 
+    static get pageSize() {
+        return native.pageSize();
+    }
+
     static get rootDir() {
         return MMKV.g_rootDir;
     }
@@ -54,8 +58,8 @@ export class MMKV {
         this.nativeHandle = handle;
     }
 
-    static defaultMMKV() {
-        let handle = native.getDefaultMMKV(MMKV.SINGLE_PROCESS_MODE);
+    static defaultMMKV(mode?: number) {
+        let handle = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE);
         // hilog.info(0x0000, 'mmkv', 'default mmkv: %{public}i', handle);
         return new MMKV(handle);
     }
@@ -140,6 +144,10 @@ export class MMKV {
         return native.allKeys(this.nativeHandle, filterExpire ?? false);
     }
 
+    count(filterExpire?: boolean) {
+        return native.count(this.nativeHandle, filterExpire ?? false);
+    }
+
     removeValueForKey(key: string) {
         native.removeValueForKey(this.nativeHandle, key);
     }
@@ -148,7 +156,35 @@ export class MMKV {
         native.removeValuesForKeys(this.nativeHandle, keys);
     }
 
-    count(filterExpire?: boolean) {
-        return native.count(this.nativeHandle, filterExpire ?? false);
+    clearAll(keepSpace?: boolean) {
+        return native.clearAll(this.nativeHandle, keepSpace ?? false);
+    }
+
+    totalSize() {
+        return native.totalSize(this.nativeHandle);
+    }
+
+    actualSize() {
+        return native.actualSize(this.nativeHandle);
+    }
+
+    sync(sync?: boolean) {
+        return native.sync(this.nativeHandle, sync ?? false);
+    }
+
+    clearMemoryCache() {
+        return native.clearMemoryCache(this.nativeHandle);
+    }
+
+    lock() {
+        return native.lock(this.nativeHandle);
+    }
+
+    unlock() {
+        return native.unlock(this.nativeHandle);
+    }
+
+    tryLock() {
+        return native.tryLock(this.nativeHandle);
     }
 }

@@ -274,8 +274,13 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
 static napi_value version(napi_env env, napi_callback_info info) {
     napi_value sum;
     NAPI_CALL(napi_create_string_latin1(env, MMKV_VERSION, strlen(MMKV_VERSION), &sum));
-
     return sum;
+}
+
+static napi_value pageSize(napi_env env, napi_callback_info info) {
+    napi_value value;
+    NAPI_CALL(napi_create_uint32(env, DEFAULT_MMAP_SIZE, &value));
+    return value;
 }
 
 static napi_value getDefaultMMKV(napi_env env, napi_callback_info info) {
@@ -704,11 +709,118 @@ static napi_value allKeys(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+static napi_value clearAll(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto keepSpace = NValueToBool(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->clearAll(keepSpace);
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value sync(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto needSync = NValueToBool(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->sync(needSync ? MMKV_SYNC : MMKV_ASYNC);
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value clearMemoryCache(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->clearMemoryCache();
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value totalSize(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return UInt64ToNValue(env, kv->totalSize());
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value actualSize(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return UInt64ToNValue(env, kv->actualSize());
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value lock(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->lock();
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value unlock(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->unlock();
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value tryLock(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return BoolToNValue(env, kv->try_lock());
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
         { "initialize", nullptr, initialize, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "version", nullptr, version, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "pageSize", nullptr, pageSize, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "getDefaultMMKV", nullptr, getDefaultMMKV, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeBool", nullptr, encodeBool, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeBool", nullptr, decodeBool, nullptr, nullptr, nullptr, napi_default, nullptr },
@@ -733,6 +845,14 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "allKeys", nullptr, allKeys, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "removeValueForKey", nullptr, removeValueForKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "removeValuesForKeys", nullptr, removeValuesForKeys, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "clearAll", nullptr, clearAll, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "clearMemoryCache", nullptr, clearMemoryCache, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "actualSize", nullptr, actualSize, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "totalSize", nullptr, totalSize, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "sync", nullptr, sync, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "lock", nullptr, lock, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "unlock", nullptr, unlock, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "tryLock", nullptr, tryLock, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
