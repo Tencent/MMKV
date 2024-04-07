@@ -99,6 +99,17 @@ struct Index {
     let bytes = kv.decodeBytes('bytes');
     hilog.info(0, "mmkvdemo", 'decode bytes = %{public}s', ArrayBufferToString(bytes));
 
+    let strArr: string[] = ['abc', 'dec', 'hij'];
+    kv.encodeStringSet('string-set', strArr);
+    let newStrArr = kv.decodeStringSet('string-set');
+    hilog.info(0, "mmkvdemo", 'string-set = %{public}s', StringArrayToString(newStrArr));
+
+    kv.encodeStringSet('empty-string-set', []);
+    let emptyStrArr = kv.decodeStringSet('empty-string-set');
+    hilog.info(0, "mmkvdemo", 'empty-string-set = %{public}s', StringArrayToString(emptyStrArr));
+    let nonStrArr = kv.decodeStringSet('non-exist-string-set');
+    hilog.info(0, "mmkvdemo", 'non-exist-string-set = %{public}s', StringArrayToString(nonStrArr));
+
     hilog.info(0, "mmkvdemo", 'contains bytes = %{public}s, contains bytes_not_exit = %{public}s',
       kv.containsKey('bytes'), kv.containsKey('bytes_not_exit'));
 
@@ -124,4 +135,11 @@ function ArrayBufferToString(arr: ArrayBuffer): string {
   let out8Arr = new Uint8Array(arr);
   let dnc = util.TextDecoder.create("utf-8");
   return dnc.decodeWithStream(out8Arr);
+}
+
+function StringArrayToString(strArr: string[]): string {
+  if (strArr == undefined) {
+    return 'undefined';
+  }
+  return '[' + strArr.join(', ') + ']';
 }

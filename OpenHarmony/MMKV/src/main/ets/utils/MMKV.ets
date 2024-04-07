@@ -116,6 +116,14 @@ export class MMKV {
         return native.decodeString(this.nativeHandle, key, defaultValue);
     }
 
+    encodeStringSet(key: string, value: string[], expiration?: number) {
+        return native.encodeStringSet(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeStringSet(key: string, defaultValue?: string[]) {
+        return native.decodeStringSet(this.nativeHandle, key, defaultValue);
+    }
+
     encodeBytes(key: string, value: ArrayBuffer, expiration?: number) {
         return native.encodeBytes(this.nativeHandle, key, value, expiration);
     }

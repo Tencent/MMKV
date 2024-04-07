@@ -89,6 +89,38 @@ static napi_value StringToNValue(napi_env env, const string &value) {
     return result;
 }
 
+static vector<string> NValueToStringArray(napi_env env, napi_value value, bool maybeUndefined = false) {
+    vector<string> keys;
+    if (maybeUndefined && IsNValueUndefined(env, value)) {
+        return keys;
+    }
+
+    uint32_t length = 0;
+    if (napi_get_array_length(env, value, &length) != napi_ok || length == 0) {
+        return keys;
+    }
+    keys.reserve(length);
+
+    for (uint32_t index = 0; index < length; index++) {
+        napi_value jsKey = nullptr;
+        if (napi_get_element(env, value, index, &jsKey) != napi_ok) {
+            continue;
+        }
+        keys.push_back(NValueToString(env, jsKey));
+    }
+    return keys;
+}
+
+static napi_value StringArrayToNValue(napi_env env, const vector<string> &value) {
+    napi_value jsArr = nullptr;
+    napi_create_array_with_length(env, value.size(), &jsArr);
+    for (size_t index = 0; index < value.size(); index++) {
+        auto jsKey = StringToNValue(env, value[index]);
+        napi_set_element(env, jsArr, index, jsKey);
+    }
+    return jsArr;
+}
+
 static void my_finalizer(napi_env env, void *finalize_data, void *finalize_hint) {
     // MMKVInfo("free %p", finalize_data);
     free(finalize_data);
@@ -521,6 +553,44 @@ static napi_value decodeString(napi_env env, napi_callback_info info) {
     return args[2];
 }
 
+static napi_value encodeStringSet(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        auto value = NValueToStringArray(env, args[2]);
+        if (IsNValueUndefined(env, args[3])) {
+            auto ret = kv->set(value, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[3]);
+        auto ret = kv->set(value, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value decodeStringSet(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        vector<string> result;
+        if (kv->getVector(key, result)) {
+            return StringArrayToNValue(env, result);
+        }
+    }
+    return args[2];
+}
+
 static napi_value encodeBytes(napi_env env, napi_callback_info info) {
     size_t argc = 4;
     napi_value args[4] = {nullptr};
@@ -598,21 +668,7 @@ static napi_value removeValuesForKeys(napi_env env, napi_callback_info info) {
        return NAPIUndefined(env);
     }
 
-    uint32_t length = 0;
-    if (napi_get_array_length(env, args[1], &length) != napi_ok || length == 0) {
-        return NAPIUndefined(env);
-    }
-
-    vector<string> keys;
-    keys.reserve(length);
-    for (uint32_t index = 0; index < length; index++) {
-        napi_value jsKey = nullptr;
-        if (napi_get_element(env, args[1], index, &jsKey) != napi_ok) {
-            return NAPIUndefined(env);
-        }
-        keys.push_back(NValueToString(env, jsKey));
-    }
-
+    vector<string> keys = NValueToStringArray(env, args[1]);
     if (keys.size() > 0) {
        kv->removeValuesForKeys(keys);
     }
@@ -643,13 +699,7 @@ static napi_value allKeys(napi_env env, napi_callback_info info) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
         auto keys = kv->allKeys(filterExpire);
-        napi_value jsArr = nullptr;
-        napi_create_array_with_length(env, keys.size(), &jsArr);
-        for (size_t index = 0; index < keys.size(); index++) {
-            auto jsKey = StringToNValue(env, keys[index]);
-            napi_set_element(env, jsArr, index, jsKey);
-        }
-        return jsArr;
+        return StringArrayToNValue(env, keys);
     }
     return NAPIUndefined(env);
 }
@@ -674,6 +724,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeDouble", nullptr, decodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeString", nullptr, encodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeString", nullptr, decodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeStringSet", nullptr, encodeStringSet, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeStringSet", nullptr, decodeStringSet, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeBytes", nullptr, encodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeBytes", nullptr, decodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "containsKey", nullptr, containsKey, nullptr, nullptr, nullptr, napi_default, nullptr },
