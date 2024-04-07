@@ -106,6 +106,11 @@ struct Index {
     hilog.info(0, "mmkvdemo", 'after remove, contains bytes = %{public}s', kv.containsKey('bytes'));
 
     hilog.info(0, "mmkvdemo", 'total count = %{public}i', kv.count());
+
+    hilog.info(0, "mmkvdemo", 'allKeys = %{public}s', kv.allKeys().join());
+
+    kv.removeValuesForKeys(['bool', 'int32']);
+    hilog.info(0, "mmkvdemo", 'after remove "bool" & "int32", allKeys = %{public}s', kv.allKeys().join());
   }
 }
 

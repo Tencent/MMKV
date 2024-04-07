@@ -128,11 +128,19 @@ export class MMKV {
         return native.containsKey(this.nativeHandle, key);
     }
 
+    allKeys(filterExpire?: boolean) {
+        return native.allKeys(this.nativeHandle, filterExpire ?? false);
+    }
+
     removeValueForKey(key: string) {
         native.removeValueForKey(this.nativeHandle, key);
     }
 
-    count() {
-        return native.count(this.nativeHandle);
+    removeValuesForKeys(keys: string[]) {
+        native.removeValuesForKeys(this.nativeHandle, keys);
+    }
+
+    count(filterExpire?: boolean) {
+        return native.count(this.nativeHandle, filterExpire ?? false);
     }
 }
