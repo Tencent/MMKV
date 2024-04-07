@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/lingol/.ohos/config/default_MMKVDemo_N7nGq6Xy1YJ-mYxSsdPb4jpp6CpBheypbD1hxfC2xU0=.cer",
-          "storePassword": "0000001940EBB031F520CECE6DA62F5F63FF955391CED6BA71B86C0C14DDAAEE46EAD1401630FE9387",
-          "keyAlias": "debugKey",
-          "keyPassword": "00000019FA389C36437FA737216E2684E7058F4AFEE6E4463CE7792C8A2AC173D67DE488E72966FD96",
-          "profile": "/Users/lingol/.ohos/config/default_MMKVDemo_N7nGq6Xy1YJ-mYxSsdPb4jpp6CpBheypbD1hxfC2xU0=.p7b",
+          "storePassword": "0000001886EDA863FB9D094439F68797CC47CE421EEA4FC26EC15521D2E38A130A55015F9FBC7CBB",
+          "certpath": "codesign/mmkvdemo.cer",
+          "keyAlias": "mmkvdemo",
+          "keyPassword": "00000018D4E68A64D83FEA9CDEE07C0FED97A7B15A3E017768C241980F6959D0CD9704D3BEB6AB55",
+          "profile": "codesign/mmkvdemoDebug.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/lingol/.ohos/config/default_MMKVDemo_N7nGq6Xy1YJ-mYxSsdPb4jpp6CpBheypbD1hxfC2xU0=.p12"
+          "storeFile": "codesign/mmkvdemo.p12"
         }
       }
     ],
