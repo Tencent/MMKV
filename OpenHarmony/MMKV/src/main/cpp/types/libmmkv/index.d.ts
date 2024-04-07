@@ -2,6 +2,7 @@ export const initialize: (rootDir: string, cacheDir: string, logLevel?: number) 
 export const version: () => string;
 export const pageSize: () => number;
 export const getDefaultMMKV: (mode: number, cryptKey?: string) => bigint;
+export const mmapID: (handle: bigint) => string;
 export const encodeBool: (handle: bigint, key: string, value: boolean, expiration?: number) => boolean;
 export const decodeBool: (handle: bigint, key: string, defaultValue: boolean) => boolean;
 export const encodeInt32: (handle: bigint, key: string, value: number, expiration?: number) => boolean;
@@ -33,3 +34,8 @@ export const clearMemoryCache: (handle: bigint) => bigint;
 export const lock: (handle: bigint) => bigint;
 export const unlock: (handle: bigint) => bigint;
 export const tryLock: (handle: bigint) => boolean;
+export const getValueSize: (handle: bigint, key: string, actualSize?: boolean) => number;
+export const trim: (handle: bigint) => void;
+export const close: (handle: bigint) => void;
+export const removeStorage: (mmapID: string, rootPath?: string) => boolean;
+export const isFileValid: (mmapID: string, rootPath?: string) => boolean;

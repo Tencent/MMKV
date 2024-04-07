@@ -64,6 +64,10 @@ export class MMKV {
         return new MMKV(handle);
     }
 
+    get mmapID () {
+        return native.mmapID(this.nativeHandle);
+    }
+
     encodeBool(key: string, value: boolean, expiration?: number) {
         return native.encodeBool(this.nativeHandle, key, value, expiration);
     }
@@ -186,5 +190,25 @@ export class MMKV {
 
     tryLock() {
         return native.tryLock(this.nativeHandle);
+    }
+
+    trim() {
+        return native.trim(this.nativeHandle);
+    }
+
+    close() {
+        return native.close(this.nativeHandle);
+    }
+
+    getValueSize(key: string, actualSize?: boolean) {
+        return native.getValueSize(this.nativeHandle, key, actualSize);
+    }
+
+    static removeStorage(mmapID: string, rootPath?: string) {
+        return native.removeStorage(mmapID, rootPath);
+    }
+
+    static isFileValid(mmapID: string, rootPath?: string) {
+        return native.isFileValid(mmapID, rootPath);
     }
 }

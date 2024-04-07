@@ -99,6 +99,9 @@ struct Index {
     let bytes = kv.decodeBytes('bytes');
     hilog.info(0, "mmkvdemo", 'decode bytes = %{public}s', ArrayBufferToString(bytes));
 
+    hilog.info(0, "mmkvdemo", 'bytes value size = %{public}d, actual value size =  %{public}d',
+      kv.getValueSize('bytes'), kv.getValueSize('bytes', true));
+
     let strArr: string[] = ['abc', 'defg', 'hijk'];
     kv.encodeStringSet('string-set', strArr);
     let newStrArr = kv.decodeStringSet('string-set');
@@ -116,10 +119,11 @@ struct Index {
     kv.removeValueForKey('bytes');
     hilog.info(0, "mmkvdemo", 'after remove, contains bytes = %{public}s', kv.containsKey('bytes'));
 
-    hilog.info(0, "mmkvdemo", 'total count = %{public}i, total size = %{public}i, actual size = %{public}i',
-      kv.count(), kv.totalSize(), kv.actualSize());
+    hilog.info(0, "mmkvdemo", 'mmapID = %{public}s, total count = %{public}i, total size = %{public}i, actual size = %{public}i',
+      kv.mmapID, kv.count(), kv.totalSize(), kv.actualSize());
 
     kv.lock();
+    kv.trim();
     kv.sync(true);
     kv.unlock();
     hilog.info(0, "mmkvdemo", 'tryLock = %{public}s', kv.tryLock());
@@ -132,6 +136,10 @@ struct Index {
 
     kv.clearAll();
     hilog.info(0, "mmkvdemo", 'clearAll(), allKeys = %{public}s', StringArrayToString(kv.allKeys()));
+
+    kv.close();
+    hilog.info(0, "mmkvdemo", 'isFileValue %{public}s', MMKV.isFileValid("mmkv.default"));
+    hilog.info(0, "mmkvdemo", 'remove storage %{public}s', MMKV.removeStorage("mmkv.default"));
   }
 }
 

@@ -304,6 +304,19 @@ static napi_value getDefaultMMKV(napi_env env, napi_callback_info info) {
     return UInt64ToNValue(env,(uint64_t)kv);
 }
 
+static napi_value mmapID(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return StringToNValue(env, kv->mmapID());
+    }
+    return NAPIUndefined(env);
+}
+
 static napi_value encodeBool(napi_env env, napi_callback_info info) {
     size_t argc = 4;
     napi_value args[4] = {nullptr};
@@ -815,6 +828,79 @@ static napi_value tryLock(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+static napi_value getValueSize(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        auto actualSize = NValueToBool(env, args[2]);
+        return UInt32ToNValue(env, kv->getValueSize(key, actualSize));
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value trim(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->trim();
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value mmkvClose(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->close();
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value removeStorage(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto mmapID = NValueToString(env, args[0]);
+    if (!mmapID.empty()) {
+        auto rootPath = NValueToString(env, args[1], true);
+        if (rootPath.empty()) {
+            return BoolToNValue(env, MMKV::removeStorage(mmapID));
+        }
+        return BoolToNValue(env, MMKV::removeStorage(mmapID, &rootPath));
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value isFileValid(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto mmapID = NValueToString(env, args[0]);
+    if (!mmapID.empty()) {
+        auto rootPath = NValueToString(env, args[1], true);
+        if (rootPath.empty()) {
+            return BoolToNValue(env, MMKV::isFileValid(mmapID));
+        }
+        return BoolToNValue(env, MMKV::isFileValid(mmapID, &rootPath));
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -822,6 +908,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "version", nullptr, version, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "pageSize", nullptr, pageSize, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "getDefaultMMKV", nullptr, getDefaultMMKV, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "mmapID", nullptr, mmapID, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeBool", nullptr, encodeBool, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeBool", nullptr, decodeBool, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeInt32", nullptr, encodeInt32, nullptr, nullptr, nullptr, napi_default, nullptr },
@@ -853,6 +940,11 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "lock", nullptr, lock, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "unlock", nullptr, unlock, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "tryLock", nullptr, tryLock, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "getValueSize", nullptr, getValueSize, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "close", nullptr, mmkvClose, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "trim", nullptr, trim, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "removeStorage", nullptr, removeStorage, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "isFileValid", nullptr, isFileValid, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
