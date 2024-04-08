@@ -271,22 +271,27 @@ export class MMKV {
                 // there's no way to tell whether a number is integer or float/double
                 this.encodeDouble(key, value as number);
             } else if (typeof value == 'object') {
-                if (Array.isArray(value) && value.length > 0) {
-                    // Array<number>、Array<string>、Array<boolean>、Uint8Array
-                    let first: Object = value[0];
-                    if (typeof first == 'string') {
-                        let arrStr = value as string[];
-                        this.encodeStringSet(key, arrStr);
-                    } else if (typeof first == 'boolean') {
-                        let arrBool = value as boolean[];
-                        this.encodeBoolSet(key, arrBool);
-                    } else if (typeof first == 'number') {
-                        let arrNumber = value as number[];
-                        this.encodeNumberSet(key, arrNumber);
+                if (Array.isArray(value)) {
+                    if (value.length == 0) {
+                        // assume it's Array<string>, the type doesn't really matter for an empty Array
+                        this.encodeStringSet(key, value as string[]);
                     } else {
-                        hilog.warn(0x0000, 'mmkv', 'unsupported Array<%{public}s> type on key %{public}s',
-                            typeof first, key);
-                        continue;
+                        // Array<number>、Array<string>、Array<boolean>、Uint8Array
+                        let first: Object = value[0];
+                        if (typeof first == 'string') {
+                            let arrStr = value as string[];
+                            this.encodeStringSet(key, arrStr);
+                        } else if (typeof first == 'boolean') {
+                            let arrBool = value as boolean[];
+                            this.encodeBoolSet(key, arrBool);
+                        } else if (typeof first == 'number') {
+                            let arrNumber = value as number[];
+                            this.encodeNumberSet(key, arrNumber);
+                        } else {
+                            hilog.warn(0x0000, 'mmkv', 'unsupported Array<%{public}s> type on key %{public}s',
+                                typeof first, key);
+                            continue;
+                        }
                     }
                 } else if (value instanceof Uint8Array) {
                     let arr = value as Uint8Array;

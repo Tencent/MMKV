@@ -319,6 +319,7 @@ struct Index {
     preferences.putSync('double_min', Number.MIN_VALUE);
     preferences.putSync('string', 'hello, world preferenes');
     preferences.putSync('string_array', ['hello', 'world', 'preferenes']);
+    preferences.putSync('empty_string_array', []);
     preferences.putSync('number_array', [pow31 - 1, -pow31, pow32, Number.MAX_VALUE, Number.MIN_VALUE]);
     preferences.putSync('bool_array', [true, false, true, false]);
     let arrayBuffer = StringToArrayBuffer("This is a string 转换成 a Uint8Array 💯");
@@ -335,6 +336,7 @@ struct Index {
     hilog.info(0, "mmkvdemo", 'decode double min = %{public}d', kv.decodeDouble('double_min'));
     hilog.info(0, "mmkvdemo", 'decode string = %{public}s', kv.decodeString('string'));
     hilog.info(0, "mmkvdemo", 'decode string array = %{public}s', ArrayToString(kv.decodeStringSet('string_array')));
+    hilog.info(0, "mmkvdemo", 'decode empty string array = %{public}s', ArrayToString(kv.decodeStringSet('empty_string_array')));
     hilog.info(0, "mmkvdemo", 'decode number array = %{public}s', ArrayToString(kv.decodeNumberSet('number_array')));
     hilog.info(0, "mmkvdemo", 'decode bool array = %{public}s', ArrayToString(kv.decodeBoolSet('bool_array')));
     hilog.info(0, "mmkvdemo", 'decode uint8 array = %{public}s', ArrayBufferToString(kv.decodeBytes('uint8_array')));
