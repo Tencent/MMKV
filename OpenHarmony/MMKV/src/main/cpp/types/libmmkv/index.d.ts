@@ -20,6 +20,10 @@ export const encodeString: (handle: bigint, key: string, value: string, expirati
 export const decodeString: (handle: bigint, key: string, defaultValue?: string) => string;
 export const encodeStringSet: (handle: bigint, key: string, value: string[], expiration?: number) => boolean;
 export const decodeStringSet: (handle: bigint, key: string, defaultValue?: string[]) => string[];
+export const encodeNumberSet: (handle: bigint, key: string, value: number[], expiration?: number) => boolean;
+export const decodeNumberSet: (handle: bigint, key: string, defaultValue?: number[]) => number[];
+export const encodeBoolSet: (handle: bigint, key: string, value: boolean[], expiration?: number) => boolean;
+export const decodeBoolSet: (handle: bigint, key: string, defaultValue?: boolean[]) => boolean[];
 export const encodeBytes: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
 export const decodeBytes: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
 export const containsKey: (handle: bigint, key: string) => string;

@@ -21,7 +21,9 @@
 import native from 'libmmkv.so';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { MMKVLogLevel } from './MMKVLogLevel';
+import { getObjKeys } from './Util';
 import common from '@ohos.app.ability.common';
+import dataPreferences from '@ohos.data.preferences';
 
 export class MMKV {
     static SINGLE_PROCESS_MODE: number = 1 << 0
@@ -144,6 +146,22 @@ export class MMKV {
         return native.decodeStringSet(this.nativeHandle, key, defaultValue);
     }
 
+    encodeNumberSet(key: string, value: number[], expiration?: number) {
+        return native.encodeNumberSet(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeNumberSet(key: string, defaultValue?: number[]) {
+        return native.decodeNumberSet(this.nativeHandle, key, defaultValue);
+    }
+
+    encodeBoolSet(key: string, value: boolean[], expiration?: number) {
+        return native.encodeBoolSet(this.nativeHandle, key, value, expiration);
+    }
+
+    decodeBoolSet(key: string, defaultValue?: boolean[]) {
+        return native.decodeBoolSet(this.nativeHandle, key, defaultValue);
+    }
+
     encodeBytes(key: string, value: ArrayBuffer, expiration?: number) {
         return native.encodeBytes(this.nativeHandle, key, value, expiration);
     }
@@ -234,5 +252,55 @@ export class MMKV {
 
     checkReSetCryptKey(newKey?: string) {
         return native.checkReSetCryptKey(this.nativeHandle, newKey);
+    }
+
+    importFromPreferences(preferences: dataPreferences.Preferences) {
+        hilog.info(0x0000, 'mmkv', 'import from Preferences to %{public}s', this.mmapID);
+        let all = preferences.getAllSync();
+        let allKeys = getObjKeys(all);
+        let allKV = all as Record<string, Object>;
+        let count = BigInt(0);
+        for (let index = 0; index < allKeys.length; index++) {
+            const key = allKeys[index];
+            const value = allKV[key];
+            if (typeof value == 'string') {
+                this.encodeString(key, value as string);
+            } else if (typeof value == 'boolean') {
+                this.encodeBool(key, value as boolean);
+            } else if (typeof value == 'number') {
+                // there's no way to tell whether a number is integer or float/double
+                this.encodeDouble(key, value as number);
+            } else if (typeof value == 'object') {
+                if (Array.isArray(value) && value.length > 0) {
+                    // Array<number>、Array<string>、Array<boolean>、Uint8Array
+                    let first: Object = value[0];
+                    if (typeof first == 'string') {
+                        let arrStr = value as string[];
+                        this.encodeStringSet(key, arrStr);
+                    } else if (typeof first == 'boolean') {
+                        let arrBool = value as boolean[];
+                        this.encodeBoolSet(key, arrBool);
+                    } else if (typeof first == 'number') {
+                        let arrNumber = value as number[];
+                        this.encodeNumberSet(key, arrNumber);
+                    } else {
+                        hilog.warn(0x0000, 'mmkv', 'unsupported Array<%{public}s> type on key %{public}s',
+                            typeof first, key);
+                        continue;
+                    }
+                } else if (value instanceof Uint8Array) {
+                    let arr = value as Uint8Array;
+                    this.encodeBytes(key, arr.buffer as ArrayBuffer);
+                } else {
+                    hilog.warn(0x0000, 'mmkv', 'unsupported Object type on key %{public}s', key);
+                    continue;
+                }
+            } else {
+                hilog.warn(0x0000, 'mmkv', 'unsupported %{public}s type on key %{public}s', typeof value, key);
+                continue;
+            }
+            count++;
+        }
+        return count;
     }
 }

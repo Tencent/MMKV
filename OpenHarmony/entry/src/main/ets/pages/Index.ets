@@ -21,6 +21,8 @@
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { MMKV, MMKVLogLevel } from 'mmkv';
 import util from '@ohos.util';
+import dataPreferences from '@ohos.data.preferences';
+import { GlobalContainer } from '../Util/Util'
 
 @Entry
 @Component
@@ -35,7 +37,7 @@ struct Index {
           .buttonStyle(ButtonStyleMode.TEXTUAL)
           .fontSize(18)
           .onClick(() => {
-            this.functionalTest('test', MMKV.MULTI_PROCESS_MODE, undefined, 'encrypt_key');
+            this.functionalTest('test', MMKV.MULTI_PROCESS_MODE, 'encrypt_key');
           })
         Button('Encryption Test')
           .type(ButtonType.Normal)
@@ -43,6 +45,13 @@ struct Index {
           .fontSize(18)
           .onClick(() => {
             this.testReKey();
+          })
+        Button('Import Preferences Test')
+          .type(ButtonType.Normal)
+          .buttonStyle(ButtonStyleMode.TEXTUAL)
+          .fontSize(18)
+          .onClick(() => {
+            this.testImportPreferences();
           })
         Text('mmkv version: ' + MMKV.version)
           .fontSize(16)
@@ -59,8 +68,8 @@ struct Index {
     .height('100%')
   }
 
-  functionalTest(mmapID: string, mode?: number, rootPath?: string, cryptKey?: string, expectedCapacity?: bigint) {
-    let kv = MMKV.mmkvWithID(mmapID, mode, rootPath, cryptKey, expectedCapacity);
+  functionalTest(mmapID: string, mode?: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint) {
+    let kv = MMKV.mmkvWithID(mmapID, mode, cryptKey, rootPath, expectedCapacity);
     hilog.info(0, "mmkvdemo", 'mmapID = %{public}s, cryptKey = %{public}s', kv.mmapID, kv.cryptKey);
 
     kv.encodeBool('bool', true);
@@ -117,13 +126,13 @@ struct Index {
     let strArr: string[] = ['abc', 'defg', 'hijk'];
     kv.encodeStringSet('string-set', strArr);
     let newStrArr = kv.decodeStringSet('string-set');
-    hilog.info(0, "mmkvdemo", 'string-set = %{public}s', StringArrayToString(newStrArr));
+    hilog.info(0, "mmkvdemo", 'string-set = %{public}s', ArrayToString(newStrArr));
 
     kv.encodeStringSet('empty-string-set', []);
     let emptyStrArr = kv.decodeStringSet('empty-string-set');
-    hilog.info(0, "mmkvdemo", 'empty-string-set = %{public}s', StringArrayToString(emptyStrArr));
+    hilog.info(0, "mmkvdemo", 'empty-string-set = %{public}s', ArrayToString(emptyStrArr));
     let nonStrArr = kv.decodeStringSet('non-exist-string-set');
-    hilog.info(0, "mmkvdemo", 'non-exist-string-set = %{public}s', StringArrayToString(nonStrArr));
+    hilog.info(0, "mmkvdemo", 'non-exist-string-set = %{public}s', ArrayToString(nonStrArr));
 
     hilog.info(0, "mmkvdemo", 'contains bytes = %{public}s, contains bytes_not_exit = %{public}s',
       kv.containsKey('bytes'), kv.containsKey('bytes_not_exit'));
@@ -141,13 +150,13 @@ struct Index {
     hilog.info(0, "mmkvdemo", 'tryLock = %{public}s', kv.tryLock());
 
     kv.clearMemoryCache();
-    hilog.info(0, "mmkvdemo", 'allKeys = %{public}s', StringArrayToString(kv.allKeys()));
+    hilog.info(0, "mmkvdemo", 'allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
     kv.removeValuesForKeys(['bool', 'int32']);
-    hilog.info(0, "mmkvdemo", 'remove "bool" & "int32", allKeys = %{public}s', StringArrayToString(kv.allKeys()));
+    hilog.info(0, "mmkvdemo", 'remove "bool" & "int32", allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
     kv.clearAll();
-    hilog.info(0, "mmkvdemo", 'clearAll(), allKeys = %{public}s', StringArrayToString(kv.allKeys()));
+    hilog.info(0, "mmkvdemo", 'clearAll(), allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
     kv.close();
     hilog.info(0, "mmkvdemo", 'isFileValue %{public}s', MMKV.isFileValid(mmapID, rootPath));
@@ -240,15 +249,15 @@ struct Index {
       kv.encodeStringSet('string-set', strArr);
     }
     let newStrArr = kv.decodeStringSet('string-set');
-    hilog.info(0, "mmkvdemo", 'string-set = %{public}s', StringArrayToString(newStrArr));
+    hilog.info(0, "mmkvdemo", 'string-set = %{public}s', ArrayToString(newStrArr));
 
     if (!decodeOnly) {
       kv.encodeStringSet('empty-string-set', []);
     }
     let emptyStrArr = kv.decodeStringSet('empty-string-set');
-    hilog.info(0, "mmkvdemo", 'empty-string-set = %{public}s', StringArrayToString(emptyStrArr));
+    hilog.info(0, "mmkvdemo", 'empty-string-set = %{public}s', ArrayToString(emptyStrArr));
     let nonStrArr = kv.decodeStringSet('non-exist-string-set');
-    hilog.info(0, "mmkvdemo", 'non-exist-string-set = %{public}s', StringArrayToString(nonStrArr));
+    hilog.info(0, "mmkvdemo", 'non-exist-string-set = %{public}s', ArrayToString(nonStrArr));
 
     hilog.info(0, "mmkvdemo", 'contains bool = %{public}s, contains bool_not_exit = %{public}s',
       kv.containsKey('bool'), kv.containsKey('bool_not_exit'));
@@ -266,10 +275,10 @@ struct Index {
     // hilog.info(0, "mmkvdemo", 'tryLock = %{public}s', kv.tryLock());
 
     kv.clearMemoryCache();
-    hilog.info(0, "mmkvdemo", 'allKeys = %{public}s', StringArrayToString(kv.allKeys()));
+    hilog.info(0, "mmkvdemo", 'allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
     kv.removeValuesForKeys(['int32', 'uint32']);
-    hilog.info(0, "mmkvdemo", 'remove "int32" & "uint32", allKeys = %{public}s', StringArrayToString(kv.allKeys()));
+    hilog.info(0, "mmkvdemo", 'remove "int32" & "uint32", allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
     // kv.clearAll();
     // hilog.info(0, "mmkvdemo", 'clearAll(), allKeys = %{public}s', StringArrayToString(kv.allKeys()));
@@ -296,6 +305,40 @@ struct Index {
     kv.clearMemoryCache();
     this.testMMKV(mmapID, true);
   }
+
+  testImportPreferences() {
+    let context = GlobalContainer.getObject("context") as Context
+    let preferences = dataPreferences.getPreferencesSync(context, { name: 'default' });
+    preferences.putSync('bool', true);
+    let pow31 = Math.pow(2, 31);
+    preferences.putSync('int32_max', pow31 - 1);
+    preferences.putSync('int32_min', - pow31);
+    let pow32 = Math.pow(2, 32);
+    preferences.putSync('uint32', pow32 - 1);
+    preferences.putSync('double_max', Number.MAX_VALUE);
+    preferences.putSync('double_min', Number.MIN_VALUE);
+    preferences.putSync('string', 'hello, world preferenes');
+    preferences.putSync('string_array', ['hello', 'world', 'preferenes']);
+    preferences.putSync('number_array', [pow31 - 1, -pow31, pow32, Number.MAX_VALUE, Number.MIN_VALUE]);
+    preferences.putSync('bool_array', [true, false, true, false]);
+    let arrayBuffer = StringToArrayBuffer("This is a string 转换成 a Uint8Array 💯");
+    preferences.putSync('uint8_array', new Uint8Array(arrayBuffer));
+    preferences.flush();
+
+    let kv = MMKV.mmkvWithID('testImportPreferences');
+    let count = kv.importFromPreferences(preferences);
+    hilog.info(0, "mmkvdemo", 'importFromPreferences count %{public}i', count);
+    hilog.info(0, "mmkvdemo", 'decode int32 max = %{public}d', kv.decodeDouble('int32_max'));
+    hilog.info(0, "mmkvdemo", 'decode int32 min = %{public}d', kv.decodeDouble('int32_min'));
+    hilog.info(0, "mmkvdemo", 'decode uint32 max = %{public}d', kv.decodeDouble('uint32'));
+    hilog.info(0, "mmkvdemo", 'decode double max = %{public}d', kv.decodeDouble('double_max'));
+    hilog.info(0, "mmkvdemo", 'decode double min = %{public}d', kv.decodeDouble('double_min'));
+    hilog.info(0, "mmkvdemo", 'decode string = %{public}s', kv.decodeString('string'));
+    hilog.info(0, "mmkvdemo", 'decode string array = %{public}s', ArrayToString(kv.decodeStringSet('string_array')));
+    hilog.info(0, "mmkvdemo", 'decode number array = %{public}s', ArrayToString(kv.decodeNumberSet('number_array')));
+    hilog.info(0, "mmkvdemo", 'decode bool array = %{public}s', ArrayToString(kv.decodeBoolSet('bool_array')));
+    hilog.info(0, "mmkvdemo", 'decode uint8 array = %{public}s', ArrayBufferToString(kv.decodeBytes('uint8_array')));
+  }
 }
 
 function StringToArrayBuffer(str: string): ArrayBuffer {
@@ -310,9 +353,9 @@ function ArrayBufferToString(arr: ArrayBuffer): string {
   return dnc.decodeWithStream(out8Arr);
 }
 
-function StringArrayToString(strArr: string[]): string {
-  if (strArr == undefined) {
+function ArrayToString(arr: string[] | number[] | boolean[]): string {
+  if (arr == undefined) {
     return 'undefined';
   }
-  return '[' + strArr.join(', ') + ']';
+  return '[' + arr.join(', ') + ']';
 }

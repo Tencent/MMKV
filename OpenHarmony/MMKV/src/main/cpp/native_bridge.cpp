@@ -18,12 +18,15 @@
  * limitations under the License.
  */
 
+#include "CodedInputData.h"
+#include "CodedOutputData.h"
 #include "MMKVPredef.h"
 
 #include "MMBuffer.h"
 #include "MMKV.h"
 #include "MMKVLog.h"
 #include "MemoryFile.h"
+#include "MiniPBCoder.h"
 #include "napi/native_api.h"
 #include <cstdint>
 #include <string>
@@ -116,6 +119,76 @@ static napi_value StringArrayToNValue(napi_env env, const vector<string> &value)
     napi_create_array_with_length(env, value.size(), &jsArr);
     for (size_t index = 0; index < value.size(); index++) {
         auto jsKey = StringToNValue(env, value[index]);
+        napi_set_element(env, jsArr, index, jsKey);
+    }
+    return jsArr;
+}
+
+static napi_value DoubleToNValue(napi_env env, double value);
+static double NValueToDouble(napi_env env, napi_value value);
+
+static vector<double> NValueToDoubleArray(napi_env env, napi_value value, bool maybeUndefined = false) {
+    vector<double> vec;
+    if (maybeUndefined && IsNValueUndefined(env, value)) {
+        return vec;
+    }
+
+    uint32_t length = 0;
+    if (napi_get_array_length(env, value, &length) != napi_ok || length == 0) {
+        return vec;
+    }
+    vec.reserve(length);
+
+    for (uint32_t index = 0; index < length; index++) {
+        napi_value jsKey = nullptr;
+        if (napi_get_element(env, value, index, &jsKey) != napi_ok) {
+            continue;
+        }
+        vec.push_back(NValueToDouble(env, jsKey));
+    }
+    return vec;
+}
+
+static napi_value DoubleArrayToNValue(napi_env env, const vector<double> &value) {
+    napi_value jsArr = nullptr;
+    napi_create_array_with_length(env, value.size(), &jsArr);
+    for (size_t index = 0; index < value.size(); index++) {
+        auto jsKey = DoubleToNValue(env, value[index]);
+        napi_set_element(env, jsArr, index, jsKey);
+    }
+    return jsArr;
+}
+
+static napi_value BoolToNValue(napi_env env, bool value);
+static bool NValueToBool(napi_env env, napi_value value);
+
+static vector<bool> NValueToBoolArray(napi_env env, napi_value value, bool maybeUndefined = false) {
+    vector<bool> keys;
+    if (maybeUndefined && IsNValueUndefined(env, value)) {
+        return keys;
+    }
+
+    uint32_t length = 0;
+    if (napi_get_array_length(env, value, &length) != napi_ok || length == 0) {
+        return keys;
+    }
+    keys.reserve(length);
+
+    for (uint32_t index = 0; index < length; index++) {
+        napi_value jsKey = nullptr;
+        if (napi_get_element(env, value, index, &jsKey) != napi_ok) {
+            continue;
+        }
+        keys.push_back(NValueToBool(env, jsKey));
+    }
+    return keys;
+}
+
+static napi_value BoolArrayToNValue(napi_env env, const vector<bool> &value) {
+    napi_value jsArr = nullptr;
+    napi_create_array_with_length(env, value.size(), &jsArr);
+    for (size_t index = 0; index < value.size(); index++) {
+        auto jsKey = BoolToNValue(env, value[index]);
         napi_set_element(env, jsArr, index, jsKey);
     }
     return jsArr;
@@ -634,6 +707,106 @@ static napi_value decodeStringSet(napi_env env, napi_callback_info info) {
     return args[2];
 }
 
+static napi_value encodeNumberSet(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        auto value = NValueToDoubleArray(env, args[2]);
+        auto valueLength = value.size() * pbDoubleSize();
+        auto buffer = MMBuffer(valueLength);
+        CodedOutputData output(buffer.getPtr(), valueLength);
+        for (auto single : value) {
+            output.writeDouble(single);
+        }
+        if (IsNValueUndefined(env, args[3])) {
+            auto ret = kv->set(buffer, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[3]);
+        auto ret = kv->set(buffer, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value decodeNumberSet(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        MMBuffer buffer;
+        if (kv->getBytes(key, buffer)) {
+            vector<double> result;
+            CodedInputData input(buffer.getPtr(), buffer.length());
+            while (!input.isAtEnd()) {
+                auto value = input.readDouble();
+                result.push_back(value);
+            }
+            return DoubleArrayToNValue(env, result);
+        }
+    }
+    return args[2];
+}
+
+static napi_value encodeBoolSet(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        auto value = NValueToBoolArray(env, args[2]);
+        auto valueLength = value.size() * pbBoolSize();
+        auto buffer = MMBuffer(valueLength);
+        CodedOutputData output(buffer.getPtr(), valueLength);
+        for (auto single : value) {
+            output.writeBool(single);
+        }
+        if (IsNValueUndefined(env, args[3])) {
+            auto ret = kv->set(buffer, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[3]);
+        auto ret = kv->set(buffer, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value decodeBoolSet(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        MMBuffer buffer;
+        if (kv->getBytes(key, buffer)) {
+            vector<bool> result;
+            CodedInputData input(buffer.getPtr(), buffer.length());
+            while (!input.isAtEnd()) {
+                auto value = input.readBool();
+                result.push_back(value);
+            }
+            return BoolArrayToNValue(env, result);
+        }
+    }
+    return args[2];
+}
+
 static napi_value encodeBytes(napi_env env, napi_callback_info info) {
     size_t argc = 4;
     napi_value args[4] = {nullptr};
@@ -993,6 +1166,10 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeString", nullptr, decodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeStringSet", nullptr, encodeStringSet, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeStringSet", nullptr, decodeStringSet, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeNumberSet", nullptr, encodeNumberSet, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeNumberSet", nullptr, decodeNumberSet, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeBoolSet", nullptr, encodeBoolSet, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeBoolSet", nullptr, decodeBoolSet, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeBytes", nullptr, encodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeBytes", nullptr, decodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "containsKey", nullptr, containsKey, nullptr, nullptr, nullptr, napi_default, nullptr },
