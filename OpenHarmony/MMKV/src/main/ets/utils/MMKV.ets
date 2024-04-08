@@ -21,6 +21,7 @@
 import native from 'libmmkv.so';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { MMKVLogLevel } from './MMKVLogLevel';
+import common from '@ohos.app.ability.common';
 
 export class MMKV {
     static SINGLE_PROCESS_MODE: number = 1 << 0
@@ -34,7 +35,14 @@ export class MMKV {
         // MMKV.checkedHandleSet = new Set<string>()
     }
 
-    static initialize(rootDir:string, cacheDir:string, logLevel?:MMKVLogLevel) {
+    static initialize(context: common.ApplicationContext, logLevel?:MMKVLogLevel): string {
+        let rootDir = context.filesDir + "/mmkv";
+        let cacheDir = context.cacheDir;
+        // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
+        return MMKV.initializeWithPath(rootDir, cacheDir, logLevel);
+    }
+
+    static initializeWithPath(rootDir:string, cacheDir:string, logLevel?:MMKVLogLevel): string {
         MMKV.initData();
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
         MMKV.g_rootDir = native.initialize(rootDir, cacheDir, logLevel);
@@ -58,9 +66,13 @@ export class MMKV {
         this.nativeHandle = handle;
     }
 
-    static defaultMMKV(mode?: number) {
-        let handle = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE);
-        // hilog.info(0x0000, 'mmkv', 'default mmkv: %{public}i', handle);
+    static defaultMMKV(mode?: number, cryptKey?: string) {
+        let handle = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        return new MMKV(handle);
+    }
+
+    static mmkvWithID(mmapID: string, mode?: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint) {
+        let handle = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath, expectedCapacity);
         return new MMKV(handle);
     }
 
@@ -210,5 +222,17 @@ export class MMKV {
 
     static isFileValid(mmapID: string, rootPath?: string) {
         return native.isFileValid(mmapID, rootPath);
+    }
+
+    get cryptKey() {
+        return native.cryptKey(this.nativeHandle);
+    }
+
+    reKey(newKey?: string) {
+        return native.reKey(this.nativeHandle, newKey);
+    }
+
+    checkReSetCryptKey(newKey?: string) {
+        return native.checkReSetCryptKey(this.nativeHandle, newKey);
     }
 }

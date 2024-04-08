@@ -244,7 +244,10 @@ static napi_value UInt64ToNValue(napi_env env, uint64_t value) {
     return result;
 }
 
-static uint64_t NValueToUInt64(napi_env env, napi_value value) {
+static uint64_t NValueToUInt64(napi_env env, napi_value value, bool maybeUndefined = false) {
+    if (maybeUndefined && IsNValueUndefined(env, value)) {
+        return 0;
+    }
     uint64_t result;
     bool lossless;
     napi_get_value_bigint_uint64(env, value, &result, &lossless);
@@ -302,6 +305,28 @@ static napi_value getDefaultMMKV(napi_env env, napi_callback_info info) {
     }
 
     return UInt64ToNValue(env,(uint64_t)kv);
+}
+
+// mmkvWithID(mmapID: string, mode: number, rootPath?: string, cryptKey?: string, expectedCapacity?: bigint): bigint
+static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
+    size_t argc = 5;
+    napi_value args[5] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    MMKV *kv = nullptr;
+    auto mmapID = NValueToString(env, args[0]);
+    if (!mmapID.empty()) {
+        int32_t mode = NValueToInt32(env, args[1]);
+        auto cryptKey = NValueToString(env, args[2], true);
+        auto rootPath = NValueToString(env, args[3], true);
+        auto expectedCapacity = NValueToUInt64(env, args[3], true);
+
+        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
+        auto rootPathPtr = rootPath.empty() ? nullptr : &rootPath;
+        kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, expectedCapacity);
+    }
+
+    return UInt64ToNValue(env, (uint64_t)kv);
 }
 
 static napi_value mmapID(napi_env env, napi_callback_info info) {
@@ -901,6 +926,48 @@ static napi_value isFileValid(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+static napi_value cryptKey(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return StringToNValue(env, kv->cryptKey());
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value reKey(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto cryptKey = NValueToString(env, args[1], true);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return BoolToNValue(env, kv->reKey(cryptKey));
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value checkReSetCryptKey(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto cryptKey = NValueToString(env, args[1], true);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
+        kv->checkReSetCryptKey(cryptKeyPtr);
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -908,6 +975,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "version", nullptr, version, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "pageSize", nullptr, pageSize, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "getDefaultMMKV", nullptr, getDefaultMMKV, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "mmkvWithID", nullptr, mmkvWithID, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "mmapID", nullptr, mmapID, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeBool", nullptr, encodeBool, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeBool", nullptr, decodeBool, nullptr, nullptr, nullptr, napi_default, nullptr },
@@ -945,6 +1013,9 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "trim", nullptr, trim, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "removeStorage", nullptr, removeStorage, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "isFileValid", nullptr, isFileValid, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "cryptKey", nullptr, cryptKey, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "reKey", nullptr, reKey, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "checkReSetCryptKey", nullptr, checkReSetCryptKey, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

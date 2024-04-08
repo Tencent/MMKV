@@ -27,12 +27,8 @@ export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, 'mmkvdemo', '%{public}s', 'Ability onCreate');
 
-    let appContext = this.context.getApplicationContext();
-    let rootDir = appContext.filesDir + "/mmkv";
-    let cacheDir = appContext.cacheDir;
-    // hilog.info(0x0000, 'mmkvdemo', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, MMKVLogLevel.LevelInfo);
-    let result = MMKV.initialize(rootDir, cacheDir, MMKVLogLevel.LevelInfo);
-    // hilog.info(0x0000, 'mmkvdemo', 'rootDir: %{public}s', result);
+    let result = MMKV.initialize(this.context.getApplicationContext(), MMKVLogLevel.LevelInfo);
+    hilog.info(0x0000, 'mmkvdemo', 'rootDir: %{public}s', result);
   }
 
 
