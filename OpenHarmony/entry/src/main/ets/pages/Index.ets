@@ -53,6 +53,14 @@ struct Index {
           .onClick(() => {
             this.testImportPreferences();
           })
+        Button('Backup & Restore Test')
+          .type(ButtonType.Normal)
+          .buttonStyle(ButtonStyleMode.TEXTUAL)
+          .fontSize(18)
+          .onClick(() => {
+            this.testBackup();
+            this.testRestore();
+          })
         Text('mmkv version: ' + MMKV.version)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
@@ -312,7 +320,7 @@ struct Index {
     preferences.putSync('bool', true);
     let pow31 = Math.pow(2, 31);
     preferences.putSync('int32_max', pow31 - 1);
-    preferences.putSync('int32_min', - pow31);
+    preferences.putSync('int32_min', -pow31);
     let pow32 = Math.pow(2, 32);
     preferences.putSync('uint32', pow32 - 1);
     preferences.putSync('double_max', Number.MAX_VALUE);
@@ -326,7 +334,7 @@ struct Index {
     preferences.putSync('uint8_array', new Uint8Array(arrayBuffer));
     preferences.flush();
 
-    let kv = MMKV.mmkvWithID('testImportPreferences');
+    let kv = MMKV.mmkvWithID('imported');
     let count = kv.importFromPreferences(preferences);
     hilog.info(0, "mmkvdemo", 'importFromPreferences count %{public}i', count);
     hilog.info(0, "mmkvdemo", 'decode int32 max = %{public}d', kv.decodeDouble('int32_max'));
@@ -340,6 +348,90 @@ struct Index {
     hilog.info(0, "mmkvdemo", 'decode number array = %{public}s', ArrayToString(kv.decodeNumberSet('number_array')));
     hilog.info(0, "mmkvdemo", 'decode bool array = %{public}s', ArrayToString(kv.decodeBoolSet('bool_array')));
     hilog.info(0, "mmkvdemo", 'decode uint8 array = %{public}s', ArrayBufferToString(kv.decodeBytes('uint8_array')));
+  }
+
+  testBackup() {
+    let context = GlobalContainer.getObject('context') as Context;
+    let backupRootDir = context.filesDir + '/mmkv_backup_3';
+    let otherDir = context.filesDir + "/mmkv_3";
+    let mmapID = 'test/AES';
+    let cryptKey = 'Tencent MMKV';
+
+    {
+      let kv = this.testMMKV(mmapID, false, cryptKey, otherDir);
+      kv.close();
+    }
+
+    let ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, otherDir);
+    hilog.info(0, "mmkvdemo", 'backup one [%{public}s] ret = %{public}s', mmapID, ret);
+    if (ret) {
+      let mmkv = MMKV.backedUpMMKVWithID(mmapID, backupRootDir, MMKV.SINGLE_PROCESS_MODE, cryptKey);
+      hilog.info(0, "mmkvdemo", 'check on backup file[%{public}s] allKeys: %{public}s',
+        mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+
+      mmkv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, otherDir);
+      hilog.info(0, "mmkvdemo", 'check on origin file[%{public}s] allKeys: %{public}s',
+        mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+    }
+
+    /*{
+      MMKV mmkv = MMKV.mmkvWithID("imported");
+      mmkv.close();
+      mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+      mmkv.close();
+    }*/
+    backupRootDir = context.filesDir + "/mmkv_backup";
+    let count = MMKV.backupAllToDirectory(backupRootDir);
+    hilog.info(0, "mmkvdemo", 'backup all count %{public}d', count);
+    if (count > 0) {
+      let mmkv = MMKV.backedUpMMKVWithID("imported", backupRootDir);
+      hilog.info(0, "mmkvdemo", 'check on backup file[%{public}s] allKeys: %{public}s',
+        mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+
+      mmkv = MMKV.backedUpMMKVWithID("test/AES_reKey1", backupRootDir);
+      hilog.info(0, "mmkvdemo", 'check on backup file[%{public}s] allKeys: %{public}s',
+        mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+    }
+  }
+
+  testRestore() {
+    hilog.info(0, "mmkvdemo", 'test restore begin');
+
+    let context = GlobalContainer.getObject('context') as Context;
+    let backupRootDir = context.filesDir + '/mmkv_backup_3';
+    let otherDir = context.filesDir + "/mmkv_3";
+    let mmapID = 'test/AES';
+    let cryptKey = 'Tencent MMKV';
+
+    let mmkv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, otherDir);
+    mmkv.encodeBool("test_restore", true);
+    hilog.info(0, "mmkvdemo", 'before restore [%{public}s] allKeys: %{public}s',
+      mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+    let ret = MMKV.restoreOneFromDirectory(mmapID, backupRootDir, otherDir);
+    hilog.info(0, "mmkvdemo", 'restore one [%{public}s] ret = %{public}s', mmapID, ret);
+    if (ret) {
+      hilog.info(0, "mmkvdemo", 'after restore [%{public}s] allKeys: %{public}s',
+        mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+    }
+
+    /*{
+      mmkv = MMKV.mmkvWithID("imported");
+      mmkv.close();
+      mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+      mmkv.close();
+    }*/
+    backupRootDir = context.filesDir + "/mmkv_backup";
+    let count = MMKV.restoreAllFromDirectory(backupRootDir);
+    hilog.info(0, "mmkvdemo", 'restore all count %{public}d', count);
+    if (count > 0) {
+      mmkv = MMKV.mmkvWithID("imported");
+      hilog.info(0, "mmkvdemo", 'check on restore file[%{public}s] allKeys: %{public}s',
+        mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+
+      mmkv = MMKV.mmkvWithID("test/AES_reKey1");
+      hilog.info(0, "mmkvdemo", 'check on restore file[%{public}s] allKeys: %{public}s',
+        mmkv.mmapID, ArrayToString(mmkv.allKeys()));
+    }
   }
 }
 

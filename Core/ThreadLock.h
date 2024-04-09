@@ -27,12 +27,45 @@
 #ifndef MMKV_WIN32
 #    include <pthread.h>
 #    define MMKV_USING_PTHREAD 1
+#    ifdef MMKV_OHOS
+#        define MMKV_USING_STD_MUTEX 1
+#    endif
 #endif
 
 #if MMKV_USING_PTHREAD
-#else
 #    include <atomic>
 #endif
+
+#include <thread>
+
+class MyMutex {
+public:
+    MyMutex();
+
+    MyMutex(MyMutex const &) = delete;
+
+    MyMutex &operator=(MyMutex) = delete;
+
+    /**
+     * Acquires exclusive access to this mutex.
+     * This is recursion-safe, i.e. from one thread it can be called multiple
+     * times.
+     */
+    void lock();
+
+    bool try_lock();
+
+    /**
+     * Releases a previously acquired lock.
+     * Number of calls should match acquire() to fully release access.
+     */
+    void unlock();
+    
+protected:
+    size_t m_RecursionCount;
+    std::atomic<size_t> m_LockCount;
+    std::atomic<size_t> m_Owner;
+};
 
 namespace mmkv {
 
@@ -45,9 +78,14 @@ using ThreadOnceToken_t = std::atomic<ThreadOnceTokenEnum>;
 #endif
 
 class ThreadLock {
-private:
+public:
 #if MMKV_USING_PTHREAD
+#   if MMKV_USING_STD_MUTEX
+    // looks like there's bug on pthread_mutex_lock() on OHOS, use custom mutex instead
+    MyMutex m_lock;
+#   else
     pthread_mutex_t m_lock;
+#   endif
 #else
     CRITICAL_SECTION m_lock;
 #endif

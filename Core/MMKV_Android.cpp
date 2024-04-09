@@ -19,6 +19,7 @@
  */
 
 #include "MMKV.h"
+#include <bits/alltypes.h>
 
 #ifdef MMKV_ANDROID
 
@@ -137,11 +138,19 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 }
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath,
-                       size_t expectedCapacity) {
+    MMKVPath_t *newRootPath, size_t expectedCapacity) {
     if (mmapID.empty()) {
         return nullptr;
     }
+    if (rootPath) {
+        MMKVInfo("prepare 1 to load %s from rootPath %p, %zu, %s", mmapID.c_str(), rootPath, rootPath->size(), rootPath->c_str());
+    }
     SCOPED_LOCK(g_instanceLock);
+
+    if (rootPath) {
+        MMKVInfo("prepare 2 to load %s from rootPath %p, %zu, %s, %s", mmapID.c_str(), rootPath, rootPath->size(),
+                 rootPath->c_str(), newRootPath->c_str());
+    }
 
     auto mmapKey = mmapedKVKey(mmapID, rootPath);
     auto itr = g_instanceDic->find(mmapKey);
@@ -155,7 +164,8 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
                 return nullptr;
             }
         }
-        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %zu, %s, %s", mmapID.c_str(), mmapKey.c_str(), rootPath->size(),
+                 rootPath->c_str(), newRootPath->c_str());
     }
     auto kv = new MMKV(mmapID, size, mode, cryptKey, rootPath, expectedCapacity);
     (*g_instanceDic)[mmapKey] = kv;

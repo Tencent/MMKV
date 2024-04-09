@@ -80,10 +80,27 @@ static string NValueToString(napi_env env, napi_value value, bool maybeUndefined
     string result;
     size_t size;
     NAPI_CALL_RET(napi_get_value_string_utf8(env, value, nullptr, 0, &size), "");
+    result.resize(size + 1);
+    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, result.data(), result.capacity(), &size), "");
     result.resize(size);
-    // MMKV_LOG_INFO("size: %{public}zu, capacity: %{public}zu\n", result.size(), result.capacity());
-    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, result.data(), result.capacity(), nullptr), "");
     return result;
+}
+
+std::string AkiGetString(napi_env env, napi_value value, bool maybeUndefined = false) {
+//     FUNCTION_DTRACE();
+    if (maybeUndefined && IsNValueUndefined(env, value)) {
+        return "";
+    }
+    
+    size_t length = 0;
+    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &length);
+//     AKI_DCHECK(status == napi_ok) << "status(" << status << "): " << GetStatusDesc(status);
+//     AKI_DCHECK((length + 1) < std::numeric_limits<size_t>::max());
+    std::string buf(length, '\0');
+    status = napi_get_value_string_utf8(env, value, buf.data(), length + 1, &length);
+//     AKI_DCHECK(status == napi_ok) << "status(" << status << "): " << GetStatusDesc(status);
+
+    return buf;
 }
 
 static napi_value StringToNValue(napi_env env, const string &value) {
@@ -380,7 +397,7 @@ static napi_value getDefaultMMKV(napi_env env, napi_callback_info info) {
     return UInt64ToNValue(env,(uint64_t)kv);
 }
 
-// mmkvWithID(mmapID: string, mode: number, rootPath?: string, cryptKey?: string, expectedCapacity?: bigint): bigint
+// mmkvWithID(mmapID: string, mode: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint): bigint
 static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
     size_t argc = 5;
     napi_value args[5] = {nullptr};
@@ -391,12 +408,14 @@ static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
     if (!mmapID.empty()) {
         int32_t mode = NValueToInt32(env, args[1]);
         auto cryptKey = NValueToString(env, args[2], true);
-        auto rootPath = NValueToString(env, args[3], true);
-        auto expectedCapacity = NValueToUInt64(env, args[3], true);
+        auto rootPath = AkiGetString(env, args[3], true);
+        auto expectedCapacity = NValueToUInt64(env, args[4], true);
 
         auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
         auto rootPathPtr = rootPath.empty() ? nullptr : &rootPath;
-        kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, expectedCapacity);
+        auto newRootPath = rootPath;
+        MMKVInfo("rootPath: %p, %s, %s", rootPathPtr, rootPath.c_str(), rootPathPtr ? rootPathPtr->c_str() : "");
+        kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, &newRootPath, expectedCapacity);
     }
 
     return UInt64ToNValue(env, (uint64_t)kv);
@@ -1141,6 +1160,60 @@ static napi_value checkReSetCryptKey(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+static napi_value backupOneToDirectory(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto mmapID = NValueToString(env, args[0]);
+    auto dstDir = NValueToString(env, args[1]);
+    if (!mmapID.empty()) {
+        auto rootPath = NValueToString(env, args[2], true);
+        auto rootPathPtr = rootPath.empty() ? nullptr : &rootPath;
+        return BoolToNValue(env, MMKV::backupOneToDirectory(mmapID, dstDir, rootPathPtr));
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value restoreOneFromDirectory(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto mmapID = NValueToString(env, args[0]);
+    auto srcDir = NValueToString(env, args[1]);
+    if (!mmapID.empty()) {
+        auto rootPath = NValueToString(env, args[2], true);
+        auto rootPathPtr = rootPath.empty() ? nullptr : &rootPath;
+        return BoolToNValue(env, MMKV::restoreOneFromDirectory(mmapID, srcDir, rootPathPtr));
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value backupAllToDirectory(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto dstDir = NValueToString(env, args[0]);
+    if (!dstDir.empty()) {
+        return UInt64ToNValue(env, MMKV::backupAllToDirectory(dstDir));
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value restoreAllFromDirectory(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto srcDir = NValueToString(env, args[0]);
+    if (!srcDir.empty()) {
+        return UInt64ToNValue(env, MMKV::restoreAllFromDirectory(srcDir));
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -1193,6 +1266,10 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "cryptKey", nullptr, cryptKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "reKey", nullptr, reKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "checkReSetCryptKey", nullptr, checkReSetCryptKey, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "backupOneToDirectory", nullptr, backupOneToDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "restoreOneFromDirectory", nullptr, restoreOneFromDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "backupAllToDirectory", nullptr, backupAllToDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "restoreAllFromDirectory", nullptr, restoreAllFromDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

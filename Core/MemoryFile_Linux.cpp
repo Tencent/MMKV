@@ -60,12 +60,17 @@ bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     if (g_renameat2) {
         renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
     }
+    if (!renamed && errno != ENOENT) {
+        MMKVWarning("fail on renameat2() [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno,
+                    strerror(errno));
+    }
 #endif
     if (!renamed) {
         renamed = (syscall(SYS_renameat2, AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
     }
     if (!renamed && errno != ENOENT) {
-        MMKVError("fail on renameat2() [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
+        MMKVWarning("fail on syscall(SYS_renameat2) [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno,
+                    strerror(errno));
     }
 #endif // SYS_renameat2
 

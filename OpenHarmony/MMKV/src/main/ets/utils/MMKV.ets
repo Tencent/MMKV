@@ -308,4 +308,26 @@ export class MMKV {
         }
         return count;
     }
+
+    static backedUpMMKVWithID(mmapID: string, rootPath: string, mode?: number, cryptKey?: string): MMKV {
+        let realMode = (mode ?? MMKV.SINGLE_PROCESS_MODE) | MMKV.BACKUP_MODE
+        // hilog.info(0x0000, 'mmkv', 'realMode %{public}d for mmapID %{public}s', realMode, mmapID);
+        return MMKV.mmkvWithID(mmapID, realMode, cryptKey, rootPath);
+    }
+
+    static backupOneToDirectory(mmapID: string, dstDir: string, rootPath?: string) {
+        return native.backupOneToDirectory(mmapID, dstDir, rootPath);
+    }
+
+    static restoreOneFromDirectory(mmapID: string, srcDir: string, rootPath?: string) {
+        return native.restoreOneFromDirectory(mmapID, srcDir, rootPath);
+    }
+
+    static backupAllToDirectory(dstDir: string) {
+        return native.backupAllToDirectory(dstDir);
+    }
+
+    static restoreAllFromDirectory(srcDir: string) {
+        return native.restoreAllFromDirectory(srcDir);
+    }
 }

@@ -47,3 +47,7 @@ export const isFileValid: (mmapID: string, rootPath?: string) => boolean;
 export const cryptKey: (handle: bigint) => string;
 export const reKey: (handle: bigint, newKey: string) => boolean;
 export const checkReSetCryptKey: (handle: bigint, newKey: string) => void;
+export const backupOneToDirectory: (mmapID: string, dstDir: string, rootPath?: string) => boolean;
+export const restoreOneFromDirectory: (mmapID: string, srcDir: string, rootPath?: string) => boolean;
+export const backupAllToDirectory: (dstDir: string) => bigint;
+export const restoreAllFromDirectory: (srcDir: string) => bigint;
