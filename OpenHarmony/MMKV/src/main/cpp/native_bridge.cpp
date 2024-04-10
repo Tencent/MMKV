@@ -28,6 +28,7 @@
 #include "MemoryFile.h"
 #include "MiniPBCoder.h"
 #include "napi/native_api.h"
+#include <bits/alltypes.h>
 #include <cstdint>
 #include <string>
 #include <sys/stat.h>

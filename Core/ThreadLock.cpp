@@ -107,36 +107,59 @@ bool ThreadLock::try_lock() {
 
 #else // MMKV_USING_STD_MUTEX
 
-ThreadLock::ThreadLock() {
+void dumpMutex(MPthread_mutex_t *mutex, const char *msg) {
+    MPthread *pSelf = __pthread_self();
+    auto &wrap = mutex->__u.wrap;
+    MMKVInfo("pthread_mutex: %p [%s], m_type %d, m_prev %p, m_next %p, robust_list: {%p, 0x%llx, %p}",
+        mutex, msg, wrap.m_type, wrap.m_prev, wrap.m_next,
+        pSelf->robust_list.head, pSelf->robust_list.off, pSelf->robust_list.pending);
+}
+
+ThreadLock::ThreadLock() : m_lock({}), m_lockPtr((MPthread_mutex_t *)&m_lock) {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
+    dumpMutex(m_lockPtr, "before init");
     pthread_mutex_init(&m_lock, &attr);
+    dumpMutex(m_lockPtr, "after init");
 
     pthread_mutexattr_destroy(&attr);
 }
 
 ThreadLock::~ThreadLock() {
+#ifdef MMKV_OHOS
+    dumpMutex(m_lockPtr, "before unlock");
+    pthread_mutex_unlock(&m_lock);
+    dumpMutex(m_lockPtr, "after unlock");
+#endif
+    dumpMutex(m_lockPtr, "before destroy");
     pthread_mutex_destroy(&m_lock);
+    dumpMutex(m_lockPtr, "after destroy");
 }
 
 void ThreadLock::lock() {
+    dumpMutex(m_lockPtr, "before lock");
     auto ret = pthread_mutex_lock(&m_lock);
+    dumpMutex(m_lockPtr, "after lock");
     if (ret != 0) {
-        MMKVError("fail to lock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
+            MMKVError("fail to lock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
     }
 }
 
 void ThreadLock::unlock() {
+    dumpMutex(m_lockPtr, "before unlock");
     auto ret = pthread_mutex_unlock(&m_lock);
+    dumpMutex(m_lockPtr, "after unlock");
     if (ret != 0) {
-        MMKVError("fail to unlock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
+            MMKVError("fail to unlock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
     }
 }
 
 bool ThreadLock::try_lock() {
+    dumpMutex(m_lockPtr, "before try_lock");
     auto ret = pthread_mutex_trylock(&m_lock);
+    dumpMutex(m_lockPtr, "after try_lock");
     return (ret == 0);
 }
 
@@ -147,6 +170,61 @@ void ThreadLock::initialize() {
 }
 
 void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) { pthread_once(onceToken, callback); }
+
+void dumpMutex(pthread_mutex_t *m, const char *msg) {
+    MPthread_mutex_t *mutex = (MPthread_mutex_t *)m;
+    MPthread *pSelf = __pthread_self();
+    auto &wrap = mutex->__u.wrap;
+    MMKVInfo("pthread_mutex: %p [%s], m_type %d, m_prev %p, m_next %p, robust_list: {%p, 0x%llx, %p}", mutex, msg,
+        wrap.m_type, wrap.m_prev, wrap.m_next, pSelf->robust_list.head, pSelf->robust_list.off,
+        pSelf->robust_list.pending);
+}
+
+static void pthreadMutexMemoryCorruptPOC() {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+    pthread_mutex_t stackMutex = {};
+    pthread_mutex_init(&stackMutex, &attr);
+
+    size_t size = sizeof(pthread_mutex_t);
+    pthread_mutex_t *heapMutex = (pthread_mutex_t *)malloc(size);
+    pthread_mutex_init(heapMutex, &attr);
+    pthread_mutexattr_destroy(&attr);
+
+    pthread_mutex_lock(&stackMutex);
+    dumpMutex(&stackMutex, "lock");
+
+    pthread_mutex_lock(heapMutex);
+    dumpMutex(heapMutex, "lock");
+    // pthread_mutex_lock(heapMutex);
+    // dumpMutex(heapMutex, "lock");
+    pthread_mutex_unlock(heapMutex);
+    dumpMutex(heapMutex, "unlock");
+    pthread_mutex_unlock(heapMutex);
+    dumpMutex(heapMutex, "unlock");
+
+    pthread_mutex_destroy(heapMutex);
+    dumpMutex(heapMutex, "destroy");
+    free(heapMutex);
+
+    pthread_mutex_unlock(&stackMutex);
+    dumpMutex(&stackMutex, "unlock");
+
+    size_t count = size / sizeof(char);
+    char *buffer = (char *)calloc(count, sizeof(char));
+    MMKVInfo("heapMutex %p, buffer %p", heapMutex, buffer);
+
+    pthread_mutex_lock(&stackMutex);
+    dumpMutex(&stackMutex, "lock");
+
+    for (size_t index = 0; index < count; index++) {
+        if (buffer[index] != 0) {
+            abort();
+        }
+    }
+}
 
 } // namespace mmkv
 

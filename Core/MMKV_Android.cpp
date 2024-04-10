@@ -139,17 +139,22 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath,
     MMKVPath_t *newRootPath, size_t expectedCapacity) {
+    MPthread *g_pthreadSelf = __pthread_self();
     if (mmapID.empty()) {
         return nullptr;
     }
     if (rootPath) {
         MMKVInfo("prepare 1 to load %s from rootPath %p, %zu, %s", mmapID.c_str(), rootPath, rootPath->size(), rootPath->c_str());
+        MMKVInfo("prepare 1 robust_list: %p, 0x%llx, %p",
+            g_pthreadSelf->robust_list.head, g_pthreadSelf->robust_list.off, g_pthreadSelf->robust_list.pending);
     }
     SCOPED_LOCK(g_instanceLock);
 
     if (rootPath) {
         MMKVInfo("prepare 2 to load %s from rootPath %p, %zu, %s, %s", mmapID.c_str(), rootPath, rootPath->size(),
                  rootPath->c_str(), newRootPath->c_str());
+        MMKVInfo("prepare 2 robust_list: %p, 0x%llx, %p", g_pthreadSelf->robust_list.head,
+                 g_pthreadSelf->robust_list.off, g_pthreadSelf->robust_list.pending);
     }
 
     auto mmapKey = mmapedKVKey(mmapID, rootPath);
