@@ -20,7 +20,7 @@
 
 #ifndef MMKV_THREADLOCK_H
 #define MMKV_THREADLOCK_H
-#include <linux/futex.h>
+
 #ifdef  __cplusplus
 
 #include "MMKVPredef.h"

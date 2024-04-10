@@ -20,7 +20,6 @@
 
 #include "ThreadLock.h"
 #include "MMKVLog.h"
-#include <cassert>
 
 #if MMKV_USING_PTHREAD
 
