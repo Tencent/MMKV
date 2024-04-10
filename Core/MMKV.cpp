@@ -127,7 +127,6 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *ro
 #endif
 
 MMKV::~MMKV() {
-    MMKVInfo("destruct mmkv [%s], lock: %p", m_mmapID.c_str(), m_lock->m_lockPtr);
     clearMemoryCache();
 
     delete m_dic;

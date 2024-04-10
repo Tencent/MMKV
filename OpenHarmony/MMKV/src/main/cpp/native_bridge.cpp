@@ -78,30 +78,11 @@ static string NValueToString(napi_env env, napi_value value, bool maybeUndefined
         return "";
     }
 
-    string result;
     size_t size;
     NAPI_CALL_RET(napi_get_value_string_utf8(env, value, nullptr, 0, &size), "");
-    result.resize(size + 1);
-    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, result.data(), result.capacity(), &size), "");
-    result.resize(size);
+    string result(size, '\0');
+    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, result.data(), result.capacity(), nullptr), "");
     return result;
-}
-
-std::string AkiGetString(napi_env env, napi_value value, bool maybeUndefined = false) {
-//     FUNCTION_DTRACE();
-    if (maybeUndefined && IsNValueUndefined(env, value)) {
-        return "";
-    }
-    
-    size_t length = 0;
-    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &length);
-//     AKI_DCHECK(status == napi_ok) << "status(" << status << "): " << GetStatusDesc(status);
-//     AKI_DCHECK((length + 1) < std::numeric_limits<size_t>::max());
-    std::string buf(length, '\0');
-    status = napi_get_value_string_utf8(env, value, buf.data(), length + 1, &length);
-//     AKI_DCHECK(status == napi_ok) << "status(" << status << "): " << GetStatusDesc(status);
-
-    return buf;
 }
 
 static napi_value StringToNValue(napi_env env, const string &value) {
@@ -409,14 +390,13 @@ static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
     if (!mmapID.empty()) {
         int32_t mode = NValueToInt32(env, args[1]);
         auto cryptKey = NValueToString(env, args[2], true);
-        auto rootPath = AkiGetString(env, args[3], true);
+        auto rootPath = NValueToString(env, args[3], true);
         auto expectedCapacity = NValueToUInt64(env, args[4], true);
 
         auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
         auto rootPathPtr = rootPath.empty() ? nullptr : &rootPath;
-        auto newRootPath = rootPath;
-        MMKVInfo("rootPath: %p, %s, %s", rootPathPtr, rootPath.c_str(), rootPathPtr ? rootPathPtr->c_str() : "");
-        kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, &newRootPath, expectedCapacity);
+        // MMKVInfo("rootPath: %p, %s, %s", rootPathPtr, rootPath.c_str(), rootPathPtr ? rootPathPtr->c_str() : "");
+        kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, expectedCapacity);
     }
 
     return UInt64ToNValue(env, (uint64_t)kv);

@@ -359,6 +359,7 @@ struct Index {
 
     {
       let kv = this.testMMKV(mmapID, false, cryptKey, otherDir);
+      kv.removeValueForKey("test_restore");
       kv.close();
     }
 

@@ -218,7 +218,6 @@ public:
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
                             std::string *cryptKey = nullptr,
                             MMKVPath_t *rootPath = nullptr,
-                            MMKVPath_t *newRootPath = nullptr,
                             size_t expectedCapacity = 0);
 
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, std::string *cryptKey = nullptr);
