@@ -23,6 +23,9 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { MMKV, MMKVLogLevel } from 'mmkv';
 import { GlobalContainer } from '../Util/Util';
+import childProcessManager from '@ohos.app.ability.childProcessManager';
+import { DemoProcess } from '../process/DemoProcess';
+import { BusinessError } from '@ohos.base';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -34,8 +37,10 @@ export default class EntryAbility extends UIAbility {
 
     // share between pages
     GlobalContainer.setObject('context', appCtx);
-  }
 
+    // looks like there's noway to test multi-process for the time being
+    // this.startChildProcess();
+  }
 
   onDestroy(): void {
     hilog.info(0x0000, 'mmkvdemo', '%{public}s', 'Ability onDestroy');
@@ -67,5 +72,21 @@ export default class EntryAbility extends UIAbility {
   onBackground(): void {
     // Ability has back to background
     hilog.info(0x0000, 'mmkvdemo', '%{public}s', 'Ability onBackground');
+  }
+
+  startChildProcess(): void {
+    try {
+      // 这里要调用下DemoProcess类的任意方法，防止没有引用到而被构建工具优化掉
+      hilog.info(0x0000, 'mmkvdemo', 'startChildProcess %{public}s', DemoProcess.toString());
+      childProcessManager.startChildProcess("./ets/process/DemoProcess.ts", childProcessManager.StartMode.APP_SPAWN_FORK, (err, data) => {
+        if (data) {
+          console.log(`startChildProcess success, pid: ${data}`);
+        } else {
+          console.error(`startChildProcess error, errorCode: ${err.code}`);
+        }
+      });
+    } catch (err) {
+      console.error(`startChildProcess error, errorCode: ${(err as BusinessError).code}`);
+    }
   }
 }

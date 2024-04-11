@@ -119,6 +119,7 @@ int g_android_api = __ANDROID_API_L__;
 #endif
 std::string g_android_tmpDir = "/data/local/tmp/";
 
+#ifndef MMKV_OHOS
 void *loadLibrary() {
     auto name = "libandroid.so";
     static auto handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
@@ -129,13 +130,14 @@ void *loadLibrary() {
 }
 
 typedef int (*AShmem_create_t)(const char *name, size_t size);
+typedef size_t (*AShmem_getSize_t)(int fd);
+
+#endif
 
 int ASharedMemory_create(const char *name, size_t size) {
     int fd = -1;
 #ifndef MMKV_OHOS
-    if (g_android_api >= __ANDROID_API_O__)
-#endif
-    {
+    if (g_android_api >= __ANDROID_API_O__) {
         static auto handle = loadLibrary();
         static AShmem_create_t funcPtr =
             (handle != nullptr) ? reinterpret_cast<AShmem_create_t>(dlsym(handle, "ASharedMemory_create")) : nullptr;
@@ -148,6 +150,7 @@ int ASharedMemory_create(const char *name, size_t size) {
             MMKVWarning("fail to locate ASharedMemory_create() from loading libandroid.so");
         }
     }
+#endif
     if (fd < 0) {
         fd = open(ASHMEM_NAME_DEF, O_RDWR | O_CLOEXEC);
         if (fd < 0) {
@@ -163,14 +166,10 @@ int ASharedMemory_create(const char *name, size_t size) {
     return fd;
 }
 
-typedef size_t (*AShmem_getSize_t)(int fd);
-
 size_t ASharedMemory_getSize(int fd) {
     size_t size = 0;
 #ifndef MMKV_OHOS
-    if (g_android_api >= __ANDROID_API_O__)
-#endif
-    {
+    if (g_android_api >= __ANDROID_API_O__) {
         static auto handle = loadLibrary();
         static AShmem_getSize_t funcPtr =
             (handle != nullptr) ? reinterpret_cast<AShmem_getSize_t>(dlsym(handle, "ASharedMemory_getSize")) : nullptr;
@@ -183,6 +182,7 @@ size_t ASharedMemory_getSize(int fd) {
             MMKVWarning("fail to locate ASharedMemory_create() from loading libandroid.so");
         }
     }
+#endif
     if (size == 0) {
         int tmp = ioctl(fd, ASHMEM_GET_SIZE, nullptr);
         if (tmp < 0) {
@@ -199,11 +199,10 @@ string ASharedMemory_getName(int fd) {
     // I've make a request to Google, https://issuetracker.google.com/issues/130741665
     // There's nothing we can do before it's supported officially by Google
 #ifndef MMKV_OHOS
-    if (g_android_api >= __ANDROID_API_O__)
-#endif
-    {
+    if (g_android_api >= __ANDROID_API_O__) {
         return "";
     }
+#endif
 
     char name[ASHMEM_NAME_LEN] = {0};
     if (ioctl(fd, ASHMEM_GET_NAME, name) != 0) {

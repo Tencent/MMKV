@@ -353,4 +353,22 @@ export class MMKV {
     disableCompareBeforeSet() {
         return native.disableCompareBeforeSet(this.nativeHandle);
     }
+
+    static mmkvWithAshmemID(mmapID: string, size: number, mode: number, cryptKey?: string): MMKV {
+        let handle = native.mmkvWithIDAndSize(mmapID, size, (mode | MMKV.ASHMEM_MODE), cryptKey);
+        return new MMKV(handle);
+    }
+
+    static mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): MMKV {
+        let handle = native.mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKey);
+        return new MMKV(handle);
+    }
+
+    get ashmemFD(): number {
+        return native.ashmemFD(this.nativeHandle);
+    }
+
+    get ashmemMetaFD(): number {
+        return native.ashmemMetaFD(this.nativeHandle);
+    }
 }

@@ -75,6 +75,13 @@ struct Index {
           .onClick(() => {
             this.testCompareBeforeSet()
           })
+        Button('Ashmem Test')
+          .type(ButtonType.Normal)
+          .buttonStyle(ButtonStyleMode.TEXTUAL)
+          .fontSize(18)
+          .onClick(() => {
+            this.testAshmem()
+          })
         Text('mmkv version: ' + MMKV.version)
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
@@ -187,6 +194,14 @@ struct Index {
 
   testMMKV(mmapID: string, decodeOnly: boolean, cryptKey?: string, rootPath?: string): MMKV {
     let kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath);
+
+    this.testOneMMKV(kv, decodeOnly);
+    hilog.info(0, 'mmkvdemo', 'isFileValue %{public}s', MMKV.isFileValid(kv.mmapID, rootPath));
+
+    return kv;
+  }
+
+  testOneMMKV(kv: MMKV, decodeOnly: boolean) {
     hilog.info(0, 'mmkvdemo', 'mmapID = %{public}s, cryptKey = %{public}s', kv.mmapID, kv.cryptKey);
 
     if (!decodeOnly) {
@@ -306,9 +321,6 @@ struct Index {
     // hilog.info(0, 'mmkvdemo', 'clearAll(), allKeys = %{public}s', StringArrayToString(kv.allKeys()));
 
     // kv.close();
-    hilog.info(0, 'mmkvdemo', 'isFileValue %{public}s', MMKV.isFileValid(kv.mmapID, rootPath));
-    // hilog.info(0, 'mmkvdemo', 'remove storage %{public}s', MMKV.removeStorage('mmkv.default'));
-    return kv;
   }
 
   testReKey() {
@@ -626,6 +638,17 @@ struct Index {
       hilog.info(0, 'mmkvdemo', 'testCompareBeforeSet actualSize = %{public}i', mmkv.actualSize());
       hilog.info(0, 'mmkvdemo', 'testCompareBeforeSet v = %{public}s', mmkv.decodeString(key, ''));
     }
+  }
+
+  private testAshmem() {
+    let mmapID = 'testAshmem';
+    let cryptKey = 'Tencent MMKV';
+
+    let kv = MMKV.mmkvWithAshmemID(mmapID, MMKV.pageSize, MMKV.SINGLE_PROCESS_MODE, cryptKey);
+    this.testOneMMKV(kv, false);
+
+    let newKV = MMKV.mmkvWithAshmemFD(mmapID, kv.ashmemFD, kv.ashmemMetaFD, cryptKey);
+    this.testOneMMKV(newKV, true);
   }
 }
 

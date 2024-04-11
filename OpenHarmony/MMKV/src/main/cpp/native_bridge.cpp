@@ -1248,6 +1248,72 @@ static napi_value disableCompareBeforeSet(napi_env env, napi_callback_info info)
     return NAPIUndefined(env);
 }
 
+// mmkvWithIDAndSize(mmapID: string, size: number, mode: number, cryptKey?: string): bigint
+static napi_value mmkvWithIDAndSize(napi_env env, napi_callback_info info) {
+    size_t argc = 5;
+    napi_value args[5] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    MMKV *kv = nullptr;
+    auto mmapID = NValueToString(env, args[0]);
+    if (!mmapID.empty()) {
+        int32_t size = NValueToInt32(env, args[1]);
+        int32_t mode = NValueToInt32(env, args[2]);
+        auto cryptKey = NValueToString(env, args[3], true);
+
+        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
+        kv = MMKV::mmkvWithID(mmapID, size, (MMKVMode)mode, cryptKeyPtr);
+    }
+
+    return UInt64ToNValue(env, (uint64_t)kv);
+}
+
+// mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): bigint
+static napi_value mmkvWithAshmemFD(napi_env env, napi_callback_info info) {
+    size_t argc = 5;
+    napi_value args[5] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    MMKV *kv = nullptr;
+    auto mmapID = NValueToString(env, args[0]);
+    if (!mmapID.empty()) {
+        int32_t fd = NValueToInt32(env, args[1]);
+        int32_t metaFD = NValueToInt32(env, args[2]);
+        auto cryptKey = NValueToString(env, args[3], true);
+
+        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
+        kv = MMKV::mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKeyPtr);
+    }
+
+    return UInt64ToNValue(env, (uint64_t)kv);
+}
+
+static napi_value ashmemFD(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return Int32ToNValue(env, kv->ashmemFD());
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value ashmemMetaFD(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return Int32ToNValue(env, kv->ashmemMetaFD());
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -1308,6 +1374,10 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "disableAutoKeyExpire", nullptr, disableAutoKeyExpire, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "enableCompareBeforeSet", nullptr, enableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "disableCompareBeforeSet", nullptr, disableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "mmkvWithIDAndSize", nullptr, mmkvWithIDAndSize, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "mmkvWithAshmemFD", nullptr, mmkvWithAshmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "ashmemFD", nullptr, ashmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "ashmemMetaFD", nullptr, ashmemMetaFD, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
