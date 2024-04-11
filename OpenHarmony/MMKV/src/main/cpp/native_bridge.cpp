@@ -81,7 +81,7 @@ static string NValueToString(napi_env env, napi_value value, bool maybeUndefined
     size_t size;
     NAPI_CALL_RET(napi_get_value_string_utf8(env, value, nullptr, 0, &size), "");
     string result(size, '\0');
-    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, result.data(), result.capacity(), nullptr), "");
+    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, (char *) result.data(), result.capacity(), nullptr), "");
     return result;
 }
 
