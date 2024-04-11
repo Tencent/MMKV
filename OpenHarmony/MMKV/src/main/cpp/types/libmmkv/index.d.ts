@@ -51,3 +51,7 @@ export const backupOneToDirectory: (mmapID: string, dstDir: string, rootPath?: s
 export const restoreOneFromDirectory: (mmapID: string, srcDir: string, rootPath?: string) => boolean;
 export const backupAllToDirectory: (dstDir: string) => bigint;
 export const restoreAllFromDirectory: (srcDir: string) => bigint;
+export const enableAutoKeyExpire: (handle: bigint, expireDurationInSecond: number) => boolean;
+export const disableAutoKeyExpire: (handle: bigint) => boolean;
+export const enableCompareBeforeSet: (handle: bigint) => void;
+export const disableCompareBeforeSet: (handle: bigint) => void;

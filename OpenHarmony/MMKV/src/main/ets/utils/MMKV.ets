@@ -26,10 +26,10 @@ import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 
 export class MMKV {
-    static SINGLE_PROCESS_MODE: number = 1 << 0
-    static MULTI_PROCESS_MODE: number = 1 << 1
-    private static ASHMEM_MODE: number = 1 << 3
-    private static BACKUP_MODE: number = 1 << 4
+    static readonly SINGLE_PROCESS_MODE: number = 1 << 0
+    static readonly MULTI_PROCESS_MODE: number = 1 << 1
+    private static readonly ASHMEM_MODE: number = 1 << 3
+    private static readonly BACKUP_MODE: number = 1 << 4
 
     private  static g_rootDir: string
 
@@ -329,5 +329,28 @@ export class MMKV {
 
     static restoreAllFromDirectory(srcDir: string) {
         return native.restoreAllFromDirectory(srcDir);
+    }
+
+    static readonly ExpireNever = 0;
+    static readonly ExpireInMinute = 60;
+    static readonly ExpireInHour = 60 * 60;
+    static readonly ExpireInDay = 24 * 60 * 60;
+    static readonly ExpireInMonth = 30 * 24 * 60 * 60;
+    static readonly ExpireInYear = 365 * 30 * 24 * 60 * 60;
+
+    enableAutoKeyExpire(expireDurationInSecond: number) {
+        return native.enableAutoKeyExpire(this.nativeHandle, expireDurationInSecond);
+    }
+
+    disableAutoKeyExpire() {
+        return native.disableAutoKeyExpire(this.nativeHandle);
+    }
+
+    enableCompareBeforeSet() {
+        return native.enableCompareBeforeSet(this.nativeHandle);
+    }
+
+    disableCompareBeforeSet() {
+        return native.disableCompareBeforeSet(this.nativeHandle);
     }
 }

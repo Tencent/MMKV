@@ -1195,6 +1195,59 @@ static napi_value restoreAllFromDirectory(napi_env env, napi_callback_info info)
     return NAPIUndefined(env);
 }
 
+static napi_value enableAutoKeyExpire(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto expireDuration = NValueToUInt32(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return BoolToNValue(env, kv->enableAutoKeyExpire(expireDuration));
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value disableAutoKeyExpire(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        return BoolToNValue(env, kv->disableAutoKeyExpire());
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value enableCompareBeforeSet(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->enableCompareBeforeSet();
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value disableCompareBeforeSet(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->disableCompareBeforeSet();
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -1251,6 +1304,10 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "restoreOneFromDirectory", nullptr, restoreOneFromDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "backupAllToDirectory", nullptr, backupAllToDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "restoreAllFromDirectory", nullptr, restoreAllFromDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "enableAutoKeyExpire", nullptr, enableAutoKeyExpire, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "disableAutoKeyExpire", nullptr, disableAutoKeyExpire, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "enableCompareBeforeSet", nullptr, enableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "disableCompareBeforeSet", nullptr, disableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
