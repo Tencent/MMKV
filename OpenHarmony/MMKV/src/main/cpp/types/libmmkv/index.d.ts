@@ -59,3 +59,6 @@ export const mmkvWithIDAndSize: (mmapID: string, size: number, mode: number, cry
 export const mmkvWithAshmemFD: (mmapID: string, fd: number, metaFD: number, cryptKey?: string) => bigint;
 export const ashmemFD: (handle: bigint) => number;
 export const ashmemMetaFD: (handle: bigint) => number;
+export const createNativeBuffer: (size: number) => bigint;
+export const destroyNativeBuffer: (ptr: bigint, size: number) => void;
+export const writeValueToNativeBuffer: (handle: bigint, key: string, ptr: bigint, size: number) => number;

@@ -19,7 +19,7 @@
  */
 
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { MMKV, MMKVLogLevel } from 'mmkv';
+import { MMKV, NativeBuffer } from 'mmkv';
 import util from '@ohos.util';
 import dataPreferences from '@ohos.data.preferences';
 import { GlobalContainer } from '../Util/Util'
@@ -280,6 +280,14 @@ struct Index {
 
     hilog.info(0, 'mmkvdemo', 'bytes value size = %{public}d, actual value size = %{public}d',
       kv.getValueSize('bytes'), kv.getValueSize('bytes', true));
+
+    let sizeNeeded = kv.getValueSize('bytes', true);
+    let nativeBuffer = MMKV.createNativeBuffer(sizeNeeded);
+    if (nativeBuffer !== null) {
+      let size = kv.writeValueToNativeBuffer('bytes', nativeBuffer);
+      hilog.info(0, 'mmkvdemo', 'NativeBuffer: size Needed = %{public}d,  written size = %{public}d', sizeNeeded, size);
+      MMKV.destroyNativeBuffer(nativeBuffer);
+    }
 
     if (!decodeOnly) {
       let strArr: string[] = ['abc', 'defg', 'hijk'];

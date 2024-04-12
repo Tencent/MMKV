@@ -399,7 +399,7 @@ static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
         kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, expectedCapacity);
     }
 
-    return UInt64ToNValue(env, (uint64_t)kv);
+    return UInt64ToNValue(env, (uint64_t) kv);
 }
 
 static napi_value mmapID(napi_env env, napi_callback_info info) {
@@ -1314,6 +1314,48 @@ static napi_value ashmemMetaFD(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+static napi_value createNativeBuffer(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto size = NValueToUInt32(env, args[0]);
+    if (size != 0) {
+        auto ptr = malloc(size);
+        return UInt64ToNValue(env, (uintptr_t) ptr);
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value destroyNativeBuffer(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto ptr = (void*) NValueToUInt64(env, args[0]);
+    auto size = NValueToUInt32(env, args[1]);
+    if (ptr != nullptr && size != 0) {
+        free(ptr);
+    }
+    return NAPIUndefined(env);
+}
+
+static napi_value writeValueToNativeBuffer(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    auto ptr = (void*) NValueToUInt64(env, args[2]);
+    auto size = NValueToUInt32(env, args[3]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0 && ptr != nullptr && size != 0) {
+        return Int32ToNValue(env, kv->writeValueToBuffer(key, ptr, size));
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -1378,6 +1420,9 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "mmkvWithAshmemFD", nullptr, mmkvWithAshmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "ashmemFD", nullptr, ashmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "ashmemMetaFD", nullptr, ashmemMetaFD, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "createNativeBuffer", nullptr, createNativeBuffer, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "destroyNativeBuffer", nullptr, destroyNativeBuffer, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "writeValueToNativeBuffer", nullptr, writeValueToNativeBuffer, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

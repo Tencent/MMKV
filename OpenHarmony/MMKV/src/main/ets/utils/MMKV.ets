@@ -22,6 +22,7 @@ import native from 'libmmkv.so';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { MMKVLogLevel } from './MMKVLogLevel';
 import { getObjKeys } from './Util';
+import { NativeBuffer } from './NativeBuffer';
 import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 
@@ -30,21 +31,20 @@ export class MMKV {
     static readonly MULTI_PROCESS_MODE: number = 1 << 1
     private static readonly ASHMEM_MODE: number = 1 << 3
     private static readonly BACKUP_MODE: number = 1 << 4
-
-    private  static g_rootDir: string
+    private static g_rootDir: string
 
     private static initData() {
         // MMKV.checkedHandleSet = new Set<string>()
     }
 
-    static initialize(context: common.ApplicationContext, logLevel?:MMKVLogLevel): string {
+    static initialize(context: common.ApplicationContext, logLevel?: MMKVLogLevel): string {
         let rootDir = context.filesDir + "/mmkv";
         let cacheDir = context.cacheDir;
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
         return MMKV.initializeWithPath(rootDir, cacheDir, logLevel);
     }
 
-    static initializeWithPath(rootDir:string, cacheDir:string, logLevel?:MMKVLogLevel): string {
+    static initializeWithPath(rootDir: string, cacheDir: string, logLevel?: MMKVLogLevel): string {
         MMKV.initData();
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
         MMKV.g_rootDir = native.initialize(rootDir, cacheDir, logLevel);
@@ -64,6 +64,7 @@ export class MMKV {
     }
 
     private nativeHandle: bigint;
+
     private constructor(handle: bigint) {
         this.nativeHandle = handle;
     }
@@ -78,7 +79,7 @@ export class MMKV {
         return new MMKV(handle);
     }
 
-    get mmapID () {
+    get mmapID() {
         return native.mmapID(this.nativeHandle);
     }
 
@@ -370,5 +371,21 @@ export class MMKV {
 
     get ashmemMetaFD(): number {
         return native.ashmemMetaFD(this.nativeHandle);
+    }
+
+    public static createNativeBuffer(size: number): NativeBuffer | null {
+        let pointer: bigint = native.createNativeBuffer(size);
+        if (pointer <= BigInt(0)) {
+            return null;
+        }
+        return new NativeBuffer(pointer, size);
+    }
+
+    public static destroyNativeBuffer(buffer: NativeBuffer): void {
+        native.destroyNativeBuffer(buffer.pointer, buffer.size);
+    }
+
+    public writeValueToNativeBuffer(key: string, buffer: NativeBuffer): number {
+        return native.writeValueToNativeBuffer(this.nativeHandle, key, buffer.pointer, buffer.size);
     }
 }
