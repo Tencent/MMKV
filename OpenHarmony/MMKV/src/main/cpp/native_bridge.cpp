@@ -1123,7 +1123,7 @@ static napi_value reKey(napi_env env, napi_callback_info info) {
     if (kv) {
         return BoolToNValue(env, kv->reKey(cryptKey));
     }
-    return NAPIUndefined(env);
+    return BoolToNValue(env, false);
 }
 
 static napi_value checkReSetCryptKey(napi_env env, napi_callback_info info) {

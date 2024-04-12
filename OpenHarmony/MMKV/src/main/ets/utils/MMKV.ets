@@ -27,8 +27,8 @@ import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 
 export class MMKV {
-    static readonly SINGLE_PROCESS_MODE: number = 1 << 0
-    static readonly MULTI_PROCESS_MODE: number = 1 << 1
+    public static readonly SINGLE_PROCESS_MODE: number = 1 << 0
+    public static readonly MULTI_PROCESS_MODE: number = 1 << 1
     private static readonly ASHMEM_MODE: number = 1 << 3
     private static readonly BACKUP_MODE: number = 1 << 4
     private static g_rootDir: string
@@ -37,29 +37,29 @@ export class MMKV {
         // MMKV.checkedHandleSet = new Set<string>()
     }
 
-    static initialize(context: common.ApplicationContext, logLevel?: MMKVLogLevel): string {
+    public static initialize(context: common.ApplicationContext, logLevel?: MMKVLogLevel): string {
         let rootDir = context.filesDir + "/mmkv";
         let cacheDir = context.cacheDir;
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
         return MMKV.initializeWithPath(rootDir, cacheDir, logLevel);
     }
 
-    static initializeWithPath(rootDir: string, cacheDir: string, logLevel?: MMKVLogLevel): string {
+    public static initializeWithPath(rootDir: string, cacheDir: string, logLevel?: MMKVLogLevel): string {
         MMKV.initData();
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
         MMKV.g_rootDir = native.initialize(rootDir, cacheDir, logLevel);
         return MMKV.g_rootDir;
     }
 
-    static get version() {
+    public static get version(): string {
         return native.version();
     }
 
-    static get pageSize() {
+    public static get pageSize(): number {
         return native.pageSize();
     }
 
-    static get rootDir() {
+    public static get rootDir(): string {
         return MMKV.g_rootDir;
     }
 
@@ -69,193 +69,205 @@ export class MMKV {
         this.nativeHandle = handle;
     }
 
-    static defaultMMKV(mode?: number, cryptKey?: string) {
+    public static defaultMMKV(mode?: number, cryptKey?: string): MMKV {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
         let handle = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        if (!handle) {
+            throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
+        }
         return new MMKV(handle);
     }
 
-    static mmkvWithID(mmapID: string, mode?: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint) {
+    public static mmkvWithID(mmapID: string, mode?: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint): MMKV {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
         let handle = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath, expectedCapacity);
+        if (!handle) {
+            throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
+        }
         return new MMKV(handle);
     }
 
-    get mmapID() {
+    public get mmapID(): string {
         return native.mmapID(this.nativeHandle);
     }
 
-    encodeBool(key: string, value: boolean, expiration?: number) {
+    public encodeBool(key: string, value: boolean, expiration?: number): boolean {
         return native.encodeBool(this.nativeHandle, key, value, expiration);
     }
 
-    decodeBool(key: string, defaultValue?: boolean) {
+    public decodeBool(key: string, defaultValue?: boolean): boolean | undefined {
         return native.decodeBool(this.nativeHandle, key, defaultValue ?? false);
     }
 
-    encodeInt32(key: string, value: number, expiration?: number) {
+    public encodeInt32(key: string, value: number, expiration?: number): boolean {
         return native.encodeInt32(this.nativeHandle, key, value, expiration);
     }
 
-    decodeInt32(key: string, defaultValue?: number) {
+    public decodeInt32(key: string, defaultValue?: number): number | undefined {
         return native.decodeInt32(this.nativeHandle, key, defaultValue ?? 0);
     }
 
-    encodeUInt32(key: string, value: number, expiration?: number) {
+    public encodeUInt32(key: string, value: number, expiration?: number): boolean {
         return native.encodeUInt32(this.nativeHandle, key, value, expiration);
     }
 
-    decodeUInt32(key: string, defaultValue?: number) {
+    public decodeUInt32(key: string, defaultValue?: number): number | undefined {
         return native.decodeUInt32(this.nativeHandle, key, defaultValue ?? 0);
     }
 
-    encodeInt64(key: string, value: bigint, expiration?: number) {
+    public encodeInt64(key: string, value: bigint, expiration?: number): boolean {
         return native.encodeInt64(this.nativeHandle, key, value, expiration);
     }
 
-    decodeInt64(key: string, defaultValue?: bigint) {
+    public decodeInt64(key: string, defaultValue?: bigint): bigint | undefined {
         return native.decodeInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
     }
 
-    encodeUInt64(key: string, value: bigint, expiration?: number) {
+    public encodeUInt64(key: string, value: bigint, expiration?: number): boolean {
         return native.encodeUInt64(this.nativeHandle, key, value, expiration);
     }
 
-    decodeUInt64(key: string, defaultValue?: bigint) {
+    public decodeUInt64(key: string, defaultValue?: bigint): bigint | undefined {
         return native.decodeUInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
     }
 
-    encodeDouble(key: string, value: number, expiration?: number) {
+    public encodeDouble(key: string, value: number, expiration?: number): boolean {
         return native.encodeDouble(this.nativeHandle, key, value, expiration);
     }
 
-    decodeDouble(key: string, defaultValue?: number) {
+    public decodeDouble(key: string, defaultValue?: number): number | undefined {
         return native.decodeDouble(this.nativeHandle, key, defaultValue ?? 0);
     }
 
-    encodeString(key: string, value: string, expiration?: number) {
+    public encodeString(key: string, value: string, expiration?: number): boolean {
         return native.encodeString(this.nativeHandle, key, value, expiration);
     }
 
-    decodeString(key: string, defaultValue?: string) {
+    public decodeString(key: string, defaultValue?: string): string | undefined {
         return native.decodeString(this.nativeHandle, key, defaultValue);
     }
 
-    encodeStringSet(key: string, value: string[], expiration?: number) {
+    public encodeStringSet(key: string, value: string[], expiration?: number): boolean {
         return native.encodeStringSet(this.nativeHandle, key, value, expiration);
     }
 
-    decodeStringSet(key: string, defaultValue?: string[]) {
+    public decodeStringSet(key: string, defaultValue?: string[]): string[] | undefined {
         return native.decodeStringSet(this.nativeHandle, key, defaultValue);
     }
 
-    encodeNumberSet(key: string, value: number[], expiration?: number) {
+    public encodeNumberSet(key: string, value: number[], expiration?: number): boolean {
         return native.encodeNumberSet(this.nativeHandle, key, value, expiration);
     }
 
-    decodeNumberSet(key: string, defaultValue?: number[]) {
+    public decodeNumberSet(key: string, defaultValue?: number[]) : number[] | undefined {
         return native.decodeNumberSet(this.nativeHandle, key, defaultValue);
     }
 
-    encodeBoolSet(key: string, value: boolean[], expiration?: number) {
+    public encodeBoolSet(key: string, value: boolean[], expiration?: number): boolean {
         return native.encodeBoolSet(this.nativeHandle, key, value, expiration);
     }
 
-    decodeBoolSet(key: string, defaultValue?: boolean[]) {
+    public decodeBoolSet(key: string, defaultValue?: boolean[]): boolean[] | undefined {
         return native.decodeBoolSet(this.nativeHandle, key, defaultValue);
     }
 
-    encodeBytes(key: string, value: ArrayBuffer, expiration?: number) {
+    public encodeBytes(key: string, value: ArrayBuffer, expiration?: number): boolean {
         return native.encodeBytes(this.nativeHandle, key, value, expiration);
     }
 
-    decodeBytes(key: string, defaultValue?: ArrayBuffer) {
+    public decodeBytes(key: string, defaultValue?: ArrayBuffer): ArrayBuffer | undefined {
         return native.decodeBytes(this.nativeHandle, key, defaultValue);
     }
 
-    containsKey(key: string) {
+    public containsKey(key: string): boolean {
         return native.containsKey(this.nativeHandle, key);
     }
 
-    allKeys(filterExpire?: boolean) {
+    public allKeys(filterExpire?: boolean): string[] {
         return native.allKeys(this.nativeHandle, filterExpire ?? false);
     }
 
-    count(filterExpire?: boolean) {
+    public count(filterExpire?: boolean): bigint {
         return native.count(this.nativeHandle, filterExpire ?? false);
     }
 
-    removeValueForKey(key: string) {
+    public removeValueForKey(key: string): void {
         native.removeValueForKey(this.nativeHandle, key);
     }
 
-    removeValuesForKeys(keys: string[]) {
+    public removeValuesForKeys(keys: string[]): void {
         native.removeValuesForKeys(this.nativeHandle, keys);
     }
 
-    clearAll(keepSpace?: boolean) {
+    public clearAll(keepSpace?: boolean): void {
         return native.clearAll(this.nativeHandle, keepSpace ?? false);
     }
 
-    totalSize() {
+    public totalSize(): bigint {
         return native.totalSize(this.nativeHandle);
     }
 
-    actualSize() {
+    public actualSize(): bigint {
         return native.actualSize(this.nativeHandle);
     }
 
-    sync(sync?: boolean) {
+    public sync(sync?: boolean): void {
         return native.sync(this.nativeHandle, sync ?? false);
     }
 
-    clearMemoryCache() {
+    public clearMemoryCache(): void {
         return native.clearMemoryCache(this.nativeHandle);
     }
 
-    lock() {
+    public lock(): void {
         return native.lock(this.nativeHandle);
     }
 
-    unlock() {
+    public unlock(): void {
         return native.unlock(this.nativeHandle);
     }
 
-    tryLock() {
+    public tryLock(): boolean {
         return native.tryLock(this.nativeHandle);
     }
 
-    trim() {
+    public trim(): void {
         return native.trim(this.nativeHandle);
     }
 
-    close() {
+    public close(): void {
         return native.close(this.nativeHandle);
     }
 
-    getValueSize(key: string, actualSize?: boolean) {
+    public getValueSize(key: string, actualSize?: boolean): number {
         return native.getValueSize(this.nativeHandle, key, actualSize);
     }
 
-    static removeStorage(mmapID: string, rootPath?: string) {
+    public static removeStorage(mmapID: string, rootPath?: string): boolean {
         return native.removeStorage(mmapID, rootPath);
     }
 
-    static isFileValid(mmapID: string, rootPath?: string) {
+    public static isFileValid(mmapID: string, rootPath?: string): boolean {
         return native.isFileValid(mmapID, rootPath);
     }
 
-    get cryptKey() {
+    public get cryptKey(): string | undefined {
         return native.cryptKey(this.nativeHandle);
     }
 
-    reKey(newKey?: string) {
+    public reKey(newKey?: string): boolean {
         return native.reKey(this.nativeHandle, newKey);
     }
 
-    checkReSetCryptKey(newKey?: string) {
+    public checkReSetCryptKey(newKey?: string): void {
         return native.checkReSetCryptKey(this.nativeHandle, newKey);
     }
 
-    importFromPreferences(preferences: dataPreferences.Preferences) {
+    public importFromPreferences(preferences: dataPreferences.Preferences): bigint {
         hilog.info(0x0000, 'mmkv', 'import from Preferences to %{public}s', this.mmapID);
         let all = preferences.getAllSync();
         let allKeys = getObjKeys(all);
@@ -310,66 +322,87 @@ export class MMKV {
         return count;
     }
 
-    static backedUpMMKVWithID(mmapID: string, rootPath: string, mode?: number, cryptKey?: string): MMKV {
+    public static backedUpMMKVWithID(mmapID: string, rootPath: string, mode?: number, cryptKey?: string): MMKV {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
         let realMode = (mode ?? MMKV.SINGLE_PROCESS_MODE) | MMKV.BACKUP_MODE
         // hilog.info(0x0000, 'mmkv', 'realMode %{public}d for mmapID %{public}s', realMode, mmapID);
         return MMKV.mmkvWithID(mmapID, realMode, cryptKey, rootPath);
     }
 
-    static backupOneToDirectory(mmapID: string, dstDir: string, rootPath?: string) {
+    public static backupOneToDirectory(mmapID: string, dstDir: string, rootPath?: string): boolean {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
         return native.backupOneToDirectory(mmapID, dstDir, rootPath);
     }
 
-    static restoreOneFromDirectory(mmapID: string, srcDir: string, rootPath?: string) {
+    public static restoreOneFromDirectory(mmapID: string, srcDir: string, rootPath?: string): boolean {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
         return native.restoreOneFromDirectory(mmapID, srcDir, rootPath);
     }
 
-    static backupAllToDirectory(dstDir: string) {
+    public static backupAllToDirectory(dstDir: string): bigint {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
         return native.backupAllToDirectory(dstDir);
     }
 
-    static restoreAllFromDirectory(srcDir: string) {
+    public static restoreAllFromDirectory(srcDir: string): bigint {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
         return native.restoreAllFromDirectory(srcDir);
     }
 
-    static readonly ExpireNever = 0;
-    static readonly ExpireInMinute = 60;
-    static readonly ExpireInHour = 60 * 60;
-    static readonly ExpireInDay = 24 * 60 * 60;
-    static readonly ExpireInMonth = 30 * 24 * 60 * 60;
-    static readonly ExpireInYear = 365 * 30 * 24 * 60 * 60;
+    public static readonly ExpireNever = 0;
+    public static readonly ExpireInMinute = 60;
+    public static readonly ExpireInHour = 60 * 60;
+    public static readonly ExpireInDay = 24 * 60 * 60;
+    public static readonly ExpireInMonth = 30 * 24 * 60 * 60;
+    public static readonly ExpireInYear = 365 * 30 * 24 * 60 * 60;
 
-    enableAutoKeyExpire(expireDurationInSecond: number) {
+    public enableAutoKeyExpire(expireDurationInSecond: number): boolean {
         return native.enableAutoKeyExpire(this.nativeHandle, expireDurationInSecond);
     }
 
-    disableAutoKeyExpire() {
+    public disableAutoKeyExpire(): boolean {
         return native.disableAutoKeyExpire(this.nativeHandle);
     }
 
-    enableCompareBeforeSet() {
+    public enableCompareBeforeSet(): void {
         return native.enableCompareBeforeSet(this.nativeHandle);
     }
 
-    disableCompareBeforeSet() {
+    public disableCompareBeforeSet(): void {
         return native.disableCompareBeforeSet(this.nativeHandle);
     }
 
-    static mmkvWithAshmemID(mmapID: string, size: number, mode: number, cryptKey?: string): MMKV {
+    public static mmkvWithAshmemID(mmapID: string, size: number, mode: number, cryptKey?: string): MMKV {
         let handle = native.mmkvWithIDAndSize(mmapID, size, (mode | MMKV.ASHMEM_MODE), cryptKey);
+        if (!handle) {
+            throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
+        }
         return new MMKV(handle);
     }
 
-    static mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): MMKV {
+    public static mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): MMKV {
         let handle = native.mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKey);
+        if (!handle) {
+            throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
+        }
         return new MMKV(handle);
     }
 
-    get ashmemFD(): number {
+    public get ashmemFD(): number {
         return native.ashmemFD(this.nativeHandle);
     }
 
-    get ashmemMetaFD(): number {
+    public get ashmemMetaFD(): number {
         return native.ashmemMetaFD(this.nativeHandle);
     }
 
