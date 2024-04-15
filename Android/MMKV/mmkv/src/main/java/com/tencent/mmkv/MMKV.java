@@ -715,7 +715,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -736,7 +736,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -757,7 +757,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -778,7 +778,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -799,7 +799,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -820,7 +820,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -843,7 +843,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -885,7 +885,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -923,7 +923,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Set value with customize expiration in sections.
+     * Set value with customize expiration in seconds.
      *
      * @param expireDurationInSecond override the default duration, {@link #ExpireNever} (0) means never expire.
      */
@@ -1140,6 +1140,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     /**
      * remove the storage of the MMKV, including the data file & meta file (.crc)
      * Note: the existing instance (if any) will be closed & destroyed
+     *
+     * @param mmapID   The unique ID of the MMKV instance.
      */
     public static boolean removeStorage(String mmapID) {
         return removeStorage(mmapID, null);
@@ -1250,10 +1252,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native boolean disableAutoKeyExpire();
 
     /**
-     * Enable data compare before set, for better performance
-     * If data for key seldom changes, use it
+     * Enable data compare before set, for better performance.
+     * If data for key seldom changes, use it.
      * When encryption or expiration is on, compare-before-set will be invalid.
-     * For encryption, compare operation must decrypt data which is time consuming
+     * For encryption, compare operation must decrypt data which is time consuming.
      * For expiration, compare is useless because in most cases the expiration time changes every time.
      */
     public void enableCompareBeforeSet() {

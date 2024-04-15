@@ -18,6 +18,11 @@
  * limitations under the License.
  */
 
+/**
+ * A native memory wrapper, whose underlying memory can be passed to another NAPI method directly.
+ * Avoiding unnecessary NAPI boxing and unboxing.
+ * Must be destroy manually {@link MMKV.destroyNativeBuffer()}.
+ */
 export class NativeBuffer {
   public pointer: bigint;
   public size: number;

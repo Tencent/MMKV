@@ -18,6 +18,9 @@
  * limitations under the License.
  */
 
+/**
+ * @enum The levels of MMKV log.
+ */
 export enum MMKVLogLevel {
   /**
    * Debug level. Not available for release/production build.
