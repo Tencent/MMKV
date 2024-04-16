@@ -117,7 +117,7 @@ export class MMKV {
         }
         let handle = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey);
         if (!handle) {
-            throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
+            throw new Error('Fail to create the default MMKV instance in NAPI.');
         }
         return new MMKV(handle);
     }
