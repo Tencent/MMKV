@@ -660,19 +660,25 @@ struct Index {
   }
 }
 
-function StringToArrayBuffer(str: string): ArrayBuffer {
+function StringToArrayBuffer(str: string | undefined): ArrayBuffer {
+  if (str == undefined) {
+    return new ArrayBuffer(0);
+  }
   let enc = new util.TextEncoder(); // always utf-8
   let i8Arr = enc.encodeInto(str);
   return i8Arr.buffer;
 }
 
-function ArrayBufferToString(arr: ArrayBuffer): string {
+function ArrayBufferToString(arr: ArrayBuffer | undefined): string {
+  if (arr == undefined) {
+    return 'undefined';
+  }
   let out8Arr = new Uint8Array(arr);
   let dnc = util.TextDecoder.create('utf-8');
   return dnc.decodeWithStream(out8Arr);
 }
 
-function ArrayToString(arr: string[] | number[] | boolean[]): string {
+function ArrayToString(arr: string[] | number[] | boolean[] | undefined): string {
   if (arr == undefined) {
     return 'undefined';
   }
