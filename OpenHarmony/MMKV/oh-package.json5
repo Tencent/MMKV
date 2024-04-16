@@ -5,11 +5,11 @@
   "main": "Index.ets",
   "author": "guoling",
   "license": "BSD 3-Clause",
+  "type": "module",
   "packageType": "InterfaceHar",
   "dependencies": {
     "libmmkv.so": "file:./src/main/cpp/types/libmmkv"
   },
-  "type": "module",
   "repository": "https://github.com/Tencent/mmkv",
   "homepage": "https://github.com/Tencent/mmkv",
   "keywords": [

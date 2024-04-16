@@ -94,8 +94,6 @@ export default class EntryAbility extends UIAbility {
 * **Deleting & Querying**:
 
     ```js
-    var mmkv = MMKV.defaultMMKV();
-
     mmkv.removeValue('bool');
     console.info('contains "bool"', mmkv.containsKey('bool'));
 
@@ -191,7 +189,7 @@ For additional documents, checkout the [wiki](https://github.com/Tencent/MMKV/wi
 MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT).
 
 ## Change Log
-Check out the [CHANGELOG.md](https://github.com/Tencent/MMKV/blob/master/OpenHarmony/MMKV/src/CHANGELOG.md) for details of change history.
+Check out the [CHANGELOG.md](https://github.com/Tencent/MMKV/blob/master/OpenHarmony/MMKV/CHANGELOG.md) for details of change history.
 
 ## Contributing
 
