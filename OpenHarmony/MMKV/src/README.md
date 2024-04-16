@@ -16,7 +16,7 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
 
 * **Small**.
   * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
-  * **About 100K in binary size**: MMKV adds about 100K per architecture on App size, and much less when zipped (HAR/HAP).
+  * **About 600K in binary size**: MMKV adds about 600K per architecture on App size, and much less when zipped (HAR/HAP).
 
 
 ## Getting Started
