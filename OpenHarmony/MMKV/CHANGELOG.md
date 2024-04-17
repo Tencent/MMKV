@@ -1,5 +1,5 @@
 # MMKV for OpenHarmony Change Log
 
-## v1.3.5 / 2024-04-xx
+## v1.3.4 / 2024-04-17
 
-The first official OpenHarmony plugin of MMKV. Most things actually work!
+The first official OpenHarmony package of MMKV. Most things actually work!

@@ -33,13 +33,13 @@
 #include <string>
 #include <sys/stat.h>
 #include <system_error>
-#include <hilog/log.h>
+// #include <hilog/log.h>
 
-#define LOG_LEVEL(level, ...) OH_LOG_Print(LOG_APP, level, 0, "mmkv", __VA_ARGS__)
-#define MMKV_LOG_DEBUG(...) LOG_LEVEL(LOG_DEBUG, __VA_ARGS__)
-#define MMKV_LOG_INFO(...) LOG_LEVEL(LOG_INFO, __VA_ARGS__)
-#define MMKV_LOG_WARN(...) LOG_LEVEL(LOG_WARN, __VA_ARGS__)
-#define MMKV_LOG_ERROR(...) LOG_LEVEL(LOG_ERROR, __VA_ARGS__)
+// #define LOG_LEVEL(level, ...) OH_LOG_Print(LOG_APP, level, 0, "mmkv", __VA_ARGS__)
+// #define MMKV_LOG_DEBUG(...) LOG_LEVEL(LOG_DEBUG, __VA_ARGS__)
+// #define MMKV_LOG_INFO(...) LOG_LEVEL(LOG_INFO, __VA_ARGS__)
+// #define MMKV_LOG_WARN(...) LOG_LEVEL(LOG_WARN, __VA_ARGS__)
+// #define MMKV_LOG_ERROR(...) LOG_LEVEL(LOG_ERROR, __VA_ARGS__)
 
 using namespace std;
 using namespace mmkv;
@@ -51,14 +51,13 @@ using namespace mmkv;
         if (status != napi_ok) {                                                                                       \
             const napi_extended_error_info *error_info = nullptr;                                                      \
             napi_get_last_error_info(env, &error_info);                                                                \
-            MMKV_LOG_INFO("NAPI Error: code %{public}d, msg %{public}s\n",                                             \
-                error_info->error_code, error_info->error_message);                                                    \
+            MMKVInfo("NAPI Error: code %d, msg %s", error_info->error_code, error_info->error_message);                \
             bool is_pending;                                                                                           \
             napi_is_exception_pending(env, &is_pending);                                                               \
             if (!is_pending) {                                                                                         \
                 auto message = error_info->error_message ? error_info->error_message : "null";                         \
                 napi_throw_error(env, nullptr, message);                                                               \
-                return return_value;                                                                                        \
+                return return_value;                                                                                   \
             }                                                                                                          \
         }                                                                                                              \
     } while (0)
@@ -337,8 +336,7 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     int32_t logLevel;
     NAPI_CALL(napi_get_value_int32(env, args[2], &logLevel));
 
-    MMKV_LOG_INFO("rootDir: %{public}s, cacheDir: %{public}s, log level:%{public}d\n",
-        rootDir.c_str(), cacheDir.c_str(), logLevel);
+    MMKVInfo("rootDir: %s, cacheDir: %s, log level:%d", rootDir.c_str(), cacheDir.c_str(), logLevel);
 
     MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
     g_android_tmpDir = cacheDir;
