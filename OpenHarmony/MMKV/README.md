@@ -29,7 +29,10 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
 
 ### Installation via OHPM:
 This is the fastest and recommanded way to add MMKV to your project.
-
+```bash
+ohpm install @tencent/mmkv
+```
+Or, you can add it to your project manually.
 * Add the following lines to `oh-package.json5` on your app module.
 
   ```json

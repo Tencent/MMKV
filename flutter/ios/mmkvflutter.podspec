@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
   s.dependency 'MMKV', '>= 1.3.4'
-  s.platform = :ios, '11.0'
+  s.platform = :ios, '12.0'
 
 # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = {
