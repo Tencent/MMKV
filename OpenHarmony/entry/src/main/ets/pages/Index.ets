@@ -19,7 +19,7 @@
  */
 
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { MMKV, NativeBuffer } from 'mmkv';
+import { MMKV, NativeBuffer } from '@tencent/mmkv';
 import util from '@ohos.util';
 import dataPreferences from '@ohos.data.preferences';
 import { GlobalContainer } from '../Util/Util'

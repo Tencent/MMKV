@@ -21,7 +21,7 @@
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { MMKV, MMKVLogLevel } from 'mmkv';
+import { MMKV, MMKVLogLevel } from '@tencent/mmkv';
 import { GlobalContainer } from '../Util/Util';
 import childProcessManager from '@ohos.app.ability.childProcessManager';
 import { DemoProcess } from '../process/DemoProcess';

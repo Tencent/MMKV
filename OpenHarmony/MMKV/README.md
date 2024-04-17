@@ -54,7 +54,7 @@ You can use MMKV as you go. All changes are saved immediately, no `sync`, no `ap
 Setup MMKV on App startup, say your `EntryAbility.onCreate()` function, add these lines:
 
 ```js
-import { MMKV } from 'mmkv';
+import { MMKV } from '@tencent/mmkv';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -70,7 +70,7 @@ export default class EntryAbility extends UIAbility {
 * MMKV has a global instance, that can be used directly:
 
     ```js
-    import { MMKV } from 'mmkv';
+    import { MMKV } from '@tencent/mmkv';
         
     let mmkv = MMKV.defaultMMKV();
     mmkv.encodeBool('bool', true);
@@ -137,7 +137,7 @@ Due to the current limitation of NAPI runtime, we **can't efficiently** redirect
 * You can turn off MMKV's logging once and for all on initialization (which we strongly disrecommend).  
 
     ```js
-    import { MMKV, MMKVLogLevel } from 'mmkv';
+    import { MMKV, MMKVLogLevel } from '@tencent/mmkv';
 
     MMKV.initialize(appCtx, MMKVLogLevel.None);
     ```
