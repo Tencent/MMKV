@@ -34,7 +34,7 @@ android {
 
     defaultConfig {
         applicationId "com.tencent.mmkv_example"
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 23
         targetSdkVersion 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
