@@ -133,8 +133,6 @@ class MMKV {
   Pointer<Void> _handle = nullptr;
   static String _rootDir = "";
 
-  static const MethodChannel _channel = MethodChannel("mmkv");
-
   /// MMKV must be initialized before any usage.
   ///
   /// Generally speaking you should do this inside `main()`:
@@ -162,28 +160,7 @@ class MMKV {
     }
     _rootDir = rootDir;
 
-    if (Platform.isIOS) {
-      final Map<String, dynamic> params = {
-        "rootDir": rootDir,
-        "logLevel": logLevel.index,
-      };
-      if (groupDir != null) {
-        params["groupDir"] = groupDir;
-      }
-      final ret = await _channel.invokeMethod("initializeMMKV", params);
-      return ret;
-    } else {
-      final rootDirPtr = _string2Pointer(rootDir);
-      final sdkInt = await _channel.invokeMethod("getSdkVersion") ?? 0;
-      final cacheDir = await getTemporaryDirectory();
-      final cacheDirPtr = _string2Pointer(cacheDir.path);
-
-      _mmkvInitialize!(rootDirPtr, cacheDirPtr, sdkInt, logLevel.index);
-
-      calloc.free(rootDirPtr);
-      calloc.free(cacheDirPtr);
-      return rootDir;
-    }
+    return await _mmkvPlatform.initialize(rootDir, groupDir: groupDir, logLevel: logLevel.index);
   }
 
   /// The root directory of MMKV.
@@ -805,7 +782,7 @@ String _nativeFuncName(String name) {
 
 final DynamicLibrary _nativeLib = Platform.isAndroid ? DynamicLibrary.open("libmmkv.so") : DynamicLibrary.process();
 
-final _mmkvPlatform = MMKVPluginPlatform.instance;
+final MMKVPluginPlatform _mmkvPlatform = MMKVPluginPlatform.instance!;
 
 final void Function(Pointer<Utf8> rootDir, Pointer<Utf8> cacheDir, int sdkInt, int logLevel)? _mmkvInitialize = Platform.isIOS
     ? null
