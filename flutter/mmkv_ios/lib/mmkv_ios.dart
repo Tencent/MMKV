@@ -17,3 +17,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import 'package:mmkv_platform_interface/mmkv_platform_interface.dart';
+
+final class MMKVPlatformIOS extends MMKVPluginPlatform {
+  static void registerWith() {
+    MMKVPluginPlatform.instance = MMKVPlatformIOS();
+  }
+}

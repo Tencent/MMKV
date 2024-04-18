@@ -41,3 +41,4 @@ flutter:
     platforms:
       ios:
         pluginClass: MMKVPlugin
+        dartPluginClass: MMKVPlatformIOS
