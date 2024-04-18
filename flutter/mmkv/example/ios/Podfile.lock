@@ -2,17 +2,17 @@ PODS:
   - Flutter (1.0.0)
   - MMKV (1.3.4):
     - MMKVCore (~> 1.3.4)
-  - MMKVCore (1.3.4)
-  - mmkvflutter (1.3.4):
+  - mmkv_ios (1.0.0):
     - Flutter
     - MMKV (>= 1.3.4)
+  - MMKVCore (1.3.4)
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - mmkvflutter (from `.symlinks/plugins/mmkvflutter/ios`)
+  - mmkv_ios (from `.symlinks/plugins/mmkv_ios/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
 
 SPEC REPOS:
@@ -23,18 +23,18 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  mmkvflutter:
-    :path: ".symlinks/plugins/mmkvflutter/ios"
+  mmkv_ios:
+    :path: ".symlinks/plugins/mmkv_ios/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   MMKV: ed58ad794b3f88c24d604a5b74f3fba17fcbaf74
+  mmkv_ios: e0912023617fa627e58273fdb57216ab6184c669
   MMKVCore: a67a1cede26175c413176f404a7cedec43f96a0b
-  mmkvflutter: 9f8249e06b670676faa531030dcba6533de91751
   path_provider_foundation: 3784922295ac71e43754bd15e0653ccfd36a147c
 
-PODFILE CHECKSUM: 751e522a1d35e86af4f588d982f4a515941611c5
+PODFILE CHECKSUM: 1563b043a1654f444034281ea7562be0e211db4e
 
 COCOAPODS: 1.15.2
