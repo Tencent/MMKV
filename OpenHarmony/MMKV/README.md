@@ -28,7 +28,7 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
 * DevEco Studio NEXT Developer Beta1 (5.0.3.100) or later.
 
 ### Installation via OHPM:
-This is the fastest and recommanded way to add MMKV to your project.
+This is the fastest and recommended way to add MMKV to your project.
 ```bash
 ohpm install @tencent/mmkv
 ```
