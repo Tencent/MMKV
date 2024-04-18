@@ -1,27 +1,46 @@
+/*
+ * Tencent is pleased to support the open source community by making
+ * MMKV available.
+ *
+ * Copyright (C) 2024 THL A29 Limited, a Tencent company.
+ * All rights reserved.
+ *
+ * Licensed under the BSD 3-Clause License (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *       https://opensource.org/licenses/BSD-3-Clause
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import "dart:ffi";
 import "package:ffi/ffi.dart";
 import "package:flutter/services.dart";
 import "package:path_provider/path_provider.dart";
 import "package:mmkv_platform_interface/mmkv_platform_interface.dart";
 
-final class MMKVPlatformAndroid extends MMKVPluginPlatform {
+final class MMKVPlatformAndroid extends MMKVPluginPlatformFFI {
   // A default real implementation of the platform interface would go here.
   static void registerWith() {
     MMKVPluginPlatform.instance = MMKVPlatformAndroid();
   }
 
-  @pragma("vm:prefer-inline")
-  static String _nativeFuncName(String name) {
-    return name;
+  static final _nativeLib = DynamicLibrary.open("libmmkv.so");
+
+  @override
+  DynamicLibrary nativeLib() {
+    return _nativeLib;
   }
 
   static const MethodChannel _channel = MethodChannel("mmkv");
 
-  static final _nativeLib = DynamicLibrary.open("libmmkv.so");
-
-  static final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
-  _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("encodeBool")).asFunction();
-  static final void Function(Pointer<Utf8> rootDir, Pointer<Utf8> cacheDir, int sdkInt, int logLevel) _mmkvInitialize = _nativeLib.lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>, Int32, Int32)>>("mmkvInitialize_v1").asFunction();
+  static final void Function(Pointer<Utf8> rootDir, Pointer<Utf8> cacheDir, int sdkInt, int logLevel) _mmkvInitialize =
+      _nativeLib.lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>, Int32, Int32)>>("mmkvInitialize_v1").asFunction();
 
   @override
   Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1}) async {
@@ -35,11 +54,6 @@ final class MMKVPlatformAndroid extends MMKVPluginPlatform {
     calloc.free(rootDirPtr);
     calloc.free(cacheDirPtr);
     return rootDir;
-  }
-
-  @override
-  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeBoolFunc()  {
-    return _encodeBool;
   }
 }
 

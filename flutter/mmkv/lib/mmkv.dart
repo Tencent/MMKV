@@ -780,156 +780,96 @@ String _nativeFuncName(String name) {
   return "mmkv_$name";
 }
 
-final DynamicLibrary _nativeLib = Platform.isAndroid ? DynamicLibrary.open("libmmkv.so") : DynamicLibrary.process();
-
 final MMKVPluginPlatform _mmkvPlatform = MMKVPluginPlatform.instance!;
 
-final void Function(Pointer<Utf8> rootDir, Pointer<Utf8> cacheDir, int sdkInt, int logLevel)? _mmkvInitialize = Platform.isIOS
-    ? null
-    : _nativeLib.lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>, Int32, Int32)>>("mmkvInitialize_v1").asFunction();
-
 final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) _getMMKVWithID =
-    _nativeLib
-        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>, Pointer<Utf8>, Uint32)>>("getMMKVWithID")
-        .asFunction();
+    _mmkvPlatform.getMMKVWithIDFunc();
 
-final Pointer<Void> Function(int, Pointer<Utf8> cryptKey) _getDefaultMMKV =
-    _nativeLib.lookup<NativeFunction<Pointer<Void> Function(Uint32, Pointer<Utf8>)>>("getDefaultMMKV").asFunction();
+final Pointer<Void> Function(int, Pointer<Utf8> cryptKey) _getDefaultMMKV = _mmkvPlatform.getDefaultMMKVFunc();
 
-final Pointer<Utf8> Function(Pointer<Void>) _mmapID =
-    _nativeLib.lookup<NativeFunction<Pointer<Utf8> Function(Pointer<Void>)>>(_nativeFuncName("mmapID")).asFunction();
+final Pointer<Utf8> Function(Pointer<Void>) _mmapID = _mmkvPlatform.mmapIDFunc();
 
-// final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
-//     _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("encodeBool")).asFunction();
 final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool = _mmkvPlatform.encodeBoolFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeBoolV2 =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8, Uint32)>>(_nativeFuncName("encodeBool_v2")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeBoolV2 = _mmkvPlatform.encodeBoolV2Func();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeBool =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("decodeBool")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeBool = _mmkvPlatform.decodeBoolFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt32 =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(_nativeFuncName("encodeInt32")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt32 = _mmkvPlatform.encodeInt32Func();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt32V2 =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32, Uint32)>>(_nativeFuncName("encodeInt32_v2")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt32V2 = _mmkvPlatform.encodeInt32V2Func();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt32 =
-    _nativeLib.lookup<NativeFunction<Int32 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(_nativeFuncName("decodeInt32")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt32 = _mmkvPlatform.decodeInt32Func();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt64 =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(_nativeFuncName("encodeInt64")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeInt64 = _mmkvPlatform.encodeInt64Func();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt64V2 =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64, Uint32)>>(_nativeFuncName("encodeInt64_v2")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeInt64V2 = _mmkvPlatform.encodeInt64V2Func();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt64 =
-    _nativeLib.lookup<NativeFunction<Int64 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(_nativeFuncName("decodeInt64")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _decodeInt64 = _mmkvPlatform.decodeInt64Func();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, double) _encodeDouble =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Double)>>(_nativeFuncName("encodeDouble")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, double) _encodeDouble = _mmkvPlatform.encodeDoubleFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, double, int) _encodeDoubleV2 =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Double, Uint32)>>(_nativeFuncName("encodeDouble_v2")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, double, int) _encodeDoubleV2 = _mmkvPlatform.encodeDoubleV2Func();
 
-final double Function(Pointer<Void>, Pointer<Utf8>, double) _decodeDouble =
-    _nativeLib.lookup<NativeFunction<Double Function(Pointer<Void>, Pointer<Utf8>, Double)>>(_nativeFuncName("decodeDouble")).asFunction();
+final double Function(Pointer<Void>, Pointer<Utf8>, double) _decodeDouble = _mmkvPlatform.decodeDoubleFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int) _encodeBytes = _nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, Uint64)>>(_nativeFuncName("encodeBytes"))
-    .asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int) _encodeBytes =  _mmkvPlatform.encodeBytesFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int, int) _encodeBytesV2 = _nativeLib
-    .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, Uint64, Uint32)>>(_nativeFuncName("encodeBytes_v2"))
-    .asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int, int) _encodeBytesV2 =  _mmkvPlatform.encodeBytesV2Func();
 
-final Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>) _decodeBytes = _nativeLib
-    .lookup<NativeFunction<Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>)>>(_nativeFuncName("decodeBytes"))
-    .asFunction();
+final Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>) _decodeBytes =  _mmkvPlatform.decodeBytesFunc();
 
-final int Function(Pointer<Void>, Pointer<Uint8>, int) _reKey =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>(_nativeFuncName("reKey")).asFunction();
+final int Function(Pointer<Void>, Pointer<Uint8>, int) _reKey = _mmkvPlatform.reKeyFunc();
 
-final Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>) _cryptKey =
-    _nativeLib.lookup<NativeFunction<Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>)>>(_nativeFuncName("cryptKey")).asFunction();
+final Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>) _cryptKey = _mmkvPlatform.cryptKeyFunc();
 
-final void Function(Pointer<Void>, Pointer<Uint8>, int) _checkReSetCryptKey =
-    _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>(_nativeFuncName("checkReSetCryptKey")).asFunction();
+final void Function(Pointer<Void>, Pointer<Uint8>, int) _checkReSetCryptKey = _mmkvPlatform.checkReSetCryptKeyFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _valueSize =
-    _nativeLib.lookup<NativeFunction<Uint32 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("valueSize")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _valueSize = _mmkvPlatform.valueSizeFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int) _writeValueToNB = _nativeLib
-    .lookup<NativeFunction<Int32 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, Uint32)>>(_nativeFuncName("writeValueToNB"))
-    .asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int) _writeValueToNB =  _mmkvPlatform.writeValueToNBFunc();
 
-final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>, int) _allKeys = _nativeLib
-    .lookup<NativeFunction<Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>, Int8)>>(
-        _nativeFuncName("allKeys"))
-    .asFunction();
+final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>, int) _allKeys =  _mmkvPlatform.allKeysFunc();
+final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _mmkvPlatform.containsKeyFunc();
 
-final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>)>>(_nativeFuncName("containsKey")).asFunction();
+final int Function(Pointer<Void>, int) _count = _mmkvPlatform.countFunc();
 
-final int Function(Pointer<Void>, int) _count =
-    _nativeLib.lookup<NativeFunction<Uint64 Function(Pointer<Void>, Int8)>>(_nativeFuncName("count")).asFunction();
+final int Function(Pointer<Void>) _totalSize = _mmkvPlatform.totalSizeFunc();
 
-final int Function(Pointer<Void>) _totalSize =
-    _nativeLib.lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(_nativeFuncName("totalSize")).asFunction();
+final int Function(Pointer<Void>) _actualSize = _mmkvPlatform.actualSizeFunc();
 
-final int Function(Pointer<Void>) _actualSize =
-    _nativeLib.lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(_nativeFuncName("actualSize")).asFunction();
+final void Function(Pointer<Void>, Pointer<Utf8>) _removeValueForKey = _mmkvPlatform.removeValueForKeyFunc();
 
-final void Function(Pointer<Void>, Pointer<Utf8>) _removeValueForKey =
-    _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Utf8>)>>(_nativeFuncName("removeValueForKey")).asFunction();
+final void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int) _removeValuesForKeys =  _mmkvPlatform.removeValuesForKeysFunc();
+final void Function(Pointer<Void>, int) _clearAll = _mmkvPlatform.clearAllFunc();
 
-final void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int) _removeValuesForKeys = _nativeLib
-    .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, Uint64)>>(_nativeFuncName("removeValuesForKeys"))
-    .asFunction();
+final void Function(Pointer<Void>, int) _mmkvSync =  _mmkvPlatform.mmkvSyncFunc();
 
-final void Function(Pointer<Void>, int) _clearAll =
-    _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>, Uint32)>>(_nativeFuncName("clearAll")).asFunction();
+final void Function(Pointer<Void>) _clearMemoryCache = _mmkvPlatform.clearMemoryCacheFunc();
 
-final void Function(Pointer<Void>, int) _mmkvSync = _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>, Int8)>>("mmkvSync").asFunction();
+final int Function() _pageSize =  _mmkvPlatform.pageSizeFunc();
 
-final void Function(Pointer<Void>) _clearMemoryCache =
-    _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>)>>(_nativeFuncName("clearMemoryCache")).asFunction();
+final Pointer<Utf8> Function() _version =  _mmkvPlatform.versionFunc();
 
-final int Function() _pageSize = _nativeLib.lookup<NativeFunction<Int32 Function()>>(_nativeFuncName("pageSize")).asFunction();
+final void Function(Pointer<Void>) _trim =  _mmkvPlatform.trimFunc();
 
-final Pointer<Utf8> Function() _version = _nativeLib.lookup<NativeFunction<Pointer<Utf8> Function()>>(_nativeFuncName("version")).asFunction();
+final void Function(Pointer<Void>) _mmkvClose =  _mmkvPlatform.mmkvCloseFunc();
 
-final void Function(Pointer<Void>) _trim = _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>)>>(_nativeFuncName("trim")).asFunction();
+final void Function(Pointer<Void>, Pointer<Void>, int) _memcpy = _mmkvPlatform.memcpyFunc();
 
-final void Function(Pointer<Void>) _mmkvClose = _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>)>>("mmkvClose").asFunction();
+final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> dstDir, Pointer<Utf8> rootPath) _backupOne = _mmkvPlatform.backupOneFunc();
 
-final void Function(Pointer<Void>, Pointer<Void>, int) _memcpy =
-    _nativeLib.lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Void>, Uint64)>>("mmkvMemcpy").asFunction();
+final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> srcDir, Pointer<Utf8> rootPath) _restoreOne = _mmkvPlatform.restoreOneFunc();
 
-final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> dstDir, Pointer<Utf8> rootPath) _backupOne =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>)>>(_nativeFuncName("backupOne")).asFunction();
+final int Function(Pointer<Utf8> dstDir) _backupAll = _mmkvPlatform.backupAllFunc();
+final int Function(Pointer<Utf8> srcDir) _restoreAll = _mmkvPlatform.restoreAllFunc();
 
-final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> srcDir, Pointer<Utf8> rootPath) _restoreOne =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>)>>(_nativeFuncName("restoreOne")).asFunction();
+final bool Function(Pointer<Void>, int) _enableAutoExpire = _mmkvPlatform.enableAutoExpireFunc();
 
-final int Function(Pointer<Utf8> dstDir) _backupAll =
-    _nativeLib.lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(_nativeFuncName("backupAll")).asFunction();
+final bool Function(Pointer<Void>) _disableAutoExpire = _mmkvPlatform.disableAutoExpireFunc();
 
-final int Function(Pointer<Utf8> srcDir) _restoreAll =
-    _nativeLib.lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(_nativeFuncName("restoreAll")).asFunction();
+final bool Function(Pointer<Void>) _enableCompareBeforeSet = _mmkvPlatform.enableCompareBeforeSetFunc();
 
-final bool Function(Pointer<Void>, int) _enableAutoExpire =
-    _nativeLib.lookup<NativeFunction<Bool Function(Pointer<Void>, Uint32)>>(_nativeFuncName("enableAutoExpire")).asFunction();
+final bool Function(Pointer<Void>) _disableCompareBeforeSet = _mmkvPlatform.disableCompareBeforeSetFunc();
 
-final bool Function(Pointer<Void>) _disableAutoExpire =
-    _nativeLib.lookup<NativeFunction<Bool Function(Pointer<Void>)>>(_nativeFuncName("disableAutoExpire")).asFunction();
-
-final bool Function(Pointer<Void>) _enableCompareBeforeSet =
-    _nativeLib.lookup<NativeFunction<Bool Function(Pointer<Void>)>>(_nativeFuncName("enableCompareBeforeSet")).asFunction();
-
-final bool Function(Pointer<Void>) _disableCompareBeforeSet =
-    _nativeLib.lookup<NativeFunction<Bool Function(Pointer<Void>)>>(_nativeFuncName("disableCompareBeforeSet")).asFunction();
-
-final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _removeStorage =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>)>>(_nativeFuncName("removeStorage")).asFunction();
+final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _removeStorage = _mmkvPlatform.removeStorageFunc();

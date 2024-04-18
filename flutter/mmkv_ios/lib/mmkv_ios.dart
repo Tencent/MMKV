@@ -19,25 +19,27 @@
  */
 
 import 'dart:ffi';
-import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:mmkv_platform_interface/mmkv_platform_interface.dart';
 
-final class MMKVPlatformIOS extends MMKVPluginPlatform {
+final class MMKVPlatformIOS extends MMKVPluginPlatformFFI {
   static void registerWith() {
     MMKVPluginPlatform.instance = MMKVPlatformIOS();
   }
 
-  static String _nativeFuncName(String name) {
+  @override
+  String nativeFuncName(String name) {
     return "mmkv_$name";
   }
 
-  static const MethodChannel _channel = MethodChannel("mmkv");
-
   static late final _nativeLib = DynamicLibrary.process();
 
-  static late final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
-  _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("encodeBool")).asFunction();
+  @override
+  DynamicLibrary nativeLib() {
+    return _nativeLib;
+  }
+
+  static const MethodChannel _channel = MethodChannel("mmkv");
 
   @override
   Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1}) async {
@@ -50,10 +52,5 @@ final class MMKVPlatformIOS extends MMKVPluginPlatform {
     }
     final ret = await _channel.invokeMethod("initializeMMKV", params);
     return ret;
-  }
-
-  @override
-  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeBoolFunc()  {
-    return _encodeBool;
   }
 }

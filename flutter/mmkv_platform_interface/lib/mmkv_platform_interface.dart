@@ -21,6 +21,7 @@
 import "dart:ffi";
 import "package:ffi/ffi.dart";
 
+/// The interface class that all implementation of MMKV platform plugin must extend
 abstract base class MMKVPluginPlatform {
   MMKVPluginPlatform();
 
@@ -38,5 +39,416 @@ abstract base class MMKVPluginPlatform {
   int Function(Pointer<Void>, Pointer<Utf8>, int) encodeBoolFunc() {
     throw UnimplementedError();
   }
+
+  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) getMMKVWithIDFunc() {
+    throw UnimplementedError();
+  }
+
+  Pointer<Void> Function(int, Pointer<Utf8> cryptKey) getDefaultMMKVFunc() {
+    throw UnimplementedError();
+  }
+
+  Pointer<Utf8> Function(Pointer<Void>) mmapIDFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int, int) encodeBoolV2Func() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) decodeBoolFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeInt32Func() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int, int) encodeInt32V2Func() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) decodeInt32Func() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeInt64Func() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int, int) encodeInt64V2Func() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) decodeInt64Func() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, double) encodeDoubleFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, double, int) encodeDoubleV2Func() {
+    throw UnimplementedError();
+  }
+
+  double Function(Pointer<Void>, Pointer<Utf8>, double) decodeDoubleFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int) encodeBytesFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int, int) encodeBytesV2Func() {
+    throw UnimplementedError();
+  }
+
+  Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>) decodeBytesFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Uint8>, int) reKeyFunc() {
+    throw UnimplementedError();
+  }
+
+  Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>) cryptKeyFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>, Pointer<Uint8>, int) checkReSetCryptKeyFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) valueSizeFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int) writeValueToNBFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>, int) allKeysFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>) containsKeyFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>, int) countFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>) totalSizeFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Void>) actualSizeFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>, Pointer<Utf8>) removeValueForKeyFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int) removeValuesForKeysFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>, int) clearAllFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>, int) mmkvSyncFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>) clearMemoryCacheFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function() pageSizeFunc() {
+    throw UnimplementedError();
+  }
+
+  Pointer<Utf8> Function() versionFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>) trimFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>) mmkvCloseFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>, Pointer<Void>, int) memcpyFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> dstDir, Pointer<Utf8> rootPath) backupOneFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> srcDir, Pointer<Utf8> rootPath) restoreOneFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Utf8> dstDir) backupAllFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Utf8> srcDir) restoreAllFunc() {
+    throw UnimplementedError();
+  }
+
+  bool Function(Pointer<Void>, int) enableAutoExpireFunc() {
+    throw UnimplementedError();
+  }
+
+  bool Function(Pointer<Void>) disableAutoExpireFunc() {
+    throw UnimplementedError();
+  }
+
+  bool Function(Pointer<Void>) enableCompareBeforeSetFunc() {
+    throw UnimplementedError();
+  }
+
+  bool Function(Pointer<Void>) disableCompareBeforeSetFunc() {
+    throw UnimplementedError();
+  }
+
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) removeStorageFunc() {
+    throw UnimplementedError();
+  }
 }
 
+/// A helper class to ease the implementation of MMKV platform plugin in FFI
+abstract base class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
+  /// tells which dylib to lookup for function pointer
+  DynamicLibrary nativeLib() {
+    throw UnimplementedError();
+  }
+
+  /// a chance to map native function name (to avoid potential conflict)
+  String nativeFuncName(String name) {
+    return name;
+  }
+
+  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) getMMKVWithIDFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>, Pointer<Utf8>, Uint32)>>("getMMKVWithID")
+        .asFunction();
+  }
+
+  Pointer<Void> Function(int, Pointer<Utf8> cryptKey) getDefaultMMKVFunc() {
+    return nativeLib().lookup<NativeFunction<Pointer<Void> Function(Uint32, Pointer<Utf8>)>>("getDefaultMMKV").asFunction();
+  }
+
+  Pointer<Utf8> Function(Pointer<Void>) mmapIDFunc() {
+    return nativeLib().lookup<NativeFunction<Pointer<Utf8> Function(Pointer<Void>)>>(nativeFuncName("mmapID")).asFunction();
+  }
+
+  @override
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeBoolFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(nativeFuncName("encodeBool")).asFunction();
+  }
+
+  @override
+  int Function(Pointer<Void>, Pointer<Utf8>, int, int) encodeBoolV2Func() {
+    return nativeLib()
+        .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8, Uint32)>>(nativeFuncName("encodeBool_v2"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) decodeBoolFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(nativeFuncName("decodeBool")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeInt32Func() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(nativeFuncName("encodeInt32")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int, int) encodeInt32V2Func() {
+    return nativeLib()
+        .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int32, Uint32)>>(nativeFuncName("encodeInt32_v2"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) decodeInt32Func() {
+    return nativeLib().lookup<NativeFunction<Int32 Function(Pointer<Void>, Pointer<Utf8>, Int32)>>(nativeFuncName("decodeInt32")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeInt64Func() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(nativeFuncName("encodeInt64")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int, int) encodeInt64V2Func() {
+    return nativeLib()
+        .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int64, Uint32)>>(nativeFuncName("encodeInt64_v2"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) decodeInt64Func() {
+    return nativeLib().lookup<NativeFunction<Int64 Function(Pointer<Void>, Pointer<Utf8>, Int64)>>(nativeFuncName("decodeInt64")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, double) encodeDoubleFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Double)>>(nativeFuncName("encodeDouble")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, double, int) encodeDoubleV2Func() {
+    return nativeLib()
+        .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Double, Uint32)>>(nativeFuncName("encodeDouble_v2"))
+        .asFunction();
+  }
+
+  double Function(Pointer<Void>, Pointer<Utf8>, double) decodeDoubleFunc() {
+    return nativeLib().lookup<NativeFunction<Double Function(Pointer<Void>, Pointer<Utf8>, Double)>>(nativeFuncName("decodeDouble")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int) encodeBytesFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, Uint64)>>(nativeFuncName("encodeBytes"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, int, int) encodeBytesV2Func() {
+    return nativeLib()
+        .lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint8>, Uint64, Uint32)>>(nativeFuncName("encodeBytes_v2"))
+        .asFunction();
+  }
+
+  Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>) decodeBytesFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Pointer<Uint8> Function(Pointer<Void>, Pointer<Utf8>, Pointer<Uint64>)>>(nativeFuncName("decodeBytes"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Uint8>, int) reKeyFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>(nativeFuncName("reKey")).asFunction();
+  }
+
+  Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>) cryptKeyFunc() {
+    return nativeLib().lookup<NativeFunction<Pointer<Uint8> Function(Pointer<Void>, Pointer<Uint64>)>>(nativeFuncName("cryptKey")).asFunction();
+  }
+
+  void Function(Pointer<Void>, Pointer<Uint8>, int) checkReSetCryptKeyFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Uint8>, Uint64)>>(nativeFuncName("checkReSetCryptKey"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, int) valueSizeFunc() {
+    return nativeLib().lookup<NativeFunction<Uint32 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(nativeFuncName("valueSize")).asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int) writeValueToNBFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Int32 Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, Uint32)>>(nativeFuncName("writeValueToNB"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>, int) allKeysFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Uint64 Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>, Int8)>>(
+        nativeFuncName("allKeys"))
+        .asFunction();
+  }
+
+  int Function(Pointer<Void>, Pointer<Utf8>) containsKeyFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>)>>(nativeFuncName("containsKey")).asFunction();
+  }
+
+  int Function(Pointer<Void>, int) countFunc() {
+    return nativeLib().lookup<NativeFunction<Uint64 Function(Pointer<Void>, Int8)>>(nativeFuncName("count")).asFunction();
+  }
+
+  int Function(Pointer<Void>) totalSizeFunc() {
+    return nativeLib().lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(nativeFuncName("totalSize")).asFunction();
+  }
+
+  int Function(Pointer<Void>) actualSizeFunc() {
+    return nativeLib().lookup<NativeFunction<Uint64 Function(Pointer<Void>)>>(nativeFuncName("actualSize")).asFunction();
+  }
+
+  void Function(Pointer<Void>, Pointer<Utf8>) removeValueForKeyFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Utf8>)>>(nativeFuncName("removeValueForKey")).asFunction();
+  }
+
+  void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, int) removeValuesForKeysFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Pointer<Utf8>>, Pointer<Uint32>, Uint64)>>(nativeFuncName("removeValuesForKeys"))
+        .asFunction();
+  }
+
+  void Function(Pointer<Void>, int) clearAllFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>, Uint32)>>(nativeFuncName("clearAll")).asFunction();
+  }
+
+  void Function(Pointer<Void>, int) mmkvSyncFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>, Int8)>>("mmkvSync").asFunction();
+  }
+
+  void Function(Pointer<Void>) clearMemoryCacheFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>)>>(nativeFuncName("clearMemoryCache")).asFunction();
+  }
+
+  int Function() pageSizeFunc() {
+    return nativeLib().lookup<NativeFunction<Int32 Function()>>(nativeFuncName("pageSize")).asFunction();
+  }
+
+  Pointer<Utf8> Function() versionFunc() {
+    return nativeLib().lookup<NativeFunction<Pointer<Utf8> Function()>>(nativeFuncName("version")).asFunction();
+  }
+
+  void Function(Pointer<Void>) trimFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>)>>(nativeFuncName("trim")).asFunction();
+  }
+
+  void Function(Pointer<Void>) mmkvCloseFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>)>>("mmkvClose").asFunction();
+  }
+
+  void Function(Pointer<Void>, Pointer<Void>, int) memcpyFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>, Pointer<Void>, Uint64)>>("mmkvMemcpy").asFunction();
+  }
+
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> dstDir, Pointer<Utf8> rootPath) backupOneFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>)>>(nativeFuncName("backupOne")).asFunction();
+  }
+
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> srcDir, Pointer<Utf8> rootPath) restoreOneFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>)>>(nativeFuncName("restoreOne")).asFunction();
+  }
+
+  int Function(Pointer<Utf8> dstDir) backupAllFunc() {
+    return nativeLib().lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(nativeFuncName("backupAll")).asFunction();
+  }
+
+  int Function(Pointer<Utf8> srcDir) restoreAllFunc() {
+    return nativeLib().lookup<NativeFunction<Uint64 Function(Pointer<Utf8>)>>(nativeFuncName("restoreAll")).asFunction();
+  }
+
+  bool Function(Pointer<Void>, int) enableAutoExpireFunc() {
+    return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Void>, Uint32)>>(nativeFuncName("enableAutoExpire")).asFunction();
+  }
+
+  bool Function(Pointer<Void>) disableAutoExpireFunc() {
+    return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Void>)>>(nativeFuncName("disableAutoExpire")).asFunction();
+  }
+
+  bool Function(Pointer<Void>) enableCompareBeforeSetFunc() {
+    return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Void>)>>(nativeFuncName("enableCompareBeforeSet")).asFunction();
+  }
+
+  bool Function(Pointer<Void>) disableCompareBeforeSetFunc() {
+    return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Void>)>>(nativeFuncName("disableCompareBeforeSet")).asFunction();
+  }
+
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) removeStorageFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>)>>(nativeFuncName("removeStorage")).asFunction();
+  }
+}
