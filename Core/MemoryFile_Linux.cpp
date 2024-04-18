@@ -54,20 +54,25 @@ bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     bool renamed = false;
 
     // try renameat2() first
-#ifdef SYS_renameat2
+#if defined(SYS_renameat2) && !defined(MMKV_OHOS)
 #ifdef MMKV_ANDROID
     static auto g_renameat2 = (renameat2_t) dlsym(RTLD_DEFAULT, "renameat2");
     if (g_renameat2) {
         renamed = (g_renameat2(AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
+    }
+    if (!renamed && errno != ENOENT) {
+        MMKVWarning("fail on renameat2() [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno,
+                    strerror(errno));
     }
 #endif
     if (!renamed) {
         renamed = (syscall(SYS_renameat2, AT_FDCWD, srcPath.c_str(), AT_FDCWD, dstPath.c_str(), RENAME_EXCHANGE) == 0);
     }
     if (!renamed && errno != ENOENT) {
-        MMKVError("fail on renameat2() [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno, strerror(errno));
+        MMKVWarning("fail on syscall(SYS_renameat2) [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno,
+                    strerror(errno));
     }
-#endif // SYS_renameat2
+#endif // SYS_renameat2 && !MMKV_OHOS
 
     if (!renamed) {
         if (::rename(srcPath.c_str(), dstPath.c_str()) != 0) {

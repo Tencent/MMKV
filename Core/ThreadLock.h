@@ -20,6 +20,7 @@
 
 #ifndef MMKV_THREADLOCK_H
 #define MMKV_THREADLOCK_H
+
 #ifdef  __cplusplus
 
 #include "MMKVPredef.h"
@@ -30,7 +31,6 @@
 #endif
 
 #if MMKV_USING_PTHREAD
-#else
 #    include <atomic>
 #endif
 
@@ -45,7 +45,6 @@ using ThreadOnceToken_t = std::atomic<ThreadOnceTokenEnum>;
 #endif
 
 class ThreadLock {
-private:
 #if MMKV_USING_PTHREAD
     pthread_mutex_t m_lock;
 #else

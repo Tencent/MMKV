@@ -23,6 +23,12 @@ package com.tencent.mmkv;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import org.jetbrains.annotations.Contract;
+
 import java.io.IOException;
 
 /**
@@ -34,7 +40,7 @@ public final class ParcelableMMKV implements Parcelable {
     private int ashmemMetaFD = -1;
     private String cryptKey = null;
 
-    public ParcelableMMKV(MMKV mmkv) {
+    public ParcelableMMKV(@NonNull MMKV mmkv) {
         mmapID = mmkv.mmapID();
         ashmemFD = mmkv.ashmemFD();
         ashmemMetaFD = mmkv.ashmemMetaFD();
@@ -48,6 +54,7 @@ public final class ParcelableMMKV implements Parcelable {
         cryptKey = key;
     }
 
+    @Nullable
     public MMKV toMMKV() {
         if (ashmemFD >= 0 && ashmemMetaFD >= 0) {
             return MMKV.mmkvWithAshmemFD(mmapID, ashmemFD, ashmemMetaFD, cryptKey);
@@ -61,7 +68,7 @@ public final class ParcelableMMKV implements Parcelable {
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
         try {
             dest.writeString(mmapID);
             ParcelFileDescriptor fd = ParcelFileDescriptor.fromFd(ashmemFD);
@@ -78,8 +85,9 @@ public final class ParcelableMMKV implements Parcelable {
     }
 
     public static final Parcelable.Creator<ParcelableMMKV> CREATOR = new Parcelable.Creator<ParcelableMMKV>() {
+        @Nullable
         @Override
-        public ParcelableMMKV createFromParcel(Parcel source) {
+        public ParcelableMMKV createFromParcel(@NonNull Parcel source) {
             String mmapID = source.readString();
             ParcelFileDescriptor fd = ParcelFileDescriptor.CREATOR.createFromParcel(source);
             ParcelFileDescriptor metaFD = ParcelFileDescriptor.CREATOR.createFromParcel(source);
@@ -90,6 +98,8 @@ public final class ParcelableMMKV implements Parcelable {
             return null;
         }
 
+        @NonNull
+        @Contract(value = "_ -> new", pure = true)
         @Override
         public ParcelableMMKV[] newArray(int size) {
             return new ParcelableMMKV[size];

@@ -40,10 +40,9 @@
 #include <cstdio>
 #include <cstring>
 #include <unordered_set>
-//#include <unistd.h>
 #include <cassert>
 
-#if defined(__aarch64__) && defined(__linux)
+#if defined(__aarch64__) && defined(__linux__) && !defined (MMKV_OHOS)
 #    include <asm/hwcap.h>
 #    include <sys/auxv.h>
 #endif
@@ -167,7 +166,7 @@ void initialize() {
     MMKVInfo("version %s, page size %d, arch %s", MMKV_VERSION, DEFAULT_MMAP_SIZE, MMKV_ABI);
 
     // get CPU status of ARMv8 extensions (CRC32, AES)
-#if defined(__aarch64__) && defined(__linux__)
+#if defined(__aarch64__) && defined(__linux__) && !defined (MMKV_OHOS)
     auto hwcaps = getauxval(AT_HWCAP);
 #    ifndef MMKV_DISABLE_CRYPT
     if (hwcaps & HWCAP_AES) {
@@ -188,7 +187,7 @@ void initialize() {
         MMKVInfo("armv8 CRC32 instructions is not supported");
     }
 #    endif // MMKV_USE_ARMV8_CRC32
-#endif     // __aarch64__ && defined(__linux__)
+#endif     // __aarch64__ && defined(__linux__) && !defined (MMKV_OHOS)
 
 #if defined(MMKV_DEBUG) && !defined(MMKV_DISABLE_CRYPT)
     // AESCrypt::testAESCrypt();

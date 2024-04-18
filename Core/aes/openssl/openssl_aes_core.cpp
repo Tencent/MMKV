@@ -45,16 +45,16 @@
 
 namespace openssl {
 
-#if (__ARM_MAX_ARCH__ > 7) && defined(__linux__)
+#if (__ARM_MAX_ARCH__ > 7) && defined(__linux__) && !defined(MMKV_OHOS)
 
 aes_set_encrypt_t AES_set_encrypt_key = openssl::AES_C_set_encrypt_key;
 aes_set_decrypt_t AES_set_decrypt_key = openssl::AES_C_set_decrypt_key;
 aes_encrypt_t AES_encrypt = openssl::AES_C_encrypt;
 aes_encrypt_t AES_decrypt = openssl::AES_C_decrypt;
 
-#endif // (__ARM_MAX_ARCH__ > 7 && defined(__linux__)
+#endif // (__ARM_MAX_ARCH__ > 7 && defined(__linux__) && !defined(MMKV_OHOS)
 
-#if (__ARM_MAX_ARCH__ <= 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__))
+#if (__ARM_MAX_ARCH__ <= 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__) && !defined(MMKV_OHOS))
 
 /*-
 Te0[x] = S [x].[02, 01, 01, 03];
@@ -1037,7 +1037,7 @@ void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *k) {
     PUTU32(out + 12, s3);
 }
 
-#endif // (__ARM_MAX_ARCH__ < 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__))
+#endif // (__ARM_MAX_ARCH__ < 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__) && !defined(MMKV_OHOS))
 
 } // namespace openssl
 
