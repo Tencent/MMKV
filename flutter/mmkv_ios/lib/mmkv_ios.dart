@@ -18,10 +18,26 @@
  * limitations under the License.
  */
 
+import 'dart:ffi';
+import 'package:ffi/ffi.dart';
 import 'package:mmkv_platform_interface/mmkv_platform_interface.dart';
 
 final class MMKVPlatformIOS extends MMKVPluginPlatform {
   static void registerWith() {
     MMKVPluginPlatform.instance = MMKVPlatformIOS();
+  }
+
+  static String _nativeFuncName(String name) {
+    return "mmkv_$name";
+  }
+
+  static late final _nativeLib = DynamicLibrary.process();
+
+  static late final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
+  _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("encodeBool")).asFunction();
+
+  @override
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeBoolFunc()  {
+    return _encodeBool;
   }
 }

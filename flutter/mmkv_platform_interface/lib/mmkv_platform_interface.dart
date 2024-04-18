@@ -18,6 +18,9 @@
  * limitations under the License.
  */
 
+import 'dart:ffi';
+import 'package:ffi/ffi.dart';
+
 abstract base class MMKVPluginPlatform {
   MMKVPluginPlatform();
 
@@ -25,10 +28,23 @@ abstract base class MMKVPluginPlatform {
   // can be nullable, and the default instance can be null.
   static MMKVPluginPlatform instance = MMKVPluginDefault();
 
-// Methods for the plugin's platform interface would go here, often with
-// implementations that throw UnimplementedError.
+  // Methods for the plugin's platform interface would go here, often with
+  // implementations that throw UnimplementedError.
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeBoolFunc() {
+    throw UnimplementedError();
+  }
 }
 
 final class MMKVPluginDefault extends MMKVPluginPlatform {
   // A default real implementation of the platform interface would go here.
+
+  static late final _nativeLib = DynamicLibrary.open("libmmkv.so");
+
+  static late final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
+    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>("encodeBool").asFunction();
+
+  @override
+  int Function(Pointer<Void>, Pointer<Utf8>, int) encodeBoolFunc()  {
+    return _encodeBool;
+  }
 }

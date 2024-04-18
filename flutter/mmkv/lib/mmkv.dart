@@ -27,6 +27,7 @@ import "package:ffi/ffi.dart";
 import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
+import "package:mmkv_platform_interface/mmkv_platform_interface.dart";
 import "package:path_provider/path_provider.dart";
 
 /// Log level for MMKV.
@@ -804,6 +805,8 @@ String _nativeFuncName(String name) {
 
 final DynamicLibrary _nativeLib = Platform.isAndroid ? DynamicLibrary.open("libmmkv.so") : DynamicLibrary.process();
 
+final _mmkvPlatform = MMKVPluginPlatform.instance;
+
 final void Function(Pointer<Utf8> rootDir, Pointer<Utf8> cacheDir, int sdkInt, int logLevel)? _mmkvInitialize = Platform.isIOS
     ? null
     : _nativeLib.lookup<NativeFunction<Void Function(Pointer<Utf8>, Pointer<Utf8>, Int32, Int32)>>("mmkvInitialize_v1").asFunction();
@@ -819,8 +822,9 @@ final Pointer<Void> Function(int, Pointer<Utf8> cryptKey) _getDefaultMMKV =
 final Pointer<Utf8> Function(Pointer<Void>) _mmapID =
     _nativeLib.lookup<NativeFunction<Pointer<Utf8> Function(Pointer<Void>)>>(_nativeFuncName("mmapID")).asFunction();
 
-final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
-    _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("encodeBool")).asFunction();
+// final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool =
+//     _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8)>>(_nativeFuncName("encodeBool")).asFunction();
+final int Function(Pointer<Void>, Pointer<Utf8>, int) _encodeBool = _mmkvPlatform.encodeBoolFunc();
 
 final int Function(Pointer<Void>, Pointer<Utf8>, int, int) _encodeBoolV2 =
     _nativeLib.lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>, Int8, Uint32)>>(_nativeFuncName("encodeBool_v2")).asFunction();
