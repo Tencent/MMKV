@@ -21,7 +21,62 @@
 #include "MMKVLog.h"
 
 #ifdef ENABLE_MMKV_LOG
-#    ifdef MMKV_ANDROID
+#   ifdef MMKV_OHOS
+#   include <hilog/log.h>
+#   include <cstdarg>
+#   include <string>
+
+using namespace std;
+
+constexpr auto APP_NAME = "MMKV";
+
+static LogLevel MMKVLogLevelDesc(MMKVLogLevel level) {
+    switch (level) {
+    case MMKVLogDebug:
+        return LOG_DEBUG;
+    case MMKVLogInfo:
+        return LOG_INFO;
+    case MMKVLogWarning:
+        return LOG_WARN;
+    case MMKVLogError:
+        return LOG_ERROR;
+    default:
+        return LOG_INFO;
+    }
+}
+
+void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *func, int line, const char *format, ...) {
+    if (level >= g_currentLogLevel) {
+        string message;
+        char buffer[16];
+
+        va_list args;
+        va_start(args, format);
+        auto length = std::vsnprintf(buffer, sizeof(buffer), format, args);
+        va_end(args);
+
+        if (length < 0) { // something wrong
+            message = {};
+        } else if (length < sizeof(buffer)) {
+            message = string(buffer, static_cast<unsigned long>(length));
+        } else {
+            message.resize(static_cast<unsigned long>(length), '\0');
+            va_start(args, format);
+            std::vsnprintf(const_cast<char *>(message.data()), static_cast<size_t>(length) + 1, format, args);
+            va_end(args);
+        }
+
+        if (g_logHandler) {
+            g_logHandler(level, filename, line, func, message);
+        } else {
+            auto desc = MMKVLogLevelDesc(level);
+            OH_LOG_Print(LOG_APP, desc, 0, APP_NAME, "<%{public}s:%{public}d::%{public}s> %{public}s",
+                filename, line, func, message.c_str());
+        }
+    }
+}
+    
+#elif MMKV_ANDROID
 #        include <android/log.h>
 #        include <cstdarg>
 #        include <string>

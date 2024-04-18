@@ -27,7 +27,7 @@ using namespace std;
 
 namespace mmkv {
 
-ThreadLock::ThreadLock() {
+ThreadLock::ThreadLock() : m_lock({}) {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
@@ -38,11 +38,11 @@ ThreadLock::ThreadLock() {
 }
 
 ThreadLock::~ThreadLock() {
+#ifdef MMKV_OHOS
+    // OHOS's pthread is buggy, check for POC: https://gist.github.com/lingol/622af352e090e0490ebacfe3a38b9221 
+    pthread_mutex_unlock(&m_lock);
+#endif
     pthread_mutex_destroy(&m_lock);
-}
-
-void ThreadLock::initialize() {
-    return;
 }
 
 void ThreadLock::lock() {
@@ -62,6 +62,10 @@ void ThreadLock::unlock() {
 bool ThreadLock::try_lock() {
     auto ret = pthread_mutex_trylock(&m_lock);
     return (ret == 0);
+}
+
+void ThreadLock::initialize() {
+    return;
 }
 
 void ThreadLock::ThreadOnce(ThreadOnceToken_t *onceToken, void (*callback)()) {

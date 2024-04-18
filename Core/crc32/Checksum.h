@@ -53,9 +53,14 @@ namespace mmkv {
 uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len);
 }
 
+#   ifdef MMKV_OHOS
+// getauxval(AT_HWCAP) in OHOS returns wrong value, we just assume all OHOS device have crc32 instr
+#       define CRC32 mmkv::armv8_crc32
+#   else
 // have to check CPU's instruction set dynamically
 typedef uint32_t (*CRC32_Func_t)(uint32_t crc, const uint8_t *buf, size_t len);
 extern CRC32_Func_t CRC32;
+#   endif
 
 #else // defined(__aarch64__) && defined(__linux__)
 

@@ -19,6 +19,7 @@
  */
 
 #include "MMKV.h"
+#include <bits/alltypes.h>
 
 #ifdef MMKV_ANDROID
 
@@ -136,8 +137,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     }*/
 }
 
-MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath,
-                       size_t expectedCapacity) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath, size_t expectedCapacity) {
     if (mmapID.empty()) {
         return nullptr;
     }
@@ -155,7 +155,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
                 return nullptr;
             }
         }
-        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %zu", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
     auto kv = new MMKV(mmapID, size, mode, cryptKey, rootPath, expectedCapacity);
     (*g_instanceDic)[mmapKey] = kv;

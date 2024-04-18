@@ -77,6 +77,15 @@ extern "C" int openssl_aes_armv8_set_decrypt_key(const uint8_t *userKey, const i
 extern "C" void openssl_aes_armv8_encrypt(const uint8_t *in, uint8_t *out, const void *key);
 extern "C" void openssl_aes_armv8_decrypt(const uint8_t *in, uint8_t *out, const void *key);
 
+#ifdef MMKV_OHOS
+
+#define AES_set_encrypt_key(userKey, bits, key) openssl_aes_armv8_set_encrypt_key(userKey, bits, key)
+#define AES_set_decrypt_key(userKey, bits, key) openssl_aes_armv8_set_decrypt_key(userKey, bits, key)
+#define AES_encrypt(in, out, key) openssl_aes_armv8_encrypt(in, out, key)
+#define AES_decrypt(in, out, key) openssl_aes_armv8_decrypt(in, out, key)
+
+#else
+
 typedef int (*aes_set_encrypt_t)(const uint8_t *userKey, const int bits, void *key);
 typedef int (*aes_set_decrypt_t)(const uint8_t *userKey, const int bits, void *key);
 typedef void (*aes_encrypt_t)(const uint8_t *in, uint8_t *out, const void *key);
@@ -95,6 +104,8 @@ extern aes_encrypt_t AES_encrypt;
 extern aes_decrypt_t AES_decrypt;
 
 } // namespace openssl
+
+#endif // !MMKV_OHOS
 
 #endif // __ARM_MAX_ARCH__ <= 7
 
