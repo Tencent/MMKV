@@ -14,6 +14,8 @@ platform-specific behavior, and when you register your plugin, set the default
 `MMKVPluginPlatform` by calling
 `MMKVPluginPlatform.instance = MyMMKVPluginPlatform()`.
 
+Checkout [`mmkv_ios`][3] or [`mmkv_android`][4] for example.
+
 # Note on breaking changes
 
 Strongly prefer non-breaking changes (such as adding a method to the interface)
@@ -24,3 +26,5 @@ on why a less-clean interface is preferable to a breaking change.
 
 [1]: ../mmkv
 [2]: lib/mmkv_platform_interface.dart
+[3]: ../mmkv_ios
+[4]: ../mmkv_android
