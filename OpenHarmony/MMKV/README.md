@@ -38,7 +38,6 @@ Or, you can add it to your project manually.
   ```json
   "dependencies": {
       "@tencent/mmkv": "1.3.4",
-      ...
   }
   ```
 * Then run
