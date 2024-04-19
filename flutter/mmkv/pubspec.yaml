@@ -14,11 +14,14 @@ dependencies:
   path_provider: ^2.0.1
   ffi: ^2.1.0
   mmkv_ios:
-    path: ../mmkv_ios
+    ^1.0.0
+#    path: ../mmkv_ios
   mmkv_android:
-    path: ../mmkv_android
+    ^1.0.0
+#    path: ../mmkv_android
   mmkv_platform_interface:
-    path: ../mmkv_platform_interface
+    ^1.0.0
+#    path: ../mmkv_platform_interface
 
 dev_dependencies:
   test:
