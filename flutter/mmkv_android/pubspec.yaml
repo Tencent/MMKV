@@ -14,7 +14,7 @@ dependencies:
   path_provider: ^2.0.1
   ffi: ^2.1.0
   mmkv_platform_interface:
-    ">=1.0.0"
+    ^1.0.0
 #    path: ../mmkv_platform_interface
 
 dev_dependencies:
