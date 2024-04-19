@@ -773,13 +773,6 @@ String? _buffer2String(Pointer<Uint8>? ptr, int length) {
   return null;
 }
 
-String _nativeFuncName(String name) {
-  if (!Platform.isIOS) {
-    return name;
-  }
-  return "mmkv_$name";
-}
-
 final MMKVPluginPlatform _mmkvPlatform = MMKVPluginPlatform.instance!;
 
 final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) _getMMKVWithID =
