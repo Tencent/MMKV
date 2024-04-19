@@ -1,6 +1,6 @@
-# mmkv\_ios
+# mmkv\_android
 
-The iOS implementation detail of [`MMKV`][1].
+The Android implementation detail of [`MMKV`][1].
 
 ## Usage
 
