@@ -30,7 +30,7 @@
 #    define MMKV_USING_PTHREAD 1
 #endif
 
-#if MMKV_USING_PTHREAD
+#ifndef MMKV_USING_PTHREAD
 #    include <atomic>
 #endif
 
