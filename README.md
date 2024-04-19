@@ -1,11 +1,11 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
 [![Release Version](https://img.shields.io/badge/release-1.3.4-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Windows%20%7C%20POSIX-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./README_CN.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows** and **POSIX**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows**, **POSIX** and **HarmonyOS NEXT**.
 
 # MMKV for Android
 
@@ -270,6 +270,70 @@ std::cout << "string = " << result << std::endl;
 ```
 
 MMKV also supports **Multi-Process Access**. Full tutorials can be found here [POSIX Tutorial](https://github.com/Tencent/MMKV/wiki/posix_tutorial).
+
+# MMKV for HarmonyOS NEXT
+
+## Features
+
+* **Efficient**. MMKV uses mmap to keep memory synced with file, and protobuf to encode/decode values, making the most of native platform to achieve best performance.
+  * **Multi-Process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
+
+* **Easy-to-use**. You can use MMKV as you go. All changes are saved immediately, no `sync`, no `flush` calls needed.
+
+* **Small**.
+  * **A handful of files**: MMKV contains process locks, encode/decode helpers and mmap logics and nothing more. It's really tidy.
+  * **About 600K in binary size**: MMKV adds about 600K per architecture on App size, and much less when zipped (HAR/HAP).
+
+
+## Getting Started
+### Installation via OHPM:
+
+```bash
+ohpm install @tencent/mmkv
+```
+### Quick Tutorial
+You can use MMKV as you go. All changes are saved immediately, no `sync`, no `apply` calls needed.  
+Setup MMKV on App startup, say your `EntryAbility.onCreate()` function, add these lines:
+
+```js
+import { MMKV } from '@tencent/mmkv';
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    let appCtx = this.context.getApplicationContext();
+    let mmkvRootDir = MMKV.initialize(appCtx);
+    console.info('mmkv rootDir: ', mmkvRootDir);
+    ……
+  }
+```
+
+MMKV has a global instance, that can be used directly:
+
+```js
+import { MMKV } from '@tencent/mmkv';
+    
+let mmkv = MMKV.defaultMMKV();
+mmkv.encodeBool('bool', true);
+console.info('bool = ', mmkv.decodeBool('bool'));
+    
+mmkv.encodeInt32('int32', Math.pow(2, 31) - 1);
+console.info('max int32 = ', mmkv.decodeInt32('int32'));
+    
+mmkv.encodeInt64('int', BigInt(2**63) - BigInt(1));
+console.info('max int64 = ', mmkv.decodeInt64('int'));
+    
+let str: string = 'Hello OpenHarmony from MMKV';
+mmkv.encodeString('string', str);
+console.info('string = ', mmkv.decodeString('string'));
+
+let arrayBuffer: ArrayBuffer = StringToArrayBuffer('Hello OpenHarmony from MMKV with bytes');
+mmkv.encodeBytes('bytes', arrayBuffer);
+let bytes = mmkv.decodeBytes('bytes');
+console.info('bytes = ', ArrayBufferToString(bytes));
+```
+
+As you can see, MMKV is quite easy to use.
+For the full documentation, see [HarmonyOS NEXT Tutorial](https://github.com/Tencent/MMKV/wiki/ohos_setup).
 
 ## License
 MMKV is published under the BSD 3-Clause license. For details check out the [LICENSE.TXT](./LICENSE.TXT).

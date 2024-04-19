@@ -1,11 +1,11 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
 [![Release Version](https://img.shields.io/badge/release-1.3.4-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20OpenHarmony-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Platform](https://img.shields.io/badge/Platform-%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's now available on **OpenHarmony**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's now available on **HarmonyOS NEXT**.
 
-# MMKV for OpenHarmony
+# MMKV for HarmonyOS NEXT
 
 ## Features
 
@@ -23,7 +23,7 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
 
 ### Prerequisites
 
-* Apps using MMKV can target: OpenHarmony Next (Canary 2) or later.
+* Apps using MMKV can target: HarmonyOS Next (Canary 2) or later.
 * ARM64 & x86_64 architecture.
 * DevEco Studio NEXT Developer Beta1 (5.0.3.100) or later.
 
