@@ -32,7 +32,7 @@ export default class EntryAbility extends UIAbility {
     hilog.info(0x0000, 'mmkvdemo', '%{public}s', 'Ability onCreate');
 
     let appCtx = this.context.getApplicationContext();
-    let result = MMKV.initialize(appCtx, MMKVLogLevel.LevelInfo);
+    let result = MMKV.initialize(appCtx/*, MMKVLogLevel.LevelNone*/);
     hilog.info(0x0000, 'mmkvdemo', 'rootDir: %{public}s', result);
 
     // share between pages
