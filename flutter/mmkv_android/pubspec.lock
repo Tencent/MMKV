@@ -254,9 +254,10 @@ packages:
   mmkv_platform_interface:
     dependency: "direct main"
     description:
-      path: "../mmkv_platform_interface"
-      relative: true
-    source: path
+      name: mmkv_platform_interface
+      sha256: "37a60542697180b261fa7146179e44c329e02f83472dee715273f1ee3ca4cc85"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.0.0"
   node_preamble:
     dependency: transitive
