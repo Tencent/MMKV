@@ -24,6 +24,7 @@
 
 #include "../MMKVPredef.h"
 #include <cstddef>
+#include <cstdint>
 
 #ifdef MMKV_DISABLE_CRYPT
 

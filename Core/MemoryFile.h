@@ -23,6 +23,7 @@
 #ifdef __cplusplus
 
 #include "MMKVPredef.h"
+#include <cstdint>
 #include <functional>
 
 #ifdef MMKV_ANDROID
