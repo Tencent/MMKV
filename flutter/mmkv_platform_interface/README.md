@@ -1,4 +1,4 @@
-# mmkv_platform_interface
+# mmkv\_platform\_interface
 
 A common platform interface for the [`MMKV`][1] plugin.
 
