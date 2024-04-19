@@ -1,11 +1,11 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
 [![Release Version](https://img.shields.io/badge/release-1.3.4-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Win32%20%7C%20POSIX-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Windows%20%7C%20POSIX-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./README_CN.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Win32** and **POSIX**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows** and **POSIX**.
 
 # MMKV for Android
 
@@ -134,7 +134,7 @@ Writing random `int` for 10000 times, we get this chart:
 For more benchmark data, please refer to [our benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark).
 
 
-# MMKV for Win32
+# MMKV for Windows
 
 ## Features
 
@@ -170,7 +170,7 @@ note:
 1. MMKV is compiled with `MT/MTd` runtime by default. If your project uses `MD/MDd`, you should change MMKV's setting to match your project's (`C/C++` -> `Code Generation` -> `Runtime Library`), or vice versa.
 2. MMKV is developed with Visual Studio 2017, change the `Platform Toolset` if you use a different version of Visual Studio.
 
-For other installation options, see [Win32 Setup](https://github.com/Tencent/MMKV/wiki/windows_setup).
+For other installation options, see [Windows Setup](https://github.com/Tencent/MMKV/wiki/windows_setup).
 
 ### Quick Tutorial
 You can use MMKV as you go. All changes are saved immediately, no `sync`, no `save` calls needed.  
@@ -197,13 +197,13 @@ std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
 mmkv->set(1024, "int32");
 std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
 
-mmkv->set("Hello, MMKV for Win32", "string");
+mmkv->set("Hello, MMKV for Windows", "string");
 std::string result;
 mmkv->getString("string", result);
 std::cout << "string = " << result << std::endl;
 ```
 
-MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Win32 Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial).
+MMKV also supports **Multi-Process Access**. Full tutorials can be found here [Windows Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial).
 
 # MMKV for POSIX
 
@@ -263,7 +263,7 @@ std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
 mmkv->set(1024, "int32");
 std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
 
-mmkv->set("Hello, MMKV for Win32", "string");
+mmkv->set("Hello, MMKV for Windows", "string");
 std::string result;
 mmkv->getString("string", result);
 std::cout << "string = " << result << std::endl;
