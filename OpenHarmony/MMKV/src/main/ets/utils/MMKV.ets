@@ -73,8 +73,9 @@ export class MMKV {
      */
     public static initializeWithPath(rootDir: string, cacheDir: string, logLevel?: MMKVLogLevel): string {
         MMKV.initData();
-        // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
-        MMKV.g_rootDir = native.initialize(rootDir, cacheDir, logLevel);
+        let level = logLevel ?? MMKVLogLevel.LevelInfo;
+        // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, level);
+        MMKV.g_rootDir = native.initialize(rootDir, cacheDir, level);
         return MMKV.g_rootDir;
     }
 
