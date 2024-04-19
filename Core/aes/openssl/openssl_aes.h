@@ -13,6 +13,7 @@
 
 #include "openssl_opensslconf.h"
 #include "openssl_arm_arch.h"
+#include <cstdint>
 #include <stddef.h>
 #include "../../MMKVPredef.h"
 
