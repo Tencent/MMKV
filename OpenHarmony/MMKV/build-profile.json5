@@ -14,7 +14,7 @@
       "arkOptions": {
         "obfuscation": {
           "ruleOptions": {
-            "enable": false,
+            "enable": false, // looks like we don't gain much from this
             "files": [
               "./obfuscation-rules.txt"
             ]
