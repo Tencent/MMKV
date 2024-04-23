@@ -23,6 +23,7 @@ import { MMKV, NativeBuffer } from '@tencent/mmkv';
 import util from '@ohos.util';
 import dataPreferences from '@ohos.data.preferences';
 import { GlobalContainer } from '../Util/Util'
+import { Baseline } from '../Util/Baseline';
 
 @Entry
 @Component
@@ -81,6 +82,13 @@ struct Index {
           .fontSize(18)
           .onClick(() => {
             this.testAshmem()
+          })
+        Button('Run Baseline')
+          .type(ButtonType.Normal)
+          .buttonStyle(ButtonStyleMode.TEXTUAL)
+          .fontSize(18)
+          .onClick(() => {
+            this.baseline();
           })
         Text('mmkv version: ' + MMKV.version)
           .fontSize(16)
@@ -657,6 +665,17 @@ struct Index {
 
     let newKV = MMKV.mmkvWithAshmemFD(mmapID, kv.ashmemFD, kv.ashmemMetaFD, cryptKey);
     this.testOneMMKV(newKV, true);
+  }
+
+  private baseline() {
+    let baseline = GlobalContainer.getObject('baseline') as Baseline;
+    if (!baseline) {
+      let context = GlobalContainer.getObject('context') as Context;
+      baseline = new Baseline(context, 1000);
+      GlobalContainer.setObject('baseline', baseline);
+    }
+    baseline.mmkvBaselineTest();
+    baseline.preferencesBaselineTest();
   }
 }
 
