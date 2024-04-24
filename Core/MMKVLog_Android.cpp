@@ -75,8 +75,8 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
         }
     }
 }
-    
-#elif MMKV_ANDROID
+
+#    elif defined(MMKV_ANDROID)
 #        include <android/log.h>
 #        include <cstdarg>
 #        include <string>
