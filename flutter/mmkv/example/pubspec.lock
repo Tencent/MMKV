@@ -129,23 +129,22 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.3.4"
+    version: "1.3.5"
   mmkv_android:
     dependency: transitive
     description:
       name: mmkv_android
-      sha256: "222f86b9e469befbfa68f90c088cd6acd8b648f2865e2e1e345c0e8f04e77d6c"
+      sha256: def569ef710c24018b6afb8ff691cbbf22cacda249d6cfc2ce12df38db112623
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.0"
+    version: "1.0.1"
   mmkv_ios:
     dependency: transitive
     description:
-      name: mmkv_ios
-      sha256: "973dbdf69e1ef6e163c1bca2f9d70aa9945f155edb1e31ae8e9aef4c9d5519d3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.0"
+      path: "../../mmkv_ios"
+      relative: true
+    source: path
+    version: "1.0.1"
   mmkv_platform_interface:
     dependency: transitive
     description:
