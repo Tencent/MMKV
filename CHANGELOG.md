@@ -1,4 +1,30 @@
 # MMKV Change Log
+## v1.3.5 / 2024-04-24
+### HarmonyOS NEXT
+* This is the first official support of HarmonyOS NEXT.
+* Most things actually work!
+* Checkout the [wiki](https://github.com/Tencent/MMKV/wiki/ohos_setup) for more.
+
+### Flutter
+* Migrate to federated plugins to avoid the iOS rename headache. From now on, no more renaming from `mmkv` to `mmkvflutter` is needed.
+* Bump iOS Deployment Target to iOS 12.
+* Bump Android minSdkVersion to 23.
+
+### iOS & macOS
+* Avoid using so-called privacy APIs (`lstat()`, `fstat()`, `NSUserDefaults`).
+* Bump iOS Deployment Target to iOS 12.
+
+### Android
+* Bump minSdkVersion to 23.
+* Drop armv7 & x86 support.
+
+### POSIX
+* Use the embedded libz when libz can not be found.
+* Fix compile error when building with gcc.
+
+### Windows
+* Support x64 architecture.
+
 ## v1.3.4 / 2024-03-15
 ### Changes for All platforms
 * Make `trim()` more robust in multi-process mode.

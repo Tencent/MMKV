@@ -1,4 +1,8 @@
 # MMKV for Flutter Change Log
+## v1.3.5 / 2024-04-24
+* Migrate to federated plugins to avoid the iOS rename headache. From now on, no more renaming from `mmkv` to `mmkvflutter` is needed.
+* Bump iOS Deployment Target to iOS 12.
+* Bump Android minSdkVersion to 23.
 
 ## v1.3.4 / 2024-03-15
 * Make `trim()` more robust in multi-process mode.
