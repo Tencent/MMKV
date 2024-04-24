@@ -19,10 +19,10 @@
  */
 
 #include "MMKV.h"
+// #include <bits/alltypes.h>
 
 #ifdef MMKV_ANDROID
 
-#    include <bits/alltypes.h>
 #    include "InterProcessLock.h"
 #    include "KeyValueHolder.h"
 #    include "MMKVLog.h"
