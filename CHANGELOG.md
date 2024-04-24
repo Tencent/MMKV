@@ -1,4 +1,30 @@
 # MMKV Change Log
+## v1.3.5 / 2024-04-24
+### HarmonyOS NEXT
+* This is the first official support of HarmonyOS NEXT.
+* Most things actually work!
+* Checkout the [wiki](https://github.com/Tencent/MMKV/wiki/ohos_setup) for more.
+
+### Flutter
+* Migrate to federated plugins to avoid the iOS rename headache. From now on, no more renaming from `mmkv` to `mmkvflutter` is needed.
+* Bump iOS Deployment Target to iOS 12.
+* Bump Android minSdkVersion to 23.
+
+### iOS & macOS
+* Avoid using so-called privacy APIs (`lstat()`, `fstat()`, `NSUserDefaults`).
+* Bump iOS Deployment Target to iOS 12.
+
+### Android
+* Bump minSdkVersion to 23.
+* Drop armv7 & x86 support.
+
+### POSIX
+* Use the embedded libz when libz can not be found.
+* Fix compile error when building with gcc.
+
+### Windows
+* Support x64 architecture.
+
 ## v1.3.4 / 2024-03-15
 ### Changes for All platforms
 * Make `trim()` more robust in multi-process mode.
@@ -82,7 +108,7 @@ This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 user
 * Fix a potential memory leak on setting a new value for an existing key.
 * Upgrade min support target to iOS 11 / macOS 10.13 / tvOS 13 / watchOS 4.
 
-### Win32
+### Windows
 * Fix a bug that might fail to truncate the file size to a smaller size in some cases.
 
 ### Flutter
@@ -102,7 +128,7 @@ This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 user
 * Remove deprecated dependence.
 * Make the script more robust to fix the iOS Flutter plugin name.
 
-### Win32
+### Windows
 * Fix a string format bug on the MinGW64 environment.
 
 ### golang
@@ -126,7 +152,7 @@ This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 user
 ### golang
 * Fix a compile error on GCC.
 
-### Win32
+### Windows
 * Support CMake project on Windows.
 
 ## v1.2.14 / 2022-08-10
@@ -151,7 +177,7 @@ This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 user
 ### POSIX
 * Add ability to retrieve key existece while getting value, aka `MMKV::getXXX(key, defaultValue, hasValue)` methods.
 
-### Win32
+### Windows
 * Add ability to retrieve key existece while getting value, aka `MMKV::getXXX(key, defaultValue, hasValue)` methods.
 
 ## v1.2.12 / 2022-01-17
@@ -181,7 +207,7 @@ This is a hotfix version. It's **highly recommended** that v1.2.16 & v1.3.0 user
 * Add backup & restore ability.
 * Fix a compile error on Gentoo.
 
-### Win32
+### Windows
 * Add backup & restore ability.
 
 ## v1.2.10 / 2021-06-25
@@ -235,7 +261,7 @@ We really appreciate your understanding.
 
 * When calling `encodeString()` with an empty string value on Android, `decodeString()` will return `null`. This bug will be fixed in the next version of Android Native Lib. iOS does not have such a bug.
 
-### Win32
+### Windows
 * Fix a compile error on Visual Studio 2019.
 
 ## v1.2.7 / 2020-12-25
@@ -349,7 +375,7 @@ All of the improvements above are available to all supported platforms. Here are
 
 ## v1.1.2 / 2020-05-29
 
-### Android / iOS & macOS / Win32 / POSIX
+### Android / iOS & macOS / Windows / POSIX
 
 * Fix a potential crash after `trim()` a multi-process MMKV instance.
 * Improve `clearAll()` a bit.
@@ -375,7 +401,7 @@ All of the improvements above are available to all supported platforms. Here are
 This is the first **major breaking version** ever since MMKV was made public in September 2018, introducing bunches of improvement. Due to the Covid-19, it has been delayed for about a month. Now it's finally here! 
 
 * **Improved File Recovery Strategic**. We store the CRC checksum & actual file size on each sync operation & full write back, plus storing the actual file size in the same file(aka the .crc meta file) as the CRC checksum. Base on our usage inside WeChat on the iOS platform, it cuts the file **corruption rate down by almost half**.
-* **Unified Core Library**. We refactor the whole MMKV project and unify the cross-platform Core library. From now on, MMKV on iOS/macOS, Android, Win32 all **share the same core logic code**. It brings many benefits such as reducing the work to fix common bugs, improvements on one platform are available to other platforms immediately, and much more.
+* **Unified Core Library**. We refactor the whole MMKV project and unify the cross-platform Core library. From now on, MMKV on iOS/macOS, Android, Windows all **share the same core logic code**. It brings many benefits such as reducing the work to fix common bugs, improvements on one platform are available to other platforms immediately, and much more.
 * **Supports POSIX Platforms**. Thanks to the unified Core library, we port MMKV to POSIX platforms easily.
 * **Multi-Process Access on iOS/macOS**. Thanks to the unified Core library, we add multi-process access to iOS/macOS platforms easily.
 * **Efficiency Improvement**. We make the most of armv8 ability including the AES & CRC32 instructions to tune **encryption & error checking speed up by one order higher** than before on armv8 devices. There are bunches of other speed tuning all around the whole project.
@@ -397,7 +423,7 @@ Here are the old-style change logs of each platform.
 * Add exception inside core encode & decode logic, making MMKV much more robust.
 * Other speed improvements. Improve std::vector `push_back()` speed by using **move constructors** & move assignments.
 
-### Win32
+### Windows
 * **Improved File Recovery Strategic**. Cuts the file corruption rate down by almost half. Details are above.
 * Add exception inside core encode & decode logic, making MMKV much more robust.
 * Other speed improvements. Improve std::vector `push_back()` speed by using **move constructors** & move assignments.
@@ -423,7 +449,7 @@ What's new
 * Fix a potential crash when writing a uniquely constructed string.
 * Fix a bug that the MMKVDemo might crash when running in a simulator.
 
-### Win32
+### Windows
 * Fix a potential crash when writing a uniquely constructed string or data.
 
 ## v1.0.23 / 2019-09-03
@@ -437,12 +463,12 @@ What's new
 What's new  
 
 * Fix a potential security leak on encrypted MMKV.
-* Fix filename bug when compiled on Win32 environment.
+* Fix filename bug when compiled on Windows environment.
 * Add option for decoding String Set into other `Set<>` classes other than the default `HashSet<String>`, check `decodeStringSet()` for details.
 * Add `putBytes()` & `getBytes()`, to make function names more clear and consistent.
 * Add notification of content changed by other process, check the new `MMKVContentChangeNotification<>` interface & `checkContentChangedByOuterProcess()` for details.
 
-### Win32
+### Windows
 What's new  
 
 * Fix a potential security leak on encrypted MMKV.
@@ -460,7 +486,7 @@ What's new
 
 * Fix a bug that MMKV will corrupt while adding just one key-value, and reboot or clear memory cache. This bug was introduced in v1.0.21.
 
-### Win32
+### Windows
 What's new  
 
 * Fix a bug that MMKV will corrupt while adding just one key-value, and reboot or clear memory cache. This bug was introduced in v1.0.21.
@@ -476,7 +502,7 @@ What's new
 
 * Fix a bug that MMKV might corrupt while repeatedly adding & removing key-value with specific length. This bug was introduced in v1.0.20.
 
-### Win32
+### Windows
 What's new  
 
 * Fix a bug that MMKV might corrupt while repeatedly adding & removing key-value with specific length. This bug was introduced in v1.0.20.
@@ -497,7 +523,7 @@ What's new
 * Fix a bug that dead-lock might be reported by Android mistakenly.
 * Using `RegisterNatives()` to simplify native method naming.
 
-### Win32
+### Windows
 * Fix a bug that MMKV might crash while storing key-value with specific length.
 * Fix a bug that `trim()` might not work properly.
 * Fix a bug that `clearAll()` might not work properly.
@@ -537,7 +563,7 @@ What's new
 * Protect from mistakenly passing `Context.MODE_MULTI_PROCESS` to init MMKV.
 
 
-### Win32
+### Windows
 * Fix a potential crash when trying to recover data from file length error.
 
 ## v1.0.17 / 2019-01-25
@@ -559,7 +585,7 @@ What's new
 * Fix a potential crash when the meta file is not valid on multi-process mode.
 
 
-### Win32
+### Windows
 * Redirect logging of MMKV is supported now.
 * Dynamically disable logging of MMKV is supported now.
 * Fix a potential corruption of meta file on multi-process mode.
@@ -581,7 +607,7 @@ What's new
 * Fix a potential crash when the meta file is not valid.
 
 
-### Win32
+### Windows
 MMKV for Windows is released now. Most things actually work!
 
 ## v1.0.15 / 2018-12-13
@@ -598,8 +624,8 @@ What's new
 * Fix a stack overflow crash due to the **callback** feature introduced by v1.0.13.
 * Fix a potential crash due to divided by zero.
 
-### Win32
-MMKV for Win32 in under construction. Hopefully will come out in next release. For those who are interested, check out branch `dev_win32` for the latest development.
+### Windows
+MMKV for Windows in under construction. Hopefully will come out in next release. For those who are interested, check out branch `dev_Windows` for the latest development.
 
 ## v1.0.14 / 2018-11-30
 ### iOS / macOS

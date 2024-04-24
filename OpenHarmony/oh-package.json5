@@ -1,0 +1,14 @@
+{
+  "name": "mmkvdemo",
+  "version": "1.0.0",
+  "description": "A demo for MMKV in OpenHarmony OS.",
+  "main": "",
+  "author": "guoling",
+  "license": "BSD 3-Clause",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@ohos/hypium": "1.0.16",
+    "@ohos/hamock": "1.0.0"
+  }
+}

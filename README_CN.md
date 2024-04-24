@@ -1,5 +1,5 @@
 # MMKV——基于 mmap 的高性能通用 key-value 组件
-MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今在微信上使用，其性能和稳定性经过了时间的验证。近期也已移植到 Android / macOS / Win32 / POSIX 平台，一并开源。
+MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今在微信上使用，其性能和稳定性经过了时间的验证。近期也已移植到 Android / macOS / Windows / POSIX / HarmonyOS NEXT 等平台，一并开源。
 
 ## MMKV 源起
 在微信客户端的日常运营中，时不时就会爆发特殊文字引起系统的 crash，[参考文章](https://mp.weixin.qq.com/s?__biz=MzAwNDY1ODY2OQ==&mid=2649286826&idx=1&sn=35601cb1156617aa235b7fd4b085bfc4)，文章里面设计的技术方案是在关键代码前后进行计数器的加减，通过检查计数器的异常，来发现引起闪退的异常文字。在会话列表、会话界面等有大量 cell 的地方，希望新加的计时器不会影响滑动性能；另外这些计数器还要永久存储下来——因为闪退随时可能发生。这就需要一个性能非常高的通用 key-value 存储组件，我们考察了 SharedPreferences、NSUserDefaults、SQLite 等常见组件，发现都没能满足如此苛刻的性能要求。考虑到这个防 crash 方案最主要的诉求还是实时写入，而 mmap 内存映射文件刚好满足这种需求，我们尝试通过它来实现一套 key-value 组件。
@@ -22,8 +22,8 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:1.3.4'
-    // replace "1.3.4" with any available version
+    implementation 'com.tencent:mmkv:1.3.5'
+    // replace "1.3.5" with any available version
 }
 ```
 更多安装指引参考 [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup_cn)。
@@ -114,7 +114,7 @@ MMKV 支持**多进程访问**，更详细的用法参考 [iOS/macOS Tutorial](h
 ![](https://github.com/Tencent/MMKV/wiki/assets/profile_mini.png)  
 更详细的性能对比参考 [iOS/macOS Benchmark](https://github.com/Tencent/MMKV/wiki/iOS_benchmark_cn)。
 
-## Win32 指南
+## Windows 指南
 ### 安装引入
 推荐使用子工程：
 
@@ -136,11 +136,11 @@ MMKV 支持**多进程访问**，更详细的用法参考 [iOS/macOS Tutorial](h
 1. MMKV 默认使用 `MT/MTd` 运行时库来编译，如果你发现主工程的配置不一样，请修改 MMKV 的配置再编译;
 2. MMKV 使用 Visual Studio 2017 开发，如果你在使用其他版本的 Visual Studio，请修改 MMKV 的`工具集`与主工程一致，再编译.
 
-更多安装指引参考 [Win32 Setup](https://github.com/Tencent/MMKV/wiki/windows_setup_cn)。
+更多安装指引参考 [Windows Setup](https://github.com/Tencent/MMKV/wiki/windows_setup_cn)。
 
 ### 快速上手
 MMKV 的使用非常简单，所有变更立马生效，无需调用 `save`、`sync`。
-在 App 启动时初始化 MMKV，设定 MMKV 的根目录，例如在 main() 里：
+在 App 启动时初始化 MMKV，设定 MMKV 的根目录，例如在 `main()` 里：
 
 
 ```C++
@@ -164,13 +164,13 @@ std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
 mmkv->set(1024, "int32");
 std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
 
-mmkv->set("Hello, MMKV for Win32", "string");
+mmkv->set("Hello, MMKV for Windows", "string");
 std::string result;
 mmkv->getString("string", result);
 std::cout << "string = " << result << std::endl;
 ```
 
-MMKV 支持**多进程访问**，更详细的用法参考 [Win32 Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial_cn)。
+MMKV 支持**多进程访问**，更详细的用法参考 [Windows Tutorial](https://github.com/Tencent/MMKV/wiki/windows_tutorial_cn)。
 
 ## POSIX 指南
 ### 安装引入
@@ -195,7 +195,7 @@ MMKV 支持**多进程访问**，更详细的用法参考 [Win32 Tutorial](https
 
 ### 快速上手
 MMKV 的使用非常简单，所有变更立马生效，无需调用 `save`、`sync`。
-在 App 启动时初始化 MMKV，设定 MMKV 的根目录，例如在 main() 里：
+在 App 启动时初始化 MMKV，设定 MMKV 的根目录，例如在 `main()` 里：
 
 
 ```C++
@@ -219,13 +219,66 @@ std::cout << "bool = " << mmkv->getBool("bool") << std::endl;
 mmkv->set(1024, "int32");
 std::cout << "int32 = " << mmkv->getInt32("int32") << std::endl;
 
-mmkv->set("Hello, MMKV for Win32", "string");
+mmkv->set("Hello, MMKV for Windows", "string");
 std::string result;
 mmkv->getString("string", result);
 std::cout << "string = " << result << std::endl;
 ```
 
 MMKV 支持**多进程访问**，更详细的用法参考 [POSIX Tutorial](https://github.com/Tencent/MMKV/wiki/posix_tutorial_cn)。
+
+## HarmonyOS NEXT 指南
+### 安装引入
+推荐使用 OHPM：
+
+```bash
+ohpm install @tencent/mmkv
+```
+
+更多安装指引参考 [HarmonyOS NEXT Tutorial](https://github.com/Tencent/MMKV/wiki/ohos_setup)。
+
+### 快速上手
+MMKV 的使用非常简单，所有变更立马生效，无需调用 `save`、`sync`。
+在 App 启动时初始化 MMKV，设定 MMKV 的根目录，例如在 `EntryAbility.onCreate()` 里：
+
+```js
+import { MMKV } from '@tencent/mmkv';
+
+export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    let appCtx = this.context.getApplicationContext();
+    let mmkvRootDir = MMKV.initialize(appCtx);
+    console.info('mmkv rootDir: ', mmkvRootDir);
+    ……
+  }
+```
+
+MMKV 提供一个全局的实例，可以直接使用：
+
+```js
+import { MMKV } from '@tencent/mmkv';
+    
+let mmkv = MMKV.defaultMMKV();
+mmkv.encodeBool('bool', true);
+console.info('bool = ', mmkv.decodeBool('bool'));
+    
+mmkv.encodeInt32('int32', Math.pow(2, 31) - 1);
+console.info('max int32 = ', mmkv.decodeInt32('int32'));
+    
+mmkv.encodeInt64('int', BigInt(2**63) - BigInt(1));
+console.info('max int64 = ', mmkv.decodeInt64('int'));
+    
+let str: string = 'Hello OpenHarmony from MMKV';
+mmkv.encodeString('string', str);
+console.info('string = ', mmkv.decodeString('string'));
+
+let arrayBuffer: ArrayBuffer = StringToArrayBuffer('Hello OpenHarmony from MMKV with bytes');
+mmkv.encodeBytes('bytes', arrayBuffer);
+let bytes = mmkv.decodeBytes('bytes');
+console.info('bytes = ', ArrayBufferToString(bytes));
+```
+
+MMKV 更详细的用法参考 [HarmonyOS NEXT Tutorial](https://github.com/Tencent/MMKV/wiki/ohos_setup)。
 
 ## License
 MMKV 以 BSD 3-Clause 证书开源，详情参见 [LICENSE.TXT](./LICENSE.TXT)。

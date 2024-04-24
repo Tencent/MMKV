@@ -19,7 +19,6 @@
 #
 
 # Sets the minimum version of CMake required to build the native library.
-
 cmake_minimum_required(VERSION 3.10.0)
 
 project(mmkv)
@@ -29,6 +28,17 @@ IF(APPLE)
 ENDIF()
 
 add_subdirectory(../../Core Core)
+
+find_library(zlib
+        z
+        )
+
+IF (NOT zlib)
+    message(STATUS "Zlib library not found. Using internal zlib.")
+    add_subdirectory(../../Core/crc32/zlib zlib)
+ELSE()
+    message(STATUS "Zlib library found. ${zlib}")
+ENDIF()
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -68,6 +78,10 @@ target_link_libraries( mmkv
 install(FILES mmkv.go callback.go go.mod mmkv_test.go golang-bridge.h golang-bridge.cpp
   DESTINATION "tencent.com/mmkv")
 
-install(FILES libmmkv.a Core/libcore.a
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libmmkv.a ${CMAKE_CURRENT_BINARY_DIR}/Core/libcore.a
   DESTINATION "tencent.com/mmkv/lib")
 
+IF (NOT zlib)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/zlib/libz.a
+  DESTINATION "tencent.com/mmkv/lib")
+ENDIF()

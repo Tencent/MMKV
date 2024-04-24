@@ -34,7 +34,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v1.3.4";
+constexpr auto MMKV_VERSION = "v1.3.5";
 
 #ifdef DEBUG
 #    define MMKV_DEBUG
@@ -50,6 +50,13 @@ constexpr auto MMKV_VERSION = "v1.3.4";
 #    else
 #        define MMKV_ANDROID
 #    endif
+#elif __OHOS__
+#   ifdef FORCE_POSIX
+#       define MMKV_POSIX
+#   else
+#       define MMKV_ANDROID
+#       define MMKV_OHOS
+#endif
 #elif __APPLE__
 #    ifdef FORCE_POSIX
 #        define MMKV_POSIX

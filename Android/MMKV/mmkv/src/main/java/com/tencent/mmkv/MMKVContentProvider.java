@@ -63,6 +63,7 @@ public class MMKVContentProvider extends ContentProvider {
         return MMKVContentProvider.gUri;
     }
 
+    @NonNull
     private Bundle mmkvFromAshmemID(String ashmemID, int size, int mode, String cryptKey) throws RuntimeException {
         MMKV mmkv = MMKV.mmkvWithAshmemID(getContext(), ashmemID, size, mode, cryptKey);
         ParcelableMMKV parcelableMMKV = new ParcelableMMKV(mmkv);
@@ -72,6 +73,7 @@ public class MMKVContentProvider extends ContentProvider {
         return result;
     }
 
+    @Nullable
     private static String queryAuthority(Context context) {
         try {
             ComponentName componentName = new ComponentName(context, MMKVContentProvider.class.getName());
@@ -98,7 +100,7 @@ public class MMKVContentProvider extends ContentProvider {
         return true;
     }
 
-    protected static String getProcessNameByPID(Context context, int pid) {
+    protected static String getProcessNameByPID(@NonNull Context context, int pid) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
             // clang-format off

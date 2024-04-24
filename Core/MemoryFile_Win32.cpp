@@ -282,7 +282,7 @@ MMBuffer *readWholeFile(const MMKVPath_t &nsFilePath) {
             buffer = new MMBuffer(static_cast<size_t>(fileLength));
             SetFilePointer(fd, 0, 0, FILE_BEGIN);
             DWORD readSize = 0;
-            if (ReadFile(fd, buffer->getPtr(), fileLength, &readSize, nullptr)) {
+            if (ReadFile(fd, buffer->getPtr(), (DWORD) fileLength, &readSize, nullptr)) {
                 //fileSize = readSize;
             } else {
                 MMKVWarning("fail to read %ls: %d", nsFilePath.c_str(), GetLastError());
@@ -323,7 +323,7 @@ bool zeroFillFile(MMKVFileHandle_t file, size_t startPos, size_t size) {
     }
     if (size > 0) {
         DWORD bytesWritten = 0;
-        if (!WriteFile(file, zeros, size, &bytesWritten, nullptr)) {
+        if (!WriteFile(file, zeros, (DWORD) size, &bytesWritten, nullptr)) {
             MMKVError("fail to write fd[%p], error:%d", file, GetLastError());
             return false;
         }
@@ -407,7 +407,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
     // the Win32 platform don't have sendfile()/fcopyfile() equivalent, do it the hard way
     while (true) {
         DWORD sizeRead = 0;
-        if (!ReadFile(srcFile.getFd(), buffer, bufferSize, &sizeRead, nullptr)) {
+        if (!ReadFile(srcFile.getFd(), buffer, (DWORD) bufferSize, &sizeRead, nullptr)) {
             MMKVError("fail to read %ls: %d", srcPath.c_str(), GetLastError());
             goto errorOut;
         }

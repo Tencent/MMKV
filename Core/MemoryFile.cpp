@@ -267,10 +267,10 @@ bool isFileExist(const string &nsFilePath) {
         return false;
     }
 
-    struct stat temp = {};
-    return lstat(nsFilePath.c_str(), &temp) == 0;
+    return access(nsFilePath.c_str(), F_OK) == 0;
 }
 
+#ifndef MMKV_APPLE
 extern bool mkPath(const MMKVPath_t &str) {
     char *path = strdup(str.c_str());
 
@@ -307,6 +307,19 @@ LContinue:
 
     return true;
 }
+#else
+// avoid using so-called privacy API
+extern bool mkPath(const MMKVPath_t &str) {
+    auto path = [NSString stringWithUTF8String:str.c_str()];
+    NSError *error = nil;
+    auto ret = [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:YES attributes:nil error:&error];
+    if (!ret) {
+        MMKVWarning("%s", error.localizedDescription.UTF8String);
+        return false;
+    }
+    return true;
+}
+#endif
 
 MMBuffer *readWholeFile(const MMKVPath_t &path) {
     MMBuffer *buffer = nullptr;
@@ -360,6 +373,7 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
     return true;
 }
 
+#ifndef MMKV_APPLE
 bool getFileSize(int fd, size_t &size) {
     struct stat st = {};
     if (fstat(fd, &st) != -1) {
@@ -368,6 +382,23 @@ bool getFileSize(int fd, size_t &size) {
     }
     return false;
 }
+#else
+// avoid using so-called privacy API
+bool getFileSize(int fd, size_t &size) {
+    auto cur = lseek(fd, 0, SEEK_CUR);
+    if (cur == -1) {
+        return false;
+    }
+    auto end = lseek(fd, 0, SEEK_END);
+    if (end == -1) {
+        return false;
+    }
+    size = (size_t) end;
+
+    lseek(fd, cur, SEEK_SET);
+    return true;
+}
+#endif
 
 size_t getPageSize() {
     return static_cast<size_t>(getpagesize());

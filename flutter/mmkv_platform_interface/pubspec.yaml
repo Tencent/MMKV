@@ -1,0 +1,23 @@
+name: mmkv_platform_interface
+description: A common platform interface for the MMKV plugin.
+repository: https://github.com/Tencent/MMKV/tree/master/flutter/mmkv_platform_interface
+# NOTE: We strongly prefer non-breaking changes, even at the expense of a
+# less-clean API. See https://flutter.dev/go/platform-interface-breaking-changes
+version: 1.0.0
+homepage: https://github.com/Tencent/MMKV
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  path_provider: ^2.0.1
+  ffi: ^2.1.0
+
+dev_dependencies:
+  test:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2

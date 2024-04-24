@@ -156,7 +156,7 @@ void MMKV::partialLoadFromFile() {
                 size_t addedSize = m_actualSize - position;
                 auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
                 // incremental update crc digest
-                m_crcDigest = (uint32_t) CRC32(m_crcDigest, basePtr + position, addedSize);
+                m_crcDigest = (uint32_t) CRC32(m_crcDigest, basePtr + position, (z_size_t) addedSize);
                 if (m_crcDigest == m_metaInfo->m_crcDigest) {
                     MMBuffer inputBuffer(basePtr, m_actualSize, MMBufferNoCopy);
 #ifndef MMKV_DISABLE_CRYPT
