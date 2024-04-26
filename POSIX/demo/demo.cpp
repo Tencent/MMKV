@@ -29,10 +29,13 @@
 #include <string>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <cstring>
 #include <cassert>
 #include <time.h>
+
 using namespace std;
 using namespace mmkv;
 
