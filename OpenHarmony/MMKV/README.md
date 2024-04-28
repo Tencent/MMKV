@@ -23,7 +23,7 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
 
 ### Prerequisites
 
-* Apps using MMKV can target: HarmonyOS Next (Canary 2) or later.
+* Apps using MMKV can target: HarmonyOS Next (3.0.0.13) or later.
 * ARM64 & x86_64 architecture.
 * DevEco Studio NEXT Developer Beta1 (5.0.3.100) or later.
 
