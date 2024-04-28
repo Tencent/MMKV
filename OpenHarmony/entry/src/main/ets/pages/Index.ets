@@ -140,6 +140,12 @@ struct Index {
     kv.encodeUInt64('uint64', BigInt(0));
     hilog.info(0, 'mmkvdemo', 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
 
+    kv.encodeFloat('float', Number.MAX_VALUE);
+    hilog.info(0, 'mmkvdemo', 'decode float max = %{public}d', kv.decodeFloat('float'));
+
+    kv.encodeFloat('float', Number.MIN_VALUE);
+    hilog.info(0, 'mmkvdemo', 'decode float min = %{public}d', kv.decodeFloat('float'));
+
     kv.encodeDouble('double', Number.MAX_VALUE);
     hilog.info(0, 'mmkvdemo', 'decode double max = %{public}d', kv.decodeDouble('double'));
 
@@ -260,6 +266,16 @@ struct Index {
       kv.encodeUInt64('uint64', BigInt(0));
     }
     hilog.info(0, 'mmkvdemo', 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
+
+    if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MAX_VALUE);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float max = %{public}d', kv.decodeFloat('float'));
+
+    if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MIN_VALUE);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float min = %{public}d', kv.decodeFloat('float'));
 
     if (!decodeOnly) {
       kv.encodeDouble('double', Number.MAX_VALUE);
@@ -526,6 +542,16 @@ struct Index {
       kv.encodeUInt64('uint64', BigInt(0), expiration);
     }
     hilog.info(0, 'mmkvdemo', 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
+
+    if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MAX_VALUE, expiration);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float max = %{public}d', kv.decodeFloat('float'));
+
+    if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MIN_VALUE, expiration);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float min = %{public}d', kv.decodeFloat('float'));
 
     if (!decodeOnly) {
       kv.encodeDouble('double', Number.MAX_VALUE, expiration);

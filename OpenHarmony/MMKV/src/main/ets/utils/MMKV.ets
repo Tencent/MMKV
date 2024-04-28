@@ -241,6 +241,24 @@ export class MMKV {
     }
 
     /**
+     * Set float value with customize expiration in seconds.
+     * @param value { number }
+     * @param expiration override the default duration, {@link MMKV.ExpireNever} (0) means never expire.
+     * @returns true if success, false if failure.
+     */
+    public encodeFloat(key: string, value: number, expiration?: number): boolean {
+        return native.encodeFloat(this.nativeHandle, key, value, expiration);
+    }
+
+    /**
+     * Get float value.
+     * @returns { number | undefined }
+     */
+    public decodeFloat(key: string, defaultValue?: number): number | undefined {
+        return native.decodeFloat(this.nativeHandle, key, defaultValue ?? 0);
+    }
+
+    /**
      * Set double value with customize expiration in seconds.
      * @param value { number }
      * @param expiration override the default duration, {@link MMKV.ExpireNever} (0) means never expire.

@@ -593,6 +593,42 @@ static napi_value decodeUInt64(napi_env env, napi_callback_info info) {
     return UInt64ToNValue(env, defaultValue);
 }
 
+static napi_value encodeFloat(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        float value = NValueToDouble(env, args[2]);
+        if (IsNValueUndefined(env, args[3])) {
+            auto ret = kv->set(value, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[3]);
+        auto ret = kv->set(value, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value decodeFloat(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    auto defaultValue = NValueToDouble(env, args[2]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        return DoubleToNValue(env, kv->getFloat(key, defaultValue));
+    }
+    return DoubleToNValue(env, defaultValue);
+}
+
 static napi_value encodeDouble(napi_env env, napi_callback_info info) {
     size_t argc = 4;
     napi_value args[4] = {nullptr};
@@ -1373,6 +1409,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeInt64", nullptr, decodeInt64, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeUInt64", nullptr, encodeUInt64, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeUInt64", nullptr, decodeUInt64, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeFloat", nullptr, encodeFloat, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeFloat", nullptr, decodeFloat, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeDouble", nullptr, encodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeDouble", nullptr, decodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeString", nullptr, encodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
