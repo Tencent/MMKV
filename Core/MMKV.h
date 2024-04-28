@@ -124,8 +124,8 @@ class MMKV {
 
     bool checkFileCRCValid(size_t actualSize, uint32_t crcDigest);
 
-    void recaculateCRCDigestWithIV(const void *iv);
-    void recaculateCRCDigestOnly();
+    void recalculateCRCDigestWithIV(const void *iv);
+    void recalculateCRCDigestOnly();
 
     void updateCRCDigest(const uint8_t *ptr, size_t length);
 

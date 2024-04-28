@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <cassert>
-#include <time.h>
+#include <ctime>
 
 using namespace std;
 using namespace mmkv;

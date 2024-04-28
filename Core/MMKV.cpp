@@ -419,7 +419,7 @@ bool MMKV::checkFileCRCValid(size_t actualSize, uint32_t crcDigest) {
     return false;
 }
 
-void MMKV::recaculateCRCDigestWithIV(const void *iv) {
+void MMKV::recalculateCRCDigestWithIV(const void *iv) {
     auto ptr = (const uint8_t *) m_file->getMemory();
     if (ptr) {
         m_crcDigest = 0;
@@ -428,7 +428,7 @@ void MMKV::recaculateCRCDigestWithIV(const void *iv) {
     }
 }
 
-void MMKV::recaculateCRCDigestOnly() {
+void MMKV::recalculateCRCDigestOnly() {
     auto ptr = (const uint8_t *) m_file->getMemory();
     if (ptr) {
         m_crcDigest = 0;

@@ -939,7 +939,7 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
         m_crypter->encrypt(ptr, ptr, m_actualSize);
     }
 #endif
-    recaculateCRCDigestOnly();
+    recalculateCRCDigestOnly();
 
     return make_pair(true, KeyValueHolder(originKeyLength, valueLength, offset));
 }
@@ -1270,9 +1270,9 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
 
     m_actualSize = totalSize;
     if (encrypter) {
-        recaculateCRCDigestWithIV(newIV);
+        recalculateCRCDigestWithIV(newIV);
     } else {
-        recaculateCRCDigestWithIV(nullptr);
+        recalculateCRCDigestWithIV(nullptr);
     }
     m_hasFullWriteback = true;
     // make sure lastConfirmedMetaInfo is saved if needed
@@ -1305,7 +1305,7 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *, bool nee
     }
 
     m_actualSize = totalSize;
-    recaculateCRCDigestWithIV(nullptr);
+    recalculateCRCDigestWithIV(nullptr);
     m_hasFullWriteback = true;
     // make sure lastConfirmedMetaInfo is saved if needed
     if (needSync) {
