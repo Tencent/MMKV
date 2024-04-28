@@ -496,7 +496,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         needsFullWrite = true;
     }
 #ifndef MMKV_DISABLE_CRYPT
-    if (unlikely(iv)) {
+    if (mmkv_unlikely(iv)) {
         memcpy(m_metaInfo->m_vector, iv, sizeof(m_metaInfo->m_vector));
         if (m_metaInfo->m_version < MMKVVersionRandomIV) {
             m_metaInfo->m_version = MMKVVersionRandomIV;
@@ -504,7 +504,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         needsFullWrite = true;
     }
 #endif
-    if (unlikely(increaseSequence)) {
+    if (mmkv_unlikely(increaseSequence)) {
         m_metaInfo->m_sequence++;
         m_metaInfo->m_lastConfirmedMetaInfo.lastActualSize = static_cast<uint32_t>(size);
         m_metaInfo->m_lastConfirmedMetaInfo.lastCRCDigest = crcDigest;
@@ -526,7 +526,7 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         return false;
     }
 #endif
-    if (unlikely(needsFullWrite)) {
+    if (mmkv_unlikely(needsFullWrite)) {
         m_metaInfo->write(m_metaFile->getMemory());
     } else {
         m_metaInfo->writeCRCAndActualSizeOnly(m_metaFile->getMemory());
@@ -557,7 +557,7 @@ MMBuffer MMKV::getRawDataForKey(MMKVKey_t key) {
 }
 
 mmkv::MMBuffer MMKV::getDataForKey(MMKVKey_t key) {
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         return getDataWithoutMTimeForKey(key);
     }
     return getRawDataForKey(key);
@@ -617,7 +617,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
             } else {
                 kvHolder = KeyValueHolderCrypt(std::move(data));
             }
-            if (likely(!m_enableKeyExpire)) {
+            if (mmkv_likely(!m_enableKeyExpire)) {
                 itr->second = std::move(kvHolder);
             } else {
                 itr = m_dicCrypt->find(key);
@@ -683,7 +683,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
             }
 
             bool onlyOneKey = !m_isInterProcess && m_dic->size() == 1;
-            if (likely(!m_enableKeyExpire)) {
+            if (mmkv_likely(!m_enableKeyExpire)) {
                 KVHolderRet_t ret;
                 if (onlyOneKey) {
                     ret = overrideDataWithKey(data, itr->second, isDataHolder);
@@ -745,7 +745,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 #    ifdef MMKV_APPLE
             auto ret = appendDataWithKey(nan, key, itr->second);
             if (ret.first) {
-                if (unlikely(m_enableKeyExpire)) {
+                if (mmkv_unlikely(m_enableKeyExpire)) {
                     // filterExpiredKeys() may invalid itr
                     itr = m_dicCrypt->find(key);
                     if (itr == m_dicCrypt->end()) {
@@ -759,7 +759,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 #    else
             auto ret = appendDataWithKey(nan, key);
             if (ret.first) {
-                if (unlikely(m_enableKeyExpire)) {
+                if (mmkv_unlikely(m_enableKeyExpire)) {
                     m_dicCrypt->erase(key);
                 } else {
                     m_dicCrypt->erase(itr);
@@ -775,10 +775,10 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
         if (itr != m_dic->end()) {
             m_hasFullWriteback = false;
             static MMBuffer nan;
-            auto ret = likely(!m_enableKeyExpire) ? appendDataWithKey(nan, itr->second) : appendDataWithKey(nan, key);
+            auto ret = mmkv_likely(!m_enableKeyExpire) ? appendDataWithKey(nan, itr->second) : appendDataWithKey(nan, key);
             if (ret.first) {
 #ifdef MMKV_APPLE
-                if (unlikely(m_enableKeyExpire)) {
+                if (mmkv_unlikely(m_enableKeyExpire)) {
                     // filterExpiredKeys() may invalid itr
                     itr = m_dic->find(key);
                     if (itr == m_dic->end()) {
@@ -789,7 +789,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
                 m_dic->erase(itr);
                 [oldKey release];
 #else
-                if (unlikely(m_enableKeyExpire)) {
+                if (mmkv_unlikely(m_enableKeyExpire)) {
                     // filterExpiredKeys() may invalid itr
                     m_dic->erase(key);
                 } else {
@@ -1044,7 +1044,7 @@ bool MMKV::fullWriteback(AESCrypt *newCrypter, bool onlyWhileExpire) {
         return false;
     }
 
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto expiredCount = filterExpiredKeys();
         if (onlyWhileExpire && expiredCount == 0) {
             return true;

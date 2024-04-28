@@ -36,6 +36,7 @@ enum PBEncodeItemType {
     PBEncodeItemType_Container,
 #ifndef MMKV_APPLE
     PBEncodeItemType_String,
+    PBEncodeItemType_Int32,
 #else
     PBEncodeItemType_NSString,
     PBEncodeItemType_NSData,
@@ -50,6 +51,13 @@ struct PBEncodeItem {
     union {
         const MMBuffer *bufferValue;
 #ifndef MMKV_APPLE
+        bool boolValue;
+        int32_t int32Value;
+        int64_t int64Value;
+        uint32_t uint32Value;
+        uint64_t uint64Value;
+        float floatValue;
+        double doubleValue;
         const std::string *strValue;
 #else
         void *objectValue;

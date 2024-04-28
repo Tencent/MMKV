@@ -456,11 +456,11 @@ bool MMKV::set(bool value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    size_t size = unlikely(m_enableKeyExpire) ? Fixed32Size + pbBoolSize() : pbBoolSize();
+    size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbBoolSize() : pbBoolSize();
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeBool(value);
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
@@ -478,11 +478,11 @@ bool MMKV::set(int32_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    size_t size = unlikely(m_enableKeyExpire) ? Fixed32Size + pbInt32Size(value) : pbInt32Size(value);
+    size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbInt32Size(value) : pbInt32Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeInt32(value);
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
@@ -500,11 +500,11 @@ bool MMKV::set(uint32_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    size_t size = unlikely(m_enableKeyExpire) ? Fixed32Size + pbUInt32Size(value) : pbUInt32Size(value);
+    size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbUInt32Size(value) : pbUInt32Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt32(value);
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
@@ -522,11 +522,11 @@ bool MMKV::set(int64_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    size_t size = unlikely(m_enableKeyExpire) ? Fixed32Size + pbInt64Size(value) : pbInt64Size(value);
+    size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbInt64Size(value) : pbInt64Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeInt64(value);
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
@@ -544,11 +544,11 @@ bool MMKV::set(uint64_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    size_t size = unlikely(m_enableKeyExpire) ? Fixed32Size + pbUInt64Size(value) : pbUInt64Size(value);
+    size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbUInt64Size(value) : pbUInt64Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt64(value);
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
@@ -566,11 +566,11 @@ bool MMKV::set(float value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    size_t size = unlikely(m_enableKeyExpire) ? Fixed32Size + pbFloatSize() : pbFloatSize();
+    size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbFloatSize() : pbFloatSize();
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeFloat(value);
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
@@ -588,11 +588,11 @@ bool MMKV::set(double value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    size_t size = unlikely(m_enableKeyExpire) ? Fixed32Size + pbDoubleSize() : pbDoubleSize();
+    size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbDoubleSize() : pbDoubleSize();
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
     output.writeDouble(value);
-    if (unlikely(m_enableKeyExpire)) {
+    if (mmkv_unlikely(m_enableKeyExpire)) {
         auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
@@ -613,7 +613,7 @@ bool MMKV::set(const char *value, MMKVKey_t key, uint32_t expireDuration) {
         removeValueForKey(key);
         return true;
     }
-    if (likely(!m_enableKeyExpire)) {
+    if (mmkv_likely(!m_enableKeyExpire)) {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
         return setDataForKey(MMBuffer((void *) value, strlen(value), MMBufferNoCopy), key, true);
     } else {
@@ -638,7 +638,7 @@ bool MMKV::set(const string &value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    if (likely(!m_enableKeyExpire)) {
+    if (mmkv_likely(!m_enableKeyExpire)) {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
         return setDataForKey(MMBuffer((void *) value.data(), value.length(), MMBufferNoCopy), key, true);
     } else {
@@ -665,7 +665,7 @@ bool MMKV::set(const MMBuffer &value, MMKVKey_t key, uint32_t expireDuration) {
     }
     // delay write the size needed for encoding value
     // avoid memory copying
-    if (likely(!m_enableKeyExpire)) {
+    if (mmkv_likely(!m_enableKeyExpire)) {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
         return setDataForKey(MMBuffer(value.getPtr(), value.length(), MMBufferNoCopy), key, true);
     } else {
@@ -691,7 +691,7 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key, uint32_t expireDuration) 
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(v);
-    if (unlikely(m_enableKeyExpire) && data.length() > 0) {
+    if (mmkv_unlikely(m_enableKeyExpire) && data.length() > 0) {
         auto tmp = MMBuffer(data.length() + Fixed32Size);
         auto ptr = (uint8_t *) tmp.getPtr();
         memcpy(ptr, data.getPtr(), data.length());
@@ -786,6 +786,16 @@ bool MMKV::getVector(MMKVKey_t key, vector<string> &result) {
         }
     }
     return false;
+}
+
+void MMKV::shared_lock() {
+    m_lock->lock();
+    m_sharedProcessLock->lock();
+}
+
+void MMKV::shared_unlock() {
+    m_sharedProcessLock->lock();
+    m_lock->lock();
 }
 
 #endif // MMKV_APPLE
@@ -1060,7 +1070,7 @@ bool MMKV::containsKey(MMKVKey_t key) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
 
-    if (likely(!m_enableKeyExpire)) {
+    if (mmkv_likely(!m_enableKeyExpire)) {
         if (m_crypter) {
             return m_dicCrypt->find(key) != m_dicCrypt->end();
         } else {
@@ -1075,7 +1085,7 @@ size_t MMKV::count(bool filterExpire) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
 
-    if (unlikely(filterExpire && m_enableKeyExpire)) {
+    if (mmkv_unlikely(filterExpire && m_enableKeyExpire)) {
         SCOPED_LOCK(m_exclusiveProcessLock);
         fullWriteback(nullptr, true);
     }
@@ -1116,7 +1126,7 @@ vector<string> MMKV::allKeys(bool filterExpire) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
 
-    if (unlikely(filterExpire && m_enableKeyExpire)) {
+    if (mmkv_unlikely(filterExpire && m_enableKeyExpire)) {
         SCOPED_LOCK(m_exclusiveProcessLock);
         fullWriteback(nullptr, true);
     }

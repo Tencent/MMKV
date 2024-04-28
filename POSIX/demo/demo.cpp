@@ -39,10 +39,13 @@
 using namespace std;
 using namespace mmkv;
 
-string to_string(const vector<string> &arr, const char* sp = ", ") {
+string to_string(const std::string& str) {  return str; }
+
+template <class T>
+string to_string(const vector<T> &arr, const char* sp = ", ") {
     string str;
     for (const auto &element : arr) {
-        str += element;
+        str += to_string(element);
         str += sp;
     }
     if (!str.empty()) {
@@ -93,6 +96,26 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     string result;
     mmkv->getString("string", result);
     cout << "string = " << result << endl;
+
+    {
+        if (!decodeOnly) {
+            vector<string> vec = {"Hello", "MMKV-示例", "for", "POSIX"};
+            mmkv->set(vec, "string-set");
+        }
+        vector<string> vecResult;
+        mmkv->getVector("string-set", vecResult);
+        cout << "string-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<int32_t> vec = {1024, 0, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max()};
+            mmkv->set(vec, "int32-set");
+        }
+        vector<int32_t> vecResult;
+        mmkv->getVector("int32-set", vecResult);
+        cout << "int32-set = " << to_string(vecResult) << endl;
+    }
 
     cout << "allKeys: " << ::to_string(mmkv->allKeys()) << endl;
     cout << "count = " << mmkv->count() << ", totalSize = " << mmkv->totalSize() << endl;

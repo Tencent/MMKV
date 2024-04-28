@@ -21,9 +21,15 @@
 #ifndef MMKV_MMKV_H
 #define MMKV_MMKV_H
 #ifdef __cplusplus
+#include "MMKVPredef.h"
 
+#ifdef MMKV_APPLE
 #include "MMBuffer.h"
+#else
+#include "MiniPBCoder.h"
+#endif
 #include <cstdint>
+#include <type_traits>
 
 namespace mmkv {
 class CodedOutputData;
@@ -48,6 +54,30 @@ enum MMKVMode : uint32_t {
 };
 
 #define MMKV_OUT
+
+#ifndef MMKV_APPLE
+template <class T>
+struct mmkv_is_vector { static constexpr bool value = false; };
+template <class T, class A>
+struct mmkv_is_vector<std::vector<T, A>> { static constexpr bool value = true; };
+template <class T>
+inline constexpr bool mmkv_is_vector_v = mmkv_is_vector<T>::value;
+
+template <class T>
+concept MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE = std::is_integral_v<T> || std::is_floating_point_v<T>;
+
+template <class T>
+concept MMKV_SUPPORTED_POD_VALUE_TYPE = std::is_same_v<T, const char*> || std::is_same_v<T, std::string> ||
+    std::is_same_v<T, mmkv::MMBuffer>;
+
+template <class T>
+concept MMKV_SUPPORTED_VECTOR_VALUE_TYPE = mmkv_is_vector_v<T> &&
+    (MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<typename T::value_type> || MMKV_SUPPORTED_POD_VALUE_TYPE<typename T::value_type>);
+
+template <class T>
+concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MMKV_SUPPORTED_POD_VALUE_TYPE<T> ||
+    MMKV_SUPPORTED_VECTOR_VALUE_TYPE<T>;
+#endif
 
 class MMKV {
 #ifndef MMKV_ANDROID
@@ -190,6 +220,12 @@ class MMKV {
     mmkv::MMBuffer getDataWithoutMTimeForKey(MMKVKey_t key);
     size_t filterExpiredKeys();
 
+#ifndef MMKV_APPLE
+    static constexpr uint32_t ConstFixed32Size = 4;
+    void shared_lock();
+    void shared_unlock();
+#endif
+
 public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo, mmkv::LogHandler handler = nullptr);
@@ -292,6 +328,17 @@ public:
 
     bool set(const std::vector<std::string> &vector, MMKVKey_t key);
     bool set(const std::vector<std::string> &vector, MMKVKey_t key, uint32_t expireDuration);
+
+    template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
+    bool set(const T& value, MMKVKey_t key) {
+        return set<T>(value, key, m_expiredInSeconds);
+    }
+
+    template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
+    bool set(const T& value, MMKVKey_t key, uint32_t expireDuration);
+
+    template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
+    bool getVector(MMKVKey_t key, T &result);
 
     // inplaceModification is recommended for faster speed
     bool getString(MMKVKey_t key, std::string &result, bool inplaceModification = true);
@@ -459,6 +506,42 @@ public:
     explicit MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
 };
+
+#ifndef MMKV_APPLE
+template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
+bool MMKV::set(const T& value, MMKVKey_t key, uint32_t expireDuration) {
+    if (isKeyEmpty(key)) {
+        return false;
+    }
+    auto data = mmkv::MiniPBCoder::encodeDataWithObject(value);
+    if (mmkv_unlikely(m_enableKeyExpire) && data.length() > 0) {
+        auto tmp = mmkv::MMBuffer(data.length() + ConstFixed32Size);
+        auto ptr = (uint8_t *) tmp.getPtr();
+        memcpy(ptr, data.getPtr(), data.length());
+        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        memcpy(ptr + data.length(), &time, ConstFixed32Size);
+        data = std::move(tmp);
+    }
+    return setDataForKey(std::move(data), key);
+}
+
+template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
+bool MMKV::getVector(MMKVKey_t key, T &result) {
+    if (isKeyEmpty(key)) {
+        return false;
+    }
+    shared_lock();
+
+    bool ret = false;
+    auto data = getDataForKey(key);
+    if (data.length() > 0) {
+        ret = mmkv::MiniPBCoder::decodeVector(data, result);
+    }
+
+    shared_unlock();
+    return ret;
+}
+#endif // !MMKV_APPLE
 
 MMKV_NAMESPACE_END
 

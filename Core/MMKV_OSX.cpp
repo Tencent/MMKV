@@ -35,6 +35,7 @@
 #    include <sys/utsname.h>
 #    include <sys/sysctl.h>
 #    include "MMKV_OSX.h"
+#    include "MMKVLog.h"
 
 #    ifdef MMKV_IOS
 #        include <sys/mman.h>
@@ -139,7 +140,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
     if (tmpData) {
         // delay write the size needed for encoding tmpData
         // avoid memory copying
-        if (likely(!m_enableKeyExpire)) {
+        if (mmkv_likely(!m_enableKeyExpire)) {
             return setDataForKey(MMBuffer(tmpData, MMBufferNoCopy), key, true);
         } else {
             MMBuffer data(tmpData, MMBufferNoCopy);
@@ -167,7 +168,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
                     return false;
                 }
                 if (archived.length > 0) {
-                    if (likely(!m_enableKeyExpire)) {
+                    if (mmkv_likely(!m_enableKeyExpire)) {
                         return setDataForKey(MMBuffer(archived, MMBufferNoCopy), key);
                     } else {
                         MMBuffer data(archived, MMBufferNoCopy);
@@ -295,7 +296,7 @@ NSArray *MMKV::allKeys(bool filterExpire) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
 
-    if (unlikely(filterExpire && m_enableKeyExpire)) {
+    if (mmkv_unlikely(filterExpire && m_enableKeyExpire)) {
         SCOPED_LOCK(m_exclusiveProcessLock);
         fullWriteback(nullptr, true);
     }

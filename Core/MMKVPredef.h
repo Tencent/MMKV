@@ -217,6 +217,18 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 
 #endif //cplus-plus
 
+#ifndef MMKV_WIN32
+#    ifndef likely
+#        define mmkv_unlikely(x) (__builtin_expect(bool(x), 0))
+#        define mmkv_likely(x) (__builtin_expect(bool(x), 1))
+#    endif
+#else
+#    ifndef likely
+#        define mmkv_unlikely(x) (x)
+#        define mmkv_likely(x) (x)
+#    endif
+#endif
+
 #if defined(__arm__)
   #if defined(__ARM_ARCH_7A__)
     #if defined(__ARM_NEON__)
