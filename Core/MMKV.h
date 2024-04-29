@@ -233,7 +233,7 @@ public:
 
 #ifndef MMKV_ANDROID
 
-    // mmapID: any unique ID (com.tencent.xin.pay, etc)
+    // mmapID: any unique ID (com.tencent.xin.pay, etc.)
     // if you want a per-user mmkv, you could merge user-id within mmapID
     // cryptKey: 16 bytes at most
     static MMKV *mmkvWithID(const std::string &mmapID,
@@ -244,7 +244,7 @@ public:
 
 #else // defined(MMKV_ANDROID)
 
-    // mmapID: any unique ID (com.tencent.xin.pay, etc)
+    // mmapID: any unique ID (com.tencent.xin.pay, etc.)
     // if you want a per-user mmkv, you could merge user-id within mmapID
     // cryptKey: 16 bytes at most
     static MMKV *mmkvWithID(const std::string &mmapID,
@@ -303,12 +303,12 @@ public:
     bool set(double value, MMKVKey_t key);
     bool set(double value, MMKVKey_t key, uint32_t expireDuration);
 
-    // avoid unexpected type conversion (pointer to bool, etc)
+    // avoid unexpected type conversion (pointer to bool, etc.)
     template <typename T>
     requires(!MMKV_SUPPORTED_VALUE_TYPE<T>)
     bool set(T value, MMKVKey_t key) = delete;
 
-    // avoid unexpected type conversion (pointer to bool, etc)
+    // avoid unexpected type conversion (pointer to bool, etc.)
     template <typename T>
     requires(!MMKV_SUPPORTED_VALUE_TYPE<T>)
     bool set(T value, MMKVKey_t key, uint32_t expireDuration) = delete;
