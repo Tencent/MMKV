@@ -1,5 +1,8 @@
 # MMKV for OpenHarmony Change Log
 
+## v1.3.6-alpha / 2024-04-29
+Add encode / decode `float` interface.
+
 ## v1.3.5 / 2024-04-24
 Fix a bug in `MMKV.initialize()` that fails to handle the optional parameter _logLevel_.
 
