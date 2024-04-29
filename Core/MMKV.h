@@ -55,7 +55,6 @@ enum MMKVMode : uint32_t {
 
 #define MMKV_OUT
 
-#ifndef MMKV_APPLE
 template <class T>
 struct mmkv_is_vector { static constexpr bool value = false; };
 template <class T, class A>
@@ -77,7 +76,6 @@ concept MMKV_SUPPORTED_VECTOR_VALUE_TYPE = mmkv_is_vector_v<T> &&
 template <class T>
 concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MMKV_SUPPORTED_POD_VALUE_TYPE<T> ||
     MMKV_SUPPORTED_VECTOR_VALUE_TYPE<T>;
-#endif
 
 class MMKV {
 #ifndef MMKV_ANDROID

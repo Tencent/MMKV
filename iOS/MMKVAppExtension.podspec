@@ -25,7 +25,7 @@ Pod::Spec.new do |s|
   s.libraries    = "z", "c++"
   s.requires_arc = false
   s.pod_target_xcconfig = {
-    "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++17",
+    "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++20",
     "CLANG_CXX_LIBRARY" => "libc++",
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
     "GCC_PREPROCESSOR_DEFINITIONS" => "MMKV_IOS_EXTENSION",
