@@ -443,7 +443,7 @@ void testClearAllKeepSpace() {
         mmkv->set(12345, key2);
         mmkv->clearAll(true);
         mmkv->close();
-        mmkv = MMKV::mmkvWithID("testClearAllKeepSpaceWithCrypt");
+        mmkv = MMKV::mmkvWithID("testClearAllKeepSpaceWithCrypt", MMKV_SINGLE_PROCESS, &aesKey);
         assert(mmkv->count() == 0);
 
         mmkv->set(456, key2);

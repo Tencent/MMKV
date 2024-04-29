@@ -670,9 +670,9 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                             return true;
                         }
                     } catch (std::exception &exception) {
-                        MMKVError("compareBeforeSet exception: %s", exception.what());
+                        MMKVWarning("compareBeforeSet exception: %s", exception.what());
                     } catch (...) {
-                        MMKVError("compareBeforeSet fail");
+                        MMKVWarning("compareBeforeSet fail");
                     }
                 } else {
                     if (oldValueData == data) {
