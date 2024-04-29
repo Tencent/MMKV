@@ -751,18 +751,12 @@ static napi_value encodeNumberSet(napi_env env, napi_callback_info info) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToDoubleArray(env, args[2]);
-        auto valueLength = value.size() * pbDoubleSize();
-        auto buffer = MMBuffer(valueLength);
-        CodedOutputData output(buffer.getPtr(), valueLength);
-        for (auto single : value) {
-            output.writeDouble(single);
-        }
         if (IsNValueUndefined(env, args[3])) {
-            auto ret = kv->set(buffer, key);
+            auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
         uint32_t expiration = NValueToUInt32(env, args[3]);
-        auto ret = kv->set(buffer, key, expiration);
+        auto ret = kv->set(value, key, expiration);
         return BoolToNValue(env, ret);
     }
     return BoolToNValue(env, false);
@@ -777,14 +771,8 @@ static napi_value decodeNumberSet(napi_env env, napi_callback_info info) {
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        MMBuffer buffer;
-        if (kv->getBytes(key, buffer)) {
-            vector<double> result;
-            CodedInputData input(buffer.getPtr(), buffer.length());
-            while (!input.isAtEnd()) {
-                auto value = input.readDouble();
-                result.push_back(value);
-            }
+        vector<double> result;
+        if (kv->getVector(key, result)) {
             return DoubleArrayToNValue(env, result);
         }
     }
@@ -801,19 +789,12 @@ static napi_value encodeBoolSet(napi_env env, napi_callback_info info) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToBoolArray(env, args[2]);
-        auto valueLength = value.size() * pbBoolSize();
-        auto buffer = MMBuffer(valueLength);
-        CodedOutputData output(buffer.getPtr(), valueLength);
-        for (auto single : value) {
-            output.writeBool(single);
-        }
         if (IsNValueUndefined(env, args[3])) {
-            auto ret = kv->set(buffer, key);
+            auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
         uint32_t expiration = NValueToUInt32(env, args[3]);
-        auto ret = kv->set(buffer, key, expiration);
-        return BoolToNValue(env, ret);
+        auto ret = kv->set(value, key, expiration);
     }
     return BoolToNValue(env, false);
 }
@@ -827,14 +808,8 @@ static napi_value decodeBoolSet(napi_env env, napi_callback_info info) {
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        MMBuffer buffer;
-        if (kv->getBytes(key, buffer)) {
-            vector<bool> result;
-            CodedInputData input(buffer.getPtr(), buffer.length());
-            while (!input.isAtEnd()) {
-                auto value = input.readBool();
-                result.push_back(value);
-            }
+        vector<bool> result;
+        if (kv->getVector(key, result)) {
             return BoolArrayToNValue(env, result);
         }
     }

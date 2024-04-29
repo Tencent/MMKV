@@ -373,7 +373,7 @@ vector<string> MiniPBCoder::decodeOneVector() {
 
 bool MiniPBCoder::decodeOneVector(std::vector<bool> &result) {
     try {
-        auto size = m_inputBuffer->length();
+        auto size = m_inputData->readInt32();
         result.reserve(size / pbBoolSize());
 
         while (!m_inputData->isAtEnd()) {
@@ -459,7 +459,7 @@ bool MiniPBCoder::decodeOneVector(std::vector<uint64_t> &result) {
 
 bool MiniPBCoder::decodeOneVector(std::vector<float> &result) {
     try {
-        auto size = m_inputBuffer->length();
+        auto size = m_inputData->readInt32();
         result.reserve(size / pbFloatSize());
 
         while (!m_inputData->isAtEnd()) {
@@ -477,7 +477,7 @@ bool MiniPBCoder::decodeOneVector(std::vector<float> &result) {
 
 bool MiniPBCoder::decodeOneVector(std::vector<double> &result) {
     try {
-        auto size = m_inputBuffer->length();
+        auto size = m_inputData->readInt32();
         result.reserve(size / pbDoubleSize());
 
         while (!m_inputData->isAtEnd()) {
@@ -593,9 +593,12 @@ vector<string> MiniPBCoder::decodeVector(const MMBuffer &oData) {
 }
 
 MMBuffer MiniPBCoder::getEncodeData(const std::vector<bool> &value) {
-    auto valueLength = value.size() * pbBoolSize();
-    auto buffer = MMBuffer(valueLength);
-    CodedOutputData output(buffer.getPtr(), valueLength);
+    auto valueLength = static_cast<uint32_t>(value.size() * pbBoolSize());
+    auto size = pbRawVarint32Size(valueLength) + valueLength;
+    auto buffer = MMBuffer(size);
+    CodedOutputData output(buffer.getPtr(), size);
+    output.writeUInt32(valueLength);
+
     for (auto single : value) {
         output.writeBool(single);
     }
@@ -603,9 +606,12 @@ MMBuffer MiniPBCoder::getEncodeData(const std::vector<bool> &value) {
 }
 
 MMBuffer MiniPBCoder::getEncodeData(const std::vector<float> &value) {
-    auto valueLength = value.size() * pbFloatSize();
-    auto buffer = MMBuffer(valueLength);
-    CodedOutputData output(buffer.getPtr(), valueLength);
+    auto valueLength = static_cast<uint32_t>(value.size() * pbFloatSize());
+    auto size = pbRawVarint32Size(valueLength) + valueLength;
+    auto buffer = MMBuffer(size);
+    CodedOutputData output(buffer.getPtr(), size);
+    output.writeUInt32(valueLength);
+
     for (auto single : value) {
         output.writeFloat(single);
     }
@@ -613,9 +619,12 @@ MMBuffer MiniPBCoder::getEncodeData(const std::vector<float> &value) {
 }
 
 MMBuffer MiniPBCoder::getEncodeData(const std::vector<double> &value) {
-    auto valueLength = value.size() * pbDoubleSize();
-    auto buffer = MMBuffer(valueLength);
-    CodedOutputData output(buffer.getPtr(), valueLength);
+    auto valueLength = static_cast<uint32_t>(value.size() * pbDoubleSize());
+    auto size = pbRawVarint32Size(valueLength) + valueLength;
+    auto buffer = MMBuffer(size);
+    CodedOutputData output(buffer.getPtr(), size);
+    output.writeUInt32(valueLength);
+
     for (auto single : value) {
         output.writeDouble(single);
     }

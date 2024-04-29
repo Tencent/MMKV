@@ -16,7 +16,7 @@ include_directories(${NATIVERENDER_ROOT_PATH}
 add_library(mmkv SHARED native_bridge.cpp)
 
 set_target_properties(mmkv PROPERTIES
-        CXX_STANDARD 17
+        CXX_STANDARD 20
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
         )
