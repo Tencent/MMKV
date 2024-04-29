@@ -93,11 +93,18 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     cout << "double = " << mmkv->getDouble("double") << endl;
 
     if (!decodeOnly) {
-        mmkv->set("Hello, MMKV-示例 for POSIX", "string");
+        mmkv->set("Hello, MMKV-示例 for POSIX", "raw_string");
+        string str = "Hello, MMKV-示例 for POSIX string";
+        mmkv->set(str, "string");
+        mmkv->set(string_view(str).substr(7, 21), "string_view");
     }
     string result;
+    mmkv->getString("raw_string", result);
+    cout << "raw_string = " << result << endl;
     mmkv->getString("string", result);
     cout << "string = " << result << endl;
+    mmkv->getString("string_view", result);
+    cout << "string_view = " << result << endl;
 
     containerTest(mmkv, decodeOnly);
 

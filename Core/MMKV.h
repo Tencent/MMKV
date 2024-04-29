@@ -179,6 +179,9 @@ class MMKV {
 
     // isDataHolder: avoid memory copying
     bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, bool isDataHolder = false);
+#ifndef MMKV_APPLE
+    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, uint32_t expireDuration);
+#endif
 
     bool removeDataForKey(MMKVKey_t key);
 
@@ -324,6 +327,9 @@ public:
 
     bool set(const std::string &value, MMKVKey_t key);
     bool set(const std::string &value, MMKVKey_t key, uint32_t expireDuration);
+
+    bool set(std::string_view value, MMKVKey_t key);
+    bool set(std::string_view value, MMKVKey_t key, uint32_t expireDuration);
 
     bool set(const mmkv::MMBuffer &value, MMKVKey_t key);
     bool set(const mmkv::MMBuffer &value, MMKVKey_t key, uint32_t expireDuration);
