@@ -54,6 +54,8 @@ string to_string(const vector<T> &arr, const char* sp = ", ") {
     return str;
 }
 
+void containerTest(MMKV *mmkv, bool decodeOnly);
+
 void functionalTest(MMKV *mmkv, bool decodeOnly) {
     if (!decodeOnly) {
         mmkv->set(true, "bool");
@@ -97,25 +99,7 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     mmkv->getString("string", result);
     cout << "string = " << result << endl;
 
-    {
-        if (!decodeOnly) {
-            vector<string> vec = {"Hello", "MMKV-示例", "for", "POSIX"};
-            mmkv->set(vec, "string-set");
-        }
-        vector<string> vecResult;
-        mmkv->getVector("string-set", vecResult);
-        cout << "string-set = " << to_string(vecResult) << endl;
-    }
-
-    {
-        if (!decodeOnly) {
-            vector<int32_t> vec = {1024, 0, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max()};
-            mmkv->set(vec, "int32-set");
-        }
-        vector<int32_t> vecResult;
-        mmkv->getVector("int32-set", vecResult);
-        cout << "int32-set = " << to_string(vecResult) << endl;
-    }
+    containerTest(mmkv, decodeOnly);
 
     cout << "allKeys: " << ::to_string(mmkv->allKeys()) << endl;
     cout << "count = " << mmkv->count() << ", totalSize = " << mmkv->totalSize() << endl;
@@ -141,6 +125,88 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     mmkv->clearMemoryCache();
     cout << "allKeys: " << ::to_string(mmkv->allKeys()) << endl;
     cout << "isFileValid[" << mmkv->mmapID() + "]: " << MMKV::isFileValid(mmkv->mmapID()) << endl;
+}
+
+void containerTest(MMKV *mmkv, bool decodeOnly) {
+    {
+        if (!decodeOnly) {
+            vector<string> vec = {"Hello", "MMKV-示例", "for", "POSIX"};
+            mmkv->set(vec, "string-set");
+        }
+        vector<string> vecResult;
+        mmkv->getVector("string-set", vecResult);
+        cout << "string-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<bool> vec = {true, false, std::numeric_limits<bool>::min(), std::numeric_limits<bool>::max()};
+            mmkv->set(vec, "bool-set");
+        }
+        vector<bool> vecResult;
+        mmkv->getVector("bool-set", vecResult);
+        cout << "bool-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<int32_t> vec = {1024, 0, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max()};
+            mmkv->set(vec, "int32-set");
+        }
+        vector<int32_t> vecResult;
+        mmkv->getVector("int32-set", vecResult);
+        cout << "int32-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<uint32_t> vec = {2048, 0, std::numeric_limits<uint32_t>::min(), std::numeric_limits<uint32_t>::max()};
+            mmkv->set(vec, "uint32-set");
+        }
+        vector<uint32_t> vecResult;
+        mmkv->getVector("uint32-set", vecResult);
+        cout << "uint32-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<int64_t> vec = {1024, 0, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max()};
+            mmkv->set(vec, "int64-set");
+        }
+        vector<int64_t> vecResult;
+        mmkv->getVector("int64-set", vecResult);
+        cout << "int64-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<uint64_t> vec = {1024, 0, std::numeric_limits<uint64_t>::min(), std::numeric_limits<uint64_t>::max()};
+            mmkv->set(vec, "uint64-set");
+        }
+        vector<uint64_t> vecResult;
+        mmkv->getVector("uint64-set", vecResult);
+        cout << "uint64-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<float> vec = {1024.0, 0.0, std::numeric_limits<float>::min(), std::numeric_limits<float>::max()};
+            mmkv->set(vec, "float-set");
+        }
+        vector<float> vecResult;
+        mmkv->getVector("float-set", vecResult);
+        cout << "float-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<double> vec = {1024.0, 0.0, std::numeric_limits<double>::min(), std::numeric_limits<double>::max()};
+            mmkv->set(vec, "double-set");
+        }
+        vector<double> vecResult;
+        mmkv->getVector("double-set", vecResult);
+        cout << "double-set = " << to_string(vecResult) << endl;
+    }
 }
 
 constexpr int32_t keyCount = 10000;

@@ -70,9 +70,23 @@ class MiniPBCoder {
     size_t prepareObjectForEncode(const std::string &str);
     size_t prepareObjectForEncode(const std::vector<std::string> &vector);
     size_t prepareObjectForEncode(const std::vector<int32_t> &vec);
+    size_t prepareObjectForEncode(const std::vector<uint32_t> &vec);
+    size_t prepareObjectForEncode(const std::vector<int64_t> &vec);
+    size_t prepareObjectForEncode(const std::vector<uint64_t> &vec);
 
     std::vector<std::string> decodeOneVector();
+    bool decodeOneVector(std::vector<bool> &result);
     bool decodeOneVector(std::vector<int32_t> &result);
+    bool decodeOneVector(std::vector<uint32_t> &result);
+    bool decodeOneVector(std::vector<int64_t> &result);
+    bool decodeOneVector(std::vector<uint64_t> &result);
+    bool decodeOneVector(std::vector<float> &result);
+    bool decodeOneVector(std::vector<double> &result);
+
+    // special case for fixed size types
+    MMBuffer getEncodeData(const std::vector<bool> &obj);
+    MMBuffer getEncodeData(const std::vector<float> &obj);
+    MMBuffer getEncodeData(const std::vector<double> &obj);
 #else
     // NSString, NSData, NSDate
     size_t prepareObjectForEncode(__unsafe_unretained NSObject *obj);
