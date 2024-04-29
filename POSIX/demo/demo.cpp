@@ -206,6 +206,9 @@ void containerTest(MMKV *mmkv, bool decodeOnly) {
         vector<double> vecResult;
         mmkv->getVector("double-set", vecResult);
         cout << "double-set = " << to_string(vecResult) << endl;
+
+        // un-comment to test the functionality of set<!MMKV_SUPPORTED_VALUE_TYPE<T>>(const T& value, key)
+        // mmkv->set(&vecResult, "unsupported-type");
     }
 }
 

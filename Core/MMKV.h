@@ -307,6 +307,8 @@ public:
     template <typename T>
     requires(!MMKV_SUPPORTED_VALUE_TYPE<T>)
     bool set(T value, MMKVKey_t key) = delete;
+
+    // avoid unexpected type conversion (pointer to bool, etc)
     template <typename T>
     requires(!MMKV_SUPPORTED_VALUE_TYPE<T>)
     bool set(T value, MMKVKey_t key, uint32_t expireDuration) = delete;
