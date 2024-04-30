@@ -135,32 +135,46 @@ typedef size_t (*AShmem_getSize_t)(int fd);
 #endif
 
 int ASharedMemory_create(const char *name, size_t size) {
-    int fd = -1;
 #ifndef MMKV_OHOS
-    if (g_android_api >= __ANDROID_API_O__) {
+    if (g_android_api >= __ANDROID_API_O__ || g_android_api >= __ANDROID_API_M__) {
         static auto handle = loadLibrary();
         static AShmem_create_t funcPtr =
             (handle != nullptr) ? reinterpret_cast<AShmem_create_t>(dlsym(handle, "ASharedMemory_create")) : nullptr;
         if (funcPtr) {
-            fd = funcPtr(name, size);
+            int fd = funcPtr(name, size);
             if (fd < 0) {
                 MMKVError("fail to ASharedMemory_create %s with size %zu, errno:%s", name, size, strerror(errno));
+            } else {
+                MMKVInfo("ASharedMemory_create %s with size %zu, fd:%d", name, size, fd);
+                return fd;
+            }
+        } else if (g_android_api >= __ANDROID_API_O__) {
+            MMKVWarning("fail to locate ASharedMemory_create() from loading libandroid.so");
+        }
+
+        static AShmem_create_t regionFuncPtr =
+            (handle != nullptr) ? reinterpret_cast<AShmem_create_t>(dlsym(handle, "ashmem_create_region")) : nullptr;
+        if (regionFuncPtr) {
+            int fd = regionFuncPtr(name, size);
+            if (fd < 0) {
+                MMKVError("fail to ashmem_create_region %s with size %zu, errno:%s", name, size, strerror(errno));
+            } else {
+                MMKVInfo("ashmem_create_region %s with size %zu, fd:%d", name, size, fd);
+                return fd;
             }
         } else {
-            MMKVWarning("fail to locate ASharedMemory_create() from loading libandroid.so");
+            MMKVWarning("fail to locate ashmem_create_region() from loading libandroid.so");
         }
     }
 #endif
+    int fd = open(ASHMEM_NAME_DEF, O_RDWR | O_CLOEXEC);
     if (fd < 0) {
-        fd = open(ASHMEM_NAME_DEF, O_RDWR | O_CLOEXEC);
-        if (fd < 0) {
-            MMKVError("fail to open ashmem:%s, %s", name, strerror(errno));
-        } else {
-            if (ioctl(fd, ASHMEM_SET_NAME, name) != 0) {
-                MMKVError("fail to set ashmem name:%s, %s", name, strerror(errno));
-            } else if (ioctl(fd, ASHMEM_SET_SIZE, size) != 0) {
-                MMKVError("fail to set ashmem:%s, size %zu, %s", name, size, strerror(errno));
-            }
+        MMKVError("fail to open ashmem:%s, %s", name, strerror(errno));
+    } else {
+        if (ioctl(fd, ASHMEM_SET_NAME, name) != 0) {
+            MMKVError("fail to set ashmem name:%s, %s", name, strerror(errno));
+        } else if (ioctl(fd, ASHMEM_SET_SIZE, size) != 0) {
+            MMKVError("fail to set ashmem:%s, size %zu, %s", name, size, strerror(errno));
         }
     }
     return fd;
