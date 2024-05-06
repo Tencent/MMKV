@@ -96,10 +96,10 @@ export default class EntryAbility extends UIAbility {
 * **Deleting & Querying**:
 
     ```js
-    mmkv.removeValue('bool');
+    mmkv.removeValueForKey('bool');
     console.info('contains "bool"', mmkv.containsKey('bool'));
 
-    mmkv.removeValues(['int32', 'int']);
+    mmkv.removeValuesForKeys(['int32', 'int']);
     console.info('all keys: ', mmkv.allKeys().join());
     ```
 
