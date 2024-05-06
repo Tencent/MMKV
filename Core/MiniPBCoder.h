@@ -26,6 +26,7 @@
 
 #include "MMBuffer.h"
 #include <cstdint>
+#include <span>
 
 namespace mmkv {
 
@@ -68,11 +69,11 @@ class MiniPBCoder {
 
 #ifndef MMKV_APPLE
     size_t prepareObjectForEncode(const std::string &str);
-    size_t prepareObjectForEncode(const std::vector<std::string> &vector);
-    size_t prepareObjectForEncode(const std::vector<int32_t> &vec);
-    size_t prepareObjectForEncode(const std::vector<uint32_t> &vec);
-    size_t prepareObjectForEncode(const std::vector<int64_t> &vec);
-    size_t prepareObjectForEncode(const std::vector<uint64_t> &vec);
+    size_t prepareObjectForEncode(const std::span<const std::string> &vector);
+    size_t prepareObjectForEncode(const std::span<const int32_t> &vec);
+    size_t prepareObjectForEncode(const std::span<const uint32_t> &vec);
+    size_t prepareObjectForEncode(const std::span<const int64_t> &vec);
+    size_t prepareObjectForEncode(const std::span<const uint64_t> &vec);
 
     std::vector<std::string> decodeOneVector();
     bool decodeOneVector(std::vector<bool> &result);
@@ -85,8 +86,8 @@ class MiniPBCoder {
 
     // special case for fixed size types
     MMBuffer getEncodeData(const std::vector<bool> &obj);
-    MMBuffer getEncodeData(const std::vector<float> &obj);
-    MMBuffer getEncodeData(const std::vector<double> &obj);
+    MMBuffer getEncodeData(const std::span<const float> &obj);
+    MMBuffer getEncodeData(const std::span<const double> &obj);
 #else
     // NSString, NSData, NSDate
     size_t prepareObjectForEncode(__unsafe_unretained NSObject *obj);

@@ -236,7 +236,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const string &str) {
     return index;
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const vector<string> &v) {
+size_t MiniPBCoder::prepareObjectForEncode(const span<const string> &v) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
     size_t index = m_encodeItems->size() - 1;
@@ -258,7 +258,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const vector<string> &v) {
     return index;
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const std::vector<int32_t> &vec) {
+size_t MiniPBCoder::prepareObjectForEncode(const std::span<const int32_t> &vec) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
     size_t index = m_encodeItems->size() - 1;
@@ -283,7 +283,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const std::vector<int32_t> &vec) {
     return index;
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const std::vector<uint32_t> &vec) {
+size_t MiniPBCoder::prepareObjectForEncode(const std::span<const uint32_t> &vec) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
     size_t index = m_encodeItems->size() - 1;
@@ -308,7 +308,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const std::vector<uint32_t> &vec) {
     return index;
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const std::vector<int64_t> &vec) {
+size_t MiniPBCoder::prepareObjectForEncode(const std::span<const int64_t> &vec) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
     size_t index = m_encodeItems->size() - 1;
@@ -333,7 +333,7 @@ size_t MiniPBCoder::prepareObjectForEncode(const std::vector<int64_t> &vec) {
     return index;
 }
 
-size_t MiniPBCoder::prepareObjectForEncode(const std::vector<uint64_t> &vec) {
+size_t MiniPBCoder::prepareObjectForEncode(const std::span<const uint64_t> &vec) {
     m_encodeItems->push_back(PBEncodeItem());
     PBEncodeItem *encodeItem = &(m_encodeItems->back());
     size_t index = m_encodeItems->size() - 1;
@@ -605,7 +605,7 @@ MMBuffer MiniPBCoder::getEncodeData(const std::vector<bool> &value) {
     return buffer;
 }
 
-MMBuffer MiniPBCoder::getEncodeData(const std::vector<float> &value) {
+MMBuffer MiniPBCoder::getEncodeData(const std::span<const float> &value) {
     auto valueLength = static_cast<uint32_t>(value.size() * pbFloatSize());
     auto size = pbRawVarint32Size(valueLength) + valueLength;
     auto buffer = MMBuffer(size);
@@ -618,7 +618,7 @@ MMBuffer MiniPBCoder::getEncodeData(const std::vector<float> &value) {
     return buffer;
 }
 
-MMBuffer MiniPBCoder::getEncodeData(const std::vector<double> &value) {
+MMBuffer MiniPBCoder::getEncodeData(const std::span<const double> &value) {
     auto valueLength = static_cast<uint32_t>(value.size() * pbDoubleSize());
     auto size = pbRawVarint32Size(valueLength) + valueLength;
     auto buffer = MMBuffer(size);

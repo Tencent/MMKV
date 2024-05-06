@@ -167,7 +167,8 @@ void containerTest(MMKV *mmkv, bool decodeOnly) {
 
     {
         if (!decodeOnly) {
-            vector<uint32_t> vec = {2048, 0, std::numeric_limits<uint32_t>::min(), std::numeric_limits<uint32_t>::max()};
+            constexpr uint32_t arr[] = {2048, 0, std::numeric_limits<uint32_t>::min(), std::numeric_limits<uint32_t>::max()};
+            std::span vec = arr;
             mmkv->set(vec, "uint32-set");
         }
         vector<uint32_t> vecResult;
@@ -177,8 +178,8 @@ void containerTest(MMKV *mmkv, bool decodeOnly) {
 
     {
         if (!decodeOnly) {
-            vector<int64_t> vec = {1024, 0, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max()};
-            mmkv->set(vec, "int64-set");
+            constexpr int64_t vec[] = {1024, 0, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max()};
+            mmkv->set(std::span(vec), "int64-set");
         }
         vector<int64_t> vecResult;
         mmkv->getVector("int64-set", vecResult);

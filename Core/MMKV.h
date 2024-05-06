@@ -59,6 +59,8 @@ template <class T>
 struct mmkv_is_vector { static constexpr bool value = false; };
 template <class T, class A>
 struct mmkv_is_vector<std::vector<T, A>> { static constexpr bool value = true; };
+template <class T, size_t S>
+struct mmkv_is_vector<std::span<T, S>> { static constexpr bool value = true; };
 template <class T>
 inline constexpr bool mmkv_is_vector_v = mmkv_is_vector<T>::value;
 
@@ -521,7 +523,12 @@ bool MMKV::set(const T& value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    auto data = mmkv::MiniPBCoder::encodeDataWithObject(value);
+    mmkv::MMBuffer data;
+    if constexpr (std::is_same_v<T, std::vector<bool>>) {
+        data = mmkv::MiniPBCoder::encodeDataWithObject(value);
+    } else {
+        data = mmkv::MiniPBCoder::encodeDataWithObject(std::span(value));
+    }
     if (mmkv_unlikely(m_enableKeyExpire) && data.length() > 0) {
         auto tmp = mmkv::MMBuffer(data.length() + ConstFixed32Size);
         auto ptr = (uint8_t *) tmp.getPtr();
