@@ -116,7 +116,7 @@ export class MMKV {
         if (!MMKV.g_rootDir) {
             throw new Error('You should Call MMKV.initialize() first.')
         }
-        let handle = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        let handle: bigint = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey);
         if (!handle) {
             throw new Error('Fail to create the default MMKV instance in NAPI.');
         }
@@ -136,7 +136,7 @@ export class MMKV {
         if (!MMKV.g_rootDir) {
             throw new Error('You should Call MMKV.initialize() first.')
         }
-        let handle = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath, expectedCapacity);
+        let handle: bigint = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath, expectedCapacity);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }
@@ -732,7 +732,7 @@ export class MMKV {
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      */
     public static mmkvWithAshmemID(mmapID: string, size: number, mode: number, cryptKey?: string): MMKV {
-        let handle = native.mmkvWithIDAndSize(mmapID, size, (mode | MMKV.ASHMEM_MODE), cryptKey);
+        let handle: bigint = native.mmkvWithIDAndSize(mmapID, size, (mode | MMKV.ASHMEM_MODE), cryptKey);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }
@@ -749,7 +749,7 @@ export class MMKV {
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      */
     public static mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): MMKV {
-        let handle = native.mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKey);
+        let handle: bigint = native.mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKey);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }
