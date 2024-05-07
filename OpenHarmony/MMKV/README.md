@@ -124,7 +124,7 @@ export default class EntryAbility extends UIAbility {
   - `boolean, number, bigint, string`
 
 * Classes & Collections:
-  - `boolean[], number[], string[], ArrayBuffer`
+  - `boolean[], number[], string[], ArrayBuffer, TypedArray`
 
 ### Log
 
