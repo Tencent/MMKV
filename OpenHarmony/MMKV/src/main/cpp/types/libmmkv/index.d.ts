@@ -14,6 +14,8 @@ export const encodeInt64: (handle: bigint, key: string, value: bigint, expiratio
 export const decodeInt64: (handle: bigint, key: string, defaultValue: bigint) => bigint;
 export const encodeUInt64: (handle: bigint, key: string, value: bigint, expiration?: number) => boolean;
 export const decodeUInt64: (handle: bigint, key: string, defaultValue: bigint) => bigint;
+export const encodeFloat: (handle: bigint, key: string, value: number, expiration?: number) => boolean;
+export const decodeFloat: (handle: bigint, key: string, defaultValue: number) => number;
 export const encodeDouble: (handle: bigint, key: string, value: number, expiration?: number) => boolean;
 export const decodeDouble: (handle: bigint, key: string, defaultValue: number) => number;
 export const encodeString: (handle: bigint, key: string, value: string, expiration?: number) => boolean;
@@ -26,6 +28,14 @@ export const encodeBoolSet: (handle: bigint, key: string, value: boolean[], expi
 export const decodeBoolSet: (handle: bigint, key: string, defaultValue?: boolean[]) => boolean[];
 export const encodeBytes: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
 export const decodeBytes: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
+export const encodeInt32Array: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
+export const decodeInt32Array: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
+export const encodeUInt32Array: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
+export const decodeUInt32Array: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
+export const encodeInt64Array: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
+export const decodeInt64Array: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
+export const encodeUInt64Array: (handle: bigint, key: string, value: ArrayBuffer, expiration?: number) => boolean;
+export const decodeUInt64Array: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
 export const containsKey: (handle: bigint, key: string) => boolean;
 export const count: (handle: bigint, filterExpire: boolean) => bigint;
 export const allKeys: (handle: bigint, filterExpire: boolean) => string[];

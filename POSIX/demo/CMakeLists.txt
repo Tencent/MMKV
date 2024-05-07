@@ -31,7 +31,7 @@ add_executable(demo
 target_link_libraries(demo
         mmkv)
 set_target_properties(demo PROPERTIES
-        CXX_STANDARD 11
+        CXX_STANDARD 20
         )
 
 add_executable(process
@@ -39,7 +39,7 @@ add_executable(process
 target_link_libraries(process
         mmkv)
 set_target_properties(process PROPERTIES
-        CXX_STANDARD 11
+        CXX_STANDARD 17
         )
 
 add_executable(TestInterProcessLock
@@ -47,7 +47,7 @@ add_executable(TestInterProcessLock
 target_link_libraries(TestInterProcessLock
         mmkv)
 set_target_properties(TestInterProcessLock PROPERTIES
-        CXX_STANDARD 11
+        CXX_STANDARD 17
         )
 
 add_executable(UnitTest
@@ -55,7 +55,7 @@ add_executable(UnitTest
 target_link_libraries(UnitTest
         mmkv)
 set_target_properties(UnitTest PROPERTIES
-        CXX_STANDARD 11
+        CXX_STANDARD 20
         )
 
 add_dependencies(demo

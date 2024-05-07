@@ -26,6 +26,10 @@ import { NativeBuffer } from './NativeBuffer';
 import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 
+declare namespace internal {
+    type ArrayValueType = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | BigInt64Array | BigUint64Array | Float32Array | Float64Array;
+}
+
 /**
  * An highly efficient, reliable, multi-process key-value storage framework.
  * THE PERFECT drop-in replacement for Preferences.
@@ -116,7 +120,7 @@ export class MMKV {
         if (!MMKV.g_rootDir) {
             throw new Error('You should Call MMKV.initialize() first.')
         }
-        let handle = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        let handle: bigint = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey);
         if (!handle) {
             throw new Error('Fail to create the default MMKV instance in NAPI.');
         }
@@ -136,7 +140,7 @@ export class MMKV {
         if (!MMKV.g_rootDir) {
             throw new Error('You should Call MMKV.initialize() first.')
         }
-        let handle = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath, expectedCapacity);
+        let handle: bigint = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath, expectedCapacity);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }
@@ -238,6 +242,24 @@ export class MMKV {
      */
     public decodeUInt64(key: string, defaultValue?: bigint): bigint | undefined {
         return native.decodeUInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
+    }
+
+    /**
+     * Set float value with customize expiration in seconds.
+     * @param value { number }
+     * @param expiration override the default duration, {@link MMKV.ExpireNever} (0) means never expire.
+     * @returns true if success, false if failure.
+     */
+    public encodeFloat(key: string, value: number, expiration?: number): boolean {
+        return native.encodeFloat(this.nativeHandle, key, value, expiration);
+    }
+
+    /**
+     * Get float value.
+     * @returns { number | undefined }
+     */
+    public decodeFloat(key: string, defaultValue?: number): number | undefined {
+        return native.decodeFloat(this.nativeHandle, key, defaultValue ?? 0);
     }
 
     /**
@@ -346,6 +368,124 @@ export class MMKV {
      */
     public decodeBytes(key: string, defaultValue?: ArrayBuffer): ArrayBuffer | undefined {
         return native.decodeBytes(this.nativeHandle, key, defaultValue);
+    }
+
+    /**
+     * Encode a typed array.
+     * @param value { Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | BigInt64Array | BigUint64Array | Float32Array | Float64Array }
+     * @param expiration override the default duration, {@link MMKV.ExpireNever} (0) means never expire.
+     * @returns true if success, false if failure.
+     */
+    public encodeTypedArray(key: string, value: internal.ArrayValueType, expiration?: number): boolean {
+        if (value instanceof Int32Array) {
+            return native.encodeInt32Array(this.nativeHandle, key, value.buffer, expiration);
+        } else if (value instanceof Uint32Array) {
+            return native.encodeUInt32Array(this.nativeHandle, key, value.buffer, expiration);
+        } else if (value instanceof BigInt64Array) {
+            return native.encodeInt64Array(this.nativeHandle, key, value.buffer, expiration);
+        } else if (value instanceof BigUint64Array) {
+            return native.encodeUInt64Array(this.nativeHandle, key, value.buffer, expiration);
+        }
+        return native.encodeBytes(this.nativeHandle, key, value.buffer, expiration);
+    }
+
+    /**
+     * Get Int8Array value.
+     * @returns { Int8Array | undefined }
+     */
+    public decodeInt8Array(key: string, defaultValue?: Int8Array): Int8Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Int8Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Uint8Array value.
+     * @returns { Uint8Array | undefined }
+     */
+    public decodeUint8Array(key: string, defaultValue?: Uint8Array): Uint8Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Uint8Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Uint8ClampedArray value.
+     * @returns { Uint8ClampedArray | undefined }
+     */
+    public decodeUint8ClampedArray(key: string, defaultValue?: Uint8ClampedArray): Uint8ClampedArray | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Uint8ClampedArray(buffer) : undefined;
+    }
+
+    /**
+     * Get Int16Array value.
+     * @returns { Int16Array | undefined }
+     */
+    public decodeInt16Array(key: string, defaultValue?: Int16Array): Int16Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Int16Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Uint16Array value.
+     * @returns { Uint16Array | undefined }
+     */
+    public decodeUint16Array(key: string, defaultValue?: Uint16Array): Uint16Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Uint16Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Int32Array value.
+     * @returns { Int32Array | undefined }
+     */
+    public decodeInt32Array(key: string, defaultValue?: Int32Array): Int32Array | undefined {
+        let buffer = native.decodeInt32Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new Int32Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Uint32Array value.
+     * @returns { Uint32Array | undefined }
+     */
+    public decodeUint32Array(key: string, defaultValue?: Uint32Array): Uint32Array | undefined {
+        let buffer = native.decodeUInt32Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new Uint32Array(buffer) : undefined;
+    }
+
+    /**
+     * Get BigInt64Array value.
+     * @returns { BigInt64Array | undefined }
+     */
+    public decodeInt64Array(key: string, defaultValue?: BigInt64Array): BigInt64Array | undefined {
+        let buffer = native.decodeInt64Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new BigInt64Array(buffer) : undefined;
+    }
+
+    /**
+     * Get BigUint64Array value.
+     * @returns { BigUint64Array | undefined }
+     */
+    public decodeUint64Array(key: string, defaultValue?: BigUint64Array): BigUint64Array | undefined {
+        let buffer = native.decodeUInt64Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new BigUint64Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Float32Array value.
+     * @returns { Float32Array | undefined }
+     */
+    public decodeFloat32Array(key: string, defaultValue?: Float32Array): Float32Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Float32Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Float64Array value.
+     * @returns { Float64Array | undefined }
+     */
+    public decodeFloat64Array(key: string, defaultValue?: Float64Array): Float64Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Float64Array(buffer) : undefined;
     }
 
     /**
@@ -714,7 +854,7 @@ export class MMKV {
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      */
     public static mmkvWithAshmemID(mmapID: string, size: number, mode: number, cryptKey?: string): MMKV {
-        let handle = native.mmkvWithIDAndSize(mmapID, size, (mode | MMKV.ASHMEM_MODE), cryptKey);
+        let handle: bigint = native.mmkvWithIDAndSize(mmapID, size, (mode | MMKV.ASHMEM_MODE), cryptKey);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }
@@ -731,7 +871,7 @@ export class MMKV {
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      */
     public static mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): MMKV {
-        let handle = native.mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKey);
+        let handle: bigint = native.mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKey);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }

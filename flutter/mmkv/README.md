@@ -33,53 +33,7 @@ dependencies:
 If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.3.4.  
 
 #### iOS  
-To avoid conflict of the native lib name 'libMMKV.so' on iOS, we need to **change the plugin name 'mmkv' to 'mmkvflutter'**.  
-
-##### For a purely flutter App:  
-* Add this function `fix_mmkv_plugin_name()` to `ios/Podfile`, invoke it **before** calling any `flutter_xxx()` functions. Run `pod install` and we are all set.  
-* **Note**: you need to run `pod install` each time you have called `flutter pub get`, or has just returned to Xcode from Android Studio. 
-* We recommend **using Xcode** to debug iOS App.
-
-```ruby
-def fix_mmkv_plugin_name(flutter_application_path)
-  is_module = false
-  plugin_deps_file = File.expand_path(File.join(flutter_application_path, '..', '.flutter-plugins-dependencies'))
-  if not File.exists?(plugin_deps_file)
-    is_module = true;
-    plugin_deps_file = File.expand_path(File.join(flutter_application_path, '.flutter-plugins-dependencies'))
-  end
-
-  plugin_deps = JSON.parse(File.read(plugin_deps_file)).dig('plugins', 'ios') || []
-  plugin_deps.each do |plugin|
-    if plugin['name'] == 'mmkv' || plugin['name'] == 'mmkvflutter'
-      require File.expand_path(File.join(plugin['path'], 'tool', 'mmkvpodhelper.rb'))
-      mmkv_fix_plugin_name(flutter_application_path, is_module)
-      return
-    end
-  end
-  raise "Fail to find any mmkv plugin dependencies. If you're running pod install manually, make sure flutter pub get is executed first"
-end
-
-fix_mmkv_plugin_name(File.dirname(File.realpath(__FILE__)))
-```
-
-##### For using flutter as a module:  
-* For **[embding flutter](https://flutter.dev/docs/development/add-to-app/ios/project-setup#embed-the-flutter-module-in-your-existing-application)** to your existing iOS App, add the function `fix_mmkv_plugin_name()` above to your iOS App's `Podfile`, invoke it **before** calling any `flutter_xxx()` functions. Run `pod install` and we are all set.
-* **Note**: you need to run `pod install` each time you have called `flutter pub get`, or has just returned to Xcode from Android Studio. 
-* We recommend **using Xcode** to debug iOS App.
-
-```ruby
-def fix_mmkv_plugin_name(flutter_application_path)
-  .....
-end
-
-flutter_application_path = 'path/to/your/flutter_module'
-
-fix_mmkv_plugin_name(flutter_application_path)
-
-```
-
-**Note**: You can find the [script](https://github.com/Tencent/MMKV/blob/master/flutter/tool/fix_mmkv_plugin_name.rb) inside mmkv plugin under path `tool/fix_mmkv_plugin_name.rb`.
+Starting from v1.3.5, there's **no need** to change the plugin name 'mmkv' to 'mmkvflutter'. You should remove the script (`fix_mmkv_plugin_name()`) previously added in your Podfile. 
 
 #### Android  
 If you previously use `com.tencent.mmkv-static` or `com.tencent.mmkv-shared` in your Android App, you should move to `com.tencent.mmkv`.

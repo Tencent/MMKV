@@ -19,6 +19,7 @@
  */
 
 #include "MiniPBCoder.h"
+#include "MMKVLog.h"
 
 #ifdef MMKV_APPLE
 

@@ -71,19 +71,20 @@ def fix_mmkv_plugin_name_inside_registrant(plugin_registrant_path, is_module)
 end
 
 def mmkv_fix_plugin_name(flutter_application_path, is_module)
-  if is_module
-    flutter_dependencies_path = File.join(flutter_application_path, '.flutter-plugins-dependencies')
-    fix_mmkv_plugin_name_inside_dependencies(flutter_dependencies_path)
+  return
+  # if is_module
+  #   flutter_dependencies_path = File.join(flutter_application_path, '.flutter-plugins-dependencies')
+  #   fix_mmkv_plugin_name_inside_dependencies(flutter_dependencies_path)
 
-    flutter_registrant_path = File.join(flutter_application_path, '.ios', 'Flutter', 'FlutterPluginRegistrant')
-    fix_mmkv_plugin_name_inside_registrant(flutter_registrant_path, is_module)
-  else
-    flutter_dependencies_path = File.join(flutter_application_path, '..', '.flutter-plugins-dependencies')
-    fix_mmkv_plugin_name_inside_dependencies(flutter_dependencies_path)
+  #   flutter_registrant_path = File.join(flutter_application_path, '.ios', 'Flutter', 'FlutterPluginRegistrant')
+  #   fix_mmkv_plugin_name_inside_registrant(flutter_registrant_path, is_module)
+  # else
+  #   flutter_dependencies_path = File.join(flutter_application_path, '..', '.flutter-plugins-dependencies')
+  #   fix_mmkv_plugin_name_inside_dependencies(flutter_dependencies_path)
 
-    flutter_registrant_path = File.join(flutter_application_path, 'Runner')
-    fix_mmkv_plugin_name_inside_registrant(flutter_registrant_path, is_module)
-  end
+  #   flutter_registrant_path = File.join(flutter_application_path, 'Runner')
+  #   fix_mmkv_plugin_name_inside_registrant(flutter_registrant_path, is_module)
+  # end
 end
 
 def load_mmkv_plugin_deps(flutter_application_path)

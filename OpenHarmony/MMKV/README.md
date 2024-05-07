@@ -23,7 +23,7 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
 
 ### Prerequisites
 
-* Apps using MMKV can target: HarmonyOS Next (Canary 2) or later.
+* Apps using MMKV can target: HarmonyOS Next (3.0.0.13) or later (API 12).
 * ARM64 & x86_64 architecture.
 * DevEco Studio NEXT Developer Beta1 (5.0.3.100) or later.
 
@@ -96,10 +96,10 @@ export default class EntryAbility extends UIAbility {
 * **Deleting & Querying**:
 
     ```js
-    mmkv.removeValue('bool');
+    mmkv.removeValueForKey('bool');
     console.info('contains "bool"', mmkv.containsKey('bool'));
 
-    mmkv.removeValues(['int32', 'int']);
+    mmkv.removeValuesForKeys(['int32', 'int']);
     console.info('all keys: ', mmkv.allKeys().join());
     ```
 
@@ -124,7 +124,7 @@ export default class EntryAbility extends UIAbility {
   - `boolean, number, bigint, string`
 
 * Classes & Collections:
-  - `boolean[], number[], string[], ArrayBuffer`
+  - `boolean[], number[], string[], ArrayBuffer, TypedArray`
 
 ### Log
 

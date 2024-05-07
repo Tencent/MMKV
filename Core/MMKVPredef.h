@@ -34,7 +34,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v1.3.5";
+constexpr auto MMKV_VERSION = "v1.3.6-alpha";
 
 #ifdef DEBUG
 #    define MMKV_DEBUG
@@ -42,6 +42,10 @@ constexpr auto MMKV_VERSION = "v1.3.5";
 
 #ifdef NDEBUG
 #    undef MMKV_DEBUG
+#endif
+
+#if __cplusplus>=202002L
+#    define MMKV_HAS_CPP20
 #endif
 
 #ifdef __ANDROID__
@@ -216,6 +220,18 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 #endif
 
 #endif //cplus-plus
+
+#ifndef MMKV_WIN32
+#    ifndef likely
+#        define mmkv_unlikely(x) (__builtin_expect(bool(x), 0))
+#        define mmkv_likely(x) (__builtin_expect(bool(x), 1))
+#    endif
+#else
+#    ifndef likely
+#        define mmkv_unlikely(x) (x)
+#        define mmkv_likely(x) (x)
+#    endif
+#endif
 
 #if defined(__arm__)
   #if defined(__ARM_ARCH_7A__)

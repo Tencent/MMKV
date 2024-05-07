@@ -24,7 +24,7 @@ add_library( mmkv
         )
 
 set_target_properties(mmkv PROPERTIES
-        CXX_STANDARD 17
+        CXX_STANDARD 20
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
         )

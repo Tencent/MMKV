@@ -29,17 +29,23 @@
 #include <string>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <cstring>
 #include <cassert>
-#include <time.h>
+#include <ctime>
+
 using namespace std;
 using namespace mmkv;
 
-string to_string(const vector<string> &arr, const char* sp = ", ") {
+string to_string(const std::string& str) {  return str; }
+
+template <class T>
+string to_string(const vector<T> &arr, const char* sp = ", ") {
     string str;
     for (const auto &element : arr) {
-        str += element;
+        str += to_string(element);
         str += sp;
     }
     if (!str.empty()) {
@@ -47,6 +53,8 @@ string to_string(const vector<string> &arr, const char* sp = ", ") {
     }
     return str;
 }
+
+void containerTest(MMKV *mmkv, bool decodeOnly);
 
 void functionalTest(MMKV *mmkv, bool decodeOnly) {
     if (!decodeOnly) {
@@ -85,11 +93,20 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     cout << "double = " << mmkv->getDouble("double") << endl;
 
     if (!decodeOnly) {
-        mmkv->set("Hello, MMKV-示例 for POSIX", "string");
+        mmkv->set("Hello, MMKV-示例 for POSIX", "raw_string");
+        string str = "Hello, MMKV-示例 for POSIX string";
+        mmkv->set(str, "string");
+        mmkv->set(string_view(str).substr(7, 21), "string_view");
     }
     string result;
+    mmkv->getString("raw_string", result);
+    cout << "raw_string = " << result << endl;
     mmkv->getString("string", result);
     cout << "string = " << result << endl;
+    mmkv->getString("string_view", result);
+    cout << "string_view = " << result << endl;
+
+    containerTest(mmkv, decodeOnly);
 
     cout << "allKeys: " << ::to_string(mmkv->allKeys()) << endl;
     cout << "count = " << mmkv->count() << ", totalSize = " << mmkv->totalSize() << endl;
@@ -115,6 +132,93 @@ void functionalTest(MMKV *mmkv, bool decodeOnly) {
     mmkv->clearMemoryCache();
     cout << "allKeys: " << ::to_string(mmkv->allKeys()) << endl;
     cout << "isFileValid[" << mmkv->mmapID() + "]: " << MMKV::isFileValid(mmkv->mmapID()) << endl;
+}
+
+void containerTest(MMKV *mmkv, bool decodeOnly) {
+    {
+        if (!decodeOnly) {
+            vector<string> vec = {"Hello", "MMKV-示例", "for", "POSIX"};
+            mmkv->set(vec, "string-set");
+        }
+        vector<string> vecResult;
+        mmkv->getVector("string-set", vecResult);
+        cout << "string-set = " << to_string(vecResult) << endl;
+    }
+#if __cplusplus>=202002L
+    {
+        if (!decodeOnly) {
+            vector<bool> vec = {true, false, std::numeric_limits<bool>::min(), std::numeric_limits<bool>::max()};
+            mmkv->set(vec, "bool-set");
+        }
+        vector<bool> vecResult;
+        mmkv->getVector("bool-set", vecResult);
+        cout << "bool-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<int32_t> vec = {1024, 0, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max()};
+            mmkv->set(vec, "int32-set");
+        }
+        vector<int32_t> vecResult;
+        mmkv->getVector("int32-set", vecResult);
+        cout << "int32-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            constexpr uint32_t arr[] = {2048, 0, std::numeric_limits<uint32_t>::min(), std::numeric_limits<uint32_t>::max()};
+            std::span vec = arr;
+            mmkv->set(vec, "uint32-set");
+        }
+        vector<uint32_t> vecResult;
+        mmkv->getVector("uint32-set", vecResult);
+        cout << "uint32-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            constexpr int64_t vec[] = {1024, 0, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max()};
+            mmkv->set(std::span(vec), "int64-set");
+        }
+        vector<int64_t> vecResult;
+        mmkv->getVector("int64-set", vecResult);
+        cout << "int64-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<uint64_t> vec = {1024, 0, std::numeric_limits<uint64_t>::min(), std::numeric_limits<uint64_t>::max()};
+            mmkv->set(vec, "uint64-set");
+        }
+        vector<uint64_t> vecResult;
+        mmkv->getVector("uint64-set", vecResult);
+        cout << "uint64-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<float> vec = {1024.0, 0.0, std::numeric_limits<float>::min(), std::numeric_limits<float>::max()};
+            mmkv->set(vec, "float-set");
+        }
+        vector<float> vecResult;
+        mmkv->getVector("float-set", vecResult);
+        cout << "float-set = " << to_string(vecResult) << endl;
+    }
+
+    {
+        if (!decodeOnly) {
+            vector<double> vec = {1024.0, 0.0, std::numeric_limits<double>::min(), std::numeric_limits<double>::max()};
+            mmkv->set(vec, "double-set");
+        }
+        vector<double> vecResult;
+        mmkv->getVector("double-set", vecResult);
+        cout << "double-set = " << to_string(vecResult) << endl;
+
+        // un-comment to test the functionality of set<!MMKV_SUPPORTED_VALUE_TYPE<T>>(const T& value, key)
+        // mmkv->set(&vecResult, "unsupported-type");
+    }
+#endif // __cplusplus>=202002L
 }
 
 constexpr int32_t keyCount = 10000;
@@ -351,7 +455,7 @@ void testClearAllKeepSpace() {
         mmkv->set(12345, key2);
         mmkv->clearAll(true);
         mmkv->close();
-        mmkv = MMKV::mmkvWithID("testClearAllKeepSpaceWithCrypt");
+        mmkv = MMKV::mmkvWithID("testClearAllKeepSpaceWithCrypt", MMKV_SINGLE_PROCESS, &aesKey);
         assert(mmkv->count() == 0);
 
         mmkv->set(456, key2);

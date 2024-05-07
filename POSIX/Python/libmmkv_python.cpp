@@ -249,7 +249,7 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsMMKV.def("sync", &MMKV::sync, py::arg("flag") = MMKV_SYNC,
                 "this call is not necessary unless you worry about unexpected shutdown of the machine (running out of "
-                "battery, etc)");
+                "battery, etc.)");
 
     clsMMKV.def("enableAutoKeyExpire", &MMKV::enableAutoKeyExpire, py::arg("expireDurationInSecond"),
                 "turn on auto key expiration, passing 0 means never expire");

@@ -86,5 +86,5 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'com.getkeepsafe.relinker:relinker:1.4.3'
+    implementation 'com.getkeepsafe.relinker:relinker:1.4.5'
 }
