@@ -27,12 +27,7 @@ import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 
 declare namespace internal {
-    /**
-     * protobuf (varint) provides little additional advantage for encoding these types:
-     *  Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Float32Array | Float64Array
-     * So if you want to encode a value of those types, just cast to ArrayBuffer and call {@link MMKV.encodeBytes()}.
-     */
-    type ArrayValueType = Int32Array | Uint32Array | BigInt64Array | BigUint64Array;
+    type ArrayValueType = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | BigInt64Array | BigUint64Array | Float32Array | Float64Array;
 }
 
 /**
@@ -376,23 +371,67 @@ export class MMKV {
     }
 
     /**
-     * Encode a typed array. Only int32/uint32/int64/uint64 array are supported.
-     * For other typed array, cast to ArrayBuffer and call {@link MMKV.encodeBytes()}.
-     * @param value { Int32Array | Uint32Array | BigInt64Array | BigUint64Array }
+     * Encode a typed array.
+     * @param value { Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | BigInt64Array | BigUint64Array | Float32Array | Float64Array }
      * @param expiration override the default duration, {@link MMKV.ExpireNever} (0) means never expire.
      * @returns true if success, false if failure.
      */
     public encodeArray(key: string, value: internal.ArrayValueType, expiration?: number): boolean {
         if (value instanceof Int32Array) {
-            return native.encodeInt32Array(this.nativeHandle, key, value as Int32Array, expiration);
+            return native.encodeInt32Array(this.nativeHandle, key, value.buffer, expiration);
         } else if (value instanceof Uint32Array) {
-            return native.encodeUInt32Array(this.nativeHandle, key, value as Uint32Array, expiration);
+            return native.encodeUInt32Array(this.nativeHandle, key, value.buffer, expiration);
         } else if (value instanceof BigInt64Array) {
-            return native.encodeInt64Array(this.nativeHandle, key, value as BigInt64Array, expiration);
+            return native.encodeInt64Array(this.nativeHandle, key, value.buffer, expiration);
         } else if (value instanceof BigUint64Array) {
-            return native.encodeUInt64Array(this.nativeHandle, key, value as BigUint64Array, expiration);
+            return native.encodeUInt64Array(this.nativeHandle, key, value.buffer, expiration);
         }
-        return false;
+        return native.encodeBytes(this.nativeHandle, key, value.buffer, expiration);
+    }
+
+    /**
+     * Get Int8Array value.
+     * @returns { Int8Array | undefined }
+     */
+    public decodeInt8Array(key: string, defaultValue?: Int8Array): Int8Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Int8Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Uint8Array value.
+     * @returns { Uint8Array | undefined }
+     */
+    public decodeUint8Array(key: string, defaultValue?: Uint8Array): Uint8Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Uint8Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Uint8ClampedArray value.
+     * @returns { Uint8ClampedArray | undefined }
+     */
+    public decodeUint8ClampedArray(key: string, defaultValue?: Uint8ClampedArray): Uint8ClampedArray | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Uint8ClampedArray(buffer) : undefined;
+    }
+
+    /**
+     * Get Int16Array value.
+     * @returns { Int16Array | undefined }
+     */
+    public decodeInt16Array(key: string, defaultValue?: Int16Array): Int16Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Int16Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Uint16Array value.
+     * @returns { Uint16Array | undefined }
+     */
+    public decodeUint16Array(key: string, defaultValue?: Uint16Array): Uint16Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Uint16Array(buffer) : undefined;
     }
 
     /**
@@ -400,7 +439,8 @@ export class MMKV {
      * @returns { Int32Array | undefined }
      */
     public decodeInt32Array(key: string, defaultValue?: Int32Array): Int32Array | undefined {
-        return native.decodeInt32Array(this.nativeHandle, key, defaultValue);
+        let buffer = native.decodeInt32Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new Int32Array(buffer) : undefined;
     }
 
     /**
@@ -408,7 +448,8 @@ export class MMKV {
      * @returns { Uint32Array | undefined }
      */
     public decodeUint32Array(key: string, defaultValue?: Uint32Array): Uint32Array | undefined {
-        return native.decodeUInt32Array(this.nativeHandle, key, defaultValue);
+        let buffer = native.decodeUInt32Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new Uint32Array(buffer) : undefined;
     }
 
     /**
@@ -416,7 +457,8 @@ export class MMKV {
      * @returns { BigInt64Array | undefined }
      */
     public decodeInt64Array(key: string, defaultValue?: BigInt64Array): BigInt64Array | undefined {
-        return native.decodeInt64Array(this.nativeHandle, key, defaultValue);
+        let buffer = native.decodeInt64Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new BigInt64Array(buffer) : undefined;
     }
 
     /**
@@ -424,7 +466,26 @@ export class MMKV {
      * @returns { BigUint64Array | undefined }
      */
     public decodeUint64Array(key: string, defaultValue?: BigUint64Array): BigUint64Array | undefined {
-        return native.decodeUInt64Array(this.nativeHandle, key, defaultValue);
+        let buffer = native.decodeUInt64Array(this.nativeHandle, key, defaultValue);
+        return buffer ? new BigUint64Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Float32Array value.
+     * @returns { Float32Array | undefined }
+     */
+    public decodeFloat32Array(key: string, defaultValue?: Float32Array): Float32Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Float32Array(buffer) : undefined;
+    }
+
+    /**
+     * Get Float64Array value.
+     * @returns { Float64Array | undefined }
+     */
+    public decodeFloat64Array(key: string, defaultValue?: Float64Array): Float64Array | undefined {
+        let buffer = native.decodeBytes(this.nativeHandle, key, defaultValue ? defaultValue.buffer : undefined);
+        return buffer ? new Float64Array(buffer) : undefined;
     }
 
     /**
