@@ -376,7 +376,7 @@ export class MMKV {
      * @param expiration override the default duration, {@link MMKV.ExpireNever} (0) means never expire.
      * @returns true if success, false if failure.
      */
-    public encodeArray(key: string, value: internal.ArrayValueType, expiration?: number): boolean {
+    public encodeTypedArray(key: string, value: internal.ArrayValueType, expiration?: number): boolean {
         if (value instanceof Int32Array) {
             return native.encodeInt32Array(this.nativeHandle, key, value.buffer, expiration);
         } else if (value instanceof Uint32Array) {
