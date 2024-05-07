@@ -22,6 +22,8 @@
 		CB1FD42D20455E2D00931B5F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42C20455E2D00931B5F /* Assets.xcassets */; };
 		CB1FD43020455E2D00931B5F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */; };
 		CB1FD43320455E2D00931B5F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB1FD43220455E2D00931B5F /* main.m */; };
+		CB2C907E2BE9DB890052A2D7 /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; };
+		CB2C907F2BE9DB920052A2D7 /* MMKV.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CB3166FE2A4C6B5F0003221B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB3166FD2A4C6B5F0003221B /* AppDelegate.m */; };
 		CB3167012A4C6B5F0003221B /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB3167002A4C6B5F0003221B /* SceneDelegate.m */; };
 		CB3167042A4C6B5F0003221B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB3167032A4C6B5F0003221B /* ViewController.m */; };
@@ -48,7 +50,6 @@
 		CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C827215CDB9600487192 /* Assets.xcassets */; };
 		CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C829215CDB9600487192 /* Main.storyboard */; };
 		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
-		CBD5359023B46E8500D3A404 /* libMMKV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV.a */; };
 		CBF19016243D6F59001C82ED /* Interface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBF19014243D6F59001C82ED /* Interface.storyboard */; };
 		CBF19018243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF19017243D6F5A001C82ED /* Assets.xcassets */; };
 		CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -66,6 +67,13 @@
 			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = CB1FD4912046984F00931B5F;
+			remoteInfo = MMKV;
+		};
+		CB2C907C2BE9DB7D0052A2D7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CBC1A8F520DA946200AD5087;
 			remoteInfo = MMKV;
 		};
 		CB36F24E20F8A20C009AF46F /* PBXContainerItemProxy */ = {
@@ -116,13 +124,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = CB1E0641242B84D800F2FD42;
 			remoteInfo = MMKVAppExtension;
-		};
-		CBD5358E23B46E7C00D3A404 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = CB1FD4B02046994C00931B5F /* MMKV.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = CB1FD4902046984F00931B5F;
-			remoteInfo = "MMKV Static";
 		};
 		CBF19020243D6F5A001C82ED /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -175,6 +176,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				CB2C907F2BE9DB920052A2D7 /* MMKV.framework in CopyFiles */,
 				CB6180EA26E904AC003FF912 /* MMKVAppExtension.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -316,8 +318,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CB2C907E2BE9DB890052A2D7 /* MMKV.framework in Frameworks */,
 				CB1E0659242B8E3F00F2FD42 /* libz.tbd in Frameworks */,
-				CBD5359023B46E8500D3A404 /* libMMKV.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -584,7 +586,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				CBD5358F23B46E7C00D3A404 /* PBXTargetDependency */,
+				CB2C907D2BE9DB7D0052A2D7 /* PBXTargetDependency */,
 				CB6D44D623B3A44400F369AA /* PBXTargetDependency */,
 				CBF19031243D6F5A001C82ED /* PBXTargetDependency */,
 			);
@@ -961,6 +963,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		CB2C907D2BE9DB7D0052A2D7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = MMKV;
+			targetProxy = CB2C907C2BE9DB7D0052A2D7 /* PBXContainerItemProxy */;
+		};
 		CB36F24F20F8A20C009AF46F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = CB1FD41F20455E2D00931B5F /* MMKVDemo */;
@@ -985,11 +992,6 @@
 			isa = PBXTargetDependency;
 			name = MMKVAppExtension;
 			targetProxy = CBB306642435EC6000CB593E /* PBXContainerItemProxy */;
-		};
-		CBD5358F23B46E7C00D3A404 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "MMKV Static";
-			targetProxy = CBD5358E23B46E7C00D3A404 /* PBXContainerItemProxy */;
 		};
 		CBF19021243D6F5A001C82ED /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

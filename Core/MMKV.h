@@ -25,6 +25,7 @@
 
 #ifdef MMKV_APPLE
 #include "MMBuffer.h"
+#include <span>
 #else
 #include "MiniPBCoder.h"
 #endif
