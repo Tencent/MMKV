@@ -690,7 +690,11 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key, uint32_t expireDuration) 
     if (isKeyEmpty(key)) {
         return false;
     }
+#ifdef MMKV_HAS_CPP20
     auto data = MiniPBCoder::encodeDataWithObject(std::span(v));
+#else
+    auto data = MiniPBCoder::encodeDataWithObject(v);
+#endif
     if (mmkv_unlikely(m_enableKeyExpire) && data.length() > 0) {
         auto tmp = MMBuffer(data.length() + Fixed32Size);
         auto ptr = (uint8_t *) tmp.getPtr();

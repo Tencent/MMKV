@@ -24,11 +24,16 @@
 #include "MMKVPredef.h"
 
 #ifdef MMKV_APPLE
-#include "MMBuffer.h"
-#include <span>
+
+#  include "MMBuffer.h"
+#  ifdef MMKV_HAS_CPP20
+#    include <span>
+#  endif
+
 #else
-#include "MiniPBCoder.h"
+#  include "MiniPBCoder.h"
 #endif
+
 #include <cstdint>
 #include <type_traits>
 
@@ -56,6 +61,7 @@ enum MMKVMode : uint32_t {
 
 #define MMKV_OUT
 
+#ifdef MMKV_HAS_CPP20
 template <class T>
 struct mmkv_is_vector { static constexpr bool value = false; };
 template <class T, class A>
@@ -79,6 +85,7 @@ concept MMKV_SUPPORTED_VECTOR_VALUE_TYPE = mmkv_is_vector_v<T> &&
 template <class T>
 concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MMKV_SUPPORTED_POD_VALUE_TYPE<T> ||
     MMKV_SUPPORTED_VECTOR_VALUE_TYPE<T>;
+#endif // MMKV_HAS_CPP20
 
 class MMKV {
 #ifndef MMKV_ANDROID
@@ -309,6 +316,7 @@ public:
     bool set(double value, MMKVKey_t key);
     bool set(double value, MMKVKey_t key, uint32_t expireDuration);
 
+#ifdef MMKV_HAS_CPP20
     // avoid unexpected type conversion (pointer to bool, etc.)
     template <typename T>
     requires(!MMKV_SUPPORTED_VALUE_TYPE<T>)
@@ -318,6 +326,11 @@ public:
     template <typename T>
     requires(!MMKV_SUPPORTED_VALUE_TYPE<T>)
     bool set(T value, MMKVKey_t key, uint32_t expireDuration) = delete;
+#else
+    // avoid unexpected type conversion (pointer to bool, etc.)
+    template <typename T>
+    bool set(T value, MMKVKey_t key, uint32_t expireDuration) = delete;
+#endif
 
 #ifdef MMKV_APPLE
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key);
@@ -340,6 +353,7 @@ public:
     bool set(const std::vector<std::string> &vector, MMKVKey_t key);
     bool set(const std::vector<std::string> &vector, MMKVKey_t key, uint32_t expireDuration);
 
+#ifdef MMKV_HAS_CPP20
     template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
     bool set(const T& value, MMKVKey_t key) {
         return set<T>(value, key, m_expiredInSeconds);
@@ -350,6 +364,7 @@ public:
 
     template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
     bool getVector(MMKVKey_t key, T &result);
+#endif
 
     // inplaceModification is recommended for faster speed
     bool getString(MMKVKey_t key, std::string &result, bool inplaceModification = true);
@@ -518,7 +533,7 @@ public:
     MMKV &operator=(const MMKV &other) = delete;
 };
 
-#ifndef MMKV_APPLE
+#if defined(MMKV_HAS_CPP20) && !defined(MMKV_APPLE)
 template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
 bool MMKV::set(const T& value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
@@ -557,7 +572,7 @@ bool MMKV::getVector(MMKVKey_t key, T &result) {
     shared_unlock();
     return ret;
 }
-#endif // !MMKV_APPLE
+#endif // MMKV_HAS_CPP20 && !MMKV_APPLE
 
 MMKV_NAMESPACE_END
 

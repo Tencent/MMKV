@@ -44,6 +44,10 @@ constexpr auto MMKV_VERSION = "v1.3.6-alpha";
 #    undef MMKV_DEBUG
 #endif
 
+#if __cplusplus>=202002L
+#    define MMKV_HAS_CPP20
+#endif
+
 #ifdef __ANDROID__
 #    ifdef FORCE_POSIX
 #        define MMKV_POSIX

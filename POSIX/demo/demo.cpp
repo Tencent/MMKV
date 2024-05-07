@@ -144,7 +144,7 @@ void containerTest(MMKV *mmkv, bool decodeOnly) {
         mmkv->getVector("string-set", vecResult);
         cout << "string-set = " << to_string(vecResult) << endl;
     }
-
+#if __cplusplus>=202002L
     {
         if (!decodeOnly) {
             vector<bool> vec = {true, false, std::numeric_limits<bool>::min(), std::numeric_limits<bool>::max()};
@@ -218,6 +218,7 @@ void containerTest(MMKV *mmkv, bool decodeOnly) {
         // un-comment to test the functionality of set<!MMKV_SUPPORTED_VALUE_TYPE<T>>(const T& value, key)
         // mmkv->set(&vecResult, "unsupported-type");
     }
+#endif // __cplusplus>=202002L
 }
 
 constexpr int32_t keyCount = 10000;
