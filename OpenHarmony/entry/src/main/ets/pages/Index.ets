@@ -155,6 +155,10 @@ struct Index {
     kv.encodeString('string', 'Hello world to OpenHarmony!');
     hilog.info(0, 'mmkvdemo', 'decode string = %{public}s', kv.decodeString('string'));
 
+    let json: string = '{"courseId":39575,"name":"通识课测试2","type":4,"status":1,"limit":1819956082000,"needapprove":"0","lastModifyDate":1712821563000,"openCourse":1,"md5":"967cdcbd284197d68efb19ca9b27f06b"}';
+    kv.encodeString('json', json);
+    hilog.info(0, 'mmkvdemo', 'decode json = %{public}s', kv.decodeString('json'));
+
     hilog.info(0, 'mmkvdemo', 'decode non-exist string = %{public}s', kv.decodeString('non-exist'));
     hilog.info(0, 'mmkvdemo', 'decode non-exist string = %{public}s', kv.decodeString('non-exist', 'default_value'));
 
