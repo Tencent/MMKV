@@ -1,6 +1,6 @@
 # MMKV for HarmonyOS NEXT Change Log
 
-## v1.3.6-beta / 2024-05-xx
+## v1.3.6-beta / 2024-05-09
 * Add encode / decode `float` interface.
 * Add encode / decode all `TypedArray` interface.
 * Fix a bug when transforming a JavaScript string to a native string, the last char might lost.
