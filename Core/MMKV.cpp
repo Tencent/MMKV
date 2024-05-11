@@ -98,7 +98,7 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *ro
     m_output = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
-    if (cryptKey && cryptKey->length() > 0) {
+    if (cryptKey && !cryptKey->empty()) {
         m_dicCrypt = new MMKVMapCrypt();
         m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length());
     } else {
@@ -365,7 +365,7 @@ void MMKV::checkReSetCryptKey(const string *cryptKey) {
     SCOPED_LOCK(m_lock);
 
     if (m_crypter) {
-        if (cryptKey && cryptKey->length() > 0) {
+        if (cryptKey && !cryptKey->empty()) {
             string oldKey = this->cryptKey();
             if (oldKey != *cryptKey) {
                 MMKVInfo("setting new aes key");
@@ -385,7 +385,7 @@ void MMKV::checkReSetCryptKey(const string *cryptKey) {
             checkLoadData();
         }
     } else {
-        if (cryptKey && cryptKey->length() > 0) {
+        if (cryptKey && !cryptKey->empty()) {
             MMKVInfo("setting new aes key");
             auto ptr = cryptKey->data();
             m_crypter = new AESCrypt(ptr, cryptKey->length());
@@ -1234,7 +1234,7 @@ static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath
         return false;
     }
 
-    bool ret = false;
+    bool ret;
     {
 #ifdef MMKV_WIN32
         MMKVInfo("backup one mmkv[%s] from [%ls] to [%ls]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
@@ -1360,7 +1360,8 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &sr
             auto basename = filename(srcPath);
             const auto &strBasename = MMKVPath_t2String(basename);
             auto mmapKey = isInSpecialDir ? strBasename : mmapedKVKey(strBasename, &srcDir);
-            auto dstPath = dstDir + MMKV_PATH_SLASH + basename;
+            auto dstPath = dstDir + MMKV_PATH_SLASH;
+            dstPath += basename;
             if (backupOneToDirectory(mmapKey, dstPath, srcPath, compareFullPath)) {
                 count++;
             }
@@ -1393,7 +1394,7 @@ static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVP
         return false;
     }
 
-    bool ret = false;
+    bool ret;
     {
 #ifdef MMKV_WIN32
         MMKVInfo("restore one mmkv[%s] from [%ls] to [%ls]", mmapKey.c_str(), srcPath.c_str(), dstPath.c_str());
@@ -1524,7 +1525,8 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
             auto basename = filename(srcPath);
             const auto &strBasename = MMKVPath_t2String(basename);
             auto mmapKey = isInSpecialDir ? strBasename : mmapedKVKey(strBasename, &dstDir);
-            auto dstPath = dstDir + MMKV_PATH_SLASH + basename;
+            auto dstPath = dstDir + MMKV_PATH_SLASH;
+            dstPath += basename;
             if (restoreOneFromDirectory(mmapKey, srcPath, dstPath, compareFullPath)) {
                 count++;
             }
