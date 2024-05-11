@@ -199,9 +199,34 @@ using MMKVVector = std::vector<std::pair<NSString *, mmkv::MMBuffer>>;
 using MMKVMap = std::unordered_map<NSString *, mmkv::KeyValueHolder, KeyHasher, KeyEqualer>;
 using MMKVMapCrypt = std::unordered_map<NSString *, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
 #else
+struct KeyHasher {
+    // enables heterogeneous lookup
+    using is_transparent = void;
+
+    std::size_t operator()(const std::string_view& str) const {
+        return std::hash<std::string_view>{}(str);
+    }
+
+    std::size_t operator()(const std::string& str) const {
+        return std::hash<std::string>{}(str);
+    }
+};
+
+struct KeyEqualer {
+    // enables heterogeneous lookup
+    using is_transparent = void;
+
+    bool operator()(const std::string_view& lhs, const std::string_view& rhs) const {
+        return lhs == rhs;
+    }
+
+    bool operator()(const std::string& lhs, const std::string& rhs) const {
+        return lhs == rhs;
+    }
+};
 using MMKVVector = std::vector<std::pair<std::string, mmkv::MMBuffer>>;
-using MMKVMap = std::unordered_map<std::string, mmkv::KeyValueHolder>;
-using MMKVMapCrypt = std::unordered_map<std::string, mmkv::KeyValueHolderCrypt>;
+using MMKVMap = std::unordered_map<std::string, mmkv::KeyValueHolder, KeyHasher, KeyEqualer>;
+using MMKVMapCrypt = std::unordered_map<std::string, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
 #endif // MMKV_APPLE
 
 template <typename T>

@@ -732,6 +732,14 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     return true;
 }
 
+template <typename T>
+static void eraseHelper(T& container, std::string_view key) {
+    auto itr = container.find(key);
+    if (itr != container.end()) {
+        container.erase(itr);
+    }
+}
+
 bool MMKV::removeDataForKey(MMKVKey_t key) {
     if (isKeyEmpty(key)) {
         return false;
@@ -760,7 +768,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
             auto ret = appendDataWithKey(nan, key);
             if (ret.first) {
                 if (mmkv_unlikely(m_enableKeyExpire)) {
-                    m_dicCrypt->erase(key);
+                    eraseHelper(*m_dicCrypt, key);
                 } else {
                     m_dicCrypt->erase(itr);
                 }
@@ -791,7 +799,7 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 #else
                 if (mmkv_unlikely(m_enableKeyExpire)) {
                     // filterExpiredKeys() may invalid itr
-                    m_dic->erase(key);
+                    eraseHelper(*m_dic, key);
                 } else {
                     m_dic->erase(itr);
                 }
@@ -1751,7 +1759,7 @@ mmkv::MMBuffer MMKV::getDataWithoutMTimeForKey(MMKVKey_t key) {
 #ifdef MMKV_APPLE
             MMKVInfo("deleting expired key [%@] in mmkv [%s], due date %u", key, m_mmapID.c_str(), time);
 #else
-            MMKVInfo("deleting expired key [%s] in mmkv [%s], due date %u", key.c_str(), m_mmapID.c_str(), time);
+            MMKVInfo("deleting expired key [%s] in mmkv [%s], due date %u", key.data(), m_mmapID.c_str(), time);
 #endif
             removeValueForKey(key);
             return MMBuffer();

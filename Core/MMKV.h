@@ -141,12 +141,12 @@ class MMKV {
 #  define mmkv_retain_key(key) [key retain]
 #  define mmkv_release_key(key) [key release]
 #else
-    using MMKVKey_t = const std::string &;
+    using MMKVKey_t = std::string_view;
     static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
 #  define mmkv_key_length(key) key.length()
 #  define mmkv_retain_key(key) ((void) 0)
 #  define mmkv_release_key(key) ((void) 0)
-#endif
+#endif // !MMKV_APPLE
 
     void loadFromFile();
 
