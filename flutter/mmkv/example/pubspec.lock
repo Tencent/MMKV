@@ -141,9 +141,10 @@ packages:
   mmkv_ios:
     dependency: transitive
     description:
-      path: "../../mmkv_ios"
-      relative: true
-    source: path
+      name: mmkv_ios
+      sha256: "45a3696e35fa762f25e3dadb8d878f45aa3f327edcf4a0f4f59bbd54f37d3056"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.0.1"
   mmkv_platform_interface:
     dependency: transitive
