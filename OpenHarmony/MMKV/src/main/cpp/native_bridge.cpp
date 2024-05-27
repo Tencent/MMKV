@@ -467,9 +467,13 @@ static napi_value decodeBool(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToBool(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return BoolToNValue(env, kv->getBool(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getBool(key, defaultValue, &hasValue);
+        if(hasValue) {
+            return BoolToNValue(env, ret);
+        }
     }
-    return BoolToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeInt32(napi_env env, napi_callback_info info) {
@@ -503,9 +507,13 @@ static napi_value decodeInt32(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToInt32(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return Int32ToNValue(env, kv->getInt32(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getInt32(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return Int32ToNValue(env, ret);
+        }
     }
-    return Int32ToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeUInt32(napi_env env, napi_callback_info info) {
@@ -539,9 +547,13 @@ static napi_value decodeUInt32(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToUInt32(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return UInt32ToNValue(env, kv->getUInt32(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getUInt32(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return UInt32ToNValue(env, ret);
+        }
     }
-    return UInt32ToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeInt64(napi_env env, napi_callback_info info) {
@@ -575,9 +587,13 @@ static napi_value decodeInt64(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToInt64(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return Int64ToNValue(env, kv->getInt64(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getInt64(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return Int64ToNValue(env, ret);
+        }
     }
-    return Int64ToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeUInt64(napi_env env, napi_callback_info info) {
@@ -611,9 +627,13 @@ static napi_value decodeUInt64(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToUInt64(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return UInt64ToNValue(env, kv->getUInt64(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getUInt64(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return UInt64ToNValue(env, ret);
+        }
     }
-    return UInt64ToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeFloat(napi_env env, napi_callback_info info) {
@@ -647,9 +667,13 @@ static napi_value decodeFloat(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToDouble(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return DoubleToNValue(env, kv->getFloat(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getFloat(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return DoubleToNValue(env, ret);
+        }
     }
-    return DoubleToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeDouble(napi_env env, napi_callback_info info) {
@@ -683,9 +707,13 @@ static napi_value decodeDouble(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToDouble(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return DoubleToNValue(env, kv->getDouble(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getDouble(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return DoubleToNValue(env, ret);
+        }
     }
-    return DoubleToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeString(napi_env env, napi_callback_info info) {

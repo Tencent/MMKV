@@ -111,10 +111,14 @@ struct Index {
 
     kv.encodeBool('bool', true);
     hilog.info(0, 'mmkvdemo', 'decode bool = %{public}s', kv.decodeBool('bool'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist bool = %{public}s', kv.decodeBool('non-bool'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist bool = %{public}s', kv.decodeBool('non-bool', false));
 
     let pow31 = Math.pow(2, 31);
     kv.encodeInt32('int32', pow31 - 1);
     hilog.info(0, 'mmkvdemo', 'decode int32 max = %{public}d', kv.decodeInt32('int32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int32 = %{public}s', kv.decodeInt32('non-int32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int32 = %{public}d', kv.decodeInt32('non-int32', 0));
 
     kv.encodeInt32('int32', -pow31);
     hilog.info(0, 'mmkvdemo', 'decode int32 min = %{public}d', kv.decodeInt32('int32'));
@@ -122,6 +126,8 @@ struct Index {
     let pow32 = Math.pow(2, 32);
     kv.encodeUInt32('uint32', pow32 - 1);
     hilog.info(0, 'mmkvdemo', 'decode uint32 max = %{public}d', kv.decodeUInt32('uint32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint32 = %{public}s', kv.decodeUInt32('non-uint32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint32 = %{public}d', kv.decodeUInt32('non-uint32', 0));
 
     kv.encodeUInt32('uint32', 0);
     hilog.info(0, 'mmkvdemo', 'decode uint32 min = %{public}d', kv.decodeUInt32('uint32'));
@@ -129,6 +135,8 @@ struct Index {
     let pow63 = BigInt(2**63);
     kv.encodeInt64('int64', pow63 - BigInt(1));
     hilog.info(0, 'mmkvdemo', 'decode int64 max = %{public}i', kv.decodeInt64('int64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int64 = %{public}s', kv.decodeInt64('non-int64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int64 = %{public}d', kv.decodeInt64('non-int64', BigInt(0)));
 
     kv.encodeInt64('int64', -pow63);
     hilog.info(0, 'mmkvdemo', 'decode int64 min = %{public}i', kv.decodeInt64('int64'));
@@ -136,18 +144,24 @@ struct Index {
     let pow64 = BigInt(2**64);
     kv.encodeUInt64('uint64', pow64 - BigInt(1));
     hilog.info(0, 'mmkvdemo', 'decode uint64 max = %{public}i', kv.decodeUInt64('uint64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint64 = %{public}s', kv.decodeUInt64('non-uint64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint64 = %{public}i', kv.decodeUInt64('non-uint64', BigInt(0)));
 
     kv.encodeUInt64('uint64', BigInt(0));
     hilog.info(0, 'mmkvdemo', 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
 
     kv.encodeFloat('float', Number.MAX_VALUE);
     hilog.info(0, 'mmkvdemo', 'decode float max = %{public}d', kv.decodeFloat('float'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist float = %{public}s', kv.decodeFloat('non-float'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist float = %{public}d', kv.decodeFloat('non-float', 0));
 
     kv.encodeFloat('float', Number.MIN_VALUE);
     hilog.info(0, 'mmkvdemo', 'decode float min = %{public}d', kv.decodeFloat('float'));
 
     kv.encodeDouble('double', Number.MAX_VALUE);
     hilog.info(0, 'mmkvdemo', 'decode double max = %{public}d', kv.decodeDouble('double'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist double = %{public}s', kv.decodeDouble('non-double'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist double = %{public}d', kv.decodeDouble('non-double', 0));
 
     kv.encodeDouble('double', Number.MIN_VALUE);
     hilog.info(0, 'mmkvdemo', 'decode double min = %{public}d', kv.decodeDouble('double'));

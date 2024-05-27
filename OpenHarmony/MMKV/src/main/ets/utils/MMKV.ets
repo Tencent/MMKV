@@ -169,7 +169,7 @@ export class MMKV {
      * @returns { boolean | undefined }
      */
     public decodeBool(key: string, defaultValue?: boolean): boolean | undefined {
-        return native.decodeBool(this.nativeHandle, key, defaultValue ?? false);
+        return native.decodeBool(this.nativeHandle, key, defaultValue);
     }
 
     /**
@@ -187,7 +187,7 @@ export class MMKV {
      * @returns { number | undefined }
      */
     public decodeInt32(key: string, defaultValue?: number): number | undefined {
-        return native.decodeInt32(this.nativeHandle, key, defaultValue ?? 0);
+        return native.decodeInt32(this.nativeHandle, key, defaultValue);
     }
 
     /**
@@ -205,7 +205,7 @@ export class MMKV {
      * @returns { number | undefined }
      */
     public decodeUInt32(key: string, defaultValue?: number): number | undefined {
-        return native.decodeUInt32(this.nativeHandle, key, defaultValue ?? 0);
+        return native.decodeUInt32(this.nativeHandle, key, defaultValue);
     }
 
     /**
@@ -223,7 +223,7 @@ export class MMKV {
      * @returns { bigint | undefined }
      */
     public decodeInt64(key: string, defaultValue?: bigint): bigint | undefined {
-        return native.decodeInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
+        return native.decodeInt64(this.nativeHandle, key, defaultValue);
     }
 
     /**
@@ -241,7 +241,7 @@ export class MMKV {
      * @returns { bigint | undefined }
      */
     public decodeUInt64(key: string, defaultValue?: bigint): bigint | undefined {
-        return native.decodeUInt64(this.nativeHandle, key, defaultValue ?? BigInt(0));
+        return native.decodeUInt64(this.nativeHandle, key, defaultValue);
     }
 
     /**
@@ -259,7 +259,7 @@ export class MMKV {
      * @returns { number | undefined }
      */
     public decodeFloat(key: string, defaultValue?: number): number | undefined {
-        return native.decodeFloat(this.nativeHandle, key, defaultValue ?? 0);
+        return native.decodeFloat(this.nativeHandle, key, defaultValue);
     }
 
     /**
@@ -277,7 +277,7 @@ export class MMKV {
      * @returns { number | undefined }
      */
     public decodeDouble(key: string, defaultValue?: number): number | undefined {
-        return native.decodeDouble(this.nativeHandle, key, defaultValue ?? 0);
+        return native.decodeDouble(this.nativeHandle, key, defaultValue);
     }
 
     /**
