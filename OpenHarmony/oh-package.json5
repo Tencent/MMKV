@@ -1,4 +1,5 @@
 {
+  "modelVersion": "5.0.0",
   "name": "mmkvdemo",
   "version": "1.0.0",
   "description": "A demo for MMKV in OpenHarmony OS.",
