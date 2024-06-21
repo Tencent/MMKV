@@ -50,3 +50,5 @@ dist/
 
 #Android Studio
 .cxx
+
+pubspec.lock

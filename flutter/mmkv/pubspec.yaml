@@ -17,8 +17,8 @@ dependencies:
     ^1.0.1
 #    path: ../mmkv_ios
   mmkv_android:
-    ^1.0.1
-#    path: ../mmkv_android
+#    ^1.0.1
+    path: ../mmkv_android
   mmkv_platform_interface:
     ^1.0.0
 #    path: ../mmkv_platform_interface
