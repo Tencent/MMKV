@@ -3,6 +3,7 @@
 
 import sys
 import mmkv
+import tempfile
 
 KeyNotExist = 'KeyNotExist'
 
@@ -193,7 +194,9 @@ def test_equal(kv, mmap_id):
 
 
 if __name__ == '__main__':
-    mmkv.MMKV.initializeMMKV('/tmp/mmkv')
+    temp_dir = tempfile.gettempdir()
+    root_dir = temp_dir + '/mmkv'
+    mmkv.MMKV.initializeMMKV(root_dir)
     kv = mmkv.MMKV('unit_test_python')
     test_bool(kv)
     test_int(kv)

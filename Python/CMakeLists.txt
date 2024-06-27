@@ -53,5 +53,10 @@ set_target_properties(mmkv PROPERTIES
 target_link_libraries( # Specifies the target library.
                        mmkv PRIVATE
                        core
-                       pthread
         )
+
+IF (NOT WIN32)
+    target_link_libraries(mmkv
+            PRIVATE
+            pthread)
+ENDIF()

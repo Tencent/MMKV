@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
-# import re
+import re
 import sys
-# import platform
+import platform
 import subprocess
 
 from setuptools import setup, Extension
@@ -26,10 +26,10 @@ class CMakeBuild(build_ext):
             raise RuntimeError("CMake must be installed to build the following extensions: " +
                                ", ".join(e.name for e in self.extensions))
 
-        # if platform.system() == "Windows":
-        #     cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)', out.decode()).group(1))
-        #     if cmake_version < '3.1.0':
-        #         raise RuntimeError("CMake >= 3.1.0 is required on Windows")
+        if platform.system() == "Windows":
+            cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)', out.decode()).group(1))
+            if cmake_version < '3.1.0':
+                raise RuntimeError("CMake >= 3.1.0 is required on Windows")
 
         for ext in self.extensions:
             self.build_extension(ext)
@@ -46,13 +46,12 @@ class CMakeBuild(build_ext):
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
 
-        # if platform.system() == "Windows":
-        #     cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
-        #     if sys.maxsize > 2 ** 32:
-        #         cmake_args += ['-A', 'x64']
-        #     build_args += ['--', '/m']
-        # else:
-        if True:
+        if platform.system() == "Windows":
+            cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
+            if sys.maxsize > 2 ** 32:
+                cmake_args += ['-A', 'x64']
+            build_args += ['--', '/m']
+        else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             build_args += ['--', '-j8']
 
@@ -66,7 +65,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='mmkv',
-    version='1.2.13',
+    version='1.3.6',
     author='Tencent',
     description='An efficient, small key-value storage framework developed by WeChat Team.',
     long_description='The MMKV, for Python. MMKV is an efficient, generic, easy-to-use key-value storage framework '

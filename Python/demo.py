@@ -4,6 +4,7 @@
 import sys
 import mmkv
 import time
+import tempfile
 
 
 def functional_test(mmap_id, decode_only):
@@ -58,7 +59,8 @@ def functional_test(mmap_id, decode_only):
 
 
 def test_backup():
-    root_dir = "/tmp/mmkv_backup"
+    temp_dir = tempfile.gettempdir()
+    root_dir = temp_dir + "/mmkv_backup"
     mmap_id = "test_python"
     ret = mmkv.MMKV.backupOneToDirectory(mmap_id, root_dir)
     print("backup one return: ", ret)
@@ -100,7 +102,8 @@ def test_expected_capacity():
 
 
 def test_restore():
-    root_dir = "/tmp/mmkv_backup"
+    temp_dir = tempfile.gettempdir()
+    root_dir = temp_dir + "/mmkv_backup"
     mmap_id = "test/Encrypt"
     aes_key = "cryptKey"
     a_kv = mmkv.MMKV(mmap_id, mmkv.MMKVMode.SingleProcess, aes_key)
@@ -161,7 +164,7 @@ def test_compare_before_set():
     actualSize2 = kv.actualSize()
     print("testCompareBeforeSet: actualSize2 = ", actualSize2)
     if actualSize1 != actualSize2:
-        panic("size not match")
+        raise("size not match")
 
     kv.set(False, key)
     print("testCompareBeforeSet: bool value = ", kv.getBool(key))
@@ -201,7 +204,8 @@ def test_remove_storage():
     if kv.count() != 0:
         print("storage not successfully remove")
 
-    rootDir = "/dev/mmkv_sg"
+    temp_dir = tempfile.gettempdir()
+    rootDir = temp_dir + "/dev/mmkv_sg"
     kv = mmkv.MMKV("test_remove/sg", rootDir = rootDir)
     kv.set(True, "bool")
 
@@ -230,9 +234,12 @@ def content_change_handler(mmap_id):
 
 
 if __name__ == '__main__':
+    temp_dir = tempfile.gettempdir()
+    root_dir = temp_dir + '/mmkv'
+
     # you can enable logging & log handler
-    # mmkv.MMKV.initializeMMKV('/tmp/mmkv', mmkv.MMKVLogLevel.Info, logger)
-    mmkv.MMKV.initializeMMKV('/tmp/mmkv')
+    # mmkv.MMKV.initializeMMKV(root_dir, mmkv.MMKVLogLevel.Info, logger)
+    mmkv.MMKV.initializeMMKV(root_dir)
 
     # redirect logging
     # mmkv.MMKV.registerLogHandler(logger)
