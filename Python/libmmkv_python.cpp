@@ -153,38 +153,38 @@ PYBIND11_MODULE(mmkv, m) {
 
     // TODO: Doesn't work, why?
     // clsMMKV.def("set", py::overload_cast<bool, const string&>(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(bool, const string &))(&MMKV::set), "encode a boolean value", py::arg("value"),
+    clsMMKV.def("set", (bool (MMKV::*)(bool, string_view))(&MMKV::set), "encode a boolean value", py::arg("value"),
                 py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(bool, const string &, uint32_t))(&MMKV::set),
+    clsMMKV.def("set", (bool (MMKV::*)(bool, string_view, uint32_t))(&MMKV::set),
                 "encode a boolean value with expiration", py::arg("value"), py::arg("key"), py::arg("expireDuration"));
-    clsMMKV.def("set", (bool (MMKV::*)(int32_t, const string &))(&MMKV::set), "encode an int32 value", py::arg("value"),
+    clsMMKV.def("set", (bool (MMKV::*)(int32_t, string_view))(&MMKV::set), "encode an int32 value", py::arg("value"),
                 py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(int32_t, const string &, uint32_t))(&MMKV::set),
+    clsMMKV.def("set", (bool (MMKV::*)(int32_t, string_view, uint32_t))(&MMKV::set),
                 "encode an int32 value with expiration", py::arg("value"), py::arg("key"), py::arg("expireDuration"));
-    clsMMKV.def("set", (bool (MMKV::*)(uint32_t, const string &))(&MMKV::set), "encode an unsigned int32 value",
+    clsMMKV.def("set", (bool (MMKV::*)(uint32_t, string_view))(&MMKV::set), "encode an unsigned int32 value",
                 py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(uint32_t, const string &, uint32_t))(&MMKV::set),
+    clsMMKV.def("set", (bool (MMKV::*)(uint32_t, string_view, uint32_t))(&MMKV::set),
                 "encode an unsigned int32 value with expiration", py::arg("value"), py::arg("key"),
                 py::arg("expireDuration"));
-    clsMMKV.def("set", (bool (MMKV::*)(int64_t, const string &))(&MMKV::set), "encode an int64 value", py::arg("value"),
+    clsMMKV.def("set", (bool (MMKV::*)(int64_t, string_view))(&MMKV::set), "encode an int64 value", py::arg("value"),
                 py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(int64_t, const string &, uint32_t))(&MMKV::set),
+    clsMMKV.def("set", (bool (MMKV::*)(int64_t, string_view, uint32_t))(&MMKV::set),
                 "encode an int64 value with expiration", py::arg("value"), py::arg("key"), py::arg("expireDuration"));
-    clsMMKV.def("set", (bool (MMKV::*)(uint64_t, const string &))(&MMKV::set), "encode an unsigned int64 value",
+    clsMMKV.def("set", (bool (MMKV::*)(uint64_t, string_view))(&MMKV::set), "encode an unsigned int64 value",
                 py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(uint64_t, const string &, uint32_t))(&MMKV::set),
+    clsMMKV.def("set", (bool (MMKV::*)(uint64_t, string_view, uint32_t))(&MMKV::set),
                 "encode an unsigned int64 value with expiration", py::arg("value"), py::arg("key"),
                 py::arg("expireDuration"));
-    //clsMMKV.def("set", (bool (MMKV::*)(float, const string &))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(double, const string &))(&MMKV::set), "encode a float/double value",
+    //clsMMKV.def("set", (bool (MMKV::*)(float, string_view))(&MMKV::set), py::arg("value"), py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(double, string_view))(&MMKV::set), "encode a float/double value",
                 py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(double, const string &, uint32_t))(&MMKV::set),
+    clsMMKV.def("set", (bool (MMKV::*)(double, string_view, uint32_t))(&MMKV::set),
                 "encode a float/double value with expiration", py::arg("value"), py::arg("key"),
                 py::arg("expireDuration"));
-    //clsMMKV.def("set", (bool (MMKV::*)(const char*, const string&))(&MMKV::set), py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(const string &, const string &))(&MMKV::set),
+    //clsMMKV.def("set", (bool (MMKV::*)(const char*, string_view))(&MMKV::set), py::arg("value"), py::arg("key"));
+    clsMMKV.def("set", (bool (MMKV::*)(const string &, string_view))(&MMKV::set),
                 "encode an UTF-8 String/bytes value", py::arg("value"), py::arg("key"));
-    clsMMKV.def("set", (bool (MMKV::*)(const string &, const string &, uint32_t))(&MMKV::set),
+    clsMMKV.def("set", (bool (MMKV::*)(const string &, string_view, uint32_t))(&MMKV::set),
                 "encode an UTF-8 String/bytes value with expiration", py::arg("value"), py::arg("key"),
                 py::arg("expireDuration"));
 #if PY_MAJOR_VERSION >= 3

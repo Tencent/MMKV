@@ -28,7 +28,7 @@ IF(APPLE)
     add_compile_definitions(FORCE_POSIX)
 ENDIF()
 
-add_subdirectory(../../Core Core)
+add_subdirectory(../Core Core)
 add_subdirectory(pybind11)
 
 
