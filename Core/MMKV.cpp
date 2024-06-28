@@ -609,15 +609,12 @@ bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t ex
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
         return setDataForKey(std::move(data), key, true);
     } else {
-        if (data.length() > 0) {
-            auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
-            CodedOutputData output(tmp.getPtr(), tmp.length());
-            output.writeData(data);
-            auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
-            output.writeRawLittleEndian32(UInt32ToInt32(time));
-            return setDataForKey(std::move(tmp), key);
-        }
-        return setDataForKey(std::move(data), key);
+        auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
+        CodedOutputData output(tmp.getPtr(), tmp.length());
+        output.writeData(data);
+        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        output.writeRawLittleEndian32(UInt32ToInt32(time));
+        return setDataForKey(std::move(tmp), key);
     }
 }
 
@@ -663,23 +660,7 @@ bool MMKV::set(const MMBuffer &value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
-    // delay write the size needed for encoding value
-    // avoid memory copying
-    if (mmkv_likely(!m_enableKeyExpire)) {
-        assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
-        return setDataForKey(MMBuffer(value.getPtr(), value.length(), MMBufferNoCopy), key, true);
-    } else {
-        MMBuffer data(value.getPtr(), value.length(), MMBufferNoCopy);
-        if (data.length() > 0) {
-            auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
-            CodedOutputData output(tmp.getPtr(), tmp.length());
-            output.writeData(data);
-            auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
-            output.writeRawLittleEndian32(UInt32ToInt32(time));
-            data = std::move(tmp);
-        }
-        return setDataForKey(std::move(data), key);
-    }
+    return setDataForKey(MMBuffer(value.getPtr(), value.length(), MMBufferNoCopy), key, expireDuration);
 }
 
 bool MMKV::set(const vector<string> &value, MMKVKey_t key) {
