@@ -36,6 +36,7 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <cstring>
 
 namespace mmkv {
 class CodedOutputData;

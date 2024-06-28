@@ -35,6 +35,7 @@
 #include <cstring>
 #include <cassert>
 #include <ctime>
+#include <cmath>
 
 using namespace std;
 using namespace mmkv;
@@ -827,7 +828,7 @@ void testGetStringSpeed() {
     }
     end1 = getTimeInMs();
 
-    printf("old_method = %lld, new_method = %lld\n", end1 - start1, end2 - start2);
+    printf("old_method = %ld, new_method = %ld\n", end1 - start1, end2 - start2);
 
     start1 = getTimeInMs();
     for (int i = 0; i < 2000000; i++) {
@@ -840,7 +841,7 @@ void testGetStringSpeed() {
         mmkv->getString("key1", result, true);
     }
     end2 = getTimeInMs();
-    printf("old_method = %lld, new_method = %lld\n", end1 - start1, end2 - start2);
+    printf("old_method = %ld, new_method = %ld\n", end1 - start1, end2 - start2);
 }
 
 void printVector(vector<string> &v) {
@@ -917,15 +918,15 @@ void testCompareBeforeSet() {
         key = "int64_t";
         int64_t v64 = 8080;
         mmkv->set(v64, key);
-        printf("testCompareBeforeSet: int64_t value = %lld\n", mmkv->getInt64(key));
+        printf("testCompareBeforeSet: int64_t value = %ld\n", mmkv->getInt64(key));
         actualSize1 = mmkv->actualSize();
         printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
-        printf("testCompareBeforeSet: int64_t value = %lld\n", mmkv->getInt64(key));
+        printf("testCompareBeforeSet: int64_t value = %ld\n", mmkv->getInt64(key));
         mmkv->set(v64, key);
         actualSize2 = mmkv->actualSize();
         assert(actualSize1 == actualSize2);
         mmkv->set(v64 >> 1, key);
-        printf("testCompareBeforeSet: int64_t value = %lld\n", mmkv->getInt64(key));
+        printf("testCompareBeforeSet: int64_t value = %ld\n", mmkv->getInt64(key));
         assert(mmkv->getInt64(key) == v64 >> 1);
     }
 
@@ -933,15 +934,15 @@ void testCompareBeforeSet() {
         key = "uint64_t";
         uint64_t v64u = 8848;
         mmkv->set(v64u, key);
-        printf("testCompareBeforeSet: uint64_t value = %lld\n", mmkv->getUInt64(key));
+        printf("testCompareBeforeSet: uint64_t value = %lu\n", mmkv->getUInt64(key));
         actualSize1 = mmkv->actualSize();
         printf("testCompareBeforeSet: actualSize = %lu\n", actualSize1);
-        printf("testCompareBeforeSet: uint64_t value = %lld\n", mmkv->getUInt64(key));
+        printf("testCompareBeforeSet: uint64_t value = %lu\n", mmkv->getUInt64(key));
         mmkv->set(v64u, key);
         actualSize2 = mmkv->actualSize();
         assert(actualSize1 == actualSize2);
         mmkv->set(v64u >> 1, key);
-        printf("testCompareBeforeSet: uint64_t value = %lld\n", mmkv->getUInt64(key));
+        printf("testCompareBeforeSet: uint64_t value = %lu\n", mmkv->getUInt64(key));
         assert(mmkv->getUInt64(key) == v64u >> 1);
     }
 
