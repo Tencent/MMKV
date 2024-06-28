@@ -41,6 +41,7 @@ Linux/Makefile
 cmake-build-debug/
 cmake-build-release/
 build/
+build_*/
 dist/
 *.egg-info/
 .cmake
