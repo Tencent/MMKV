@@ -868,20 +868,23 @@ static napi_value decodeBoolSet(napi_env env, napi_callback_info info) {
 }
 
 static napi_value encodeBytes(napi_env env, napi_callback_info info) {
-    size_t argc = 4;
-    napi_value args[4] = {nullptr};
+    size_t argc = 6;
+    napi_value args[6] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        auto value = NValueToMMBuffer(env, args[2]);
-        if (IsNValueUndefined(env, args[3])) {
+        auto buffer = NValueToMMBuffer(env, args[2]);
+        auto offset = NValueToUInt32(env, args[3]);
+        auto length = NValueToUInt32(env, args[4]);
+        auto value = MMBuffer((uint8_t *)buffer.getPtr() + offset, length, mmkv::MMBufferNoCopy);
+        if (IsNValueUndefined(env, args[5])) {
             auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
-        uint32_t expiration = NValueToUInt32(env, args[3]);
+        uint32_t expiration = NValueToUInt32(env, args[5]);
         auto ret = kv->set(value, key, expiration);
         return BoolToNValue(env, ret);
     }
@@ -907,8 +910,8 @@ static napi_value decodeBytes(napi_env env, napi_callback_info info) {
 
 template <typename T>
 napi_value encodeArray(napi_env env, napi_callback_info info) {
-    size_t argc = 4;
-    napi_value args[4] = {nullptr};
+    size_t argc = 6;
+    napi_value args[6] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
@@ -916,12 +919,15 @@ napi_value encodeArray(napi_env env, napi_callback_info info) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto buffer = NValueToMMBuffer(env, args[2]);
-        std::span<T> value((T *)buffer.getPtr(), buffer.length() / sizeof(T));
-        if (IsNValueUndefined(env, args[3])) {
+        auto offset = NValueToUInt32(env, args[3]);
+        auto length = NValueToUInt32(env, args[4]);
+        auto ptr = (uint8_t *)buffer.getPtr() + offset;
+        std::span<T> value((T *)ptr, length / sizeof(T));
+        if (IsNValueUndefined(env, args[5])) {
             auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
-        uint32_t expiration = NValueToUInt32(env, args[3]);
+        uint32_t expiration = NValueToUInt32(env, args[5]);
         auto ret = kv->set(value, key, expiration);
         return BoolToNValue(env, ret);
     }

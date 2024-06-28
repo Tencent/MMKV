@@ -359,7 +359,19 @@ export class MMKV {
      * @returns true if success, false if failure.
      */
     public encodeBytes(key: string, value: ArrayBuffer, expiration?: number): boolean {
-        return native.encodeBytes(this.nativeHandle, key, value, expiration);
+        return native.encodeBytes(this.nativeHandle, key, value, 0, value.byteLength, expiration);
+    }
+
+    /**
+     * Set a view of a ArrayBuffer value and customize expiration in seconds.
+     * @param value { ArrayBuffer }
+     * @param offset the offset from the start of the buffer
+     * @param length the total length of the view of the buffer
+     * @param expiration override the default duration, {@link MMKV.ExpireNever} (0) means never expire.
+     * @returns true if success, false if failure.
+     */
+    public encodeBytesPart(key: string, value: ArrayBuffer, offset: number, length: number, expiration?: number): boolean {
+        return native.encodeBytes(this.nativeHandle, key, value, offset, length, expiration);
     }
 
     /**
@@ -378,15 +390,15 @@ export class MMKV {
      */
     public encodeTypedArray(key: string, value: internal.ArrayValueType, expiration?: number): boolean {
         if (value instanceof Int32Array) {
-            return native.encodeInt32Array(this.nativeHandle, key, value.buffer, expiration);
+            return native.encodeInt32Array(this.nativeHandle, key, value.buffer, value.byteOffset, value.byteLength, expiration);
         } else if (value instanceof Uint32Array) {
-            return native.encodeUInt32Array(this.nativeHandle, key, value.buffer, expiration);
+            return native.encodeUInt32Array(this.nativeHandle, key, value.buffer, value.byteOffset, value.byteLength, expiration);
         } else if (value instanceof BigInt64Array) {
-            return native.encodeInt64Array(this.nativeHandle, key, value.buffer, expiration);
+            return native.encodeInt64Array(this.nativeHandle, key, value.buffer, value.byteOffset, value.byteLength, expiration);
         } else if (value instanceof BigUint64Array) {
-            return native.encodeUInt64Array(this.nativeHandle, key, value.buffer, expiration);
+            return native.encodeUInt64Array(this.nativeHandle, key, value.buffer, value.byteOffset, value.byteLength, expiration);
         }
-        return native.encodeBytes(this.nativeHandle, key, value.buffer, expiration);
+        return native.encodeBytes(this.nativeHandle, key, value.buffer, value.byteOffset, value.byteLength, expiration);
     }
 
     /**

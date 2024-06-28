@@ -184,6 +184,14 @@ struct Index {
     hilog.info(0, 'mmkvdemo', 'bytes value size = %{public}d, actual value size = %{public}d',
       kv.getValueSize('bytes'), kv.getValueSize('bytes', true));
 
+    let typedArr = new Uint8Array(arrayBuffer, 5, 11);
+    kv.encodeTypedArray('bytes', typedArr);
+    let typedArrResult = kv.decodeUint8Array('bytes')!;
+    if (!ArraysEqual(typedArr, typedArrResult)) {
+      hilog.error(0, 'mmkvdemo', 'typedArr = %{public}s, typeArrResult = %{public}s',
+        ArrayToString(typedArr), ArrayToString(typedArrResult));
+    }
+
     this.testContainer(kv, false);
 
     hilog.info(0, 'mmkvdemo', 'contains bytes = %{public}s, contains bytes_not_exit = %{public}s',
@@ -256,9 +264,13 @@ struct Index {
       let pow15 = Math.pow(2, 15);
       let arr = new Int16Array([1024, 0, pow15 - 1, -pow15]);
       kv.encodeTypedArray('int16-array', arr);
+      let arrPart = new Int16Array(arr.buffer, 2, arr.length - 2);
+      kv.encodeTypedArray('int16-array-part', arrPart);
     }
     let newI16Arr = kv.decodeInt16Array('int16-array');
-    hilog.info(0, 'mmkvdemo', 'int16-array = %{public}s', ArrayToString(newI16Arr));
+    let newI16ArrPart = kv.decodeInt16Array('int16-array-part');
+    hilog.info(0, 'mmkvdemo', 'int16-array = %{public}s, int16-array-part = %{public}s',
+      ArrayToString(newI16Arr), ArrayToString(newI16ArrPart));
 
     if (!decodeOnly) {
       let pow16 = Math.pow(2, 16);
@@ -841,4 +853,21 @@ function ArrayToString<T extends Joinable>(arr: T | undefined): string {
     return 'undefined';
   }
   return '[' + arr.join(', ') + ']';
+}
+
+function ArraysEqual(arr1: Uint8Array, arr2: Uint8Array) {
+  // Check if the lengths are different
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+
+  // Compare each element
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+
+  // If all elements are equal, return true
+  return true;
 }
