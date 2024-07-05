@@ -39,7 +39,10 @@ uLong crc32(uLong crc, const Bytef *buf, z_size_t len);
 #else // MMKV_EMBED_ZLIB
 
 #    include <zlib.h>
-
+// some old version of zlib doesn't define z_size_t
+#    ifndef z_size_t
+       typedef size_t z_size_t;
+#    endif
 #    define ZLIB_CRC32(crc, buf, len) ::crc32(crc, buf, static_cast<uInt>(len))
 
 #endif // MMKV_EMBED_ZLIB

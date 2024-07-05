@@ -111,10 +111,14 @@ struct Index {
 
     kv.encodeBool('bool', true);
     hilog.info(0, 'mmkvdemo', 'decode bool = %{public}s', kv.decodeBool('bool'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist bool = %{public}s', kv.decodeBool('non-bool'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist bool = %{public}s', kv.decodeBool('non-bool', false));
 
     let pow31 = Math.pow(2, 31);
     kv.encodeInt32('int32', pow31 - 1);
     hilog.info(0, 'mmkvdemo', 'decode int32 max = %{public}d', kv.decodeInt32('int32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int32 = %{public}s', kv.decodeInt32('non-int32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int32 = %{public}d', kv.decodeInt32('non-int32', 0));
 
     kv.encodeInt32('int32', -pow31);
     hilog.info(0, 'mmkvdemo', 'decode int32 min = %{public}d', kv.decodeInt32('int32'));
@@ -122,6 +126,8 @@ struct Index {
     let pow32 = Math.pow(2, 32);
     kv.encodeUInt32('uint32', pow32 - 1);
     hilog.info(0, 'mmkvdemo', 'decode uint32 max = %{public}d', kv.decodeUInt32('uint32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint32 = %{public}s', kv.decodeUInt32('non-uint32'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint32 = %{public}d', kv.decodeUInt32('non-uint32', 0));
 
     kv.encodeUInt32('uint32', 0);
     hilog.info(0, 'mmkvdemo', 'decode uint32 min = %{public}d', kv.decodeUInt32('uint32'));
@@ -129,6 +135,8 @@ struct Index {
     let pow63 = BigInt(2**63);
     kv.encodeInt64('int64', pow63 - BigInt(1));
     hilog.info(0, 'mmkvdemo', 'decode int64 max = %{public}i', kv.decodeInt64('int64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int64 = %{public}s', kv.decodeInt64('non-int64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist int64 = %{public}d', kv.decodeInt64('non-int64', BigInt(0)));
 
     kv.encodeInt64('int64', -pow63);
     hilog.info(0, 'mmkvdemo', 'decode int64 min = %{public}i', kv.decodeInt64('int64'));
@@ -136,18 +144,34 @@ struct Index {
     let pow64 = BigInt(2**64);
     kv.encodeUInt64('uint64', pow64 - BigInt(1));
     hilog.info(0, 'mmkvdemo', 'decode uint64 max = %{public}i', kv.decodeUInt64('uint64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint64 = %{public}s', kv.decodeUInt64('non-uint64'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist uint64 = %{public}i', kv.decodeUInt64('non-uint64', BigInt(0)));
 
     kv.encodeUInt64('uint64', BigInt(0));
     hilog.info(0, 'mmkvdemo', 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
 
+    kv.encodeFloat('float', Number.MAX_VALUE);
+    hilog.info(0, 'mmkvdemo', 'decode float max = %{public}d', kv.decodeFloat('float'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist float = %{public}s', kv.decodeFloat('non-float'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist float = %{public}d', kv.decodeFloat('non-float', 0));
+
+    kv.encodeFloat('float', Number.MIN_VALUE);
+    hilog.info(0, 'mmkvdemo', 'decode float min = %{public}d', kv.decodeFloat('float'));
+
     kv.encodeDouble('double', Number.MAX_VALUE);
     hilog.info(0, 'mmkvdemo', 'decode double max = %{public}d', kv.decodeDouble('double'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist double = %{public}s', kv.decodeDouble('non-double'));
+    hilog.info(0, 'mmkvdemo', 'decode non-exist double = %{public}d', kv.decodeDouble('non-double', 0));
 
     kv.encodeDouble('double', Number.MIN_VALUE);
     hilog.info(0, 'mmkvdemo', 'decode double min = %{public}d', kv.decodeDouble('double'));
 
     kv.encodeString('string', 'Hello world to OpenHarmony!');
     hilog.info(0, 'mmkvdemo', 'decode string = %{public}s', kv.decodeString('string'));
+
+    let json: string = '{"courseId":39575,"name":"通识课测试2","type":4,"status":1,"limit":1819956082000,"needapprove":"0","lastModifyDate":1712821563000,"openCourse":1,"md5":"967cdcbd284197d68efb19ca9b27f06b"}';
+    kv.encodeString('json', json);
+    hilog.info(0, 'mmkvdemo', 'decode json = %{public}s', kv.decodeString('json'));
 
     hilog.info(0, 'mmkvdemo', 'decode non-exist string = %{public}s', kv.decodeString('non-exist'));
     hilog.info(0, 'mmkvdemo', 'decode non-exist string = %{public}s', kv.decodeString('non-exist', 'default_value'));
@@ -160,16 +184,15 @@ struct Index {
     hilog.info(0, 'mmkvdemo', 'bytes value size = %{public}d, actual value size = %{public}d',
       kv.getValueSize('bytes'), kv.getValueSize('bytes', true));
 
-    let strArr: string[] = ['abc', 'defg', 'hijk'];
-    kv.encodeStringSet('string-set', strArr);
-    let newStrArr = kv.decodeStringSet('string-set');
-    hilog.info(0, 'mmkvdemo', 'string-set = %{public}s', ArrayToString(newStrArr));
+    let typedArr = new Uint8Array(arrayBuffer, 5, 11);
+    kv.encodeTypedArray('bytes', typedArr);
+    let typedArrResult = kv.decodeUint8Array('bytes')!;
+    if (!ArraysEqual(typedArr, typedArrResult)) {
+      hilog.error(0, 'mmkvdemo', 'typedArr = %{public}s, typeArrResult = %{public}s',
+        ArrayToString(typedArr), ArrayToString(typedArrResult));
+    }
 
-    kv.encodeStringSet('empty-string-set', []);
-    let emptyStrArr = kv.decodeStringSet('empty-string-set');
-    hilog.info(0, 'mmkvdemo', 'empty-string-set = %{public}s', ArrayToString(emptyStrArr));
-    let nonStrArr = kv.decodeStringSet('non-exist-string-set');
-    hilog.info(0, 'mmkvdemo', 'non-exist-string-set = %{public}s', ArrayToString(nonStrArr));
+    this.testContainer(kv, false);
 
     hilog.info(0, 'mmkvdemo', 'contains bytes = %{public}s, contains bytes_not_exit = %{public}s',
       kv.containsKey('bytes'), kv.containsKey('bytes_not_exit'));
@@ -198,6 +221,110 @@ struct Index {
     kv.close();
     hilog.info(0, 'mmkvdemo', 'isFileValue %{public}s', MMKV.isFileValid(mmapID, rootPath));
     hilog.info(0, 'mmkvdemo', 'remove storage %{public}s', MMKV.removeStorage(mmapID, rootPath));
+  }
+
+  testContainer(kv: MMKV, decodeOnly: boolean) {
+    if (!decodeOnly) {
+      let strArr: string[] = ['abc', 'defg', 'hijk'];
+      kv.encodeStringSet('string-set', strArr);
+    }
+    let newStrArr = kv.decodeStringSet('string-set');
+    hilog.info(0, 'mmkvdemo', 'string-set = %{public}s', ArrayToString(newStrArr));
+
+    if (!decodeOnly) {
+      kv.encodeStringSet('empty-string-set', []);
+    }
+    let emptyStrArr = kv.decodeStringSet('empty-string-set');
+    hilog.info(0, 'mmkvdemo', 'empty-string-set = %{public}s', ArrayToString(emptyStrArr));
+    let nonStrArr = kv.decodeStringSet('non-exist-string-set');
+    hilog.info(0, 'mmkvdemo', 'non-exist-string-set = %{public}s', ArrayToString(nonStrArr));
+
+    if (!decodeOnly) {
+      let arr = new Int8Array([-128, 0, 127, 1]);
+      kv.encodeTypedArray('int8-array', arr);
+    }
+    let newI8Arr = kv.decodeInt8Array('int8-array');
+    hilog.info(0, 'mmkvdemo', 'int8-array = %{public}s', ArrayToString(newI8Arr));
+
+    if (!decodeOnly) {
+      let arr = new Uint8Array([0, 255, 1, 255]);
+      kv.encodeTypedArray('uint8-array', arr);
+    }
+    let newUI8Arr = kv.decodeUint8Array('uint8-array');
+    hilog.info(0, 'mmkvdemo', 'uint8-array = %{public}s', ArrayToString(newUI8Arr));
+
+    if (!decodeOnly) {
+      let arr = new Uint8ClampedArray([0, 255, 256, -1]);
+      kv.encodeTypedArray('uint8Clamped-array', arr);
+    }
+    let newUint8ClampedArray = kv.decodeUint8ClampedArray('uint8Clamped-array');
+    hilog.info(0, 'mmkvdemo', 'uint8Clamped-array = %{public}s', ArrayToString(newUint8ClampedArray));
+
+    if (!decodeOnly) {
+      let pow15 = Math.pow(2, 15);
+      let arr = new Int16Array([1024, 0, pow15 - 1, -pow15]);
+      kv.encodeTypedArray('int16-array', arr);
+      let arrPart = new Int16Array(arr.buffer, 2, arr.length - 2);
+      kv.encodeTypedArray('int16-array-part', arrPart);
+    }
+    let newI16Arr = kv.decodeInt16Array('int16-array');
+    let newI16ArrPart = kv.decodeInt16Array('int16-array-part');
+    hilog.info(0, 'mmkvdemo', 'int16-array = %{public}s, int16-array-part = %{public}s',
+      ArrayToString(newI16Arr), ArrayToString(newI16ArrPart));
+
+    if (!decodeOnly) {
+      let pow16 = Math.pow(2, 16);
+      let ui32Arr = new Uint16Array([2048, 0, pow16 - 1]);
+      kv.encodeTypedArray('uint16-array', ui32Arr);
+    }
+    let newUI16Arr = kv.decodeUint16Array('uint16-array');
+    hilog.info(0, 'mmkvdemo', 'uint16-array = %{public}s', ArrayToString(newUI16Arr));
+
+    if (!decodeOnly) {
+      let pow31 = Math.pow(2, 31);
+      let i32Arr = new Int32Array([1024, 0, pow31 - 1, -pow31]);
+      kv.encodeTypedArray('int32-array', i32Arr);
+    }
+    let newI32Arr = kv.decodeInt32Array('int32-array');
+    hilog.info(0, 'mmkvdemo', 'int32-array = %{public}s', ArrayToString(newI32Arr));
+
+    if (!decodeOnly) {
+      let pow32 = Math.pow(2, 32);
+      let ui32Arr = new Uint32Array([2048, 0, pow32 - 1]);
+      kv.encodeTypedArray('uint32-array', ui32Arr);
+    }
+    let newUI32Arr = kv.decodeUint32Array('uint32-array');
+    hilog.info(0, 'mmkvdemo', 'uint32-array = %{public}s', ArrayToString(newUI32Arr));
+
+    if (!decodeOnly) {
+      let pow63 = BigInt(2**63);
+      let arr = new BigInt64Array([BigInt(4096), BigInt(0), pow63 - BigInt(1), -pow63]);
+      kv.encodeTypedArray('int64-array', arr);
+    }
+    let newI64Arr = kv.decodeInt64Array('int64-array');
+    hilog.info(0, 'mmkvdemo', 'int64-array = %{public}s', ArrayToString(newI64Arr));
+
+    if (!decodeOnly) {
+      let pow64 = BigInt(2**64);
+      let arr = new BigUint64Array([BigInt(8192), BigInt(0), pow64 - BigInt(1)]);
+      kv.encodeTypedArray('uint64-array', arr);
+    }
+    let newUI64Arr = kv.decodeUint64Array('uint64-array');
+    hilog.info(0, 'mmkvdemo', 'uint64-array = %{public}s', ArrayToString(newUI64Arr));
+
+    if (!decodeOnly) {
+      let arr = new Float32Array([0.0, -3.1416, Number.MIN_VALUE, Number.MAX_VALUE]);
+      kv.encodeTypedArray('float32-array', arr);
+    }
+    let newFloat32Array = kv.decodeFloat32Array('float32-array');
+    hilog.info(0, 'mmkvdemo', 'float32-array = %{public}s', ArrayToString(newFloat32Array));
+
+    if (!decodeOnly) {
+      let arr = new Float64Array([0.0, -3.1416, Number.MIN_VALUE, Number.MAX_VALUE]);
+      kv.encodeTypedArray('float64-array', arr);
+    }
+    let newFloat64Array = kv.decodeFloat64Array('float64-array');
+    hilog.info(0, 'mmkvdemo', 'float64-array = %{public}s', ArrayToString(newFloat64Array));
   }
 
   testMMKV(mmapID: string, decodeOnly: boolean, cryptKey?: string, rootPath?: string): MMKV {
@@ -260,6 +387,16 @@ struct Index {
       kv.encodeUInt64('uint64', BigInt(0));
     }
     hilog.info(0, 'mmkvdemo', 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
+
+    if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MAX_VALUE);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float max = %{public}d', kv.decodeFloat('float'));
+
+    if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MIN_VALUE);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float min = %{public}d', kv.decodeFloat('float'));
 
     if (!decodeOnly) {
       kv.encodeDouble('double', Number.MAX_VALUE);
@@ -528,6 +665,16 @@ struct Index {
     hilog.info(0, 'mmkvdemo', 'decode uint64 min = %{public}i', kv.decodeUInt64('uint64'));
 
     if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MAX_VALUE, expiration);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float max = %{public}d', kv.decodeFloat('float'));
+
+    if (!decodeOnly) {
+      kv.encodeFloat('float', Number.MIN_VALUE, expiration);
+    }
+    hilog.info(0, 'mmkvdemo', 'decode float min = %{public}d', kv.decodeFloat('float'));
+
+    if (!decodeOnly) {
       kv.encodeDouble('double', Number.MAX_VALUE, expiration);
     }
     hilog.info(0, 'mmkvdemo', 'decode double max = %{public}d', kv.decodeDouble('double'));
@@ -697,9 +844,30 @@ function ArrayBufferToString(arr: ArrayBuffer | undefined): string {
   return dnc.decodeWithStream(out8Arr);
 }
 
-function ArrayToString(arr: string[] | number[] | boolean[] | undefined): string {
+interface Joinable {
+  join(separator?: string): string;
+}
+
+function ArrayToString<T extends Joinable>(arr: T | undefined): string {
   if (arr == undefined) {
     return 'undefined';
   }
   return '[' + arr.join(', ') + ']';
+}
+
+function ArraysEqual(arr1: Uint8Array, arr2: Uint8Array) {
+  // Check if the lengths are different
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+
+  // Compare each element
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+
+  // If all elements are equal, return true
+  return true;
 }

@@ -156,7 +156,7 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:X86</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MiniPBCoder.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>
@@ -196,7 +196,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MiniPBCoder.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>
@@ -236,7 +236,7 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:X86</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MiniPBCoder.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>
@@ -276,7 +276,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
     </Lib>
     <PostBuildEvent>
-      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
+      <Command>for %%f in ("$(ProjectDir)MMKV.h", "$(ProjectDir)MMBuffer.h",  "$(ProjectDir)MMKVPredef.h", "$(ProjectDir)MiniPBCoder.h") do xcopy /y /i %%f "$(OutDir)\include\MMKV\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying Headers</Message>

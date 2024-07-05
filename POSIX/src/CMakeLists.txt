@@ -64,7 +64,7 @@ target_include_directories(mmkv PUBLIC
               #)
 
 set_target_properties(mmkv PROPERTIES
-            CXX_STANDARD 17
+            CXX_STANDARD 20
             CXX_EXTENSIONS OFF
             )
 

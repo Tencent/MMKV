@@ -39,6 +39,8 @@ public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+        loadLibrary();
+
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "mmkv");
         channel.setMethodCallHandler(this);
     }
@@ -65,5 +67,16 @@ public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
 
     private int getSdkVersion() {
         return Integer.parseInt(android.os.Build.VERSION.SDK);
+    }
+
+    private static boolean isLibraryLoaded = false;
+
+    private static void loadLibrary() {
+        if (isLibraryLoaded) {
+            return;
+        }
+
+        System.loadLibrary("mmkv");
+        isLibraryLoaded = true;
     }
 }

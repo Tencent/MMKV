@@ -34,7 +34,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v1.3.5";
+constexpr auto MMKV_VERSION = "v1.3.6";
 
 #ifdef DEBUG
 #    define MMKV_DEBUG
@@ -42,6 +42,10 @@ constexpr auto MMKV_VERSION = "v1.3.5";
 
 #ifdef NDEBUG
 #    undef MMKV_DEBUG
+#endif
+
+#if __cplusplus>=202002L
+#    define MMKV_HAS_CPP20
 #endif
 
 #ifdef __ANDROID__
@@ -195,9 +199,34 @@ using MMKVVector = std::vector<std::pair<NSString *, mmkv::MMBuffer>>;
 using MMKVMap = std::unordered_map<NSString *, mmkv::KeyValueHolder, KeyHasher, KeyEqualer>;
 using MMKVMapCrypt = std::unordered_map<NSString *, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
 #else
+struct KeyHasher {
+    // enables heterogeneous lookup
+    using is_transparent = void;
+
+    std::size_t operator()(const std::string_view& str) const {
+        return std::hash<std::string_view>{}(str);
+    }
+
+    std::size_t operator()(const std::string& str) const {
+        return std::hash<std::string>{}(str);
+    }
+};
+
+struct KeyEqualer {
+    // enables heterogeneous lookup
+    using is_transparent = void;
+
+    bool operator()(const std::string_view& lhs, const std::string_view& rhs) const {
+        return lhs == rhs;
+    }
+
+    bool operator()(const std::string& lhs, const std::string& rhs) const {
+        return lhs == rhs;
+    }
+};
 using MMKVVector = std::vector<std::pair<std::string, mmkv::MMBuffer>>;
-using MMKVMap = std::unordered_map<std::string, mmkv::KeyValueHolder>;
-using MMKVMapCrypt = std::unordered_map<std::string, mmkv::KeyValueHolderCrypt>;
+using MMKVMap = std::unordered_map<std::string, mmkv::KeyValueHolder, KeyHasher, KeyEqualer>;
+using MMKVMapCrypt = std::unordered_map<std::string, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
 #endif // MMKV_APPLE
 
 template <typename T>
@@ -216,6 +245,18 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
 #endif
 
 #endif //cplus-plus
+
+#ifndef MMKV_WIN32
+#    ifndef likely
+#        define mmkv_unlikely(x) (__builtin_expect(bool(x), 0))
+#        define mmkv_likely(x) (__builtin_expect(bool(x), 1))
+#    endif
+#else
+#    ifndef likely
+#        define mmkv_unlikely(x) (x)
+#        define mmkv_likely(x) (x)
+#    endif
+#endif
 
 #if defined(__arm__)
   #if defined(__ARM_ARCH_7A__)

@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKV"
-  s.version      = "1.3.5"
+  s.version      = "1.3.6"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC
@@ -27,12 +27,12 @@ Pod::Spec.new do |s|
   s.libraries    = "z", "c++"
   s.requires_arc = false
   s.pod_target_xcconfig = {
-    "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++17",
+    "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++20",
     "CLANG_CXX_LIBRARY" => "libc++",
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
   }
 
-  s.dependency 'MMKVCore', '~> 1.3.5'
+  s.dependency 'MMKVCore', '~> 1.3.6'
 
 end
 

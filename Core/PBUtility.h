@@ -26,18 +26,6 @@
 
 #include <cstdint>
 
-#ifndef MMKV_WIN32
-#    ifndef likely
-#        define unlikely(x) (__builtin_expect(bool(x), 0))
-#        define likely(x) (__builtin_expect(bool(x), 1))
-#    endif
-#else
-#    ifndef likely
-#        define unlikely(x) (x)
-#        define likely(x) (x)
-#    endif
-#endif
-
 namespace mmkv {
 
 template <typename T, typename P>

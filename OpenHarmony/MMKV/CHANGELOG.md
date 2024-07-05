@@ -1,8 +1,15 @@
-# MMKV for OpenHarmony Change Log
+# MMKV for HarmonyOS NEXT Change Log
+
+## v1.3.6 / 2024-07-05
+* Fix a bug that a `String` value might get truncated on encoding.
+* MMKV returns `undefined` when a key does not exist, previously a default value of the type (`false` for `boolean`, `0` for `number`, etc) is returned.
+* Add the feature to encode/decode a `float` value.
+* Add the feature to encode/decode a `TypedArray` value.
+* Support encoding a part of an `ArrayBuffer`.
 
 ## v1.3.5 / 2024-04-24
 Fix a bug in `MMKV.initialize()` that fails to handle the optional parameter _logLevel_.
 
 ## v1.3.4 / 2024-04-17
 
-The first official OpenHarmony package of MMKV. Most things actually work!
+The first official HarmonyOS NEXT package of MMKV. Most things actually work!

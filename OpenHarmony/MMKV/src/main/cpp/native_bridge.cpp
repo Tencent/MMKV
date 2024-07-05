@@ -80,7 +80,7 @@ static string NValueToString(napi_env env, napi_value value, bool maybeUndefined
     size_t size;
     NAPI_CALL_RET(napi_get_value_string_utf8(env, value, nullptr, 0, &size), "");
     string result(size, '\0');
-    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, (char *) result.data(), result.capacity(), nullptr), "");
+    NAPI_CALL_RET(napi_get_value_string_utf8(env, value, (char *) result.data(), size + 1, nullptr), "");
     return result;
 }
 
@@ -231,6 +231,29 @@ static napi_value MMBufferToNValue(napi_env env, MMBuffer &&value) {
     }
     return MMBufferToNValue(env, (const MMBuffer &) value);
 }
+
+// static napi_value MMBufferToTypeArray(napi_env env, const MMBuffer &value, napi_typedarray_type type) {
+//     napi_value result = nullptr;
+//     void *data = nullptr;
+//     if (napi_create_typedarray(env, type, value.length(), &data, &result) == napi_ok) {
+//         memcpy(data, value.getPtr(), value.length());
+//     }
+//     return result;
+// }
+//
+// static napi_value MMBufferToTypeArray(napi_env env, MMBuffer &&value) {
+//     if (!value.isStoredOnStack()) {
+//         napi_value result = nullptr;
+//         auto ret =
+//             napi_create_external_arraybuffer(env, value.getPtr(), value.length(), my_finalizer, nullptr, &result);
+//         if (ret == napi_ok) {
+//             // MMKVInfo("using napi_create_external_arraybuffer %p", value.getPtr());
+//             value.detach();
+//             return result;
+//         }
+//     }
+//     return MMBufferToNValue(env, (const MMBuffer &)value);
+// }
 
 static napi_value NAPIUndefined(napi_env env) {
     napi_value result = nullptr;
@@ -444,9 +467,13 @@ static napi_value decodeBool(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToBool(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return BoolToNValue(env, kv->getBool(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getBool(key, defaultValue, &hasValue);
+        if(hasValue) {
+            return BoolToNValue(env, ret);
+        }
     }
-    return BoolToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeInt32(napi_env env, napi_callback_info info) {
@@ -480,9 +507,13 @@ static napi_value decodeInt32(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToInt32(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return Int32ToNValue(env, kv->getInt32(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getInt32(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return Int32ToNValue(env, ret);
+        }
     }
-    return Int32ToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeUInt32(napi_env env, napi_callback_info info) {
@@ -516,9 +547,13 @@ static napi_value decodeUInt32(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToUInt32(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return UInt32ToNValue(env, kv->getUInt32(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getUInt32(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return UInt32ToNValue(env, ret);
+        }
     }
-    return UInt32ToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeInt64(napi_env env, napi_callback_info info) {
@@ -552,9 +587,13 @@ static napi_value decodeInt64(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToInt64(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return Int64ToNValue(env, kv->getInt64(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getInt64(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return Int64ToNValue(env, ret);
+        }
     }
-    return Int64ToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeUInt64(napi_env env, napi_callback_info info) {
@@ -588,9 +627,53 @@ static napi_value decodeUInt64(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToUInt64(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return UInt64ToNValue(env, kv->getUInt64(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getUInt64(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return UInt64ToNValue(env, ret);
+        }
     }
-    return UInt64ToNValue(env, defaultValue);
+    return args[2];
+}
+
+static napi_value encodeFloat(napi_env env, napi_callback_info info) {
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        float value = NValueToDouble(env, args[2]);
+        if (IsNValueUndefined(env, args[3])) {
+            auto ret = kv->set(value, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[3]);
+        auto ret = kv->set(value, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+static napi_value decodeFloat(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    auto defaultValue = NValueToDouble(env, args[2]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        bool hasValue = false;
+        auto ret = kv->getFloat(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return DoubleToNValue(env, ret);
+        }
+    }
+    return args[2];
 }
 
 static napi_value encodeDouble(napi_env env, napi_callback_info info) {
@@ -624,9 +707,13 @@ static napi_value decodeDouble(napi_env env, napi_callback_info info) {
     auto defaultValue = NValueToDouble(env, args[2]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        return DoubleToNValue(env, kv->getDouble(key, defaultValue));
+        bool hasValue = false;
+        auto ret = kv->getDouble(key, defaultValue, &hasValue);
+        if (hasValue) {
+            return DoubleToNValue(env, ret);
+        }
     }
-    return DoubleToNValue(env, defaultValue);
+    return args[2];
 }
 
 static napi_value encodeString(napi_env env, napi_callback_info info) {
@@ -715,18 +802,12 @@ static napi_value encodeNumberSet(napi_env env, napi_callback_info info) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToDoubleArray(env, args[2]);
-        auto valueLength = value.size() * pbDoubleSize();
-        auto buffer = MMBuffer(valueLength);
-        CodedOutputData output(buffer.getPtr(), valueLength);
-        for (auto single : value) {
-            output.writeDouble(single);
-        }
         if (IsNValueUndefined(env, args[3])) {
-            auto ret = kv->set(buffer, key);
+            auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
         uint32_t expiration = NValueToUInt32(env, args[3]);
-        auto ret = kv->set(buffer, key, expiration);
+        auto ret = kv->set(value, key, expiration);
         return BoolToNValue(env, ret);
     }
     return BoolToNValue(env, false);
@@ -741,14 +822,8 @@ static napi_value decodeNumberSet(napi_env env, napi_callback_info info) {
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        MMBuffer buffer;
-        if (kv->getBytes(key, buffer)) {
-            vector<double> result;
-            CodedInputData input(buffer.getPtr(), buffer.length());
-            while (!input.isAtEnd()) {
-                auto value = input.readDouble();
-                result.push_back(value);
-            }
+        vector<double> result;
+        if (kv->getVector(key, result)) {
             return DoubleArrayToNValue(env, result);
         }
     }
@@ -765,19 +840,12 @@ static napi_value encodeBoolSet(napi_env env, napi_callback_info info) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
         auto value = NValueToBoolArray(env, args[2]);
-        auto valueLength = value.size() * pbBoolSize();
-        auto buffer = MMBuffer(valueLength);
-        CodedOutputData output(buffer.getPtr(), valueLength);
-        for (auto single : value) {
-            output.writeBool(single);
-        }
         if (IsNValueUndefined(env, args[3])) {
-            auto ret = kv->set(buffer, key);
+            auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
         uint32_t expiration = NValueToUInt32(env, args[3]);
-        auto ret = kv->set(buffer, key, expiration);
-        return BoolToNValue(env, ret);
+        auto ret = kv->set(value, key, expiration);
     }
     return BoolToNValue(env, false);
 }
@@ -791,14 +859,8 @@ static napi_value decodeBoolSet(napi_env env, napi_callback_info info) {
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        MMBuffer buffer;
-        if (kv->getBytes(key, buffer)) {
-            vector<bool> result;
-            CodedInputData input(buffer.getPtr(), buffer.length());
-            while (!input.isAtEnd()) {
-                auto value = input.readBool();
-                result.push_back(value);
-            }
+        vector<bool> result;
+        if (kv->getVector(key, result)) {
             return BoolArrayToNValue(env, result);
         }
     }
@@ -806,20 +868,23 @@ static napi_value decodeBoolSet(napi_env env, napi_callback_info info) {
 }
 
 static napi_value encodeBytes(napi_env env, napi_callback_info info) {
-    size_t argc = 4;
-    napi_value args[4] = {nullptr};
+    size_t argc = 6;
+    napi_value args[6] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     auto handle = NValueToUInt64(env, args[0]);
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        auto value = NValueToMMBuffer(env, args[2]);
-        if (IsNValueUndefined(env, args[3])) {
+        auto buffer = NValueToMMBuffer(env, args[2]);
+        auto offset = NValueToUInt32(env, args[3]);
+        auto length = NValueToUInt32(env, args[4]);
+        auto value = MMBuffer((uint8_t *)buffer.getPtr() + offset, length, mmkv::MMBufferNoCopy);
+        if (IsNValueUndefined(env, args[5])) {
             auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
-        uint32_t expiration = NValueToUInt32(env, args[3]);
+        uint32_t expiration = NValueToUInt32(env, args[5]);
         auto ret = kv->set(value, key, expiration);
         return BoolToNValue(env, ret);
     }
@@ -841,6 +906,83 @@ static napi_value decodeBytes(napi_env env, napi_callback_info info) {
         }
     }
     return args[2];
+}
+
+template <typename T>
+napi_value encodeArray(napi_env env, napi_callback_info info) {
+    size_t argc = 6;
+    napi_value args[6] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        auto buffer = NValueToMMBuffer(env, args[2]);
+        auto offset = NValueToUInt32(env, args[3]);
+        auto length = NValueToUInt32(env, args[4]);
+        auto ptr = (uint8_t *)buffer.getPtr() + offset;
+        std::span<T> value((T *)ptr, length / sizeof(T));
+        if (IsNValueUndefined(env, args[5])) {
+            auto ret = kv->set(value, key);
+            return BoolToNValue(env, ret);
+        }
+        uint32_t expiration = NValueToUInt32(env, args[5]);
+        auto ret = kv->set(value, key, expiration);
+        return BoolToNValue(env, ret);
+    }
+    return BoolToNValue(env, false);
+}
+
+template <typename T>
+napi_value decodeArray(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        std::vector<T> vec;
+        if (kv->getVector(key, vec)) {
+            MMBuffer result(vec.data(), vec.size() * sizeof(T));
+            return MMBufferToNValue(env, std::move(result));
+        }
+    }
+    return args[2];
+}
+
+static napi_value encodeInt32Array(napi_env env, napi_callback_info info) {
+    return encodeArray<int32_t>(env, info);
+}
+
+static napi_value decodeInt32Array(napi_env env, napi_callback_info info) {
+    return decodeArray<int32_t>(env, info);
+}
+
+static napi_value encodeUInt32Array(napi_env env, napi_callback_info info) {
+    return encodeArray<uint32_t>(env, info);
+}
+
+static napi_value decodeUInt32Array(napi_env env, napi_callback_info info) {
+    return decodeArray<uint32_t>(env, info);
+}
+
+static napi_value encodeInt64Array(napi_env env, napi_callback_info info) {
+    return encodeArray<int64_t>(env, info);
+}
+
+static napi_value decodeInt64Array(napi_env env, napi_callback_info info) {
+    return decodeArray<int64_t>(env, info);
+}
+
+static napi_value encodeUInt64Array(napi_env env, napi_callback_info info) {
+    return encodeArray<uint64_t>(env, info);
+}
+
+static napi_value decodeUInt64Array(napi_env env, napi_callback_info info) {
+    return decodeArray<uint64_t>(env, info);
 }
 
 static napi_value containsKey(napi_env env, napi_callback_info info) {
@@ -1373,6 +1515,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeInt64", nullptr, decodeInt64, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeUInt64", nullptr, encodeUInt64, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeUInt64", nullptr, decodeUInt64, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeFloat", nullptr, encodeFloat, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeFloat", nullptr, decodeFloat, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeDouble", nullptr, encodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeDouble", nullptr, decodeDouble, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeString", nullptr, encodeString, nullptr, nullptr, nullptr, napi_default, nullptr },
@@ -1385,6 +1529,14 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeBoolSet", nullptr, decodeBoolSet, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeBytes", nullptr, encodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeBytes", nullptr, decodeBytes, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeInt32Array", nullptr, encodeInt32Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeInt32Array", nullptr, decodeInt32Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeUInt32Array", nullptr, encodeUInt32Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeUInt32Array", nullptr, decodeUInt32Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeInt64Array", nullptr, encodeInt64Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeInt64Array", nullptr, decodeInt64Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "encodeUInt64Array", nullptr, encodeUInt64Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "decodeUInt64Array", nullptr, decodeUInt64Array, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "containsKey", nullptr, containsKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "count", nullptr, count, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "allKeys", nullptr, allKeys, nullptr, nullptr, nullptr, napi_default, nullptr },

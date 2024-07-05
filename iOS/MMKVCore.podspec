@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKVCore"
-  s.version      = "1.3.5"
+  s.version      = "1.3.6"
   s.summary      = "MMKVCore for MMKV. MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC
@@ -31,7 +31,7 @@ Pod::Spec.new do |s|
   s.ios.frameworks = "UIKit"
   s.libraries    = "z", "c++"
   s.pod_target_xcconfig = {
-    "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++17",
+    "CLANG_CXX_LANGUAGE_STANDARD" => "gnu++20",
     "CLANG_CXX_LIBRARY" => "libc++",
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
   }

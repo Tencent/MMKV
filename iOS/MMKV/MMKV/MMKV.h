@@ -382,6 +382,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)removeStorage:(NSString *)mmapID rootPath:(nullable NSString *)path NS_SWIFT_NAME(removeStorage(for:rootPath:));
 + (BOOL)removeStorage:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(removeStorage(for:mode:));
 
+// protection from potential misuse
++ (void)initialize NS_UNAVAILABLE;
+
 NS_ASSUME_NONNULL_END
 
 @end

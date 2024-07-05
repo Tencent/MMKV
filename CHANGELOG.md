@@ -1,4 +1,39 @@
 # MMKV Change Log
+## v1.3.6 / 2024-07-05
+### Changes for All platforms
+* The Core library now upgrades the C++ standard from C++17 to C++20 to make the most of morden C++ feature such as `Concept` & unordered containers with `std::string_view` as key. From now on, if you build MMKV by source (iOS, Windows, POSIX, etc), you will need a C++ compiler that supports the C++20 standard. If you only use MMKV in binary (Android, OHOS, etc), this upgrade of the C++ compiler is not required.
+* The key type changes from `std::string` to `std::string_view`, to avoid unnecessary string construction and destruction when the key is a raw string.
+
+### Android
+* Use the latest ashmem API if possible.
+* Use the latest API to get the device API level.
+
+### Flutter
+* MMKV will try to load libmmkv.so before Dart code, to reduce the error of loading library in Android.
+
+### HarmonyOS NEXT
+* Fix a bug that a `String` value might get truncated on encoding.
+* MMKV returns `undefined` when a key does not exist, previously a default value of the type (`false` for `boolean`, `0` for `number`, etc) is returned.
+* Add the feature to encode/decode a `float` value.
+* Add the feature to encode/decode a `TypedArray` value.
+* Support encoding a part of an `ArrayBuffer`.
+
+### iOS/macOS
+* Hide the default `NSObject.initialize()` from Swift/ObjC to prevent potential misuse.
+
+### POSIX
+* Support encode/decode `std::vector<T>` or `std::span<T>` values, with T as primitive types.
+* Fix a compile error on Linux env.
+* Fix a compile error on the GNU compiler.
+* Fix a compile error with some old version of zlib (on CentOS).
+
+### Python
+* Python now runs on Windows. Check out the latest [wiki](https://github.com/Tencent/MMKV/wiki/python_setup) for instructions.
+
+### Windows
+* Support encode/decode `std::vector<T>` or `std::span<T>` values, with T as primitive types.
+* Python now runs on Windows. Check out the latest [wiki](https://github.com/Tencent/MMKV/wiki/python_setup) for instructions.
+
 ## v1.3.5 / 2024-04-24
 ### HarmonyOS NEXT
 * This is the first official support of HarmonyOS NEXT.

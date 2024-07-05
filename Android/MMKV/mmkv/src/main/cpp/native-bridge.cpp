@@ -29,6 +29,7 @@
 #    include <cstdint>
 #    include <jni.h>
 #    include <string>
+#    include <android/api-level.h>
 
 using namespace std;
 using namespace mmkv;
@@ -108,23 +109,13 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         InternalLogError("fail to get method id for onContentChangedByOuterProcess()");
     }
 
-    // get current API level by accessing android.os.Build.VERSION.SDK_INT
-    jclass versionClass = env->FindClass("android/os/Build$VERSION");
-    if (versionClass) {
-        jfieldID sdkIntFieldID = env->GetStaticFieldID(versionClass, "SDK_INT", "I");
-        if (sdkIntFieldID) {
-            g_android_api = env->GetStaticIntField(versionClass, sdkIntFieldID);
+    // Note: If you use NDK r23 or older, you can get API level by accessing android.os.Build.VERSION.SDK_INT
+    g_android_api = android_get_device_api_level();
 #ifdef MMKV_STL_SHARED
-            InternalLogInfo("current API level = %d, libc++_shared=%d", g_android_api, MMKV_STL_SHARED);
+    InternalLogInfo("current API level = %d, libc++_shared=%d", g_android_api, MMKV_STL_SHARED);
 #else
-            InternalLogInfo("current API level = %d, libc++_shared=?", g_android_api);
+    InternalLogInfo("current API level = %d, libc++_shared=?", g_android_api);
 #endif
-        } else {
-            InternalLogError("fail to get field id android.os.Build.VERSION.SDK_INT");
-        }
-    } else {
-        InternalLogError("fail to get class android.os.Build.VERSION");
-    }
 
     return JNI_VERSION_1_6;
 }
