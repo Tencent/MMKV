@@ -1,4 +1,9 @@
 # MMKV for Flutter Change Log
+## v1.3.6 / 2024-07-05
+* Android: MMKV will try to load libmmkv.so before Dart code, to reduce the error of loading library in Android.
+* Android: Use the latest ashmem API if possible.
+* Android: Use the latest API to get the device API level.
+
 ## v1.3.5 / 2024-04-24
 * Migrate to federated plugins to avoid the iOS rename headache. From now on, no more renaming from `mmkv` to `mmkvflutter` is needed.
 * Bump iOS Deployment Target to iOS 12.

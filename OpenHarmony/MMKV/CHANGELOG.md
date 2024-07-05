@@ -1,11 +1,11 @@
 # MMKV for HarmonyOS NEXT Change Log
 
-## v1.3.6-beta3 / 2024-06-28
-* Add encode / decode `float` interface.
-* Add encode / decode all `TypedArray` interface.
-* Fix a bug when transforming a JavaScript string to a native string, the last char might lost.
-* Fix a bug when decoding an non-existent value of primitive types, `undefined` is not returned.
-* Fix a bug when encoding a TypedArray with only a view of a ArrayBuffer, it will not be encoded correctly.
+## v1.3.6 / 2024-07-05
+* Fix a bug that a `String` value might get truncated on encoding.
+* MMKV returns `undefined` when a key does not exist, previously a default value of the type (`false` for `boolean`, `0` for `number`, etc) is returned.
+* Add the feature to encode/decode a `float` value.
+* Add the feature to encode/decode a `TypedArray` value.
+* Support encoding a part of an `ArrayBuffer`.
 
 ## v1.3.5 / 2024-04-24
 Fix a bug in `MMKV.initialize()` that fails to handle the optional parameter _logLevel_.
