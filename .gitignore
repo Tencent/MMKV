@@ -53,3 +53,4 @@ dist/
 .cxx
 
 pubspec.lock
+Podfile.lock
