@@ -1,4 +1,9 @@
 # MMKV for Flutter Change Log
+## v1.3.7 / 2024-07-08
+**Sync with Latest Android Native Binary:**
+
+This Long Term Support (LTS) release primarily reintroduces support for the ARMv7 architecture and lowers the minimum SDK version requirement to 21. Please note that only critical bug fixes will be applied to the 1.3.x series. New features will be introduced in version 2.0 and later, which will discontinue support for 32-bit architectures and raise the minimum SDK version requirement to 23.
+
 ## v1.3.6 / 2024-07-05
 * Android: MMKV will try to load libmmkv.so before Dart code, to reduce the error of loading library in Android.
 * Android: Use the latest ashmem API if possible.
