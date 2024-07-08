@@ -5,7 +5,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'mmkv_ios'
-  s.version          = '1.0.2'
+  s.version          = '1.0.3'
   s.summary          = 'MMKV is a cross-platform key-value storage framework developed by WeChat.'
   s.description      = <<-DESC
   The MMKV, for Flutter.
@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
-  s.dependency 'MMKV', '>= 1.3.6'
+  s.dependency 'MMKV', '>= 1.3.7'
   s.platform = :ios, '12.0'
 
 # Flutter.framework does not contain a i386 slice.
