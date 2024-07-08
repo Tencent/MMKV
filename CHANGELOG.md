@@ -1,4 +1,11 @@
 # MMKV Change Log
+## v1.3.7 / 2024-07-08
+### Android & Flutter
+**This Long Term Support (LTS) release** primarily reintroduces support for the ARMv7 architecture and lowers the minimum SDK version requirement to 21. Please note that only critical bug fixes will be applied to the 1.3.x series. New features will be introduced in version 2.0 and later, which will discontinue support for 32-bit architectures and raise the minimum SDK version requirement to 23.
+
+### For other platforms
+This is exactly the same as v1.3.6, so don't be surprised if you don't see this version in CocoaPods or OHPM.
+
 ## v1.3.6 / 2024-07-05
 ### Changes for All platforms
 * The Core library now upgrades the C++ standard from C++17 to C++20 to make the most of morden C++ feature such as `Concept` & unordered containers with `std::string_view` as key. From now on, if you build MMKV by source (iOS, Windows, POSIX, etc), you will need a C++ compiler that supports the C++20 standard. If you only use MMKV in binary (Android, OHOS, etc), this upgrade of the C++ compiler is not required.
