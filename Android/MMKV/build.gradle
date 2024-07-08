@@ -25,7 +25,7 @@ task clean(type: Delete) {
 }
 
 ext {
-    minSdkVersion = 21
+    minSdkVersion = 23
     compileSdkVersion = 34
     targetSdkVersion = compileSdkVersion
     supportLibVersion = "25.4.0"
