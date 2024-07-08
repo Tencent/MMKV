@@ -17,17 +17,17 @@ android {
 
     signingConfigs {
         configDebug {
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
+            keyAlias 'key0'
+            keyPassword 'mmkv.wxg'
             storeFile rootProject.file('debug.keystore')
-            storePassword 'android'
+            storePassword 'mmkv.wxg'
         }
 
         configRelease {
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
+            keyAlias 'key0'
+            keyPassword 'mmkv.wxg'
             storeFile rootProject.file('debug.keystore')
-            storePassword 'android'
+            storePassword 'mmkv.wxg'
         }
     }
 

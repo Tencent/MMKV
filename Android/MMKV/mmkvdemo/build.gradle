@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId "com.tencent.mmkvdemo"
-        minSdkVersion 23
+        minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion 34
         versionCode 1
         versionName "1.0"
