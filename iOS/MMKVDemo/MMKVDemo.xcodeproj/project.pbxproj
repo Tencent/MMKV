@@ -42,6 +42,15 @@
 		CB6D44D023B3A44400F369AA /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CB6D44CF23B3A44400F369AA /* TodayViewController.m */; };
 		CB6D44D323B3A44400F369AA /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CB6D44D123B3A44400F369AA /* MainInterface.storyboard */; };
 		CB6D44D723B3A44400F369AA /* MMKVTodayExtensionDemo.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CB76C5A82C3D69A0008B0E61 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB76C5A72C3D69A0008B0E61 /* AppDelegate.m */; };
+		CB76C5AB2C3D69A0008B0E61 /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CB76C5AA2C3D69A0008B0E61 /* SceneDelegate.m */; };
+		CB76C5AE2C3D69A0008B0E61 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CB76C5AD2C3D69A0008B0E61 /* ViewController.mm */; };
+		CB76C5B12C3D69A0008B0E61 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = CB76C5B02C3D69A0008B0E61 /* Base */; };
+		CB76C5B32C3D69A1008B0E61 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CB76C5B22C3D69A1008B0E61 /* Assets.xcassets */; };
+		CB76C5B62C3D69A1008B0E61 /* Base in Resources */ = {isa = PBXBuildFile; fileRef = CB76C5B52C3D69A1008B0E61 /* Base */; };
+		CB76C5B92C3D69A1008B0E61 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CB76C5B82C3D69A1008B0E61 /* main.m */; };
+		CB76C5BD2C3D6A05008B0E61 /* MMKV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; };
+		CB76C5BF2C3D6A11008B0E61 /* MMKV.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB36F25420F8A20C009AF46F /* MMKV.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		CB9C2731215E5DF000448B6C /* libMMKV.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CB1FD4B52046994D00931B5F /* libMMKV.a */; };
 		CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */; };
 		CBB306612435E8F200CB593E /* ViewController+TestCaseBad.mm in Sources */ = {isa = PBXBuildFile; fileRef = CBB306602435E8F200CB593E /* ViewController+TestCaseBad.mm */; };
@@ -192,6 +201,16 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB76C5BE2C3D6A0A008B0E61 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				CB76C5BF2C3D6A11008B0E61 /* MMKV.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CBF19033243D6F5A001C82ED /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -273,6 +292,18 @@
 		CB6D44D223B3A44400F369AA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		CB6D44D423B3A44400F369AA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB6D44DC23B3A45A00F369AA /* MMKVTodayExtensionDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MMKVTodayExtensionDemo.entitlements; sourceTree = "<group>"; };
+		CB76C5A42C3D69A0008B0E61 /* MMKVCatalystDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MMKVCatalystDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CB76C5A62C3D69A0008B0E61 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		CB76C5A72C3D69A0008B0E61 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		CB76C5A92C3D69A0008B0E61 /* SceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SceneDelegate.h; sourceTree = "<group>"; };
+		CB76C5AA2C3D69A0008B0E61 /* SceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SceneDelegate.m; sourceTree = "<group>"; };
+		CB76C5AC2C3D69A0008B0E61 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		CB76C5AD2C3D69A0008B0E61 /* ViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
+		CB76C5B02C3D69A0008B0E61 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		CB76C5B22C3D69A1008B0E61 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CB76C5B52C3D69A1008B0E61 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		CB76C5B72C3D69A1008B0E61 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CB76C5B82C3D69A1008B0E61 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		CB9C2732215E5ECC00448B6C /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib/libz.tbd; sourceTree = DEVELOPER_DIR; };
 		CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MMKVDemo-Bridging-Header.h"; sourceTree = "<group>"; };
 		CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoSwiftUsage.swift; sourceTree = "<group>"; };
@@ -348,6 +379,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB76C5A12C3D699F008B0E61 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB76C5BD2C3D6A05008B0E61 /* MMKV.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CBB6C81C215CDB9500487192 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -400,6 +439,7 @@
 				CBF19022243D6F5A001C82ED /* WatchApp Extension */,
 				CB3166FB2A4C6B5F0003221B /* kvdemo */,
 				70A630912B7E7EC9003AB1DF /* MMKVVisionDemo */,
+				CB76C5A52C3D69A0008B0E61 /* MMKVCatalystDemo */,
 				CB1FD42120455E2D00931B5F /* Products */,
 				CB1FD45720455F3500931B5F /* Frameworks */,
 			);
@@ -417,6 +457,7 @@
 				CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */,
 				CB3166FA2A4C6B5F0003221B /* kvdemo.app */,
 				70A630902B7E7EC9003AB1DF /* MMKVVisionDemo.app */,
+				CB76C5A42C3D69A0008B0E61 /* MMKVCatalystDemo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -505,6 +546,24 @@
 				CB6D44D423B3A44400F369AA /* Info.plist */,
 			);
 			path = MMKVTodayExtensionDemo;
+			sourceTree = "<group>";
+		};
+		CB76C5A52C3D69A0008B0E61 /* MMKVCatalystDemo */ = {
+			isa = PBXGroup;
+			children = (
+				CB76C5A62C3D69A0008B0E61 /* AppDelegate.h */,
+				CB76C5A72C3D69A0008B0E61 /* AppDelegate.m */,
+				CB76C5A92C3D69A0008B0E61 /* SceneDelegate.h */,
+				CB76C5AA2C3D69A0008B0E61 /* SceneDelegate.m */,
+				CB76C5AC2C3D69A0008B0E61 /* ViewController.h */,
+				CB76C5AD2C3D69A0008B0E61 /* ViewController.mm */,
+				CB76C5AF2C3D69A0008B0E61 /* Main.storyboard */,
+				CB76C5B22C3D69A1008B0E61 /* Assets.xcassets */,
+				CB76C5B42C3D69A1008B0E61 /* LaunchScreen.storyboard */,
+				CB76C5B72C3D69A1008B0E61 /* Info.plist */,
+				CB76C5B82C3D69A1008B0E61 /* main.m */,
+			);
+			path = MMKVCatalystDemo;
 			sourceTree = "<group>";
 		};
 		CBB6C820215CDB9500487192 /* MMKVMacDemo */ = {
@@ -649,6 +708,24 @@
 			productReference = CB6D44CA23B3A44400F369AA /* MMKVTodayExtensionDemo.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		CB76C5A32C3D699F008B0E61 /* MMKVCatalystDemo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB76C5BA2C3D69A1008B0E61 /* Build configuration list for PBXNativeTarget "MMKVCatalystDemo" */;
+			buildPhases = (
+				CB76C5A02C3D699F008B0E61 /* Sources */,
+				CB76C5A12C3D699F008B0E61 /* Frameworks */,
+				CB76C5A22C3D699F008B0E61 /* Resources */,
+				CB76C5BE2C3D6A0A008B0E61 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MMKVCatalystDemo;
+			productName = MMKVCatalystDemo;
+			productReference = CB76C5A42C3D69A0008B0E61 /* MMKVCatalystDemo.app */;
+			productType = "com.apple.product-type.application";
+		};
 		CBB6C81E215CDB9500487192 /* MMKVMacDemo */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CBB6C833215CDB9600487192 /* Build configuration list for PBXNativeTarget "MMKVMacDemo" */;
@@ -710,7 +787,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 1520;
+				LastSwiftUpdateCheck = 1530;
 				LastUpgradeCheck = 1530;
 				ORGANIZATIONNAME = Lingol;
 				TargetAttributes = {
@@ -740,6 +817,9 @@
 					CB6D44C923B3A44400F369AA = {
 						CreatedOnToolsVersion = 11.3;
 						ProvisioningStyle = Manual;
+					};
+					CB76C5A32C3D699F008B0E61 = {
+						CreatedOnToolsVersion = 15.3;
 					};
 					CBB6C81E215CDB9500487192 = {
 						CreatedOnToolsVersion = 10.0;
@@ -782,6 +862,7 @@
 				CBF1901D243D6F5A001C82ED /* WatchApp Extension */,
 				CB3166F92A4C6B5F0003221B /* kvdemo */,
 				70A6308F2B7E7EC9003AB1DF /* MMKVVisionDemo */,
+				CB76C5A32C3D699F008B0E61 /* MMKVCatalystDemo */,
 			);
 		};
 /* End PBXProject section */
@@ -862,6 +943,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CB76C5A22C3D699F008B0E61 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB76C5B32C3D69A1008B0E61 /* Assets.xcassets in Resources */,
+				CB76C5B62C3D69A1008B0E61 /* Base in Resources */,
+				CB76C5B12C3D69A0008B0E61 /* Base in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CBB6C81D215CDB9500487192 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -937,6 +1028,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB6D44D023B3A44400F369AA /* TodayViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB76C5A02C3D699F008B0E61 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB76C5AE2C3D69A0008B0E61 /* ViewController.mm in Sources */,
+				CB76C5A82C3D69A0008B0E61 /* AppDelegate.m in Sources */,
+				CB76C5B92C3D69A1008B0E61 /* main.m in Sources */,
+				CB76C5AB2C3D69A0008B0E61 /* SceneDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1044,6 +1146,22 @@
 				CB6D44D223B3A44400F369AA /* Base */,
 			);
 			name = MainInterface.storyboard;
+			sourceTree = "<group>";
+		};
+		CB76C5AF2C3D69A0008B0E61 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CB76C5B02C3D69A0008B0E61 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		CB76C5B42C3D69A1008B0E61 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				CB76C5B52C3D69A1008B0E61 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 		CBB6C829215CDB9600487192 /* Main.storyboard */ = {
@@ -1461,6 +1579,93 @@
 			};
 			name = Release;
 		};
+		CB76C5BB2C3D69A1008B0E61 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVCatalystDemo/MMKVCatalystDemo.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = SG5PVJM4JW;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = SG5PVJM4JW;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MMKVCatalystDemo/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVCatalystDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = MMKViOSCatalystDemo;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = MMKVCatalystDemo;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CB76C5BC2C3D69A1008B0E61 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = MMKVCatalystDemo/MMKVCatalystDemo.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = SG5PVJM4JW;
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = SG5PVJM4JW;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MMKVCatalystDemo/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tencent.MMKVCatalystDemo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = MMKViOSCatalystDemo;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = MMKVCatalystDemo;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		CBB6C830215CDB9600487192 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1657,6 +1862,15 @@
 			buildConfigurations = (
 				CB6D44D923B3A44400F369AA /* Debug */,
 				CB6D44DA23B3A44400F369AA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CB76C5BA2C3D69A1008B0E61 /* Build configuration list for PBXNativeTarget "MMKVCatalystDemo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB76C5BB2C3D69A1008B0E61 /* Debug */,
+				CB76C5BC2C3D69A1008B0E61 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
