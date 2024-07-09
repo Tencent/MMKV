@@ -912,8 +912,11 @@ export class MMKV {
      * @param size The size of the underlying memory.
      */
     public static createNativeBuffer(size: number): NativeBuffer | null {
-        let pointer: bigint = native.createNativeBuffer(size);
-        if (pointer <= BigInt(0)) {
+        if (size <= 0) {
+            return null;
+        }
+        let pointer: bigint | undefined = native.createNativeBuffer(size);
+        if (!pointer || pointer <= BigInt(0)) {
             return null;
         }
         return new NativeBuffer(pointer, size);
