@@ -1517,6 +1517,30 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
     }
 }
 
+bool MMKV::instanceExists(const std::string &mmapID) {
+    auto mmapKey = mmapedKVKey(mmapID, relatePath);
+#ifdef MMKV_ANDROID
+    auto &realID = mmapKey; // historically Android mistakenly use mmapKey as mmapID
+#else
+    auto &realID = mmapID;
+#endif
+    MMKVDebug("mmapKey %s", mmapKey.c_str());
+
+    MMKVPath_t kvPath = mappedKVPathWithID(realID, MMKV_SINGLE_PROCESS, relatePath);
+    if (isFileExist(kvPath)) {
+        MMKVDebug("file exist (unencrypted) %s", kvPath.c_str());
+        return true;
+    }
+    MMKVPath_t crcPath = crcPathWithID(realID, MMKV_SINGLE_PROCESS, relatePath);
+    if (isFileExist(crcPath)) {
+        MMKVDebug("file exist (encrypted) %s", crcPath.c_str());
+        return true;
+    }
+
+    MMKVWarning("file does not exist %s", crcPath.c_str());
+    return false;
+}
+
 bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
     auto mmapKey = mmapedKVKey(mmapID, relatePath);
 #ifdef MMKV_ANDROID
