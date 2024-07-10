@@ -1517,7 +1517,7 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
     }
 }
 
-bool MMKV::instanceExists(const std::string &mmapID) {
+bool MMKV::instanceExists(const std::string &mmapID, MMKVPath_t *relatePath = nullptr) {
     auto mmapKey = mmapedKVKey(mmapID, relatePath);
 #ifdef MMKV_ANDROID
     auto &realID = mmapKey; // historically Android mistakenly use mmapKey as mmapID
