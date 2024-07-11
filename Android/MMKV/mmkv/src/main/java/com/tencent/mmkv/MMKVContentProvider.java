@@ -101,6 +101,9 @@ public class MMKVContentProvider extends ContentProvider {
     }
 
     protected static String getProcessNameByPID(@NonNull Context context, int pid) {
+        if (pid == android.os.Process.myPid()) {
+            return MMKVProcessUtil.getCurrentProcessName(context);
+        }
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
             // clang-format off
