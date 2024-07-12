@@ -21,10 +21,10 @@
 import "dart:ffi";
 import "package:ffi/ffi.dart";
 import "package:flutter/services.dart";
-import "package:path_provider/path_provider.dart";
 import "package:mmkv_platform_interface/mmkv_platform_interface.dart";
 
-final class MMKVPlatformAndroid extends MMKVPluginPlatformFFI {
+// final
+class MMKVPlatformAndroid extends MMKVPluginPlatformFFI {
   // A default real implementation of the platform interface would go here.
   static void registerWith() {
     MMKVPluginPlatform.instance = MMKVPlatformAndroid();
@@ -46,8 +46,8 @@ final class MMKVPlatformAndroid extends MMKVPluginPlatformFFI {
   Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1}) async {
     final rootDirPtr = _string2Pointer(rootDir);
     final sdkInt = await _channel.invokeMethod("getSdkVersion") ?? 0;
-    final cacheDir = await getTemporaryDirectory();
-    final cacheDirPtr = _string2Pointer(cacheDir.path);
+    final cacheDir = await getTemporaryPath();
+    final cacheDirPtr = _string2Pointer(cacheDir);
 
     _mmkvInitialize(rootDirPtr, cacheDirPtr, sdkInt, logLevel);
 

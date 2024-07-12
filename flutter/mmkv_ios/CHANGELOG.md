@@ -1,4 +1,7 @@
 # MMKV Platform iOS Change Log
+## v1.0.4 / 2024-07-12
+Lower Dart to 2.17 to avoid OHOS conflict.
+
 ## v1.0.3 / 2024-07-08
 Keep up with native lib v1.3.7.
 

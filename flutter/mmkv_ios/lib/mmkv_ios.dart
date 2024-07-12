@@ -22,7 +22,8 @@ import 'dart:ffi';
 import 'package:flutter/services.dart';
 import 'package:mmkv_platform_interface/mmkv_platform_interface.dart';
 
-final class MMKVPlatformIOS extends MMKVPluginPlatformFFI {
+// final
+class MMKVPlatformIOS extends MMKVPluginPlatformFFI {
   static void registerWith() {
     MMKVPluginPlatform.instance = MMKVPlatformIOS();
   }
