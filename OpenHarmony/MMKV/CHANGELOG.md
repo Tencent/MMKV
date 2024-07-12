@@ -1,5 +1,8 @@
 # MMKV for HarmonyOS NEXT Change Log
 
+## v1.3.7 / 2024-07-12
+* Add support of Flutter on HarmonyOS NEXT.
+
 ## v1.3.6 / 2024-07-05
 * Fix a bug that a `String` value might get truncated on encoding.
 * MMKV returns `undefined` when a key does not exist, previously a default value of the type (`false` for `boolean`, `0` for `number`, etc) is returned.
