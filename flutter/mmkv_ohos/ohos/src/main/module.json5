@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "mmkv_ohos",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet"
+    ]
+  }
+}
