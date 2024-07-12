@@ -1,4 +1,7 @@
 # MMKV for Flutter Change Log
+## v1.3.8 / 2024-07-12
+* Add support for **HarmonyOS NEXT**.
+
 ## v1.3.7 / 2024-07-08
 **Sync with Latest Android Native Binary:**
 
