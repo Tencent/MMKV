@@ -28,7 +28,6 @@ import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:mmkv_platform_interface/mmkv_platform_interface.dart";
-import "package:path_provider/path_provider.dart";
 
 /// Log level for MMKV.
 enum MMKVLogLevel { Debug, Info, Warning, Error, None }
@@ -155,8 +154,8 @@ class MMKV {
     WidgetsFlutterBinding.ensureInitialized();
 
     if (rootDir == null) {
-      final path = await getApplicationDocumentsDirectory();
-      rootDir = "${path.path}/mmkv";
+      final path = await _mmkvPlatform.getApplicationDocumentsPath();
+      rootDir = "${path}/mmkv";
     }
     _rootDir = rootDir;
 
