@@ -20,11 +20,13 @@
 
 import "dart:ffi";
 import "package:ffi/ffi.dart";
+import "package:path_provider/path_provider.dart";
 
 export "mmkv_platform_ffi.dart";
 
 /// The interface class that all implementation of MMKV platform plugin must extend
-abstract base class MMKVPluginPlatform {
+// abstract base
+class MMKVPluginPlatform {
   MMKVPluginPlatform();
 
   // A plugin can have a default implementation, as shown here, or `instance`
@@ -224,5 +226,17 @@ abstract base class MMKVPluginPlatform {
 
   int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) removeStorageFunc() {
     throw UnimplementedError();
+  }
+
+  // some platform doesn't publish their path_provider package to pub.dev
+  // provide override point for these calls
+  Future<String> getApplicationDocumentsPath() async {
+    final result = await getApplicationDocumentsDirectory();
+    return result.path;
+  }
+
+  Future<String> getTemporaryPath() async {
+    final result = await getTemporaryDirectory();
+    return result.path;
   }
 }

@@ -23,7 +23,8 @@ import "package:ffi/ffi.dart";
 import "mmkv_platform_interface.dart";
 
 /// A helper class to ease the implementation of MMKV platform plugin in FFI
-abstract base class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
+// abstract base
+class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   /// tells which dylib to lookup for function pointer
   DynamicLibrary nativeLib() {
     throw UnimplementedError();
