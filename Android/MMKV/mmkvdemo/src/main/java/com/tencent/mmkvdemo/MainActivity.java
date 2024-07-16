@@ -36,10 +36,10 @@ import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.NativeBuffer;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import org.jetbrains.annotations.Nullable;
 
 public class MainActivity extends AppCompatActivity {
     static private final String KEY_1 = "Ashmem_Key_1";
@@ -130,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
         testClearAllKeepSpace();
 //        testFastNativeSpeed();
         testRemoveStorage();
+        overrideTest();
     }
 
     private void testCompareBeforeSet() {
@@ -815,5 +816,103 @@ public class MainActivity extends AppCompatActivity {
         if (mmkv.count() != 0) {
             Log.e("MMKV", "storage not successfully removed");
         }
+    }
+
+    private void overrideTest() {
+        MMKV mmkv0 = MMKV.mmkvWithID("overrideTest");
+        String key = "hello";
+        String key2 = "hello2";
+        String value = "world";
+
+        mmkv0.encode(key, value);
+        String v2 = mmkv0.decodeString(key);
+        if (!value.equals(v2)) {
+            System.out.println("value = " + v2);
+            System.exit(1);
+        }
+        mmkv0.removeValueForKey(key);
+
+        mmkv0.encode(key2, value);
+        v2 = mmkv0.decodeString(key2);
+        if (!value.equals(v2)) {
+            System.out.println("value = " + v2);
+            System.exit(1);
+        }
+        mmkv0.removeValueForKey(key2);
+
+        int len = 10000;
+        StringBuilder bigValue = new StringBuilder("🏊🏻®4️⃣🐅_");
+        for (int i = 0; i < len; i++) {
+            bigValue.append("0");
+        }
+        mmkv0.encode(key, bigValue.toString());
+        String v3 = mmkv0.decodeString(key);
+        if (!bigValue.toString().equals(v3)) {
+            System.exit(1);
+        }
+
+        // rewrite
+        mmkv0.encode(key, "OK");
+        String v4 = mmkv0.decodeString(key);
+        if (!"OK".equals(v4)) {
+            System.out.println("value = " + v2);
+            System.exit(1);
+        }
+
+        mmkv0.encode(key, 12345);
+        int v5 = mmkv0.decodeInt(key);
+        if (v5 != 12345) {
+            System.out.println("value = " + v5);
+            System.exit(1);
+        }
+        mmkv0.removeValueForKey(key);
+
+        mmkv0.clearAll();
+
+        overrideTestEncrypt();
+    }
+
+    private void overrideTestEncrypt() {
+        // test small value
+        encryptionTest("cryptworld");
+        // test medium value
+        encryptionTest("An efficient, small mobile key-value storage framework developed by WeChat. Works on Android, iOS, macOS, Windows, and POSIX.");
+        // test large value
+        encryptionTest("An efficient, small mobile key-value storage framework developed by WeChat. Works on Android, iOS, macOS, Windows, and POSIX. MMKV is an efficient, small, easy-to-use mobile key-value storage framework used in the WeChat application. It's currently available on Android, iOS/macOS, Windows, POSIX and HarmonyOS NEXT.");
+    }
+
+    private void encryptionTest(String value) {
+        String key = "hello";
+        String key2 = "hello2";
+
+        encryptionTestKV(key, value);
+        encryptionTestKV(key2, value);
+    }
+
+    private void encryptionTestKV(String key, String value) {
+        String crypt = "fastestCrypt";
+        MMKV mmkv0 = MMKV.mmkvWithID("overrideCryptTest", MMKV.SINGLE_PROCESS_MODE, crypt);
+
+        mmkv0.encode(key, value);
+        String v2 = mmkv0.decodeString(key);
+        if (!value.equals(v2)) {
+            System.out.println("value = " + value + ", result = " + v2);
+            System.exit(1);
+        }
+
+        mmkv0.close();
+        mmkv0 = MMKV.mmkvWithID("overrideCryptTest", MMKV.SINGLE_PROCESS_MODE, crypt);
+        v2 = mmkv0.decodeString(key);
+        if (!value.equals(v2)) {
+            System.out.println("value = " + value + ", result = " + v2);
+            System.exit(1);
+        }
+        mmkv0.encode(key, value);
+        v2 = mmkv0.decodeString(key);
+        if (!value.equals(v2)) {
+            System.out.println("value = " + value + ", result = " + v2);
+            System.exit(1);
+        }
+        mmkv0.removeValueForKey(key);
     }
 }

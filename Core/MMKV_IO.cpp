@@ -911,9 +911,6 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
         } else {
             m_crypter->resetIV();
         }
-        if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
-            m_crypter->getCurStatus(t_status);
-        }
     }
 #endif
     try {
@@ -921,7 +918,15 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
         m_output->setPosition(0);
         m_output->writeRawVarint32(ItemSizeHolder);
         m_actualSize = ItemSizeHolderSize;
-
+#ifndef MMKV_DISABLE_CRYPT
+        if (m_crypter) {
+            auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size;
+            m_crypter->encrypt(ptr, ptr, m_actualSize);
+            if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
+                m_crypter->getCurStatus(t_status);
+            }
+        }
+#endif
         if (isKeyEncoded) {
             m_output->writeRawData(keyData);
         } else {
@@ -941,10 +946,10 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
 
     auto offset = static_cast<uint32_t>(m_actualSize);
     m_actualSize += size;
-    auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size;
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
-        m_crypter->encrypt(ptr, ptr, m_actualSize);
+        auto ptr = (uint8_t *) m_file->getMemory() + Fixed32Size + offset;
+        m_crypter->encrypt(ptr, ptr, size);
     }
 #endif
     recalculateCRCDigestOnly();
