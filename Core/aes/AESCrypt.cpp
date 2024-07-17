@@ -102,6 +102,19 @@ void AESCrypt::fillRandomIV(void *vector) {
     }
 }
 
+// assuming size in [1, 5]
+uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
+    constexpr uint32_t ItemSizeHolders[] = {0, 0x80, 0x4000, 0x200000, 0x10000000, 0};
+    auto ItemSizeHolderMin = ItemSizeHolders[size - 1];
+    auto ItemSizeHolderMax = ItemSizeHolders[size] - 1;
+
+    srand((unsigned) time(nullptr));
+    auto result = static_cast<uint32_t>(random());
+    result = result % (ItemSizeHolderMax - ItemSizeHolderMin + 1);
+    result += ItemSizeHolderMin;
+    return result;
+}
+
 static inline void
 Rollback_cfb_decrypt(const uint8_t *input, const uint8_t *output, size_t len, AES_KEY *key, AESCryptStatus &status) {
     auto ivec = status.m_vector;
@@ -170,8 +183,17 @@ AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
 
 namespace mmkv {
 
+void testRandomPlaceHolder() {
+    for (uint32_t size = 1; size < 6; size++) {
+        auto holder = AESCrypt::randomItemSizeHolder(size);
+        MMKVInfo("holder 0x%x for size %u", holder, size);
+    }
+}
+
 // check if AESCrypt is encrypt-decrypt full-duplex
 void AESCrypt::testAESCrypt() {
+    testRandomPlaceHolder();
+
     const uint8_t plainText[] = "Hello, OpenSSL-mmkv::AESCrypt::testAESCrypt() with AES CFB 128.";
     constexpr size_t textLength = sizeof(plainText) - 1;
 
