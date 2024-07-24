@@ -1,4 +1,7 @@
 # MMKV Platform Android Change Log
+## v1.0.5 / 2024-07-xx
+Keep up with native lib v1.3.9.
+
 ## v1.0.4 / 2024-07-12
 Lower Dart to 2.17 to avoid OHOS conflict.
 
