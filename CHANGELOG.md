@@ -10,6 +10,9 @@
 * Use an alternative way to get the process name to avoid potential App review issues.
 * Upgrade to NDK 26.3.11579264.
 
+### Flutter
+* Add support for HarmonyOS NEXT. In fact, a temp version named v1.3.8 adds this support with the native lib of v1.3.7. To avoid potential confusion, bump both versions to v1.3.9.
+
 ## v1.3.7 / 2024-07-08
 ### Android & Flutter
 **This Long Term Support (LTS) release** primarily reintroduces support for the ARMv7 architecture and lowers the minimum SDK version requirement to 21. Please note that only critical bug fixes will be applied to the 1.3.x series. New features will be introduced in version 2.0 and later, which will discontinue support for 32-bit architectures and raise the minimum SDK version requirement to 23.
