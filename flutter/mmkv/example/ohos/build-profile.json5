@@ -1,0 +1,41 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/lingol/.ohos/config/default_ohos_1HD658c6NQUQuufw73R4pM9jk2_zRyU-MIvpwrj5Aow=.cer",
+          "storePassword": "0000001BD13BD4FD3E6F7A2DF0EE4400AF1E0891E9AFEBBFCE49942E0BC8314023B1974889CE7534DE4EBF",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B248D9207C7D411E9D5F3BB20D8C4EF32B182D8F5FAAE82E4A67C0DBB2BAF55D946D3DC317BB333",
+          "profile": "/Users/lingol/.ohos/config/default_ohos_1HD658c6NQUQuufw73R4pM9jk2_zRyU-MIvpwrj5Aow=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/lingol/.ohos/config/default_ohos_1HD658c6NQUQuufw73R4pM9jk2_zRyU-MIvpwrj5Aow=.p12"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.0(12)",
+        "runtimeOS": "HarmonyOS"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -283,7 +283,7 @@ struct Index {
 
     let sizeNeeded = kv.getValueSize('bytes', true);
     let nativeBuffer = MMKV.createNativeBuffer(sizeNeeded);
-    if (nativeBuffer !== null) {
+    if (nativeBuffer) {
       let size = kv.writeValueToNativeBuffer('bytes', nativeBuffer);
       hilog.info(0, 'mmkvdemo', 'NativeBuffer: size Needed = %{public}d,  written size = %{public}d', sizeNeeded, size);
       MMKV.destroyNativeBuffer(nativeBuffer);

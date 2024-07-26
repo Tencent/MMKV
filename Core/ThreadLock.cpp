@@ -38,10 +38,8 @@ ThreadLock::ThreadLock() : m_lock({}) {
 }
 
 ThreadLock::~ThreadLock() {
-#ifdef MMKV_OHOS
-    // OHOS's pthread is buggy, check for POC: https://gist.github.com/lingol/622af352e090e0490ebacfe3a38b9221 
     pthread_mutex_unlock(&m_lock);
-#endif
+
     pthread_mutex_destroy(&m_lock);
 }
 
