@@ -22,7 +22,7 @@
 #define MMKV_SRC_MMKVPREDEF_H
 
 // disable encryption & decryption to reduce some code
-//#define MMKV_DISABLE_CRYPT
+// #define MMKV_DISABLE_CRYPT
 //#define MMKV_DISABLE_FLUTTER
 
 // using POSIX implementation

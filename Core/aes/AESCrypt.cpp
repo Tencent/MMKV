@@ -25,7 +25,7 @@
 #include <cstring>
 #include <ctime>
 
-using namespace mmkv;
+namespace mmkv {
 
 // assuming size in [1, 5]
 uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
@@ -270,3 +270,5 @@ void AESCrypt::testAESCrypt() {
 
 #    endif // MMKV_DEBUG
 #endif     // MMKV_DISABLE_CRYPT
+
+} // namespace mmkv

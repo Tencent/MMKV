@@ -1387,6 +1387,8 @@ static napi_value isFileValid(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+
 static napi_value cryptKey(napi_env env, napi_callback_info info) {
     size_t argc = 1;
     napi_value args[1] = {nullptr};
@@ -1428,6 +1430,8 @@ static napi_value checkReSetCryptKey(napi_env env, napi_callback_info info) {
     }
     return NAPIUndefined(env);
 }
+
+#endif
 
 static napi_value backupOneToDirectory(napi_env env, napi_callback_info info) {
     size_t argc = 3;
@@ -1742,9 +1746,11 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "trim", nullptr, trim, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "removeStorage", nullptr, removeStorage, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "isFileValid", nullptr, isFileValid, nullptr, nullptr, nullptr, napi_default, nullptr },
+#ifndef MMKV_DISABLE_CRYPT
         { "cryptKey", nullptr, cryptKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "reKey", nullptr, reKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "checkReSetCryptKey", nullptr, checkReSetCryptKey, nullptr, nullptr, nullptr, napi_default, nullptr },
+#endif
         { "backupOneToDirectory", nullptr, backupOneToDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "restoreOneFromDirectory", nullptr, restoreOneFromDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "backupAllToDirectory", nullptr, backupAllToDirectory, nullptr, nullptr, nullptr, napi_default, nullptr },
