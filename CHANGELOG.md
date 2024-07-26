@@ -1,5 +1,5 @@
 # MMKV Change Log
-## v1.3.9 / 2024-07-xx
+## v1.3.9 / 2024-07-26
 **This is a Long Term Support (LTS) release.**
 ### Changes for All platforms
 * Fix a data corruption bug on an encrypted MMKV with only one key value stored.
