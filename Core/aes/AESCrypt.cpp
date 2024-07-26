@@ -25,11 +25,24 @@
 #include <cstring>
 #include <ctime>
 
+namespace mmkv {
+
+// assuming size in [1, 5]
+uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
+    constexpr uint32_t ItemSizeHolders[] = {0, 0x80, 0x4000, 0x200000, 0x10000000, 0};
+    auto ItemSizeHolderMin = ItemSizeHolders[size - 1];
+    auto ItemSizeHolderMax = ItemSizeHolders[size] - 1;
+
+    srand((unsigned) time(nullptr));
+    auto result = static_cast<uint32_t>(rand());
+    result = result % (ItemSizeHolderMax - ItemSizeHolderMin + 1);
+    result += ItemSizeHolderMin;
+    return result;
+}
+
 #ifndef MMKV_DISABLE_CRYPT
 
 using namespace openssl;
-
-namespace mmkv {
 
 AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivLength) {
     if (key && keyLength > 0) {
@@ -102,19 +115,6 @@ void AESCrypt::fillRandomIV(void *vector) {
     }
 }
 
-// assuming size in [1, 5]
-uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
-    constexpr uint32_t ItemSizeHolders[] = {0, 0x80, 0x4000, 0x200000, 0x10000000, 0};
-    auto ItemSizeHolderMin = ItemSizeHolders[size - 1];
-    auto ItemSizeHolderMax = ItemSizeHolders[size] - 1;
-
-    srand((unsigned) time(nullptr));
-    auto result = static_cast<uint32_t>(rand());
-    result = result % (ItemSizeHolderMax - ItemSizeHolderMin + 1);
-    result += ItemSizeHolderMin;
-    return result;
-}
-
 static inline void
 Rollback_cfb_decrypt(const uint8_t *input, const uint8_t *output, size_t len, AES_KEY *key, AESCryptStatus &status) {
     auto ivec = status.m_vector;
@@ -173,8 +173,6 @@ void AESCrypt::getCurStatus(AESCryptStatus &status) {
 AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
     return AESCrypt(*this, status);
 }
-
-} // namespace mmkv
 
 #    ifdef MMKV_DEBUG
 
@@ -272,7 +270,7 @@ void AESCrypt::testAESCrypt() {
     delete[] decryptText;
 }
 
-} // namespace mmkv
-
 #    endif // MMKV_DEBUG
 #endif     // MMKV_DISABLE_CRYPT
+
+} // namespace mmkv
