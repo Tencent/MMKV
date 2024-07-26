@@ -109,7 +109,11 @@ uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
     auto ItemSizeHolderMax = ItemSizeHolders[size] - 1;
 
     srand((unsigned) time(nullptr));
+#   ifdef _WIN32
+    auto result = static_cast<uint32_t>(rand());
+#   else
     auto result = static_cast<uint32_t>(random());
+#   endif
     result = result % (ItemSizeHolderMax - ItemSizeHolderMin + 1);
     result += ItemSizeHolderMin;
     return result;
