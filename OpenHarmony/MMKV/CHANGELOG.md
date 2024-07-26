@@ -1,6 +1,6 @@
 # MMKV for HarmonyOS NEXT Change Log
 
-## v1.3.9 / 2024-07-xx
+## v1.3.9 / 2024-07-26
 * Fix a data corruption bug on an encrypted MMKV with only one key value stored.
 * Make encryption more resilient from brute force cracking.
 
