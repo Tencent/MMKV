@@ -42,6 +42,21 @@ uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
     return result;
 }
 
+namespace mmkv {
+
+// assuming size in [1, 5]
+uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
+    constexpr uint32_t ItemSizeHolders[] = {0, 0x80, 0x4000, 0x200000, 0x10000000, 0};
+    auto ItemSizeHolderMin = ItemSizeHolders[size - 1];
+    auto ItemSizeHolderMax = ItemSizeHolders[size] - 1;
+
+    srand((unsigned) time(nullptr));
+    auto result = static_cast<uint32_t>(rand());
+    result = result % (ItemSizeHolderMax - ItemSizeHolderMin + 1);
+    result += ItemSizeHolderMin;
+    return result;
+}
+
 #ifndef MMKV_DISABLE_CRYPT
 
 using namespace openssl;
