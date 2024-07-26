@@ -1,4 +1,13 @@
 # MMKV for Flutter Change Log
+## v1.3.9 / 2024-07-26
+This will be **the last LTS release of MMKV for Flutter**.
+* Modify the dependency of native lib in a way that no Dart package update is needed for any LTS release in the future.
+* Fix a data corruption bug on an encrypted MMKV with only one key value stored.
+* Make encryption more resilient from brute force cracking.
+* Fix a bug that pthread_mutex is not being destroyed correctly.
+* Android: Use an alternative way to get the process name to avoid potential App review issues.
+* Android: Upgrade to NDK 26.3.11579264.
+
 ## v1.3.8 / 2024-07-12
 * Add support for **HarmonyOS NEXT**.
 

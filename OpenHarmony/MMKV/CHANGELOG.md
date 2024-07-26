@@ -1,5 +1,9 @@
 # MMKV for HarmonyOS NEXT Change Log
 
+## v1.3.9 / 2024-07-26
+* Fix a data corruption bug on an encrypted MMKV with only one key value stored.
+* Make encryption more resilient from brute force cracking.
+
 ## v1.3.7 / 2024-07-12
 * Add support of Flutter on HarmonyOS NEXT.
 
