@@ -529,6 +529,9 @@ public:
     // Note: the existing instance (if any) will be closed & destroyed
     static bool removeStorage(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
 
+    // check whether an instance with the given key exists or not
+    static bool instanceExists(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
