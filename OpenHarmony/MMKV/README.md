@@ -172,7 +172,7 @@ Due to the current limitation of NAPI runtime, we **can't efficiently** redirect
     let appCtx = this.context.getApplicationContext();
     let rootDir = appCtx.filesDir + '/mmkv_2';
     let cacheDir = appCtx.cacheDir;
-    MMKV.initialize(rootDir, cacheDir);
+    MMKV.initializeWithPath(rootDir, cacheDir);
     ```
 
 * You can even customize any MMKV instance's location:
