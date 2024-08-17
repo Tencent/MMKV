@@ -141,14 +141,18 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
     if (mmapID.empty()) {
         return nullptr;
     }
-    SCOPED_LOCK(g_instanceLock);
+    //SCOPED_LOCK(g_instanceLock);
 
+    g_instanceLock->lock();
     auto mmapKey = mmapedKVKey(mmapID, rootPath);
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
+        g_instanceLock->unlock();
         return kv;
     }
+    g_instanceLock->unlock();
+
     if (rootPath) {
         if (!isFileExist(*rootPath)) {
             if (!mkPath(*rootPath)) {
@@ -157,8 +161,13 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
         }
         MMKVInfo("prepare to load %s (id %s) from rootPath %zu", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
+
     auto kv = new MMKV(mmapID, size, mode, cryptKey, rootPath, expectedCapacity);
+
+    g_instanceLock->lock();
     (*g_instanceDic)[mmapKey] = kv;
+    g_instanceLock->unlock();
+
     return kv;
 }
 
@@ -167,18 +176,26 @@ MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *c
     if (fd < 0) {
         return nullptr;
     }
-    SCOPED_LOCK(g_instanceLock);
+    //SCOPED_LOCK(g_instanceLock);
 
+    g_instanceLock->lock();
     auto itr = g_instanceDic->find(mmapID);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
 #    ifndef MMKV_DISABLE_CRYPT
         kv->checkReSetCryptKey(fd, metaFD, cryptKey);
 #    endif
+        g_instanceLock->unlock();
         return kv;
     }
+    g_instanceLock->unlock();
+
     auto kv = new MMKV(mmapID, fd, metaFD, cryptKey);
+
+    g_instanceLock->lock();
     (*g_instanceDic)[mmapID] = kv;
+    g_instanceLock->unlock();
+
     return kv;
 }
 
