@@ -6,3 +6,6 @@
 
 build/
 doc/
+
+.flutter-plugins
+.flutter-plugins-dependencies
