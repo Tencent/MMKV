@@ -25,7 +25,7 @@
 #include <cstring>
 #include <ctime>
 
-namespace mmkv {
+using namespace mmkv;
 
 // assuming size in [1, 5]
 uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
@@ -179,8 +179,6 @@ AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
 #        include "../MMKVLog.h"
 #        include "../MemoryFile.h"
 
-namespace mmkv {
-
 void testRandomPlaceHolder() {
     for (uint32_t size = 1; size < 6; size++) {
         auto holder = AESCrypt::randomItemSizeHolder(size);
@@ -272,5 +270,3 @@ void AESCrypt::testAESCrypt() {
 
 #    endif // MMKV_DEBUG
 #endif     // MMKV_DISABLE_CRYPT
-
-} // namespace mmkv
