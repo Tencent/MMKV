@@ -42,7 +42,7 @@
 #    endif
 
 #    ifdef __aarch64__
-#        include "Checksum.h"
+#        include "crc32/Checksum.h"
 #    endif
 
 #    if __has_feature(objc_arc)
