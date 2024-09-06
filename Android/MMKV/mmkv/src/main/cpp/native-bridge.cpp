@@ -1064,6 +1064,22 @@ MMKV_JNI void clearAllWithKeepingSpace(JNIEnv *env, jobject instance) {
     }
 }
 
+MMKV_JNI jboolean isMultiProcess(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return (jboolean) kv->isMultiProcess();
+    }
+    return jboolean(false);
+}
+
+MMKV_JNI jboolean isReadOnly(JNIEnv *env, jobject instance) {
+    MMKV *kv = getMMKV(env, instance);
+    if (kv) {
+        return (jboolean) kv->isReadOnly();
+    }
+    return jboolean(false);
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -1146,6 +1162,8 @@ static JNINativeMethod g_methods[] = {
     {"isEncryptionEnabled", "()Z", (void *) mmkv::isEncryptionEnabled},
     {"isExpirationEnabled", "()Z", (void *) mmkv::isExpirationEnabled},
     {"clearAllWithKeepingSpace", "()V", (void *) mmkv::clearAllWithKeepingSpace},
+    {"isMultiProcess", "()Z", (void *) mmkv::isMultiProcess},
+    {"isReadOnly", "()Z", (void *) mmkv::isReadOnly},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

@@ -26,6 +26,7 @@ import "dart:typed_data";
 import "package:flutter/material.dart";
 import "package:mmkv/mmkv.dart";
 import "package:path_provider_foundation/path_provider_foundation.dart";
+// import "package:posix/posix.dart" show chmod;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,7 +78,8 @@ class _MyAppState extends State<MyApp> {
           Text("MMKV Version: ${MMKV.version}\n"),
           TextButton(
               onPressed: () {
-                functionalTest();
+                // functionalTest();
+                testReadOnly();
               },
               child: Text("Functional Test", style: TextStyle(fontSize: 18))),
           TextButton(
@@ -197,7 +199,11 @@ class _MyAppState extends State<MyApp> {
 
   MMKV testMMKV(String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {
     final mmkv = MMKV(mmapID, cryptKey: cryptKey, rootDir: rootPath);
+    testMMKVImp(mmkv, decodeOnly);
+    return mmkv;
+  }
 
+  void testMMKVImp(MMKV mmkv, bool decodeOnly) {
     if (!decodeOnly) {
       mmkv.encodeBool("bool", true);
     }
@@ -254,8 +260,6 @@ class _MyAppState extends State<MyApp> {
     print('after remove, contains "bool": ${mmkv.containsKey('bool')}');
     mmkv.removeValues(["int32", "int"]);
     print("all keys: ${mmkv.allKeys}");
-
-    return mmkv;
   }
 
   void testReKey() {
@@ -420,5 +424,33 @@ class _MyAppState extends State<MyApp> {
     if (mmkv.count != 0) {
       print("storage not successfully removed");
     }
+  }
+
+  void testReadOnly() {
+    final name = "testReadOnly";
+    final key = "ReadOnly+Key";
+    {
+      final mmkv = MMKV(name, cryptKey: key);
+      testMMKVImp(mmkv, false);
+      mmkv.close();
+    }
+
+    // posix.dart not working in Android or iOS, sigh..
+    /*final path = MMKV.rootDir + "/" + name;
+    chmod(path, "444");
+    final crcPath = path + ".crc";
+    chmod(crcPath, "444");
+    */
+
+    final mmkv = MMKV(name, cryptKey: key, readOnly: true);
+    testMMKVImp(mmkv, true);
+
+    // also check if it tolerate update operations without crash
+    testMMKVImp(mmkv, false);
+
+    /*
+    chmod(path, "666");
+    chmod(crcPath, "666");
+    */
   }
 }

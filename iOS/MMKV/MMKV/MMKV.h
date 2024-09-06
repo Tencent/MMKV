@@ -25,8 +25,10 @@
 #endif
 
 typedef NS_ENUM(NSUInteger, MMKVMode) {
-    MMKVSingleProcess = 0x1,
-    MMKVMultiProcess = 0x2,
+    MMKVSingleProcess = 1 << 0,
+    MMKVMultiProcess = 1 << 1,
+    // 2~4 are preserved for Android
+    MMKVReadOnly = 1 << 5,
 };
 
 typedef NS_ENUM(UInt32, MMKVExpireDuration) {
@@ -87,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:expectedCapacity:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
-/// @param mode MMKVMultiProcess for multi-process MMKV
+/// @param mode MMKVReadOnly for readonly MMKV, MMKVMultiProcess for multi-process MMKV
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(init(mmapID:mode:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
@@ -101,7 +103,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param cryptKey 16 bytes at most
-/// @param mode MMKVMultiProcess for multi-process MMKV
+/// @param mode MMKVReadOnly for readonly MMKV, MMKVMultiProcess for multi-process MMKV
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode NS_SWIFT_NAME(init(mmapID:cryptKey:mode:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
@@ -133,6 +135,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param expectedCapacity the file size you expected when opening or creating file
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:cryptKey:rootPath:expectedCapacity:));
 
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 bytes at most
+/// @param rootPath custom path of the file, `NSDocumentDirectory/mmkv` by default
+/// @param mode MMKVReadOnly for readonly MMKV, MMKVMultiProcess for multi-process MMKV
+/// @param expectedCapacity the file size you expected when opening or creating file
++ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:cryptKey:rootPath:mode:expectedCapacity:));
 
 /// you can call this on applicationWillTerminate, it's totally fine if you don't call
 + (void)onAppTerminate;
@@ -310,6 +318,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// unless you worry about running out of battery
 - (void)sync;
 - (void)async;
+
+- (BOOL)isMultiProcess;
+
+- (BOOL)isReadOnly;
 
 /// backup one MMKV instance to dstDir
 /// @param mmapID the MMKV ID to backup

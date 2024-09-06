@@ -38,6 +38,7 @@ enum MMKVMode {
   SINGLE_PROCESS_MODE,
   MULTI_PROCESS_MODE,
 }
+final int _READ_ONLY_MODE = 1 << 5;
 
 /// A native memory buffer, must call [MMBuffer.destroy()] after no longer use.
 class MMBuffer {
@@ -189,13 +190,15 @@ class MMKV {
   /// * You can get a multi-process MMKV instance by passing [MMKVMode.MULTI_PROCESS_MODE].
   /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
   /// * You can customize the [rootDir] of the file.
-  MMKV(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0}) {
+  MMKV(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0
+    , bool readOnly = false}) {
     if (mmapID.isNotEmpty) {
       final mmapIDPtr = _string2Pointer(mmapID);
       final cryptKeyPtr = _string2Pointer(cryptKey);
       final rootDirPtr = _string2Pointer(rootDir);
 
-      _handle = _getMMKVWithID(mmapIDPtr, mode.index, cryptKeyPtr, rootDirPtr, expectedCapacity);
+      final realMode = readOnly ? (mode.index | _READ_ONLY_MODE) : mode.index;
+      _handle = _getMMKVWithID(mmapIDPtr, realMode, cryptKeyPtr, rootDirPtr, expectedCapacity);
 
       calloc.free(mmapIDPtr);
       calloc.free(cryptKeyPtr);
@@ -516,6 +519,14 @@ class MMKV {
   /// Get the actual used size. See also [totalSize].
   int get actualSize {
     return _actualSize(_handle);
+  }
+
+  bool get isMultiProcess {
+    return _isMultiProcess(_handle);
+  }
+
+  bool get isReadOnly {
+    return _isReadOnly(_handle);
   }
 
   void removeValue(String key) {
@@ -865,3 +876,7 @@ final bool Function(Pointer<Void>) _enableCompareBeforeSet = _mmkvPlatform.enabl
 final bool Function(Pointer<Void>) _disableCompareBeforeSet = _mmkvPlatform.disableCompareBeforeSetFunc();
 
 final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _removeStorage = _mmkvPlatform.removeStorageFunc();
+
+final bool Function(Pointer<Void>) _isMultiProcess = _mmkvPlatform.isMultiProcessFunc();
+
+final bool Function(Pointer<Void>) _isReadOnly = _mmkvPlatform.isReadOnlyFunc();

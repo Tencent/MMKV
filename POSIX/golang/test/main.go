@@ -5,6 +5,7 @@ import (
 	//"log"
 	"math"
 	"time"
+	"os"
 
 	"tencent.com/mmkv"
 )
@@ -31,6 +32,7 @@ func main() {
 	testAutoExpire()
 	testCompareBeforeSet()
 	testRemoveStorage()
+	testReadOnly()
 }
 
 func functionalTest() {
@@ -95,7 +97,11 @@ func functionalTest() {
 
 func testMMKV(mmapID string, cryptKey string, decodeOnly bool) mmkv.MMKV {
 	kv := mmkv.MMKVWithIDAndModeAndCryptKey(mmapID, mmkv.MMKV_SINGLE_PROCESS, cryptKey)
+	testMMKVImp(kv, decodeOnly)
+	return kv
+}
 
+func testMMKVImp(kv mmkv.MMKV, decodeOnly bool) {
 	if !decodeOnly {
 		kv.SetBool(true, "bool")
 	}
@@ -147,8 +153,6 @@ func testMMKV(mmapID string, cryptKey string, decodeOnly bool) mmkv.MMKV {
 
 	kv.RemoveKeys([]string{"int32", "int64"})
 	fmt.Println("all keys:", kv.AllKeys())
-
-	return kv
 }
 
 func testReKey() {
@@ -332,6 +336,31 @@ func testRemoveStorage()  {
 	if kv.Count() != 0 {
 	    panic("storage not successfully remove")
 	}
+}
+
+func testReadOnly() {
+	mmapID := "testReadOnly"
+	aesKey := "ReadOnly+Key"
+	{
+    	kv := mmkv.MMKVWithIDAndModeAndCryptKey(mmapID, mmkv.MMKV_SINGLE_PROCESS, aesKey)
+    	testMMKVImp(kv, false)
+    	kv.Close()
+	}
+	path := "/tmp/mmkv/" + mmapID
+	os.Chmod(path, 0444)
+	crcPath := path + ".crc"
+	os.Chmod(crcPath, 0444)
+	{
+		kv := mmkv.MMKVWithIDAndModeAndCryptKey(mmapID, (mmkv.MMKV_SINGLE_PROCESS | mmkv.MMKV_READ_ONLY), aesKey)
+		testMMKVImp(kv, true)
+
+		// also check if it tolerate update operations without crash
+		testMMKVImp(kv, false)
+
+		kv.Close()
+	}
+	os.Chmod(path, 0666)
+	os.Chmod(crcPath, 0666)
 }
 
 func logHandler(level int, file string, line int, function string, message string) {

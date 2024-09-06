@@ -166,7 +166,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode {
-    auto rootPath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
+    auto rootPath = (mode & MMKVSingleProcess) ? nil : g_groupPath;
     return [MMKV mmkvWithID:mmapID cryptKey:nil rootPath:rootPath mode:mode];
 }
 
@@ -179,7 +179,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode {
-    auto rootPath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
+    auto rootPath = (mode & MMKVSingleProcess) ? nil : g_groupPath;
     return [MMKV mmkvWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode];
 }
 
@@ -219,7 +219,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
     SCOPED_LOCK(g_lock);
 
-    if (mode == MMKVMultiProcess) {
+    if (mode & MMKVMultiProcess) {
         if (!rootPath) {
             rootPath = g_groupPath;
         }
@@ -718,6 +718,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->checkContentChanged();
 }
 
+- (BOOL)isMultiProcess {
+    return m_mmkv->isMultiProcess();
+}
+
+- (BOOL)isReadOnly {
+    return m_mmkv->isReadOnly();
+}
+
 + (void)onAppTerminate {
     g_lock->lock();
 
@@ -1123,7 +1131,7 @@ static NSString *md5(NSString *value) {
 }
 
 + (BOOL)removeStorage:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(removeStorage(for:mode:)) {
-    auto rootPath = (mode == MMKVSingleProcess) ? nil : g_groupPath;
+    auto rootPath = (mode & MMKVSingleProcess) ? nil : g_groupPath;
     return [self removeStorage:mmapID rootPath:rootPath];
 }
 

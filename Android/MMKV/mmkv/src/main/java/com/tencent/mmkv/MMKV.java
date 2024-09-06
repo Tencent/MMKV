@@ -335,6 +335,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     static private final int BACKUP_MODE = 1 << 4;
 
     /**
+     * Read-only mode.
+     */
+    static public final int READ_ONLY_MODE = 1 << 5;
+
+    /**
      * Create an MMKV instance with an unique ID (in single-process mode).
      *
      * @param mmapID The unique ID of the MMKV instance.
@@ -1645,6 +1650,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * Check inter-process content change manually.
      */
     public native void checkContentChangedByOuterProcess();
+
+    /**
+     * Check if this instance is in multi-process mode.
+     */
+    public native boolean isMultiProcess();
+
+    /**
+     * Check if this instance is in read-only mode.
+     */
+    public native boolean isReadOnly();
 
     // jni
     private final long nativeHandle;

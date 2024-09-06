@@ -228,6 +228,14 @@ class MMKVPluginPlatform {
     throw UnimplementedError();
   }
 
+  bool Function(Pointer<Void>) isMultiProcessFunc() {
+    throw UnimplementedError();
+  }
+
+  bool Function(Pointer<Void>) isReadOnlyFunc() {
+    throw UnimplementedError();
+  }
+
   // some platform doesn't publish their path_provider package to pub.dev
   // provide override point for these calls
   Future<String> getApplicationDocumentsPath() async {

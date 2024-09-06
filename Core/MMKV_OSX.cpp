@@ -300,9 +300,13 @@ NSArray *MMKV::allKeys(bool filterExpire) {
     return keys;
 }
 
-void MMKV::removeValuesForKeys(NSArray *arrKeys) {
+bool MMKV::removeValuesForKeys(NSArray *arrKeys) {
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
     if (arrKeys.count == 0) {
-        return;
+        return true;
     }
     if (arrKeys.count == 1) {
         return removeValueForKey(arrKeys[0]);
@@ -337,8 +341,9 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
     if (deleteCount > 0) {
         m_hasFullWriteback = false;
 
-        fullWriteback();
+        return fullWriteback();
     }
+    return true;
 }
 
 void MMKV::enumerateKeys(EnumerateBlock block) {

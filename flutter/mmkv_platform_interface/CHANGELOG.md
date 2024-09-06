@@ -1,4 +1,8 @@
 # MMKV Platform Interface Change Log
+## v1.0.2 / 2024-09-xx
+* Add `isMultiProcess()`.
+* Add `isReadOnly()`.
+
 ## v1.0.1 / 2024-07-12
 * Add override point for path_provider.
 

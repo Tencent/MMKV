@@ -64,7 +64,11 @@ const (
 
 const (
 	MMKV_SINGLE_PROCESS = 1 << iota
-	MMKV_MULTI_PROCESS
+	MMKV_MULTI_PROCESS = 1 << iota
+    context_MODE_MULTI_PROCESS = 1 << iota // not available in golang
+    mmkv_ASHMEM = 1 << iota // not available in golang
+    mmkv_BACKUP = 1 << iota // not available in golang
+    MMKV_READ_ONLY = 1 << iota
 )
 
 const (
@@ -224,6 +228,9 @@ type MMKV interface {
 
 	EnableCompareBeforeSet() bool
 	DisableCompareBeforeSet() bool
+
+	IsMultiProcess() bool
+	IsReadOnly() bool
 }
 
 type ctorMMKV uintptr
@@ -671,5 +678,15 @@ func (kv ctorMMKV) EnableCompareBeforeSet() bool {
 
 func (kv ctorMMKV) DisableCompareBeforeSet() bool {
 	ret := C.disableCompareBeforeSet(unsafe.Pointer(kv))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) IsMultiProcess() bool {
+	ret := C.isMultiProcess(unsafe.Pointer(kv))
+	return bool(ret)
+}
+
+func (kv ctorMMKV) IsReadOnly() bool {
+	ret := C.isReadOnly(unsafe.Pointer(kv))
 	return bool(ret)
 }

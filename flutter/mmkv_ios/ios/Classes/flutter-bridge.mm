@@ -521,6 +521,22 @@ MMKV_EXPORT bool MMKV_FUNC(removeStorage)(const char *mmapID, const char *rootDi
     return [MMKV removeStorage:strID rootPath:nil];
 }
 
+MMKV_EXPORT bool MMKV_FUNC(isMultiProcess)(const void *handle) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv) {
+        return [kv isMultiProcess];
+    }
+    return false;
+}
+
+MMKV_EXPORT bool MMKV_FUNC(isReadOnly)(const void *handle) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv) {
+        return [kv isReadOnly];
+    }
+    return false;
+}
+
 /* Looks like Dart:ffi's async callback not working perfectly
  * We don't support them for the moment.
  * https://github.com/dart-lang/sdk/issues/37022
