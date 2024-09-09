@@ -566,4 +566,20 @@ MMKV_EXPORT bool removeStorage(const char *mmapID, const char *rootPath) {
     return MMKV::removeStorage(mmapID, nullptr);
 }
 
+MMKV_EXPORT bool isMultiProcess(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->isMultiProcess();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool isReadOnly(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->isReadOnly();
+    }
+    return false;
+}
+
 #endif // MMKV_DISABLE_FLUTTER

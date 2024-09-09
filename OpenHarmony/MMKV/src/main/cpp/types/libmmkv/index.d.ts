@@ -72,3 +72,5 @@ export const ashmemMetaFD: (handle: bigint) => number;
 export const createNativeBuffer: (size: number) => bigint;
 export const destroyNativeBuffer: (ptr: bigint, size: number) => void;
 export const writeValueToNativeBuffer: (handle: bigint, key: string, ptr: bigint, size: number) => number;
+export const isMultiProcess: (handle: bigint) => boolean;
+export const isReadOnly: (handle: bigint) => boolean;

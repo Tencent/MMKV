@@ -46,6 +46,7 @@ export class MMKV {
     public static readonly MULTI_PROCESS_MODE: number = 1 << 1
     private static readonly ASHMEM_MODE: number = 1 << 3
     private static readonly BACKUP_MODE: number = 1 << 4
+    public static readonly READ_ONLY_MODE: number = 1 << 5
     private static g_rootDir: string
 
     private static initData() {
@@ -936,5 +937,13 @@ export class MMKV {
      */
     public writeValueToNativeBuffer(key: string, buffer: NativeBuffer): number {
         return native.writeValueToNativeBuffer(this.nativeHandle, key, buffer.pointer, buffer.size);
+    }
+
+    public isMultiProcess(): boolean {
+        return native.isMultiProcess(this.nativeHandle);
+    }
+
+    public isReadOnly(): boolean {
+        return native.isReadOnly(this.nativeHandle);
     }
 }
