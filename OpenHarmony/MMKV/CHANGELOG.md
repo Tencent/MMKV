@@ -1,5 +1,9 @@
 # MMKV for HarmonyOS NEXT Change Log
 
+## v2.0.0 / 2024-09-xx
+* Support obfuscation.
+* Support read-only mode.
+
 ## v1.3.9 / 2024-07-26
 * Fix a data corruption bug on an encrypted MMKV with only one key value stored.
 * Make encryption more resilient from brute force cracking.
