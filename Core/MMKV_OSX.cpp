@@ -94,6 +94,9 @@ bool MLockPtr::isMLockPtrEnabled = true;
 static bool g_isInBackground = false;
 
 void MMKV::setIsInBackground(bool isInBackground) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
 
     g_isInBackground = isInBackground;
@@ -101,6 +104,9 @@ void MMKV::setIsInBackground(bool isInBackground) {
 }
 
 bool MMKV::isInBackground() {
+    if (!g_instanceLock) {
+        return true;
+    }
     SCOPED_LOCK(g_instanceLock);
 
     return g_isInBackground;

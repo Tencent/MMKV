@@ -38,8 +38,8 @@ void main() async {
   }
 
   // must wait for MMKV to finish initialization
-  final rootDir = await MMKV.initialize(groupDir: groupDir);
-  print("MMKV for flutter with rootDir = $rootDir");
+  // final rootDir = await MMKV.initialize(groupDir: groupDir);
+  // print("MMKV for flutter with rootDir = $rootDir");
 
   runApp(MyApp());
 }
@@ -78,8 +78,8 @@ class _MyAppState extends State<MyApp> {
           Text("MMKV Version: ${MMKV.version}\n"),
           TextButton(
               onPressed: () {
-                // functionalTest();
-                testReadOnly();
+                functionalTest();
+                // testReadOnly();
               },
               child: Text("Functional Test", style: TextStyle(fontSize: 18))),
           TextButton(

@@ -233,7 +233,7 @@ const MMKVPath_t &MMKV::getRootDir() {
 #ifndef MMKV_ANDROID
 MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity) {
 
-    if (mmapID.empty()) {
+    if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
@@ -261,6 +261,9 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
 #endif
 
 void MMKV::onExit() {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
 
     for (auto &pair : *g_instanceDic) {
@@ -1248,6 +1251,9 @@ static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath
 }
 
 bool MMKV::backupOneToDirectory(const string &mmapKey, const MMKVPath_t &dstPath, const MMKVPath_t &srcPath, bool compareFullPath) {
+    if (!g_instanceLock) {
+        return false;
+    }
     // we have to lock the creation of MMKV instance, regardless of in cache or not
     SCOPED_LOCK(g_instanceLock);
     MMKV *kv = nullptr;
@@ -1410,6 +1416,9 @@ static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVP
 // They won't know a difference when the file has been replaced.
 // We have to let them know by overriding the existing file with new content.
 bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath) {
+    if (!g_instanceLock) {
+        return false;
+    }
     // we have to lock the creation of MMKV instance, regardless of in cache or not
     SCOPED_LOCK(g_instanceLock);
     MMKV *kv = nullptr;
@@ -1544,26 +1553,41 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
 // callbacks
 
 void MMKV::registerErrorHandler(ErrorHandler handler) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_errorHandler = handler;
 }
 
 void MMKV::unRegisterErrorHandler() {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_errorHandler = nullptr;
 }
 
 void MMKV::registerLogHandler(LogHandler handler) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_logHandler = handler;
 }
 
 void MMKV::unRegisterLogHandler() {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_logHandler = nullptr;
 }
 
 void MMKV::setLogLevel(MMKVLogLevel level) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_currentLogLevel = level;
 }

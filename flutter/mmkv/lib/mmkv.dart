@@ -180,6 +180,9 @@ class MMKV {
     final cryptKeyPtr = _string2Pointer(cryptKey);
     const mode = MMKVMode.SINGLE_PROCESS_MODE;
     mmkv._handle = _getDefaultMMKV(mode.index, cryptKeyPtr);
+    if (mmkv._handle == nullptr) {
+      throw StateError("Invalid state, forget initialize MMKV first?");
+    }
     calloc.free(cryptKeyPtr);
     return mmkv;
   }
@@ -199,6 +202,9 @@ class MMKV {
 
       final realMode = readOnly ? (mode.index | _READ_ONLY_MODE) : mode.index;
       _handle = _getMMKVWithID(mmapIDPtr, realMode, cryptKeyPtr, rootDirPtr, expectedCapacity);
+      if (_handle == nullptr) {
+        throw StateError("Invalid state, forget initialize MMKV first?");
+      }
 
       calloc.free(mmapIDPtr);
       calloc.free(cryptKeyPtr);

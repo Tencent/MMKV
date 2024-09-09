@@ -1540,6 +1540,9 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
 }
 
 bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
+    if (!g_instanceLock) {
+        return false;
+    }
     auto mmapKey = mmapedKVKey(mmapID, relatePath);
 #ifdef MMKV_ANDROID
     auto &realID = mmapKey; // historically Android mistakenly use mmapKey as mmapID

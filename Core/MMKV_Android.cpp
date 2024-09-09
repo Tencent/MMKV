@@ -138,7 +138,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 }
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath, size_t expectedCapacity) {
-    if (mmapID.empty()) {
+    if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
@@ -164,7 +164,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
 
 MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *cryptKey) {
 
-    if (fd < 0) {
+    if (fd < 0 || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
