@@ -19,12 +19,14 @@
 
 -keep
 ./src/main/ets/utils/MMKV.ets
+./src/main/ets/utils/MMKVHandler.ets
 ./src/main/ets/utils/MMKVLogLevel.ets
 ./src/main/ets/utils/NativeBuffer.ets
 ./src/main/ets/utils/Util.ts
 
 -keep-file-name
 MMKV
+MMKVHandler
 MMKVLogLevel
 NativeBuffer
 Util

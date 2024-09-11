@@ -28,18 +28,8 @@
 #include "MemoryFile.h"
 #include "MiniPBCoder.h"
 #include "napi/native_api.h"
-#include <bits/alltypes.h>
 #include <cstdint>
 #include <string>
-#include <sys/stat.h>
-#include <system_error>
-// #include <hilog/log.h>
-
-// #define LOG_LEVEL(level, ...) OH_LOG_Print(LOG_APP, level, 0, "mmkv", __VA_ARGS__)
-// #define MMKV_LOG_DEBUG(...) LOG_LEVEL(LOG_DEBUG, __VA_ARGS__)
-// #define MMKV_LOG_INFO(...) LOG_LEVEL(LOG_INFO, __VA_ARGS__)
-// #define MMKV_LOG_WARN(...) LOG_LEVEL(LOG_WARN, __VA_ARGS__)
-// #define MMKV_LOG_ERROR(...) LOG_LEVEL(LOG_ERROR, __VA_ARGS__)
 
 using namespace std;
 using namespace mmkv;
@@ -348,9 +338,128 @@ static uint64_t NValueToUInt64(napi_env env, napi_value value, bool maybeUndefin
     return result;
 }
 
+struct CallbackInfo {
+    napi_ref handlerRef = nullptr;
+
+    napi_ref callbacks[4] = {};
+    napi_ref &wantLogRedirect = callbacks[0];
+    napi_ref &mmkvLog = callbacks[1];
+    napi_ref &onMMKVCRCCheckFail = callbacks[2];
+    napi_ref &onMMKVFileLengthError = callbacks[3];
+};
+
+static const char *g_arrCallbackNames[] = {
+    "wantLogRedirect",
+    "mmkvLog",
+    "onMMKVCRCCheckFail",
+    "onMMKVFileLengthError",
+};
+
+static CallbackInfo g_callbackInfo;
+
+static std::pair<bool, bool> initCallbacks(napi_env env, napi_value callbackArg) {
+    if (IsNValueUndefined(env, callbackArg)) {
+        return {false, false};
+    }
+    napi_valuetype valueType;
+    napi_typeof(env, callbackArg, &valueType);
+    if (valueType != napi_object) {
+        napi_throw_type_error(env, nullptr, "Expected an object as the callback argument");
+        return {false, false};
+    }
+
+    bool hasCallback = false;
+    for (size_t index = 0; index < (sizeof(g_arrCallbackNames) / sizeof(g_arrCallbackNames[0])); index++) {
+        auto &name = g_arrCallbackNames[index];
+        napi_value callback;
+        if (napi_get_named_property(env, callbackArg, name, &callback) != napi_ok) {
+            continue;
+        }
+        napi_valuetype callbackType;
+        napi_typeof(env, callback, &callbackType);
+        if (callbackType != napi_function) {
+            napi_throw_type_error(env, nullptr, "Expected a function as the callback");
+            continue;
+        }
+        hasCallback = true;
+
+        napi_create_reference(env, callback, 1, &g_callbackInfo.callbacks[index]);
+    }
+    if (hasCallback) {
+        napi_create_reference(env, callbackArg, 1, &g_callbackInfo.handlerRef);
+    }
+
+    bool wantLogRedirect = false;
+    if (g_callbackInfo.wantLogRedirect) {
+        napi_value handler;
+        napi_get_reference_value(env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(env, g_callbackInfo.wantLogRedirect, &callback);
+
+        napi_value result;
+        napi_call_function(env, handler, callback, 0, nullptr, &result);
+        wantLogRedirect = NValueToBool(env, result);
+    }
+
+    return {hasCallback, wantLogRedirect};
+}
+
+static napi_env g_env = nullptr;
+
+void myLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) {
+    if (!g_env) {
+        return;
+    }
+
+    napi_value handler;
+    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+    napi_value callback;
+    napi_get_reference_value(g_env, g_callbackInfo.mmkvLog, &callback);
+
+    napi_value args[] = {
+        Int32ToNValue(g_env, level),
+        StringToNValue(g_env, file),
+        Int32ToNValue(g_env, line),
+        StringToNValue(g_env, function),
+        StringToNValue(g_env, message)
+    };
+
+    napi_value result;
+    napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
+}
+
+static MMKVRecoverStrategic myErrorHandler(const std::string &mmapID, MMKVErrorType errorType) {
+    if (!g_env) {
+        return OnErrorDiscard;
+    }
+
+    napi_value handler;
+    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+    napi_value callback;
+    if (errorType == MMKVCRCCheckFail) {
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVCRCCheckFail, &callback);
+    } else if (errorType == MMKVFileLength) {
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVFileLengthError, &callback);
+    } else {
+        return OnErrorDiscard;
+    }
+
+    napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+    napi_value result;
+    if (napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result) == napi_ok) {
+        if (!IsNValueUndefined(g_env, result)) {
+            return ( MMKVRecoverStrategic ) NValueToInt32(g_env, result);
+        }
+    }
+    return OnErrorDiscard;
+}
+
 static napi_value initialize(napi_env env, napi_callback_info info) {
-    size_t argc = 3;
-    napi_value args[3] = {nullptr};
+    g_env = env;
+
+    size_t argc = 4;
+    napi_value args[4] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args , nullptr, nullptr));
 
     auto rootDir = NValueToString(env, args[0]);
@@ -359,10 +468,18 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     int32_t logLevel;
     NAPI_CALL(napi_get_value_int32(env, args[2], &logLevel));
 
-    MMKVInfo("rootDir: %s, cacheDir: %s, log level:%d", rootDir.c_str(), cacheDir.c_str(), logLevel);
+    auto [hasCallback, wantLogRedirect] = initCallbacks(env, args[3]);
+    auto logHandler = wantLogRedirect ? myLogHandler : nullptr;
 
-    MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
+    MMKVInfo("rootDir: %s, cacheDir: %s, log level:%d, has callback: %d, want log redirect: %d",
+        rootDir.c_str(), cacheDir.c_str(), logLevel, hasCallback, wantLogRedirect);
+
+    MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, logHandler);
     g_android_tmpDir = cacheDir;
+
+    if (hasCallback) {
+        MMKV::registerErrorHandler(myErrorHandler);
+    }
 
     return StringToNValue(env, MMKV::getRootDir());
 }

@@ -1,4 +1,4 @@
-export const initialize: (rootDir: string, cacheDir: string, logLevel: number) => string;
+export const initialize: (rootDir: string, cacheDir: string, logLevel: number, handler?: MMKVHandler) => string;
 export const version: () => string;
 export const pageSize: () => number;
 export const getDefaultMMKV: (mode: number, cryptKey?: string) => bigint;
