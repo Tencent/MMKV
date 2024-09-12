@@ -74,3 +74,4 @@ export const destroyNativeBuffer: (ptr: bigint, size: number) => void;
 export const writeValueToNativeBuffer: (handle: bigint, key: string, ptr: bigint, size: number) => number;
 export const isMultiProcess: (handle: bigint) => boolean;
 export const isReadOnly: (handle: bigint) => boolean;
+export const checkContentChanged:(handle: bigint) => void;

@@ -64,4 +64,13 @@ export class MyMMKVHandler extends MMKVHandler {
     hilog.warn(0x0000, 'mmkvdemo', 'onMMKVFileLengthError: %{public}s', mmapID);
     return MMKVRecoverStrategic.OnErrorRecover;
   }
+
+  public wantContentChangeNotification(): boolean {
+    // hilog.info(0x0000, 'mmkvdemo', 'wantContentChangeNotification uniqueId: %{public}d', this.uniqueId);
+    return true;
+  }
+
+  public onContentChangedByOuterProcess(mmapID: string): void {
+    hilog.info(0x0000, 'mmkvdemo', 'onContentChangedByOuterProcess: %{public}s', mmapID);
+  }
 }

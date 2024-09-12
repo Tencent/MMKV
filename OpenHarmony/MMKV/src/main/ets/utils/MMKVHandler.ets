@@ -92,4 +92,20 @@ export abstract class MMKVHandler {
   public onMMKVFileLengthError(mmapID: string): MMKVRecoverStrategic {
     return MMKVRecoverStrategic.OnErrorDiscard;
   }
+
+  /**
+   * @return Return true to enable inter-process content change notification
+   */
+  public wantContentChangeNotification(): boolean {
+    return false;
+  }
+
+  /**
+   * Inter-process content change notification.
+   * Triggered by any method call, such as getXXX() or setXXX() or {@link MMKV#checkContentChangedByOuterProcess()}.
+   * @param mmapID The unique ID of the changed MMKV instance.
+   */
+  public onContentChangedByOuterProcess(mmapID: string): void {
+    return;
+  }
 }

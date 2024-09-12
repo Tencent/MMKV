@@ -131,6 +131,10 @@ void MMKV::loadFromFile() {
         }
         auto count = m_crypter ? m_dicCrypt->size() : m_dic->size();
         MMKVInfo("loaded [%s] with %zu key-values", m_mmapID.c_str(), count);
+//        auto keys = allKeys();
+//        for (size_t index = 0; index < count; index++) {
+//            MMKVInfo("key[%llu]: %s", index, keys[index].c_str());
+//        }
     }
 
     m_needLoadFromFile = false;

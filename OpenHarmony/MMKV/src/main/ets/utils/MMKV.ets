@@ -949,4 +949,8 @@ export class MMKV {
     public isReadOnly(): boolean {
         return native.isReadOnly(this.nativeHandle);
     }
+
+    public checkContentChanged(): void {
+        native.checkContentChanged(this.nativeHandle);
+    }
 }

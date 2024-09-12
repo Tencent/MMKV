@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKVCore"
-  s.version      = "1.3.9"
+  s.version      = "2.0.0"
   s.summary      = "MMKVCore for MMKV. MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC
@@ -21,6 +21,7 @@ Pod::Spec.new do |s|
   s.visionos.deployment_target = "1.0"
 
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
+  # s.source       = { :git => "https://github.com/Tencent/MMKV.git", :branch => "dev" }
   s.source_files = "Core", "Core/*.{h,cpp,hpp}", "Core/aes/*", "Core/aes/openssl/*", "Core/crc32/*.h"
   s.public_header_files = "Core/MMBuffer.h", "Core/MMKV.h", "Core/MMKVLog.h", "Core/MMKVPredef.h", "Core/PBUtility.h", "Core/ScopedLock.hpp", "Core/ThreadLock.h", "Core/aes/openssl/openssl_md5.h", "Core/aes/openssl/openssl_opensslconf.h"
   s.compiler_flags = '-x objective-c++'

@@ -38,10 +38,46 @@ void main() async {
   }
 
   // must wait for MMKV to finish initialization
-  final rootDir = await MMKV.initialize(groupDir: groupDir);
+  final rootDir = await MMKV.initialize(groupDir: groupDir, handler: MyMMKVHandler());
   print("MMKV for flutter with rootDir = $rootDir");
 
   runApp(MyApp());
+}
+
+class MyMMKVHandler extends MMKVHandler {
+  @override
+  bool wantLogRedirect() {
+    print("MyMMKVHandler.wantLogRedirect() is called");
+    return true;
+  }
+
+  @override
+  void mmkvLog(MMKVLogLevel level, String file, int line, String function, String message) {
+    print("mmkv-redirect <$file:$line::$function> $message");
+  }
+
+  @override
+  MMKVRecoverStrategic onMMKVCRCCheckFail(String mmapID) {
+    print("onMMKVCRCCheckFail: $mmapID");
+    return MMKVRecoverStrategic.OnErrorRecover;
+  }
+
+  @override
+  MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
+    print("onMMKVFileLengthError: $mmapID");
+    return MMKVRecoverStrategic.OnErrorRecover;
+  }
+
+  @override
+  bool wantContentChangeNotification() {
+    print("MyMMKVHandler.wantContentChangeNotification() is called");
+    return true;
+  }
+
+  @override
+  void onContentChangedByOuterProcess(String mmapID) {
+    print("onContentChangedByOuterProcess: $mmapID");
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -195,6 +231,7 @@ class _MyAppState extends State<MyApp> {
     print("all keys: ${mmkv.allKeys}");
     // mmkv.sync(true);
     // mmkv.close();
+    mmkv.checkContentChangedByOuterProcess();
   }
 
   MMKV testMMKV(String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {

@@ -217,6 +217,7 @@ struct Index {
     kv.removeValuesForKeys(['bool', 'int32']);
     hilog.info(0, 'mmkvdemo', 'remove "bool" & "int32", allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
+    kv.checkContentChanged();
     kv.clearAll();
     hilog.info(0, 'mmkvdemo', 'clearAll(), allKeys = %{public}s', ArrayToString(kv.allKeys()));
 

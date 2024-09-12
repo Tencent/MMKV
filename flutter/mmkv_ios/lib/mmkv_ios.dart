@@ -19,6 +19,7 @@
  */
 
 import 'dart:ffi';
+import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:mmkv_platform_interface/mmkv_platform_interface.dart';
 
@@ -42,16 +43,36 @@ class MMKVPlatformIOS extends MMKVPluginPlatformFFI {
 
   static const MethodChannel _channel = MethodChannel("mmkv");
 
+  static final Pointer<Utf8> Function(Pointer<Utf8> rootDir, Pointer<Utf8> groupDir, int logLevel, Pointer<NativeFunction<LogCallbackWrap>>)
+      _mmkvInitialize = _nativeLib
+          .lookup<NativeFunction<Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>, Int32, Pointer<NativeFunction<LogCallbackWrap>>)>>(
+              "mmkvInitialize")
+          .asFunction();
+
   @override
-  Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1}) async {
-    final Map<String, dynamic> params = {
-      "rootDir": rootDir,
-      "logLevel": logLevel,
-    };
-    if (groupDir != null) {
-      params["groupDir"] = groupDir;
-    }
-    final ret = await _channel.invokeMethod("initializeMMKV", params);
-    return ret;
+  Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1, Pointer<NativeFunction<LogCallbackWrap>>? logHandler}) async {
+    final rootDirPtr = _string2Pointer(rootDir);
+    final groupDirPtr = groupDir != null ? _string2Pointer(groupDir) : nullptr;
+
+    final ret = _mmkvInitialize(rootDirPtr, groupDirPtr, logLevel, logHandler ?? nullptr);
+
+    calloc.free(rootDirPtr);
+    calloc.free(groupDirPtr);
+
+    return _pointer2String(ret) ?? rootDir;
   }
+}
+
+Pointer<Utf8> _string2Pointer(String? str) {
+  if (str != null) {
+    return str.toNativeUtf8();
+  }
+  return nullptr;
+}
+
+String? _pointer2String(Pointer<Utf8>? ptr) {
+  if (ptr != null && ptr != nullptr) {
+    return ptr.toDartString();
+  }
+  return null;
 }

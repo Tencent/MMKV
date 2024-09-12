@@ -341,11 +341,13 @@ static uint64_t NValueToUInt64(napi_env env, napi_value value, bool maybeUndefin
 struct CallbackInfo {
     napi_ref handlerRef = nullptr;
 
-    napi_ref callbacks[4] = {};
+    napi_ref callbacks[6] = {};
     napi_ref &wantLogRedirect = callbacks[0];
     napi_ref &mmkvLog = callbacks[1];
     napi_ref &onMMKVCRCCheckFail = callbacks[2];
     napi_ref &onMMKVFileLengthError = callbacks[3];
+    napi_ref &wantContentChangeNotification = callbacks[4];
+    napi_ref &onContentChangedByOuterProcess = callbacks[5];
 };
 
 static const char *g_arrCallbackNames[] = {
@@ -353,19 +355,21 @@ static const char *g_arrCallbackNames[] = {
     "mmkvLog",
     "onMMKVCRCCheckFail",
     "onMMKVFileLengthError",
+    "wantContentChangeNotification",
+    "onContentChangedByOuterProcess"
 };
 
 static CallbackInfo g_callbackInfo;
 
-static std::pair<bool, bool> initCallbacks(napi_env env, napi_value callbackArg) {
+static std::tuple<bool, bool, bool> initCallbacks(napi_env env, napi_value callbackArg) {
     if (IsNValueUndefined(env, callbackArg)) {
-        return {false, false};
+        return {false, false, false};
     }
     napi_valuetype valueType;
     napi_typeof(env, callbackArg, &valueType);
     if (valueType != napi_object) {
         napi_throw_type_error(env, nullptr, "Expected an object as the callback argument");
-        return {false, false};
+        return {false, false, false};
     }
 
     bool hasCallback = false;
@@ -391,17 +395,25 @@ static std::pair<bool, bool> initCallbacks(napi_env env, napi_value callbackArg)
 
     bool wantLogRedirect = false;
     if (g_callbackInfo.wantLogRedirect) {
-        napi_value handler;
-        napi_get_reference_value(env, g_callbackInfo.handlerRef, &handler);
         napi_value callback;
         napi_get_reference_value(env, g_callbackInfo.wantLogRedirect, &callback);
 
         napi_value result;
-        napi_call_function(env, handler, callback, 0, nullptr, &result);
+        napi_call_function(env, callbackArg, callback, 0, nullptr, &result);
         wantLogRedirect = NValueToBool(env, result);
     }
 
-    return {hasCallback, wantLogRedirect};
+    bool wantContentChangeNotification = false;
+    if (g_callbackInfo.wantContentChangeNotification) {
+        napi_value callback;
+        napi_get_reference_value(env, g_callbackInfo.wantContentChangeNotification, &callback);
+
+        napi_value result;
+        napi_call_function(env, callbackArg, callback, 0, nullptr, &result);
+        wantContentChangeNotification = NValueToBool(env, result);
+    }
+
+    return {hasCallback, wantLogRedirect, wantContentChangeNotification};
 }
 
 static napi_env g_env = nullptr;
@@ -455,6 +467,22 @@ static MMKVRecoverStrategic myErrorHandler(const std::string &mmapID, MMKVErrorT
     return OnErrorDiscard;
 }
 
+static void myContentNotificationHandler(const std::string &mmapID) {
+    if (!g_env) {
+        return;
+    }
+
+    napi_value handler;
+    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+    napi_value callback;
+    napi_get_reference_value(g_env, g_callbackInfo.onContentChangedByOuterProcess, &callback);
+
+    napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+    napi_value result;
+    napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
+}
+
 static napi_value initialize(napi_env env, napi_callback_info info) {
     g_env = env;
 
@@ -468,7 +496,7 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     int32_t logLevel;
     NAPI_CALL(napi_get_value_int32(env, args[2], &logLevel));
 
-    auto [hasCallback, wantLogRedirect] = initCallbacks(env, args[3]);
+    auto [hasCallback, wantLogRedirect, wantContentChangeNotification] = initCallbacks(env, args[3]);
     auto logHandler = wantLogRedirect ? myLogHandler : nullptr;
 
     MMKVInfo("rootDir: %s, cacheDir: %s, log level:%d, has callback: %d, want log redirect: %d",
@@ -479,6 +507,9 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
 
     if (hasCallback) {
         MMKV::registerErrorHandler(myErrorHandler);
+    }
+    if (wantContentChangeNotification) {
+        MMKV::registerContentChangeHandler(myContentNotificationHandler);
     }
 
     return StringToNValue(env, MMKV::getRootDir());
@@ -1639,6 +1670,19 @@ static napi_value isReadOnly(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+static napi_value checkContentChanged(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv) {
+        kv->checkContentChanged();
+    }
+    return NAPIUndefined(env);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -1718,6 +1762,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "writeValueToNativeBuffer", nullptr, writeValueToNativeBuffer, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "isMultiProcess", nullptr, isMultiProcess, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "isReadOnly", nullptr, isReadOnly, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "checkContentChanged", nullptr, checkContentChanged, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

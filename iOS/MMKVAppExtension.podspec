@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKVAppExtension"
-  s.version      = "1.3.9"
+  s.version      = "2.0.0"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
   s.module_name  = "MMKVAppExtension"
 
@@ -31,7 +31,7 @@ Pod::Spec.new do |s|
     "GCC_PREPROCESSOR_DEFINITIONS" => "MMKV_IOS_EXTENSION",
   }
 
-  s.dependency 'MMKVCore', '~> 1.3.9'
+  s.dependency 'MMKVCore', '~> 2.0.0'
 
 end
 

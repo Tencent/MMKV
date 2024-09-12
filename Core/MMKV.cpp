@@ -220,8 +220,10 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
 #    endif
 #endif
 
-    g_rootDir = rootDir;
-    mkPath(g_rootDir);
+    if (g_rootDir.empty()) {
+        g_rootDir = rootDir;
+        mkPath(g_rootDir);
+    }
 
     MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
 }

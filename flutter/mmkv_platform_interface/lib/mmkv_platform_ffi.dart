@@ -300,7 +300,23 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
     return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Void>)>>(nativeFuncName("isMultiProcess")).asFunction();
   }
 
+  @override
   bool Function(Pointer<Void>) isReadOnlyFunc() {
     return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Void>)>>(nativeFuncName("isReadOnly")).asFunction();
+  }
+
+  @override
+  ErrorCallbackRegister registerErrorHandlerFunc() {
+    return nativeLib().lookup<NativeFunction<ErrorCallbackRegisterWrap>>(nativeFuncName("registerErrorHandler")).asFunction();
+  }
+
+  @override
+  ContentCallbackRegister registerContentHandlerFunc() {
+    return nativeLib().lookup<NativeFunction<ContentCallbackRegisterWrap>>(nativeFuncName("registerContentChangeNotify")).asFunction();
+  }
+
+  @override
+  void Function(Pointer<Void> p1) checkContentChangedFunc() {
+    return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>)>>(nativeFuncName("checkContentChanged")).asFunction();
   }
 }
