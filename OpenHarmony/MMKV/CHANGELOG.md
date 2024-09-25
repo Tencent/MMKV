@@ -1,6 +1,6 @@
 # MMKV for HarmonyOS NEXT Change Log
 
-## v2.0.0-SNAPSHOT / 2024-09-23
+## v2.0.0-beta1 / 2024-09-25
 * Support obfuscation.
 * Support read-only mode.
 * Add add log / error / content-change callback for Flutter & ArtTS
