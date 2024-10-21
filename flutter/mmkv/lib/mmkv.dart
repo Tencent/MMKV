@@ -29,8 +29,7 @@ import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:mmkv_platform_interface/mmkv_platform_interface.dart";
 
-/// Log level for MMKV.
-enum MMKVLogLevel { Debug, Info, Warning, Error, None }
+export "package:mmkv_platform_interface/mmkv_platform_interface.dart" show MMKVHandler, MMKVLogLevel, MMKVRecoverStrategic;
 
 /// Process mode for MMKV, default to [SINGLE_PROCESS_MODE].
 enum MMKVMode {
@@ -38,6 +37,7 @@ enum MMKVMode {
   SINGLE_PROCESS_MODE,
   MULTI_PROCESS_MODE,
 }
+final int _READ_ONLY_MODE = 1 << 5;
 
 /// A native memory buffer, must call [MMBuffer.destroy()] after no longer use.
 class MMBuffer {
@@ -150,7 +150,7 @@ class MMKV {
   /// You can even turnoff logging by passing [MMKVLogLevel.None], which we don't recommend doing.
   /// * If you want to use MMKV in multi-process on iOS, you should set group folder by passing [groupDir].
   /// [groupDir] will be ignored on Android.
-  static Future<String> initialize({String? rootDir, String? groupDir, MMKVLogLevel logLevel = MMKVLogLevel.Info}) async {
+  static Future<String> initialize({String? rootDir, String? groupDir, MMKVLogLevel logLevel = MMKVLogLevel.Info, MMKVHandler? handler}) async {
     WidgetsFlutterBinding.ensureInitialized();
 
     if (rootDir == null) {
@@ -159,7 +159,21 @@ class MMKV {
     }
     _rootDir = rootDir;
 
-    return await _mmkvPlatform.initialize(rootDir, groupDir: groupDir, logLevel: logLevel.index);
+    _mmkvPlatform.theHandler = handler;
+    final logHandler = (handler != null && handler.wantLogRedirect()) ? Pointer.fromFunction<LogCallbackWrap>(_logRedirect) : nullptr;
+
+    final result = await _mmkvPlatform.initialize(rootDir, groupDir: groupDir, logLevel: logLevel.index, logHandler: logHandler);
+    if (handler != null) {
+      const ExceptionalReturn = -1;
+      final errorHandler = Pointer.fromFunction<ErrorCallbackWrap>(_errorHandler, ExceptionalReturn);
+      _registerErrorHandler(errorHandler);
+
+      if (handler.wantContentChangeNotification()) {
+        final contentHandler = Pointer.fromFunction<ContentCallbackWrap>(_contentChangeHandler);
+        _registerContentHandler(contentHandler);
+      }
+    }
+    return result;
   }
 
   /// The root directory of MMKV.
@@ -179,6 +193,9 @@ class MMKV {
     final cryptKeyPtr = _string2Pointer(cryptKey);
     const mode = MMKVMode.SINGLE_PROCESS_MODE;
     mmkv._handle = _getDefaultMMKV(mode.index, cryptKeyPtr);
+    if (mmkv._handle == nullptr) {
+      throw StateError("Invalid state, forget initialize MMKV first?");
+    }
     calloc.free(cryptKeyPtr);
     return mmkv;
   }
@@ -189,13 +206,18 @@ class MMKV {
   /// * You can get a multi-process MMKV instance by passing [MMKVMode.MULTI_PROCESS_MODE].
   /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
   /// * You can customize the [rootDir] of the file.
-  MMKV(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0}) {
+  MMKV(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0
+    , bool readOnly = false}) {
     if (mmapID.isNotEmpty) {
       final mmapIDPtr = _string2Pointer(mmapID);
       final cryptKeyPtr = _string2Pointer(cryptKey);
       final rootDirPtr = _string2Pointer(rootDir);
 
-      _handle = _getMMKVWithID(mmapIDPtr, mode.index, cryptKeyPtr, rootDirPtr, expectedCapacity);
+      final realMode = readOnly ? (mode.index | _READ_ONLY_MODE) : mode.index;
+      _handle = _getMMKVWithID(mmapIDPtr, realMode, cryptKeyPtr, rootDirPtr, expectedCapacity);
+      if (_handle == nullptr) {
+        throw StateError("Invalid state, forget initialize MMKV first?");
+      }
 
       calloc.free(mmapIDPtr);
       calloc.free(cryptKeyPtr);
@@ -518,6 +540,14 @@ class MMKV {
     return _actualSize(_handle);
   }
 
+  bool get isMultiProcess {
+    return _isMultiProcess(_handle);
+  }
+
+  bool get isReadOnly {
+    return _isReadOnly(_handle);
+  }
+
   void removeValue(String key) {
     final keyPtr = key.toNativeUtf8();
     _removeValueForKey(_handle, keyPtr);
@@ -680,33 +710,14 @@ class MMKV {
 
     return _int2Bool(ret);
   }
-}
 
-/* Looks like Dart:ffi's async callback not working perfectly
- * We don't support them for the moment.
- * https://github.com/dart-lang/sdk/issues/37022
-class MMKV {
-  ....
-  // callbacks
-  static void registerLogCallback(LogCallback callback) {
-    _logCallback = callback;
-    _setWantsLogRedirect(Pointer.fromFunction<_LogCallbackWrap>(_logRedirect));
-  }
+  void checkContentChangedByOuterProcess() {
 
-  static void unRegisterLogCallback() {
-    _setWantsLogRedirect(nullptr);
-    _logCallback = null;
   }
 }
-
-typedef LogCallback = void Function(MMKVLogLevel level, String file, int line, String funcname, String message);
-typedef _LogCallbackWrap = Void Function(Uint32, Pointer<Utf8>, Int32, Pointer<Utf8>, Pointer<Utf8>);
-typedef _LogCallbackRegisterWrap = Void Function(Pointer<NativeFunction<_LogCallbackWrap>>);
-typedef _LogCallbackRegister = void Function(Pointer<NativeFunction<_LogCallbackWrap>>);
-LogCallback _logCallback;
 
 void _logRedirect(int logLevel, Pointer<Utf8> file, int line, Pointer<Utf8> funcname, Pointer<Utf8> message) {
-  if (_logCallback == null) {
+  if (_mmkvPlatform.theHandler == null) {
     return;
   }
 
@@ -730,17 +741,41 @@ void _logRedirect(int logLevel, Pointer<Utf8> file, int line, Pointer<Utf8> func
       break;
   }
 
-  _logCallback(level, _pointer2String(file), line, _pointer2String(funcname), _pointer2String(message));
-
-  if (!Platform.isIOS) {
-    free(message);
-  }
+  _mmkvPlatform.theHandler?.mmkvLog(level, _pointer2String(file)!, line, _pointer2String(funcname)!, _pointer2String(message)!);
 }
 
-final _LogCallbackRegister _setWantsLogRedirect =
-nativeLib.lookup<NativeFunction<_LogCallbackRegisterWrap>>('setWantsLogRedirect')
-    .asFunction();
-*/
+enum _MMKVErrorType {
+  MMKVCRCCheckFail,
+  MMKVFileLength,
+}
+
+int _errorHandler(Pointer<Utf8> mmapIDPtr, int errorType) {
+  if (_mmkvPlatform.theHandler == null || mmapIDPtr == nullptr) {
+    return MMKVRecoverStrategic.OnErrorDiscard.index;
+  }
+
+  final mmapID = _pointer2String(mmapIDPtr);
+  MMKVRecoverStrategic strategic;
+  if (errorType == _MMKVErrorType.MMKVCRCCheckFail.index) {
+    strategic = _mmkvPlatform.theHandler!.onMMKVCRCCheckFail(mmapID!);
+  } else if (errorType == _MMKVErrorType.MMKVFileLength.index) {
+    strategic = _mmkvPlatform.theHandler!.onMMKVFileLengthError(mmapID!);
+  } else {
+    strategic = MMKVRecoverStrategic.OnErrorDiscard;
+  }
+
+  return strategic.index;
+}
+
+void _contentChangeHandler(Pointer<Utf8> mmapIDPtr) {
+  if (_mmkvPlatform.theHandler != null && mmapIDPtr != nullptr) {
+    final handler = _mmkvPlatform.theHandler!;
+    if (handler.wantContentChangeNotification()) {
+      final mmapID = _pointer2String(mmapIDPtr);
+      handler.onContentChangedByOuterProcess(mmapID!);
+    }
+  }
+}
 
 int _bool2Int(bool value) {
   return value ? 1 : 0;
@@ -865,3 +900,13 @@ final bool Function(Pointer<Void>) _enableCompareBeforeSet = _mmkvPlatform.enabl
 final bool Function(Pointer<Void>) _disableCompareBeforeSet = _mmkvPlatform.disableCompareBeforeSetFunc();
 
 final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _removeStorage = _mmkvPlatform.removeStorageFunc();
+
+final bool Function(Pointer<Void>) _isMultiProcess = _mmkvPlatform.isMultiProcessFunc();
+
+final bool Function(Pointer<Void>) _isReadOnly = _mmkvPlatform.isReadOnlyFunc();
+
+final ErrorCallbackRegister _registerErrorHandler = _mmkvPlatform.registerErrorHandlerFunc();
+
+final ContentCallbackRegister _registerContentHandler = _mmkvPlatform.registerContentHandlerFunc();
+
+final void Function(Pointer<Void>) _checkContentChanged = _mmkvPlatform.checkContentChangedFunc();

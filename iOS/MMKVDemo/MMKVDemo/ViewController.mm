@@ -98,6 +98,7 @@
 
     [self testClearAllWithKeepingSpace];
     [self testRemoveStorage];
+    [self testReadOnly:NO];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -224,7 +225,12 @@
 
 - (void)testMMKV:(NSString *)mmapID withCryptKey:(NSData *)cryptKey decodeOnly:(BOOL)decodeOnly {
     MMKV *mmkv = [MMKV mmkvWithID:mmapID cryptKey:cryptKey];
+    [self testMMKV:mmkv decodeOnly:decodeOnly];
 
+    NSLog(@"isFileValid[%@]: %d", mmapID, [MMKV isFileValid:mmapID]);
+}
+
+- (void)testMMKV:(MMKV *)mmkv decodeOnly:(BOOL)decodeOnly {
     if (!decodeOnly) {
         [mmkv setInt32:-1024 forKey:@"int32"];
     }
@@ -280,7 +286,6 @@
 
     [mmkv removeValuesForKeys:@[ @"int", @"long" ]];
     [mmkv clearMemoryCache];
-    NSLog(@"isFileValid[%@]: %d", mmapID, [MMKV isFileValid:mmapID]);
 }
 
 - (void)testReKey {
@@ -1178,6 +1183,23 @@ MMKV *getMMKVForBatchTest() {
         abort();
     }
     // }
+}
+
+- (void)testReadOnly:(BOOL) isForPrepare {
+    auto name = @"testReadOnly";
+    NSData *key_1 = [@"Key_ReadOnly" dataUsingEncoding:NSUTF8StringEncoding];
+    if (isForPrepare) {
+        [self testMMKV:name withCryptKey:key_1 decodeOnly:NO];
+    } else {
+        auto mmkvPath = [[NSBundle mainBundle] pathForResource:name ofType:nil];
+        auto mmkvDir = [mmkvPath stringByDeletingLastPathComponent];
+        auto mmkv = [MMKV mmkvWithID:name cryptKey:key_1 rootPath:mmkvDir mode:MMKVReadOnly expectedCapacity:0];
+
+        [self testMMKV:mmkv decodeOnly:YES];
+
+        // also check if it tolerate update operations without crash
+        [self testMMKV:mmkv decodeOnly:NO];
+    }
 }
 
 @end

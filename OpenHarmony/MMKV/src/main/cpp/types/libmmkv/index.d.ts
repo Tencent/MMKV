@@ -1,4 +1,4 @@
-export const initialize: (rootDir: string, cacheDir: string, logLevel: number) => string;
+export const initialize: (rootDir: string, cacheDir: string, logLevel: number, handler?: MMKVHandler) => string;
 export const version: () => string;
 export const pageSize: () => number;
 export const getDefaultMMKV: (mode: number, cryptKey?: string) => bigint;
@@ -72,3 +72,6 @@ export const ashmemMetaFD: (handle: bigint) => number;
 export const createNativeBuffer: (size: number) => bigint;
 export const destroyNativeBuffer: (ptr: bigint, size: number) => void;
 export const writeValueToNativeBuffer: (handle: bigint, key: string, ptr: bigint, size: number) => number;
+export const isMultiProcess: (handle: bigint) => boolean;
+export const isReadOnly: (handle: bigint) => boolean;
+export const checkContentChanged:(handle: bigint) => void;

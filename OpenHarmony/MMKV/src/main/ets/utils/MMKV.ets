@@ -23,6 +23,7 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { MMKVLogLevel } from './MMKVLogLevel';
 import { getObjKeys } from './Util';
 import { NativeBuffer } from './NativeBuffer';
+import { MMKVHandler } from './MMKVHandler';
 import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 
@@ -46,6 +47,7 @@ export class MMKV {
     public static readonly MULTI_PROCESS_MODE: number = 1 << 1
     private static readonly ASHMEM_MODE: number = 1 << 3
     private static readonly BACKUP_MODE: number = 1 << 4
+    public static readonly READ_ONLY_MODE: number = 1 << 5
     private static g_rootDir: string
 
     private static initData() {
@@ -58,13 +60,14 @@ export class MMKV {
      *
      * @param context The ApplicationContext of the App, usually from UIAbility.
      * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel.LevelInfo}.
+     * @param handler Handle log redirecting & crc/file check failure.
      * @returns The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      */
-    public static initialize(context: common.ApplicationContext, logLevel?: MMKVLogLevel): string {
+    public static initialize(context: common.ApplicationContext, logLevel?: MMKVLogLevel, handler?: MMKVHandler): string {
         let rootDir = context.filesDir + "/mmkv";
         let cacheDir = context.cacheDir;
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, logLevel);
-        return MMKV.initializeWithPath(rootDir, cacheDir, logLevel);
+        return MMKV.initializeWithPath(rootDir, cacheDir, logLevel, handler);
     }
 
     /**
@@ -73,13 +76,14 @@ export class MMKV {
      * @param rootDir The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      * @param cacheDir The cache folder of MMKV, defaults to $(CacheDir).
      * @param logLevel The log level of MMKV, defaults to {@link MMKVLogLevel.LevelInfo}.
+     * @param handler Handle log redirecting & crc/file check failure.
      * @returns The root folder of MMKV, defaults to $(FilesDir)/mmkv.
      */
-    public static initializeWithPath(rootDir: string, cacheDir: string, logLevel?: MMKVLogLevel): string {
+    public static initializeWithPath(rootDir: string, cacheDir: string, logLevel?: MMKVLogLevel, handler?: MMKVHandler): string {
         MMKV.initData();
         let level = logLevel ?? MMKVLogLevel.LevelInfo;
         // hilog.info(0x0000, 'mmkv', '%{public}s, %{public}s, %{public}d', rootDir, cacheDir, level);
-        MMKV.g_rootDir = native.initialize(rootDir, cacheDir, level);
+        MMKV.g_rootDir = native.initialize(rootDir, cacheDir, level, handler);
         return MMKV.g_rootDir;
     }
 
@@ -936,5 +940,17 @@ export class MMKV {
      */
     public writeValueToNativeBuffer(key: string, buffer: NativeBuffer): number {
         return native.writeValueToNativeBuffer(this.nativeHandle, key, buffer.pointer, buffer.size);
+    }
+
+    public isMultiProcess(): boolean {
+        return native.isMultiProcess(this.nativeHandle);
+    }
+
+    public isReadOnly(): boolean {
+        return native.isReadOnly(this.nativeHandle);
+    }
+
+    public checkContentChanged(): void {
+        native.checkContentChanged(this.nativeHandle);
     }
 }

@@ -42,7 +42,7 @@
 #    endif
 
 #    ifdef __aarch64__
-#        include "Checksum.h"
+#        include "crc32/Checksum.h"
 #    endif
 
 #    if __has_feature(objc_arc)
@@ -94,6 +94,9 @@ bool MLockPtr::isMLockPtrEnabled = true;
 static bool g_isInBackground = false;
 
 void MMKV::setIsInBackground(bool isInBackground) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
 
     g_isInBackground = isInBackground;
@@ -101,6 +104,9 @@ void MMKV::setIsInBackground(bool isInBackground) {
 }
 
 bool MMKV::isInBackground() {
+    if (!g_instanceLock) {
+        return true;
+    }
     SCOPED_LOCK(g_instanceLock);
 
     return g_isInBackground;
@@ -300,9 +306,13 @@ NSArray *MMKV::allKeys(bool filterExpire) {
     return keys;
 }
 
-void MMKV::removeValuesForKeys(NSArray *arrKeys) {
+bool MMKV::removeValuesForKeys(NSArray *arrKeys) {
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
     if (arrKeys.count == 0) {
-        return;
+        return true;
     }
     if (arrKeys.count == 1) {
         return removeValueForKey(arrKeys[0]);
@@ -337,8 +347,9 @@ void MMKV::removeValuesForKeys(NSArray *arrKeys) {
     if (deleteCount > 0) {
         m_hasFullWriteback = false;
 
-        fullWriteback();
+        return fullWriteback();
     }
+    return true;
 }
 
 void MMKV::enumerateKeys(EnumerateBlock block) {

@@ -41,13 +41,16 @@ class MMKVPlatformOHOS extends MMKVPluginPlatformFFI {
   static const MethodChannel _channel = MethodChannel("mmkv");
 
   @override
-  Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1}) async {
+  Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1, Pointer<NativeFunction<LogCallbackWrap>>? logHandler}) async {
     final Map<String, dynamic> params = {
       "rootDir": rootDir,
       "logLevel": logLevel,
     };
     final cacheDir = await getTemporaryPath();
     params["cacheDir"] = cacheDir;
+    if (logHandler != null) {
+      print("warn: Flutter on OHOS does not support log redirecting! You should use the ArtTS interface instead.");
+    }
 
     final ret = await _channel.invokeMethod("initializeMMKV", params);
     return ret;

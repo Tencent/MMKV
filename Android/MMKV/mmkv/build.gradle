@@ -11,8 +11,8 @@ android {
         externalNativeBuild {
             cmake {
                 // uncomment this line to support 32-bit ABIs (armeabi-v7a & x86)
-                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                // abiFilters 'arm64-v8a', 'x86_64'
+                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+                abiFilters 'arm64-v8a', 'x86_64'
             }
         }
         ndkVersion = '26.3.11579264'
@@ -23,7 +23,8 @@ android {
             minifyEnabled false
             externalNativeBuild {
                 cmake {
-                    cppFlags "-fvisibility=hidden", "-funwind-tables", "-fasynchronous-unwind-tables", "-O2"
+                    cppFlags "-fvisibility=hidden", "-funwind-tables", "-fasynchronous-unwind-tables", "-O2",
+                            "-Wl,-z,max-page-size=16384"
                 }
             }
             consumerProguardFiles 'proguard-rules.pro'
@@ -43,7 +44,11 @@ android {
     lintOptions {
         tasks.lint.enabled = false
     }
-
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
     flavorDimensions "stl_mode"
     productFlavors {
         DefaultCpp {

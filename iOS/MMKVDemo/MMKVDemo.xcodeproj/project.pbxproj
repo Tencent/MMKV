@@ -59,6 +59,8 @@
 		CBB6C828215CDB9600487192 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C827215CDB9600487192 /* Assets.xcassets */; };
 		CBB6C82B215CDB9600487192 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBB6C829215CDB9600487192 /* Main.storyboard */; };
 		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
+		CBDC22E12C8ABDD20000DDA5 /* testReadOnly in Resources */ = {isa = PBXBuildFile; fileRef = CBDC22DF2C8ABDD20000DDA5 /* testReadOnly */; };
+		CBDC22E22C8ABDD20000DDA5 /* testReadOnly.crc in Resources */ = {isa = PBXBuildFile; fileRef = CBDC22E02C8ABDD20000DDA5 /* testReadOnly.crc */; };
 		CBF19016243D6F59001C82ED /* Interface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBF19014243D6F59001C82ED /* Interface.storyboard */; };
 		CBF19018243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF19017243D6F5A001C82ED /* Assets.xcassets */; };
 		CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -320,6 +322,8 @@
 		CBB6C82D215CDB9600487192 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		CBB6C82F215CDB9600487192 /* MMKVMacDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MMKVMacDemo.entitlements; sourceTree = "<group>"; };
 		CBD5359823B4718200D3A404 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		CBDC22DF2C8ABDD20000DDA5 /* testReadOnly */ = {isa = PBXFileReference; lastKnownFileType = file; path = testReadOnly; sourceTree = "<group>"; };
+		CBDC22E02C8ABDD20000DDA5 /* testReadOnly.crc */ = {isa = PBXFileReference; lastKnownFileType = file; path = testReadOnly.crc; sourceTree = "<group>"; };
 		CBF19012243D6F59001C82ED /* WatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBF19015243D6F59001C82ED /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Interface.storyboard; sourceTree = "<group>"; };
 		CBF19017243D6F5A001C82ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -465,15 +469,11 @@
 		CB1FD42220455E2D00931B5F /* MMKVDemo */ = {
 			isa = PBXGroup;
 			children = (
-				CB6D44C423B3924E00F369AA /* MMKVDemo.entitlements */,
 				CB1FD42320455E2D00931B5F /* AppDelegate.h */,
 				CB1FD42420455E2D00931B5F /* AppDelegate.m */,
-				CB1FD42C20455E2D00931B5F /* Assets.xcassets */,
+				CBDC22DE2C8ABD880000DDA5 /* Resources */,
 				CB9F963820FCA7C500A1C14C /* DemoSwiftUsage.swift */,
-				CB1FD43120455E2D00931B5F /* Info.plist */,
-				CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */,
 				CB1FD43220455E2D00931B5F /* main.m */,
-				CB1FD42920455E2D00931B5F /* Main.storyboard */,
 				CB9F963720FCA7C400A1C14C /* MMKVDemo-Bridging-Header.h */,
 				CB1FD42620455E2D00931B5F /* ViewController.h */,
 				CB1FD42720455E2D00931B5F /* ViewController.mm */,
@@ -580,6 +580,20 @@
 				CBB6C82F215CDB9600487192 /* MMKVMacDemo.entitlements */,
 			);
 			path = MMKVMacDemo;
+			sourceTree = "<group>";
+		};
+		CBDC22DE2C8ABD880000DDA5 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CBDC22DF2C8ABDD20000DDA5 /* testReadOnly */,
+				CBDC22E02C8ABDD20000DDA5 /* testReadOnly.crc */,
+				CB6D44C423B3924E00F369AA /* MMKVDemo.entitlements */,
+				CB1FD42C20455E2D00931B5F /* Assets.xcassets */,
+				CB1FD43120455E2D00931B5F /* Info.plist */,
+				CB1FD42E20455E2D00931B5F /* LaunchScreen.storyboard */,
+				CB1FD42920455E2D00931B5F /* Main.storyboard */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		CBF19013243D6F59001C82ED /* WatchApp */ = {
@@ -913,7 +927,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				CB1FD43020455E2D00931B5F /* LaunchScreen.storyboard in Resources */,
+				CBDC22E22C8ABDD20000DDA5 /* testReadOnly.crc in Resources */,
 				CB1FD42D20455E2D00931B5F /* Assets.xcassets in Resources */,
+				CBDC22E12C8ABDD20000DDA5 /* testReadOnly in Resources */,
 				CB1FD42B20455E2D00931B5F /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1372,10 +1388,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
+				CODE_SIGN_ENTITLEMENTS = MMKVDemo/Resources/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
-				INFOPLIST_FILE = MMKVDemo/Info.plist;
+				INFOPLIST_FILE = MMKVDemo/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1395,10 +1411,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = MMKVDemo/MMKVDemo.entitlements;
+				CODE_SIGN_ENTITLEMENTS = MMKVDemo/Resources/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_TEAM = SG5PVJM4JW;
-				INFOPLIST_FILE = MMKVDemo/Info.plist;
+				INFOPLIST_FILE = MMKVDemo/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

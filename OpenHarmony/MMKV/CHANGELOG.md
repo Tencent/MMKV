@@ -1,5 +1,10 @@
 # MMKV for HarmonyOS NEXT Change Log
 
+## v2.0.0 / 2024-10-21
+* Support obfuscation. For the time being, you will have to manually copy the content of MMKV's [consumer-rules.txt](https://github.com/Tencent/MMKV/blob/master/OpenHarmony/MMKV/consumer-rules.txt) into your App's obfuscation-rules.txt.
+* Support read-only mode.
+* Add add log/error/content-change callback for Flutter & ArtTS
+
 ## v1.3.9 / 2024-07-26
 * Fix a data corruption bug on an encrypted MMKV with only one key value stored.
 * Make encryption more resilient from brute force cracking.

@@ -14,12 +14,15 @@
       "arkOptions": {
         "obfuscation": {
           "ruleOptions": {
-            "enable": false, // looks like we don't gain much from this
+            "enable": false,
             "files": [
               "./obfuscation-rules.txt"
             ]
-          }
-        }
+          },
+          "consumerFiles": [
+            "./consumer-rules.txt"
+          ]
+        },
       },
       "nativeLib": {
         "debugSymbol": {

@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
 //        testFastNativeSpeed();
         testRemoveStorage();
         overrideTest();
+        testReadOnly();
     }
 
     private void testCompareBeforeSet() {
@@ -212,7 +213,12 @@ public class MainActivity extends AppCompatActivity {
     private MMKV testMMKV(String mmapID, String cryptKey, boolean decodeOnly, String rootPath) {
         //MMKV kv = MMKV.defaultMMKV();
         MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath);
+        testMMKV(kv, decodeOnly);
+        Log.i("MMKV", "isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID(), rootPath));
+        return kv;
+    }
 
+    private void testMMKV(MMKV kv, boolean decodeOnly) {
         if (!decodeOnly) {
             kv.encode("bool", true);
         }
@@ -291,9 +297,6 @@ public class MainActivity extends AppCompatActivity {
         //kv.clearAll();
         kv.clearMemoryCache();
         Log.i("MMKV", "allKeys: " + Arrays.toString(kv.allKeys()));
-        Log.i("MMKV", "isFileValid[" + kv.mmapID() + "]: " + MMKV.isFileValid(kv.mmapID(), rootPath));
-
-        return kv;
     }
 
     private void testImportSharedPreferences() {
@@ -914,5 +917,30 @@ public class MainActivity extends AppCompatActivity {
             System.exit(1);
         }
         mmkv0.removeValueForKey(key);
+    }
+
+    private void testReadOnly() {
+        final String name = "testReadOnly";
+        final String key = "readonly+key";
+        {
+            MMKV kv = MMKV.mmkvWithID(name, MMKV.SINGLE_PROCESS_MODE, key);
+            testMMKV(kv, false);
+            kv.close();
+        }
+
+        String path = MMKV.getRootDir() + "/" + name;
+        File file = new File(path);
+        file.setReadOnly();
+        File crcFile = new File(path + ".crc");
+        crcFile.setReadOnly();
+
+        MMKV kv = MMKV.mmkvWithID(name, MMKV.SINGLE_PROCESS_MODE | MMKV.READ_ONLY_MODE, key);
+        testMMKV(kv, true);
+
+        // also check if it tolerate update operations without crash
+        testMMKV(kv, false);
+
+        file.setWritable(true);
+        crcFile.setWritable(true);
     }
 }

@@ -5,13 +5,18 @@ import sys
 import mmkv
 import time
 import tempfile
+import os
 
 
 def functional_test(mmap_id, decode_only):
     # pass MMKVMode.MultiProcess to get a multi-process instance
     # kv = mmkv.MMKV('test_python', mmkv.MMKVMode.MultiProcess)
     kv = mmkv.MMKV(mmap_id)
+    functional_test_imp(kv, decode_only)
+    return kv
 
+
+def functional_test_imp(kv, decode_only):
     if not decode_only:
         kv.set(True, 'bool')
     print('bool = ', kv.getBool('bool'))
@@ -164,7 +169,7 @@ def test_compare_before_set():
     actualSize2 = kv.actualSize()
     print("testCompareBeforeSet: actualSize2 = ", actualSize2)
     if actualSize1 != actualSize2:
-        raise("size not match")
+        raise ("size not match")
 
     kv.set(False, key)
     print("testCompareBeforeSet: bool value = ", kv.getBool(key))
@@ -206,13 +211,35 @@ def test_remove_storage():
 
     temp_dir = tempfile.gettempdir()
     rootDir = temp_dir + "/dev/mmkv_sg"
-    kv = mmkv.MMKV("test_remove/sg", rootDir = rootDir)
+    kv = mmkv.MMKV("test_remove/sg", rootDir=rootDir)
     kv.set(True, "bool")
 
     mmkv.MMKV.removeStorage("test_remove/sg")
-    kv = mmkv.MMKV("test_remove/sg", rootDir = rootDir)
+    kv = mmkv.MMKV("test_remove/sg", rootDir=rootDir)
     if kv.count() != 0:
         print("storage not successfully remove")
+
+
+def test_read_only():
+    mmap_id = "testReadOnly"
+    aes_key = "ReadOnly+Key"
+
+    kv = mmkv.MMKV(mmap_id, mmkv.MMKVMode.SingleProcess, aes_key)
+    functional_test_imp(kv, False)
+    kv.close()
+
+    path = mmkv.MMKV.rootDir() + "/" + mmap_id
+    os.chmod(path, 0o444)
+    crc_path = path + ".crc"
+    os.chmod(crc_path, 0o444)
+
+    kv = mmkv.MMKV(mmap_id, mmkv.MMKVMode(mmkv.MMKVMode.SingleProcess | mmkv.MMKVMode.ReadOnly), aes_key)
+    functional_test_imp(kv, True)
+    functional_test_imp(kv, False)
+    kv.close()
+
+    os.chmod(path, 0o666)
+    os.chmod(crc_path, 0o666)
 
 
 def logger(log_level, file, line, function, message):
@@ -236,6 +263,7 @@ def content_change_handler(mmap_id):
 if __name__ == '__main__':
     temp_dir = tempfile.gettempdir()
     root_dir = temp_dir + '/mmkv'
+    print("root dir:", root_dir)
 
     # you can enable logging & log handler
     # mmkv.MMKV.initializeMMKV(root_dir, mmkv.MMKVLogLevel.Info, logger)
@@ -261,6 +289,7 @@ if __name__ == '__main__':
     test_auto_expire()
     test_compare_before_set()
     test_remove_storage()
+    test_read_only()
 
     # mmkv.MMKV.unRegisterLogHandler()
     # mmkv.MMKV.unRegisterErrorHandler()

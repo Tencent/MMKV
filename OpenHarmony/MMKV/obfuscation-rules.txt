@@ -16,3 +16,17 @@
 # Keep options:
 # -keep-property-name: specifies property names that you want to keep
 # -keep-global-name: specifies names that you want to keep in the global scope
+
+-keep
+./src/main/ets/utils/MMKV.ets
+./src/main/ets/utils/MMKVHandler.ets
+./src/main/ets/utils/MMKVLogLevel.ets
+./src/main/ets/utils/NativeBuffer.ets
+./src/main/ets/utils/Util.ts
+
+-keep-file-name
+MMKV
+MMKVHandler
+MMKVLogLevel
+NativeBuffer
+Util

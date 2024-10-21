@@ -26,6 +26,7 @@ import "dart:typed_data";
 import "package:flutter/material.dart";
 import "package:mmkv/mmkv.dart";
 import "package:path_provider_foundation/path_provider_foundation.dart";
+// import "package:posix/posix.dart" show chmod;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +38,46 @@ void main() async {
   }
 
   // must wait for MMKV to finish initialization
-  final rootDir = await MMKV.initialize(groupDir: groupDir);
+  final rootDir = await MMKV.initialize(groupDir: groupDir, handler: MyMMKVHandler());
   print("MMKV for flutter with rootDir = $rootDir");
 
   runApp(MyApp());
+}
+
+class MyMMKVHandler extends MMKVHandler {
+  @override
+  bool wantLogRedirect() {
+    print("MyMMKVHandler.wantLogRedirect() is called");
+    return true;
+  }
+
+  @override
+  void mmkvLog(MMKVLogLevel level, String file, int line, String function, String message) {
+    print("mmkv-redirect <$file:$line::$function> $message");
+  }
+
+  @override
+  MMKVRecoverStrategic onMMKVCRCCheckFail(String mmapID) {
+    print("onMMKVCRCCheckFail: $mmapID");
+    return MMKVRecoverStrategic.OnErrorRecover;
+  }
+
+  @override
+  MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
+    print("onMMKVFileLengthError: $mmapID");
+    return MMKVRecoverStrategic.OnErrorRecover;
+  }
+
+  @override
+  bool wantContentChangeNotification() {
+    print("MyMMKVHandler.wantContentChangeNotification() is called");
+    return true;
+  }
+
+  @override
+  void onContentChangedByOuterProcess(String mmapID) {
+    print("onContentChangedByOuterProcess: $mmapID");
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -78,6 +115,7 @@ class _MyAppState extends State<MyApp> {
           TextButton(
               onPressed: () {
                 functionalTest();
+                // testReadOnly();
               },
               child: Text("Functional Test", style: TextStyle(fontSize: 18))),
           TextButton(
@@ -193,11 +231,16 @@ class _MyAppState extends State<MyApp> {
     print("all keys: ${mmkv.allKeys}");
     // mmkv.sync(true);
     // mmkv.close();
+    mmkv.checkContentChangedByOuterProcess();
   }
 
   MMKV testMMKV(String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {
     final mmkv = MMKV(mmapID, cryptKey: cryptKey, rootDir: rootPath);
+    testMMKVImp(mmkv, decodeOnly);
+    return mmkv;
+  }
 
+  void testMMKVImp(MMKV mmkv, bool decodeOnly) {
     if (!decodeOnly) {
       mmkv.encodeBool("bool", true);
     }
@@ -254,8 +297,6 @@ class _MyAppState extends State<MyApp> {
     print('after remove, contains "bool": ${mmkv.containsKey('bool')}');
     mmkv.removeValues(["int32", "int"]);
     print("all keys: ${mmkv.allKeys}");
-
-    return mmkv;
   }
 
   void testReKey() {
@@ -420,5 +461,33 @@ class _MyAppState extends State<MyApp> {
     if (mmkv.count != 0) {
       print("storage not successfully removed");
     }
+  }
+
+  void testReadOnly() {
+    final name = "testReadOnly";
+    final key = "ReadOnly+Key";
+    {
+      final mmkv = MMKV(name, cryptKey: key);
+      testMMKVImp(mmkv, false);
+      mmkv.close();
+    }
+
+    // posix.dart not working in Android or iOS, sigh..
+    /*final path = MMKV.rootDir + "/" + name;
+    chmod(path, "444");
+    final crcPath = path + ".crc";
+    chmod(crcPath, "444");
+    */
+
+    final mmkv = MMKV(name, cryptKey: key, readOnly: true);
+    testMMKVImp(mmkv, true);
+
+    // also check if it tolerate update operations without crash
+    testMMKVImp(mmkv, false);
+
+    /*
+    chmod(path, "666");
+    chmod(crcPath, "666");
+    */
   }
 }

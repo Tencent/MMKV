@@ -80,20 +80,21 @@ MMKVPath_t filename(const MMKVPath_t &path);
 #ifndef MMKV_ANDROID
 MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
+    , m_mode(mode)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
-    , m_file(new MemoryFile(m_path, m_expectedCapacity))
-    , m_metaFile(new MemoryFile(m_crcPath))
+    , m_file(new MemoryFile(m_path, m_expectedCapacity, isReadOnly()))
+    , m_metaFile(new MemoryFile(m_crcPath, 0, isReadOnly()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
     , m_fileLock(new FileLock(m_metaFile->getFd()))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
-    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0) {
+{
     m_actualSize = 0;
     m_output = nullptr;
 
@@ -114,8 +115,8 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *ro
     m_crcDigest = 0;
 
     m_lock->initialize();
-    m_sharedProcessLock->m_enable = m_isInterProcess;
-    m_exclusiveProcessLock->m_enable = m_isInterProcess;
+    m_sharedProcessLock->m_enable = isMultiProcess();
+    m_exclusiveProcessLock->m_enable = isMultiProcess();
 
     // sensitive zone
     /*{
@@ -219,8 +220,10 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
 #    endif
 #endif
 
-    g_rootDir = rootDir;
-    mkPath(g_rootDir);
+    if (g_rootDir.empty()) {
+        g_rootDir = rootDir;
+        mkPath(g_rootDir);
+    }
 
     MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
 }
@@ -232,7 +235,7 @@ const MMKVPath_t &MMKV::getRootDir() {
 #ifndef MMKV_ANDROID
 MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity) {
 
-    if (mmapID.empty()) {
+    if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
@@ -260,6 +263,9 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
 #endif
 
 void MMKV::onExit() {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
 
     for (auto &pair : *g_instanceDic) {
@@ -1094,15 +1100,19 @@ size_t MMKV::actualSize() {
     return m_actualSize;
 }
 
-void MMKV::removeValueForKey(MMKVKey_t key) {
+bool MMKV::removeValueForKey(MMKVKey_t key) {
     if (isKeyEmpty(key)) {
-        return;
+        return false;
+    }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
     }
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
 
-    removeDataForKey(key);
+    return removeDataForKey(key);
 }
 
 #ifndef MMKV_APPLE
@@ -1129,9 +1139,13 @@ vector<string> MMKV::allKeys(bool filterExpire) {
     return keys;
 }
 
-void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
+bool MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
     if (arrKeys.empty()) {
-        return;
+        return true;
     }
     if (arrKeys.size() == 1) {
         return removeValueForKey(arrKeys[0]);
@@ -1162,8 +1176,9 @@ void MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     if (deleteCount > 0) {
         m_hasFullWriteback = false;
 
-        fullWriteback();
+        return fullWriteback();
     }
+    return true;
 }
 
 #endif // MMKV_APPLE
@@ -1238,6 +1253,9 @@ static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath
 }
 
 bool MMKV::backupOneToDirectory(const string &mmapKey, const MMKVPath_t &dstPath, const MMKVPath_t &srcPath, bool compareFullPath) {
+    if (!g_instanceLock) {
+        return false;
+    }
     // we have to lock the creation of MMKV instance, regardless of in cache or not
     SCOPED_LOCK(g_instanceLock);
     MMKV *kv = nullptr;
@@ -1400,6 +1418,9 @@ static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVP
 // They won't know a difference when the file has been replaced.
 // We have to let them know by overriding the existing file with new content.
 bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath) {
+    if (!g_instanceLock) {
+        return false;
+    }
     // we have to lock the creation of MMKV instance, regardless of in cache or not
     SCOPED_LOCK(g_instanceLock);
     MMKV *kv = nullptr;
@@ -1447,7 +1468,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         // reload data after restore
         kv->clearMemoryCache();
         kv->loadFromFile();
-        if (kv->m_isInterProcess) {
+        if (kv->isMultiProcess()) {
             kv->notifyContentChanged();
         }
 
@@ -1534,26 +1555,41 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
 // callbacks
 
 void MMKV::registerErrorHandler(ErrorHandler handler) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_errorHandler = handler;
 }
 
 void MMKV::unRegisterErrorHandler() {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_errorHandler = nullptr;
 }
 
 void MMKV::registerLogHandler(LogHandler handler) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_logHandler = handler;
 }
 
 void MMKV::unRegisterLogHandler() {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_logHandler = nullptr;
 }
 
 void MMKV::setLogLevel(MMKVLogLevel level) {
+    if (!g_instanceLock) {
+        return;
+    }
     SCOPED_LOCK(g_instanceLock);
     g_currentLogLevel = level;
 }

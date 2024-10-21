@@ -367,6 +367,56 @@ void testRemoveStorage() {
     }
 }
 
+void setReadOnly(const MMKVPath_t& path, bool readOnly) {
+    // Get the current file attributes
+    DWORD attributes = GetFileAttributes(path.c_str());
+    if (attributes == INVALID_FILE_ATTRIBUTES) {
+        // If the function fails, print an error message
+        DWORD error = GetLastError();
+        printf("Failed to get file attributes. Error code: %lu\n", error);
+        return;
+    }
+
+    // alter the read-only attribute
+    if (readOnly) {
+        attributes |= FILE_ATTRIBUTE_READONLY;
+    } else {
+        attributes &= ~FILE_ATTRIBUTE_READONLY;
+    }
+    // Set the file attributes to the new value
+    if (!SetFileAttributes(path.c_str(), attributes)) {
+        // If the function fails, print an error message
+        DWORD error = GetLastError();
+        printf("Failed to set file attributes. Error code: %lu\n", error);
+    }
+}
+
+void testReadOnly() {
+    string mmapID = "testReadOnly";
+    string aesKey = "ReadOnly+Key";
+    {
+        auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, &aesKey);
+        functionalTest(mmkv, false);
+        mmkv->close();
+    }
+
+    auto path = MMKV::getRootDir() + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID);
+    setReadOnly(path, true);
+    auto crcPath = path + L".crc";
+    setReadOnly(crcPath, true);
+    {
+        auto mmkv = MMKV::mmkvWithID(mmapID, (MMKV_SINGLE_PROCESS | MMKV_READ_ONLY), &aesKey);
+        functionalTest(mmkv, true);
+
+        // also check if it tolerate update operations without crash
+        functionalTest(mmkv, false);
+
+        mmkv->close();
+    }
+    setReadOnly(path, false);
+    setReadOnly(crcPath, false);
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -417,4 +467,5 @@ int main() {
     testAutoExpire();
     testExpectedCapacity();
     testRemoveStorage();
+    testReadOnly();
 }

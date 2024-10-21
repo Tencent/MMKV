@@ -179,8 +179,6 @@ AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
 #        include "../MMKVLog.h"
 #        include "../MemoryFile.h"
 
-namespace mmkv {
-
 void testRandomPlaceHolder() {
     for (uint32_t size = 1; size < 6; size++) {
         auto holder = AESCrypt::randomItemSizeHolder(size);

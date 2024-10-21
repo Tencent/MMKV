@@ -67,9 +67,10 @@ static void MyContentChangeHandler(const std::string &mmapID) {
 PYBIND11_MODULE(mmkv, m) {
     m.doc() = "An efficient, small key-value storage framework developed by WeChat Team.";
 
-    py::enum_<MMKVMode>(m, "MMKVMode")
+    py::enum_<MMKVMode>(m, "MMKVMode", py::arithmetic())
         .value("SingleProcess", MMKVMode::MMKV_SINGLE_PROCESS)
         .value("MultiProcess", MMKVMode::MMKV_MULTI_PROCESS)
+        .value("ReadOnly", MMKVMode::MMKV_READ_ONLY)
         .export_values();
 
     py::enum_<MMKVLogLevel>(m, "MMKVLogLevel")
@@ -143,7 +144,7 @@ PYBIND11_MODULE(mmkv, m) {
         "a generic purpose instance", py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string());
 
     clsMMKV.def("mmapID", &MMKV::mmapID);
-    clsMMKV.def_readonly("isInterProcess", &MMKV::m_isInterProcess);
+    clsMMKV.def("isInterProcess", &MMKV::isMultiProcess);
 
     clsMMKV.def("cryptKey", &MMKV::cryptKey);
     clsMMKV.def("reKey", &MMKV::reKey,
@@ -266,6 +267,13 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("lock", &MMKV::lock, "get exclusive access, won't return until the lock is obtained");
     clsMMKV.def("unlock", &MMKV::unlock);
     clsMMKV.def("try_lock", &MMKV::try_lock, "try to get exclusive access");
+
+    clsMMKV.def("isMultiProcess", &MMKV::isMultiProcess, "check multi-process mode");
+    clsMMKV.def("isReadOnly", &MMKV::isReadOnly, "check read-only mode");
+
+    clsMMKV.def("close", &MMKV::close, "close the instance");
+
+    clsMMKV.def_static("rootDir", &MMKV::getRootDir, "get the root directory of MMKV");
 
     // log callback handler
     clsMMKV.def_static(

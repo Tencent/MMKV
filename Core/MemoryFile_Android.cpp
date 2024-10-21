@@ -70,8 +70,9 @@ File::File(MMKVFileHandle_t ashmemFD)
     }
 }
 
-MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expectedCapacity)
-    : m_diskFile(std::move(path), OpenFlag::ReadWrite | OpenFlag::Create, size, fileType), m_ptr(nullptr), m_size(0), m_fileType(fileType) {
+MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expectedCapacity, bool isReadOnly)
+    : m_diskFile(std::move(path), isReadOnly ? OpenFlag::ReadOnly : (OpenFlag::ReadWrite | OpenFlag::Create), size, fileType),
+    m_ptr(nullptr), m_size(0), m_fileType(fileType), m_readOnly(isReadOnly) {
     if (m_fileType == MMFILE_TYPE_FILE) {
         reloadFromFile(expectedCapacity);
     } else {
@@ -86,7 +87,7 @@ MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expec
 }
 
 MemoryFile::MemoryFile(int ashmemFD)
-    : m_diskFile(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM) {
+    : m_diskFile(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM), m_readOnly(false) {
     if (!m_diskFile.isFileValid()) {
         MMKVError("fd %d invalid", ashmemFD);
     } else {

@@ -24,6 +24,65 @@ import "package:path_provider/path_provider.dart";
 
 export "mmkv_platform_ffi.dart";
 
+/// Log level for MMKV.
+enum MMKVLogLevel { Debug, Info, Warning, Error, None }
+
+/// The recover strategic of MMKV on errors. {@link MMKV#registerHandler}
+enum MMKVRecoverStrategic {
+  /// The default strategic is to discard everything on errors.
+  OnErrorDiscard,
+
+  /// The recover strategic will try to recover as much data as possible.
+  OnErrorRecover,
+}
+
+/// Callback handler for MMKV.
+/// Callback is called on the operating thread of the MMKV instance.
+class MMKVHandler {
+  /// return true to enable log redirect
+  bool wantLogRedirect() {
+    return false;
+  }
+
+  /// Log Redirecting.
+  ///
+  /// [level] The level of this log.
+  /// [file] The file name of this log.
+  /// [line] The line of code of this log.
+  /// [function] The function name of this log.
+  /// [message] The content of this log.
+  void mmkvLog(MMKVLogLevel level, String file, int line, String function, String message) {
+    print("redirect <$file:$line::$function> $message");
+  }
+
+  /// By default MMKV will discard all data on crc32-check failure. [MMKVRecoverStrategic.OnErrorDiscard]
+  /// return [MMKVRecoverStrategic.OnErrorRecover] to recover any data on the file.
+  /// [mmapID] The unique ID of the MMKV instance.
+  MMKVRecoverStrategic onMMKVCRCCheckFail(String mmapID) {
+    return MMKVRecoverStrategic.OnErrorDiscard;
+  }
+
+  /// By default MMKV will discard all data on file length mismatch. [MMKVRecoverStrategic.OnErrorDiscard]
+  /// return [MMKVRecoverStrategic.OnErrorRecover] to recover any data on the file.
+  /// [mmapID] The unique ID of the MMKV instance.
+  MMKVRecoverStrategic onMMKVFileLengthError(String mmapID) {
+    return MMKVRecoverStrategic.OnErrorDiscard;
+  }
+
+  /// return true to enable inter-process content change notification
+  bool wantContentChangeNotification() {
+    return false;
+  }
+
+  /// Inter-process content change notification.
+  ///
+  /// Triggered by any method call, such as getXXX() or setXXX() or [MMKV.checkContentChangedByOuterProcess()].
+  /// [mmapID] The unique ID of the changed MMKV instance.
+  void onContentChangedByOuterProcess(String mmapID) {
+    return;
+  }
+}
+
 /// The interface class that all implementation of MMKV platform plugin must extend
 // abstract base
 class MMKVPluginPlatform {
@@ -33,10 +92,12 @@ class MMKVPluginPlatform {
   // can be nullable, and the default instance can be null.
   static MMKVPluginPlatform? instance = null;
 
+  MMKVHandler? theHandler = null;
+
   // Methods for the plugin's platform interface would go here, often with
   // implementations that throw UnimplementedError.
 
-  Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1}) async {
+  Future<String> initialize(String rootDir, {String? groupDir, int logLevel = 1, Pointer<NativeFunction<LogCallbackWrap>>? logHandler}) async {
     throw UnimplementedError();
   }
 
@@ -228,6 +289,26 @@ class MMKVPluginPlatform {
     throw UnimplementedError();
   }
 
+  bool Function(Pointer<Void>) isMultiProcessFunc() {
+    throw UnimplementedError();
+  }
+
+  bool Function(Pointer<Void>) isReadOnlyFunc() {
+    throw UnimplementedError();
+  }
+
+  ErrorCallbackRegister registerErrorHandlerFunc() {
+    throw UnimplementedError();
+  }
+
+  ContentCallbackRegister registerContentHandlerFunc() {
+    throw UnimplementedError();
+  }
+
+  void Function(Pointer<Void>) checkContentChangedFunc() {
+    throw UnimplementedError();
+  }
+
   // some platform doesn't publish their path_provider package to pub.dev
   // provide override point for these calls
   Future<String> getApplicationDocumentsPath() async {
@@ -240,3 +321,15 @@ class MMKVPluginPlatform {
     return result.path;
   }
 }
+
+typedef LogCallbackWrap = Void Function(Uint32, Pointer<Utf8>, Int32, Pointer<Utf8>, Pointer<Utf8>);
+typedef LogCallbackRegisterWrap = Void Function(Pointer<NativeFunction<LogCallbackWrap>>);
+typedef LogCallbackRegister = void Function(Pointer<NativeFunction<LogCallbackWrap>>);
+
+typedef ErrorCallbackWrap = Int32 Function(Pointer<Utf8>, Int32);
+typedef ErrorCallbackRegisterWrap = Void Function(Pointer<NativeFunction<ErrorCallbackWrap>>);
+typedef ErrorCallbackRegister = void Function(Pointer<NativeFunction<ErrorCallbackWrap>>);
+
+typedef ContentCallbackWrap = Void Function(Pointer<Utf8>);
+typedef ContentCallbackRegisterWrap = Void Function(Pointer<NativeFunction<ContentCallbackWrap>>);
+typedef ContentCallbackRegister = void Function(Pointer<NativeFunction<ContentCallbackWrap>>);

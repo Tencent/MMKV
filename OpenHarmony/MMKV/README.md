@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.3.9-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-2.0.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's now available on **HarmonyOS NEXT**.
@@ -37,7 +37,7 @@ Or, you can add it to your project manually.
 
   ```json
   "dependencies": {
-      "@tencent/mmkv": "^1.3.9",
+      "@tencent/mmkv": "^2.0.0",
   }
   ```
 * Then run
@@ -172,7 +172,7 @@ Due to the current limitation of NAPI runtime, we **can't efficiently** redirect
     let appCtx = this.context.getApplicationContext();
     let rootDir = appCtx.filesDir + '/mmkv_2';
     let cacheDir = appCtx.cacheDir;
-    MMKV.initialize(rootDir, cacheDir);
+    MMKV.initializeWithPath(rootDir, cacheDir);
     ```
 
 * You can even customize any MMKV instance's location:

@@ -22,7 +22,7 @@
 #define MMKV_SRC_MMKVPREDEF_H
 
 // disable encryption & decryption to reduce some code
-//#define MMKV_DISABLE_CRYPT
+// #define MMKV_DISABLE_CRYPT
 //#define MMKV_DISABLE_FLUTTER
 
 // using POSIX implementation
@@ -34,7 +34,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v1.3.9";
+constexpr auto MMKV_VERSION = "v2.0.0";
 
 #ifdef DEBUG
 #    define MMKV_DEBUG

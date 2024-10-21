@@ -81,7 +81,7 @@ void MMKV::loadFromFile() {
         checkDataValid(loadFromFile, needFullWriteback);
         MMKVInfo("loading [%s] with %zu actual size, file size %zu, InterProcess %d, meta info "
                  "version:%u",
-                 m_mmapID.c_str(), m_actualSize, m_file->getFileSize(), m_isInterProcess, m_metaInfo->m_version);
+                 m_mmapID.c_str(), m_actualSize, m_file->getFileSize(), isMultiProcess(), m_metaInfo->m_version);
         auto ptr = (uint8_t *) m_file->getMemory();
         // loading
         if (loadFromFile && m_actualSize > 0) {
@@ -131,6 +131,10 @@ void MMKV::loadFromFile() {
         }
         auto count = m_crypter ? m_dicCrypt->size() : m_dic->size();
         MMKVInfo("loaded [%s] with %zu key-values", m_mmapID.c_str(), count);
+//        auto keys = allKeys();
+//        for (size_t index = 0; index < count; index++) {
+//            MMKVInfo("key[%llu]: %s", index, keys[index].c_str());
+//        }
     }
 
     m_needLoadFromFile = false;
@@ -303,7 +307,7 @@ void MMKV::checkLoadData() {
         loadFromFile();
         return;
     }
-    if (!m_isInterProcess) {
+    if (!isMultiProcess()) {
         return;
     }
 
@@ -395,6 +399,10 @@ static pair<MMBuffer, size_t> prepareEncode(MMKVVector &&vec) {
 bool MMKV::ensureMemorySize(size_t newSize) {
     if (!isFileValid()) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return false;
+    }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
         return false;
     }
 
@@ -590,7 +598,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
         }
         auto itr = m_dicCrypt->find(key);
         if (itr != m_dicCrypt->end()) {
-            bool onlyOneKey = !m_isInterProcess && m_dicCrypt->size() == 1;
+            bool onlyOneKey = !isMultiProcess() && m_dicCrypt->size() == 1;
 #    ifdef MMKV_APPLE
             KVHolderRet_t ret;
             if (onlyOneKey) {
@@ -629,7 +637,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 }
             }
         } else {
-            bool needOverride = !m_isInterProcess && m_dicCrypt->empty() && m_actualSize > 0;
+            bool needOverride = !isMultiProcess() && m_dicCrypt->empty() && m_actualSize > 0;
             KVHolderRet_t ret;
             if (needOverride) {
                 ret = overrideDataWithKey(data, key, isDataHolder);
@@ -681,7 +689,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 }
             }
 
-            bool onlyOneKey = !m_isInterProcess && m_dic->size() == 1;
+            bool onlyOneKey = !isMultiProcess() && m_dic->size() == 1;
             if (mmkv_likely(!m_enableKeyExpire)) {
                 KVHolderRet_t ret;
                 if (onlyOneKey) {
@@ -713,7 +721,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
                 }
             }
         } else {
-            bool needOverride = !m_isInterProcess && m_dic->empty() && m_actualSize > 0;
+            bool needOverride = !isMultiProcess() && m_dic->empty() && m_actualSize > 0;
             KVHolderRet_t ret;
             if (needOverride) {
                 ret = overrideDataWithKey(data, key, isDataHolder);
@@ -1338,6 +1346,10 @@ bool MMKV::reKey(const string &cryptKey) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
         return false;
     }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
 
     bool ret = false;
     if (m_crypter) {
@@ -1408,6 +1420,10 @@ void MMKV::trim() {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
         return;
     }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return;
+    }
 
     if (m_actualSize == 0) {
         clearAll();
@@ -1450,6 +1466,10 @@ void MMKV::clearAll(bool keepSpace) {
     checkLoadData();
     if (!isFileValid()) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
+        return;
+    }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
         return;
     }
 
@@ -1524,6 +1544,9 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
 }
 
 bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
+    if (!g_instanceLock) {
+        return false;
+    }
     auto mmapKey = mmapedKVKey(mmapID, relatePath);
 #ifdef MMKV_ANDROID
     auto &realID = mmapKey; // historically Android mistakenly use mmapKey as mmapID
@@ -1625,6 +1648,10 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     if (m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
         return true;
     }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
 
     auto autoRecordExpireTime = (m_expiredInSeconds != 0);
     auto time = autoRecordExpireTime ? getCurrentTimeInSecond() + m_expiredInSeconds : 0;
@@ -1684,6 +1711,10 @@ bool MMKV::disableAutoKeyExpire() {
     m_enableKeyExpire = false;
     if (!m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
         return true;
+    }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
     }
 
     MMKVInfo("erase previous recorded expire date for all keys inside [%s]", m_mmapID.c_str());

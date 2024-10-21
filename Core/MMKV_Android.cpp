@@ -41,20 +41,20 @@ extern ThreadLock *g_instanceLock;
 
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath, size_t expectedCapacity)
     : m_mmapID((mode & MMKV_BACKUP) ? mmapID : mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
+    , m_mode(mode)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
-    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity))
-    , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType))
+    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity, isReadOnly()))
+    , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType, 0, isReadOnly()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
     , m_fileLock(new FileLock(m_metaFile->getFd(), (mode & MMKV_ASHMEM)))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
-    , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
-    , m_isInterProcess((mode & MMKV_MULTI_PROCESS) != 0 || (mode & CONTEXT_MODE_MULTI_PROCESS) != 0) {
+    , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType)) {
     m_actualSize = 0;
     m_output = nullptr;
 
@@ -78,8 +78,8 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
 
     m_crcDigest = 0;
 
-    m_sharedProcessLock->m_enable = m_isInterProcess;
-    m_exclusiveProcessLock->m_enable = m_isInterProcess;
+    m_sharedProcessLock->m_enable = isMultiProcess();
+    m_exclusiveProcessLock->m_enable = isMultiProcess();
 
     // sensitive zone
     /*{
@@ -90,6 +90,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
 
 MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
     : m_mmapID(mmapID)
+    , m_mode(MMKV_ASHMEM)
     , m_path(mappedKVPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
     , m_crcPath(crcPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
     , m_dic(nullptr)
@@ -101,8 +102,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     , m_lock(new ThreadLock())
     , m_fileLock(new FileLock(m_metaFile->getFd(), true))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
-    , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
-    , m_isInterProcess(true) {
+    , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType)) {
 
     m_actualSize = 0;
     m_output = nullptr;
@@ -127,8 +127,8 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 
     m_crcDigest = 0;
 
-    m_sharedProcessLock->m_enable = m_isInterProcess;
-    m_exclusiveProcessLock->m_enable = m_isInterProcess;
+    m_sharedProcessLock->m_enable = true;
+    m_exclusiveProcessLock->m_enable = true;
 
     // sensitive zone
     /*{
@@ -138,7 +138,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
 }
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath, size_t expectedCapacity) {
-    if (mmapID.empty()) {
+    if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
@@ -164,7 +164,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
 
 MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *cryptKey) {
 
-    if (fd < 0) {
+    if (fd < 0 || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
@@ -213,7 +213,7 @@ bool MMKV::checkProcessMode() {
         return true;
     }
 
-    if (m_isInterProcess) {
+    if (isMultiProcess()) {
         if (!m_exclusiveProcessModeLock) {
             m_exclusiveProcessModeLock = new InterProcessLock(m_fileModeLock, ExclusiveLockType);
         }

@@ -24,6 +24,7 @@ import util from '@ohos.util';
 import dataPreferences from '@ohos.data.preferences';
 import { GlobalContainer } from '../Util/Util'
 import { Baseline } from '../Util/Baseline';
+// import fs from '@ohos.file.fs';
 
 @Entry
 @Component
@@ -76,12 +77,13 @@ struct Index {
           .onClick(() => {
             this.testCompareBeforeSet()
           })
-        Button('Ashmem Test')
+        Button('Ashmem & ReadOnly Test')
           .type(ButtonType.Normal)
           .buttonStyle(ButtonStyleMode.TEXTUAL)
           .fontSize(18)
           .onClick(() => {
             this.testAshmem()
+            this.testReadOnly()
           })
         Button('Run Baseline')
           .type(ButtonType.Normal)
@@ -215,6 +217,7 @@ struct Index {
     kv.removeValuesForKeys(['bool', 'int32']);
     hilog.info(0, 'mmkvdemo', 'remove "bool" & "int32", allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
+    kv.checkContentChanged();
     kv.clearAll();
     hilog.info(0, 'mmkvdemo', 'clearAll(), allKeys = %{public}s', ArrayToString(kv.allKeys()));
 
@@ -812,6 +815,36 @@ struct Index {
 
     let newKV = MMKV.mmkvWithAshmemFD(mmapID, kv.ashmemFD, kv.ashmemMetaFD, cryptKey);
     this.testOneMMKV(newKV, true);
+  }
+
+  private testReadOnly() {
+    let mmapID = 'testReadOnly';
+    let cryptKey = 'ReadOnly+Key';
+
+    {
+      let kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey);
+      this.testOneMMKV(kv, false);
+      kv.close();
+    }
+
+    // HW no longer provide chmod() for nonsense, sigh..
+    /*
+    let path = MMKV.rootDir + '/' + mmapID;
+    fs.chmod(path, 0o444);
+    let crcPath = path + '.crc';
+    fs.chmod(crcPath, 0o444);
+    */
+    {
+      let kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE | MMKV.READ_ONLY_MODE, cryptKey);
+      this.testOneMMKV(kv, true);
+
+      // also check if it tolerate update operations without crash
+      this.testOneMMKV(kv, false);
+    }
+    /*
+    fs.chmod(path, 0o666);
+    fs.chmod(crcPath, 0o666);
+    */
   }
 
   private baseline() {

@@ -677,4 +677,20 @@ MMKV_EXPORT bool removeStorage(GoStringWrap_t mmapID, GoStringWrap_t rootPath) {
     return MMKV::removeStorage(id, nullptr);
 }
 
+MMKV_EXPORT bool isMultiProcess(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->isMultiProcess();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool isReadOnly(void *handle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv) {
+        return kv->isReadOnly();
+    }
+    return false;
+}
+
 #endif // CGO

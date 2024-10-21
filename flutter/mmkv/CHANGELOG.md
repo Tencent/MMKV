@@ -1,4 +1,10 @@
 # MMKV for Flutter Change Log
+## v2.0.0 / 2024-10-21
+* Support read-only mode.
+* Add add log/error/content-change callback for Flutter & ArtTS
+* Bump Android minSdkVersion to 23.
+* Drop 32-bit arch support.
+
 ## v1.3.9 / 2024-07-26
 This will be **the last LTS release of MMKV for Flutter**.
 * Modify the dependency of native lib in a way that no Dart package update is needed for any LTS release in the future.

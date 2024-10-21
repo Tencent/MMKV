@@ -58,7 +58,12 @@ enum MMKVMode : uint32_t {
     MMKV_ASHMEM = 1 << 3,
     MMKV_BACKUP = 1 << 4,
 #endif
+    MMKV_READ_ONLY = 1 << 5,
 };
+
+static inline MMKVMode operator | (MMKVMode one, MMKVMode other) {
+    return static_cast<MMKVMode>(static_cast<uint32_t>(one) | static_cast<uint32_t>(other));
+}
 
 #define MMKV_OUT
 
@@ -105,6 +110,7 @@ class MMKV {
     ~MMKV();
 
     std::string m_mmapID;
+    const MMKVMode m_mode;
     MMKVPath_t m_path;
     MMKVPath_t m_crcPath;
     mmkv::MMKVMap *m_dic;
@@ -281,8 +287,16 @@ public:
     static void onExit();
 
     const std::string &mmapID() const;
-
-    const bool m_isInterProcess;
+#ifndef MMKV_ANDROID
+    bool isMultiProcess() const { return  (m_mode & MMKV_MULTI_PROCESS) != 0; }
+#else
+    bool isMultiProcess() const {
+        return (m_mode & MMKV_MULTI_PROCESS) != 0
+            || (m_mode & CONTEXT_MODE_MULTI_PROCESS) != 0
+            || (m_mode & MMKV_ASHMEM) != 0; // ashmem is always multi-process
+    }
+#endif
+    bool isReadOnly() const { return (m_mode & MMKV_READ_ONLY) != 0; }
 
 #ifndef MMKV_DISABLE_CRYPT
     std::string cryptKey() const;
@@ -428,7 +442,7 @@ public:
     // filterExpire: return all non-expired keys, keep in mind it comes with cost
     NSArray *allKeys(bool filterExpire = false);
 
-    void removeValuesForKeys(NSArray *arrKeys);
+    bool removeValuesForKeys(NSArray *arrKeys);
 
     typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
     void enumerateKeys(EnumerateBlock block);
@@ -441,10 +455,10 @@ public:
     // filterExpire: return all non-expired keys, keep in mind it comes with cost
     std::vector<std::string> allKeys(bool filterExpire = false);
 
-    void removeValuesForKeys(const std::vector<std::string> &arrKeys);
+    bool removeValuesForKeys(const std::vector<std::string> &arrKeys);
 #endif // MMKV_APPLE
 
-    void removeValueForKey(MMKVKey_t key);
+    bool removeValueForKey(MMKVKey_t key);
 
     // keepSpace: remove all keys but keep the file size not changed, running faster
     void clearAll(bool keepSpace = false);

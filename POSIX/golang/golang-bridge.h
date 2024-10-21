@@ -117,6 +117,9 @@ void setWantsContentChangeHandle(bool contentChange);
 
 bool removeStorage(GoStringWrap_t mmapID, GoStringWrap_t rootPath);
 
+bool isMultiProcess(void *handle);
+bool isReadOnly(void *handle);
+
 #ifdef __cplusplus
 }
 #endif
