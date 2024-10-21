@@ -19,7 +19,9 @@
               "./obfuscation-rules.txt"
             ]
           },
-          "consumerFiles": "./consumer-rules.txt"
+          "consumerFiles": [
+            "./consumer-rules.txt"
+          ]
         },
       },
       "nativeLib": {

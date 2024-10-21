@@ -570,7 +570,7 @@ void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(con
 
     while (auto child = readdir(dir)) {
         if ((child->d_type & DT_REG) && (type & WalkFile)) {
-#ifdef _DIRENT_HAVE_D_NAMLEN
+#if defined(_DIRENT_HAVE_D_NAMLEN) || defined(__APPLE__)
             stpcpy(childPath + folderPathLength, child->d_name);
             childPath[folderPathLength + child->d_namlen] = 0;
 #else
@@ -578,7 +578,7 @@ void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(con
 #endif
             walker(childPath, WalkFile);
         } else if ((child->d_type & DT_DIR) && (type & WalkFolder)) {
-#ifdef _DIRENT_HAVE_D_NAMLEN
+#if defined(_DIRENT_HAVE_D_NAMLEN) || defined(__APPLE__)
             if ((child->d_namlen == 1 && child->d_name[0] == '.') ||
                 (child->d_namlen == 2 && child->d_name[0] == '.' && child->d_name[1] == '.')) {
                 continue;
