@@ -7,7 +7,7 @@
   "license": "BSD 3-Clause",
   "dependencies": {
      "@tencent/mmkv": "file:../MMKV"
-//    "@tencent/mmkv": "2.0.0-beta1",
+//    "@tencent/mmkv": "2.0.0",
   }
 }
 

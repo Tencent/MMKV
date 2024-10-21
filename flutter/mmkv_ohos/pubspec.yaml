@@ -18,8 +18,8 @@ dependencies:
 #      path: "packages/path_provider/path_provider_ohos"
   ffi: ^2.0.0
   mmkv_platform_interface:
-#    ^1.0.2
-    path: ../mmkv_platform_interface
+    ^1.0.2
+#    path: ../mmkv_platform_interface
 
 dev_dependencies:
   flutter_test:

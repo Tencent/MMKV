@@ -1,4 +1,28 @@
 # MMKV Change Log
+## v2.0.0 / 2024-10-21
+**This release is a breaking change release, especially for Android.**
+### Changes for All platforms
+* Add **readonly mode** support.
+* Fix a compile error when `MMKV_DISABLE_CRYPT` is defined and MMKV is built by source in DEBUG.
+
+### Android
+* Support 16K page size for Android 15.
+* Drop the support of **32-bit ABI**.
+* Bump the mini **SDK level to API 23**.
+
+### iOS / macOS
+* Add Mac Catalyst support
+
+### Flutter
+* Add add log/error/content-change callback.
+
+### HarmonyOS NEXT
+* Add add log/error/content-change callback.
+* Support obfuscation. For the time being, you will have to manually copy the content of MMKV's [consumer-rules.txt](https://github.com/Tencent/MMKV/blob/master/OpenHarmony/MMKV/consumer-rules.txt) into your App's obfuscation-rules.txt.
+
+### Win32
+* Replace `random()` with `rand()` to fix a compile error.
+
 ## v1.3.9 / 2024-07-26
 **This is a Long Term Support (LTS) release.**
 ### Changes for All platforms

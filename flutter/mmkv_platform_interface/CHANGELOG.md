@@ -1,5 +1,5 @@
 # MMKV Platform Interface Change Log
-## v1.0.2 / 2024-09-xx
+## v1.0.2 / 2024-10-21
 * Add `isMultiProcess()`.
 * Add `isReadOnly()`.
 
