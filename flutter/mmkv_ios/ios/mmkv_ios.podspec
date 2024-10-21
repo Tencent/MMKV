@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
   s.author           = { 'Tencent' => 'guoling@tencent.com' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
-  s.public_header_files = 'Classes/**/*.h'
+  s.public_header_files = 'Classes/**/MMKVPlugin.h'
   s.dependency 'Flutter'
   s.dependency 'MMKV', '>= 2.0.0', '< 2.1'
   s.platform = :ios, '12.0'
