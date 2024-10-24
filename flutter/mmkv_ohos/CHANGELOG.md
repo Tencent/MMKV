@@ -1,4 +1,10 @@
 # MMKV Platform OHOS Change Log
+## v1.0.3 / 2024-10-24
+Rollback native lib to v1.3.x.
+
+## v1.0.2 / 2024-10-21
+Keep up with native lib v2.0.0.
+
 ## v1.0.1 / 2024-07-26
 Keep up with native lib v1.3.9.
 
