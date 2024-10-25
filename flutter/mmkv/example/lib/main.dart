@@ -34,7 +34,7 @@ void main() async {
   var groupDir = null;
   if (Platform.isIOS) {
     final PathProviderFoundation provider = PathProviderFoundation();
-    groupDir = await provider.getContainerPath(appGroupIdentifier: "group.com.lingol.mmkvdemo");
+    groupDir = await provider.getContainerPath(appGroupIdentifier: "group.tencent.mmkv");
   }
 
   // must wait for MMKV to finish initialization

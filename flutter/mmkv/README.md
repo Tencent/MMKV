@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.3.9-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-2.0.1-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android** and **iOS**.
@@ -26,10 +26,10 @@ Add the following lines to `pubspec.yaml` on your app module. Then run `flutter 
 
 ```yaml
 dependencies:
-  mmkv: "^1.3.9"
+  mmkv: "^2.0.1"
 ```
 
-If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.3.9.  
+If you already include MMKV native lib in your App, you need to upgrade to version newer than v2.0.0.  
 
 #### iOS  
 Starting from v1.3.5, there's **no need** to change the plugin name 'mmkv' to 'mmkvflutter'. You should remove the script (`fix_mmkv_plugin_name()`) previously added in your Podfile. 

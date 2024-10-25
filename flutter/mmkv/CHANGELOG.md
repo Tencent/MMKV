@@ -1,4 +1,10 @@
 # MMKV for Flutter Change Log
+## v2.0.1 / 2024-10-25
+* Fix breaking changes on platform interface package.
+
+## v1.3.10 / 2024-10-25
+* Rollback some breaking changes on platform interface package.
+
 ## v2.0.0 / 2024-10-21
 * Support read-only mode.
 * Add add log/error/content-change callback for Flutter & ArtTS
