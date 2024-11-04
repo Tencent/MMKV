@@ -1,4 +1,7 @@
 # MMKV Platform Android Change Log
+## v1.0.8 / 2024-11-04
+Rollback minSdkVersion to 21.
+
 ## v1.0.7 / 2024-10-24
 Rollback native lib to v1.3.x.
 
