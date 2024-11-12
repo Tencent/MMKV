@@ -14,7 +14,6 @@
   },
   "overrides": {
     "@ohos/flutter_ohos": "file:./har/flutter.har",
-    "mmkv_fake": "file:./har/mmkv_fake.har",
     "@ohos/flutter_module": "file:./entry",
     "path_provider_ohos": "file:./har/path_provider_ohos.har",
     "mmkv_ohos": "file:./har/mmkv_ohos.har"

@@ -13,10 +13,22 @@
 * limitations under the License.
 */
 
-import { FlutterAbility, FlutterEngine } from '@ohos/flutter_ohos';
+import { FlutterAbility, FlutterEngine, FlutterManager } from '@ohos/flutter_ohos';
 import { GeneratedPluginRegistrant } from '../plugins/GeneratedPluginRegistrant';
+// import { MMKV } from '@tencent/mmkv';
+import AbilityConstant from '@ohos.app.ability.AbilityConstant';
+import Want from '@ohos.app.ability.Want';
 
 export default class EntryAbility extends FlutterAbility {
+  async onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): Promise<void> {
+    // EntryAbility.instance = this
+    // MMKV.initialize(this.context.getApplicationContext())
+    // let mmkv = MMKV.defaultMMKV();
+    // mmkv.encodeInt32('Harmony', 12)
+    // mmkv.decodeNumberSet('a')
+    super.onCreate(want, launchParam)
+  }
+
   configureFlutterEngine(flutterEngine: FlutterEngine) {
     super.configureFlutterEngine(flutterEngine)
     GeneratedPluginRegistrant.registerWith(flutterEngine)
