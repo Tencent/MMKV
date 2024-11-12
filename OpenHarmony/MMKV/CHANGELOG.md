@@ -1,5 +1,8 @@
 # MMKV for HarmonyOS NEXT Change Log
 
+## v1.3.11 / 2024-11-12
+* Fix a bug that after encode / decode `TypedArray`, the instance become dead-locked for other threads.
+
 ## v1.3.9 / 2024-07-26
 * Fix a data corruption bug on an encrypted MMKV with only one key value stored.
 * Make encryption more resilient from brute force cracking.
