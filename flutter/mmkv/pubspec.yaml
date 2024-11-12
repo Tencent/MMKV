@@ -16,10 +16,10 @@ dependencies:
     ^1.0.8
 #    path: ../mmkv_ios
   mmkv_android:
-    ^1.0.7
+    ^1.0.9
 #    path: ../mmkv_android
   mmkv_ohos:
-    ^1.0.3
+    ^1.0.4
 #      path: ../mmkv_ohos
   mmkv_platform_interface:
     ^1.0.3

@@ -1,4 +1,7 @@
 # MMKV for Flutter Change Log
+## v1.3.11 / 2024-11-12
+* Fix a bug that MMKV on HarmonyOS NEXT might become dead-locked for other threads after `decodeStringSet()` / `decodeNumberSet` / `decodeBoolSet` or decoding `TypedArray`.
+
 ## v1.3.10 / 2024-10-25
 * Rollback some breaking changes on platform interface package.
 
