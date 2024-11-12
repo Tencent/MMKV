@@ -1,4 +1,18 @@
 # MMKV Change Log
+## v1.3.11 / 2024-11-12
+**This is a Long Term Support (LTS) release.**
+### Changes for All platforms
+* Fix a bug that might cause MMKV to become dead-locked for other threads after decoding container-type values. The affected platforms and value types are listed below. So don't be surprised if you find no update on the unaffected platforms.
+
+### HarmonyOS NEXT
+* Fix a bug that MMKV might become dead-locked for other threads after `decodeStringSet()` / `decodeNumberSet` / `decodeBoolSet` or decoding `TypedArray`.
+
+### Flutter
+* Fix the bug on HarmonyOS NEXT listed above. A temp version named v1.3.10 was added to fix the Android version conflict between the LTS series & v2.0. To avoid potential confusion, bump both versions to v1.3.11.
+
+### POSIX
+* Fix a bug that MMKV might become dead-locked for other threads after decoding `std::vector<T>` or `std::span<T>` values.
+
 ## v1.3.9 / 2024-07-26
 **This is a Long Term Support (LTS) release.**
 ### Changes for All platforms
