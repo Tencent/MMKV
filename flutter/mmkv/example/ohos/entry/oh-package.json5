@@ -6,8 +6,8 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "mmkv_fake": "file:../har/mmkv_fake.har",
     "path_provider_ohos": "file:../har/path_provider_ohos.har",
-    "mmkv_ohos": "file:../har/mmkv_ohos.har"
+    "mmkv_ohos": "file:../har/mmkv_ohos.har",
+//    "@tencent/mmkv": "file:/Users/lingol/Developer/mmkv/OpenHarmony/MMKV/build/default/outputs/default/MMKV.har"
   }
 }

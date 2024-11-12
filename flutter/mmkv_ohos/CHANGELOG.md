@@ -1,4 +1,7 @@
 # MMKV Platform OHOS Change Log
+## v2.0.1 / 2024-10-25
+Keep up with native lib v2.0.1.
+
 ## v2.0.0 / 2024-10-25
 Bump to 2.0 to setup a breaking change version.
 

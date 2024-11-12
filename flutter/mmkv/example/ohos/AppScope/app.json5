@@ -2,7 +2,7 @@
   "app": {
     "bundleName": "com.example.mmkv_fake_example",
     "vendor": "example",
-    "versionCode": 1000000,
+    "versionCode": 1,
     "versionName": "1.0.0",
     "icon": "$media:app_icon",
     "label": "$string:app_name"

@@ -1,4 +1,6 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v2.0.1 / 2024-11-12
+* Fix a bug that MMKV might become dead-locked for other threads after `decodeStringSet()` / `decodeNumberSet` / `decodeBoolSet` or decoding `TypedArray`.
 
 ## v2.0.0 / 2024-10-21
 * Support obfuscation. For the time being, you will have to manually copy the content of MMKV's [consumer-rules.txt](https://github.com/Tencent/MMKV/blob/master/OpenHarmony/MMKV/consumer-rules.txt) into your App's obfuscation-rules.txt.

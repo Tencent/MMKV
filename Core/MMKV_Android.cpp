@@ -155,7 +155,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
                 return nullptr;
             }
         }
-        MMKVInfo("prepare to load %s (id %s) from rootPath %zu", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
+        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
     auto kv = new MMKV(mmapID, size, mode, cryptKey, rootPath, expectedCapacity);
     (*g_instanceDic)[mmapKey] = kv;
