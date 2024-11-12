@@ -4,7 +4,7 @@
     "externalNativeOptions": {
       "path": "./src/main/cpp/CMakeLists.txt",
       "arguments": "-DOHOS_STL=c++_static",
-      "cppFlags": "-DMMKV_STL_SHARED=0 -fvisibility=hidden -funwind-tables -fasynchronous-unwind-tables -O2",
+      "cppFlags": "-DMMKV_STL_SHARED=0 -fvisibility=hidden -funwind-tables -fasynchronous-unwind-tables -O2 -g",
       "abiFilters": ["arm64-v8a", "x86_64"],
     }
   },
@@ -26,7 +26,7 @@
       },
       "nativeLib": {
         "debugSymbol": {
-          "strip": true,
+          "strip": false,
           "exclude": []
         }
       }
