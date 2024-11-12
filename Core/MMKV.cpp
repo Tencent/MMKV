@@ -779,8 +779,8 @@ void MMKV::shared_lock() {
 }
 
 void MMKV::shared_unlock() {
-    m_sharedProcessLock->lock();
-    m_lock->lock();
+    m_sharedProcessLock->unlock();
+    m_lock->unlock();
 }
 
 #endif // MMKV_APPLE
