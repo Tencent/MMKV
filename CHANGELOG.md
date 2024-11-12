@@ -1,4 +1,18 @@
 # MMKV Change Log
+## v2.0.1 / 2024-11-12
+**This is a hotfix release.**
+### Changes for All platforms
+* Fix a bug that might cause MMKV to become dead-locked for other threads after decoding container-type values. The affected platforms and value types are listed below. So don't be surprised if you find no update on the unaffected platforms.
+
+### HarmonyOS NEXT
+* Fix a bug that MMKV might become dead-locked for other threads after `decodeStringSet()` / `decodeNumberSet` / `decodeBoolSet` or decoding `TypedArray`.
+
+### Flutter
+* Fix the bug on HarmonyOS NEXT listed above. A version named v2.0.1 was added to fix the Android version conflict between the LTS series & v2.0. Thanks to the federated plugins framework, only the underlying `mmkv_ohos` plugin is upgraded, the `mmkv` plugin stays the same.
+
+### POSIX
+* Fix a bug that MMKV might become dead-locked for other threads after decoding `std::vector<T>` or `std::span<T>` values.
+
 ## v2.0.0 / 2024-10-21
 **This release is a breaking change release, especially for Android.**
 ### Changes for All platforms
