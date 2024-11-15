@@ -506,6 +506,13 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     if (copyFileContent(srcPath, tmpFD, false)) {
         MMKVInfo("copyfile [%s] to [%s]", srcPath.c_str(), tmpPath.c_str());
         renamed = tryAtomicRename(tmpPath, dstPath);
+        if (!renamed) {
+            MMKVInfo("rename fail, try copy file content instead.");
+            if (copyFileContent(tmpPath, dstPath)) {
+                renamed = true;
+                ::unlink(tmpPath.c_str());
+            }
+        }
         if (renamed) {
             MMKVInfo("copyfile [%s] to [%s] finish.", srcPath.c_str(), dstPath.c_str());
         }
