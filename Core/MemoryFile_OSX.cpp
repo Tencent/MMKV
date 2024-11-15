@@ -97,8 +97,12 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
         MMKVInfo("copyfile [%s] to [%s] finish.", srcPath.c_str(), dstPath.c_str());
         return true;
     }
+
+    MMKVInfo("rename fail, try copy file content instead.");
+    auto ret = copyFileContent(tmpFile.UTF8String, dstPath);
+
     unlink(tmpFile.UTF8String);
-    return false;
+    return ret;
 }
 
 bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
