@@ -27,8 +27,9 @@
 MMKV_NAMESPACE_BEGIN
 
 std::string mmapedKVKey(const std::string &mmapID, const MMKVPath_t *rootPath = nullptr);
+std::string legacyMmapedKVKey(const std::string &mmapID, const MMKVPath_t *rootPath = nullptr);
 MMKVPath_t mappedKVPathWithID(const std::string &mmapID, MMKVMode mode, const MMKVPath_t *rootPath);
-MMKVPath_t crcPathWithID(const std::string &mmapID, MMKVMode mode, const MMKVPath_t *rootPath);
+MMKVPath_t crcPathWithPath(const MMKVPath_t &kvPath);
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
 MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);

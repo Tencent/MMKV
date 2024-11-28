@@ -1505,7 +1505,7 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
         return true;
     }
 
-    MMKVPath_t crcPath = crcPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
+    MMKVPath_t crcPath = crcPathWithPath(kvPath);
     if (!isFileExist(crcPath)) {
         return false;
     }
@@ -1568,7 +1568,7 @@ bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
         MMKVWarning("file not exist %s", kvPath.c_str());
         return false;
     }
-    MMKVPath_t crcPath = crcPathWithID(realID, MMKV_SINGLE_PROCESS, relatePath);
+    MMKVPath_t crcPath = crcPathWithPath(kvPath);
     if (!isFileExist(crcPath)) {
         MMKVWarning("file not exist %s", crcPath.c_str());
         return false;

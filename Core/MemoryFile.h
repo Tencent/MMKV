@@ -171,6 +171,7 @@ extern bool isFileExist(const MMKVPath_t &nsFilePath);
 extern MMBuffer *readWholeFile(const MMKVPath_t &path);
 extern bool zeroFillFile(MMKVFileHandle_t fd, size_t startPos, size_t size);
 extern size_t getPageSize();
+extern MMKVPath_t absolutePath(const MMKVPath_t &path);
 
 extern bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 

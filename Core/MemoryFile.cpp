@@ -36,8 +36,10 @@
 #    include <dirent.h>
 #    include <cstring>
 #    include <unistd.h>
+#    include <filesystem>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 namespace mmkv {
 
@@ -416,6 +418,13 @@ bool getFileSize(int fd, size_t &size) {
 
 size_t getPageSize() {
     return static_cast<size_t>(getpagesize());
+}
+
+extern MMKVPath_t absolutePath(const MMKVPath_t &path) {
+    fs::path relative_path(path);
+    fs::path absolute_path = fs::absolute(relative_path);
+    fs::path normalized = fs::weakly_canonical(absolute_path);
+    return normalized.string();
 }
 
 #ifndef MMKV_APPLE
