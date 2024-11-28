@@ -1700,6 +1700,14 @@ bool MMKV::disableAutoKeyExpire() {
     MMKVVector vec;
     auto packKeyValue = [&](const MMKVKey_t &key, const MMBuffer &value) {
         assert(value.length() >= Fixed32Size);
+        if (value.length() < Fixed32Size) {
+#ifdef MMKV_APPLE
+            MMKVWarning("key [%@] has invalid value size %u", key, value.length());
+#else
+            MMKVWarning("key [%s] has invalid value size %u", key.data(), value.length());
+#endif
+            return;
+        }
         MMBuffer data(value.length() - Fixed32Size);
         auto ptr = (uint8_t *) data.getPtr();
         memcpy(ptr, value.getPtr(), value.length() - Fixed32Size);
@@ -1740,6 +1748,13 @@ uint32_t MMKV::getExpireTimeForKey(MMKVKey_t key) {
     auto raw = getRawDataForKey(key);
     assert(raw.length() == 0 || raw.length() >= Fixed32Size);
     if (raw.length() < Fixed32Size) {
+        if (raw.length() != 0) {
+#ifdef MMKV_APPLE
+            MMKVWarning("key [%@] has invalid value size %u", key, raw.length());
+#else
+            MMKVWarning("key [%s] has invalid value size %u", key.data(), raw.length());
+#endif
+        }
         return 0;
     }
     auto ptr = (const uint8_t *) raw.getPtr() + raw.length() - Fixed32Size;
@@ -1755,6 +1770,13 @@ mmkv::MMBuffer MMKV::getDataWithoutMTimeForKey(MMKVKey_t key) {
     auto raw = getRawDataForKey(key);
     assert(raw.length() == 0 || raw.length() >= Fixed32Size);
     if (raw.length() < Fixed32Size) {
+        if (raw.length() != 0) {
+#ifdef MMKV_APPLE
+            MMKVWarning("key [%@] has invalid value size %u", key, raw.length());
+#else
+            MMKVWarning("key [%s] has invalid value size %u", key.data(), raw.length());
+#endif
+        }
         return raw;
     }
     auto newLength = raw.length() - Fixed32Size;
@@ -1793,6 +1815,15 @@ size_t MMKV::filterExpiredKeys() {
         for (auto itr = m_dicCrypt->begin(); itr != m_dicCrypt->end(); NOOP) {
             auto &kvHolder = itr->second;
             assert(kvHolder.realValueSize() >= Fixed32Size);
+            if (kvHolder.realValueSize() < Fixed32Size) {
+#ifdef MMKV_APPLE
+                MMKVWarning("key [%@] has invalid value size %u", itr->first, kvHolder.realValueSize());
+#else
+                MMKVWarning("key [%s] has invalid value size %u", itr->first.c_str(), kvHolder.realValueSize());
+#endif
+                itr++;
+                continue;
+            }
             auto buffer = kvHolder.toMMBuffer(basePtr, m_crypter);
             auto ptr = (uint8_t *) buffer.getPtr();
             ptr += buffer.length() - Fixed32Size;
@@ -1817,6 +1848,15 @@ size_t MMKV::filterExpiredKeys() {
         for (auto itr = m_dic->begin(); itr != m_dic->end(); NOOP) {
             auto &kvHolder = itr->second;
             assert(kvHolder.valueSize >= Fixed32Size);
+            if (kvHolder.valueSize < Fixed32Size) {
+#ifdef MMKV_APPLE
+                MMKVWarning("key [%@] has invalid value size %u", itr->first, kvHolder.valueSize);
+#else
+                MMKVWarning("key [%s] has invalid value size %u", itr->first.c_str(), kvHolder.valueSize);
+#endif
+                itr++;
+                continue;
+            }
             auto ptr = basePtr + kvHolder.offset + kvHolder.computedKVSize;
             ptr += kvHolder.valueSize - Fixed32Size;
             auto time = *(const uint32_t *) ptr;
