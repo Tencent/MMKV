@@ -72,6 +72,10 @@ bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
         MMKVWarning("fail on syscall(SYS_renameat2) [%s] to [%s], %d(%s)", srcPath.c_str(), dstPath.c_str(), errno,
                     strerror(errno));
     }
+
+    if (renamed && (srcPath != dstPath)) {
+        ::unlink(srcPath.c_str());
+    }
 #endif // SYS_renameat2 && !MMKV_OHOS
 
     if (!renamed) {
@@ -81,7 +85,6 @@ bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
         }
     }
 
-    ::unlink(srcPath.c_str());
     return true;
 }
 
