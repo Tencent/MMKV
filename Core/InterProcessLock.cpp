@@ -26,6 +26,22 @@
 #endif
 
 namespace mmkv {
+FileLock::~FileLock() {
+    if (m_exclusiveLockCount > 0) {
+#ifdef MMKV_WIN32
+        // only win32 file lock requires double unlock
+        if (m_sharedLockCount > 0) {
+            platformUnLock(true);
+        }
+#endif
+        m_sharedLockCount = 0;
+        m_exclusiveLockCount = 0;
+        platformUnLock(false);
+    } else if (m_sharedLockCount > 0) {
+        m_sharedLockCount = 0;
+        platformUnLock(false);
+    }
+}
 
 bool FileLock::lock(LockType lockType) {
     return doLock(lockType, true);
