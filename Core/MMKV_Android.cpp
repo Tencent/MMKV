@@ -39,11 +39,11 @@ using namespace mmkv;
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
 
-MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath, size_t expectedCapacity)
+MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
     : m_mmapID((mode & MMKV_BACKUP) ? mmapID : mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
     , m_mode(mode)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
+    , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
@@ -88,11 +88,11 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, string *cryptKey, stri
     }*/
 }
 
-MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKey)
+MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *cryptKey)
     : m_mmapID(mmapID)
     , m_mode(MMKV_ASHMEM)
     , m_path(mappedKVPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
-    , m_crcPath(crcPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
+    , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(ashmemFD))
@@ -137,7 +137,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, string *cryptKe
     }*/
 }
 
-MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cryptKey, string *rootPath, size_t expectedCapacity) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity) {
     if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
@@ -162,7 +162,7 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, string *cr
     return kv;
 }
 
-MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, string *cryptKey) {
+MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, const string *cryptKey) {
 
     if (fd < 0 || !g_instanceLock) {
         return nullptr;
@@ -191,7 +191,7 @@ int MMKV::ashmemMetaFD() {
 }
 
 #    ifndef MMKV_DISABLE_CRYPT
-void MMKV::checkReSetCryptKey(int fd, int metaFD, string *cryptKey) {
+void MMKV::checkReSetCryptKey(int fd, int metaFD, const string *cryptKey) {
     SCOPED_LOCK(m_lock);
 
     checkReSetCryptKey(cryptKey);
