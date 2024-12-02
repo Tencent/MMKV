@@ -58,6 +58,9 @@ void tryResetFileProtection(const string &path) {
 namespace mmkv {
 
 bool tryAtomicRename(const char *src, const char *dst) {
+    if (!src || !dst) {
+        return false;
+    }
     bool renamed = false;
 
     // try atomic swap first
@@ -65,6 +68,9 @@ bool tryAtomicRename(const char *src, const char *dst) {
         // renameat2() equivalent
         if (renamex_np(src, dst, RENAME_SWAP) == 0) {
             renamed = true;
+            if (strcmp(src, dst) != 0) {
+                ::unlink(src);
+            }
         } else if (errno != ENOENT) {
             MMKVError("fail to renamex_np %s to %s, %s", src, dst, strerror(errno));
         }
@@ -77,8 +83,6 @@ bool tryAtomicRename(const char *src, const char *dst) {
             return false;
         }
     }
-
-    ::unlink(src);
 
     return true;
 }
