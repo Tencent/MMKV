@@ -286,10 +286,10 @@ public:
 #endif // MMKV_ANDROID
 
     // get a namespace with custom root dir
-    static NameSpace nameSpace(const MMKVPath_t &rootDir);
+    static mmkv::NameSpace nameSpace(const MMKVPath_t &rootDir);
 
     // identical with the original MMKV with the global root dir
-    static NameSpace defaultNameSpace();
+    static mmkv::NameSpace defaultNameSpace();
 
     // you can call this on application termination, it's totally fine if you don't call
     static void onExit();
@@ -627,8 +627,8 @@ public:
     MMKV *mmkvWithID(const std::string &mmapID,
                      int size = mmkv::DEFAULT_MMAP_SIZE,
                      MMKVMode mode = MMKV_SINGLE_PROCESS,
-                     std::string *cryptKey = nullptr,
-                     MMKVPath_t *rootPath = nullptr,
+                     const std::string *cryptKey = nullptr,
+                     const MMKVPath_t *rootPath = nullptr,
                      size_t expectedCapacity = 0);
 #endif // MMKV_ANDROID
 
@@ -658,7 +658,7 @@ public:
     // Note: the existing instance (if any) will be closed & destroyed
     bool removeStorage(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
 
-    friend class MMKV;
+    friend class MMKV_NAMESPACE_PREFIX::MMKV;
 };
 
 }

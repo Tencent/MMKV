@@ -43,7 +43,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     : m_mmapID(mmapID)
     , m_mode(mode)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
+    , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
@@ -92,7 +92,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     : m_mmapID(mmapID)
     , m_mode(MMKV_ASHMEM)
     , m_path(mappedKVPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
-    , m_crcPath(crcPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
+    , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(ashmemFD))
@@ -268,6 +268,11 @@ bool MMKV::checkProcessMode() {
         }
         return shareLocked;
     }
+}
+
+MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity) {
+    auto theRootPath = rootPath ? rootPath : &m_rootDir;
+    return MMKV::mmkvWithID(mmapID, size, mode, cryptKey, theRootPath, expectedCapacity);
 }
 
 #endif // MMKV_ANDROID

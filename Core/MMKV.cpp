@@ -1729,13 +1729,13 @@ NameSpace MMKV::nameSpace(const MMKVPath_t &rootDir) {
         ensureMinimalInitialize();
     }
 
-    static std::once_flag flag;
-    std::call_once(flag, []{
+    static ThreadOnceToken_t once = ThreadOnceUninitialized;
+    ThreadLock::ThreadOnce(&once, []{
         g_namespaceLock = new ThreadLock;
         g_namespaceLock->initialize();
     });
     SCOPED_LOCK(g_namespaceLock);
-    
+
     auto itr = g_realRootMap.find(rootDir);
     if (itr == g_realRootMap.end()) {
         auto realRoot = absolutePath(rootDir);
@@ -1754,10 +1754,12 @@ NameSpace MMKV::defaultNameSpace() {
     }
     return NameSpace(g_realRootDir);
 }
-    
+
+#ifndef MMKV_ANDROID
 MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity) {
     auto theRootPath = rootPath ? rootPath : &m_rootDir;
     return MMKV::mmkvWithID(mmapID, mode, cryptKey, theRootPath, expectedCapacity);
 }
+#endif
 
 MMKV_NAMESPACE_END
