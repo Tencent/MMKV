@@ -30,9 +30,6 @@ namespace mmkv {
 
 FileLock::FileLock(MMKVFileHandle_t fd, bool isAshmem, int64_t lockPos, int64_t lockLen)
     : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_isAshmem(isAshmem), m_lockInfo() {
-    // locking with pos & len only works in ashmem lock type (fcntl)
-    assert(isAshmem || (lockPos == 0 && lockLen == 0));
-
     m_lockInfo.l_type = F_WRLCK;
     m_lockInfo.l_start = lockPos;
     m_lockInfo.l_whence = SEEK_SET;

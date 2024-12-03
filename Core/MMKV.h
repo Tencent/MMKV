@@ -96,12 +96,13 @@ concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MM
 
 class MMKV {
 #ifndef MMKV_ANDROID
-    std::string m_mmapKey;
     MMKV(const std::string &mmapID, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
+    mmkv::FileLock *m_fileMigrationLock;
+    mmkv::InterProcessLock *m_sharedMigrationLock;
 
     MMKV(const std::string &mmapID, int size, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 
@@ -110,6 +111,7 @@ class MMKV {
 
     ~MMKV();
 
+    std::string m_mmapKey;
     std::string m_mmapID;
     const MMKVMode m_mode;
     MMKVPath_t m_path;
