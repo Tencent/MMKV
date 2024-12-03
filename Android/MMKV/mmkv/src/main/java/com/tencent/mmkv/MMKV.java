@@ -588,7 +588,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Create the default MMKV instance in customize process mode, with an encryption key.
+     * Create the default MMKV instance in customimize process mode, with an encryption key.
      *
      * @param mode     The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).

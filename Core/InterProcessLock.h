@@ -64,6 +64,7 @@ public:
 #        ifndef MMKV_ANDROID
     explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 #        else
+    // locking with pos & len only works in ashmem lock type (fcntl)
     explicit FileLock(MMKVFileHandle_t fd, bool isAshmem = false, int64_t lockPos = 0, int64_t lockLen = 0);
 #        endif // MMKV_ANDROID
 #    else      // defined(MMKV_WIN32)

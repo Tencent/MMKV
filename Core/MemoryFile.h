@@ -29,6 +29,8 @@
 #ifdef MMKV_ANDROID
 MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
 
+long long getFileModifyTimeInMS(const char *path);
+
 namespace mmkv {
 extern int g_android_api;
 extern std::string g_android_tmpDir;

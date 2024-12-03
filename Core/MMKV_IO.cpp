@@ -1500,7 +1500,7 @@ void MMKV::clearAll(bool keepSpace) {
 }
 
 bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
-    MMKVPath_t kvPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
+    MMKVPath_t kvPath = mappedKVPathWithID(mmapID, relatePath);
     if (!isFileExist(kvPath)) {
         return true;
     }
@@ -1547,23 +1547,24 @@ bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
     if (!g_instanceLock) {
         return false;
     }
-    auto mmapKey = mmapedKVKey(mmapID, relatePath);
 #ifdef MMKV_ANDROID
-    std::string realID;
-    auto correctPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
-    if (relatePath && isFileExist(correctPath)) {
-        // it's successfully migrated to the correct path by newer version of MMKV
-        realID = mmapID;
+    string realID;
+    auto migrateStatus = tryMigrateLegacyMMKVFile(mmapID, relatePath);
+    if (migrateStatus == MigrateStatus::NoneExist) {
+        MMKVWarning("file id [%s] not exist in path %s", mmapID.c_str(), relatePath ? relatePath->c_str() : "default");
+        return false;
+    } else if (migrateStatus == MigrateStatus::OldToNewMigrateFail) {
+        realID = legacyMmapedKVKey(mmapID, relatePath);
     } else {
-        // historically Android mistakenly use mmapKey as mmapID
-        realID = mmapKey;
+        realID = mmapID;
     }
 #else
     auto &realID = mmapID;
 #endif
-    MMKVDebug("mmapKey %s", mmapKey.c_str());
+    auto mmapKey = mmapedKVKey(realID, relatePath);
+    MMKVDebug("mmapKey %s, real ID %s", mmapKey.c_str(), realID.c_str());
 
-    MMKVPath_t kvPath = mappedKVPathWithID(realID, MMKV_SINGLE_PROCESS, relatePath);
+    MMKVPath_t kvPath = mappedKVPathWithID(realID, relatePath);
     if (!isFileExist(kvPath)) {
         MMKVWarning("file not exist %s", kvPath.c_str());
         return false;
@@ -1574,7 +1575,7 @@ bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
         return false;
     }
 
-    MMKVInfo("remove storage [%s]", mmapID.c_str());
+    MMKVInfo("remove storage [%s]", realID.c_str());
     SCOPED_LOCK(g_instanceLock);
 
     File crcFile(crcPath, OpenFlag::ReadOnly);
