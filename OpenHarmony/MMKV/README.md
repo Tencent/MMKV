@@ -89,6 +89,11 @@ export default class EntryAbility extends UIAbility {
     mmkv.encodeBytes('bytes', arrayBuffer);
     let bytes = mmkv.decodeBytes('bytes');
     console.info('bytes = ', ArrayBufferToString(bytes));
+
+    let arr = new Uint8Array([0, 255, 1, 255]);
+    mmkv.encodeTypedArray('uint8-array', arr);
+    let newUI8Arr = kv.decodeUint8Array('uint8-array');
+    console.info('uint8-array = ', newUI8Arr);
     ```
 
     As you can see, MMKV is quite easy to use.
