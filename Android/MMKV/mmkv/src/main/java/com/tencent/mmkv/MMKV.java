@@ -190,6 +190,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     public static String initialize(@NonNull Context context, String rootDir, LibLoader loader, MMKVLogLevel logLevel, MMKVHandler handler) {
+        if (!android.os.Process.is64Bit()) {
+            throw new UnsupportedArchitectureException("MMKV 2.0+ requires 64-bit App, use 1.3.x instead.");
+        }
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
         //  If any one knows how, you're welcome to make a contribution.
