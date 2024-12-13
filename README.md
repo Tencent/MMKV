@@ -33,6 +33,8 @@ dependencies {
 }
 ```
 
+Starting from v2.0.0, MMKV **no longer supports 32-bit** arch and API level 22 or 21, if you want 32-bit or API level 21~22, use v1.3.x LTS series.  
+
 For other installation options, see [Android Setup](https://github.com/Tencent/MMKV/wiki/android_setup).
 
 ### Quick Tutorial
