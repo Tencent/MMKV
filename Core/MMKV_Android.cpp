@@ -42,7 +42,7 @@ extern ThreadLock *g_instanceLock;
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
     : m_mmapID((mode & MMKV_BACKUP) ? mmapID : mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
-    , m_crcPath(crcPathWithPath(m_path))
+    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
@@ -91,7 +91,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
 MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *cryptKey)
     : m_mmapID(mmapID)
     , m_path(mappedKVPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
-    , m_crcPath(crcPathWithPath(m_path))
+    , m_crcPath(crcPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_file(new MemoryFile(ashmemFD))
