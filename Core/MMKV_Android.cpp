@@ -40,7 +40,7 @@ extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
 
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
-    : m_mmapID((mode & MMKV_BACKUP) ? mmapID : mmapedKVKey(mmapID, rootPath)) // historically Android mistakenly use mmapKey as mmapID
+    : m_mmapID(mmapID)
     , m_mode(mode)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
@@ -157,7 +157,18 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const stri
         }
         MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
-    auto kv = new MMKV(mmapID, size, mode, cryptKey, rootPath, expectedCapacity);
+
+    string realID;
+    auto correctPath = mappedKVPathWithID(mmapID, mode, rootPath);
+    if ((mode & MMKV_BACKUP) || (rootPath && isFileExist(correctPath))) {
+        // it's successfully migrated to the correct path by newer version of MMKV
+        realID = mmapID;
+    } else {
+        // historically Android mistakenly use mmapKey as mmapID
+        realID = mmapKey;
+    }
+    auto kv = new MMKV(realID, size, mode, cryptKey, rootPath, expectedCapacity);
+    kv->m_mmapKey = mmapKey;
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }
@@ -178,6 +189,7 @@ MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, const str
         return kv;
     }
     auto kv = new MMKV(mmapID, fd, metaFD, cryptKey);
+    kv->m_mmapKey = mmapID;
     (*g_instanceDic)[mmapID] = kv;
     return kv;
 }
