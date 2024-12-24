@@ -1526,7 +1526,15 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
 bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
     auto mmapKey = mmapedKVKey(mmapID, relatePath);
 #ifdef MMKV_ANDROID
-    auto &realID = mmapKey; // historically Android mistakenly use mmapKey as mmapID
+    std::string realID;
+    auto correctPath = mappedKVPathWithID(mmapID, MMKV_SINGLE_PROCESS, relatePath);
+    if (relatePath && isFileExist(correctPath)) {
+        // it's successfully migrated to the correct path by newer version of MMKV
+        realID = mmapID;
+    } else {
+        // historically Android mistakenly use mmapKey as mmapID
+        realID = mmapKey;
+    }
 #else
     auto &realID = mmapID;
 #endif

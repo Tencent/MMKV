@@ -337,11 +337,7 @@ void MMKV::close() {
     SCOPED_LOCK(g_instanceLock);
     m_lock->lock();
 
-#ifndef MMKV_ANDROID
     auto itr = g_instanceDic->find(m_mmapKey);
-#else
-    auto itr = g_instanceDic->find(m_mmapID);
-#endif
     if (itr != g_instanceDic->end()) {
         g_instanceDic->erase(itr);
     }
@@ -1290,8 +1286,14 @@ bool MMKV::backupOneToDirectory(const string &mmapID, const MMKVPath_t &dstDir, 
     auto dstPath = dstDir + MMKV_PATH_SLASH + encodePath;
     auto mmapKey = mmapedKVKey(mmapID, rootPath);
 #ifdef MMKV_ANDROID
-    // historically Android mistakenly use mmapKey as mmapID
-    auto srcPath = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapKey, *rootPath);
+    string srcPath;
+    auto correctPath = *rootPath + MMKV_PATH_SLASH + encodePath;
+    if (srcDir && isFileExist(correctPath)) {
+        srcPath = correctPath;
+    } else {
+        // historically Android mistakenly use mmapKey as mmapID
+        srcPath = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapKey, *rootPath);
+    }
 #else
     auto srcPath = *rootPath + MMKV_PATH_SLASH + encodePath;
 #endif
@@ -1470,8 +1472,14 @@ bool MMKV::restoreOneFromDirectory(const string &mmapID, const MMKVPath_t &srcDi
     auto srcPath = srcDir + MMKV_PATH_SLASH + encodePath;
     auto mmapKey = mmapedKVKey(mmapID, rootPath);
 #ifdef MMKV_ANDROID
-    // historically Android mistakenly use mmapKey as mmapID
-    auto dstPath = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapKey, *rootPath);
+    string dstPath;
+    auto correctPath = *rootPath + MMKV_PATH_SLASH + encodePath;
+    if (dstDir && isFileExist(correctPath)) {
+        dstPath = correctPath;
+    } else {
+        // historically Android mistakenly use mmapKey as mmapID
+        dstPath = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapKey, *rootPath);
+    }
 #else
     auto dstPath = *rootPath + MMKV_PATH_SLASH + encodePath;
 #endif
