@@ -1,4 +1,7 @@
 # MMKV for Flutter Change Log
+## v2.0.2 / 2024-12-27
+* Add version limitation of < v2.1.0 on MMKV platform plugins.
+
 ## v2.0.1 / 2024-10-25
 * Fix breaking changes on platform interface package.
 

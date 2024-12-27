@@ -1,4 +1,9 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v2.0.2 / 2024-12-27
+* Obfuscation fully supported.
+* Use atomic file rename on OHOS.
+* Add forward support for the correct filename with a custom root path.
+
 ## v2.0.1 / 2024-11-12
 * Fix a bug that MMKV might become dead-locked for other threads after `decodeStringSet()` / `decodeNumberSet` / `decodeBoolSet` or decoding `TypedArray`.
 
