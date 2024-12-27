@@ -105,6 +105,10 @@ public class MainActivity extends AppCompatActivity {
         kv.checkContentChangedByOuterProcess();
         kv.close();
 
+        // prepare for backup customize root path
+        kv = testMMKV("test_backup", "MMKV Backup", false, otherDir);
+        kv.close();
+
         testAshmem();
         testReKey();
 
@@ -564,6 +568,15 @@ public class MainActivity extends AppCompatActivity {
             Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
         }
 
+        // test backup a normal mmkv from custom root path
+        mmapID = "test_backup";
+        ret = MMKV.backupOneToDirectory(mmapID, backupRootDir, otherDir);
+        Log.i("MMKV", "backup one [" + mmapID + "] ret = " + ret);
+        if (ret) {
+            MMKV mmkv = MMKV.backedUpMMKVWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, "MMKV Backup", backupRootDir);
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+        }
+
         /*{
             MMKV mmkv = MMKV.mmkvWithID("imported");
             mmkv.close();
@@ -601,6 +614,17 @@ public class MainActivity extends AppCompatActivity {
         Log.i("MMKV", "restore one [" + mmapID + "] ret = " + ret);
         if (ret) {
             Log.i("MMKV", "after restore [" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+        }
+
+        // test backup a normal mmkv from custom root path
+        mmapID = "test_backup";
+        mmkv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, "MMKV Backup", otherDir);
+        mmkv.encode("test_restore", 1024);
+        Log.i("MMKV", "before restore [" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
+        ret = MMKV.restoreOneMMKVFromDirectory(mmapID, backupRootDir, otherDir);
+        Log.i("MMKV", "backup one [" + mmapID + "] ret = " + ret);
+        if (ret) {
+            Log.i("MMKV", "check on backup file[" + mmkv.mmapID() + "] allKeys: " + Arrays.toString(mmkv.allKeys()));
         }
 
         /*{

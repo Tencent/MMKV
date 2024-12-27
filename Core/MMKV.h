@@ -95,20 +95,20 @@ concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MM
 
 class MMKV {
 #ifndef MMKV_ANDROID
-    std::string m_mmapKey;
     MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
 
-    MMKV(const std::string &mmapID, int size, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity = 0);
+    MMKV(const std::string &mmapID, int size, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 
-    MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, std::string *cryptKey = nullptr);
+    MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, const std::string *cryptKey = nullptr);
 #endif
 
     ~MMKV();
 
+    std::string m_mmapKey;
     std::string m_mmapID;
     const MMKVMode m_mode;
     MMKVPath_t m_path;
@@ -226,7 +226,7 @@ class MMKV {
     void notifyContentChanged();
 
 #if defined(MMKV_ANDROID) && !defined(MMKV_DISABLE_CRYPT)
-    void checkReSetCryptKey(int fd, int metaFD, std::string *cryptKey);
+    void checkReSetCryptKey(int fd, int metaFD, const std::string *cryptKey);
 #endif
     static bool backupOneToDirectory(const std::string &mmapKey, const MMKVPath_t &dstPath, const MMKVPath_t &srcPath, bool compareFullPath);
     static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool isInSpecialDir);
@@ -270,11 +270,11 @@ public:
     static MMKV *mmkvWithID(const std::string &mmapID,
                             int size = mmkv::DEFAULT_MMAP_SIZE,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
-                            std::string *cryptKey = nullptr,
-                            MMKVPath_t *rootPath = nullptr,
+                            const std::string *cryptKey = nullptr,
+                            const MMKVPath_t *rootPath = nullptr,
                             size_t expectedCapacity = 0);
 
-    static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, std::string *cryptKey = nullptr);
+    static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, const std::string *cryptKey = nullptr);
 
     int ashmemFD();
 
@@ -591,5 +591,5 @@ bool MMKV::getVector(MMKVKey_t key, T &result) {
 
 MMKV_NAMESPACE_END
 
-#endif
+#endif // __cplusplus
 #endif // MMKV_MMKV_H

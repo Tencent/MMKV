@@ -1,4 +1,22 @@
 # MMKV Change Log
+## v2.0.2 / 2024-12-27
+Mary holiday and a happy new year!
+### Changes for All platforms
+* Fix a bug that MMKV might fail to backup/restore across different filesystems.
+* Add protection from invalid value size of auto-key-expire mmkv.
+
+### Android
+* If the running App is 32-bit only, warn about it (by throwing `UnsupportedArchitectureException`) before trying to load native lib.
+* Add forward support for the correct filename with a custom root path.
+
+### HarmonyOS NEXT
+* Obfuscation fully supported.
+* Use atomic file rename on OHOS.
+* Add forward support for the correct filename with a custom root path.
+
+### Win32
+* Only `mmap()` on `ftruncate()`/`zeroFillFile()` failure iff we have a valid file mapping before.
+
 ## v2.0.1 / 2024-11-12
 **This is a hotfix release.**
 ### Changes for All platforms

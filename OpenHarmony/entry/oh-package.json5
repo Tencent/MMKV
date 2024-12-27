@@ -6,8 +6,8 @@
   "author": "guoling",
   "license": "BSD 3-Clause",
   "dependencies": {
-     "@tencent/mmkv": "file:../MMKV"
-//    "@tencent/mmkv": "2.0.0",
+     "@tencent/mmkv": "file:../MMKV",
+//    "@tencent/mmkv": "~2.0.2",
   }
 }
 

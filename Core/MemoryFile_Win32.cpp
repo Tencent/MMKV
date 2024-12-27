@@ -122,7 +122,11 @@ bool MemoryFile::truncate(size_t size) {
         m_size = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;
     }
 
+    // Win32 won't ftruncate a file if there's active file mmapping/handle, we have to unmmap/close ahead
+    bool needMMapOnFailure = false;
     if (m_ptr) {
+        // if we have a valid file mapping before, we should restore it regardless
+        needMMapOnFailure = true;
         if (!UnmapViewOfFile(m_ptr)) {
             MMKVError("fail to munmap [%ls], %d", m_diskFile.m_path.c_str(), GetLastError());
         }
@@ -136,14 +140,18 @@ bool MemoryFile::truncate(size_t size) {
     if (!ftruncate(m_diskFile.getFd(), m_size)) {
         MMKVError("fail to truncate [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
         m_size = oldSize;
-        mmap();
+        if (needMMapOnFailure) {
+            mmap();
+        }
         return false;
     }
     if (m_size > oldSize) {
         if (!zeroFillFile(m_diskFile.getFd(), oldSize, m_size - oldSize)) {
             MMKVError("fail to zeroFile [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
             m_size = oldSize;
-            mmap();
+            if (needMMapOnFailure) {
+                mmap();
+            }
             return false;
         }
     }
