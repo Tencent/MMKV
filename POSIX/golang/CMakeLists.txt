@@ -28,17 +28,7 @@ IF(APPLE)
 ENDIF()
 
 add_subdirectory(../../Core Core)
-
-find_library(zlib
-        z
-        )
-
-IF (NOT zlib)
-    message(STATUS "Zlib library not found. Using internal zlib.")
-    add_subdirectory(../../Core/crc32/zlib zlib)
-ELSE()
-    message(STATUS "Zlib library found. ${zlib}")
-ENDIF()
+add_subdirectory(../../Core/crc32/zlib zlib)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -71,6 +61,7 @@ set_target_properties(mmkv PROPERTIES
 target_link_libraries( mmkv
                        core
                        pthread
+                       zlib
         )
 
 # Install source file & library to tencent.com/mmkv dir
@@ -78,10 +69,5 @@ target_link_libraries( mmkv
 install(FILES mmkv.go callback.go go.mod mmkv_test.go golang-bridge.h golang-bridge.cpp
   DESTINATION "tencent.com/mmkv")
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libmmkv.a ${CMAKE_CURRENT_BINARY_DIR}/Core/libcore.a
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libmmkv.a ${CMAKE_CURRENT_BINARY_DIR}/Core/libcore.a ${CMAKE_CURRENT_BINARY_DIR}/zlib/libz.a
   DESTINATION "tencent.com/mmkv/lib")
-
-IF (NOT zlib)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/zlib/libz.a
-  DESTINATION "tencent.com/mmkv/lib")
-ENDIF()
