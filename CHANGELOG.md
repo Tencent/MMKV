@@ -1,4 +1,17 @@
 # MMKV Change Log
+## v1.3.12 / 2025-01-02
+**This is a Long Term Support (LTS) release.**
+### Changes for All platforms
+* Fix a bug that MMKV might fail to backup/restore across different filesystems.
+* Add protection from invalid value size of auto-key-expire mmkv.
+
+### Android
+* Add forward support for the correct filename with a custom root path.
+
+### HarmonyOS NEXT
+* Add forward support for the correct filename with a custom root path.
+* Obfuscation fully supported.
+
 ## v1.3.11 / 2024-11-12
 **This is a Long Term Support (LTS) release.**
 ### Changes for All platforms

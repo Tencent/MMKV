@@ -1,4 +1,9 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v1.3.12 / 2025-01-02
+* Fix a bug that MMKV might fail to backup/restore across different filesystems.
+* Add protection from invalid value size of auto-key-expire mmkv.
+* Add forward support for the correct filename with a custom root path.
+* Obfuscation fully supported.
 
 ## v1.3.11 / 2024-11-12
 * Fix a bug that after encode / decode `TypedArray`, the instance become dead-locked for other threads.
