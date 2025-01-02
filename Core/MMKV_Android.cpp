@@ -41,7 +41,6 @@ extern ThreadLock *g_instanceLock;
 
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
-    , m_mode(mode)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
