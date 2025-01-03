@@ -1080,6 +1080,15 @@ MMKV_JNI jboolean isReadOnly(JNIEnv *env, jobject instance) {
     return jboolean(false);
 }
 
+MMKV_JNI jboolean getNameSpace(JNIEnv *env, jclass type, jstring rootPath) {
+    if (rootPath) {
+        auto root = jstring2string(env, rootPath);
+        MMKV::nameSpace(root);
+        return (jboolean) true;
+    }
+    return (jboolean) false;
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -1164,6 +1173,7 @@ static JNINativeMethod g_methods[] = {
     {"clearAllWithKeepingSpace", "()V", (void *) mmkv::clearAllWithKeepingSpace},
     {"isMultiProcess", "()Z", (void *) mmkv::isMultiProcess},
     {"isReadOnly", "()Z", (void *) mmkv::isReadOnly},
+    {"getNameSpace", "(Ljava/lang/String;)Z", (void *)mmkv::getNameSpace},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

@@ -1774,4 +1774,28 @@ MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *c
 }
 #endif
 
+bool NameSpace::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir) {
+    return MMKV::backupOneToDirectory(mmapID, dstDir, &m_rootDir);
+}
+
+bool NameSpace::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir) {
+    return MMKV::restoreOneFromDirectory(mmapID, srcDir, &m_rootDir);
+}
+
+size_t NameSpace::backupAllToDirectory(const MMKVPath_t &dstDir) {
+    return MMKV::backupAllToDirectory(dstDir, &m_rootDir);
+}
+
+size_t NameSpace::restoreAllFromDirectory(const MMKVPath_t &srcDir) {
+    return MMKV::restoreAllFromDirectory(srcDir, &m_rootDir);
+}
+
+bool NameSpace::isFileValid(const std::string &mmapID) {
+    return MMKV::isFileValid(mmapID, &m_rootDir);
+}
+
+bool NameSpace::removeStorage(const std::string &mmapID) {
+    return MMKV::removeStorage(mmapID, &m_rootDir);
+}
+
 MMKV_NAMESPACE_END

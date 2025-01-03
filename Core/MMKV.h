@@ -546,11 +546,11 @@ public:
 
     // detect if the MMKV file is valid or not
     // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
-    static bool isFileValid(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+    static bool isFileValid(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
     // remove the storage of the MMKV, including the data file & meta file (.crc)
     // Note: the existing instance (if any) will be closed & destroyed
-    static bool removeStorage(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+    static bool removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;
@@ -633,31 +633,27 @@ public:
                      size_t expectedCapacity = 0);
 #endif // MMKV_ANDROID
 
-    // backup one MMKV instance from srcDir to dstDir
-    // if srcDir is null, then backup from the root dir of MMKV
-    bool backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir = nullptr);
+    // backup one MMKV instance to dstDir
+    bool backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir);
 
-    // restore one MMKV instance from srcDir to dstDir
-    // if dstDir is null, then restore to the root dir of MMKV
-    bool restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir = nullptr);
+    // restore one MMKV instance from srcDir
+    bool restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir);
 
-    // backup all MMKV instance from srcDir to dstDir
-    // if srcDir is null, then backup from the root dir of MMKV
+    // backup all MMKV instance to dstDir
     // return count of MMKV successfully backuped
-    size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir = nullptr);
+    size_t backupAllToDirectory(const MMKVPath_t &dstDir);
 
-    // restore all MMKV instance from srcDir to dstDir
-    // if dstDir is null, then restore to the root dir of MMKV
+    // restore all MMKV instance from srcDir
     // return count of MMKV successfully restored
-    size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir = nullptr);
+    size_t restoreAllFromDirectory(const MMKVPath_t &srcDir);
 
     // detect if the MMKV file is valid or not
     // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
-    bool isFileValid(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+    bool isFileValid(const std::string &mmapID);
 
     // remove the storage of the MMKV, including the data file & meta file (.crc)
     // Note: the existing instance (if any) will be closed & destroyed
-    bool removeStorage(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+    bool removeStorage(const std::string &mmapID);
 
     friend class MMKV_NAMESPACE_PREFIX::MMKV;
 };

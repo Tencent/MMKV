@@ -645,4 +645,13 @@ MMKV_EXPORT void checkContentChanged(void *handle) {
     }
 }
 
+MMKV_EXPORT bool getNameSpace(const char *rootPath) {
+    if (rootPath) {
+        auto root = string(rootPath);
+        MMKV::nameSpace(root);
+        return true;
+    }
+    return false;
+}
+
 #endif // MMKV_DISABLE_FLUTTER

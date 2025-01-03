@@ -1499,7 +1499,7 @@ void MMKV::clearAll(bool keepSpace) {
     loadFromFile();
 }
 
-bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
+bool MMKV::isFileValid(const string &mmapID, const MMKVPath_t *relatePath) {
     MMKVPath_t kvPath = mappedKVPathWithID(mmapID, relatePath);
     if (!isFileExist(kvPath)) {
         return true;
@@ -1543,7 +1543,7 @@ bool MMKV::isFileValid(const string &mmapID, MMKVPath_t *relatePath) {
     }
 }
 
-bool MMKV::removeStorage(const std::string &mmapID, MMKVPath_t *relatePath) {
+bool MMKV::removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath) {
     if (!g_instanceLock) {
         return false;
     }

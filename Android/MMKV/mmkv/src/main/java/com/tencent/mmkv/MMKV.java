@@ -217,6 +217,18 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     private static String doInitialize(String rootDir, String cacheDir, LibLoader loader, MMKVLogLevel logLevel, boolean wantLogReDirecting) {
+        tryLoadNativeLib(loader);
+        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel), wantLogReDirecting);
+        MMKV.rootDir = rootDir;
+        return MMKV.rootDir;
+    }
+
+    private static boolean g_isNativeLibLoaded = false;
+
+    private static void tryLoadNativeLib(@Nullable LibLoader loader) {
+        if (g_isNativeLibLoaded) {
+            return;
+        }
         if (loader != null) {
             if (BuildConfig.FLAVOR.equals("SharedCpp")) {
                 loader.loadLibrary("c++_shared");
@@ -228,9 +240,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             }
             System.loadLibrary("mmkv");
         }
-        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel), wantLogReDirecting);
-        MMKV.rootDir = rootDir;
-        return MMKV.rootDir;
+        g_isNativeLibLoaded = true;
     }
 
     /**
@@ -269,6 +279,30 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
         return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
+    }
+
+    /**
+     * @param dir the customize root directory of a NameSpace
+     * @return a NameSpace with custom root dir
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static NameSpace nameSpace(String dir) throws RuntimeException {
+        tryLoadNativeLib(null);
+        if (getNameSpace(dir)) {
+            return new NameSpace(dir);
+        }
+        throw new RuntimeException("Fail to get NameSpace[" + dir + "] in JNI.");
+    }
+
+    /**
+     * identical with the original MMKV with the global root dir
+     * @throws RuntimeException if there's an runtime error.
+     */
+    public static NameSpace defaultNameSpace() throws RuntimeException {
+        if (rootDir == null) {
+            throw new IllegalStateException("You should Call MMKV.initialize() first.");
+        }
+        return new NameSpace(rootDir);
     }
 
     static private String rootDir = null;
@@ -606,7 +640,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @NonNull
     @Contract("_, _, _ -> new")
-    private static MMKV checkProcessMode(long handle, String mmapID, int mode) throws RuntimeException {
+    static MMKV checkProcessMode(long handle, String mmapID, int mode) throws RuntimeException {
         if (handle == 0) {
             throw new RuntimeException("Fail to create an MMKV instance [" + mmapID + "] in JNI");
         }
@@ -1224,7 +1258,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static native boolean restoreOneMMKVFromDirectory(String mmapID, String srcDir, @Nullable String rootPath);
 
     /**
-     * backup all MMKV instance to dstDir
+     * backup all MMKV instance from default root dir to dstDir
      *
      * @param dstDir the backup destination directory
      * @return count of MMKV successfully backuped
@@ -1232,12 +1266,33 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static native long backupAllToDirectory(String dstDir);
 
     /**
-     * restore all MMKV instance from srcDir
+     * restore all MMKV instance from srcDir to default root dir
      *
      * @param srcDir the restore source directory
      * @return count of MMKV successfully restored
      */
     public static native long restoreAllFromDirectory(String srcDir);
+
+    // TODO: we can't have these functionality because we can't know for sure
+    //  that each instance inside NameSpace has been upgraded successfully or not.
+    //  The workaround is to manually call backup/restore on each instance of NameSpace.
+//    /**
+//     * backup all MMKV instance from srcDir to dstDir
+//     *
+//     * @param dstDir the backup destination directory
+//     * @param srcDir the backup source directory
+//     * @return count of MMKV successfully backuped
+//     */
+//    public static native long backupAllToDirectory(String dstDir, String srcDir);
+//
+//    /**
+//     * restore all MMKV instance from srcDir to dstDir
+//     *
+//     * @param srcDir the restore source directory
+//     * @param dstDir the restore destination directory
+//     * @return count of MMKV successfully restored
+//     */
+//    public static native long restoreAllFromDirectory(String srcDir, String dstDir);
 
     public static final int ExpireNever = 0;
     public static final int ExpireInMinute = 60;
@@ -1673,7 +1728,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting);
 
-    private native static long
+    native static long
     getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath,
                   long expectedCapacity);
 
@@ -1767,4 +1822,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native boolean isExpirationEnabled();
 
     private static native boolean checkProcessMode(long handle);
+
+    private static native boolean getNameSpace(String rootPath);
 }
