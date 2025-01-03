@@ -94,10 +94,11 @@ concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MM
     MMKV_SUPPORTED_VECTOR_VALUE_TYPE<T>;
 #endif // MMKV_HAS_CPP20
 
-class MMKV {
 #ifndef MMKV_ANDROID
+class MMKV {
     MMKV(const std::string &mmapID, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
+class __attribute__((visibility("default"))) MMKV {
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
