@@ -18,14 +18,14 @@
  * limitations under the License.
  */
 
-#include "MMKVPredef.h"
+#include <MMKV/MMKVPredef.h>
 
 #ifdef MMKV_ANDROID
 
-#    include "MMBuffer.h"
-#    include "MMKV.h"
-#    include "MMKVLog.h"
-#    include "MemoryFile.h"
+#    include <MMKV/MMBuffer.h>
+#    include <MMKV/MMKV.h>
+#    include <MMKV/MMKVLog.h>
+#    include <MMKV/MemoryFile.h>
 #    include <cstdint>
 #    include <jni.h>
 #    include <string>

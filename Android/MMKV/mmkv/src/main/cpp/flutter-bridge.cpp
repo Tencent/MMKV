@@ -18,12 +18,12 @@
  * limitations under the License.
  */
 
-#include "MMKVPredef.h"
+#include <MMKV/MMKVPredef.h>
 
 #ifndef MMKV_DISABLE_FLUTTER
 
-#    include "MMKV.h"
-#    include "MMKVLog.h"
+#    include <MMKV/MMKV.h>
+#    include <MMKV/MMKVLog.h>
 #    include <cstdint>
 #    include <string>
 
@@ -35,6 +35,9 @@ extern int g_android_api;
 extern string g_android_tmpDir;
 }
 
+#    ifdef MMKV_EXPORT
+#       undef MMKV_EXPORT
+#    endif
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
 using LogCallback_t = void (*)(uint32_t level, const char *file, int32_t line, const char *funcname, const char *message);

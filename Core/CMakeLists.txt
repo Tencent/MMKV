@@ -146,7 +146,7 @@ ELSE()
         aes/openssl/openssl_aes-armv4.S)
 ENDIF()
 
-target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 IF (WIN32)
     # MMKV can be used only with Unicode on Windows.
@@ -170,3 +170,43 @@ ELSE()
     target_link_libraries(core ${zlib})
 ENDIF()
 
+function(copy_files)
+    list(LENGTH ARGN num_args)
+
+    if(num_args LESS 2)
+        message(FATAL_ERROR "copy_files function requires at least one source file and one destination directory.")
+        return()
+    endif()
+
+    # Get the last argument as the destination directory
+    list(GET ARGN -1 destination_dir)
+    # Get all arguments except the last one as the source files
+    list(REMOVE_AT ARGN -1)
+    set(source_files ${ARGN})
+
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${destination_dir})
+
+    foreach(file ${source_files})
+        get_filename_component(file_dir ${file} DIRECTORY)
+        file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${destination_dir}/${file_dir})
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${file} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${destination_dir}/${file_dir})
+    endforeach()
+endfunction()
+
+file(REMOVE_RECURSE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+copy_files(
+        MMKV.h
+        MMKVPredef.h
+        MMBuffer.h
+        MiniPBCoder.h
+        include/MMKV)
+
+IF(OHOS OR ANDROID)
+    copy_files(
+            MMKVLog.h
+            MemoryFile.h
+            include/MMKV)
+ENDIF()
+
+target_include_directories(core INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)

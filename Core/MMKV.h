@@ -94,11 +94,10 @@ concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MM
     MMKV_SUPPORTED_VECTOR_VALUE_TYPE<T>;
 #endif // MMKV_HAS_CPP20
 
+class MMKV_EXPORT MMKV {
 #ifndef MMKV_ANDROID
-class MMKV {
     MMKV(const std::string &mmapID, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
-class __attribute__((visibility("default"))) MMKV {
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
@@ -604,7 +603,7 @@ MMKV_NAMESPACE_END
 namespace mmkv {
 
 // a POD-like facade what wraps custom root directory
-class NameSpace {
+class MMKV_EXPORT NameSpace {
     const MMKVPath_t &m_rootDir;
     NameSpace(const MMKVPath_t &rootDir) : m_rootDir(rootDir) {}
 public:

@@ -41,7 +41,7 @@ enum MMBufferCopyFlag : bool {
 struct KeyValueHolderCrypt;
 #endif
 
-class MMBuffer {
+class MMKV_EXPORT MMBuffer {
     enum MMBufferType : uint8_t {
         MMBufferType_Small,  // store small buffer in stack memory
         MMBufferType_Normal, // store in heap memory

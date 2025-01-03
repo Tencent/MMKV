@@ -290,4 +290,10 @@ constexpr size_t AES_KEY_BITSET_LEN = 128;
   #define MMKV_ABI "unknown"
 #endif
 
+#ifdef MMKV_ANDROID
+#define MMKV_EXPORT __attribute__((visibility("default")))
+#else
+#define MMKV_EXPORT
+#endif
+
 #endif //MMKV_SRC_MMKVPREDEF_H

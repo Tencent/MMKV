@@ -223,10 +223,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return MMKV.rootDir;
     }
 
-    private static boolean g_isNativeLibLoaded = false;
+    private static boolean isNativeLibLoaded = false;
 
     private static void tryLoadNativeLib(@Nullable LibLoader loader) {
-        if (g_isNativeLibLoaded) {
+        if (isNativeLibLoaded) {
             return;
         }
         if (loader != null) {
@@ -240,7 +240,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             }
             System.loadLibrary("mmkv");
         }
-        g_isNativeLibLoaded = true;
+        isNativeLibLoaded = true;
     }
 
     /**

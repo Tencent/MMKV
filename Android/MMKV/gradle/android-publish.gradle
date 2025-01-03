@@ -86,11 +86,11 @@ android.libraryVariants.all { variant ->
         failOnError false
     }
     def javadocJar = task("${variant.name}JavadocJar", type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
+        archiveClassifier = 'javadoc'
         from javadoc.destinationDir
     }
     def jniSymbolsJar = task("${variant.name}SymbolJar", type: Jar, dependsOn: 'build') {
-        classifier = "so-symbols"
+        archiveClassifier = "so-symbols"
         boolean hasNativeBuildTask = false
         tasks.each { task ->
             if (task.getName().startsWith("externalNativeBuild")) {
@@ -109,6 +109,13 @@ android.libraryVariants.all { variant ->
         } else {
             from file("build/intermediates/cmake/release/obj/")
         }
+    }
+    // Custom task to package headers into a ZIP file
+    def headerZip = task("${variant.name}Header", type: Zip, dependsOn: 'build') {
+        archiveClassifier = "header"
+        from '../../../Core/include'
+        archiveFileName = 'headers.zip'
+        destinationDirectory = file("$buildDir/outputs/headers")
     }
 
     def publicationName = "component${variant.name.capitalize()}"
@@ -131,6 +138,7 @@ android.libraryVariants.all { variant ->
             }
             artifact javadocJar
             artifact jniSymbolsJar
+            artifact headerZip
 
             pom {
                 name = 'MMKV'
