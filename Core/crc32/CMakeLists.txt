@@ -34,6 +34,7 @@ ENDIF()
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
+
 add_library( # Sets the name of the library.
              z
 
@@ -41,10 +42,9 @@ add_library( # Sets the name of the library.
              STATIC
 
              # Provides a relative path to your source file(s).
-             crc32.h
-             crc32.cpp
-             zconf.h
-             zutil.h
+             zlib
+             Checksum.h
+             crc32_armv8.cpp
         )
 
 
