@@ -35,7 +35,7 @@ find_library(zlib
 
 IF (NOT zlib)
     message(STATUS "Zlib library not found. Using internal zlib.")
-    add_subdirectory(../../Core/crc32/zlib zlib)
+    add_subdirectory(../../Core/crc32 zlib)
 ELSE()
     message(STATUS "Zlib library found. ${zlib}")
 ENDIF()

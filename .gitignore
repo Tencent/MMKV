@@ -54,3 +54,6 @@ dist/
 
 pubspec.lock
 Podfile.lock
+
+#docker
+output/
