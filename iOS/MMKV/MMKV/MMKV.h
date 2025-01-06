@@ -40,9 +40,11 @@ typedef NS_ENUM(UInt32, MMKVExpireDuration) {
     MMKVExpireInYear = 365 * 30 * 24 * 60 * 60,
 };
 
-@interface MMKV : NSObject
-
 NS_ASSUME_NONNULL_BEGIN
+
+@class MMKVNameSpace;
+
+@interface MMKV : NSObject
 
 /// call this in main thread, before calling any other MMKV methods
 /// @param rootDir the root dir of MMKV, passing nil defaults to {NSDocumentDirectory}/mmkv
@@ -140,12 +142,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param rootPath custom path of the file, `NSDocumentDirectory/mmkv` by default
 /// @param mode MMKVReadOnly for readonly MMKV, MMKVMultiProcess for multi-process MMKV
 /// @param expectedCapacity the file size you expected when opening or creating file
-+ (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:cryptKey:rootPath:mode:expectedCapacity:));
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(init(mmapID:cryptKey:rootPath:mode:expectedCapacity:));
 
 /// you can call this on applicationWillTerminate, it's totally fine if you don't call
 + (void)onAppTerminate;
 
 + (NSString *)mmkvBasePath;
+
+/// get a namespace with custom root dir
++ (MMKVNameSpace *)nameSpace:(NSString *)rootPath;
+
+/// identical with the original MMKV with the global root dir
++ (nullable MMKVNameSpace *)defaultNameSpace;
 
 /// if you want to change the base path, do it BEFORE getting any MMKV instance
 /// otherwise the behavior is undefined
@@ -397,6 +405,68 @@ NS_ASSUME_NONNULL_BEGIN
 // protection from potential misuse
 + (void)initialize NS_UNAVAILABLE;
 
-NS_ASSUME_NONNULL_END
+@end
+
+@interface MMKVNameSpace : NSObject
+
+- (NSString*)rootPath;
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(mmkv(mmapID:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param expectedCapacity the file size you expected when opening or creating file
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(mmkv(mmapID:expectedCapacity:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param mode MMKVReadOnly for readonly MMKV, MMKVMultiProcess for multi-process MMKV
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(mmkv(mmapID:mode:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 bytes at most
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey NS_SWIFT_NAME(mmkv(mmapID:cryptKey:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 bytes at most
+/// @param expectedCapacity the file size you expected when opening or creating file
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey expectedCapacity:(size_t)expectedCapacity NS_SWIFT_NAME(mmkv(mmapID:cryptKey:expectedCapacity:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+/// @param cryptKey 16 bytes at most
+/// @param mode MMKVReadOnly for readonly MMKV, MMKVMultiProcess for multi-process MMKV
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode NS_SWIFT_NAME(mmkv(mmapID:cryptKey:mode:));
+
+/// backup one MMKV instance from the customize root path to dstDir
+/// @param mmapID the MMKV ID to backup
+/// @param dstDir the backup destination directory
+- (BOOL)backupOneMMKV:(NSString *)mmapID toDirectory:(NSString *)dstDir NS_SWIFT_NAME(backup(mmapID:dstDir:));
+
+/// restore one MMKV instance from srcDir to the customize root path
+/// @param mmapID the MMKV ID to restore
+/// @param srcDir the restore source directory
+- (BOOL)restoreOneMMKV:(NSString *)mmapID fromDirectory:(NSString *)srcDir NS_SWIFT_NAME(restore(mmapID:srcDir:));
+
+/// backup all MMKV instance from the customize root path to dstDir
+/// @param dstDir the backup destination directory
+/// @return count of MMKV successfully backuped
+- (size_t)backupAllToDirectory:(NSString *)dstDir NS_SWIFT_NAME(backupAll(dstDir:));
+
+/// restore all MMKV instance from srcDir to the customize root path
+/// @param srcDir the restore source directory
+/// @return count of MMKV successfully restored
+- (size_t)restoreAllFromDirectory:(NSString *)srcDir NS_SWIFT_NAME(restoreAll(srcDir:));
+
+/// detect if the MMKV file is valid or not
+/// Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
+- (BOOL)isFileValid:(NSString *)mmapID NS_SWIFT_NAME(isFileValid(for:));
+
+/// remove the storage of the MMKV, including the data file & meta file (.crc)
+/// Note: the existing instance (if any) will be closed & destroyed
+- (BOOL)removeStorage:(NSString *)mmapID NS_SWIFT_NAME(removeStorage(for:));
+
+// protection from potential misuse
+- (instancetype)init NS_UNAVAILABLE;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -225,12 +225,12 @@
 
 - (void)testMMKV:(NSString *)mmapID withCryptKey:(NSData *)cryptKey decodeOnly:(BOOL)decodeOnly {
     MMKV *mmkv = [MMKV mmkvWithID:mmapID cryptKey:cryptKey];
-    [self testMMKV:mmkv decodeOnly:decodeOnly];
+    [ViewController testMMKV:mmkv decodeOnly:decodeOnly];
 
     NSLog(@"isFileValid[%@]: %d", mmapID, [MMKV isFileValid:mmapID]);
 }
 
-- (void)testMMKV:(MMKV *)mmkv decodeOnly:(BOOL)decodeOnly {
++ (void)testMMKV:(MMKV *)mmkv decodeOnly:(BOOL)decodeOnly {
     if (!decodeOnly) {
         [mmkv setInt32:-1024 forKey:@"int32"];
     }
@@ -1195,10 +1195,10 @@ MMKV *getMMKVForBatchTest() {
         auto mmkvDir = [mmkvPath stringByDeletingLastPathComponent];
         auto mmkv = [MMKV mmkvWithID:name cryptKey:key_1 rootPath:mmkvDir mode:MMKVReadOnly expectedCapacity:0];
 
-        [self testMMKV:mmkv decodeOnly:YES];
+        [ViewController testMMKV:mmkv decodeOnly:YES];
 
         // also check if it tolerate update operations without crash
-        [self testMMKV:mmkv decodeOnly:NO];
+        [ViewController testMMKV:mmkv decodeOnly:NO];
     }
 }
 
