@@ -24,6 +24,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include "../MMKVLog.h"
+#include "../MemoryFile.h"
 
 namespace mmkv {
 
@@ -175,11 +177,6 @@ AESCrypt AESCrypt::cloneWithStatus(const AESCryptStatus &status) const {
 }
 
 #    ifdef MMKV_DEBUG
-
-#        include "../MMKVLog.h"
-#        include "../MemoryFile.h"
-
-namespace mmkv {
 
 void testRandomPlaceHolder() {
     for (uint32_t size = 1; size < 6; size++) {
