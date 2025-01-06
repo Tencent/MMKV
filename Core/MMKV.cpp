@@ -216,16 +216,7 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
     // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
     int device = 0, version = 0;
     GetAppleMachineInfo(device, version);
-#    ifndef MMKV_IOS
     MMKVInfo("Apple Device: %d, version: %d", device, version);
-#    else
-    // we have verified that on iOS 13+, the mlock() protection in background is no longer needed
-    // this may be true as well on iOS 12 or even iOS 11, sadly we can't verify that on WeChat
-    if (@available(iOS 13, *)) {
-        MLockPtr::isMLockPtrEnabled = false;
-    }
-    MMKVInfo("Apple Device: %d, version: %d, mlock enabled: %d", device, version, MLockPtr::isMLockPtrEnabled);
-#    endif
 #endif
 
     if (g_rootDir.empty()) {

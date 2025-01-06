@@ -476,12 +476,6 @@ void MMKV::oldStyleWriteActualSize(size_t actualSize) {
     MMKV_ASSERT(m_file->getMemory());
 
     m_actualSize = actualSize;
-#ifdef MMKV_IOS
-    auto ret = guardForBackgroundWriting(m_file->getMemory(), Fixed32Size);
-    if (!ret.first) {
-        return;
-    }
-#endif
     memcpy(m_file->getMemory(), &actualSize, Fixed32Size);
 }
 
@@ -527,12 +521,6 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
         m_metaInfo->m_version = MMKVVersionFlag;
         needsFullWrite = true;
     }
-#ifdef MMKV_IOS
-    auto ret = guardForBackgroundWriting(m_metaFile->getMemory(), sizeof(MMKVMetaInfo));
-    if (!ret.first) {
-        return false;
-    }
-#endif
     if (mmkv_unlikely(needsFullWrite)) {
         m_metaInfo->write(m_metaFile->getMemory());
     } else {
@@ -839,12 +827,6 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
         return make_pair(false, KeyValueHolder());
     }
 
-#ifdef MMKV_IOS
-    auto ret = guardForBackgroundWriting(m_output->curWritePointer(), size);
-    if (!ret.first) {
-        return make_pair(false, KeyValueHolder());
-    }
-#endif
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
         if (KeyValueHolderCrypt::isValueStoredAsOffset(valueLength)) {
@@ -905,12 +887,6 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
     // we don't not support override in multi-process mode
     // SCOPED_LOCK(m_exclusiveProcessLock);
 
-#ifdef MMKV_IOS
-    auto ret = guardForBackgroundWriting(m_output->curWritePointer(), size);
-    if (!ret.first) {
-        return make_pair(false, KeyValueHolder());
-    }
-#endif
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
         if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
@@ -1261,12 +1237,6 @@ static void fullWriteBackWholeData(MMBuffer allData, size_t totalSize, CodedOutp
 bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
-#    ifdef MMKV_IOS
-    auto ret = guardForBackgroundWriting(ptr + Fixed32Size, totalSize);
-    if (!ret.first) {
-        return false;
-    }
-#    endif
 
     uint8_t newIV[AES_KEY_LEN];
     auto encrypter = (newCrypter == InvalidCryptPtr) ? nullptr : (newCrypter ? newCrypter : m_crypter);
@@ -1309,12 +1279,6 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
 bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
-#    ifdef MMKV_IOS
-    auto ret = guardForBackgroundWriting(ptr + Fixed32Size, totalSize);
-    if (!ret.first) {
-        return false;
-    }
-#    endif
 
     delete m_output;
     m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
