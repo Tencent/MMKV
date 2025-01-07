@@ -75,3 +75,4 @@ export const writeValueToNativeBuffer: (handle: bigint, key: string, ptr: bigint
 export const isMultiProcess: (handle: bigint) => boolean;
 export const isReadOnly: (handle: bigint) => boolean;
 export const checkContentChanged:(handle: bigint) => void;
+export const getNameSpace:(rootPath: string) => boolean;

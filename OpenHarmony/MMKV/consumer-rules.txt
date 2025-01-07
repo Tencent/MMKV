@@ -24,6 +24,7 @@ MMKVRecoverStrategic
 MMKVLogLevel
 NativeBuffer
 getObjKeys
+NameSpace
 
 -keep-property-name
 *_MODE

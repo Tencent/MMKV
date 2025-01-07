@@ -113,6 +113,10 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
     return kv;
 }
 
+MMKV_EXPORT void *getMMKVWithID2(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity, bool fromNameSpace) {
+    return getMMKVWithID(mmapID, mode, cryptKey, rootPath, expectedCapacity);
+}
+
 MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey) {
     MMKV *kv = nullptr;
 
@@ -651,8 +655,10 @@ MMKV_EXPORT void checkContentChanged(void *handle) {
 MMKV_EXPORT bool getNameSpace(const char *rootPath) {
     if (rootPath) {
         auto root = string(rootPath);
-        MMKV::nameSpace(root);
-        return true;
+        if (!root.empty()) {
+            MMKV::nameSpace(root);
+            return true;
+        }
     }
     return false;
 }

@@ -1083,8 +1083,10 @@ MMKV_JNI jboolean isReadOnly(JNIEnv *env, jobject instance) {
 MMKV_JNI jboolean getNameSpace(JNIEnv *env, jclass type, jstring rootPath) {
     if (rootPath) {
         auto root = jstring2string(env, rootPath);
-        MMKV::nameSpace(root);
-        return (jboolean) true;
+        if (!root.empty()) {
+            MMKV::nameSpace(root);
+            return (jboolean) true;
+        }
     }
     return (jboolean) false;
 }

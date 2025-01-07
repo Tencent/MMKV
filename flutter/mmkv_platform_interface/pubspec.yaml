@@ -3,7 +3,7 @@ description: A common platform interface for the MMKV plugin.
 repository: https://github.com/Tencent/MMKV/tree/master/flutter/mmkv_platform_interface
 # NOTE: We strongly prefer non-breaking changes, even at the expense of a
 # less-clean API. See https://flutter.dev/go/platform-interface-breaking-changes
-version: 2.0.0
+version: 2.1.0
 homepage: https://github.com/Tencent/MMKV
 
 environment:
