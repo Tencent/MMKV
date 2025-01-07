@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#include "MMKV.h"
+#include <MMKV/MMKV.h>
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -96,6 +96,36 @@ PYBIND11_MODULE(mmkv, m) {
         .value("FileLength", MMKVErrorType::MMKVFileLength)
         .export_values();
 
+    py::class_<NameSpace, unique_ptr<NameSpace>> clsNameSpace(m, "NameSpace");
+
+    clsNameSpace.def("mmkvWithID", &NameSpace::mmkvWithID,
+                "Parameters:\n"
+                "  mmapID: all instances of the same mmapID share the same data and file storage\n"
+                "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
+                "  cryptKey: pass a non-empty string for an encrypted MMKV, 16 bytes at most\n"
+                "  expectedCapacity: the file size you expected when opening or creating file",
+                py::arg("mmapID"), py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string(),
+                py::arg("expectedCapacity") = 0);
+
+    clsNameSpace.def("rootDir", &NameSpace::getRootDir, "get the root directory of NameSpace");
+
+    clsNameSpace.def("backupOneToDirectory", &NameSpace::backupOneToDirectory,
+        "backup one MMKV instance from the root dir of NameSpace to dstDir",
+        py::arg("mmapID"), py::arg("dstDir"));
+
+    clsNameSpace.def("restoreOneFromDirectory", &NameSpace::restoreOneFromDirectory,
+        "restore one MMKV instance from srcDir to dstDir to the root dir of NameSpace",
+        py::arg("mmapID"), py::arg("srcDir"));
+
+    clsNameSpace.def("backupAllToDirectory", &NameSpace::backupAllToDirectory,
+        "backup all MMKV instance from the root dir of NameSpace to dstDir", py::arg("dstDir"));
+
+    clsNameSpace.def("restoreAllFromDirectory", &NameSpace::restoreAllFromDirectory,
+        "restore all MMKV instance from srcDir to the root dir of NameSpace", py::arg("srcDir"));
+
+    clsNameSpace.def("removeStorage", &NameSpace::removeStorage);
+    clsNameSpace.def("isFileValid", &NameSpace::isFileValid);
+
     py::class_<MMKV, unique_ptr<MMKV, py::nodelete>> clsMMKV(m, "MMKV");
 
     // TODO: not working
@@ -142,6 +172,9 @@ PYBIND11_MODULE(mmkv, m) {
             return MMKV::defaultMMKV(mode, cryptKeyPtr);
         },
         "a generic purpose instance", py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string());
+
+    clsMMKV.def_static("nameSpace", &MMKV::nameSpace, "get a namespace with custom root dir");
+    clsMMKV.def_static("defaultNameSpace", &MMKV::defaultNameSpace, "identical with the original MMKV with the global root dir");
 
     clsMMKV.def("mmapID", &MMKV::mmapID);
     clsMMKV.def("isInterProcess", &MMKV::isMultiProcess);
@@ -353,7 +386,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "backupOneToDirectory",
         [](const string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t &srcDir) {
-            MMKVPath_t *srcDirPtr = (srcDir.length() > 0) ? (MMKVPath_t *) &srcDir : nullptr;
+            MMKVPath_t *srcDirPtr = (!srcDir.empty()) ? (MMKVPath_t *) &srcDir : nullptr;
             return MMKV::backupOneToDirectory(mmapID, dstDir, srcDirPtr);
         },
         "backup one MMKV instance from srcDir (default to the root dir of MMKV) to dstDir", py::arg("mmapID"),
@@ -362,7 +395,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "restoreOneFromDirectory",
         [](const string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t &dstDir) {
-            MMKVPath_t *dstDirPtr = (dstDir.length() > 0) ? (MMKVPath_t *) &dstDir : nullptr;
+            MMKVPath_t *dstDirPtr = (!dstDir.empty()) ? (MMKVPath_t *) &dstDir : nullptr;
             return MMKV::restoreOneFromDirectory(mmapID, srcDir, dstDirPtr);
         },
         "restore one MMKV instance from srcDir to dstDir (default to the root dir of MMKV)", py::arg("mmapID"),
@@ -371,7 +404,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "backupAllToDirectory",
         [](const MMKVPath_t &dstDir, const MMKVPath_t &srcDir) {
-            MMKVPath_t *srcDirPtr = (srcDir.length() > 0) ? (MMKVPath_t *) &srcDir : nullptr;
+            MMKVPath_t *srcDirPtr = (!srcDir.empty()) ? (MMKVPath_t *) &srcDir : nullptr;
             return MMKV::backupAllToDirectory(dstDir, srcDirPtr);
         },
         "backup all MMKV instance from srcDir (default to the root dir of MMKV) to dstDir", py::arg("dstDir"),
@@ -380,7 +413,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "restoreAllFromDirectory",
         [](const MMKVPath_t &srcDir, const MMKVPath_t &dstDir) {
-            MMKVPath_t *dstDirPtr = (dstDir.length() > 0) ? (MMKVPath_t *) &dstDir : nullptr;
+            MMKVPath_t *dstDirPtr = (!dstDir.empty()) ? (MMKVPath_t *) &dstDir : nullptr;
             return MMKV::restoreAllFromDirectory(srcDir, dstDirPtr);
         },
         "restore all MMKV instance from srcDir to dstDir (default to the root dir of MMKV)", py::arg("srcDir"),
@@ -389,9 +422,17 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def_static(
         "removeStorage",
         [](const string &mmapID, const MMKVPath_t &rootDir) {
-            MMKVPath_t *rootDirPtr = (rootDir.length() > 0) ? (MMKVPath_t *) &rootDir : nullptr;
+            MMKVPath_t *rootDirPtr = (!rootDir.empty()) ? (MMKVPath_t *) &rootDir : nullptr;
             return MMKV::removeStorage(mmapID, rootDirPtr);
         },
         "remove the storage of the MMKV, including the data file & meta file (.crc)", py::arg("mmapID"),
         py::arg("rootDir") = MMKVPath_t());
+
+    clsMMKV.def_static("isFileValid",
+       [](const string &mmapID, const MMKVPath_t &rootDir) {
+           MMKVPath_t *rootDirPtr = (!rootDir.empty()) ? (MMKVPath_t *) &rootDir : nullptr;
+           return MMKV::isFileValid(mmapID, rootDirPtr);
+       },
+       "detect if the MMKV file is valid or not", py::arg("mmapID"),
+       py::arg("rootDir") = MMKVPath_t());
 }

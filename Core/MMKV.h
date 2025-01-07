@@ -617,7 +617,6 @@ public:
     MMKV *mmkvWithID(const std::string &mmapID,
                      MMKVMode mode = MMKV_SINGLE_PROCESS,
                      const std::string *cryptKey = nullptr,
-                     const MMKVPath_t *rootPath = nullptr,
                      size_t expectedCapacity = 0);
 
 #else // defined(MMKV_ANDROID)
@@ -629,7 +628,6 @@ public:
                      int size = mmkv::DEFAULT_MMAP_SIZE,
                      MMKVMode mode = MMKV_SINGLE_PROCESS,
                      const std::string *cryptKey = nullptr,
-                     const MMKVPath_t *rootPath = nullptr,
                      size_t expectedCapacity = 0);
 #endif // MMKV_ANDROID
 

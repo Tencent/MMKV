@@ -326,9 +326,8 @@ bool MMKV::checkProcessMode() {
     }
 }
 
-MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity) {
-    auto theRootPath = rootPath ? rootPath : &m_rootDir;
-    return MMKV::mmkvWithID(mmapID, size, mode, cryptKey, theRootPath, expectedCapacity);
+MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, size_t expectedCapacity) {
+    return MMKV::mmkvWithID(mmapID, size, mode, cryptKey, &m_rootDir, expectedCapacity);
 }
 
 #endif // MMKV_ANDROID

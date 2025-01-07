@@ -1759,9 +1759,8 @@ NameSpace MMKV::defaultNameSpace() {
 }
 
 #ifndef MMKV_ANDROID
-MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity) {
-    auto theRootPath = rootPath ? rootPath : &m_rootDir;
-    return MMKV::mmkvWithID(mmapID, mode, cryptKey, theRootPath, expectedCapacity);
+MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, size_t expectedCapacity) {
+    return MMKV::mmkvWithID(mmapID, mode, cryptKey, &m_rootDir, expectedCapacity);
 }
 #endif
 
