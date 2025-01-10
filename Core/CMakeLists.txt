@@ -184,12 +184,12 @@ function(copy_files)
     list(REMOVE_AT ARGN -1)
     set(source_files ${ARGN})
 
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${destination_dir})
+    file(MAKE_DIRECTORY ${destination_dir})
 
     foreach(file ${source_files})
         get_filename_component(file_dir ${file} DIRECTORY)
-        file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${destination_dir}/${file_dir})
-        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${file} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${destination_dir}/${file_dir})
+        file(MAKE_DIRECTORY ${destination_dir}/${file_dir})
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${file} DESTINATION ${destination_dir}/${file_dir})
     endforeach()
 endfunction()
 
@@ -200,13 +200,13 @@ copy_files(
         MMKVPredef.h
         MMBuffer.h
         MiniPBCoder.h
-        include/MMKV)
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV)
 
 IF(OHOS OR ANDROID)
     copy_files(
             MMKVLog.h
             MemoryFile.h
-            include/MMKV)
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV)
 ENDIF()
 
 target_include_directories(core INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)

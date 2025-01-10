@@ -113,7 +113,10 @@ android.libraryVariants.all { variant ->
     // Custom task to package headers into a ZIP file
     def headerZip = task("${variant.name}Header", type: Zip, dependsOn: 'build') {
         archiveClassifier = "header"
-        from '../../../Core/include'
+        from('../../../Core/include') {
+            exclude '*/MemoryFile.h'
+            exclude '*/MMKVLog.h'
+        }
         archiveFileName = 'headers.zip'
         destinationDirectory = file("$buildDir/outputs/headers")
     }
