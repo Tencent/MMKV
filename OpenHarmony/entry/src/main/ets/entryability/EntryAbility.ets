@@ -27,6 +27,7 @@ import childProcessManager from '@ohos.app.ability.childProcessManager';
 import { DemoProcess } from '../process/DemoProcess';
 import { MyMMKVHandler } from '../Util/MyMMKVHandler';
 import { BusinessError } from '@ohos.base';
+import native from 'libentry.so';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -100,5 +101,7 @@ export default class EntryAbility extends UIAbility {
     let ns = MMKV.nameSpace(rootDir);
     let kv = ns.mmkvWithID('test_namespace');
     testOneMMKV(kv, false);
+    let result = native.TestNativeMMKV(rootDir, 'test_namespace_native');
+    hilog.info(0x0000, 'mmkvdemo', 'mmkv native result:%{public}d', result);
   }
 }

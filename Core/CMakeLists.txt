@@ -193,7 +193,7 @@ function(copy_files)
     endforeach()
 endfunction()
 
-file(REMOVE_RECURSE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+#file(REMOVE_RECURSE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 copy_files(
         MMKV.h
@@ -202,11 +202,12 @@ copy_files(
         MiniPBCoder.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV)
 
+#message(STATUS "copying headers to ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV")
+
 IF(OHOS OR ANDROID)
-    copy_files(
-            MMKVLog.h
-            MemoryFile.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV)
+    file(COPY_FILE MemoryFile.h MMKVLog.h DESTINATION include/MMKV)
+ELSE()
+    file(REMOVE include/MMKV/MemoryFile.h include/MMKV/MMKVLog.h)
 ENDIF()
 
 target_include_directories(core INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -32,9 +32,12 @@ target_link_libraries(mmkv PUBLIC
     libhilog_ndk.z.so
     core)
 
-file(REMOVE_RECURSE ${MODULE_ROOT_PATH}/include)
+#file(REMOVE_RECURSE ${MODULE_ROOT_PATH}/include)
 
+message(STATUS "copying from ${REPO_ROOT_PATH}/Core/include to ${MODULE_ROOT_PATH}")
 file(COPY ${REPO_ROOT_PATH}/Core/include DESTINATION ${MODULE_ROOT_PATH}
     PATTERN "MMKVLog.h" EXCLUDE
     PATTERN "MemoryFile.h" EXCLUDE
 )
+
+#message(FATAL_ERROR "Halt.")
