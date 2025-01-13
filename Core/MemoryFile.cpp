@@ -614,6 +614,16 @@ void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(con
     closedir(dir);
 }
 
+bool deleteFile(const MMKVPath_t &path) {
+    auto filename = path.c_str();
+    if (::unlink(filename) != 0) {
+        auto err = errno;
+        MMKVError("fail to delete file [%s], %d (%s)", filename, err, strerror(err));
+        return false;
+    }
+    return true;
+}
+
 } // namespace mmkv
 
 #endif // !defined(MMKV_WIN32)

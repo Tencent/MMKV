@@ -161,6 +161,13 @@ class MMKV_EXPORT MMKV {
     void loadFromFile();
 
     void partialLoadFromFile();
+    
+#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+    bool m_isSecondLoad = false;
+    bool checkFileHasDiskError();
+#else
+    bool checkFileHasDiskError() { return false; }
+#endif
 
     void loadMetaInfoAndCheck();
 

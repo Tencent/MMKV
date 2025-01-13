@@ -445,8 +445,15 @@ LogHandler(MMKVLogLevel level, const char *file, int line, const char *function,
 }
 
 int main() {
+    // Get the original global locale
+    std::locale originalLocale = std::locale::global(std::locale());
+    std::cout << "Original locale: " << originalLocale.name() << std::endl;
     locale::global(locale(""));
-    wcout.imbue(locale(""));
+
+    std::locale newLocale = std::locale();
+    std::cout << "New locale: " << newLocale.name() << std::endl;
+    // wcout.imbue(locale(""));
+
     srand(GetTickCount());
 
     // test NameSpace before initializeMMKV()

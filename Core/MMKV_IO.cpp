@@ -188,6 +188,28 @@ void MMKV::partialLoadFromFile() {
     loadFromFile();
 }
 
+#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+bool MMKV::checkFileHasDiskError() {
+    if (m_isSecondLoad) {
+        return false;
+    }
+    m_isSecondLoad = true;
+
+    bool needReportReadFail = false;
+    if (isDiskOfMMAPFileCorrupted(m_metaFile, needReportReadFail)) {
+        m_metaFile->clearMemoryCache();
+        deleteFile(m_metaFile->getPath());
+        m_metaFile->reloadFromFile();
+    }
+    if (isDiskOfMMAPFileCorrupted(m_file, needReportReadFail)) {
+        m_file->clearMemoryCache();
+        deleteFile(m_file->getPath());
+        m_file->reloadFromFile(m_expectedCapacity);
+    }
+    return needReportReadFail;
+}
+#endif
+
 void MMKV::loadMetaInfoAndCheck() {
     if (!m_metaFile->isFileValid()) {
         m_metaFile->reloadFromFile();
@@ -195,6 +217,10 @@ void MMKV::loadMetaInfoAndCheck() {
     if (!m_metaFile->isFileValid()) {
         MMKVError("file [%s] not valid", m_metaFile->getPath().c_str());
         return;
+    }
+
+    if (checkFileHasDiskError()) {
+        // let user know?
     }
 
     m_metaInfo->read(m_metaFile->getMemory());
