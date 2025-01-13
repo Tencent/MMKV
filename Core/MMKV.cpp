@@ -1753,7 +1753,7 @@ NameSpace MMKV::nameSpace(const MMKVPath_t &rootDir) {
 NameSpace MMKV::defaultNameSpace() {
     if (g_rootDir.empty()) {
         MMKVWarning("MMKV has not been initialized, there's no default NameSpace.");
-        return NameSpace("");
+        return NameSpace(MMKVPath_t());
     }
     return NameSpace(g_realRootDir);
 }

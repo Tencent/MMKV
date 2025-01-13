@@ -417,6 +417,13 @@ void testReadOnly() {
     setReadOnly(crcPath, false);
 }
 
+void testNameSpace() {
+    wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-mmkv_namespace");
+    auto ns = MMKV::nameSpace(rootDir);
+    auto kv = ns.mmkvWithID("test_namespace");
+    functionalTest(kv, false);
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -441,6 +448,9 @@ int main() {
     locale::global(locale(""));
     wcout.imbue(locale(""));
     srand(GetTickCount());
+
+    // test NameSpace before initializeMMKV()
+    testNameSpace();
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-MMKV");
     MMKV::initializeMMKV(rootDir, MMKVLogInfo, LogHandler);

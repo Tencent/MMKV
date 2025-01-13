@@ -29,8 +29,10 @@
 #    include "ThreadLock.h"
 #    include <cassert>
 #    include <strsafe.h>
+#    include <filesystem>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 namespace mmkv {
 
@@ -247,6 +249,13 @@ size_t getPageSize() {
     SYSTEM_INFO system_info;
     GetSystemInfo(&system_info);
     return system_info.dwPageSize;
+}
+
+MMKVPath_t absolutePath(const MMKVPath_t& path) {
+    fs::path relative_path(path);
+    fs::path absolute_path = fs::absolute(relative_path);
+    fs::path normalized = fs::weakly_canonical(absolute_path);
+    return normalized.wstring();
 }
 
 bool isFileExist(const MMKVPath_t &nsFilePath) {
