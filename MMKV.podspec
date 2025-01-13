@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKV"
-  s.version      = "1.3.12"
+  s.version      = "1.3.13"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC
@@ -32,7 +32,7 @@ Pod::Spec.new do |s|
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
   }
 
-  s.dependency 'MMKVCore', '~> 1.3.12'
+  s.dependency 'MMKVCore', '~> 1.3.13'
 
 end
 
