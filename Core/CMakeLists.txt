@@ -205,7 +205,7 @@ copy_files(
 #message(STATUS "copying headers to ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV")
 
 IF(OHOS OR ANDROID)
-    file(COPY_FILE MemoryFile.h MMKVLog.h DESTINATION include/MMKV)
+    file(COPY MemoryFile.h MMKVLog.h DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV)
 ELSE()
     file(REMOVE include/MMKV/MemoryFile.h include/MMKV/MMKVLog.h)
 ENDIF()

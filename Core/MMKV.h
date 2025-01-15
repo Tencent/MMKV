@@ -162,12 +162,14 @@ class MMKV_EXPORT MMKV {
 
     void partialLoadFromFile();
     
-#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+//#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+// the disk corruption detection is tested in iOS/Win32, but not Android
+// let's assume what works for iOS also works on Android for they are all POSIX
     bool m_isSecondLoad = false;
     bool checkFileHasDiskError();
-#else
-    bool checkFileHasDiskError() { return false; }
-#endif
+//#else
+//    bool checkFileHasDiskError() { return false; }
+//#endif
 
     void loadMetaInfoAndCheck();
 

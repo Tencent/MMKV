@@ -188,7 +188,7 @@ void MMKV::partialLoadFromFile() {
     loadFromFile();
 }
 
-#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+//#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
 bool MMKV::checkFileHasDiskError() {
     if (m_isSecondLoad) {
         return false;
@@ -208,7 +208,7 @@ bool MMKV::checkFileHasDiskError() {
     }
     return needReportReadFail;
 }
-#endif
+//#endif
 
 void MMKV::loadMetaInfoAndCheck() {
     if (!m_metaFile->isFileValid()) {
