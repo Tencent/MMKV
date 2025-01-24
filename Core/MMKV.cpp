@@ -89,12 +89,12 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, const string *cryptKey, const MM
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
-    , m_file(new MemoryFile(m_path, m_expectedCapacity, isReadOnly()))
-    , m_metaFile(new MemoryFile(m_crcPath, 0, isReadOnly()))
+    , m_file(new MemoryFile(m_path, m_expectedCapacity, isReadOnly(), true))
+    , m_metaFile(new MemoryFile(m_crcPath, 0, isReadOnly(), !isMultiProcess()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile->getFd()))
+    , m_fileLock(new FileLock(isMultiProcess() ? m_metaFile->getFd() : MMKVFileHandleInvalidValue))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
 {
@@ -1456,9 +1456,11 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
 
         kv->sync();
         auto ret = copyFileContent(srcPath, kv->m_file->getFd());
+        kv->m_file->cleanMayflyFD();
         if (ret) {
             auto srcCRCPath = srcPath + CRC_SUFFIX;
             // ret = copyFileContent(srcCRCPath, kv->m_metaFile->getFd());
+            // kv->m_metaFile->cleanMayflyFD();
 #ifndef MMKV_ANDROID
             MemoryFile srcCRCFile(srcCRCPath);
 #else
