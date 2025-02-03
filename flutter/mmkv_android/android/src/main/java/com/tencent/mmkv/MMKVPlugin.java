@@ -20,43 +20,49 @@
 
 package com.tencent.mmkv;
 
+import android.content.Context;
 import androidx.annotation.NonNull;
-import com.tencent.mmkv.MMKV;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 
-/** MmkvPlugin */
+/* MMKVPlugin */
 public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
     private MethodChannel channel;
+    private Context context;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
         loadLibrary();
 
+        context = flutterPluginBinding.getApplicationContext();
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "mmkv");
         channel.setMethodCallHandler(this);
     }
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-        if (call.method.equals("initializeMMKV")) {
-            final String rootDir = call.argument("rootDir");
-            final int logLevel = call.argument("logLevel");
-            final String ret = MMKV.initialize(rootDir, MMKVLogLevel.values()[logLevel]);
-            result.success(ret);
-        } else if (call.method.equals("getSdkVersion")) {
-            final int sdkVersion = getSdkVersion();
-            result.success(sdkVersion);
-        } else {
-            result.notImplemented();
+        switch (call.method) {
+            case "initializeMMKV":
+                final String rootDir = call.argument("rootDir");
+                final Object logLevelObj = call.argument("logLevel");
+                final int logLevelInt = logLevelObj instanceof Integer ? (int) logLevelObj : 1 /* LevelInfo */;
+                final MMKVLogLevel logLevel = MMKVLogLevel.values()[logLevelInt];
+                final String ret = MMKV.initialize(context, rootDir, logLevel);
+                result.success(ret);
+                break;
+            case "getSdkVersion":
+                result.success(android.os.Build.VERSION.SDK_INT);
+                break;
+            default:
+                result.notImplemented();
+                break;
         }
     }
 
@@ -65,18 +71,12 @@ public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(null);
     }
 
-    private int getSdkVersion() {
-        return Integer.parseInt(android.os.Build.VERSION.SDK);
-    }
-
     private static boolean isLibraryLoaded = false;
 
     private static void loadLibrary() {
-        if (isLibraryLoaded) {
-            return;
+        if (!isLibraryLoaded) {
+            System.loadLibrary("mmkv");
+            isLibraryLoaded = true;
         }
-
-        System.loadLibrary("mmkv");
-        isLibraryLoaded = true;
     }
 }
