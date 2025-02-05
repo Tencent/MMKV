@@ -20,6 +20,7 @@
 
 #import "AppDelegate.h"
 #import <MMKV/MMKV.h>
+#import "ViewController.h"
 
 @interface AppDelegate () <MMKVHandler>
 
@@ -30,6 +31,8 @@
 #pragma mark - init MMKV in the main thread
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // test using NameSpace before +[MMKV initializeMMKV:]
+    [self testNameSpace];
 
     // usally you can just init MMKV with the default root dir like this
     //[MMKV initializeMMKV:nil];
@@ -92,6 +95,8 @@
     NSLog(@"redirect logging [%s] <%s:%d::%s> %@", levelDesc, file, line, funcname, message);
 }
 
+#pragma mark - UIApplicationDelegate
+
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
@@ -113,6 +118,18 @@
 - (void)applicationWillTerminate:(UIApplication *)application {
     // it's totally fine no calling this method
     [MMKV onAppTerminate];
+}
+
+#pragma mark -
+
+- (void)testNameSpace {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+    NSString *libraryPath = (NSString *) [paths firstObject];
+    NSString *rootDir = [libraryPath stringByAppendingPathComponent:@"mmkv_namespace"];
+
+    MMKVNameSpace *ns = [MMKV nameSpace:rootDir];
+    MMKV *kv = [ns mmkvWithID:@"test_namespace"];
+    [ViewController testMMKV:kv decodeOnly:NO];
 }
 
 @end

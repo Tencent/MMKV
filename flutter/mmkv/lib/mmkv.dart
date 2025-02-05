@@ -37,7 +37,7 @@ enum MMKVMode {
   SINGLE_PROCESS_MODE,
   MULTI_PROCESS_MODE,
 }
-final int _READ_ONLY_MODE = 1 << 5;
+const int _READ_ONLY_MODE = 1 << 5;
 
 /// A native memory buffer, must call [MMBuffer.destroy()] after no longer use.
 class MMBuffer {
@@ -126,6 +126,28 @@ class MMBuffer {
   }
 }
 
+/// A facade wrapper for customize root path
+class NameSpace {
+  late String _rootDir;
+
+  NameSpace(String dir) {
+    _rootDir = dir;
+  }
+
+  String get rootDir => _rootDir;
+
+  /// Get an MMKV instance with an unique ID [mmapID].
+  ///
+  /// * If you want a per-user mmkv, you could merge user-id within [mmapID].
+  /// * You can get a multi-process MMKV instance by passing [MMKVMode.MULTI_PROCESS_MODE].
+  /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
+  MMKV mmkv(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, int expectedCapacity = 0
+    , bool readOnly = false}) {
+    final kv = MMKV._init(mmapID, mode: mode, cryptKey: cryptKey, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly, fromNameSpace: true);
+    return kv;
+  }
+}
+
 /// An efficient, small mobile key-value storage framework developed by WeChat.
 /// Works on Android & iOS.
 class MMKV {
@@ -176,10 +198,30 @@ class MMKV {
     return result;
   }
 
-  /// The root directory of MMKV.
-  static String get rootDir {
-    return _rootDir;
+  /// create a NameSpace with custom root dir
+  static NameSpace nameSpace(String path) {
+    if (path.isNotEmpty) {
+      final rootDirPtr = _string2Pointer(path);
+      final ret = _getNameSpace(rootDirPtr);
+      calloc.free(rootDirPtr);
+      if (ret) {
+        final ns = NameSpace(path);
+        return ns;
+      }
+    }
+    throw StateError("Invalid rootPath $path");
   }
+
+  /// identical with the original MMKV with the global root dir
+  static NameSpace defaultNameSpace() {
+    if (rootDir.isEmpty) {
+      throw StateError("Invalid rootPath $rootDir");
+    }
+    return NameSpace(rootDir);
+  }
+
+  /// The root directory of MMKV.
+  static String get rootDir => _rootDir;
 
   /// A generic purpose instance in single-process mode.
   ///
@@ -208,13 +250,18 @@ class MMKV {
   /// * You can customize the [rootDir] of the file.
   MMKV(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0
     , bool readOnly = false}) {
+    MMKV._init(mmapID, mode: mode, cryptKey: cryptKey, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly, fromNameSpace: false);
+  }
+
+  MMKV._init(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0
+    , bool readOnly = false, bool fromNameSpace = false}) {
     if (mmapID.isNotEmpty) {
       final mmapIDPtr = _string2Pointer(mmapID);
       final cryptKeyPtr = _string2Pointer(cryptKey);
       final rootDirPtr = _string2Pointer(rootDir);
 
       final realMode = readOnly ? (mode.index | _READ_ONLY_MODE) : mode.index;
-      _handle = _getMMKVWithID(mmapIDPtr, realMode, cryptKeyPtr, rootDirPtr, expectedCapacity);
+      _handle = _getMMKVWithID2(mmapIDPtr, realMode, cryptKeyPtr, rootDirPtr, expectedCapacity, _bool2Int(fromNameSpace));
       if (_handle == nullptr) {
         throw StateError("Invalid state, forget initialize MMKV first?");
       }
@@ -809,8 +856,8 @@ String? _buffer2String(Pointer<Uint8>? ptr, int length) {
 
 final MMKVPluginPlatform _mmkvPlatform = MMKVPluginPlatform.instance!;
 
-final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) _getMMKVWithID =
-    _mmkvPlatform.getMMKVWithIDFunc();
+final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace) _getMMKVWithID2 =
+_mmkvPlatform.getMMKVWithIDFunc2();
 
 final Pointer<Void> Function(int, Pointer<Utf8> cryptKey) _getDefaultMMKV = _mmkvPlatform.getDefaultMMKVFunc();
 
@@ -910,3 +957,5 @@ final ErrorCallbackRegister _registerErrorHandler = _mmkvPlatform.registerErrorH
 final ContentCallbackRegister _registerContentHandler = _mmkvPlatform.registerContentHandlerFunc();
 
 final void Function(Pointer<Void>) _checkContentChanged = _mmkvPlatform.checkContentChangedFunc();
+
+final bool Function(Pointer<Utf8>) _getNameSpace = _mmkvPlatform.getNameSpaceFunc();

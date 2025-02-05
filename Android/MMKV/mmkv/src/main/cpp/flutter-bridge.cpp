@@ -18,12 +18,12 @@
  * limitations under the License.
  */
 
-#include "MMKVPredef.h"
+#include <MMKV/MMKVPredef.h>
 
 #ifndef MMKV_DISABLE_FLUTTER
 
-#    include "MMKV.h"
-#    include "MMKVLog.h"
+#    include <MMKV/MMKV.h>
+#    include <MMKV/MMKVLog.h>
 #    include <cstdint>
 #    include <string>
 
@@ -35,6 +35,9 @@ extern int g_android_api;
 extern string g_android_tmpDir;
 }
 
+#    ifdef MMKV_EXPORT
+#       undef MMKV_EXPORT
+#    endif
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
 using LogCallback_t = void (*)(uint32_t level, const char *file, int32_t line, const char *funcname, const char *message);
@@ -108,6 +111,10 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
     }
 
     return kv;
+}
+
+MMKV_EXPORT void *getMMKVWithID2(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity, bool fromNameSpace) {
+    return getMMKVWithID(mmapID, mode, cryptKey, rootPath, expectedCapacity);
 }
 
 MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey) {
@@ -643,6 +650,17 @@ MMKV_EXPORT void checkContentChanged(void *handle) {
     if (kv) {
         kv->checkContentChanged();
     }
+}
+
+MMKV_EXPORT bool getNameSpace(const char *rootPath) {
+    if (rootPath) {
+        auto root = string(rootPath);
+        if (!root.empty()) {
+            MMKV::nameSpace(root);
+            return true;
+        }
+    }
+    return false;
 }
 
 #endif // MMKV_DISABLE_FLUTTER

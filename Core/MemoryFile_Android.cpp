@@ -233,4 +233,20 @@ MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID) {
     return MMKVPath_t(ASHMEM_NAME_DEF) + MMKV_PATH_SLASH + mmapID;
 }
 
+static long long timespec_to_ms(struct timespec ts) {
+    return (long long)ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
+}
+
+long long getFileModifyTimeInMS(const char *path) {
+    if (!path) {
+        return -1;
+    }
+    struct stat soStat = {};
+    if (::stat(path, &soStat) < 0) {
+        MMKVError("fail to stat %s: %d(%s)", path, errno, strerror(errno));
+        return -1;
+    }
+    return timespec_to_ms(soStat.st_mtim);
+}
+
 #endif // MMKV_ANDROID

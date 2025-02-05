@@ -1,6 +1,6 @@
 {
   "name": "@tencent/mmkv",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "The official OpenHarmony package of MMKV. An efficient, small mobile key-value storage framework developed by WeChat.",
   "main": "Index.ets",
   "author": "guoling",
@@ -10,6 +10,8 @@
   "dependencies": {
     "libmmkv.so": "file:./src/main/cpp/types/libmmkv"
   },
+  "compatibleSdkVersion": "12",
+  "compatibleSdkType": "HarmonyOS",
   "repository": "https://github.com/Tencent/mmkv",
   "homepage": "https://github.com/Tencent/mmkv",
   "keywords": [

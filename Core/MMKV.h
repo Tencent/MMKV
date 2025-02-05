@@ -46,6 +46,7 @@ struct MMKVMetaInfo;
 class FileLock;
 class InterProcessLock;
 class ThreadLock;
+class NameSpace;
 } // namespace mmkv
 
 MMKV_NAMESPACE_BEGIN
@@ -93,13 +94,15 @@ concept MMKV_SUPPORTED_VALUE_TYPE = MMKV_SUPPORTED_PRIMITIVE_VALUE_TYPE<T> || MM
     MMKV_SUPPORTED_VECTOR_VALUE_TYPE<T>;
 #endif // MMKV_HAS_CPP20
 
-class MMKV {
+class MMKV_EXPORT MMKV {
 #ifndef MMKV_ANDROID
-    MMKV(const std::string &mmapID, MMKVMode mode, std::string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity = 0);
+    MMKV(const std::string &mmapID, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
+    mmkv::FileLock *m_fileMigrationLock;
+    mmkv::InterProcessLock *m_sharedMigrationLock;
 
     MMKV(const std::string &mmapID, int size, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 
@@ -158,6 +161,15 @@ class MMKV {
     void loadFromFile();
 
     void partialLoadFromFile();
+    
+//#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+// the disk corruption detection is tested in iOS/Win32, but not Android
+// let's assume what works for iOS also works on Android for they are all POSIX
+    bool m_isSecondLoad = false;
+    bool checkFileHasDiskError();
+//#else
+//    bool checkFileHasDiskError() { return false; }
+//#endif
 
     void loadMetaInfoAndCheck();
 
@@ -249,7 +261,7 @@ public:
     static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo, mmkv::LogHandler handler = nullptr);
 
     // a generic purpose instance
-    static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, std::string *cryptKey = nullptr);
+    static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, const std::string *cryptKey = nullptr);
 
 #ifndef MMKV_ANDROID
 
@@ -258,8 +270,8 @@ public:
     // cryptKey: 16 bytes at most
     static MMKV *mmkvWithID(const std::string &mmapID,
                             MMKVMode mode = MMKV_SINGLE_PROCESS,
-                            std::string *cryptKey = nullptr,
-                            MMKVPath_t *rootPath = nullptr,
+                            const std::string *cryptKey = nullptr,
+                            const MMKVPath_t *rootPath = nullptr,
                             size_t expectedCapacity = 0);
 
 #else // defined(MMKV_ANDROID)
@@ -282,6 +294,12 @@ public:
 
     bool checkProcessMode();
 #endif // MMKV_ANDROID
+
+    // get a namespace with custom root dir
+    static mmkv::NameSpace nameSpace(const MMKVPath_t &rootDir);
+
+    // identical with the original MMKV with the global root dir
+    static mmkv::NameSpace defaultNameSpace();
 
     // you can call this on application termination, it's totally fine if you don't call
     static void onExit();
@@ -537,11 +555,11 @@ public:
 
     // detect if the MMKV file is valid or not
     // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
-    static bool isFileValid(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+    static bool isFileValid(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
     // remove the storage of the MMKV, including the data file & meta file (.crc)
     // Note: the existing instance (if any) will be closed & destroyed
-    static bool removeStorage(const std::string &mmapID, MMKVPath_t *relatePath = nullptr);
+    static bool removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;
@@ -590,6 +608,64 @@ bool MMKV::getVector(MMKVKey_t key, T &result) {
 #endif // MMKV_HAS_CPP20 && !MMKV_APPLE
 
 MMKV_NAMESPACE_END
+
+namespace mmkv {
+
+// a POD-like facade what wraps custom root directory
+class MMKV_EXPORT NameSpace {
+    const MMKVPath_t &m_rootDir;
+    NameSpace(const MMKVPath_t &rootDir) : m_rootDir(rootDir) {}
+public:
+    // return the absolute root dir of NameSpace
+    const MMKVPath_t &getRootDir() { return m_rootDir; }
+
+#ifndef MMKV_ANDROID
+    // mmapID: any unique ID (com.tencent.xin.pay, etc.)
+    // if you want a per-user mmkv, you could merge user-id within mmapID
+    // cryptKey: 16 bytes at most
+    MMKV *mmkvWithID(const std::string &mmapID,
+                     MMKVMode mode = MMKV_SINGLE_PROCESS,
+                     const std::string *cryptKey = nullptr,
+                     size_t expectedCapacity = 0);
+
+#else // defined(MMKV_ANDROID)
+
+    // mmapID: any unique ID (com.tencent.xin.pay, etc.)
+    // if you want a per-user mmkv, you could merge user-id within mmapID
+    // cryptKey: 16 bytes at most
+    MMKV *mmkvWithID(const std::string &mmapID,
+                     int size = mmkv::DEFAULT_MMAP_SIZE,
+                     MMKVMode mode = MMKV_SINGLE_PROCESS,
+                     const std::string *cryptKey = nullptr,
+                     size_t expectedCapacity = 0);
+#endif // MMKV_ANDROID
+
+    // backup one MMKV instance to dstDir
+    bool backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir);
+
+    // restore one MMKV instance from srcDir
+    bool restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir);
+
+    // backup all MMKV instance to dstDir
+    // return count of MMKV successfully backuped
+    size_t backupAllToDirectory(const MMKVPath_t &dstDir);
+
+    // restore all MMKV instance from srcDir
+    // return count of MMKV successfully restored
+    size_t restoreAllFromDirectory(const MMKVPath_t &srcDir);
+
+    // detect if the MMKV file is valid or not
+    // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.
+    bool isFileValid(const std::string &mmapID);
+
+    // remove the storage of the MMKV, including the data file & meta file (.crc)
+    // Note: the existing instance (if any) will be closed & destroyed
+    bool removeStorage(const std::string &mmapID);
+
+    friend class MMKV_NAMESPACE_PREFIX::MMKV;
+};
+
+}
 
 #endif // __cplusplus
 #endif // MMKV_MMKV_H

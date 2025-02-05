@@ -42,8 +42,8 @@ extern ThreadLock *g_instanceLock;
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
     , m_mode(mode)
-    , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
+    , m_path(mappedKVPathWithID(m_mmapID, rootPath, mode))
+    , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
@@ -52,16 +52,20 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile->getFd(), (mode & MMKV_ASHMEM)))
+    , m_fileLock(new FileLock(m_metaFile->getFd(), (mode & MMKV_ASHMEM), 0, 1))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType)) {
     m_actualSize = 0;
     m_output = nullptr;
 
     // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-    m_fileModeLock = new FileLock(m_file->getFd(), true);
+    m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
     m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     m_exclusiveProcessModeLock = nullptr;
+
+    m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
+    m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
+    m_sharedMigrationLock->try_lock();
 
 #    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
@@ -91,16 +95,17 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
 MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *cryptKey)
     : m_mmapID(mmapID)
     , m_mode(MMKV_ASHMEM)
-    , m_path(mappedKVPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
-    , m_crcPath(crcPathWithID(m_mmapID, MMKV_ASHMEM, nullptr))
+    , m_path(mappedKVPathWithID(m_mmapID, nullptr, MMKV_ASHMEM))
+    , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
+    , m_expectedCapacity(DEFAULT_MMAP_SIZE)
     , m_file(new MemoryFile(ashmemFD))
     , m_metaFile(new MemoryFile(ashmemMetaFD))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile->getFd(), true))
+    , m_fileLock(new FileLock(m_metaFile->getFd(), true, 0, 1))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType)) {
 
@@ -108,9 +113,13 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     m_output = nullptr;
 
     // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-    m_fileModeLock = new FileLock(m_file->getFd(), true);
+    m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
     m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     m_exclusiveProcessModeLock = nullptr;
+
+    m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
+    m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
+    m_sharedMigrationLock->try_lock();
 
 #    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
@@ -137,6 +146,46 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     }*/
 }
 
+// historically Android mistakenly use mmapKey as mmapID, we try migrate back to normal when possible
+MigrateStatus tryMigrateLegacyMMKVFile(const string &mmapID, const string *rootPath) {
+    auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
+    if (legacyID == mmapID) {
+        // it's not specially encoded
+        return MigrateStatus::NotSpecial;
+    }
+    auto path = mappedKVPathWithID(legacyID, rootPath);
+    auto targetPath = mappedKVPathWithID(mmapID, rootPath);
+    bool oldExit = isFileExist(path);
+    bool newExist = isFileExist(targetPath);
+    if (oldExit) {
+        if (newExist) {
+            MMKVWarning("both legacy file [%s] modify: %lld ms, and new file [%s] modify: %lld ms exist",
+                        path.c_str(), getFileModifyTimeInMS(path.c_str()),
+                        targetPath.c_str(), getFileModifyTimeInMS(targetPath.c_str()));
+            return MigrateStatus::OldAndNewExist;
+        }
+        auto file = File(path, OpenFlag::ReadWrite);
+        if (file.isFileValid()) {
+            // check if it's opened by other process
+            auto fileMigrationLock = FileLock(file.getFd(), true, 2, 3);
+            auto exclusiveMigrationLock = InterProcessLock(&fileMigrationLock, ExclusiveLockType);
+            // works even if it's opened by us
+            if (exclusiveMigrationLock.try_lock()) {
+                if (tryAtomicRename(path, targetPath)) {
+                    if (tryAtomicRename(crcPathWithPath(path), crcPathWithPath(targetPath))) {
+                        MMKVInfo("Migrated legacy MMKV [%s] to [%s] in path %s", legacyID.c_str(), mmapID.c_str(), rootPath->c_str());
+                        return MigrateStatus::OldToNewMigrated;
+                    }
+                }
+            } else {
+                MMKVInfo("Can't migrate legacy MMKV [%s] to [%s] in path %s, try next time.", legacyID.c_str(), mmapID.c_str(), rootPath->c_str());
+            }
+        }
+        return MigrateStatus::OldToNewMigrateFail;
+    }
+    return newExist ? MigrateStatus::NewExist : MigrateStatus::NoneExist;
+}
+
 MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity) {
     if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
@@ -158,17 +207,24 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const stri
         MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
 
-    string realID;
-    auto correctPath = mappedKVPathWithID(mmapID, mode, rootPath);
-    if ((mode & MMKV_BACKUP) || (rootPath && isFileExist(correctPath))) {
-        // it's successfully migrated to the correct path by newer version of MMKV
-        realID = mmapID;
-    } else {
-        // historically Android mistakenly use mmapKey as mmapID
-        realID = mmapKey;
+    MMKV *kv = nullptr;
+    auto migrateStatus = (mode & MMKV_ASHMEM) ? MigrateStatus::NoneExist : tryMigrateLegacyMMKVFile(mmapID, rootPath);
+    switch (migrateStatus) {
+        case MigrateStatus::NotSpecial:
+        case MigrateStatus::NoneExist:
+        case MigrateStatus::NewExist:
+        case MigrateStatus::OldToNewMigrated:
+        case MigrateStatus::OldAndNewExist: // TODO: shell we compare and use the latest one?
+            kv = new MMKV(mmapID, size, mode, cryptKey, rootPath, expectedCapacity);
+            break;
+        case MigrateStatus::OldToNewMigrateFail: {
+            auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
+            kv = new MMKV(legacyID, size, mode, cryptKey, rootPath, expectedCapacity);
+            break;
+        }
     }
-    auto kv = new MMKV(realID, size, mode, cryptKey, rootPath, expectedCapacity);
     kv->m_mmapKey = mmapKey;
+
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }
@@ -268,6 +324,10 @@ bool MMKV::checkProcessMode() {
         }
         return shareLocked;
     }
+}
+
+MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, size_t expectedCapacity) {
+    return MMKV::mmkvWithID(mmapID, size, mode, cryptKey, &m_rootDir, expectedCapacity);
 }
 
 #endif // MMKV_ANDROID

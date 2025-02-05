@@ -29,6 +29,8 @@
 #ifdef MMKV_ANDROID
 MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
 
+long long getFileModifyTimeInMS(const char *path);
+
 namespace mmkv {
 extern int g_android_api;
 extern std::string g_android_tmpDir;
@@ -171,6 +173,7 @@ extern bool isFileExist(const MMKVPath_t &nsFilePath);
 extern MMBuffer *readWholeFile(const MMKVPath_t &path);
 extern bool zeroFillFile(MMKVFileHandle_t fd, size_t startPos, size_t size);
 extern size_t getPageSize();
+extern MMKVPath_t absolutePath(const MMKVPath_t &path);
 
 extern bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 
@@ -181,6 +184,12 @@ extern bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 extern bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 extern bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD);
 extern bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate);
+
+//#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail);
+//#endif
+
+bool deleteFile(const MMKVPath_t &path);
 
 enum WalkType : uint32_t {
     WalkFile = 1 << 0,

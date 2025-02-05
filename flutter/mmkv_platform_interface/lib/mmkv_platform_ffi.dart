@@ -43,6 +43,13 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   }
 
   @override
+  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace) getMMKVWithIDFunc2() {
+    return nativeLib()
+        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>, Pointer<Utf8>, Uint32, Int8)>>("getMMKVWithID2")
+        .asFunction();
+  }
+
+  @override
   Pointer<Void> Function(int, Pointer<Utf8> cryptKey) getDefaultMMKVFunc() {
     return nativeLib().lookup<NativeFunction<Pointer<Void> Function(Uint32, Pointer<Utf8>)>>("getDefaultMMKV").asFunction();
   }
@@ -318,5 +325,10 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   @override
   void Function(Pointer<Void> p1) checkContentChangedFunc() {
     return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>)>>(nativeFuncName("checkContentChanged")).asFunction();
+  }
+
+  @override
+  bool Function(Pointer<Utf8> rootPath) getNameSpaceFunc() {
+    return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Utf8>)>>(nativeFuncName("getNameSpace")).asFunction();
   }
 }

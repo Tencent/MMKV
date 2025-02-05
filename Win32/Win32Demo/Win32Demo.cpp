@@ -417,6 +417,13 @@ void testReadOnly() {
     setReadOnly(crcPath, false);
 }
 
+void testNameSpace() {
+    wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-mmkv_namespace");
+    auto ns = MMKV::nameSpace(rootDir);
+    auto kv = ns.mmkvWithID("test_namespace");
+    functionalTest(kv, false);
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -438,9 +445,19 @@ LogHandler(MMKVLogLevel level, const char *file, int line, const char *function,
 }
 
 int main() {
+    // Get the original global locale
+    std::locale originalLocale = std::locale::global(std::locale());
+    std::cout << "Original locale: " << originalLocale.name() << std::endl;
     locale::global(locale(""));
-    wcout.imbue(locale(""));
+
+    std::locale newLocale = std::locale();
+    std::cout << "New locale: " << newLocale.name() << std::endl;
+    // wcout.imbue(locale(""));
+
     srand(GetTickCount());
+
+    // test NameSpace before initializeMMKV()
+    testNameSpace();
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"н╒пе-MMKV");
     MMKV::initializeMMKV(rootDir, MMKVLogInfo, LogHandler);

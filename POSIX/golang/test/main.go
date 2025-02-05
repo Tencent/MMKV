@@ -4,15 +4,24 @@ import (
 	"fmt"
 	//"log"
 	"math"
-	"time"
 	"os"
+	"time"
 
 	"tencent.com/mmkv"
 )
 
 func main() {
+	// test NameSpace before mmkv.Initialize()
+	testNameSpace()
+
 	// init MMKV with root dir and log redirecting
 	mmkv.InitializeMMKVWithLogLevelAndHandler("/tmp/mmkv", mmkv.MMKVLogInfo, logHandler)
+
+	{
+		fmt.Println("rootDir:", mmkv.GetRootDir())
+		ns := mmkv.DefaultNameSpace()
+		fmt.Println("DefaultNameSpace:", ns.GetRootDir())
+	}
 
 	// you can set log redirecting
 	// mmkv.RegisterLogHandler(logHandler)
@@ -21,7 +30,7 @@ func main() {
 	mmkv.RegisterErrorHandler(errorHandler)
 	// you can get notify content change by other process (not in realtime)
 	mmkv.RegisterContentChangeHandler(contentChangeNotify)
-       
+
 	testExpectedCapacity()
 	functionalTest()
 	testReKey()
@@ -186,29 +195,29 @@ func testBackup() {
 }
 
 func testExpectedCapacity() {
-    key := "key0"
-    value := "🏊🏻®4️⃣🐅_"
-    dataLen := 10000
-    for i := 0; i < dataLen; i++ {
-        value = value + string('0')
-    }
-    fmt.Println("value size = ", len(value))
-    expectedSize := uint64(len(key) + len(value))
-    // if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
-    kv := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest0", expectedSize)
-    // 0 times expand
-    kv.SetString(value, key)
-//     fmt.Println("string =", bytes.Count([]byte(kv.GetString("key0")), nil))
+	key := "key0"
+	value := "🏊🏻®4️⃣🐅_"
+	dataLen := 10000
+	for i := 0; i < dataLen; i++ {
+		value = value + string('0')
+	}
+	fmt.Println("value size = ", len(value))
+	expectedSize := uint64(len(key) + len(value))
+	// if we know exactly the sizes of key and value, set expectedCapacity for performance improvement
+	kv := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest0", expectedSize)
+	// 0 times expand
+	kv.SetString(value, key)
+	//     fmt.Println("string =", bytes.Count([]byte(kv.GetString("key0")), nil))
 
-    count := 10
-    expectedSize1 := expectedSize * uint64(count)
-    fmt.Println("expectedSize1 =", expectedSize1)
-    kv1 := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest1", expectedSize1)
-    for i := 0; i < count; i++ {
-        key := "key" + string(i)
-        // 0 times expand
-        kv1.SetString(value, key)
-    }
+	count := 10
+	expectedSize1 := expectedSize * uint64(count)
+	fmt.Println("expectedSize1 =", expectedSize1)
+	kv1 := mmkv.MMKVWithIDAndExpectedCapacity("expectedCapacityTest1", expectedSize1)
+	for i := 0; i < count; i++ {
+		key := "key" + string(i)
+		// 0 times expand
+		kv1.SetString(value, key)
+	}
 
 }
 
@@ -240,7 +249,7 @@ func testRestore() {
 	}
 }
 
-func testAutoExpire()  {
+func testAutoExpire() {
 	kv := mmkv.MMKVWithID("testAutoExpire")
 	kv.ClearAllKeepSpace()
 	kv.Trim()
@@ -266,66 +275,66 @@ func testAutoExpire()  {
 }
 
 func testCompareBeforeSet() {
-    kv := mmkv.MMKVWithID("testCompareBeforeSet")
-    kv.EnableCompareBeforeSet()
-    kv.SetString("extraValue", "extraKey")
+	kv := mmkv.MMKVWithID("testCompareBeforeSet")
+	kv.EnableCompareBeforeSet()
+	kv.SetString("extraValue", "extraKey")
 
-    key := ""
-    {
-        key = "bool"
-        kv.SetBool(true, key)
-        fmt.Println("testCompareBeforeSet: bool value = ", kv.GetBool(key))
-        actualSize1 := kv.ActualSize()
-        fmt.Println("testCompareBeforeSet: actualSize = ", actualSize1)
-        fmt.Println("testCompareBeforeSet: bool value = ", kv.GetBool(key))
-        kv.SetBool(true, key)
-        actualSize2 := kv.ActualSize()
-        fmt.Println("testCompareBeforeSet: actualSize2 = ", actualSize2)
-        if actualSize1 != actualSize2 {
-            panic("size not match")
-        }
-        kv.SetBool(false, key)
-        fmt.Println("testCompareBeforeSet: bool value = ", kv.GetBool(key))
-        if kv.GetBool(key) != false {
-            panic("value not update")
-        }
-    }
+	key := ""
+	{
+		key = "bool"
+		kv.SetBool(true, key)
+		fmt.Println("testCompareBeforeSet: bool value = ", kv.GetBool(key))
+		actualSize1 := kv.ActualSize()
+		fmt.Println("testCompareBeforeSet: actualSize = ", actualSize1)
+		fmt.Println("testCompareBeforeSet: bool value = ", kv.GetBool(key))
+		kv.SetBool(true, key)
+		actualSize2 := kv.ActualSize()
+		fmt.Println("testCompareBeforeSet: actualSize2 = ", actualSize2)
+		if actualSize1 != actualSize2 {
+			panic("size not match")
+		}
+		kv.SetBool(false, key)
+		fmt.Println("testCompareBeforeSet: bool value = ", kv.GetBool(key))
+		if kv.GetBool(key) != false {
+			panic("value not update")
+		}
+	}
 
-    s1 := "🏊🏻®hhh4️⃣🐅_yyy"
-    s2 := "0aA🏊🏻®hhh4️⃣🐅_zzz"
-    {
-        key = "string"
-        kv.SetString(s1, key)
-        resultString := kv.GetString(key)
-        fmt.Println("testCompareBeforeSet: string = ", resultString)
-        actualSize1 := kv.ActualSize()
-        fmt.Println("testCompareBeforeSet: actualSize = ", actualSize1)
-        resultString = kv.GetString(key)
-        fmt.Println("testCompareBeforeSet: string = ", resultString)
-        kv.SetString(s1, key)
-        actualSize2 := kv.ActualSize()
-        if actualSize1 != actualSize2 {
-            panic("size not match")
-        }
-        kv.SetString(s2, key)
-        resultString = kv.GetString(key)
-        fmt.Println("testCompareBeforeSet: string = ", resultString)
-        if resultString != s2 {
-            panic("value not update")
-        }
-    }
+	s1 := "🏊🏻®hhh4️⃣🐅_yyy"
+	s2 := "0aA🏊🏻®hhh4️⃣🐅_zzz"
+	{
+		key = "string"
+		kv.SetString(s1, key)
+		resultString := kv.GetString(key)
+		fmt.Println("testCompareBeforeSet: string = ", resultString)
+		actualSize1 := kv.ActualSize()
+		fmt.Println("testCompareBeforeSet: actualSize = ", actualSize1)
+		resultString = kv.GetString(key)
+		fmt.Println("testCompareBeforeSet: string = ", resultString)
+		kv.SetString(s1, key)
+		actualSize2 := kv.ActualSize()
+		if actualSize1 != actualSize2 {
+			panic("size not match")
+		}
+		kv.SetString(s2, key)
+		resultString = kv.GetString(key)
+		fmt.Println("testCompareBeforeSet: string = ", resultString)
+		if resultString != s2 {
+			panic("value not update")
+		}
+	}
 
-    kv.DisableCompareBeforeSet()
+	kv.DisableCompareBeforeSet()
 }
 
-func testRemoveStorage()  {
+func testRemoveStorage() {
 	kv := mmkv.MMKVWithIDAndMode("test_remove", mmkv.MMKV_MULTI_PROCESS)
 	kv.SetBool(true, "bool")
 
 	mmkv.RemoveStorage("test_remove")
 	kv = mmkv.MMKVWithIDAndMode("test_remove", mmkv.MMKV_MULTI_PROCESS)
 	if kv.Count() != 0 {
-	    panic("storage not successfully remove")
+		panic("storage not successfully remove")
 	}
 
 	kv = mmkv.MMKVWithIDAndMode("test_remove/sg", mmkv.MMKV_SINGLE_PROCESS)
@@ -334,7 +343,7 @@ func testRemoveStorage()  {
 	mmkv.RemoveStorage("test_remove/sg")
 	kv = mmkv.MMKVWithIDAndMode("test_remove/sg", mmkv.MMKV_SINGLE_PROCESS)
 	if kv.Count() != 0 {
-	    panic("storage not successfully remove")
+		panic("storage not successfully remove")
 	}
 }
 
@@ -342,9 +351,9 @@ func testReadOnly() {
 	mmapID := "testReadOnly"
 	aesKey := "ReadOnly+Key"
 	{
-    	kv := mmkv.MMKVWithIDAndModeAndCryptKey(mmapID, mmkv.MMKV_SINGLE_PROCESS, aesKey)
-    	testMMKVImp(kv, false)
-    	kv.Close()
+		kv := mmkv.MMKVWithIDAndModeAndCryptKey(mmapID, mmkv.MMKV_SINGLE_PROCESS, aesKey)
+		testMMKVImp(kv, false)
+		kv.Close()
 	}
 	path := "/tmp/mmkv/" + mmapID
 	os.Chmod(path, 0444)
@@ -361,6 +370,13 @@ func testReadOnly() {
 	}
 	os.Chmod(path, 0666)
 	os.Chmod(crcPath, 0666)
+}
+
+func testNameSpace() {
+	ns := mmkv.GetNameSpace("/tmp/mmkv_namespace")
+	fmt.Println("NameSpace:", ns.GetRootDir())
+	kv := ns.MMKVWithID("test_namespace")
+	testMMKVImp(kv, false)
 }
 
 func logHandler(level int, file string, line int, function string, message string) {

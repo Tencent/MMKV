@@ -82,6 +82,11 @@ android {
             }
         }
     }
+//    sourceSets {
+//        main {
+//            assets.srcDirs += '../../../Core/include' // Include headers as assets
+//        }
+//    }
 }
 
 configurations {

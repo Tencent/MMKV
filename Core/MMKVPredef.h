@@ -34,7 +34,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v2.0.2";
+constexpr auto MMKV_VERSION = "v2.1.0";
 
 #ifdef DEBUG
 #    define MMKV_DEBUG
@@ -120,6 +120,12 @@ using MMKVPath_t = std::string;
 
 #endif // MMKV_WIN32
 
+#ifdef MMKV_ANDROID
+#define MMKV_EXPORT __attribute__((visibility("default")))
+#else
+#define MMKV_EXPORT
+#endif
+
 #ifdef MMKV_APPLE
 #    import <Foundation/Foundation.h>
 #    define MMKV_NAMESPACE_BEGIN namespace mmkv {
@@ -169,7 +175,8 @@ typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErro
 // doesn't guarantee real-time notification
 typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
-extern size_t DEFAULT_MMAP_SIZE;
+
+extern MMKV_EXPORT size_t DEFAULT_MMAP_SIZE;
 #define DEFAULT_MMAP_ID "mmkv.default"
 
 class MMBuffer;

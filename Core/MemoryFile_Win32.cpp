@@ -29,8 +29,10 @@
 #    include "ThreadLock.h"
 #    include <cassert>
 #    include <strsafe.h>
+#    include <filesystem>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 namespace mmkv {
 
@@ -192,15 +194,14 @@ bool MemoryFile::mmap() {
         return false;
     } else {
         auto viewMode = m_readOnly ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS;
-        m_ptr = (char *) MapViewOfFile(m_fileMapping, viewMode, 0, 0, 0);
+        m_ptr = (char*)MapViewOfFile(m_fileMapping, viewMode, 0, 0, 0);
         if (!m_ptr) {
             MMKVError("fail to mmap [%ls], mode %x, %d", m_diskFile.m_path.c_str(), viewMode, GetLastError());
             return false;
         }
         MMKVInfo("mmap to address [%p], [%ls]", m_ptr, m_diskFile.m_path.c_str());
+        return true;
     }
-
-    return true;
 }
 
 void MemoryFile::reloadFromFile(size_t expectedCapacity) {
@@ -247,6 +248,13 @@ size_t getPageSize() {
     SYSTEM_INFO system_info;
     GetSystemInfo(&system_info);
     return system_info.dwPageSize;
+}
+
+MMKVPath_t absolutePath(const MMKVPath_t& path) {
+    fs::path relative_path(path);
+    fs::path absolute_path = fs::absolute(relative_path);
+    fs::path normalized = fs::weakly_canonical(absolute_path);
+    return normalized.wstring();
 }
 
 bool isFileExist(const MMKVPath_t &nsFilePath) {
@@ -537,6 +545,29 @@ void walkInDir(const MMKVPath_t &dirPath,
     }
 
     FindClose(hFind);
+}
+
+bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail) {
+    // make sure the file is valid
+    __try {
+        auto data = *((uint32_t*) file->getMemory());
+        MMKVInfo("first byte of the file: 0x%x", data);
+    }
+    __except (GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
+        needReportReadFail = true;
+        DWORD errorCode = GetExceptionCode();
+        MMKVError("fail to mmap [%ls], %d", file->getPath().c_str(), errorCode);
+        return true;
+    }
+    return false;
+}
+
+bool deleteFile(const MMKVPath_t &path) {
+    if (!DeleteFile(path.c_str())) {
+        MMKVError("failed to delete file [%ls], %d", path.c_str(), GetLastError());
+        return false;
+    }
+    return true;
 }
 
 } // namespace mmkv

@@ -22,15 +22,19 @@ import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { MMKV, MMKVLogLevel } from '@tencent/mmkv';
-import { GlobalContainer } from '../Util/Util';
+import { GlobalContainer, testOneMMKV } from '../Util/Util';
 import childProcessManager from '@ohos.app.ability.childProcessManager';
 import { DemoProcess } from '../process/DemoProcess';
 import { MyMMKVHandler } from '../Util/MyMMKVHandler';
 import { BusinessError } from '@ohos.base';
+import native from 'libentry.so';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, 'mmkvdemo', '%{public}s', 'Ability onCreate');
+
+    // test NameSpace before MMKV.initialize()
+    this.testNameSpace();
 
     let appCtx = this.context.getApplicationContext();
     let result = MMKV.initialize(appCtx, MMKVLogLevel.LevelInfo, new MyMMKVHandler);
@@ -89,5 +93,15 @@ export default class EntryAbility extends UIAbility {
     } catch (err) {
       console.error(`startChildProcess error, errorCode: ${(err as BusinessError).code}`);
     }
+  }
+
+  testNameSpace(): void {
+    let appCtx = this.context.getApplicationContext();
+    let rootDir = appCtx.filesDir + '/mmkv_namespace';
+    let ns = MMKV.nameSpace(rootDir);
+    let kv = ns.mmkvWithID('test_namespace');
+    testOneMMKV(kv, false);
+    let result = native.TestNativeMMKV(rootDir, 'test_namespace_native');
+    hilog.info(0x0000, 'mmkvdemo', 'mmkv native result:%{public}d', result);
   }
 }

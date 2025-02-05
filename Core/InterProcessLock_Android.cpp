@@ -24,15 +24,16 @@
 #    include "MMKVLog.h"
 #    include <sys/file.h>
 #    include <unistd.h>
+#    include <cassert>
 
 namespace mmkv {
 
-FileLock::FileLock(MMKVFileHandle_t fd, bool isAshmem)
-    : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_isAshmem(isAshmem) {
+FileLock::FileLock(MMKVFileHandle_t fd, bool isAshmem, int64_t lockPos, int64_t lockLen)
+    : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_isAshmem(isAshmem), m_lockInfo() {
     m_lockInfo.l_type = F_WRLCK;
-    m_lockInfo.l_start = 0;
+    m_lockInfo.l_start = lockPos;
     m_lockInfo.l_whence = SEEK_SET;
-    m_lockInfo.l_len = 0;
+    m_lockInfo.l_len = lockLen;
     m_lockInfo.l_pid = 0;
 }
 
@@ -49,21 +50,21 @@ bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded
     m_lockInfo.l_type = LockType2FlockType(lockType);
     if (unLockFirstIfNeeded) {
         // try lock
-        auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        auto ret = fcntl(m_fd, F_OFD_SETLK, &m_lockInfo);
         if (ret == 0) {
             return true;
         }
         // lets be gentleman: unlock my shared-lock to prevent deadlock
         auto type = m_lockInfo.l_type;
         m_lockInfo.l_type = F_UNLCK;
-        ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+        ret = fcntl(m_fd, F_OFD_SETLK, &m_lockInfo);
         if (ret != 0) {
             MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         }
         m_lockInfo.l_type = type;
     }
 
-    int cmd = wait ? F_SETLKW : F_SETLK;
+    int cmd = wait ? F_OFD_SETLKW : F_OFD_SETLK;
     auto ret = fcntl(m_fd, cmd, &m_lockInfo);
     if (ret != 0) {
         if (tryAgain) {
@@ -89,7 +90,7 @@ bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded
 
 bool FileLock::ashmemUnLock(bool unlockToSharedLock) {
     m_lockInfo.l_type = static_cast<short>(unlockToSharedLock ? F_RDLCK : F_UNLCK);
-    auto ret = fcntl(m_fd, F_SETLK, &m_lockInfo);
+    auto ret = fcntl(m_fd, F_OFD_SETLK, &m_lockInfo);
     if (ret != 0) {
         MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         return false;

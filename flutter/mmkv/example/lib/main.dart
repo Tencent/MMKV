@@ -26,6 +26,7 @@ import "dart:typed_data";
 import "package:flutter/material.dart";
 import "package:mmkv/mmkv.dart";
 import "package:path_provider_foundation/path_provider_foundation.dart";
+import 'package:path_provider/path_provider.dart';
 // import "package:posix/posix.dart" show chmod;
 
 void main() async {
@@ -37,11 +38,81 @@ void main() async {
     groupDir = await provider.getContainerPath(appGroupIdentifier: "group.tencent.mmkv");
   }
 
+  // test NameSpace before MMKV.initialize()
+  await _testNameSpace();
+
   // must wait for MMKV to finish initialization
   final rootDir = await MMKV.initialize(groupDir: groupDir, handler: MyMMKVHandler());
   print("MMKV for flutter with rootDir = $rootDir");
 
   runApp(MyApp());
+}
+
+Future<void> _testNameSpace() async {
+  final path = await getApplicationDocumentsDirectory();
+  final rootPath = "${path.path}/mmkv_namespace";
+  final ns = MMKV.nameSpace(rootPath);
+  final kv = ns.mmkv("test_namespace");
+  _testMMKVImp(kv, false);
+}
+
+void _testMMKVImp(MMKV mmkv, bool decodeOnly) {
+  if (!decodeOnly) {
+    mmkv.encodeBool("bool", true);
+  }
+  print('bool = ${mmkv.decodeBool('bool')}');
+
+  if (!decodeOnly) {
+    mmkv.encodeInt32("int32", (1 << 31) - 1);
+  }
+  print('max int32 = ${mmkv.decodeInt32('int32')}');
+
+  if (!decodeOnly) {
+    mmkv.encodeInt32("int32", 0 - (1 << 31));
+  }
+  print('min int32 = ${mmkv.decodeInt32('int32')}');
+
+  if (!decodeOnly) {
+    mmkv.encodeInt("int", (1 << 63) - 1);
+  }
+  print('max int = ${mmkv.decodeInt('int')}');
+
+  if (!decodeOnly) {
+    mmkv.encodeInt("int", 0 - (1 << 63));
+  }
+  print('min int = ${mmkv.decodeInt('int')}');
+
+  if (!decodeOnly) {
+    mmkv.encodeDouble("double", double.maxFinite);
+  }
+  print('max double = ${mmkv.decodeDouble('double')}');
+
+  if (!decodeOnly) {
+    mmkv.encodeDouble("double", double.minPositive);
+  }
+  print('min positive double = ${mmkv.decodeDouble('double')}');
+
+  String str = "Hello dart from MMKV";
+  if (!decodeOnly) {
+    mmkv.encodeString("string", str);
+  }
+  print('string = ${mmkv.decodeString('string')}');
+
+  str += " with bytes";
+  var bytes = MMBuffer.fromList(Utf8Encoder().convert(str))!;
+  if (!decodeOnly) {
+    mmkv.encodeBytes("bytes", bytes);
+  }
+  bytes.destroy();
+  bytes = mmkv.decodeBytes("bytes")!;
+  print("bytes = ${Utf8Decoder().convert(bytes.asList()!)}");
+  bytes.destroy();
+
+  print('contains "bool": ${mmkv.containsKey('bool')}');
+  mmkv.removeValue("bool");
+  print('after remove, contains "bool": ${mmkv.containsKey('bool')}');
+  mmkv.removeValues(["int32", "int"]);
+  print("all keys: ${mmkv.allKeys}");
 }
 
 class MyMMKVHandler extends MMKVHandler {
@@ -236,67 +307,8 @@ class _MyAppState extends State<MyApp> {
 
   MMKV testMMKV(String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {
     final mmkv = MMKV(mmapID, cryptKey: cryptKey, rootDir: rootPath);
-    testMMKVImp(mmkv, decodeOnly);
+    _testMMKVImp(mmkv, decodeOnly);
     return mmkv;
-  }
-
-  void testMMKVImp(MMKV mmkv, bool decodeOnly) {
-    if (!decodeOnly) {
-      mmkv.encodeBool("bool", true);
-    }
-    print('bool = ${mmkv.decodeBool('bool')}');
-
-    if (!decodeOnly) {
-      mmkv.encodeInt32("int32", (1 << 31) - 1);
-    }
-    print('max int32 = ${mmkv.decodeInt32('int32')}');
-
-    if (!decodeOnly) {
-      mmkv.encodeInt32("int32", 0 - (1 << 31));
-    }
-    print('min int32 = ${mmkv.decodeInt32('int32')}');
-
-    if (!decodeOnly) {
-      mmkv.encodeInt("int", (1 << 63) - 1);
-    }
-    print('max int = ${mmkv.decodeInt('int')}');
-
-    if (!decodeOnly) {
-      mmkv.encodeInt("int", 0 - (1 << 63));
-    }
-    print('min int = ${mmkv.decodeInt('int')}');
-
-    if (!decodeOnly) {
-      mmkv.encodeDouble("double", double.maxFinite);
-    }
-    print('max double = ${mmkv.decodeDouble('double')}');
-
-    if (!decodeOnly) {
-      mmkv.encodeDouble("double", double.minPositive);
-    }
-    print('min positive double = ${mmkv.decodeDouble('double')}');
-
-    String str = "Hello dart from MMKV";
-    if (!decodeOnly) {
-      mmkv.encodeString("string", str);
-    }
-    print('string = ${mmkv.decodeString('string')}');
-
-    str += " with bytes";
-    var bytes = MMBuffer.fromList(Utf8Encoder().convert(str))!;
-    if (!decodeOnly) {
-      mmkv.encodeBytes("bytes", bytes);
-    }
-    bytes.destroy();
-    bytes = mmkv.decodeBytes("bytes")!;
-    print("bytes = ${Utf8Decoder().convert(bytes.asList()!)}");
-    bytes.destroy();
-
-    print('contains "bool": ${mmkv.containsKey('bool')}');
-    mmkv.removeValue("bool");
-    print('after remove, contains "bool": ${mmkv.containsKey('bool')}');
-    mmkv.removeValues(["int32", "int"]);
-    print("all keys: ${mmkv.allKeys}");
   }
 
   void testReKey() {
@@ -468,7 +480,7 @@ class _MyAppState extends State<MyApp> {
     final key = "ReadOnly+Key";
     {
       final mmkv = MMKV(name, cryptKey: key);
-      testMMKVImp(mmkv, false);
+      _testMMKVImp(mmkv, false);
       mmkv.close();
     }
 
@@ -480,10 +492,10 @@ class _MyAppState extends State<MyApp> {
     */
 
     final mmkv = MMKV(name, cryptKey: key, readOnly: true);
-    testMMKVImp(mmkv, true);
+    _testMMKVImp(mmkv, true);
 
     // also check if it tolerate update operations without crash
-    testMMKVImp(mmkv, false);
+    _testMMKVImp(mmkv, false);
 
     /*
     chmod(path, "666");

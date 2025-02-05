@@ -20,9 +20,13 @@
 
 #import <UIKit/UIKit.h>
 
+@class MMKV;
+
 @interface ViewController : UIViewController
 
 @property(weak, nonatomic) IBOutlet UIButton *m_btn;
 @property(weak, nonatomic) IBOutlet UIActivityIndicatorView *m_loading;
+
++ (void)testMMKV:(MMKV *)mmkv decodeOnly:(BOOL)decodeOnly;
 
 @end

@@ -1,4 +1,7 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v2.1.0 / 2025-01-xx
+* Add NameSpace feature.
+
 ## v2.0.2 / 2024-12-27
 * Obfuscation fully supported.
 * Use atomic file rename on OHOS.

@@ -3,8 +3,12 @@ cmake_minimum_required(VERSION 3.4.1)
 project(mmkv)
 
 set(NATIVERENDER_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+# github/MMKV
+set(REPO_ROOT_PATH ${NATIVERENDER_ROOT_PATH}/../../../../..)
+# github/MMKV/OpenHarmony/MMKV
+set(MODULE_ROOT_PATH ${NATIVERENDER_ROOT_PATH}/../../..)
 
-add_subdirectory(../../../../../Core Core)
+add_subdirectory(${REPO_ROOT_PATH}/Core Core)
 
 if(DEFINED PACKAGE_FIND_FILE)
     include(${PACKAGE_FIND_FILE})
@@ -27,3 +31,13 @@ target_link_libraries(mmkv PUBLIC
     libace_napi.z.so
     libhilog_ndk.z.so
     core)
+
+#file(REMOVE_RECURSE ${MODULE_ROOT_PATH}/include)
+
+message(STATUS "copying from ${REPO_ROOT_PATH}/Core/include to ${MODULE_ROOT_PATH}")
+file(COPY ${REPO_ROOT_PATH}/Core/include DESTINATION ${MODULE_ROOT_PATH}
+    PATTERN "MMKVLog.h" EXCLUDE
+    PATTERN "MemoryFile.h" EXCLUDE
+)
+
+#message(FATAL_ERROR "Halt.")

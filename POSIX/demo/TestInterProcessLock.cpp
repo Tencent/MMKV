@@ -18,8 +18,7 @@
  * limitations under the License.
  */
 
-#include "InterProcessLock.h"
-#include "MMKV.h"
+#include <MMKV/MMKV.h>
 #include <iostream>
 #include <pthread.h>
 #include <semaphore.h>
@@ -27,6 +26,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstring>
+
+// it's not a must-have for most app so do it the handy way
+#include "../../Core/InterProcessLock.h"
 
 using namespace std;
 using namespace mmkv;

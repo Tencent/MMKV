@@ -18,14 +18,14 @@
  * limitations under the License.
  */
 
-#include "MMKVPredef.h"
+#include <MMKV/MMKVPredef.h>
 
 #ifdef MMKV_ANDROID
 
-#    include "MMBuffer.h"
-#    include "MMKV.h"
-#    include "MMKVLog.h"
-#    include "MemoryFile.h"
+#    include <MMKV/MMBuffer.h>
+#    include <MMKV/MMKV.h>
+#    include <MMKV/MMKVLog.h>
+#    include <MMKV/MemoryFile.h>
 #    include <cstdint>
 #    include <jni.h>
 #    include <string>
@@ -1080,6 +1080,17 @@ MMKV_JNI jboolean isReadOnly(JNIEnv *env, jobject instance) {
     return jboolean(false);
 }
 
+MMKV_JNI jboolean getNameSpace(JNIEnv *env, jclass type, jstring rootPath) {
+    if (rootPath) {
+        auto root = jstring2string(env, rootPath);
+        if (!root.empty()) {
+            MMKV::nameSpace(root);
+            return (jboolean) true;
+        }
+    }
+    return (jboolean) false;
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -1164,6 +1175,7 @@ static JNINativeMethod g_methods[] = {
     {"clearAllWithKeepingSpace", "()V", (void *) mmkv::clearAllWithKeepingSpace},
     {"isMultiProcess", "()Z", (void *) mmkv::isMultiProcess},
     {"isReadOnly", "()Z", (void *) mmkv::isReadOnly},
+    {"getNameSpace", "(Ljava/lang/String;)Z", (void *)mmkv::getNameSpace},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

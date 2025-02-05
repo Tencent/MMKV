@@ -42,7 +42,7 @@ MMKV_EXPORT void *mmkvInitialize(const char *rootDir, const char *groupDir, int3
     return (void*) ret.UTF8String;
 }
 
-MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity) {
+MMKV_EXPORT void *getMMKVWithID2(const char *mmapID, uint32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity, bool isNameSpace) {
     MMKV *kv = nil;
     if (!mmapID) {
         return (__bridge void *) kv;
@@ -56,7 +56,12 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *c
             auto cryptKeyData = [crypt dataUsingEncoding:NSUTF8StringEncoding];
             if (rootPath) {
                 auto path = [NSString stringWithUTF8String:rootPath];
-                kv = [MMKV mmkvWithID:str cryptKey:cryptKeyData rootPath:path expectedCapacity:expectedCapacity];
+                if (isNameSpace) {
+                    auto ns = [MMKV nameSpace:path];
+                    kv = [ns mmkvWithID:str cryptKey:cryptKeyData expectedCapacity:expectedCapacity];
+                } else {
+                    kv = [MMKV mmkvWithID:str cryptKey:cryptKeyData rootPath:path expectedCapacity:expectedCapacity];
+                }
             } else {
                 kv = [MMKV mmkvWithID:str cryptKey:cryptKeyData mode:(MMKVMode) mode];
             }
@@ -66,13 +71,22 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *c
     if (!done) {
         if (rootPath) {
             auto path = [NSString stringWithUTF8String:rootPath];
-            kv = [MMKV mmkvWithID:str rootPath:path expectedCapacity:expectedCapacity];
+            if (isNameSpace) {
+                auto ns = [MMKV nameSpace:path];
+                kv = [ns mmkvWithID:str expectedCapacity:expectedCapacity];
+            } else {
+                kv = [MMKV mmkvWithID:str rootPath:path expectedCapacity:expectedCapacity];
+            }
         } else {
             kv = [MMKV mmkvWithID:str mode:(MMKVMode) mode];
         }
     }
 
     return (__bridge void *) kv;
+}
+
+MMKV_EXPORT void *getMMKVWithID(const char *mmapID, uint32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity) {
+    return getMMKVWithID2(mmapID, mode, cryptKey, rootPath, expectedCapacity, false);
 }
 
 MMKV_EXPORT int64_t getDefaultMMKV(int /*mode*/, const char *cryptKey) {
@@ -626,4 +640,15 @@ MMKV_EXPORT void MMKV_FUNC(checkContentChanged)(const void *handle) {
     if (kv) {
         [kv checkContentChanged];
     }
+}
+
+MMKV_EXPORT bool MMKV_FUNC(getNameSpace)(const char *rootPath) {
+    if (rootPath) {
+        auto root = [NSString stringWithUTF8String:rootPath];
+        if (root.length > 0) {
+            [MMKV nameSpace:root];
+            return true;
+        }
+    }
+    return false;
 }

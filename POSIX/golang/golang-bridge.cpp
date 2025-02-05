@@ -20,9 +20,7 @@
 
 #ifndef CGO
 
-#    include "MMKVPredef.h"
-
-#    include "MMKV.h"
+#    include <MMKV/MMKV.h>
 #    include "golang-bridge.h"
 #    include <stdint.h>
 #    include <string>
@@ -31,6 +29,9 @@
 using namespace mmkv;
 using namespace std;
 
+#    ifdef MMKV_EXPORT
+#        undef MMKV_EXPORT
+#    endif
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
 void cLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message);
@@ -517,6 +518,10 @@ MMKV_EXPORT const char *version() {
     return MMKV_VERSION;
 }
 
+MMKV_EXPORT const char *getRootDir() {
+    return MMKV::getRootDir().c_str();
+}
+
 MMKV_EXPORT void trim(void *handle) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
@@ -689,6 +694,15 @@ MMKV_EXPORT bool isReadOnly(void *handle) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {
         return kv->isReadOnly();
+    }
+    return false;
+}
+
+MMKV_EXPORT bool getNameSpace(GoStringWrap_t rootPath) {
+    if (rootPath.ptr && rootPath.length > 0) {
+        auto root = string(rootPath.ptr, rootPath.length);
+        MMKV::nameSpace(root);
+        return true;
     }
     return false;
 }

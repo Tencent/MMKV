@@ -16,6 +16,9 @@
 # Keep options:
 # -keep-property-name: specifies property names that you want to keep
 # -keep-global-name: specifies names that you want to keep in the global scope
+-keep-global-name
+TestNativeMMKV
+
 -enable-property-obfuscation
 -enable-toplevel-obfuscation
 -enable-filename-obfuscation

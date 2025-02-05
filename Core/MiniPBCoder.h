@@ -42,7 +42,7 @@ class AESCrypt;
 class CodedInputDataCrypt;
 struct PBEncodeItem;
 
-class MiniPBCoder {
+class MMKV_EXPORT MiniPBCoder {
     const MMBuffer *m_inputBuffer = nullptr;
     CodedInputData *m_inputData = nullptr;
     CodedInputDataCrypt *m_inputDataDecrpt = nullptr;
