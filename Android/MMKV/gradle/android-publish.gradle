@@ -50,9 +50,11 @@ android.libraryVariants.all { variant ->
         return
     }
     // Skipped non publishing variants
-    if (!android.defaultPublishConfig.startsWith(variant.flavorName)) {
-        return
-    }
+//    println('android.defaultPublishConfig=' + android.defaultPublishConfig)
+//    println('variant.flavorName=' + variant.flavorName)
+//    if (!android.defaultPublishConfig.startsWith(variant.flavorName)) {
+//        return
+//    }
 
     def hasFlavors = !variant.flavorName.isEmpty()
 
@@ -74,16 +76,16 @@ android.libraryVariants.all { variant ->
     def jniJar = task("${variant.name}JniJar", type: Jar, dependsOn: 'build') {
     }
     def javadoc = task("${variant.name}Javadoc", type: Javadoc) {
-        source = variant.javaCompile.source // TODO: deprecated
+        source = variant.javaCompileProvider.get().source
         options.encoding = 'utf-8'
         destinationDir = file("${buildDir}/docs/javadoc${hasFlavors ? artifactIdSuffix : ""}")
-        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdk}/android.jar"
         classpath += files(ext.androidJar)
-        classpath += files(configurations.compile)
+        classpath += files(variant.javaCompileProvider.get().classpath)
         classpath += files(configurations.javadocDeps)
         exclude '**/BuildConfig.java'
         exclude '**/R.java'
-        failOnError false
+        failOnError = false
     }
     def javadocJar = task("${variant.name}JavadocJar", type: Jar, dependsOn: javadoc) {
         archiveClassifier = 'javadoc'
@@ -222,8 +224,10 @@ task buildAndPublishToLocalMaven(type: Copy, dependsOn: ['build', 'publishToMave
     group = 'publishing'
 
     // save artifacts files to artifacts folder
-    from configurations.archives.allArtifacts.files
-    into "${rootProject.buildDir}/outputs/artifacts/"
+    from "$buildDir/outputs/aar"
+    include '*.aar'
+    into "${rootProject.buildDir}/outputs/artifacts"
+
     rename { String fileName ->
         fileName.replace("release.aar", "${version}.aar")
     }

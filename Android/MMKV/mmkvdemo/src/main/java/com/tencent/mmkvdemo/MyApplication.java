@@ -110,8 +110,14 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
     }
 
     private void testNameSpace() {
-        final NameSpace ns = MMKV.nameSpace(getFilesDir().getAbsolutePath() + "/namespace");
+        final String nsRoot = getFilesDir().getAbsolutePath() + "/namespace";
+        final NameSpace ns = MMKV.nameSpace(nsRoot);
         MMKV mmkv = ns.mmkvWithID("test/namespace/crypt", MMKV.MULTI_PROCESS_MODE, "crypt_key", 4096 * 2);
         MainActivity.testMMKV(mmkv, false);
+
+        System.loadLibrary("mmkvdemo");
+        testNameSpaceInNative(nsRoot, "testNameSpaceInNative");
     }
+
+    private native void testNameSpaceInNative(String nameSpaceRoot, String mmapID);
 }
