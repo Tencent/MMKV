@@ -83,8 +83,6 @@ bool CodedInputData::readBool() {
     return this->readRawVarint32() != 0;
 }
 
-#ifndef MMKV_APPLE
-
 string CodedInputData::readString() {
     int32_t size = readRawVarint32();
     if (size < 0) {
@@ -130,15 +128,13 @@ string CodedInputData::readString(KeyValueHolder &kvHolder) {
         kvHolder.keySize = static_cast<uint16_t>(s_size);
 
         auto ptr = m_ptr + m_position;
-        string result((char *) (m_ptr + m_position), s_size);
+        string result((char *) ptr, s_size);
         m_position += s_size;
         return result;
     } else {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }
 }
-
-#endif
 
 MMBuffer CodedInputData::readRealData(mmkv::MMBuffer & data) {
     CodedInputData input(data.getPtr(), data.length());

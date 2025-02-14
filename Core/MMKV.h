@@ -30,9 +30,9 @@
 #    include <span>
 #  endif
 
-#else
-#  include "MiniPBCoder.h"
 #endif
+
+#include "MiniPBCoder.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -145,11 +145,16 @@ class MMKV_EXPORT MMKV {
     bool m_enableCompareBeforeSet = false;
 
 #ifdef MMKV_APPLE
+#ifdef __OBJC__
     using MMKVKey_t = NSString *__unsafe_unretained;
     static bool isKeyEmpty(MMKVKey_t key) { return key.length <= 0; }
 #  define mmkv_key_length(key) key.length
 #  define mmkv_retain_key(key) [key retain]
 #  define mmkv_release_key(key) [key release]
+#else
+    using MMKVKey_t = std::string_view;
+    static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
+#endif // __OBJC__
 #else
     using MMKVKey_t = std::string_view;
     static bool isKeyEmpty(MMKVKey_t key) { return key.empty(); }
@@ -208,9 +213,8 @@ class MMKV_EXPORT MMKV {
 
     // isDataHolder: avoid memory copying
     bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, bool isDataHolder = false);
-#ifndef MMKV_APPLE
+
     bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, uint32_t expireDuration);
-#endif
 
     bool removeDataForKey(MMKVKey_t key);
 
@@ -225,6 +229,10 @@ class MMKV_EXPORT MMKV {
     KVHolderRet_t overrideDataWithKey(const mmkv::MMBuffer &data, MMKVKey_t key, bool isDataHolder = false);
     bool checkSizeForOverride(size_t size);
 #ifdef MMKV_APPLE
+#ifdef __OBJC__
+    mmkv::MMBuffer getDataForKey(std::string_view key);
+    bool setDataForKey(mmkv::MMBuffer &&data, std::string_view key, bool isDataHolder = false);
+#endif
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data,
                                     MMKVKey_t key,
                                     const mmkv::KeyValueHolderCrypt &kvHolder,
@@ -250,11 +258,9 @@ class MMKV_EXPORT MMKV {
     mmkv::MMBuffer getDataWithoutMTimeForKey(MMKVKey_t key);
     size_t filterExpiredKeys();
 
-#ifndef MMKV_APPLE
     static constexpr uint32_t ConstFixed32Size = 4;
     void shared_lock();
     void shared_unlock();
-#endif
 
 public:
     // call this before getting any MMKV instance
@@ -366,11 +372,76 @@ public:
 #endif
 
 #ifdef MMKV_APPLE
+#ifdef __OBJC__
+    bool set(bool value, std::string_view key);
+    bool set(bool value, std::string_view key, uint32_t expireDuration);
+
+    bool set(int32_t value, std::string_view key);
+    bool set(int32_t value, std::string_view key, uint32_t expireDuration);
+
+    bool set(uint32_t value, std::string_view key);
+    bool set(uint32_t value, std::string_view key, uint32_t expireDuration);
+
+    bool set(int64_t value, std::string_view key);
+    bool set(int64_t value, std::string_view key, uint32_t expireDuration);
+
+    bool set(uint64_t value, std::string_view key);
+    bool set(uint64_t value, std::string_view key, uint32_t expireDuration);
+
+    bool set(float value, std::string_view key);
+    bool set(float value, std::string_view key, uint32_t expireDuration);
+
+    bool set(double value, std::string_view key);
+    bool set(double value, std::string_view key, uint32_t expireDuration);
+
+    bool set(const char *value, std::string_view key);
+    bool set(const char *value, std::string_view key, uint32_t expireDuration);
+
+    bool set(const std::string &value, std::string_view key);
+    bool set(const std::string &value, std::string_view key, uint32_t expireDuration);
+
+    bool set(std::string_view value, std::string_view key);
+    bool set(std::string_view value, std::string_view key, uint32_t expireDuration);
+
+    bool set(const mmkv::MMBuffer &value, std::string_view key);
+    bool set(const mmkv::MMBuffer &value, std::string_view key, uint32_t expireDuration);
+
+    bool set(const std::vector<std::string> &vector, std::string_view key);
+    bool set(const std::vector<std::string> &vector, std::string_view key, uint32_t expireDuration);
+
+    bool containsKey(std::string_view key);
+
+    bool removeValueForKey(std::string_view key);
+
+    bool getBool(std::string_view key, bool defaultValue = false, MMKV_OUT bool *hasValue = nullptr);
+
+    int32_t getInt32(std::string_view key, int32_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
+
+    uint32_t getUInt32(std::string_view key, uint32_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
+
+    int64_t getInt64(std::string_view key, int64_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
+
+    uint64_t getUInt64(std::string_view key, uint64_t defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
+
+    float getFloat(std::string_view key, float defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
+
+    double getDouble(std::string_view key, double defaultValue = 0, MMKV_OUT bool *hasValue = nullptr);
+
+    bool getString(std::string_view key, std::string &result, bool inplaceModification = true);
+
+#ifdef MMKV_HAS_CPP20
+    template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
+    bool getVector(std::string_view key, T &result);
+
+    bool getVector(std::string_view key, std::vector<std::string> &result);
+#endif
+
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key);
     bool set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint32_t expireDuration);
 
     NSObject *getObject(MMKVKey_t key, Class cls);
-#else  // !defined(MMKV_APPLE)
+#endif // __OBJC__
+#endif  // MMKV_APPLE
     bool set(const char *value, MMKVKey_t key);
     bool set(const char *value, MMKVKey_t key, uint32_t expireDuration);
 
@@ -397,7 +468,7 @@ public:
 
     template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
     bool getVector(MMKVKey_t key, T &result);
-#endif
+#endif // MMKV_HAS_CPP20
 
     // inplaceModification is recommended for faster speed
     bool getString(MMKVKey_t key, std::string &result, bool inplaceModification = true);
@@ -407,7 +478,6 @@ public:
     bool getBytes(MMKVKey_t key, mmkv::MMBuffer &result);
 
     bool getVector(MMKVKey_t key, std::vector<std::string> &result);
-#endif // MMKV_APPLE
 
     bool getBool(MMKVKey_t key, bool defaultValue = false, MMKV_OUT bool *hasValue = nullptr);
 
@@ -457,13 +527,19 @@ public:
     bool isCompareBeforeSetEnabled() const { return m_enableCompareBeforeSet && !m_enableKeyExpire && !m_dicCrypt; }
 
 #ifdef MMKV_APPLE
+#ifdef __OBJC__
     // filterExpire: return all non-expired keys, keep in mind it comes with cost
-    NSArray *allKeys(bool filterExpire = false);
+    NSArray *allKeysObjC(bool filterExpire = false);
 
     bool removeValuesForKeys(NSArray *arrKeys);
 
     typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
     void enumerateKeys(EnumerateBlock block);
+#endif // __OBJC__
+    // filterExpire: return all non-expired keys, keep in mind it comes with cost
+    std::vector<std::string> allKeys(bool filterExpire = false);
+
+    bool removeValuesForKeys(const std::vector<std::string> &arrKeys);
 
 #    ifdef MMKV_IOS
     static void setIsInBackground(bool isInBackground);
@@ -566,7 +642,7 @@ public:
     MMKV &operator=(const MMKV &other) = delete;
 };
 
-#if defined(MMKV_HAS_CPP20) && !defined(MMKV_APPLE)
+#if defined(MMKV_HAS_CPP20)
 template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
 bool MMKV::set(const T& value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
@@ -605,7 +681,16 @@ bool MMKV::getVector(MMKVKey_t key, T &result) {
     shared_unlock();
     return ret;
 }
-#endif // MMKV_HAS_CPP20 && !MMKV_APPLE
+
+#ifdef __OBJC__
+template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
+bool getVector(std::string_view key, T &result) {
+    HybridString hybridKey(key);
+    return getVector(hybridKey.str, result);
+}
+#endif // __OBJC__
+
+#endif // MMKV_HAS_CPP20
 
 MMKV_NAMESPACE_END
 

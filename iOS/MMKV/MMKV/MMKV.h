@@ -42,6 +42,12 @@ typedef NS_ENUM(UInt32, MMKVExpireDuration) {
 
 NS_ASSUME_NONNULL_BEGIN
 
+#ifdef __cplusplus
+namespace mmkv {
+class MMKV;
+}
+#endif
+
 @class MMKVNameSpace;
 
 @interface MMKV : NSObject
@@ -330,6 +336,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)isMultiProcess;
 
 - (BOOL)isReadOnly;
+
+#ifdef __cplusplus
+- (mmkv::MMKV *)cppInstance;
+#endif
 
 /// backup one MMKV instance to dstDir
 /// @param mmapID the MMKV ID to backup

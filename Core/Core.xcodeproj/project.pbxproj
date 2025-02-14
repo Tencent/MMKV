@@ -47,6 +47,8 @@
 		CBD723F323B5E59800D3CDAF /* MemoryFile_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */; };
 		CBD723F523B5E76200D3CDAF /* MiniPBCoder_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F423B5E76200D3CDAF /* MiniPBCoder_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		CBD723F723B5FD9E00D3CDAF /* CodedInputData_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F623B5FD9E00D3CDAF /* CodedInputData_OSX.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		CBE668A32D5C8746005C184E /* MiniPBCoder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */; };
+		CBE668A42D5C9467005C184E /* MiniPBCoder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB9563F123AB2E9100ACCD39 /* MiniPBCoder.h */; };
 		CBF19050243D70BA001C82ED /* ThreadLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F723AB2E9100ACCD39 /* ThreadLock.cpp */; };
 		CBF19051243D70BA001C82ED /* MemoryFile_OSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD723F223B5E59800D3CDAF /* MemoryFile_OSX.cpp */; };
 		CBF19052243D70BA001C82ED /* MMKV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CB9563F223AB2E9100ACCD39 /* MMKV.cpp */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -88,6 +90,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CBE668A32D5C8746005C184E /* MiniPBCoder.h in CopyFiles */,
 				CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */,
 				CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */,
 				CB6D44C323B308D100F369AA /* MMKVLog.h in CopyFiles */,
@@ -106,6 +109,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CBE668A42D5C9467005C184E /* MiniPBCoder.h in CopyFiles */,
 				CBF1906A243D70BA001C82ED /* openssl_opensslconf.h in CopyFiles */,
 				CBF1906B243D70BA001C82ED /* openssl_md5.h in CopyFiles */,
 				CBF1906C243D70BA001C82ED /* MMKVLog.h in CopyFiles */,

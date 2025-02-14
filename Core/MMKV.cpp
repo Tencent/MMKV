@@ -607,8 +607,6 @@ bool MMKV::set(double value, MMKVKey_t key, uint32_t expireDuration) {
     return setDataForKey(std::move(data), key);
 }
 
-#ifndef MMKV_APPLE
-
 bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t expireDuration) {
     if (mmkv_likely(!m_enableKeyExpire)) {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -787,8 +785,6 @@ void MMKV::shared_unlock() {
     m_sharedProcessLock->unlock();
     m_lock->unlock();
 }
-
-#endif // MMKV_APPLE
 
 bool MMKV::getBool(MMKVKey_t key, bool defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {

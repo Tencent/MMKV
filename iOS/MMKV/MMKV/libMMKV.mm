@@ -663,7 +663,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (NSArray *)allKeys {
-    return m_mmkv->allKeys();
+    return m_mmkv->allKeysObjC();
 }
 
 - (size_t)countNonExpiredKeys {
@@ -671,7 +671,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (NSArray *)allNonExpiredKeys {
-    return m_mmkv->allKeys(true);
+    return m_mmkv->allKeysObjC(true);
 }
 
 - (BOOL)enableAutoKeyExpire:(uint32_t)expiredInSeconds {
@@ -737,6 +737,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (BOOL)isReadOnly {
     return m_mmkv->isReadOnly();
+}
+
+- (mmkv::MMKV *)cppInstance {
+    return m_mmkv;
 }
 
 + (void)onAppTerminate {

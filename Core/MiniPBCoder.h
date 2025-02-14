@@ -73,7 +73,6 @@ class MMKV_EXPORT MiniPBCoder {
     void decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy);
 #endif
 
-#ifndef MMKV_APPLE
     size_t prepareObjectForEncode(const std::string &str);
     size_t prepareObjectForEncode(const MMKV_STRING_CONTAINER &vector);
     std::vector<std::string> decodeOneVector();
@@ -96,10 +95,11 @@ class MMKV_EXPORT MiniPBCoder {
     MMBuffer getEncodeData(const std::span<const float> &obj);
     MMBuffer getEncodeData(const std::span<const double> &obj);
 #endif // MMKV_HAS_CPP20
-#else
+
+#if defined(MMKV_APPLE) && defined(__OBJC__)
     // NSString, NSData, NSDate
     size_t prepareObjectForEncode(__unsafe_unretained NSObject *obj);
-#endif // MMKV_APPLE
+#endif
 
 public:
     template <typename T>
@@ -125,7 +125,6 @@ public:
     static void greedyDecodeMap(MMKVMapCrypt &dic, const MMBuffer &oData, AESCrypt *crypter, size_t position = 0);
 #endif // MMKV_DISABLE_CRYPT
 
-#ifndef MMKV_APPLE
     static std::vector<std::string> decodeVector(const MMBuffer &oData);
 
     template <typename T>
@@ -133,7 +132,7 @@ public:
         MiniPBCoder oCoder(&oData);
         return oCoder.decodeOneVector(result);
     }
-#else
+#if defined(MMKV_APPLE) && defined(__OBJC__)
     // NSString, NSData, NSDate
     static NSObject *decodeObject(const MMBuffer &oData, Class cls);
 

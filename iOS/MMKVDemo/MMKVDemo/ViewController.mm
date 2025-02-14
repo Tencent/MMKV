@@ -21,6 +21,7 @@
 #import "MMKVDemo-Swift.h"
 #import "ViewController+TestCaseBad.h"
 #import <MMKV/MMKV.h>
+#import "TestMMKVCpp.hpp"
 
 @interface TestNSArchive : NSObject <NSSecureCoding>
 @property(nonatomic, strong) NSString *m_username;
@@ -73,6 +74,7 @@
                                                  name:UIApplicationDidBecomeActiveNotification
                                                object:nil];
 
+    [self functionTestCpp];
     [self funcionalTest:NO];
     [self testReKey];
     [self testImportFromUserDefault];
@@ -221,6 +223,10 @@
     }
 
     [mmkv close];
+}
+
+- (void)functionTestCpp {
+    functionalTest(false);
 }
 
 - (void)testMMKV:(NSString *)mmapID withCryptKey:(NSData *)cryptKey decodeOnly:(BOOL)decodeOnly {

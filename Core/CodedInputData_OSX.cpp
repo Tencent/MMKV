@@ -33,7 +33,7 @@ using namespace std;
 
 namespace mmkv {
 
-NSString *CodedInputData::readString() {
+NSString *CodedInputData::readNSString() {
     int32_t size = this->readRawVarint32();
     if (size < 0) {
         throw length_error("InvalidProtocolBuffer negativeSize");
@@ -50,7 +50,7 @@ NSString *CodedInputData::readString() {
     }
 }
 
-NSString *CodedInputData::readString(KeyValueHolder &kvHolder) {
+NSString *CodedInputData::readNSString(KeyValueHolder &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
     int32_t size = this->readRawVarint32();
