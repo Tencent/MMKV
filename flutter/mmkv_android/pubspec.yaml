@@ -13,8 +13,8 @@ dependencies:
     sdk: flutter
   ffi: ^2.0.0
   mmkv_platform_interface:
-#    '>=2.1.0 <2.2.0'
-    path: ../mmkv_platform_interface
+    '>=2.1.0 <2.2.0'
+#    path: ../mmkv_platform_interface
 
 dev_dependencies:
   test:
