@@ -23,6 +23,7 @@
 #ifdef __cplusplus
 
 #include "../MMKVPredef.h"
+#include <cstdint>
 
 #if MMKV_EMBED_ZLIB
 

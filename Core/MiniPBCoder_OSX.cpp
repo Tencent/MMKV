@@ -85,7 +85,7 @@ void MiniPBCoder::decodeOneMap(MMKVMap &dic, size_t position, bool greedy) {
         }
         while (!m_inputData->isAtEnd()) {
             KeyValueHolder kvHolder;
-            const auto &key = m_inputData->readString(kvHolder);
+            const auto &key = m_inputData->readNSString(kvHolder);
             if (key.length > 0) {
                 m_inputData->readData(kvHolder);
                 auto itr = dictionary.find(key);
@@ -142,7 +142,7 @@ void MiniPBCoder::decodeOneMap(MMKVMapCrypt &dic, size_t position, bool greedy) 
         }
         while (!m_inputDataDecrpt->isAtEnd()) {
             KeyValueHolderCrypt kvHolder;
-            const auto &key = m_inputDataDecrpt->readString(kvHolder);
+            const auto &key = m_inputDataDecrpt->readNSString(kvHolder);
             if (key.length > 0) {
                 m_inputDataDecrpt->readData(kvHolder);
                 auto itr = dictionary.find(key);
@@ -196,9 +196,9 @@ NSObject *MiniPBCoder::decodeObject(const MMBuffer &oData, Class cls) {
     }
     CodedInputData input(oData.getPtr(), oData.length());
     if (cls == [NSString class]) {
-        return input.readString();
+        return input.readNSString();
     } else if (cls == [NSMutableString class]) {
-        return [NSMutableString stringWithString:input.readString()];
+        return [NSMutableString stringWithString:input.readNSString()];
     } else if (cls == [NSData class]) {
         return input.readNSData();
     } else if (cls == [NSMutableData class]) {

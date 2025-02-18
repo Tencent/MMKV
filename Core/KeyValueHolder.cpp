@@ -221,7 +221,7 @@ void KeyValueHolderCrypt::testAESToMMBuffer() {
                                 kvHolder.cryptStatus);
     auto value = kvHolder.toMMBuffer(encryptText, &decrypt);
 #    ifdef MMKV_APPLE
-    MMKVInfo("testAESToMMBuffer: %@", CodedInputData((char *) value.getPtr(), value.length()).readString());
+    MMKVInfo("testAESToMMBuffer: %@", CodedInputData((char *) value.getPtr(), value.length()).readNSString());
 #    else
     MMKVInfo("testAESToMMBuffer: %s", CodedInputData((char *) value.getPtr(), value.length()).readString().c_str());
 #    endif

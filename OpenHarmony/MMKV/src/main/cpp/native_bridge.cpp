@@ -18,15 +18,11 @@
  * limitations under the License.
  */
 
-#include "CodedInputData.h"
-#include "CodedOutputData.h"
-#include "MMKVPredef.h"
-
-#include "MMBuffer.h"
-#include "MMKV.h"
-#include "MMKVLog.h"
-#include "MemoryFile.h"
-#include "MiniPBCoder.h"
+#include <MMKV/MMBuffer.h>
+#include <MMKV/MMKV.h>
+#include <MMKV/MMKVLog.h>
+#include <MMKV/MemoryFile.h>
+#include <MMKV/MiniPBCoder.h>
 #include "napi/native_api.h"
 #include <cstdint>
 #include <string>
@@ -1687,6 +1683,19 @@ static napi_value checkContentChanged(napi_env env, napi_callback_info info) {
     return NAPIUndefined(env);
 }
 
+static napi_value getNameSpace(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto rootPath = NValueToString(env, args[0]);
+    if (!rootPath.empty()) {
+        MMKV::nameSpace(rootPath);
+        return BoolToNValue(env, true);
+    }
+    return BoolToNValue(env, false);
+}
+
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
@@ -1769,6 +1778,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "isMultiProcess", nullptr, isMultiProcess, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "isReadOnly", nullptr, isReadOnly, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "checkContentChanged", nullptr, checkContentChanged, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "getNameSpace", nullptr, getNameSpace, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

@@ -57,37 +57,188 @@ extern MMKVPath_t g_rootDir;
 
 MMKV_NAMESPACE_BEGIN
 
-#    ifdef MMKV_IOS
-MLockPtr::MLockPtr(void *ptr, size_t size) : m_lockDownSize(0), m_lockedPtr(nullptr) {
-    if (!ptr || size == 0) {
-        return;
-    }
-    // calc ptr to mlock()
-    auto writePtr = (size_t) ptr;
-    auto lockPtr = (writePtr / DEFAULT_MMAP_SIZE) * DEFAULT_MMAP_SIZE;
-    auto lockDownSize = writePtr - lockPtr + size;
-    if (mlock((void *) lockPtr, lockDownSize) == 0) {
-        m_lockedPtr = (uint8_t *) lockPtr;
-        m_lockDownSize = lockDownSize;
+HybridString::HybridString(string_view cpp) {
+    if (cpp.empty()) {
+        str = nil;
     } else {
-        MMKVError("fail to mlock [%p], %s", m_lockedPtr, strerror(errno));
-        // just fail on this condition, otherwise app will crash anyway
+        str = [[NSString alloc] initWithBytesNoCopy:(void*)cpp.data() length:cpp.length() encoding:NSUTF8StringEncoding freeWhenDone:NO];
     }
 }
-
-MLockPtr::MLockPtr(MLockPtr &&other) : m_lockDownSize(other.m_lockDownSize), m_lockedPtr(other.m_lockedPtr) {
-    other.m_lockedPtr = nullptr;
+HybridString::~HybridString() {
+    [str release];
 }
 
-MLockPtr::~MLockPtr() {
-    if (m_lockedPtr) {
-        munlock(m_lockedPtr, m_lockDownSize);
+HybridStringCP::HybridStringCP(string_view cpp) {
+    if (cpp.empty()) {
+        str = nil;
+    } else {
+        str = [[NSString alloc] initWithBytes:(void*)cpp.data() length:cpp.length() encoding:NSUTF8StringEncoding];
     }
 }
+HybridStringCP::~HybridStringCP() {
+    [str release];
+}
 
-bool MLockPtr::isMLockPtrEnabled = true;
+bool MMKV::set(bool value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(bool value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
 
-#    endif
+bool MMKV::set(int32_t value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(int32_t value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(uint32_t value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(uint32_t value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(int64_t value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(int64_t value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(uint64_t value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(uint64_t value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(float value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(float value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(double value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(double value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(const char *value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(const char *value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(const std::string &value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(const std::string &value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(std::string_view value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(std::string_view value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(const mmkv::MMBuffer &value, std::string_view key) {
+    return set(value, key, m_expiredInSeconds);
+}
+bool MMKV::set(const mmkv::MMBuffer &value, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(value, hybridKey.str, expireDuration);
+}
+
+bool MMKV::set(const std::vector<std::string> &vector, std::string_view key) {
+    return set(vector, key, m_expiredInSeconds);
+}
+bool MMKV::set(const std::vector<std::string> &vector, std::string_view key, uint32_t expireDuration) {
+    HybridStringCP hybridKey = key;
+    return set(vector, hybridKey.str, expireDuration);
+}
+
+bool MMKV::containsKey(std::string_view key) {
+    HybridString hybridKey = key;
+    return containsKey(hybridKey.str);
+}
+
+bool MMKV::removeValueForKey(std::string_view key) {
+    HybridString hybridKey = key;
+    return removeValueForKey(hybridKey.str);
+}
+
+bool MMKV::getBool(std::string_view key, bool defaultValue, bool *hasValue) {
+    HybridString hybridKey = key;
+    return getBool(hybridKey.str, defaultValue, hasValue);
+}
+
+int32_t MMKV::getInt32(std::string_view key, int32_t defaultValue, bool *hasValue) {
+    HybridString hybridKey = key;
+    return getInt32(hybridKey.str, defaultValue, hasValue);
+}
+
+uint32_t MMKV::getUInt32(std::string_view key, uint32_t defaultValue, bool *hasValue) {
+    HybridString hybridKey = key;
+    return getUInt32(hybridKey.str, defaultValue, hasValue);
+}
+
+int64_t MMKV::getInt64(std::string_view key, int64_t defaultValue, bool *hasValue) {
+    HybridString hybridKey = key;
+    return getInt64(hybridKey.str, defaultValue, hasValue);
+}
+
+uint64_t MMKV::getUInt64(std::string_view key, uint64_t defaultValue, bool *hasValue) {
+    HybridString hybridKey = key;
+    return getUInt64(hybridKey.str, defaultValue, hasValue);
+}
+
+float MMKV::getFloat(std::string_view key, float defaultValue, bool *hasValue) {
+    HybridString hybridKey = key;
+    return getFloat(hybridKey.str, defaultValue, hasValue);
+}
+
+double MMKV::getDouble(std::string_view key, double defaultValue, bool *hasValue) {
+    HybridString hybridKey = key;
+    return getDouble(hybridKey.str, defaultValue, hasValue);
+}
+
+bool MMKV::getString(std::string_view key, std::string &result, bool inplaceModification) {
+    HybridString hybridKey = key;
+    return getString(hybridKey.str, result, inplaceModification);
+}
+
+mmkv::MMBuffer MMKV::getDataForKey(std::string_view key) {
+    HybridString hybridKey = key;
+    return getDataForKey(hybridKey.str);
+}
+
+bool MMKV::setDataForKey(mmkv::MMBuffer &&data, std::string_view key, bool isDataHolder) {
+    HybridStringCP hybridKey = key;
+    return setDataForKey(std::move(data), hybridKey.str, isDataHolder);
+}
+
+bool MMKV::getVector(std::string_view key, std::vector<std::string> &result) {
+    HybridString hybridKey = key;
+    return getVector(hybridKey.str, result);
+}
 
 #    ifdef MMKV_IOS
 
@@ -110,15 +261,6 @@ bool MMKV::isInBackground() {
     SCOPED_LOCK(g_instanceLock);
 
     return g_isInBackground;
-}
-
-pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
-    if (g_isInBackground && MLockPtr::isMLockPtrEnabled) {
-        MLockPtr mlockPtr(ptr, size);
-        return make_pair(mlockPtr.isLocked(), std::move(mlockPtr));
-    } else {
-        return make_pair(true, MLockPtr(nullptr, 0));
-    }
 }
 
 #    endif // MMKV_IOS
@@ -284,7 +426,7 @@ MMKV::overrideDataWithKey(const MMBuffer &data, MMKVKey_t key, const KeyValueHol
 }
 #    endif
 
-NSArray *MMKV::allKeys(bool filterExpire) {
+NSArray *MMKV::allKeysObjC(bool filterExpire) {
     SCOPED_LOCK(m_lock);
     checkLoadData();
 
@@ -304,6 +446,17 @@ NSArray *MMKV::allKeys(bool filterExpire) {
         }
     }
     return keys;
+}
+
+std::vector<std::string> MMKV::allKeys(bool filterExpire) {
+    @autoreleasepool {
+        auto arrKeys = allKeysObjC(filterExpire);
+        std::vector<std::string> vec;
+        for (NSString* str in arrKeys) {
+            vec.push_back(str.UTF8String);
+        }
+        return vec;
+    }
 }
 
 bool MMKV::removeValuesForKeys(NSArray *arrKeys) {
@@ -350,6 +503,19 @@ bool MMKV::removeValuesForKeys(NSArray *arrKeys) {
         return fullWriteback();
     }
     return true;
+}
+
+bool MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
+    if (arrKeys.empty()) {
+        return true;
+    }
+    NSMutableArray* arr = [[NSMutableArray alloc] initWithCapacity:arrKeys.size()];
+    for (auto& key : arrKeys) {
+        [arr addObject:HybridString(key).str];
+    }
+    auto ret = removeValuesForKeys(arr);
+    [arr release];
+    return ret;
 }
 
 void MMKV::enumerateKeys(EnumerateBlock block) {

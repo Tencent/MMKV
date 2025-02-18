@@ -1,8 +1,0 @@
-{
-  "string": [
-    {
-      "name": "shared_desc",
-      "value": "The official OpenHarmony package of MMKV. An efficient, small mobile key-value storage framework developed by WeChat."
-    }
-  ]
-}

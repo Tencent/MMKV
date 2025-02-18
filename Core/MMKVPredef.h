@@ -34,7 +34,7 @@
 #include <vector>
 #include <unordered_map>
 
-constexpr auto MMKV_VERSION = "v2.0.2";
+constexpr auto MMKV_VERSION = "v2.1.0";
 
 #ifdef DEBUG
 #    define MMKV_DEBUG
@@ -120,12 +120,22 @@ using MMKVPath_t = std::string;
 
 #endif // MMKV_WIN32
 
+#ifdef MMKV_ANDROID
+#define MMKV_EXPORT __attribute__((visibility("default")))
+#else
+#define MMKV_EXPORT
+#endif
+
 #ifdef MMKV_APPLE
+#ifdef __OBJC__
 #    import <Foundation/Foundation.h>
+using MMKVLog_t = NSString *;
+#else
+using MMKVLog_t = void *;
+#endif
 #    define MMKV_NAMESPACE_BEGIN namespace mmkv {
 #    define MMKV_NAMESPACE_END }
 #    define MMKV_NAMESPACE_PREFIX mmkv
-using MMKVLog_t = NSString *;
 #else
 #    define MMKV_NAMESPACE_BEGIN
 #    define MMKV_NAMESPACE_END
@@ -169,7 +179,8 @@ typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErro
 // doesn't guarantee real-time notification
 typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
-extern size_t DEFAULT_MMAP_SIZE;
+
+extern MMKV_EXPORT size_t DEFAULT_MMAP_SIZE;
 #define DEFAULT_MMAP_ID "mmkv.default"
 
 class MMBuffer;
@@ -182,11 +193,29 @@ struct KeyValueHolderCrypt;
 #endif
 
 #ifdef MMKV_APPLE
+
+#ifdef __OBJC__
+struct HybridStringCP {
+    NSString *str;
+    HybridStringCP(std::string_view cpp);
+    ~HybridStringCP();
+};
+
+struct HybridString {
+    NSString *str;
+    HybridString(std::string_view cpp);
+    ~HybridString();
+};
+
 struct KeyHasher {
+    // enables heterogeneous lookup
+    using is_transparent = void;
     size_t operator()(NSString *key) const { return key.hash; }
 };
 
 struct KeyEqualer {
+    // enables heterogeneous lookup
+    using is_transparent = void;
     bool operator()(NSString *left, NSString *right) const {
         if (left == right) {
             return true;
@@ -194,11 +223,17 @@ struct KeyEqualer {
         return ([left isEqualToString:right] == YES);
     }
 };
-
 using MMKVVector = std::vector<std::pair<NSString *, mmkv::MMBuffer>>;
 using MMKVMap = std::unordered_map<NSString *, mmkv::KeyValueHolder, KeyHasher, KeyEqualer>;
 using MMKVMapCrypt = std::unordered_map<NSString *, mmkv::KeyValueHolderCrypt, KeyHasher, KeyEqualer>;
-#else
+#else // type erase for pure C++ users
+using MMKVVector = std::vector<std::pair<void *, mmkv::MMBuffer>>;
+using MMKVMap = std::unordered_map<void *, mmkv::KeyValueHolder>;
+using MMKVMapCrypt = std::unordered_map<void *, mmkv::KeyValueHolderCrypt>;
+#endif // __OBJC__
+
+#else // !MMKV_APPLE
+
 struct KeyHasher {
     // enables heterogeneous lookup
     using is_transparent = void;

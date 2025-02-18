@@ -1,4 +1,49 @@
 # MMKV Change Log
+## v2.1.0 / 2025-02-18
+Happy Chinese New Year!  
+This is a **breaking change version for the Android/OHOS** platform. Read the change log bellow and upgrade carefully.
+### Changes for All platforms
+* Add the `NameSpace` feature that easily supports customizing a root directory.
+* Add protection from bad disk records of MMKV files.
+* Fix FileLock not being unlocked on destruction.
+* Improve directory creation on `ReadOnly` mode.
+
+### Android
+* **Breaking change**: Migrate legacy MMKV in a custom directory to normal MMKV. Historically Android/OHOS mistakenly use mmapKey as mmapID, which will be problematic with the `NameSpace` feature. Starting from v2.1.0, MMKV will try to migrate them back to normal when possible.  
+It's highly recommended that you **upgrade to v2.0.2/v1.3.11 first** with **forward support** of normal MMKV in a custom directory.
+* Supports using MMKV directly in C++ code.
+* Improve inter-process locking by using `F_OFD_SETLK` instead of `F_SETLK`.
+* Add *experimental* protection from bad disk records of MMKV files.
+
+### HarmonyOS NEXT
+* **Breaking change**: Migrate legacy MMKV in a custom directory to normal MMKV. Historically Android/OHOS mistakenly use mmapKey as mmapID, which will be problematic with the `NameSpace` feature. Starting from v2.1.0, MMKV will try to migrate them back to normal when possible.  
+It's highly recommended that you **upgrade to v2.0.2/v1.3.11 first** with **forward support** of normal MMKV in a custom directory.
+* Supports using MMKV directly in C++ code.
+* Improve inter-process locking by using `F_OFD_SETLK` instead of `F_SETLK`.
+* Add *experimental* protection from bad disk records of MMKV files.
+
+### iOS/macOS
+* Upgrade to iOS 13, and watchOS 6 to support the `NameSpace` functionality.
+* Supports using MMKV directly in C++ code.
+* Drop the background `mlock()` protection given that we are iOS 13+.
+* Add *tested* protection from bad disk records of MMKV files.
+* Fix a package error when using MMKV by submodule.
+
+### Flutter
+* Remove unused imports and fix deprecated implementations. 
+
+### Win32
+* Add *tested* protection from bad disk records of MMKV files.
+
+### POSIX
+* Improve inter-process locking by using `F_OFD_SETLK` instead of `F_SETLK`.
+* Add *experimental* protection from bad disk records of MMKV files.
+* Fix a compile error on the GNU toolchain.
+
+### Golang
+* Fix a link error in the armv8 arch.
+* Improve multi-platform building.
+
 ## v2.0.2 / 2024-12-27
 Mary holiday and a happy new year!
 ### Changes for All platforms

@@ -36,8 +36,10 @@
 #    include <dirent.h>
 #    include <cstring>
 #    include <unistd.h>
+#    include <filesystem>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 namespace mmkv {
 
@@ -95,16 +97,16 @@ bool File::open() {
     }
     m_fd = ::open(m_path.c_str(), OpenFlag2NativeFlag(m_flag), S_IRWXU);
     if (!isFileValid()) {
-        MMKVError("fail to open [%s], flag %x, %d(%s)", m_path.c_str(), m_flag, errno, strerror(errno));
+        MMKVError("fail to open [%s], flag 0x%x, %d(%s)", m_path.c_str(), m_flag, errno, strerror(errno));
         return false;
     }
-    MMKVInfo("open fd[%p], flag %x, %s", m_fd, m_flag, m_path.c_str());
+    MMKVInfo("open fd[%d], flag 0x%x, %s", m_fd, m_flag, m_path.c_str());
     return true;
 }
 
 void File::close() {
     if (isFileValid()) {
-        MMKVInfo("closing fd[%p], %s", m_fd, m_path.c_str());
+        MMKVInfo("closing fd[%d], %s", m_fd, m_path.c_str());
         if (::close(m_fd) == 0) {
             m_fd = -1;
         } else {
@@ -208,7 +210,7 @@ bool MemoryFile::mmap() {
     auto mode = m_readOnly ? PROT_READ : (PROT_READ | PROT_WRITE);
     m_ptr = (char *) ::mmap(m_ptr, m_size, mode, MAP_SHARED, m_diskFile.m_fd, 0);
     if (m_ptr == MAP_FAILED) {
-        MMKVError("fail to mmap [%s], mode %x, %s", m_diskFile.m_path.c_str(), mode, strerror(errno));
+        MMKVError("fail to mmap [%s], mode 0x%x, %s", m_diskFile.m_path.c_str(), mode, strerror(errno));
         m_ptr = nullptr;
         return false;
     }
@@ -418,6 +420,13 @@ size_t getPageSize() {
     return static_cast<size_t>(getpagesize());
 }
 
+extern MMKVPath_t absolutePath(const MMKVPath_t &path) {
+    fs::path relative_path(path);
+    fs::path absolute_path = fs::absolute(relative_path);
+    fs::path normalized = fs::weakly_canonical(absolute_path);
+    return normalized.string();
+}
+
 #ifndef MMKV_APPLE
 
 static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
@@ -604,6 +613,43 @@ void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(con
 
     closedir(dir);
 }
+
+bool deleteFile(const MMKVPath_t &path) {
+    auto filename = path.c_str();
+    if (::unlink(filename) != 0) {
+        auto err = errno;
+        MMKVError("fail to delete file [%s], %d (%s)", filename, err, strerror(err));
+        return false;
+    }
+    return true;
+}
+
+#ifndef MMKV_APPLE
+bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail) {
+    // TODO: maybe we need reading a larger chunk than 4 byte in Android/Linux
+    uint32_t info;
+    auto fd = file->getFd();
+    auto path = file->getPath().c_str();
+
+    auto oldPos = lseek(fd, 0, SEEK_CUR);
+    lseek(fd, 0, SEEK_SET);
+    auto size = read(fd, &info, sizeof(info));
+    auto err = errno;
+    lseek(fd, oldPos, SEEK_SET);
+
+    if (size <= 0) {
+        needReportReadFail = true;
+        MMKVError("fail to read [%s] from fd [%d], errno: %d (%s)", path, fd, err, strerror(err));
+        if (err == EIO || err == EILSEQ || err == EINVAL || err == ENXIO) {
+            MMKVWarning("file fail to read, consider it illegal, delete now: [%s]", path);
+            return true;
+        }
+    }
+    // we don't rollout mayfly fd (yet)
+    // file->cleanMayflyFD();
+    return false;
+}
+#endif
 
 } // namespace mmkv
 

@@ -3,7 +3,7 @@ apply plugin: 'com.android.library'
 android {
     namespace "com.tencent.mmkv"
 
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdk
 
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -17,9 +17,6 @@ android {
         }
     }
 
-    lintOptions {
-        tasks.lint.enabled = false
-    }
 
 }
 

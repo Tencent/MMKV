@@ -50,9 +50,11 @@ android.libraryVariants.all { variant ->
         return
     }
     // Skipped non publishing variants
-    if (!android.defaultPublishConfig.startsWith(variant.flavorName)) {
-        return
-    }
+//    println('android.defaultPublishConfig=' + android.defaultPublishConfig)
+//    println('variant.flavorName=' + variant.flavorName)
+//    if (!android.defaultPublishConfig.startsWith(variant.flavorName)) {
+//        return
+//    }
 
     def hasFlavors = !variant.flavorName.isEmpty()
 
@@ -74,23 +76,23 @@ android.libraryVariants.all { variant ->
     def jniJar = task("${variant.name}JniJar", type: Jar, dependsOn: 'build') {
     }
     def javadoc = task("${variant.name}Javadoc", type: Javadoc) {
-        source = variant.javaCompile.source // TODO: deprecated
+        source = variant.javaCompileProvider.get().source
         options.encoding = 'utf-8'
         destinationDir = file("${buildDir}/docs/javadoc${hasFlavors ? artifactIdSuffix : ""}")
-        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdk}/android.jar"
         classpath += files(ext.androidJar)
-        classpath += files(configurations.compile)
+        classpath += files(variant.javaCompileProvider.get().classpath)
         classpath += files(configurations.javadocDeps)
         exclude '**/BuildConfig.java'
         exclude '**/R.java'
-        failOnError false
+        failOnError = false
     }
     def javadocJar = task("${variant.name}JavadocJar", type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
+        archiveClassifier = 'javadoc'
         from javadoc.destinationDir
     }
     def jniSymbolsJar = task("${variant.name}SymbolJar", type: Jar, dependsOn: 'build') {
-        classifier = "so-symbols"
+        archiveClassifier = "so-symbols"
         boolean hasNativeBuildTask = false
         tasks.each { task ->
             if (task.getName().startsWith("externalNativeBuild")) {
@@ -109,6 +111,16 @@ android.libraryVariants.all { variant ->
         } else {
             from file("build/intermediates/cmake/release/obj/")
         }
+    }
+    // Custom task to package headers into a ZIP file
+    def headerZip = task("${variant.name}Header", type: Zip, dependsOn: 'build') {
+        archiveClassifier = "header"
+        from('../../../Core/include') {
+            exclude '*/MemoryFile.h'
+            exclude '*/MMKVLog.h'
+        }
+        archiveFileName = 'headers.zip'
+        destinationDirectory = file("$buildDir/outputs/headers")
     }
 
     def publicationName = "component${variant.name.capitalize()}"
@@ -131,6 +143,7 @@ android.libraryVariants.all { variant ->
             }
             artifact javadocJar
             artifact jniSymbolsJar
+            artifact headerZip
 
             pom {
                 name = 'MMKV'
@@ -211,8 +224,10 @@ task buildAndPublishToLocalMaven(type: Copy, dependsOn: ['build', 'publishToMave
     group = 'publishing'
 
     // save artifacts files to artifacts folder
-    from configurations.archives.allArtifacts.files
-    into "${rootProject.buildDir}/outputs/artifacts/"
+    from "$buildDir/outputs/aar"
+    include '*.aar'
+    into "${rootProject.buildDir}/outputs/artifacts"
+
     rename { String fileName ->
         fileName.replace("release.aar", "${version}.aar")
     }

@@ -242,6 +242,13 @@ def test_read_only():
     os.chmod(crc_path, 0o666)
 
 
+def test_namespace():
+    root_dir = tempfile.gettempdir() + "/dev/mmkv_namespace"
+    ns = mmkv.MMKV.nameSpace(root_dir)
+    print("NameSpace: [%s]" % ns.rootDir())
+    kv = ns.mmkvWithID("test_namespace")
+    functional_test_imp(kv, False)
+
 def logger(log_level, file, line, function, message):
     level = {mmkv.MMKVLogLevel.NoLog: 'N',
              mmkv.MMKVLogLevel.Debug: 'D',
@@ -261,6 +268,9 @@ def content_change_handler(mmap_id):
 
 
 if __name__ == '__main__':
+    # test NameSpace before MMKV.initializeMMKV()
+    test_namespace()
+
     temp_dir = tempfile.gettempdir()
     root_dir = temp_dir + '/mmkv'
     print("root dir:", root_dir)

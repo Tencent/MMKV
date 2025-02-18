@@ -52,6 +52,12 @@ static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, con
 static mmkv::MMKVRecoverStrategic ErrorHandler(const string &mmapID, mmkv::MMKVErrorType errorType);
 static void ContentChangeHandler(const string &mmapID);
 
+@interface MMKVNameSpace ()
+
+- (instancetype) initWith:(NSString *)path;
+
+@end
+
 @implementation MMKV {
     NSString *m_mmapID;
     NSString *m_mmapKey;
@@ -69,6 +75,14 @@ static void ContentChangeHandler(const string &mmapID);
     return [MMKV initializeMMKV:rootDir logLevel:logLevel handler:nil];
 }
 
++ (void)initialize {
+    if (self == MMKV.class) {
+        g_instanceDic = [[NSMutableDictionary alloc] init];
+        g_lock = new mmkv::ThreadLock();
+        g_lock->initialize();
+    }
+}
+
 static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (NSString *)initializeMMKV:(nullable NSString *)rootDir logLevel:(MMKVLogLevel)logLevel handler:(id<MMKVHandler>)handler {
@@ -76,10 +90,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         MMKVWarning("already called +initializeMMKV before, ignore this request");
         return [self mmkvBasePath];
     }
-    g_instanceDic = [[NSMutableDictionary alloc] init];
-    g_lock = new mmkv::ThreadLock();
-    g_lock->initialize();
-
     g_callbackHandler = handler;
     mmkv::LogHandler logHandler = nullptr;
     if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
@@ -213,12 +223,6 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 + (instancetype)mmkvWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
     NSAssert(g_hasCalledInitializeMMKV, @"MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
-    if (mmapID.length <= 0) {
-        return nil;
-    }
-
-    SCOPED_LOCK(g_lock);
-
     if (mode & MMKVMultiProcess) {
         if (!rootPath) {
             rootPath = g_groupPath;
@@ -228,6 +232,15 @@ static BOOL g_hasCalledInitializeMMKV = NO;
             MMKV_ASSERT(0);
         }
     }
+    return [self doGetWithID:mmapID cryptKey:cryptKey rootPath:rootPath mode:mode expectedCapacity:expectedCapacity];
+}
+
++ (instancetype)doGetWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
+    if (mmapID.length <= 0) {
+        return nil;
+    }
+    SCOPED_LOCK(g_lock);
+
     NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID rootPath:rootPath];
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
@@ -650,7 +663,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (NSArray *)allKeys {
-    return m_mmkv->allKeys();
+    return m_mmkv->allKeysObjC();
 }
 
 - (size_t)countNonExpiredKeys {
@@ -658,7 +671,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (NSArray *)allNonExpiredKeys {
-    return m_mmkv->allKeys(true);
+    return m_mmkv->allKeysObjC(true);
 }
 
 - (BOOL)enableAutoKeyExpire:(uint32_t)expiredInSeconds {
@@ -724,6 +737,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (BOOL)isReadOnly {
     return m_mmkv->isReadOnly();
+}
+
+- (mmkv::MMKV *)cppInstance {
+    return m_mmkv;
 }
 
 + (void)onAppTerminate {
@@ -1135,6 +1152,19 @@ static NSString *md5(NSString *value) {
     return [self removeStorage:mmapID rootPath:rootPath];
 }
 
++ (MMKVNameSpace *)nameSpace:(NSString *)rootPath {
+    mmkv::MMKV::nameSpace(rootPath.UTF8String);
+    return [[MMKVNameSpace alloc] initWith:rootPath];
+}
+
++ (MMKVNameSpace *)defaultNameSpace {
+    if (!g_hasCalledInitializeMMKV) {
+        MMKVWarning("MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
+        return nil;
+    }
+    return [[MMKVNameSpace alloc] initWith:[self mmkvBasePath]];
+}
+
 @end
 
 #pragma makr - callbacks
@@ -1163,3 +1193,89 @@ static void ContentChangeHandler(const string &mmapID) {
         [g_callbackHandler onMMKVContentChange:[NSString stringWithUTF8String:mmapID.c_str()]];
     }
 }
+
+#pragma  mark - MMKVNameSpace
+
+@implementation MMKVNameSpace {
+    NSString *_rootPath;
+    string *m_rootPath;
+}
+
+- (instancetype)initWith:(NSString *)path {
+    if (self = [super init]) {
+        _rootPath = [path retain];
+        m_rootPath = nullptr;
+    }
+    return self;
+}
+
+- (void) dealloc {
+    [_rootPath release];
+    _rootPath = nil;
+
+    delete m_rootPath;
+    m_rootPath = nullptr;
+
+    [super dealloc];
+}
+
+- (NSString *)rootPath {
+    return _rootPath;
+}
+
+- (string *)strRootPath {
+    if (!m_rootPath) {
+        m_rootPath = new string(_rootPath.UTF8String);
+    }
+    return m_rootPath;
+}
+
+- (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID {
+    return [MMKV doGetWithID:mmapID cryptKey:nil rootPath:_rootPath mode:MMKVSingleProcess expectedCapacity:0];
+}
+
+- (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID cryptKey:(nullable NSData *)cryptKey {
+    return [MMKV doGetWithID:mmapID cryptKey:cryptKey rootPath:_rootPath mode:MMKVSingleProcess expectedCapacity:0];
+}
+
+- (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID mode:(MMKVMode)mode {
+    return [MMKV doGetWithID:mmapID cryptKey:nil rootPath:_rootPath mode:mode expectedCapacity:0];
+}
+
+- (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID cryptKey:(nullable NSData *)cryptKey mode:(MMKVMode)mode {
+    return [MMKV doGetWithID:mmapID cryptKey:cryptKey rootPath:_rootPath mode:mode expectedCapacity:0];
+}
+
+- (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV doGetWithID:mmapID cryptKey:nil rootPath:_rootPath mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
+}
+
+- (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID cryptKey:(nullable NSData *)cryptKey expectedCapacity:(size_t)expectedCapacity {
+    return [MMKV doGetWithID:mmapID cryptKey:cryptKey rootPath:_rootPath mode:MMKVSingleProcess expectedCapacity:expectedCapacity];
+}
+
+- (BOOL)backupOneMMKV:(NSString *)mmapID toDirectory:(NSString *)dstDir {
+    return mmkv::MMKV::backupOneToDirectory(mmapID.UTF8String, dstDir.UTF8String, [self strRootPath]);
+}
+
+- (BOOL)restoreOneMMKV:(NSString *)mmapID fromDirectory:(NSString *)srcDir {
+    return mmkv::MMKV::restoreOneFromDirectory(mmapID.UTF8String, srcDir.UTF8String, [self strRootPath]);
+}
+
+- (size_t)backupAllToDirectory:(NSString *)dstDir {
+    return mmkv::MMKV::backupAllToDirectory(dstDir.UTF8String, [self strRootPath]);
+}
+
+- (size_t)restoreAllFromDirectory:(NSString *)srcDir {
+    return mmkv::MMKV::restoreAllFromDirectory(srcDir.UTF8String, [self strRootPath]);
+}
+
+- (BOOL)isFileValid:(NSString *)mmapID {
+    return mmkv::MMKV::isFileValid(mmapID.UTF8String, [self strRootPath]);
+}
+
+- (BOOL)removeStorage:(NSString *)mmapID {
+    return mmkv::MMKV::removeStorage(mmapID.UTF8String, [self strRootPath]);
+}
+
+@end

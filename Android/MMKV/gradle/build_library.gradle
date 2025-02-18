@@ -8,7 +8,7 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdk rootProject.ext.compileSdk
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
@@ -50,13 +50,13 @@ android {
 version = rootProject.ext.VERSION_NAME
 group = rootProject.ext.GROUP
 
-def check_private_only = project.hasProperty('PRIVATE_ONLY') ? PRIVATE_ONLY.toBoolean() : rootProject.ext.defaultsToPrivateOnly // Dangerous, turn on for default
-
-if (check_private_only) {
-    // Publish to private only repositories
-    apply from: rootProject.file('gradle/android-publish-private.gradle')
-
-} else {
-    // Publish to public repositories
-    apply from: rootProject.file('gradle/android-publish.gradle')
-}
+//def check_private_only = project.hasProperty('PRIVATE_ONLY') ? PRIVATE_ONLY.toBoolean() : rootProject.ext.defaultsToPrivateOnly // Dangerous, turn on for default
+//
+//if (check_private_only) {
+//    // Publish to private only repositories
+//    apply from: rootProject.file('gradle/android-publish-private.gradle')
+//
+//} else {
+//    // Publish to public repositories
+//    apply from: rootProject.file('gradle/android-publish.gradle')
+//}

@@ -70,13 +70,12 @@ public:
 
     static MMBuffer readRealData(mmkv::MMBuffer & data);
 
-#ifndef MMKV_APPLE
     std::string readString();
     void readString(std::string &s);
     std::string readString(KeyValueHolder &kvHolder);
-#else
-    NSString *readString();
-    NSString *readString(KeyValueHolder &kvHolder);
+#ifdef __OBJC__
+    NSString *readNSString();
+    NSString *readNSString(KeyValueHolder &kvHolder);
     NSData *readNSData();
 #endif
 };

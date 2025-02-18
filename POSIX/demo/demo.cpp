@@ -18,8 +18,7 @@
  * limitations under the License.
  */
 
-#include "InterProcessLock.h"
-#include "MMKV.h"
+#include <MMKV/MMKV.h>
 #include <chrono>
 #include <cstdio>
 #include <iostream>
@@ -37,6 +36,9 @@
 #include <ctime>
 #include <cmath>
 #include <cinttypes> // For PRId64 & PRIu64
+
+// it's not a must-have for most app so do it the handy way
+#include "../../Core/InterProcessLock.h"
 
 using namespace std;
 using namespace mmkv;
@@ -1264,6 +1266,13 @@ void testReadOnly() {
     setReadOnly(crcPath, false);
 }
 
+void testNameSpace() {
+    string root = "/tmp/mmkv_namespace";
+    auto ns = MMKV::nameSpace(root);
+    auto kv = ns.mmkvWithID("test_namespace");
+    functionalTest(kv, false);
+}
+
 void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
 
     auto desc = [level] {
@@ -1288,6 +1297,9 @@ int main() {
     wcout.imbue(locale(""));
     char c;
     srand((uint64_t) &c);
+
+    // test NameSpace before MMKV.initializeMMKV()
+    testNameSpace();
 
     string rootDir = "/tmp/mmkv";
     MMKV::initializeMMKV(rootDir, MMKVLogInfo, MyLogHandler);

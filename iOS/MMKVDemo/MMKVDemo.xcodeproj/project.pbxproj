@@ -61,6 +61,7 @@
 		CBB6C82E215CDB9600487192 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CBB6C82D215CDB9600487192 /* main.m */; };
 		CBDC22E12C8ABDD20000DDA5 /* testReadOnly in Resources */ = {isa = PBXBuildFile; fileRef = CBDC22DF2C8ABDD20000DDA5 /* testReadOnly */; };
 		CBDC22E22C8ABDD20000DDA5 /* testReadOnly.crc in Resources */ = {isa = PBXBuildFile; fileRef = CBDC22E02C8ABDD20000DDA5 /* testReadOnly.crc */; };
+		CBE6689F2D5C52E5005C184E /* TestMMKVCpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBE6689E2D5C52E5005C184E /* TestMMKVCpp.cpp */; };
 		CBF19016243D6F59001C82ED /* Interface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CBF19014243D6F59001C82ED /* Interface.storyboard */; };
 		CBF19018243D6F5A001C82ED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CBF19017243D6F5A001C82ED /* Assets.xcassets */; };
 		CBF1901F243D6F5A001C82ED /* WatchApp Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CBF1901E243D6F5A001C82ED /* WatchApp Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -324,6 +325,8 @@
 		CBD5359823B4718200D3A404 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		CBDC22DF2C8ABDD20000DDA5 /* testReadOnly */ = {isa = PBXFileReference; lastKnownFileType = file; path = testReadOnly; sourceTree = "<group>"; };
 		CBDC22E02C8ABDD20000DDA5 /* testReadOnly.crc */ = {isa = PBXFileReference; lastKnownFileType = file; path = testReadOnly.crc; sourceTree = "<group>"; };
+		CBE6689D2D5C52E5005C184E /* TestMMKVCpp.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = TestMMKVCpp.hpp; sourceTree = "<group>"; };
+		CBE6689E2D5C52E5005C184E /* TestMMKVCpp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TestMMKVCpp.cpp; sourceTree = "<group>"; };
 		CBF19012243D6F59001C82ED /* WatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBF19015243D6F59001C82ED /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Interface.storyboard; sourceTree = "<group>"; };
 		CBF19017243D6F5A001C82ED /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -479,6 +482,8 @@
 				CB1FD42720455E2D00931B5F /* ViewController.mm */,
 				CBB3065F2435E8F200CB593E /* ViewController+TestCaseBad.h */,
 				CBB306602435E8F200CB593E /* ViewController+TestCaseBad.mm */,
+				CBE6689D2D5C52E5005C184E /* TestMMKVCpp.hpp */,
+				CBE6689E2D5C52E5005C184E /* TestMMKVCpp.cpp */,
 			);
 			path = MMKVDemo;
 			sourceTree = "<group>";
@@ -1013,6 +1018,7 @@
 			files = (
 				CB1FD42820455E2D00931B5F /* ViewController.mm in Sources */,
 				CBB306612435E8F200CB593E /* ViewController+TestCaseBad.mm in Sources */,
+				CBE6689F2D5C52E5005C184E /* TestMMKVCpp.cpp in Sources */,
 				CB1FD43320455E2D00931B5F /* main.m in Sources */,
 				CB9F963920FCA7C500A1C14C /* DemoSwiftUsage.swift in Sources */,
 				CB1FD42520455E2D00931B5F /* AppDelegate.m in Sources */,
@@ -1387,6 +1393,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVDemo/Resources/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Manual;
@@ -1410,6 +1417,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = MMKVDemo/Resources/MMKVDemo.entitlements;
 				CODE_SIGN_STYLE = Manual;
@@ -1752,7 +1760,7 @@
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Debug;
 		};
@@ -1772,7 +1780,7 @@
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Release;
 		};
@@ -1797,7 +1805,7 @@
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Debug;
 		};
@@ -1821,7 +1829,7 @@
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 5.0;
+				WATCHOS_DEPLOYMENT_TARGET = 6.0;
 			};
 			name = Release;
 		};

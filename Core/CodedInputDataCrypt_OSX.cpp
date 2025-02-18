@@ -33,7 +33,7 @@ using namespace std;
 
 namespace mmkv {
 
-NSString *CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
+NSString *CodedInputDataCrypt::readNSString(KeyValueHolderCrypt &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
     int32_t size = this->readRawVarint32(true);

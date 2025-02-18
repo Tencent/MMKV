@@ -73,10 +73,9 @@ public:
 
     void readData(KeyValueHolderCrypt &kvHolder);
 
-#ifndef MMKV_APPLE
     std::string readString(KeyValueHolderCrypt &kvHolder);
-#else
-    NSString *readString(KeyValueHolderCrypt &kvHolder);
+#ifdef __OBJC__
+    NSString *readNSString(KeyValueHolderCrypt &kvHolder);
 #endif
 };
 

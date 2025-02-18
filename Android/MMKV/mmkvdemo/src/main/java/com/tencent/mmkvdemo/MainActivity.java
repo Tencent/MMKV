@@ -33,6 +33,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.tencent.mmkv.MMKV;
+import com.tencent.mmkv.NameSpace;
 import com.tencent.mmkv.NativeBuffer;
 
 import java.io.File;
@@ -222,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
         return kv;
     }
 
-    private void testMMKV(MMKV kv, boolean decodeOnly) {
+    static void testMMKV(MMKV kv, boolean decodeOnly) {
         if (!decodeOnly) {
             kv.encode("bool", true);
         }

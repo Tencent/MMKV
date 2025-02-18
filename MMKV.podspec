@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKV"
-  s.version      = "2.0.2"
+  s.version      = "2.1.0"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
 
   s.description  = <<-DESC
@@ -14,13 +14,13 @@ Pod::Spec.new do |s|
   s.license      = { :type => "BSD 3-Clause", :file => "LICENSE.TXT"}
   s.author       = { "guoling" => "guoling@tencent.com" }
 
-  s.ios.deployment_target = "12.0"
+  s.ios.deployment_target = "13.0"
   s.osx.deployment_target = "10.13"
   s.tvos.deployment_target = "13.0"
   s.visionos.deployment_target = "1.0"
 
-  s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
-  #s.source       = { :git => "https://github.com/Tencent/MMKV.git", :branch => "dev" }
+  #.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
+  s.source       = { :git => "https://github.com/Tencent/MMKV.git", :branch => "dev_namespace" }
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
   s.public_header_files = "iOS/MMKV/MMKV/MMKV.h", "iOS/MMKV/MMKV/MMKVHandler.h"
 
@@ -33,7 +33,7 @@ Pod::Spec.new do |s|
     "CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF" => "NO",
   }
 
-  s.dependency 'MMKVCore', '~> 2.0.2'
+  s.dependency 'MMKVCore', '~> 2.1.0'
 
 end
 

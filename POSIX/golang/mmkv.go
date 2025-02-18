@@ -63,21 +63,21 @@ const (
 )
 
 const (
-	MMKV_SINGLE_PROCESS = 1 << iota
-	MMKV_MULTI_PROCESS = 1 << iota
-    context_MODE_MULTI_PROCESS = 1 << iota // not available in golang
-    mmkv_ASHMEM = 1 << iota // not available in golang
-    mmkv_BACKUP = 1 << iota // not available in golang
-    MMKV_READ_ONLY = 1 << iota
+	MMKV_SINGLE_PROCESS        = 1 << iota
+	MMKV_MULTI_PROCESS         = 1 << iota
+	context_MODE_MULTI_PROCESS = 1 << iota // not available in golang
+	mmkv_ASHMEM                = 1 << iota // not available in golang
+	mmkv_BACKUP                = 1 << iota // not available in golang
+	MMKV_READ_ONLY             = 1 << iota
 )
 
 const (
-	MMKV_Expire_Never = iota
+	MMKV_Expire_Never  = iota
 	MMKV_Expire_Minute = 60
-	MMKV_Expire_Hour = 60 * 60
-	MMKV_Expire_Day = 24 * 60 * 60
-	MMKV_Expire_Month = 30 * 24 * 60 * 60
-	MMKV_Expire_Year = 365 * 30 * 24 * 60 * 60
+	MMKV_Expire_Hour   = 60 * 60
+	MMKV_Expire_Day    = 24 * 60 * 60
+	MMKV_Expire_Month  = 30 * 24 * 60 * 60
+	MMKV_Expire_Year   = 365 * 30 * 24 * 60 * 60
 )
 
 // MMBuffer a wrapper of native C memory, efficient for simple usage
@@ -243,7 +243,7 @@ func Version() string {
 }
 
 /*
-MMKV must be initialized before any usage.
+InitializeMMKV MMKV must be initialized before any usage.
 * Generally speaking you should do this inside main():
 
 	func main() {
@@ -255,13 +255,13 @@ func InitializeMMKV(rootDir string) {
 	C.mmkvInitialize(C.wrapGoString(rootDir), MMKVLogInfo, C.bool(false))
 }
 
-// Same as the function InitializeMMKV() above, except that you can customize MMKV's log level by passing logLevel.
+// InitializeMMKVWithLogLevel Same as the function InitializeMMKV() above, except that you can customize MMKV's log level by passing logLevel.
 // You can even turnoff logging by passing MMKVLogNone, which we don't recommend doing.
 func InitializeMMKVWithLogLevel(rootDir string, logLevel int) {
 	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(false))
 }
 
-// Same as the function InitializeMMKVWithLogLevel() above, except that you can provide a logHandler at the very beginning.
+// InitializeMMKVWithLogLevelAndHandler Same as the function InitializeMMKVWithLogLevel() above, except that you can provide a logHandler at the very beginning.
 func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandler LogHandler) {
 	gLogHandler = logHandler
 	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(true))
@@ -304,10 +304,10 @@ func MMKVWithID(mmapID string) MMKV {
 
 // MMKVWithIDAndExpectedCapacity an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithIDAndExpectedCapacity(mmapID string, expectedCapacity uint64) MMKV {
-        cStrNull := C.GoStringWrapNil()
-        mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull, 
-                         C.uint64_t(expectedCapacity)))
-        return MMKV(mmkv)
+	cStrNull := C.GoStringWrapNil()
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull,
+		C.uint64_t(expectedCapacity)))
+	return MMKV(mmkv)
 }
 
 // MMKVWithIDAndMode an instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
@@ -354,12 +354,31 @@ func RestoreAllFromDirectory(srcDir string) uint64 {
 	return uint64(ret)
 }
 
-// remove the storage of the MMKV, including the data file & meta file (.crc)
+// RemoveStorage Remove the storage of the MMKV, including the data file & meta file (.crc)
 // Note: the existing instance (if any) will be closed & destroyed
 func RemoveStorage(mmapID string) bool {
 	cStrNull := C.GoStringWrapNil()
 	ret := C.removeStorage(C.wrapGoString(mmapID), cStrNull)
 	return bool(ret)
+}
+
+func GetRootDir() string {
+	root := C.getRootDir()
+	goStr := C.GoString(root)
+	return goStr
+}
+
+// GetNameSpace Get a wrapper of customize root path.
+func GetNameSpace(rootDir string) NameSpace {
+	if C.getNameSpace(C.wrapGoString(rootDir)) {
+		return NameSpace{rootDir: rootDir}
+	}
+	return NameSpace{}
+}
+
+// DefaultNameSpace Identical to MMKV with default root path.
+func DefaultNameSpace() NameSpace {
+	return NameSpace{rootDir: GetRootDir()}
 }
 
 func (kv ctorMMKV) SetBool(value bool, key string) bool {
@@ -688,5 +707,83 @@ func (kv ctorMMKV) IsMultiProcess() bool {
 
 func (kv ctorMMKV) IsReadOnly() bool {
 	ret := C.isReadOnly(unsafe.Pointer(kv))
+	return bool(ret)
+}
+
+type NameSpace struct {
+	rootDir string
+}
+
+func (ns *NameSpace) GetRootDir() string {
+	return ns.rootDir
+}
+
+// MMKVWithID an instance with specific location ${NameSpace Root}/mmapID, in single-process mode.
+func (ns *NameSpace) MMKVWithID(mmapID string) MMKV {
+	cStrNull := C.GoStringWrapNil()
+	root := C.wrapGoString(ns.rootDir)
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, root, 0))
+	return MMKV(mmkv)
+}
+
+// MMKVWithIDAndExpectedCapacity an instance with specific location ${NameSpace Root}/mmapID, in single-process mode.
+func (ns *NameSpace) MMKVWithIDAndExpectedCapacity(mmapID string, expectedCapacity uint64) MMKV {
+	cStrNull := C.GoStringWrapNil()
+	root := C.wrapGoString(ns.rootDir)
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, root,
+		C.uint64_t(expectedCapacity)))
+	return MMKV(mmkv)
+}
+
+// MMKVWithIDAndMode an instance with specific location ${NameSpace Root}/mmapID, in single-process or multi-process mode.
+func (ns *NameSpace) MMKVWithIDAndMode(mmapID string, mode int) MMKV {
+	cStrNull := C.GoStringWrapNil()
+	root := C.wrapGoString(ns.rootDir)
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, root, 0))
+	return MMKV(mmkv)
+}
+
+// MMKVWithIDAndModeAndCryptKey an encrypted instance with specific location ${NameSpace Root}/mmapID, in single-process or multi-process mode.
+func (ns *NameSpace) MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string) MMKV {
+	root := C.wrapGoString(ns.rootDir)
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), root, 0))
+	return MMKV(mmkv)
+}
+
+// BackupOneToDirectory backup one MMKV instance (from the root dir of NameSpace) to dstDir
+func (ns *NameSpace) BackupOneToDirectory(mmapID string, dstDir string) bool {
+	root := C.wrapGoString(ns.rootDir)
+	ret := C.backupOneToDirectory(C.wrapGoString(mmapID), C.wrapGoString(dstDir), root)
+	return bool(ret)
+}
+
+// RestoreOneFromDirectory restore one MMKV instance from srcDir (to the root dir of NameSpace)
+func (ns *NameSpace) RestoreOneFromDirectory(mmapID string, srcDir string) bool {
+	root := C.wrapGoString(ns.rootDir)
+	ret := C.restoreOneFromDirectory(C.wrapGoString(mmapID), C.wrapGoString(srcDir), root)
+	return bool(ret)
+}
+
+// BackupAllToDirectory backup all MMKV instance (from the root dir of NameSpace) to dstDir
+// return count of MMKV successfully backup-ed
+func (ns *NameSpace) BackupAllToDirectory(dstDir string) uint64 {
+	root := C.wrapGoString(ns.rootDir)
+	ret := C.backupAllToDirectory(C.wrapGoString(dstDir), root)
+	return uint64(ret)
+}
+
+// RestoreAllFromDirectory restore all MMKV instance from srcDir (to the root dir of NameSpace)
+// return count of MMKV successfully restored
+func (ns *NameSpace) RestoreAllFromDirectory(srcDir string) uint64 {
+	root := C.wrapGoString(ns.rootDir)
+	ret := C.restoreAllFromDirectory(C.wrapGoString(srcDir), root)
+	return uint64(ret)
+}
+
+// RemoveStorage Remove the storage of the MMKV inside NameSpace, including the data file & meta file (.crc)
+// Note: the existing instance (if any) will be closed & destroyed
+func (ns *NameSpace) RemoveStorage(mmapID string) bool {
+	cStrNull := C.GoStringWrapNil()
+	ret := C.removeStorage(C.wrapGoString(mmapID), cStrNull)
 	return bool(ret)
 }

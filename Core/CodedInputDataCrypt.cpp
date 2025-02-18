@@ -217,8 +217,6 @@ int32_t CodedInputDataCrypt::readInt32() {
     return this->readRawVarint32();
 }
 
-#    ifndef MMKV_APPLE
-
 string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
@@ -241,8 +239,6 @@ string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
         throw out_of_range("InvalidProtocolBuffer truncatedMessage");
     }
 }
-
-#    endif
 
 void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
     int32_t size = this->readRawVarint32();

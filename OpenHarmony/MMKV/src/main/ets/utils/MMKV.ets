@@ -24,6 +24,7 @@ import { MMKVLogLevel } from './MMKVLogLevel';
 import { getObjKeys } from './Util';
 import { NativeBuffer } from './NativeBuffer';
 import { MMKVHandler } from './MMKVHandler';
+// import { NameSpace } from './NameSpace';
 import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 
@@ -88,6 +89,27 @@ export class MMKV {
     }
 
     /**
+     * @param rootDir the customize root directory of a NameSpace
+     * @returns a NameSpace with custom root dir
+     */
+    public static nameSpace(rootDir: string): NameSpace {
+        if (native.getNameSpace(rootDir)) {
+            return new NameSpace(rootDir);
+        }
+        throw new Error('Invalid rootDir: [' + rootDir + '].');
+    }
+
+    /**
+     * identical with the original MMKV with the global root dir
+     */
+    public static defaultNameSpace(): NameSpace {
+        if (!MMKV.g_rootDir) {
+            throw new Error('You should Call MMKV.initialize() first.')
+        }
+        return new NameSpace(MMKV.g_rootDir);
+    }
+
+    /**
      * @returns The version of MMKV.
      */
     public static get version(): string {
@@ -108,9 +130,13 @@ export class MMKV {
         return MMKV.g_rootDir;
     }
 
-    private nativeHandle: bigint;
+    private readonly nativeHandle: bigint;
 
-    private constructor(handle: bigint) {
+    /**
+     * Never use this constructor directly. It's visible only because ArkTS has no package-internal access control.
+     * @param handle The native handle of this instance.
+     */
+    constructor(handle: bigint) {
         this.nativeHandle = handle;
     }
 
@@ -952,5 +978,74 @@ export class MMKV {
 
     public checkContentChanged(): void {
         native.checkContentChanged(this.nativeHandle);
+    }
+}
+
+/**
+ * A wrapper for customize root path.
+ */
+// Intentionally not exported to protect from being usd by constructor directly.
+class NameSpace {
+    private _rootDir: string;
+
+    constructor(path: string) {
+        this._rootDir = path;
+    }
+
+    /**
+     * @returns The root folder of NameSpace.
+     */
+    public get rootDir(): string {
+        return this._rootDir;
+    }
+
+    /**
+     * Create an MMKV instance on customize folder.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param mode The process mode of the MMKV instance, defaults to {@link MMKV.SINGLE_PROCESS_MODE}.
+     * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
+     * @param expectedCapacity The file size you expected when opening or creating file.
+     * @returns The MMKV instance.
+     */
+    public mmkvWithID(mmapID: string, mode?: number, cryptKey?: string, expectedCapacity?: bigint): MMKV {
+        let handle: bigint = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, this._rootDir, expectedCapacity);
+        if (!handle) {
+            throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
+        }
+        return new MMKV(handle);
+    }
+
+    /**
+     * remove the storage of the MMKV, including the data file & meta file (.crc)
+     * Note: the existing instance (if any) will be closed & destroyed
+     */
+    public removeStorage(mmapID: string): boolean {
+        return native.removeStorage(mmapID, this._rootDir);
+    }
+
+    /**
+     * Check whether the MMKV file is valid or not on customize folder.
+     * @param mmapID   The unique ID of the MMKV instance.
+     */
+    public isFileValid(mmapID: string): boolean {
+        return native.isFileValid(mmapID, this._rootDir);
+    }
+
+    /**
+     * backup one MMKV instance the customize root path to dstDir
+     * @param mmapID   the MMKV ID to backup
+     * @param dstDir   the backup destination directory
+     */
+    public backupOneToDirectory(mmapID: string, dstDir: string): boolean {
+        return native.backupOneToDirectory(mmapID, dstDir, this._rootDir);
+    }
+
+    /**
+     * restore one MMKV instance from srcDir to the customize root path
+     * @param mmapID   the MMKV ID to restore
+     * @param srcDir   the restore source directory
+     */
+    public restoreOneFromDirectory(mmapID: string, srcDir: string): boolean {
+        return native.restoreOneFromDirectory(mmapID, srcDir, this._rootDir);
     }
 }

@@ -23,33 +23,6 @@
 
 MMKV_NAMESPACE_BEGIN
 
-#if defined(MMKV_IOS) && defined(__cplusplus)
-
-class MLockPtr {
-    size_t m_lockDownSize;
-    uint8_t *m_lockedPtr;
-
-public:
-    MLockPtr(void *ptr, size_t size);
-    MLockPtr(MLockPtr &&other);
-
-    ~MLockPtr();
-
-    bool isLocked() const {
-        return (m_lockedPtr != nullptr);
-    }
-
-    static bool isMLockPtrEnabled;
-
-    // just forbid it for possibly misuse
-    explicit MLockPtr(const MLockPtr &other) = delete;
-    MLockPtr &operator=(const MLockPtr &other) = delete;
-};
-
-std::pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size);
-
-#endif
-
 enum { UnKnown = 0, PowerMac = 1, Mac, iPhone, iPod, iPad, AppleTV, AppleWatch };
 
 void GetAppleMachineInfo(int &device, int &version);

@@ -60,6 +60,9 @@ using namespace mmkv;
 unordered_map<string, MMKV *> *g_instanceDic;
 ThreadLock *g_instanceLock;
 MMKVPath_t g_rootDir;
+MMKVPath_t g_realRootDir;
+static ThreadLock *g_namespaceLock;
+static unordered_map<MMKVPath_t, MMKVPath_t> g_realRootMap;
 static mmkv::ErrorHandler g_errorHandler;
 size_t mmkv::DEFAULT_MMAP_SIZE;
 
@@ -78,11 +81,11 @@ bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix);
 MMKVPath_t filename(const MMKVPath_t &path);
 
 #ifndef MMKV_ANDROID
-MMKV::MMKV(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity)
+MMKV::MMKV(const string &mmapID, MMKVMode mode, const string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
     , m_mode(mode)
-    , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
-    , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
+    , m_path(mappedKVPathWithID(m_mmapID, rootPath))
+    , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
@@ -134,23 +137,25 @@ MMKV::~MMKV() {
     delete m_dicCrypt;
     delete m_crypter;
 #endif
-    delete m_file;
-    delete m_metaFile;
     delete m_metaInfo;
     delete m_lock;
     delete m_fileLock;
     delete m_sharedProcessLock;
     delete m_exclusiveProcessLock;
 #ifdef MMKV_ANDROID
-    delete m_fileModeLock;
     delete m_sharedProcessModeLock;
     delete m_exclusiveProcessModeLock;
+    delete m_fileModeLock;
+    delete m_sharedMigrationLock;
+    delete m_fileMigrationLock;
 #endif
+    delete m_metaFile;
+    delete m_file;
 
     MMKVInfo("destruct [%s]", m_mmapID.c_str());
 }
 
-MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
+MMKV *MMKV::defaultMMKV(MMKVMode mode, const string *cryptKey) {
 #ifndef MMKV_ANDROID
     return mmkvWithID(DEFAULT_MMAP_ID, mode, cryptKey);
 #else
@@ -158,7 +163,7 @@ MMKV *MMKV::defaultMMKV(MMKVMode mode, string *cryptKey) {
 #endif
 }
 
-void initialize() {
+static void initialize() {
     g_instanceDic = new unordered_map<string, MMKV *>;
     g_instanceLock = new ThreadLock();
     g_instanceLock->initialize();
@@ -196,44 +201,41 @@ void initialize() {
 #endif
 }
 
-static ThreadOnceToken_t once_control = ThreadOnceUninitialized;
+static void ensureMinimalInitialize() {
+    static ThreadOnceToken_t once_control = ThreadOnceUninitialized;
+    ThreadLock::ThreadOnce(&once_control, initialize);
+}
 
 void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::LogHandler handler) {
     g_currentLogLevel = logLevel;
     g_logHandler = handler;
 
-    ThreadLock::ThreadOnce(&once_control, initialize);
+    ensureMinimalInitialize();
 
 #ifdef MMKV_APPLE
     // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
     int device = 0, version = 0;
     GetAppleMachineInfo(device, version);
-#    ifndef MMKV_IOS
     MMKVInfo("Apple Device: %d, version: %d", device, version);
-#    else
-    // we have verified that on iOS 13+, the mlock() protection in background is no longer needed
-    // this may be true as well on iOS 12 or even iOS 11, sadly we can't verify that on WeChat
-    if (@available(iOS 13, *)) {
-        MLockPtr::isMLockPtrEnabled = false;
-    }
-    MMKVInfo("Apple Device: %d, version: %d, mlock enabled: %d", device, version, MLockPtr::isMLockPtrEnabled);
-#    endif
 #endif
 
     if (g_rootDir.empty()) {
         g_rootDir = rootDir;
-        mkPath(g_rootDir);
+        // avoid operating g_realRootMap directly
+        g_realRootDir = nameSpace(rootDir).getRootDir();
+        mkPath(g_realRootDir);
     }
 
-    MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_rootDir.c_str());
+    MMKVInfo("root dir: " MMKV_PATH_FORMAT, g_realRootDir.c_str());
 }
 
 const MMKVPath_t &MMKV::getRootDir() {
+    // for backword consistency we can't return g_realRootDir
     return g_rootDir;
 }
 
 #ifndef MMKV_ANDROID
-MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath, size_t expectedCapacity) {
+MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity) {
 
     if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
@@ -247,13 +249,14 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, string *cryptKey, MM
         return kv;
     }
 
-    if (rootPath) {
+    if (rootPath && !(mode & MMKV_READ_ONLY)) {
         MMKVPath_t specialPath = (*rootPath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
         if (!isFileExist(specialPath)) {
             mkPath(specialPath);
         }
-        MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
+    auto theRootDir = rootPath ? rootPath : &g_realRootDir;
+    MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), theRootDir->c_str());
 
     auto kv = new MMKV(mmapID, mode, cryptKey, rootPath, expectedCapacity);
     kv->m_mmapKey = mmapKey;
@@ -604,8 +607,6 @@ bool MMKV::set(double value, MMKVKey_t key, uint32_t expireDuration) {
     return setDataForKey(std::move(data), key);
 }
 
-#ifndef MMKV_APPLE
-
 bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t expireDuration) {
     if (mmkv_likely(!m_enableKeyExpire)) {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -784,8 +785,6 @@ void MMKV::shared_unlock() {
     m_sharedProcessLock->unlock();
     m_lock->unlock();
 }
-
-#endif // MMKV_APPLE
 
 bool MMKV::getBool(MMKVKey_t key, bool defaultValue, bool *hasValue) {
     if (isKeyEmpty(key)) {
@@ -1295,25 +1294,30 @@ bool MMKV::backupOneToDirectory(const string &mmapKey, const MMKVPath_t &dstPath
 }
 
 bool MMKV::backupOneToDirectory(const string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
-    auto rootPath = srcDir ? srcDir : &g_rootDir;
+    auto rootPath = srcDir ? srcDir : &g_realRootDir;
     if (*rootPath == dstDir) {
         return true;
     }
     mkPath(dstDir);
-    auto encodePath = encodeFilePath(mmapID, dstDir);
-    auto dstPath = dstDir + MMKV_PATH_SLASH + encodePath;
-    auto mmapKey = mmapedKVKey(mmapID, rootPath);
+    auto dstPath = mappedKVPathWithID(mmapID, &dstDir);
+    string  mmapKey = mmapedKVKey(mmapID, rootPath);
 #ifdef MMKV_ANDROID
     string srcPath;
-    auto correctPath = *rootPath + MMKV_PATH_SLASH + encodePath;
-    if (srcDir && isFileExist(correctPath)) {
-        srcPath = correctPath;
-    } else {
-        // historically Android mistakenly use mmapKey as mmapID
-        srcPath = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapKey, *rootPath);
+    switch (tryMigrateLegacyMMKVFile(mmapID, rootPath)) {
+        case MigrateStatus::OldToNewMigrateFail: {
+            auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
+            srcPath = mappedKVPathWithID(legacyID, rootPath);
+            break;
+        }
+        case MigrateStatus::NoneExist:
+            MMKVWarning("file with ID [%s] not exist in path [%s]", mmapID.c_str(), rootPath->c_str());
+            return false;
+        default:
+            srcPath = mappedKVPathWithID(mmapID, rootPath);
+            break;
     }
 #else
-    auto srcPath = *rootPath + MMKV_PATH_SLASH + encodePath;
+    auto srcPath = mappedKVPathWithID(mmapID, rootPath);
 #endif
     return backupOneToDirectory(mmapKey, dstPath, srcPath, false);
 }
@@ -1372,7 +1376,7 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &sr
 }
 
 size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
-    auto rootPath = srcDir ? srcDir : &g_rootDir;
+    auto rootPath = srcDir ? srcDir : &g_realRootDir;
     if (*rootPath == dstDir) {
         return true;
     }
@@ -1484,25 +1488,23 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
 }
 
 bool MMKV::restoreOneFromDirectory(const string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
-    auto rootPath = dstDir ? dstDir : &g_rootDir;
+    auto rootPath = dstDir ? dstDir : &g_realRootDir;
     if (*rootPath == srcDir) {
         return true;
     }
     mkPath(*rootPath);
-    auto encodePath = encodeFilePath(mmapID, *rootPath);
-    auto srcPath = srcDir + MMKV_PATH_SLASH + encodePath;
+    auto srcPath = mappedKVPathWithID(mmapID, &srcDir);
     auto mmapKey = mmapedKVKey(mmapID, rootPath);
 #ifdef MMKV_ANDROID
     string dstPath;
-    auto correctPath = *rootPath + MMKV_PATH_SLASH + encodePath;
-    if (dstDir && isFileExist(correctPath)) {
-        dstPath = correctPath;
+    if (tryMigrateLegacyMMKVFile(mmapID, rootPath) == MigrateStatus::OldToNewMigrateFail) {
+        auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
+        dstPath = mappedKVPathWithID(legacyID, rootPath);
     } else {
-        // historically Android mistakenly use mmapKey as mmapID
-        dstPath = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapKey, *rootPath);
+        dstPath = mappedKVPathWithID(mmapID, rootPath);
     }
 #else
-    auto dstPath = *rootPath + MMKV_PATH_SLASH + encodePath;
+    auto dstPath = mappedKVPathWithID(mmapID, rootPath);
 #endif
     return restoreOneFromDirectory(mmapKey, srcPath, dstPath, false);
 }
@@ -1546,7 +1548,7 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
 }
 
 size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
-    auto rootPath = dstDir ? dstDir : &g_rootDir;
+    auto rootPath = dstDir ? dstDir : &g_realRootDir;
     if (*rootPath == srcDir) {
         return true;
     }
@@ -1603,7 +1605,7 @@ void MMKV::setLogLevel(MMKVLogLevel level) {
 }
 
 static void mkSpecialCharacterFileDirectory() {
-    MMKVPath_t path = g_rootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+    MMKVPath_t path = g_realRootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
     mkPath(path);
 }
 
@@ -1661,36 +1663,48 @@ static MMKVPath_t encodeFilePath(const string &mmapID, const MMKVPath_t &rootDir
 }
 
 string mmapedKVKey(const string &mmapID, const MMKVPath_t *rootPath) {
-    if (rootPath && g_rootDir != (*rootPath)) {
+    MMKVPath_t path;
+    // compare by pointer to speedup a bit, it's OK false detecting
+    if (rootPath && (rootPath != &g_realRootDir)) {
+        auto tmp = *rootPath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID);
+        path = absolutePath(tmp);
+    } else {
+        path = g_realRootDir + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID);
+    }
+    return md5(path);
+}
+
+string legacyMmapedKVKey(const string &mmapID, const MMKVPath_t *rootPath) {
+    if (rootPath && (*rootPath != g_rootDir)) {
         return md5(*rootPath + MMKV_PATH_SLASH + string2MMKVPath_t(mmapID));
     }
     return mmapID;
 }
 
-MMKVPath_t mappedKVPathWithID(const string &mmapID, MMKVMode mode, const MMKVPath_t *rootPath) {
 #ifndef MMKV_ANDROID
-    if (rootPath) {
+MMKVPath_t mappedKVPathWithID(const string &mmapID, const MMKVPath_t *rootPath) {
+    if (rootPath && (rootPath != &g_realRootDir)) {
+        auto path = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID, *rootPath);
+        return absolutePath(path);
+    }
+    auto path = g_realRootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+    return path;
+}
 #else
+MMKVPath_t mappedKVPathWithID(const string &mmapID, const MMKVPath_t *rootPath, MMKVMode mode) {
     if (mode & MMKV_ASHMEM) {
         return ashmemMMKVPathWithID(encodeFilePath(mmapID));
-    } else if (rootPath) {
-#endif
-        return *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+    } else if (rootPath && (rootPath != &g_realRootDir)) {
+        auto path = *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID, *rootPath);
+        return absolutePath(path);
     }
-    return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+    auto path = g_realRootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID);
+    return path;
 }
-
-MMKVPath_t crcPathWithID(const string &mmapID, MMKVMode mode, const MMKVPath_t *rootPath) {
-#ifndef MMKV_ANDROID
-    if (rootPath) {
-#else
-    if (mode & MMKV_ASHMEM) {
-        return ashmemMMKVPathWithID(encodeFilePath(mmapID)) + CRC_SUFFIX;
-    } else if (rootPath) {
 #endif
-        return *rootPath + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
-    }
-    return g_rootDir + MMKV_PATH_SLASH + encodeFilePath(mmapID) + CRC_SUFFIX;
+
+MMKVPath_t crcPathWithPath(const MMKVPath_t &kvPath) {
+    return kvPath + CRC_SUFFIX;
 }
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const string &mmapID) {
@@ -1705,6 +1719,69 @@ MMKVRecoverStrategic onMMKVFileLengthError(const string &mmapID) {
         return g_errorHandler(mmapID, MMKVErrorType::MMKVFileLength);
     }
     return OnErrorDiscard;
+}
+
+// NameSpace
+
+NameSpace MMKV::nameSpace(const MMKVPath_t &rootDir) {
+    if (!g_instanceLock) {
+        ensureMinimalInitialize();
+    }
+
+    static ThreadOnceToken_t once = ThreadOnceUninitialized;
+    ThreadLock::ThreadOnce(&once, []{
+        g_namespaceLock = new ThreadLock;
+        g_namespaceLock->initialize();
+    });
+    SCOPED_LOCK(g_namespaceLock);
+
+    auto itr = g_realRootMap.find(rootDir);
+    if (itr == g_realRootMap.end()) {
+        auto realRoot = absolutePath(rootDir);
+        if (realRoot.ends_with(MMKV_PATH_SLASH)) {
+            realRoot.erase(realRoot.size() - 1);
+        }
+        itr = g_realRootMap.emplace(rootDir, realRoot).first;
+    }
+    return NameSpace(itr->second);
+}
+
+NameSpace MMKV::defaultNameSpace() {
+    if (g_rootDir.empty()) {
+        MMKVWarning("MMKV has not been initialized, there's no default NameSpace.");
+        return NameSpace(MMKVPath_t());
+    }
+    return NameSpace(g_realRootDir);
+}
+
+#ifndef MMKV_ANDROID
+MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, size_t expectedCapacity) {
+    return MMKV::mmkvWithID(mmapID, mode, cryptKey, &m_rootDir, expectedCapacity);
+}
+#endif
+
+bool NameSpace::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir) {
+    return MMKV::backupOneToDirectory(mmapID, dstDir, &m_rootDir);
+}
+
+bool NameSpace::restoreOneFromDirectory(const std::string &mmapID, const MMKVPath_t &srcDir) {
+    return MMKV::restoreOneFromDirectory(mmapID, srcDir, &m_rootDir);
+}
+
+size_t NameSpace::backupAllToDirectory(const MMKVPath_t &dstDir) {
+    return MMKV::backupAllToDirectory(dstDir, &m_rootDir);
+}
+
+size_t NameSpace::restoreAllFromDirectory(const MMKVPath_t &srcDir) {
+    return MMKV::restoreAllFromDirectory(srcDir, &m_rootDir);
+}
+
+bool NameSpace::isFileValid(const std::string &mmapID) {
+    return MMKV::isFileValid(mmapID, &m_rootDir);
+}
+
+bool NameSpace::removeStorage(const std::string &mmapID) {
+    return MMKV::removeStorage(mmapID, &m_rootDir);
 }
 
 MMKV_NAMESPACE_END

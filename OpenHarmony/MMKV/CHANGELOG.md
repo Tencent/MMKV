@@ -1,4 +1,13 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v2.1.0 / 2025-02-18
+* **Breaking change**: Migrate legacy MMKV in a custom directory to normal MMKV. Historically Android/OHOS mistakenly use mmapKey as mmapID, which will be problematic with the `NameSpace` feature. Starting from v2.1.0, MMKV will try to migrate them back to normal when possible.  
+  It's highly recommended that you **upgrade to v2.0.2 first** with **forward support** of normal MMKV in a custom directory.
+* Supports using MMKV directly in C++ code.
+* Improve inter-process locking by using `F_OFD_SETLK` instead of `F_SETLK`.
+* Improve directory creation on `ReadOnly` mode.
+* Add *experimental* protection from bad disk records of MMKV files.
+* Fix FileLock not being unlocked on destruction.
+
 ## v2.0.2 / 2024-12-27
 * Obfuscation fully supported.
 * Use atomic file rename on OHOS.
