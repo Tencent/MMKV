@@ -492,7 +492,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++17";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
@@ -537,7 +536,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++17";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
@@ -610,7 +608,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 2.1.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -669,7 +667,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 2.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos macosx appletvos appletvsimulator";
@@ -684,7 +682,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				OTHER_LDFLAGS = "-ObjC";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-ObjC",
@@ -707,7 +704,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				OTHER_LDFLAGS = "-ObjC";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-ObjC",
@@ -748,7 +744,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++17";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
@@ -792,7 +787,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++17";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
@@ -840,7 +834,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++17";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",
@@ -887,7 +880,6 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++17";
 				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
 					"-framework",

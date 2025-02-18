@@ -23,7 +23,7 @@ It's highly recommended that you **upgrade to v2.0.2/v1.3.11 first** with **forw
 * Add *experimental* protection from bad disk records of MMKV files.
 
 ### iOS/macOS
-* Upgrade to iOS 13, and watchOS 6 to support the `NameSpace` functionality.
+* Upgrade to iOS 13, macOS 10.15, and watchOS 6 to support the `NameSpace` functionality.
 * Supports using MMKV directly in C++ code.
 * Drop the background `mlock()` protection given that we are iOS 13+.
 * Add *tested* protection from bad disk records of MMKV files.
@@ -31,6 +31,7 @@ It's highly recommended that you **upgrade to v2.0.2/v1.3.11 first** with **forw
 
 ### Flutter
 * Remove unused imports and fix deprecated implementations. 
+* Support flutter 3.29.
 
 ### Win32
 * Add *tested* protection from bad disk records of MMKV files.
