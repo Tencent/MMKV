@@ -38,8 +38,8 @@ target 'Runner' do
   # https://blog.cocoapods.org/CocoaPods-1.4.0/
 #   script_phase :name => 'Fix MMKV Plugin Name', :script => 'sed -i "" "s/@import mmkv;/@import mmkvflutter;/g" ${SRCROOT}/Runner/GeneratedPluginRegistrant.m', :execution_position=>:before_compile
   # Specify the dependency from a specific branch
-  pod 'MMKVCore', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev_namespace'
-  pod 'MMKV', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev_namespace'
+#   pod 'MMKVCore', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev_namespace'
+#   pod 'MMKV', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev_namespace'
 end
 
 post_install do |installer|
