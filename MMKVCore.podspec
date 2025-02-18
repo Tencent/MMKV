@@ -20,8 +20,8 @@ Pod::Spec.new do |s|
   s.watchos.deployment_target = "6.0"
   s.visionos.deployment_target = "1.0"
 
-  # s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
-  s.source       = { :git => "https://github.com/Tencent/MMKV.git", :branch => "dev_namespace" }
+  s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
+#s.source       = { :git => "https://github.com/Tencent/MMKV.git", :branch => "dev_namespace" }
 
   s.source_files = "Core", "Core/*.{h,cpp,hpp}", "Core/aes/*", "Core/aes/openssl/*", "Core/crc32/*.h"
   s.public_header_files = "Core/MMBuffer.h", "Core/MMKV.h", "Core/MMKVLog.h", "Core/MMKVPredef.h", "Core/PBUtility.h", "Core/ScopedLock.hpp", "Core/ThreadLock.h", "Core/aes/openssl/openssl_md5.h", "Core/aes/openssl/openssl_opensslconf.h"
