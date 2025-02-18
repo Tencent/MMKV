@@ -1,5 +1,5 @@
 # MMKV Change Log
-## v2.1.0 / 2025-02-17
+## v2.1.0 / 2025-02-18
 Happy Chinese New Year!  
 This is a **breaking change version for the Android/OHOS** platform. Read the change log bellow and upgrade carefully.
 ### Changes for All platforms

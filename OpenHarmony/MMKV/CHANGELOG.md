@@ -1,5 +1,5 @@
 # MMKV for HarmonyOS NEXT Change Log
-## v2.1.0 / 2025-02-17
+## v2.1.0 / 2025-02-18
 * **Breaking change**: Migrate legacy MMKV in a custom directory to normal MMKV. Historically Android/OHOS mistakenly use mmapKey as mmapID, which will be problematic with the `NameSpace` feature. Starting from v2.1.0, MMKV will try to migrate them back to normal when possible.  
   It's highly recommended that you **upgrade to v2.0.2 first** with **forward support** of normal MMKV in a custom directory.
 * Supports using MMKV directly in C++ code.
