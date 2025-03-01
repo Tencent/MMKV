@@ -31,8 +31,8 @@ android {
         externalNativeBuild {
             cmake {
                 // uncomment this line to support 32-bit ABIs (armeabi-v7a & x86)
-                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                abiFilters 'arm64-v8a', 'x86_64'
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+//                abiFilters 'arm64-v8a', 'x86_64'
             }
         }
         ndkVersion = '26.3.11579264'
@@ -115,6 +115,24 @@ android {
     }
 }
 
+def readPropertyFromLocalProperties(String key) {
+    Properties properties = new Properties()
+    try {
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    } catch (Exception e) {
+        println("load local properties failed msg:${e.message}")
+    }
+    return properties.getProperty(key)
+}
+
+def getRepositoryUsername() {
+    return hasProperty('REPOSITORY_USERNAME') ? REPOSITORY_USERNAME : readPropertyFromLocalProperties('REPOSITORY_USERNAME')
+}
+
+def getRepositoryPassword() {
+    return hasProperty('REPOSITORY_PASSWORD') ? REPOSITORY_PASSWORD : readPropertyFromLocalProperties('REPOSITORY_PASSWORD')
+}
+
 afterEvaluate {
     android.libraryVariants.all { variant ->
         if (variant.buildType.name == "release") {
@@ -162,6 +180,12 @@ afterEvaluate {
                 destinationDirectory.set(file("$buildDir/intermediates/so-symbols/${variant.name}"))
                 dependsOn('build')
             }
+            def sourcesJar = tasks.register("${name}SourcesJar", Jar) {
+                dependsOn("build")
+                archiveClassifier.set("sources")
+                destinationDirectory.set(file("$buildDir/intermediates/sources/${variant.name}"))
+                from(sourceSets.java.srcDirs)
+            }
 
             // Create publication per variant
             publishing.publications.create(variant.name, MavenPublication) {
@@ -173,6 +197,7 @@ afterEvaluate {
 
                 // Add debug symbols
                 artifact symbolsTask
+                artifact sourcesJar
 
                 // Configure POM
                 pom {
@@ -209,15 +234,15 @@ afterEvaluate {
             name = "MavenCentral"
             url = RELEASE_REPOSITORY_URL
             credentials {
-                username = REPOSITORY_USERNAME
-                password = REPOSITORY_PASSWORD
+                username = getRepositoryUsername()
+                password = getRepositoryPassword()
             }
         }
     }
 
-    signing {
-        sign publishing.publications
-    }
+//    signing {
+//        sign publishing.publications
+//    }
 }
 
 configurations {
