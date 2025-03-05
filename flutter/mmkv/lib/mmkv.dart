@@ -249,9 +249,8 @@ class MMKV {
   /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
   /// * You can customize the [rootDir] of the file.
   MMKV(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0
-    , bool readOnly = false}) {
-    MMKV._init(mmapID, mode: mode, cryptKey: cryptKey, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly, fromNameSpace: false);
-  }
+    , bool readOnly = false}) :
+    this._init(mmapID, mode: mode, cryptKey: cryptKey, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly, fromNameSpace: false);
 
   MMKV._init(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0
     , bool readOnly = false, bool fromNameSpace = false}) {
