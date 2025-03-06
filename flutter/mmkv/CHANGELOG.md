@@ -1,4 +1,8 @@
 # MMKV for Flutter Change Log
+## v2.1.0 / 2025-03-06
+This is a **critical hotfix** for v2.1.0. It's highly recommended to upgrade as soon as possible.
+* Fix a bug that MMKV instance from non-namespace fails to create.
+
 ## v2.1.0 / 2025-02-18
 * **Breaking change**: Migrate legacy MMKV in a custom directory to normal MMKV. Historically Android/OHOS mistakenly use mmapKey as mmapID, which will be problematic with the `NameSpace` feature. Starting from v2.1.0, MMKV will try to migrate them back to normal when possible.  
   It's highly recommended that you **upgrade to v2.0.2 first** with **forward support** of normal MMKV in a custom directory.
