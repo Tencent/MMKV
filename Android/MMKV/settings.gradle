@@ -1,1 +1,3 @@
+rootProject.name = "MMKV-Android"
+
 include ':mmkv', ':mmkvdemo', 'mmkvannotation'
