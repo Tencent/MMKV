@@ -421,18 +421,23 @@
     NSArray *newArr = [mmkv getObjectOfClass:NSArray.class forKey:@"arr"];
     assert([arr isEqualToArray:newArr]);
 
-    sleep(2);
-    assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
-    assert([mmkv containsKey:@"never_expire_key_1"] == YES);
-    [self testMMKV:mmapID withCryptKey:nil decodeOnly:YES];
+    // sleep(2);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
+        assert([mmkv containsKey:@"never_expire_key_1"] == YES);
+        [self testMMKV:mmapID withCryptKey:nil decodeOnly:YES];
 
-    [mmkv removeValueForKey:@"never_expire_key_1"];
-    [mmkv enableAutoKeyExpire:MMKVExpireNever];
-    [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1"];
-    [mmkv setBool:YES forKey:@"auto_expire_key_1" expireDuration:1];
-    sleep(2);
-    assert([mmkv containsKey:@"never_expire_key_1"] == YES);
-    assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
+        [mmkv removeValueForKey:@"never_expire_key_1"];
+        [mmkv enableAutoKeyExpire:MMKVExpireNever];
+        [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1"];
+        [mmkv setBool:YES forKey:@"auto_expire_key_1" expireDuration:1];
+
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            // sleep(2);
+            assert([mmkv containsKey:@"never_expire_key_1"] == YES);
+            assert([mmkv containsKey:@"auto_expire_key_1"] == NO);
+        });
+    });
 }
 
 - (IBAction)onBtnClick:(id)sender {
