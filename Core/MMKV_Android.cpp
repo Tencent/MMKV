@@ -47,7 +47,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
-    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity, isReadOnly()))
+    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity, isReadOnly(), !isMultiProcess()))
     , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType, 0, isReadOnly()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)

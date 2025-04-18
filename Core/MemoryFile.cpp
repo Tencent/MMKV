@@ -221,8 +221,7 @@ bool MemoryFile::truncate(size_t size) {
             MMKVError("fail to munmap [%s], %s", m_diskFile.m_path.c_str(), strerror(errno));
         }
     }
-    auto ret = mmapOrCleanup();
-    return ret;
+    return mmapOrCleanup();
 }
 
 bool MemoryFile::msync(SyncFlag syncFlag) {
