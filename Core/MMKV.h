@@ -319,6 +319,10 @@ public:
             || (m_mode & CONTEXT_MODE_MULTI_PROCESS) != 0
             || (m_mode & MMKV_ASHMEM) != 0; // ashmem is always multi-process
     }
+
+    bool isAshmem() const {
+        return (m_mode & MMKV_ASHMEM) != 0;
+    }
 #endif
     bool isReadOnly() const { return (m_mode & MMKV_READ_ONLY) != 0; }
 
