@@ -43,7 +43,7 @@ namespace fs = std::filesystem;
 
 namespace mmkv {
 
-extern bool getFileSize(int fd, size_t &size);
+static bool getFileSize(const char *path, size_t &size);
 
 #    ifdef MMKV_ANDROID
 extern size_t ASharedMemory_getSize(int fd);
@@ -122,7 +122,11 @@ size_t File::getActualFileSize() const {
     }
 #    endif
     size_t size = 0;
-    mmkv::getFileSize(m_fd, size);
+    if (isFileValid()) {
+        mmkv::getFileSize(m_fd, size);
+    } else {
+        mmkv::getFileSize(m_path.c_str(), size);
+    }
     return size;
 }
 
@@ -140,18 +144,11 @@ void MemoryFile::cleanMayflyFD() {
 }
 
 size_t MemoryFile::getActualFileSize() {
-    if (m_isMayflyFD) {
-        openIfNeeded();
-    }
-    if (!m_diskFile.isFileValid()) {
+    if (!m_isMayflyFD && !m_diskFile.isFileValid()) {
         return 0;
     }
 
-    auto size = m_diskFile.getActualFileSize();
-
-    cleanMayflyFD();
-
-    return size;
+    return m_diskFile.getActualFileSize();
 }
 
 MMKVFileHandle_t MemoryFile::getFd() {
@@ -432,6 +429,7 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
 }
 
 #ifndef MMKV_APPLE
+
 bool getFileSize(int fd, size_t &size) {
     struct stat st = {};
     if (fstat(fd, &st) != -1) {
@@ -440,7 +438,18 @@ bool getFileSize(int fd, size_t &size) {
     }
     return false;
 }
-#else
+
+bool getFileSize(const char *path, size_t &size) {
+    struct stat st = {};
+    if (stat(path, &st) != -1) {
+        size = (size_t) st.st_size;
+        return true;
+    }
+    return false;
+}
+
+#else // !MMKV_APPLE
+
 // avoid using so-called privacy API
 bool getFileSize(int fd, size_t &size) {
     auto cur = lseek(fd, 0, SEEK_CUR);
@@ -456,7 +465,18 @@ bool getFileSize(int fd, size_t &size) {
     lseek(fd, cur, SEEK_SET);
     return true;
 }
-#endif
+
+bool getFileSize(const char *path, size_t &size) {
+    auto fd = open(path, O_RDONLY);
+    if (fd >= 0) {
+        auto ret = getFileSize(fd, size);
+        close(fd);
+        return ret;
+    }
+    return false;
+}
+
+#endif // !MMKV_APPLE
 
 size_t getPageSize() {
     return static_cast<size_t>(getpagesize());

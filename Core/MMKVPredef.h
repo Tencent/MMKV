@@ -97,7 +97,7 @@ constexpr auto MMKV_VERSION = "v2.1.0";
 constexpr auto MMKV_PATH_SLASH = L"\\";
 #    define MMKV_PATH_FORMAT "%ls"
 using MMKVFileHandle_t = HANDLE;
-constexpr MMKVFileHandle_t MMKVFileHandleInvalidValue = INVALID_HANDLE_VALUE;
+#define MMKVFileHandleInvalidValue INVALID_HANDLE_VALUE
 using MMKVPath_t = std::wstring;
 extern MMKVPath_t string2MMKVPath_t(const std::string &str);
 extern std::string MMKVPath_t2String(const MMKVPath_t &str);

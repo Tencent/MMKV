@@ -163,7 +163,7 @@ public:
 #ifndef MMKV_WIN32
     bool isFileValid() { return (m_isMayflyFD || m_diskFile.isFileValid()) && m_size > 0 && m_ptr; }
 #else
-    bool isFileValid() { return (m_isMayflyFD || m_diskFile.isFileValid()) && m_size > 0 && m_fileMapping && m_ptr; }
+    bool isFileValid() { return (m_isMayflyFD || (m_diskFile.isFileValid() && m_fileMapping)) && m_size > 0 && m_ptr; }
 #endif
 
     // just forbid it for possibly misuse
@@ -179,7 +179,9 @@ extern MMBuffer *readWholeFile(const MMKVPath_t &path);
 extern bool zeroFillFile(MMKVFileHandle_t fd, size_t startPos, size_t size);
 extern size_t getPageSize();
 extern MMKVPath_t absolutePath(const MMKVPath_t &path);
-
+#ifndef MMKV_WIN32
+extern bool getFileSize(int fd, size_t &size);
+#endif
 extern bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 
 // copy file by potentially renaming target file, might change file inode
