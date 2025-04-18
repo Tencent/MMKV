@@ -48,8 +48,6 @@ typedef int (*renameat2_t)(int old_dir_fd, const char* old_path, int new_dir_fd,
 
 namespace mmkv {
 
-extern bool getFileSize(int fd, size_t &size);
-
 bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     bool renamed = false;
 

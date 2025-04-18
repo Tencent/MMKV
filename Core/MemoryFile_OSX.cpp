@@ -164,8 +164,7 @@ bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail) {
             return true;
         }
     }
-    // we don't rollout mayfly fd (yet)
-    // file->cleanMayflyFD();
+    file->cleanMayflyFD();
     return false;
 }
 
