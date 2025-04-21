@@ -30,7 +30,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                // uncomment this line to support 32-bit ABIs (armeabi-v7a & x86)
                 // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 abiFilters 'arm64-v8a', 'x86_64'
             }
@@ -116,9 +115,10 @@ android {
 }
 
 afterEvaluate {
-    android.libraryVariants.all { variant ->
+    android.libraryVariants.configureEach { variant ->
         if (variant.buildType.name == "release") {
-            def abiFilters = ['arm64-v8a', 'x86_64', 'armeabi-v7a', 'x86']
+            // def abiFilters = ['arm64-v8a', 'x86_64', 'armeabi-v7a', 'x86']
+            def abiFilters = ['arm64-v8a', 'x86_64']
 
             def strippedLibsDir = "$buildDir/intermediates/stripped_native_libs/${variant.name}/strip${variant.name}DebugSymbols/out/lib"
             // Create per-variant copy task
