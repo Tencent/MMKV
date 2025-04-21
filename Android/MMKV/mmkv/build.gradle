@@ -149,6 +149,9 @@ afterEvaluate {
             tasks.named("bundle${variant.name.capitalize()}Aar") {
                 dependsOn("syncStrippedLibsToPrefab${variant.name.capitalize()}")
             }
+            tasks.named("bundle${variant.name.capitalize()}LocalLintAar") {
+                dependsOn("syncStrippedLibsToPrefab${variant.name.capitalize()}")
+            }
 
             // Generate combined artifact suffix from all flavor dimensions
             def flavorSuffixes = variant.productFlavors.collect { it.ext.artifactIdSuffix }
