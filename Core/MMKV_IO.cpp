@@ -351,9 +351,9 @@ void MMKV::checkLoadData() {
         clearMemoryCache();
         loadFromFile();
         notifyContentChanged();
-    } else if (m_metaInfo->m_crcDigest != metaInfo.m_crcDigest) {
-        MMKVDebug("[%s] oldCrc %u, newCrc %u, new actualSize %u", m_mmapID.c_str(), m_metaInfo->m_crcDigest,
-                  metaInfo.m_crcDigest, metaInfo.m_actualSize);
+    } else if ((m_metaInfo->m_crcDigest != metaInfo.m_crcDigest) || (m_metaInfo->m_actualSize != metaInfo.m_actualSize)) {
+        MMKVDebug("[%s] crcDigest %u -> %u, actualSize %u -> %u", m_mmapID.c_str(), m_metaInfo->m_crcDigest,
+                  metaInfo.m_crcDigest, m_metaInfo->m_actualSize, metaInfo.m_actualSize);
         SCOPED_LOCK(m_sharedProcessLock);
 
         // looks like this is no longer needed
