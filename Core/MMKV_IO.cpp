@@ -356,12 +356,14 @@ void MMKV::checkLoadData() {
                   metaInfo.m_crcDigest, metaInfo.m_actualSize);
         SCOPED_LOCK(m_sharedProcessLock);
 
-        size_t fileSize = m_file->getActualFileSize();
+        // looks like this is no longer needed
+        // for we inc sequence on truncate()/trim()/expandAndWriteBack()/fullWriteBack() etc
+        /*size_t fileSize = m_file->getActualFileSize();
         if (m_file->getFileSize() != fileSize) {
             MMKVInfo("file size has changed [%s] from %zu to %zu", m_mmapID.c_str(), m_file->getFileSize(), fileSize);
             clearMemoryCache();
             loadFromFile();
-        } else {
+        } else*/ {
             partialLoadFromFile();
         }
         notifyContentChanged();
