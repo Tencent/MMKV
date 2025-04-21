@@ -142,8 +142,7 @@ IF (MSVC OR (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"))
     # x86_64 asm not supported in OHOS
 ELSE()
     target_sources(core PRIVATE
-        aes/openssl/openssl_aesv8-armx.S
-        aes/openssl/openssl_aes-armv4.S)
+        aes/openssl/openssl_aesv8-armx.S)
 ENDIF()
 
 target_include_directories(core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
