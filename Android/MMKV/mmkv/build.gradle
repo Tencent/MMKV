@@ -8,6 +8,7 @@ apply from: rootProject.file('gradle/build_library.gradle')
 
 android {
     namespace "com.tencent.mmkv"
+    compileSdk rootProject.ext.compileSdk
     publishing {
         multipleVariants("DefaultCppRelease") {
             includeBuildTypeValues('release')
@@ -30,12 +31,12 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 abiFilters 'arm64-v8a', 'x86_64'
             }
         }
-        ndkVersion = '26.3.11579264'
+        ndkVersion "28.1.13356709"
         minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
     }
     buildTypes {
         release {
@@ -117,7 +118,6 @@ android {
 afterEvaluate {
     android.libraryVariants.configureEach { variant ->
         if (variant.buildType.name == "release") {
-            // def abiFilters = ['arm64-v8a', 'x86_64', 'armeabi-v7a', 'x86']
             def abiFilters = ['arm64-v8a', 'x86_64']
 
             def strippedLibsDir = "$buildDir/intermediates/stripped_native_libs/${variant.name}/strip${variant.name}DebugSymbols/out/lib"

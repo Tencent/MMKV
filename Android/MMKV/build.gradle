@@ -8,7 +8,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.8.2'
+        classpath 'com.android.tools.build:gradle:8.9.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -26,10 +26,10 @@ task clean(type: Delete) {
 
 ext {
     minSdkVersion = 23
-    compileSdk = 34
+    compileSdk = 35
     targetSdkVersion = compileSdk
     supportLibVersion = "25.4.0"
-    javaVersion = JavaVersion.VERSION_1_8
+    javaVersion = JavaVersion.VERSION_11
 
     defaultsToPrivateOnly = true
 

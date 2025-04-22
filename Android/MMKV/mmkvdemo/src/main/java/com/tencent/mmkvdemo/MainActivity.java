@@ -32,6 +32,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+
 import com.tencent.mmkv.MMKV;
 import com.tencent.mmkv.NameSpace;
 import com.tencent.mmkv.NativeBuffer;
@@ -48,7 +52,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Enable edge-to-edge display
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_main);
+
+        View mainLayout = findViewById(R.id.main_layout);
+        ViewCompat.setOnApplyWindowInsetsListener(mainLayout, (v, insets) -> {
+            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            int navigationBarHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            v.setPadding(0, statusBarHeight, 0, navigationBarHeight);
+            return insets;
+        });
 
         TextView tv = (TextView) findViewById(R.id.sample_text);
         String rootDir = MMKV.getRootDir();
