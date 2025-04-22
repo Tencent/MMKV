@@ -1509,11 +1509,11 @@ static std::pair<MMKVPath_t, MMKVPath_t> getStorage(const std::string &mmapID, c
     MMKVDebug("mmapKey %s, real ID %s", mmapKey.c_str(), realID.c_str());
 
     MMKVPath_t kvPath = mappedKVPathWithID(realID, relatePath);
+    MMKVPath_t crcPath = crcPathWithPath(kvPath);
     if (!isFileExist(kvPath)) {
         MMKVInfo("file not exist %s", kvPath.c_str());
         kvPath.resize(0);
     }
-    MMKVPath_t crcPath = crcPathWithPath(kvPath);
     if (!isFileExist(crcPath)) {
         MMKVInfo("crc file not exist %s", crcPath.c_str());
         crcPath.resize(0);
