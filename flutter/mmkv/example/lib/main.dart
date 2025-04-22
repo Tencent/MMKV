@@ -32,7 +32,7 @@ import "package:path_provider/path_provider.dart";
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  var groupDir;
+  String? groupDir;
   if (Platform.isIOS) {
     final PathProviderFoundation provider = PathProviderFoundation();
     groupDir = await provider.getContainerPath(appGroupIdentifier: "group.tencent.mmkv");
@@ -456,9 +456,10 @@ class _MyAppState extends State<MyApp> {
       final mmkv = MMKV(mmapID, mode: MMKVMode.MULTI_PROCESS_MODE);
       mmkv.encodeBool("bool", true);
     }
-    print("check exist = ${MMKV.checkExist(mmapID)}");
-    MMKV.removeStorage(mmapID);
-    print("after remove, check exist = ${MMKV.checkExist(mmapID)}");
+    var rootDir = Platform.isIOS ? MMKV.groupPath() : null;
+    print("check exist = ${MMKV.checkExist(mmapID, rootDir: rootDir)}");
+    MMKV.removeStorage(mmapID, rootDir: rootDir);
+    print("after remove, check exist = ${MMKV.checkExist(mmapID, rootDir: rootDir)}");
     {
       final mmkv = MMKV(mmapID, mode: MMKVMode.MULTI_PROCESS_MODE);
       if (mmkv.count != 0) {
@@ -467,7 +468,7 @@ class _MyAppState extends State<MyApp> {
     }
 
     mmapID = "test_remove/sg";
-    final rootDir = "${MMKV.rootDir}_sg";
+    rootDir = "${MMKV.rootDir}_sg";
     var mmkv = MMKV(mmapID, rootDir: rootDir);
     mmkv.encodeBool("bool", true);
     print("check exist = ${MMKV.checkExist(mmapID, rootDir: rootDir)}");

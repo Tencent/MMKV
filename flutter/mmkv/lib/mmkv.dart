@@ -770,8 +770,14 @@ class MMKV {
     return _int2Bool(ret);
   }
 
-  void checkContentChangedByOuterProcess() {
+  /// return the iOS App Group root path for MMKV multi-process instances
+  static String? groupPath() {
+    return Platform.isIOS ? _pointer2String(_groupPath()) : null;
+  }
 
+  /// check if the multi-process MMKV instance has been modified by other processes
+  void checkContentChangedByOuterProcess() {
+    _checkContentChanged(_handle);
   }
 }
 
@@ -973,3 +979,5 @@ final void Function(Pointer<Void>) _checkContentChanged = _mmkvPlatform.checkCon
 final bool Function(Pointer<Utf8>) _getNameSpace = _mmkvPlatform.getNameSpaceFunc();
 
 final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _checkExist = _mmkvPlatform.checkExistFunc();
+
+final Pointer<Utf8> Function() _groupPath = _mmkvPlatform.groupPathFunc();

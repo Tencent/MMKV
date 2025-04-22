@@ -336,4 +336,9 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) checkExistFunc() {
     return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>)>>(nativeFuncName("checkExist")).asFunction();
   }
+
+  @override
+  Pointer<Utf8> Function() groupPathFunc() {
+    return nativeLib().lookup<NativeFunction<Pointer<Utf8> Function()>>(nativeFuncName("groupPath")).asFunction();
+  }
 }

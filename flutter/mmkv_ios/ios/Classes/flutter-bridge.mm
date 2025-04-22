@@ -664,3 +664,8 @@ MMKV_EXPORT bool MMKV_FUNC(checkExist)(const char *mmapID, const char *rootDir) 
     }
     return [MMKV checkExist:strID rootPath:nil];
 }
+
+MMKV_EXPORT const char *MMKV_FUNC(groupPath)() {
+    auto groupPath = [MMKV mmkvGroupPath];
+    return groupPath ? [groupPath UTF8String] : nullptr;
+}

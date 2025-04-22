@@ -332,6 +332,10 @@ class MMKVPluginPlatform {
   int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) checkExistFunc() {
     throw UnimplementedError();
   }
+
+  Pointer<Utf8> Function() groupPathFunc() {
+    throw UnimplementedError();
+  }
 }
 
 typedef LogCallbackWrap = Void Function(Uint32, Pointer<Utf8>, Int32, Pointer<Utf8>, Pointer<Utf8>);
