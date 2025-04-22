@@ -303,6 +303,7 @@ class _MyAppState extends State<MyApp> {
     // mmkv.sync(true);
     // mmkv.close();
     mmkv.checkContentChangedByOuterProcess();
+    print("is file valid: ${MMKV.isFileValid(mmkv.mmapID)}");
   }
 
   MMKV testMMKV(String mmapID, String? cryptKey, bool decodeOnly, String? rootPath) {

@@ -538,6 +538,18 @@ MMKV_EXPORT bool MMKV_FUNC(disableCompareBeforeSet)(const void *handle) {
     return false;
 }
 
+MMKV_EXPORT bool MMKV_FUNC(isFileValid)(const char *mmapID, const char *rootDir) {
+    auto strID = [NSString stringWithUTF8String:mmapID];
+
+    if (rootDir) {
+        auto root = [NSString stringWithUTF8String:rootDir];
+        if (root.length > 0) {
+            return [MMKV isFileValid:strID rootPath:root];
+        }
+    }
+    return [MMKV isFileValid:strID rootPath:nil];
+}
+
 MMKV_EXPORT bool MMKV_FUNC(removeStorage)(const char *mmapID, const char *rootDir) {
     auto strID = [NSString stringWithUTF8String:mmapID];
 

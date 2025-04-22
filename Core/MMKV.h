@@ -754,7 +754,10 @@ public:
     // Note: the existing instance (if any) will be closed & destroyed
     bool removeStorage(const std::string &mmapID);
 
-    friend class MMKV_NAMESPACE_PREFIX::MMKV;
+    // check the existence of the MMKV file
+    bool checkExist(const std::string &mmapID);
+
+   friend class MMKV_NAMESPACE_PREFIX::MMKV;
 };
 
 }

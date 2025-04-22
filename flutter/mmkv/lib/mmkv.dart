@@ -146,6 +146,33 @@ class NameSpace {
     final kv = MMKV._init(mmapID, mode: mode, cryptKey: cryptKey, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly, fromNameSpace: true);
     return kv;
   }
+
+  /// backup one MMKV instance to [dstDir]
+  bool backupOneToDirectory(String mmapID, String dstDir) {
+    return MMKV.backupOneToDirectory(mmapID, dstDir,rootDir: _rootDir);
+  }
+
+  /// restore one MMKV instance from [srcDir]
+  bool restoreOneMMKVFromDirectory(String mmapID, String srcDir) {
+    return MMKV.restoreOneMMKVFromDirectory(mmapID, srcDir, rootDir: _rootDir);
+  }
+
+  /// Check whether the MMKV file is valid or not.
+  /// Note: Don't use this to check the existence of the instance, the result is undefined on nonexistent files.
+  bool isFileValid(String mmapID) {
+    return MMKV.isFileValid(mmapID, rootDir: _rootDir);
+  }
+
+  /// remove the storage of the MMKV, including the data file & meta file (.crc)
+  /// Note: the existing instance (if any) will be closed & destroyed
+  bool removeStorage(String mmapID) {
+    return MMKV.removeStorage(mmapID, rootDir: _rootDir);
+  }
+
+  /// check the existence of the MMKV
+  bool checkExist(String mmapID) {
+    return MMKV.checkExist(mmapID, rootDir: _rootDir);
+  }
 }
 
 /// An efficient, small mobile key-value storage framework developed by WeChat.
@@ -743,6 +770,20 @@ class MMKV {
     return _disableCompareBeforeSet(_handle);
   }
 
+  /// Check whether the MMKV file is valid or not.
+  /// Note: Don't use this to check the existence of the instance, the result is undefined on nonexistent files.
+  static bool isFileValid(String mmapID, {String? rootDir}) {
+    final mmapIDPtr = mmapID.toNativeUtf8();
+    final rootDirPtr = _string2Pointer(rootDir);
+
+    final ret = _isFileValid(mmapIDPtr, rootDirPtr);
+
+    calloc.free(mmapIDPtr);
+    calloc.free(rootDirPtr);
+
+    return _int2Bool(ret);
+  }
+
   /// remove the storage of the MMKV, including the data file & meta file (.crc)
   /// Note: the existing instance (if any) will be closed & destroyed
   static bool removeStorage(String mmapID, {String? rootDir}) {
@@ -979,5 +1020,7 @@ final void Function(Pointer<Void>) _checkContentChanged = _mmkvPlatform.checkCon
 final bool Function(Pointer<Utf8>) _getNameSpace = _mmkvPlatform.getNameSpaceFunc();
 
 final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _checkExist = _mmkvPlatform.checkExistFunc();
+
+final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _isFileValid = _mmkvPlatform.isFileValidFunc();
 
 final Pointer<Utf8> Function() _groupPath = _mmkvPlatform.groupPathFunc();

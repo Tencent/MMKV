@@ -479,6 +479,9 @@ class MMKV;
 /// Note: the existing instance (if any) will be closed & destroyed
 - (BOOL)removeStorage:(NSString *)mmapID NS_SWIFT_NAME(removeStorage(for:));
 
+/// detect if the MMKV file exist or not
+- (BOOL)checkExist:(NSString *)mmapID NS_SWIFT_NAME(checkExist(for:));
+
 // protection from potential misuse
 - (instancetype)init NS_UNAVAILABLE;
 

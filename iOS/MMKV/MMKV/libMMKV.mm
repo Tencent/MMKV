@@ -1299,4 +1299,8 @@ static void ContentChangeHandler(const string &mmapID) {
     return mmkv::MMKV::removeStorage(mmapID.UTF8String, [self strRootPath]);
 }
 
+- (BOOL)checkExist:(NSString *)mmapID {
+    return mmkv::MMKV::checkExist(mmapID.UTF8String, [self strRootPath]);
+}
+
 @end

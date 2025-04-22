@@ -333,6 +333,10 @@ class MMKVPluginPlatform {
     throw UnimplementedError();
   }
 
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) isFileValidFunc() {
+    throw UnimplementedError();
+  }
+
   Pointer<Utf8> Function() groupPathFunc() {
     throw UnimplementedError();
   }

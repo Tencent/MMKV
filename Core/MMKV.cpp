@@ -1786,4 +1786,8 @@ bool NameSpace::removeStorage(const std::string &mmapID) {
     return MMKV::removeStorage(mmapID, &m_rootDir);
 }
 
+bool NameSpace::checkExist(const std::string &mmapID) {
+    return MMKV::checkExist(mmapID, &m_rootDir);
+}
+
 MMKV_NAMESPACE_END
