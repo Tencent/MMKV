@@ -331,7 +331,9 @@ func testRemoveStorage() {
 	kv := mmkv.MMKVWithIDAndMode("test_remove", mmkv.MMKV_MULTI_PROCESS)
 	kv.SetBool(true, "bool")
 
+	fmt.Println("check exist = ", mmkv.CheckExist("test_remove"))
 	mmkv.RemoveStorage("test_remove")
+	fmt.Println("after remove, check exist = ", mmkv.CheckExist("test_remove"))
 	kv = mmkv.MMKVWithIDAndMode("test_remove", mmkv.MMKV_MULTI_PROCESS)
 	if kv.Count() != 0 {
 		panic("storage not successfully remove")

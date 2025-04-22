@@ -368,6 +368,13 @@ func GetRootDir() string {
 	return goStr
 }
 
+// CheckExist Check the existence of the MMKV
+func CheckExist(mmapID string) bool {
+	cStrNull := C.GoStringWrapNil()
+	ret := C.checkExist(C.wrapGoString(mmapID), cStrNull)
+	return bool(ret)
+}
+
 // GetNameSpace Get a wrapper of customize root path.
 func GetNameSpace(rootDir string) NameSpace {
 	if C.getNameSpace(C.wrapGoString(rootDir)) {
@@ -783,7 +790,14 @@ func (ns *NameSpace) RestoreAllFromDirectory(srcDir string) uint64 {
 // RemoveStorage Remove the storage of the MMKV inside NameSpace, including the data file & meta file (.crc)
 // Note: the existing instance (if any) will be closed & destroyed
 func (ns *NameSpace) RemoveStorage(mmapID string) bool {
-	cStrNull := C.GoStringWrapNil()
-	ret := C.removeStorage(C.wrapGoString(mmapID), cStrNull)
+	root := C.wrapGoString(ns.rootDir)
+	ret := C.removeStorage(C.wrapGoString(mmapID), root)
+	return bool(ret)
+}
+
+// CheckExist Check the existence of the MMKV inside NameSpace
+func (ns *NameSpace) CheckExist(mmapID string) bool {
+	root := C.wrapGoString(ns.rootDir)
+	ret := C.checkExist(C.wrapGoString(mmapID), root)
 	return bool(ret)
 }

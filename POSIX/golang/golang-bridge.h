@@ -123,6 +123,8 @@ bool isReadOnly(void *handle);
 
 bool getNameSpace(GoStringWrap_t rootPath);
 
+bool checkExist(GoStringWrap_t mmapID, GoStringWrap_t rootPath);
+
 #ifdef __cplusplus
 }
 #endif
