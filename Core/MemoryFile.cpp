@@ -281,7 +281,6 @@ void MemoryFile::reloadFromFile(size_t expectedCapacity) {
             roundSize = std::max<size_t>(expectedSize, roundSize);
             truncate(roundSize);
 
-            // TODO: or should we dup() ?
             if (m_isMayflyFD) {
                 fileLock.destroyLock();
             }

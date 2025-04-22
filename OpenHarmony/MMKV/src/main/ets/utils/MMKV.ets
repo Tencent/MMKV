@@ -24,7 +24,6 @@ import { MMKVLogLevel } from './MMKVLogLevel';
 import { getObjKeys } from './Util';
 import { NativeBuffer } from './NativeBuffer';
 import { MMKVHandler } from './MMKVHandler';
-// import { NameSpace } from './NameSpace';
 import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
 

@@ -201,10 +201,8 @@ bool FileLock::unlock(LockType lockType) {
 }
 
 void FileLock::destroyLock() {
-    // TODO: test Win32 file lock
     m_fd = MMKVFileHandleInvalidValue;
 
-    // TODO: do we need to reset these as well?
     // m_sharedLockCount = 0;
     // m_exclusiveLockCount = 0;
 }
