@@ -348,7 +348,9 @@ void testRemoveStorage() {
         auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_MULTI_PROCESS);
         mmkv->set(true, "bool");
     }
+    printf("check exist: %d\n", MMKV::checkExist(mmapID));
     MMKV::removeStorage(mmapID);
+    printf("after remove, check exist: %d\n", MMKV::checkExist(mmapID));
     {
         auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_MULTI_PROCESS);
         if (mmkv->count() != 0) {
@@ -360,7 +362,9 @@ void testRemoveStorage() {
     auto rootDir = MMKV::getRootDir() + L"_1";
     auto mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, nullptr, &rootDir);
     mmkv->set(true, "bool");
+    printf("check exist: %d\n", MMKV::checkExist(mmapID, &rootDir));
     MMKV::removeStorage(mmapID, &rootDir);
+    printf("after remove, check exist: %d\n", MMKV::checkExist(mmapID, &rootDir));
     mmkv = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS, nullptr, &rootDir);
     if (mmkv->count() != 0) {
         abort();
