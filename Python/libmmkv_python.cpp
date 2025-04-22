@@ -125,6 +125,7 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsNameSpace.def("removeStorage", &NameSpace::removeStorage);
     clsNameSpace.def("isFileValid", &NameSpace::isFileValid);
+    clsNameSpace.def("checkExist", &NameSpace::checkExist);
 
     py::class_<MMKV, unique_ptr<MMKV, py::nodelete>> clsMMKV(m, "MMKV");
 
@@ -435,4 +436,12 @@ PYBIND11_MODULE(mmkv, m) {
        },
        "detect if the MMKV file is valid or not", py::arg("mmapID"),
        py::arg("rootDir") = MMKVPath_t());
+
+    clsMMKV.def_static("checkExist",
+                       [](const string &mmapID, const MMKVPath_t &rootDir) {
+                           MMKVPath_t *rootDirPtr = (!rootDir.empty()) ? (MMKVPath_t *) &rootDir : nullptr;
+                           return MMKV::checkExist(mmapID, rootDirPtr);
+                       },
+                       "check if the MMKV file is exist or not", py::arg("mmapID"),
+                       py::arg("rootDir") = MMKVPath_t());
 }

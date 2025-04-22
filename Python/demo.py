@@ -204,7 +204,9 @@ def test_remove_storage():
     kv = mmkv.MMKV("test_remove", mmkv.MMKVMode.MultiProcess)
     kv.set(True, "bool")
 
+    print("check exist = ", mmkv.MMKV.checkExist("test_remove"))
     mmkv.MMKV.removeStorage("test_remove")
+    print("after remove, check exist = ", mmkv.MMKV.checkExist("test_remove"))
     kv = mmkv.MMKV("test_remove", mmkv.MMKVMode.MultiProcess)
     if kv.count() != 0:
         print("storage not successfully remove")
@@ -214,7 +216,9 @@ def test_remove_storage():
     kv = mmkv.MMKV("test_remove/sg", rootDir=rootDir)
     kv.set(True, "bool")
 
-    mmkv.MMKV.removeStorage("test_remove/sg")
+    print("check exist = ", mmkv.MMKV.checkExist("test_remove/sg", rootDir=rootDir))
+    mmkv.MMKV.removeStorage("test_remove/sg", rootDir=rootDir)
+    print("after remove, check exist = ", mmkv.MMKV.checkExist("test_remove/sg", rootDir=rootDir))
     kv = mmkv.MMKV("test_remove/sg", rootDir=rootDir)
     if kv.count() != 0:
         print("storage not successfully remove")
