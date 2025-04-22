@@ -154,6 +154,7 @@ class MMKV;
 + (void)onAppTerminate;
 
 + (NSString *)mmkvBasePath;
++ (nullable NSString *)mmkvGroupPath;
 
 /// get a namespace with custom root dir
 + (MMKVNameSpace *)nameSpace:(NSString *)rootPath;

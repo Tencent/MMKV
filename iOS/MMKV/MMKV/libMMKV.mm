@@ -914,6 +914,10 @@ static AutoCleanInfoQueue_t g_cleanQueue = {};
     }
 }
 
++ (NSString *)mmkvGroupPath {
+    return g_groupPath;
+}
+
 - (void)setValue:(nullable id)value forKey:(NSString *)key {
     [super setValue:value forKey:key];
 }
