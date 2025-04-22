@@ -1199,6 +1199,21 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static native boolean removeStorage(String mmapID, @Nullable String rootPath);
 
     /**
+     * check existance of the MMKV file
+     * @param mmapID   The unique ID of the MMKV instance.
+     */
+    public static boolean checkExist(String mmapID) {
+        return checkExist(mmapID, null);
+    }
+
+    /**
+     * check existance of the MMKV file
+     * @param mmapID   The unique ID of the MMKV instance.
+     * @param rootPath The folder of the MMKV instance, defaults to $(FilesDir)/mmkv.
+     */
+    public static native boolean checkExist(String mmapID, @Nullable String rootPath);
+
+    /**
      * Atomically migrate all key-values from an existent SharedPreferences to the MMKV instance.
      *
      * @param preferences The SharedPreferences to import from.
