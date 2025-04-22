@@ -561,7 +561,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         }
 
         String processName = MMKVContentProvider.getProcessNameByPID(context, android.os.Process.myPid());
-        if (processName == null || processName.length() == 0) {
+        if (processName == null || processName.isEmpty()) {
             String message = "process name detect fail, try again later";
             simpleLog(MMKVLogLevel.LevelError, message);
             throw new IllegalStateException(message);
@@ -622,7 +622,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Create the default MMKV instance in customimize process mode, with an encryption key.
+     * Create the default MMKV instance in customize process mode, with an encryption key.
      *
      * @param mode     The process mode of the MMKV instance, defaults to {@link #SINGLE_PROCESS_MODE}.
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
@@ -913,9 +913,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         Set<String> a;
         try {
             a = cls.newInstance();
-        } catch (IllegalAccessException e) {
-            return defaultValue;
-        } catch (InstantiationException e) {
+        } catch (IllegalAccessException | InstantiationException e) {
             return defaultValue;
         }
         a.addAll(Arrays.asList(result));
@@ -977,7 +975,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return encodeBytes_2(nativeHandle, key, bytes, expireDurationInSecond);
     }
 
-    @SuppressWarnings("unchecked")
     @Nullable
     public <T extends Parcelable> T decodeParcelable(String key, Class<T> tClass) {
         return decodeParcelable(key, tClass, null);
