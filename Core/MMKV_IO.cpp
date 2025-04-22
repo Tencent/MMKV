@@ -1491,14 +1491,48 @@ void MMKV::clearAll(bool keepSpace) {
     loadFromFile();
 }
 
-bool MMKV::isFileValid(const string &mmapID, const MMKVPath_t *relatePath) {
-    MMKVPath_t kvPath = mappedKVPathWithID(mmapID, relatePath);
-    if (!isFileExist(kvPath)) {
-        return true;
+static std::pair<MMKVPath_t, MMKVPath_t> getStorage(const std::string &mmapID, const MMKVPath_t *relatePath, std::string& realID, std::string& mmapKey) {
+#ifdef MMKV_ANDROID
+    auto migrateStatus = tryMigrateLegacyMMKVFile(mmapID, relatePath);
+    if (migrateStatus == MigrateStatus::NoneExist) {
+        MMKVWarning("file id [%s] not exist in path %s", mmapID.c_str(), relatePath ? relatePath->c_str() : "default");
+        return false;
+    } else if (migrateStatus == MigrateStatus::OldToNewMigrateFail) {
+        realID = legacyMmapedKVKey(mmapID, relatePath);
+    } else {
+        realID = mmapID;
     }
+#else
+    realID = mmapID;
+#endif
+    mmapKey = mmapedKVKey(realID, relatePath);
+    MMKVDebug("mmapKey %s, real ID %s", mmapKey.c_str(), realID.c_str());
 
+    MMKVPath_t kvPath = mappedKVPathWithID(realID, relatePath);
+    if (!isFileExist(kvPath)) {
+        MMKVInfo("file not exist %s", kvPath.c_str());
+        kvPath.resize(0);
+    }
     MMKVPath_t crcPath = crcPathWithPath(kvPath);
     if (!isFileExist(crcPath)) {
+        MMKVInfo("crc file not exist %s", crcPath.c_str());
+        crcPath.resize(0);
+    }
+    return {kvPath, crcPath};
+}
+
+bool MMKV::isFileValid(const string &mmapID, const MMKVPath_t *relatePath) {
+    if (!g_instanceLock) {
+        return false;
+    }
+    SCOPED_LOCK(g_instanceLock);
+
+    std::string realID, mmapKey;
+    auto [kvPath, crcPath] = getStorage(mmapID, relatePath, realID, mmapKey);
+    if (kvPath.empty()) {
+        return true;
+    }
+    if (crcPath.empty()) {
         return false;
     }
 
@@ -1539,40 +1573,24 @@ bool MMKV::removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath
     if (!g_instanceLock) {
         return false;
     }
-#ifdef MMKV_ANDROID
-    string realID;
-    auto migrateStatus = tryMigrateLegacyMMKVFile(mmapID, relatePath);
-    if (migrateStatus == MigrateStatus::NoneExist) {
-        MMKVWarning("file id [%s] not exist in path %s", mmapID.c_str(), relatePath ? relatePath->c_str() : "default");
-        return false;
-    } else if (migrateStatus == MigrateStatus::OldToNewMigrateFail) {
-        realID = legacyMmapedKVKey(mmapID, relatePath);
-    } else {
-        realID = mmapID;
-    }
-#else
-    auto &realID = mmapID;
-#endif
-    auto mmapKey = mmapedKVKey(realID, relatePath);
-    MMKVDebug("mmapKey %s, real ID %s", mmapKey.c_str(), realID.c_str());
-
-    MMKVPath_t kvPath = mappedKVPathWithID(realID, relatePath);
-    if (!isFileExist(kvPath)) {
-        MMKVWarning("file not exist %s", kvPath.c_str());
-        return false;
-    }
-    MMKVPath_t crcPath = crcPathWithPath(kvPath);
-    if (!isFileExist(crcPath)) {
-        MMKVWarning("file not exist %s", crcPath.c_str());
-        return false;
-    }
-
-    MMKVInfo("remove storage [%s]", realID.c_str());
     SCOPED_LOCK(g_instanceLock);
+
+    std::string realID, mmapKey;
+    auto [kvPath, crcPath] = getStorage(mmapID, relatePath, realID, mmapKey);
+    if (kvPath.empty() && crcPath.empty()) {
+        return false;
+    }
+    MMKVInfo("remove storage [%s]", realID.c_str());
+
+    if (crcPath.empty()) {
+        deleteFile(kvPath);
+        return true;
+    }
 
     File crcFile(crcPath, OpenFlag::ReadOnly);
     if (!crcFile.isFileValid()) {
-        return false;
+        deleteFile(kvPath);
+        return true;
     }
     FileLock fileLock(crcFile.getFd());
     InterProcessLock lock(&fileLock, ExclusiveLockType);
@@ -1584,15 +1602,21 @@ bool MMKV::removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath
         // itr is not valid after this
     }
 
-#ifndef MMKV_WIN32
-    ::unlink(kvPath.c_str());
-    ::unlink(crcPath.c_str());
-#else
-    DeleteFile(kvPath.c_str());
-    DeleteFile(crcPath.c_str());
-#endif
+    deleteFile(kvPath);
+    deleteFile(crcPath);
 
     return true;
+}
+
+bool MMKV::checkExist(const std::string &mmapID, const MMKVPath_t *relatePath) {
+    if (!g_instanceLock) {
+        return false;
+    }
+    SCOPED_LOCK(g_instanceLock);
+
+    std::string realID, mmapKey;
+    auto [kvPath, crcPath] = getStorage(mmapID, relatePath, realID, mmapKey);
+    return (!kvPath.empty() && !crcPath.empty());
 }
 
 // ---- auto expire ----

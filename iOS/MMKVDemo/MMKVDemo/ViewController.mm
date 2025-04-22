@@ -233,7 +233,7 @@
     MMKV *mmkv = [MMKV mmkvWithID:mmapID cryptKey:cryptKey];
     [ViewController testMMKV:mmkv decodeOnly:decodeOnly];
 
-    NSLog(@"isFileValid[%@]: %d", mmapID, [MMKV isFileValid:mmapID]);
+    NSLog(@"isFileValid[%@]: %d, checkExist: %d", mmapID, [MMKV isFileValid:mmapID], [MMKV checkExist:mmapID rootPath:nil]);
 }
 
 + (void)testMMKV:(MMKV *)mmkv decodeOnly:(BOOL)decodeOnly {

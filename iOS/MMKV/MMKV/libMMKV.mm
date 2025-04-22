@@ -1152,6 +1152,23 @@ static NSString *md5(NSString *value) {
     return [self removeStorage:mmapID rootPath:rootPath];
 }
 
++ (BOOL)checkExist:(NSString *)mmapID rootPath:(nullable NSString *)path NS_SWIFT_NAME(removeStorage(for:rootPath:)) {
+    if (mmapID.length > 0) {
+        if (path.length > 0) {
+            string rootPath(path.UTF8String);
+            return mmkv::MMKV::checkExist(mmapID.UTF8String, &rootPath);
+        } else {
+            return mmkv::MMKV::checkExist(mmapID.UTF8String, nullptr);
+        }
+    }
+    return NO;
+}
+
++ (BOOL)checkExist:(NSString *)mmapID mode:(MMKVMode)mode NS_SWIFT_NAME(removeStorage(for:mode:)) {
+    auto rootPath = (mode & MMKVSingleProcess) ? nil : g_groupPath;
+    return [self checkExist:mmapID rootPath:rootPath];
+}
+
 + (MMKVNameSpace *)nameSpace:(NSString *)rootPath {
     mmkv::MMKV::nameSpace(rootPath.UTF8String);
     return [[MMKVNameSpace alloc] initWith:rootPath];

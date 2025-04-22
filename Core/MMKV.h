@@ -641,6 +641,9 @@ public:
     // Note: the existing instance (if any) will be closed & destroyed
     static bool removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
+    // check the existence of the MMKV file
+    static bool checkExist(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
+
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
