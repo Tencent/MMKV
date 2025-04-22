@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.tencent.mmkv_example"
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     lintOptions {
         disable 'InvalidPackage'
@@ -33,7 +33,7 @@ android {
     defaultConfig {
         applicationId "com.tencent.mmkv_example"
         minSdkVersion 23
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -52,7 +52,7 @@ android {
     }
 
     dependencies {
-        implementation('com.tencent:mmkv:2.1.0')
+        implementation('com.tencent:mmkv:2.2.0')
 
         constraints {
             implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {

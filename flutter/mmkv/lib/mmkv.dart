@@ -757,6 +757,19 @@ class MMKV {
     return _int2Bool(ret);
   }
 
+  /// check the existence of the MMKV
+  static bool checkExist(String mmapID, {String? rootDir}) {
+    final mmapIDPtr = mmapID.toNativeUtf8();
+    final rootDirPtr = _string2Pointer(rootDir);
+
+    final ret = _checkExist(mmapIDPtr, rootDirPtr);
+
+    calloc.free(mmapIDPtr);
+    calloc.free(rootDirPtr);
+
+    return _int2Bool(ret);
+  }
+
   void checkContentChangedByOuterProcess() {
 
   }
@@ -958,3 +971,5 @@ final ContentCallbackRegister _registerContentHandler = _mmkvPlatform.registerCo
 final void Function(Pointer<Void>) _checkContentChanged = _mmkvPlatform.checkContentChangedFunc();
 
 final bool Function(Pointer<Utf8>) _getNameSpace = _mmkvPlatform.getNameSpaceFunc();
+
+final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _checkExist = _mmkvPlatform.checkExistFunc();

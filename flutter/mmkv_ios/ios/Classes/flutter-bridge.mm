@@ -652,3 +652,15 @@ MMKV_EXPORT bool MMKV_FUNC(getNameSpace)(const char *rootPath) {
     }
     return false;
 }
+
+MMKV_EXPORT bool MMKV_FUNC(checkExist)(const char *mmapID, const char *rootDir) {
+    auto strID = [NSString stringWithUTF8String:mmapID];
+
+    if (rootDir) {
+        auto root = [NSString stringWithUTF8String:rootDir];
+        if (root.length > 0) {
+            return [MMKV checkExist:strID rootPath:root];
+        }
+    }
+    return [MMKV checkExist:strID rootPath:nil];
+}

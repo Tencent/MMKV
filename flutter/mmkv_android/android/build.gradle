@@ -8,7 +8,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.8.0'
+        classpath 'com.android.tools.build:gradle:8.9.2'
     }
 }
 
@@ -16,7 +16,7 @@ rootProject.allprojects {
     repositories {
         google()
         mavenCentral()
-//        mavenLocal()
+        mavenLocal()
     }
 }
 
@@ -24,7 +24,7 @@ apply plugin: 'com.android.library'
 
 android {
     namespace "com.tencent.mmkvflutter"
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     defaultConfig {
         minSdkVersion 23
@@ -34,6 +34,6 @@ android {
     }
 
     dependencies {
-        implementation 'com.tencent:mmkv:[2.1.0, 2.2)'
+        implementation 'com.tencent:mmkv:[2.2.0, 2.3)'
     }
 }

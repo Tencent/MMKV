@@ -1,4 +1,7 @@
 # MMKV Platform Interface Change Log
+## v2.2.0 / 2025-4-xx
+* Add `checkExist()`.
+
 ## v2.1.0 / 2025-02-18
 * Bump to 2.1 to setup a breaking change version.
 * Add `getNameSpace()`.

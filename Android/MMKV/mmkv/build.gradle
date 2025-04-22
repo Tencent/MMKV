@@ -128,14 +128,14 @@ afterEvaluate {
                 }
                 into "$buildDir/intermediates/prefab_package/${variant.name.capitalize()}/prefab/modules/mmkv/libs"
                 eachFile {
-                    println('hhh before:' + path)
+//                    println('hhh before:' + path)
                     for (abi in abiFilters) {
                         if (path.contains("${abi}/")) {
                             path = path.replace("${abi}/", "android.${abi}/")
                             break
                         }
                     }
-                    println('hhh after:' + path)
+//                    println('hhh after:' + path)
                 }
 
                 // Hook into build process

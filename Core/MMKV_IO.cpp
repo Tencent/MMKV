@@ -1496,7 +1496,7 @@ static std::pair<MMKVPath_t, MMKVPath_t> getStorage(const std::string &mmapID, c
     auto migrateStatus = tryMigrateLegacyMMKVFile(mmapID, relatePath);
     if (migrateStatus == MigrateStatus::NoneExist) {
         MMKVWarning("file id [%s] not exist in path %s", mmapID.c_str(), relatePath ? relatePath->c_str() : "default");
-        return false;
+        return {};
     } else if (migrateStatus == MigrateStatus::OldToNewMigrateFail) {
         realID = legacyMmapedKVKey(mmapID, relatePath);
     } else {
