@@ -299,6 +299,7 @@ public:
     int ashmemMetaFD();
 
     bool checkProcessMode();
+    static void enableDisableProcessMode(bool enable);
 #endif // MMKV_ANDROID
 
     // get a namespace with custom root dir

@@ -38,6 +38,7 @@ using namespace mmkv;
 
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
+static bool g_enableProcessModeCheck = false;
 
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
@@ -58,10 +59,16 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     m_actualSize = 0;
     m_output = nullptr;
 
-    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-    m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
-    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+    if (g_enableProcessModeCheck) {
+        // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
+        m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+    } else {
+        m_fileModeLock = nullptr;
+        m_sharedProcessModeLock = nullptr;
+    }
     m_exclusiveProcessModeLock = nullptr;
+
 
     m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
     m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
@@ -112,9 +119,14 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     m_actualSize = 0;
     m_output = nullptr;
 
-    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-    m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
-    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+    if (g_enableProcessModeCheck) {
+        // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
+        m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+    } else {
+        m_fileModeLock = nullptr;
+        m_sharedProcessModeLock = nullptr;
+    }
     m_exclusiveProcessModeLock = nullptr;
 
     m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
@@ -280,6 +292,10 @@ bool MMKV::checkProcessMode() {
     if (!m_file->isFileValid()) {
         return true;
     }
+    // avoid invalid status
+    if (!g_enableProcessModeCheck || !m_fileModeLock || !m_sharedProcessModeLock) {
+        return true;
+    }
 
     if (isMultiProcess()) {
         if (!m_exclusiveProcessModeLock) {
@@ -324,6 +340,11 @@ bool MMKV::checkProcessMode() {
         }
         return shareLocked;
     }
+}
+
+void MMKV::enableDisableProcessMode(bool enable) {
+    MMKVInfo("process mode check enable/disable: %d", enable);
+    g_enableProcessModeCheck = enable;
 }
 
 MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, size_t expectedCapacity) {

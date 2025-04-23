@@ -54,3 +54,4 @@ target_link_libraries( mmkv
                        core
 #                       aes
 )
+

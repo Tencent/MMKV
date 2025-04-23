@@ -1104,6 +1104,14 @@ MMKV_JNI jboolean checkExist(JNIEnv *env, jclass type, jstring oMmapID, jstring 
     return (jboolean) false;
 }
 
+MMKV_JNI void enableDisableProcessMode(JNIEnv *env, jclass type, jboolean notify) {
+    if (notify == JNI_TRUE) {
+        MMKV::enableDisableProcessMode(true);
+    } else {
+        MMKV::enableDisableProcessMode(false);
+    }
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -1190,6 +1198,7 @@ static JNINativeMethod g_methods[] = {
     {"isReadOnly", "()Z", (void *) mmkv::isReadOnly},
     {"getNameSpace", "(Ljava/lang/String;)Z", (void *)mmkv::getNameSpace},
     {"checkExist", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::checkExist},
+    {"enableDisableProcessMode", "(Z)V", (void *) mmkv::enableDisableProcessMode},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

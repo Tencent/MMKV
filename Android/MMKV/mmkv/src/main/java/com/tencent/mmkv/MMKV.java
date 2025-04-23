@@ -677,6 +677,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         synchronized (checkedHandleSet) {
             isProcessModeCheckerEnabled = true;
         }
+        enableDisableProcessMode(true);
         Log.i("MMKV", "Enable checkProcessMode()");
     }
 
@@ -689,6 +690,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         synchronized (checkedHandleSet) {
             isProcessModeCheckerEnabled = false;
         }
+        enableDisableProcessMode(false);
         Log.i("MMKV", "Disable checkProcessMode()");
     }
 
@@ -1832,6 +1834,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     @FastNative
     private native boolean isExpirationEnabled();
+
+    private static native void enableDisableProcessMode(boolean enable);
 
     private static native boolean checkProcessMode(long handle);
 
