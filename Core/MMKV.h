@@ -98,16 +98,18 @@ class MMKV_EXPORT MMKV {
 #ifndef MMKV_ANDROID
     MMKV(const std::string &mmapID, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
+#ifndef MMKV_OHOS
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
+#endif // !MMKV_OHOS
     mmkv::FileLock *m_fileMigrationLock;
     mmkv::InterProcessLock *m_sharedMigrationLock;
 
     MMKV(const std::string &mmapID, int size, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 
     MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, const std::string *cryptKey = nullptr);
-#endif
+#endif // MMKV_ANDROID
 
     ~MMKV();
 
@@ -297,9 +299,10 @@ public:
     int ashmemFD();
 
     int ashmemMetaFD();
-
+#ifndef MMKV_OHOS
     bool checkProcessMode();
     static void enableDisableProcessMode(bool enable);
+#endif // !MMKV_OHOS
 #endif // MMKV_ANDROID
 
     // get a namespace with custom root dir

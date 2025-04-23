@@ -143,12 +143,14 @@ MMKV::~MMKV() {
     delete m_sharedProcessLock;
     delete m_exclusiveProcessLock;
 #ifdef MMKV_ANDROID
+#ifndef MMKV_OHOS
     delete m_sharedProcessModeLock;
     delete m_exclusiveProcessModeLock;
     delete m_fileModeLock;
+#endif // !MMKV_OHOS
     delete m_sharedMigrationLock;
     delete m_fileMigrationLock;
-#endif
+#endif // MMKV_ANDROID
     delete m_metaFile;
     delete m_file;
 

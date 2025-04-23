@@ -38,7 +38,10 @@ using namespace mmkv;
 
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
+
+#ifndef MMKV_OHOS
 static bool g_enableProcessModeCheck = false;
+#endif
 
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
@@ -59,6 +62,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     m_actualSize = 0;
     m_output = nullptr;
 
+#ifndef MMKV_OHOS
     if (g_enableProcessModeCheck) {
         // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
         m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
@@ -68,7 +72,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
         m_sharedProcessModeLock = nullptr;
     }
     m_exclusiveProcessModeLock = nullptr;
-
+#endif
 
     m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
     m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
@@ -119,6 +123,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     m_actualSize = 0;
     m_output = nullptr;
 
+#ifndef MMKV_OHOS
     if (g_enableProcessModeCheck) {
         // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
         m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
@@ -128,6 +133,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
         m_sharedProcessModeLock = nullptr;
     }
     m_exclusiveProcessModeLock = nullptr;
+#endif
 
     m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
     m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
@@ -287,6 +293,8 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, const string *cryptKey) {
 }
 #    endif // MMKV_DISABLE_CRYPT
 
+#ifndef MMKV_OHOS
+
 bool MMKV::checkProcessMode() {
     // avoid exception on open() error
     if (!m_file->isFileValid()) {
@@ -346,6 +354,8 @@ void MMKV::enableDisableProcessMode(bool enable) {
     MMKVInfo("process mode check enable/disable: %d", enable);
     g_enableProcessModeCheck = enable;
 }
+
+#endif // !MMKV_OHOS
 
 MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, size_t expectedCapacity) {
     return MMKV::mmkvWithID(mmapID, size, mode, cryptKey, &m_rootDir, expectedCapacity);

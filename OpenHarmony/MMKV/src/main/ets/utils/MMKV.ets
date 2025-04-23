@@ -978,6 +978,10 @@ export class MMKV {
     public checkContentChanged(): void {
         native.checkContentChanged(this.nativeHandle);
     }
+
+    public static checkExist(mmapID: string, rootPath?: string): boolean {
+        return native.checkExist(mmapID, rootPath);
+    }
 }
 
 /**
