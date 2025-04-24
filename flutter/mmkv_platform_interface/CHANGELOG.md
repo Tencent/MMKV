@@ -1,5 +1,5 @@
 # MMKV Platform Interface Change Log
-## v2.2.0 / 2025-4-xx
+## v2.2.0 / 2025-4-24
 * Add `checkExist()`.
 * Add `groupPath()` for iOS.
 * Add `isFileValid()`.

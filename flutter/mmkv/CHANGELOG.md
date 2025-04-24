@@ -1,5 +1,5 @@
 # MMKV for Flutter Change Log
-## v2.2.0 / 2025-04-xx
+## v2.2.0 / 2025-04-24
 * Add `checkExist()`.
 * Add `isFileValid()`.
 * Add `groupPath()` for iOS.
