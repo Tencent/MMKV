@@ -1,4 +1,7 @@
 # MMKV Platform Android Change Log
+## v2.2.0 / 2025-4-24
+Keep up with native lib v2.2.0.
+
 ## v2.1.0 / 2025-02-18
 Keep up with native lib v2.1.0.
 

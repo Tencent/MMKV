@@ -17,10 +17,10 @@ Lrcon:
 .align	5
 _openssl_aes_arm_set_encrypt_key:
 #else // __linux__
-.globl	openssl_aes_armv8_set_encrypt_key
+.globl	openssl_aes_arm_set_encrypt_key
 
 .align	5
-openssl_aes_armv8_set_encrypt_key:
+openssl_aes_arm_set_encrypt_key:
 #endif // __linux__
 
 Lenc_key:
@@ -191,10 +191,10 @@ Lenc_key_abort:
 .align    5
 _openssl_aes_arm_set_decrypt_key:
 #else // __linux__
-.globl    openssl_aes_armv8_set_decrypt_key
+.globl    openssl_aes_arm_set_decrypt_key
 
 .align    5
-openssl_aes_armv8_set_decrypt_key:
+openssl_aes_arm_set_decrypt_key:
 #endif // __linux__
     stp    x29,x30,[sp,#-16]!
     add    x29,sp,#0
@@ -237,10 +237,10 @@ Ldec_key_abort:
 .align	5
 _openssl_aes_arm_encrypt:
 #else // __linux__
-.globl	openssl_aes_armv8_encrypt
+.globl	openssl_aes_arm_encrypt
 
 .align	5
-openssl_aes_armv8_encrypt:
+openssl_aes_arm_encrypt:
 #endif // __linux__
 
 	ldr	w3,[x2,#240]
@@ -274,10 +274,10 @@ Loop_enc:
 .align    5
 _openssl_aes_arm_decrypt:
 #else  // __linux__
-.globl    openssl_aes_armv8_decrypt
+.globl    openssl_aes_arm_decrypt
 
 .align    5
-openssl_aes_armv8_decrypt:
+openssl_aes_arm_decrypt:
 #endif  // __linux__
 
     ldr    w3,[x2,#240]

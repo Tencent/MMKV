@@ -98,16 +98,18 @@ class MMKV_EXPORT MMKV {
 #ifndef MMKV_ANDROID
     MMKV(const std::string &mmapID, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 #else // defined(MMKV_ANDROID)
+#ifndef MMKV_OHOS
     mmkv::FileLock *m_fileModeLock;
     mmkv::InterProcessLock *m_sharedProcessModeLock;
     mmkv::InterProcessLock *m_exclusiveProcessModeLock;
+#endif // !MMKV_OHOS
     mmkv::FileLock *m_fileMigrationLock;
     mmkv::InterProcessLock *m_sharedMigrationLock;
 
     MMKV(const std::string &mmapID, int size, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity = 0);
 
     MMKV(const std::string &mmapID, int ashmemFD, int ashmemMetaFd, const std::string *cryptKey = nullptr);
-#endif
+#endif // MMKV_ANDROID
 
     ~MMKV();
 
@@ -297,8 +299,10 @@ public:
     int ashmemFD();
 
     int ashmemMetaFD();
-
+#ifndef MMKV_OHOS
     bool checkProcessMode();
+    static void enableDisableProcessMode(bool enable);
+#endif // !MMKV_OHOS
 #endif // MMKV_ANDROID
 
     // get a namespace with custom root dir
@@ -318,6 +322,10 @@ public:
         return (m_mode & MMKV_MULTI_PROCESS) != 0
             || (m_mode & CONTEXT_MODE_MULTI_PROCESS) != 0
             || (m_mode & MMKV_ASHMEM) != 0; // ashmem is always multi-process
+    }
+
+    bool isAshmem() const {
+        return (m_mode & MMKV_ASHMEM) != 0;
     }
 #endif
     bool isReadOnly() const { return (m_mode & MMKV_READ_ONLY) != 0; }
@@ -637,6 +645,9 @@ public:
     // Note: the existing instance (if any) will be closed & destroyed
     static bool removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
+    // check the existence of the MMKV file
+    static bool checkExist(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
+
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
@@ -747,7 +758,10 @@ public:
     // Note: the existing instance (if any) will be closed & destroyed
     bool removeStorage(const std::string &mmapID);
 
-    friend class MMKV_NAMESPACE_PREFIX::MMKV;
+    // check the existence of the MMKV file
+    bool checkExist(const std::string &mmapID);
+
+   friend class MMKV_NAMESPACE_PREFIX::MMKV;
 };
 
 }

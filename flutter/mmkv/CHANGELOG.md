@@ -1,5 +1,13 @@
 # MMKV for Flutter Change Log
-## v2.1.0 / 2025-03-06
+## v2.2.0 / 2025-04-24
+* Add `checkExist()`.
+* Add `isFileValid()`.
+* Add `groupPath()` for iOS.
+* Reduce file descriptor usage by a half and more.
+* Improve multi-process access efficiency by about 20%.
+* Fix `checkContentChangedByOuterProcess()` not working bug.
+
+## v2.1.1 / 2025-03-06
 This is a **critical hotfix** for v2.1.0. It's highly recommended to upgrade as soon as possible.
 * Fix a bug that MMKV instance from non-namespace fails to create.
 

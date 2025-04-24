@@ -171,4 +171,12 @@ public final class NameSpace {
     public boolean removeStorage(String mmapID) {
         return MMKV.removeStorage(mmapID, rootDir);
     }
+
+    /**
+     * check existence of the MMKV file
+     * @param mmapID   The unique ID of the MMKV instance.
+     */
+    public boolean checkExist(String mmapID) {
+        return MMKV.checkExist(mmapID, rootDir);
+    }
 }

@@ -331,4 +331,19 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   bool Function(Pointer<Utf8> rootPath) getNameSpaceFunc() {
     return nativeLib().lookup<NativeFunction<Bool Function(Pointer<Utf8>)>>(nativeFuncName("getNameSpace")).asFunction();
   }
+
+  @override
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) checkExistFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>)>>(nativeFuncName("checkExist")).asFunction();
+  }
+
+  @override
+  int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) isFileValidFunc() {
+    return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Utf8>, Pointer<Utf8>)>>(nativeFuncName("isFileValid")).asFunction();
+  }
+
+  @override
+  Pointer<Utf8> Function() groupPathFunc() {
+    return nativeLib().lookup<NativeFunction<Pointer<Utf8> Function()>>(nativeFuncName("groupPath")).asFunction();
+  }
 }

@@ -1,4 +1,13 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v2.2.0 / 2025-04-24
+We introduce the **Mayfly FD** (short-lived file descriptor) enhancement, reducing MMKV's fd footprint by half and more. For a single-process mode MMKV instance, the fd footprint is reduced to zero (except Android/OHOS, details below). For a multi-process mode MMKV instance, the fd footprint is reduced by half, for we still need a long-lived fd to inter-process lock the shared memory.
+* Add **Mayfly FD** (short-lived file descriptor) enhancement. Reduce the fd footprint by half. For a single-process mode MMKV instance, we still need a long-lived fd to support the **legacy name upgrading**. In the far future, when all legacy names have been upgraded, we might drop the long-lived fd like other platforms.
+* Improve multi-process access efficiency by about 20%.
+* Add `checkExist()` to check if a MMKV instance exists on disk.
+* Drop deprecated armv7 AES hardware acceleration.
+* Drop `checkProcessMode()`, it’s never been used.
+* Improve obfuscation configuration with relative path.
+
 ## v2.1.0 / 2025-02-18
 * **Breaking change**: Migrate legacy MMKV in a custom directory to normal MMKV. Historically Android/OHOS mistakenly use mmapKey as mmapID, which will be problematic with the `NameSpace` feature. Starting from v2.1.0, MMKV will try to migrate them back to normal when possible.  
   It's highly recommended that you **upgrade to v2.0.2 first** with **forward support** of normal MMKV in a custom directory.

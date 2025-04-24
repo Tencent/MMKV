@@ -707,4 +707,16 @@ MMKV_EXPORT bool getNameSpace(GoStringWrap_t rootPath) {
     return false;
 }
 
+MMKV_EXPORT bool checkExist(GoStringWrap_t mmapID, GoStringWrap_t rootPath) {
+   if (!mmapID.ptr) {
+        return false;
+    }
+    auto id = string(mmapID.ptr, mmapID.length);
+    if (rootPath.ptr) {
+        auto path = string(rootPath.ptr, rootPath.length);
+        return MMKV::checkExist(id, &path);
+    }
+    return MMKV::checkExist(id, nullptr);
+}
+
 #endif // CGO

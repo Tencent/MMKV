@@ -39,6 +39,10 @@ using namespace mmkv;
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
 
+#ifndef MMKV_OHOS
+static bool g_enableProcessModeCheck = false;
+#endif
+
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity)
     : m_mmapID(mmapID)
     , m_mode(mode)
@@ -47,21 +51,28 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
-    , m_file(new MemoryFile(m_path, size, (mode & MMKV_ASHMEM) ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity, isReadOnly()))
+    , m_file(new MemoryFile(m_path, size, isAshmem() ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity, isReadOnly(), !isAshmem()))
     , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType, 0, isReadOnly()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile->getFd(), (mode & MMKV_ASHMEM), 0, 1))
+    , m_fileLock(new FileLock(m_metaFile->getFd(), isAshmem(), 0, 1))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType)) {
     m_actualSize = 0;
     m_output = nullptr;
 
-    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-    m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
-    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+#ifndef MMKV_OHOS
+    if (g_enableProcessModeCheck) {
+        // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
+        m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+    } else {
+        m_fileModeLock = nullptr;
+        m_sharedProcessModeLock = nullptr;
+    }
     m_exclusiveProcessModeLock = nullptr;
+#endif
 
     m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
     m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
@@ -112,10 +123,17 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     m_actualSize = 0;
     m_output = nullptr;
 
-    // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-    m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
-    m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+#ifndef MMKV_OHOS
+    if (g_enableProcessModeCheck) {
+        // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
+        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
+        m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
+    } else {
+        m_fileModeLock = nullptr;
+        m_sharedProcessModeLock = nullptr;
+    }
     m_exclusiveProcessModeLock = nullptr;
+#endif
 
     m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
     m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
@@ -275,9 +293,15 @@ void MMKV::checkReSetCryptKey(int fd, int metaFD, const string *cryptKey) {
 }
 #    endif // MMKV_DISABLE_CRYPT
 
+#ifndef MMKV_OHOS
+
 bool MMKV::checkProcessMode() {
     // avoid exception on open() error
     if (!m_file->isFileValid()) {
+        return true;
+    }
+    // avoid invalid status
+    if (!g_enableProcessModeCheck || !m_fileModeLock || !m_sharedProcessModeLock) {
         return true;
     }
 
@@ -325,6 +349,13 @@ bool MMKV::checkProcessMode() {
         return shareLocked;
     }
 }
+
+void MMKV::enableDisableProcessMode(bool enable) {
+    MMKVInfo("process mode check enable/disable: %d", enable);
+    g_enableProcessModeCheck = enable;
+}
+
+#endif // !MMKV_OHOS
 
 MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, size_t expectedCapacity) {
     return MMKV::mmkvWithID(mmapID, size, mode, cryptKey, &m_rootDir, expectedCapacity);

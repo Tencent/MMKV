@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 
 android {
     namespace "com.tencent.mmkvdemo"
-    compileSdk 34
+    compileSdk rootProject.ext.compileSdk
 
     signingConfigs {
         config {
@@ -17,7 +17,7 @@ android {
     defaultConfig {
         applicationId "com.tencent.mmkvdemo"
         minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion 34
+        targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
 
@@ -26,7 +26,7 @@ android {
             cmake {
                 arguments = ["-DANDROID_STL=c++_shared"]
                 // use prefab or not: Gradle has bug handling local prefab modules, fails on linking
-                // arguments += ["-DHAS_PREFAB=1"]
+//                 arguments += ["-DHAS_PREFAB=1"]
                 cppFlags "-fvisibility=hidden", "-funwind-tables", "-fasynchronous-unwind-tables", "-O2",
                         "-Wl,-z,max-page-size=16384"
             }
@@ -98,7 +98,7 @@ repositories {
 }
 
 // Define the mmkv version to use
-def mmkvVersion = '2.1.0'
+def mmkvVersion = '2.2.0'
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -107,7 +107,7 @@ dependencies {
 //    implementation "com.tencent:mmkv-static:$mmkvVersion" // this is identical to 'com.tencent:mmkv'
 //    implementation "com.tencent:mmkv-shared:$mmkvVersion" // with prefab functionality
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'

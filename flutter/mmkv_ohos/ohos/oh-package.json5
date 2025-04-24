@@ -1,13 +1,13 @@
 {
   "name": "mmkv_ohos",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "description": "Please describe the basic information.",
   "main": "index.ets",
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
     "@ohos/flutter_ohos": "file:./har/flutter.har",
-    "@tencent/mmkv": ">=2.1.0 <2.2"
+    "@tencent/mmkv": ">=2.2.0 <2.3"
 //    "@tencent/mmkv": "file:/Users/lingol/Developer/mmkv/OpenHarmony/MMKV/build/default/outputs/default/MMKV.har"
   },
   "devDependencies": {},

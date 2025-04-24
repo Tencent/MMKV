@@ -1,4 +1,29 @@
 # MMKV Change Log
+## v2.2.0 / 2025-04-24
+We introduce the **Mayfly FD** (short-lived file descriptor) enhancement, reducing MMKV's fd footprint by half and more. For a single-process mode MMKV instance, the fd footprint is reduced to zero (except Android/OHOS, details below). For a multi-process mode MMKV instance, the fd footprint is reduced by half, for we still need a long-lived fd to inter-process lock the shared memory.
+### Changes for All platforms
+* Add **Mayfly FD** (short-lived file descriptor) enhancement.
+* Improve multi-process access efficiency by about 20%.
+* Add `checkExist()` to check if a MMKV instance exists on disk.
+* Drop deprecated armv7 AES hardware acceleration.
+
+### Android
+* Reduce the fd footprint by half. For a single-process mode MMKV instance, we still need a long-lived fd to support the **process-mode checker** and **legacy name upgrading**. In the far future, when all legacy names have been upgraded, we might drop the long-lived fd like other platforms.
+* Upgrade Android compileSdk/targetSdk to 35, NDK to 28.1, Java to 11, Gradle to 8.11.1, and AGP to 8.9.2.
+
+### HarmonyOS NEXT
+* Reduce the fd footprint by half. For a single-process mode MMKV instance, we still need a long-lived fd to support the **legacy name upgrading**. In the far future, when all legacy names have been upgraded, we might drop the long-lived fd like other platforms.
+* Drop `checkProcessMode()`, it’s never been used.
+* Improve obfuscation configuration with relative path.
+
+### iOS
+* Add `+mmkvGroupPath` to get the group folder for MMKV multi-process storage.
+
+### Flutter
+* Add `isFileValid()`.
+* Add `groupPath()` on iOS.
+* Fix `checkContentChangedByOuterProcess()` not working bug.
+
 ## v2.1.0 / 2025-02-18
 Happy Chinese New Year!  
 This is a **breaking change version for the Android/OHOS** platform. Read the change log bellow and upgrade carefully.

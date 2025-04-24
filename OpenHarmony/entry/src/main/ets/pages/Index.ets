@@ -225,7 +225,9 @@ struct Index {
 
     kv.close();
     hilog.info(0, 'mmkvdemo', 'isFileValue %{public}s', MMKV.isFileValid(mmapID, rootPath));
+    hilog.info(0, 'mmkvdemo', 'checkExist %{public}s', MMKV.checkExist(mmapID, rootPath));
     hilog.info(0, 'mmkvdemo', 'remove storage %{public}s', MMKV.removeStorage(mmapID, rootPath));
+    hilog.info(0, 'mmkvdemo', 'checkExist %{public}s', MMKV.checkExist(mmapID, rootPath));
   }
 
   testContainer(kv: MMKV, decodeOnly: boolean) {

@@ -54,7 +54,7 @@ aes_encrypt_t AES_decrypt = openssl::AES_C_decrypt;
 
 #endif // (__ARM_MAX_ARCH__ > 7 && defined(__linux__) && !defined(MMKV_OHOS)
 
-#if (__ARM_MAX_ARCH__ <= 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__) && !defined(MMKV_OHOS))
+#if (__ARM_MAX_ARCH__ <= 7) || (defined(__linux__) && !defined(MMKV_OHOS))
 
 /*-
 Te0[x] = S [x].[02, 01, 01, 03];
@@ -640,7 +640,7 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-#if (__ARM_MAX_ARCH__ <= 0)
+#if (__ARM_MAX_ARCH__ <= 7)
 int AES_set_encrypt_key(const uint8_t *userKey, const int bits, AES_KEY *key) {
 #else
 int AES_C_set_encrypt_key(const uint8_t *userKey, const int bits, void *k) {
@@ -744,7 +744,7 @@ int AES_C_set_encrypt_key(const uint8_t *userKey, const int bits, void *k) {
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-#if (__ARM_MAX_ARCH__ <= 0)
+#if (__ARM_MAX_ARCH__ <= 7)
 int AES_set_decrypt_key(const uint8_t *userKey, const int bits, AES_KEY *key) {
 #else
 int AES_C_set_decrypt_key(const uint8_t *userKey, const int bits, void *k) {
@@ -800,7 +800,7 @@ int AES_C_set_decrypt_key(const uint8_t *userKey, const int bits, void *k) {
  * Encrypt a single block
  * in and out can overlap
  */
-#if (__ARM_MAX_ARCH__ <= 0)
+#if (__ARM_MAX_ARCH__ <= 7)
 void AES_encrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
 #else
 void AES_C_encrypt(const uint8_t *in, uint8_t *out, const void *k) {
@@ -920,7 +920,7 @@ void AES_C_encrypt(const uint8_t *in, uint8_t *out, const void *k) {
  * Decrypt a single block
  * in and out can overlap
  */
-#if (__ARM_MAX_ARCH__ <= 0)
+#if (__ARM_MAX_ARCH__ <= 7)
 void AES_decrypt(const uint8_t *in, uint8_t *out, const AES_KEY *key) {
 #else
 void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *k) {
@@ -1037,7 +1037,7 @@ void AES_C_decrypt(const uint8_t *in, uint8_t *out, const void *k) {
     PUTU32(out + 12, s3);
 }
 
-#endif // (__ARM_MAX_ARCH__ < 0) || (__ARM_MAX_ARCH__ > 7 && defined(__linux__) && !defined(MMKV_OHOS))
+#endif // (__ARM_MAX_ARCH__ <= 7) || (defined(__linux__) && !defined(MMKV_OHOS))
 
 } // namespace openssl
 

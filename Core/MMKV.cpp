@@ -89,12 +89,12 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, const string *cryptKey, const MM
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
-    , m_file(new MemoryFile(m_path, m_expectedCapacity, isReadOnly()))
-    , m_metaFile(new MemoryFile(m_crcPath, 0, isReadOnly()))
+    , m_file(new MemoryFile(m_path, m_expectedCapacity, isReadOnly(), true))
+    , m_metaFile(new MemoryFile(m_crcPath, 0, isReadOnly(), !isMultiProcess()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile->getFd()))
+    , m_fileLock(new FileLock(isMultiProcess() ? m_metaFile->getFd() : MMKVFileHandleInvalidValue))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType))
 {
@@ -143,12 +143,14 @@ MMKV::~MMKV() {
     delete m_sharedProcessLock;
     delete m_exclusiveProcessLock;
 #ifdef MMKV_ANDROID
+#ifndef MMKV_OHOS
     delete m_sharedProcessModeLock;
     delete m_exclusiveProcessModeLock;
     delete m_fileModeLock;
+#endif // !MMKV_OHOS
     delete m_sharedMigrationLock;
     delete m_fileMigrationLock;
-#endif
+#endif // MMKV_ANDROID
     delete m_metaFile;
     delete m_file;
 
@@ -176,10 +178,10 @@ static void initialize() {
     auto hwcaps = getauxval(AT_HWCAP);
 #    ifndef MMKV_DISABLE_CRYPT
     if (hwcaps & HWCAP_AES) {
-        openssl::AES_set_encrypt_key = openssl_aes_armv8_set_encrypt_key;
-        openssl::AES_set_decrypt_key = openssl_aes_armv8_set_decrypt_key;
-        openssl::AES_encrypt = openssl_aes_armv8_encrypt;
-        openssl::AES_decrypt = openssl_aes_armv8_decrypt;
+        openssl::AES_set_encrypt_key = openssl_aes_arm_set_encrypt_key;
+        openssl::AES_set_decrypt_key = openssl_aes_arm_set_decrypt_key;
+        openssl::AES_encrypt = openssl_aes_arm_encrypt;
+        openssl::AES_decrypt = openssl_aes_arm_decrypt;
         MMKVInfo("armv8 AES instructions is supported");
     } else {
         MMKVInfo("armv8 AES instructions is not supported");
@@ -256,7 +258,11 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptK
         }
     }
     auto theRootDir = rootPath ? rootPath : &g_realRootDir;
+#ifdef MMKV_WIN32
+    MMKVInfo("prepare to load %s (id %s) from rootPath %ls", mmapID.c_str(), mmapKey.c_str(), theRootDir->c_str());
+#else
     MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), theRootDir->c_str());
+#endif
 
     auto kv = new MMKV(mmapID, mode, cryptKey, rootPath, expectedCapacity);
     kv->m_mmapKey = mmapKey;
@@ -1456,9 +1462,11 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
 
         kv->sync();
         auto ret = copyFileContent(srcPath, kv->m_file->getFd());
+        kv->m_file->cleanMayflyFD();
         if (ret) {
             auto srcCRCPath = srcPath + CRC_SUFFIX;
             // ret = copyFileContent(srcCRCPath, kv->m_metaFile->getFd());
+            // kv->m_metaFile->cleanMayflyFD();
 #ifndef MMKV_ANDROID
             MemoryFile srcCRCFile(srcCRCPath);
 #else
@@ -1782,6 +1790,10 @@ bool NameSpace::isFileValid(const std::string &mmapID) {
 
 bool NameSpace::removeStorage(const std::string &mmapID) {
     return MMKV::removeStorage(mmapID, &m_rootDir);
+}
+
+bool NameSpace::checkExist(const std::string &mmapID) {
+    return MMKV::checkExist(mmapID, &m_rootDir);
 }
 
 MMKV_NAMESPACE_END

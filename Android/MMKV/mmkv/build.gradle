@@ -8,6 +8,7 @@ apply from: rootProject.file('gradle/build_library.gradle')
 
 android {
     namespace "com.tencent.mmkv"
+    compileSdk rootProject.ext.compileSdk
     publishing {
         multipleVariants("DefaultCppRelease") {
             includeBuildTypeValues('release')
@@ -30,13 +31,12 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                // uncomment this line to support 32-bit ABIs (armeabi-v7a & x86)
-                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 abiFilters 'arm64-v8a', 'x86_64'
             }
         }
-        ndkVersion = '26.3.11579264'
+        ndkVersion "28.1.13356709"
         minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
     }
     buildTypes {
         release {
@@ -116,9 +116,9 @@ android {
 }
 
 afterEvaluate {
-    android.libraryVariants.all { variant ->
+    android.libraryVariants.configureEach { variant ->
         if (variant.buildType.name == "release") {
-            def abiFilters = ['arm64-v8a', 'x86_64', 'armeabi-v7a', 'x86']
+            def abiFilters = ['arm64-v8a', 'x86_64']
 
             def strippedLibsDir = "$buildDir/intermediates/stripped_native_libs/${variant.name}/strip${variant.name}DebugSymbols/out/lib"
             // Create per-variant copy task
@@ -128,14 +128,14 @@ afterEvaluate {
                 }
                 into "$buildDir/intermediates/prefab_package/${variant.name.capitalize()}/prefab/modules/mmkv/libs"
                 eachFile {
-                    println('hhh before:' + path)
+//                    println('hhh before:' + path)
                     for (abi in abiFilters) {
                         if (path.contains("${abi}/")) {
                             path = path.replace("${abi}/", "android.${abi}/")
                             break
                         }
                     }
-                    println('hhh after:' + path)
+//                    println('hhh after:' + path)
                 }
 
                 // Hook into build process
@@ -147,6 +147,9 @@ afterEvaluate {
                 finalizedBy("syncStrippedLibsToPrefab${variant.name.capitalize()}")
             }
             tasks.named("bundle${variant.name.capitalize()}Aar") {
+                dependsOn("syncStrippedLibsToPrefab${variant.name.capitalize()}")
+            }
+            tasks.named("bundle${variant.name.capitalize()}LocalLintAar") {
                 dependsOn("syncStrippedLibsToPrefab${variant.name.capitalize()}")
             }
 

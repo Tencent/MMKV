@@ -70,33 +70,28 @@ File::File(MMKVFileHandle_t ashmemFD)
     }
 }
 
-MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expectedCapacity, bool isReadOnly)
+MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expectedCapacity, bool isReadOnly, bool mayflyFD)
     : m_diskFile(std::move(path), isReadOnly ? OpenFlag::ReadOnly : (OpenFlag::ReadWrite | OpenFlag::Create), size, fileType),
-    m_ptr(nullptr), m_size(0), m_fileType(fileType), m_readOnly(isReadOnly) {
+    m_ptr(nullptr), m_size(0), m_fileType(fileType), m_readOnly(isReadOnly), m_isMayflyFD(mayflyFD) {
     if (m_fileType == MMFILE_TYPE_FILE) {
         reloadFromFile(expectedCapacity);
     } else {
         if (m_diskFile.isFileValid()) {
             m_size = m_diskFile.m_size;
-            auto ret = mmap();
-            if (!ret) {
-                doCleanMemoryCache(true);
-            }
+            mmapOrCleanup();
         }
     }
 }
 
 MemoryFile::MemoryFile(int ashmemFD)
-    : m_diskFile(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM), m_readOnly(false) {
+    : m_diskFile(ashmemFD), m_ptr(nullptr), m_size(0), m_fileType(MMFILE_TYPE_ASHMEM), m_readOnly(false),
+    m_isMayflyFD(false) {
     if (!m_diskFile.isFileValid()) {
         MMKVError("fd %d invalid", ashmemFD);
     } else {
         m_size = m_diskFile.m_size;
         MMKVInfo("ashmem name:%s, size:%zu", m_diskFile.m_path.c_str(), m_size);
-        auto ret = mmap();
-        if (!ret) {
-            doCleanMemoryCache(true);
-        }
+        mmapOrCleanup();
     }
 }
 

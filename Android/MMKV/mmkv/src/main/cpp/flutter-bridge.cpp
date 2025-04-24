@@ -582,6 +582,16 @@ MMKV_EXPORT bool disableCompareBeforeSet(void *handle) {
     return false;
 }
 
+MMKV_EXPORT bool isFileValid(const char *mmapID, const char *rootPath) {
+    if (rootPath) {
+        auto root = string(rootPath);
+        if (root.length() > 0) {
+            return MMKV::isFileValid(mmapID, &root);
+        }
+    }
+    return MMKV::isFileValid(mmapID, nullptr);
+}
+
 MMKV_EXPORT bool removeStorage(const char *mmapID, const char *rootPath) {
     if (rootPath) {
         auto root = string(rootPath);
@@ -661,6 +671,16 @@ MMKV_EXPORT bool getNameSpace(const char *rootPath) {
         }
     }
     return false;
+}
+
+MMKV_EXPORT bool checkExist(const char *mmapID, const char *rootPath) {
+    if (rootPath) {
+        auto root = string(rootPath);
+        if (root.length() > 0) {
+            return MMKV::checkExist(mmapID, &root);
+        }
+    }
+    return MMKV::checkExist(mmapID, nullptr);
 }
 
 #endif // MMKV_DISABLE_FLUTTER
