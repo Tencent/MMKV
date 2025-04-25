@@ -193,14 +193,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (!android.os.Process.is64Bit()) {
             throw new UnsupportedArchitectureException("MMKV 2.0+ requires 64-bit App, use 1.3.x instead.");
         }
-        // disable process mode in release build
-        // FIXME: Find a better way to getApplicationInfo() without using context.
-        //  If any one knows how, you're welcome to make a contribution.
-        if ((context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) == 0) {
-            disableProcessModeChecker();
-        } else {
-            enableProcessModeChecker();
-        }
         String cacheDir = context.getCacheDir().getAbsolutePath();
 
         gCallbackHandler = handler;
@@ -213,6 +205,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         if (gCallbackHandler != null) {
             setCallbackHandler(gWantLogReDirecting, true);
         }
+
+        // disable process mode in release build
+        // FIXME: Find a better way to getApplicationInfo() without using context.
+        //  If any one knows how, you're welcome to make a contribution.
+        if ((context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) == 0) {
+            disableProcessModeChecker();
+        } else {
+            enableProcessModeChecker();
+        }
+
         return ret;
     }
 
