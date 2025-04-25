@@ -1,4 +1,7 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v2.2.1 / 2025-04-25
+* Add `importFrom()`.
+
 ## v2.2.0 / 2025-04-24
 We introduce the **Mayfly FD** (short-lived file descriptor) enhancement, reducing MMKV's fd footprint by half and more. For a single-process mode MMKV instance, the fd footprint is reduced to zero (except Android/OHOS, details below). For a multi-process mode MMKV instance, the fd footprint is reduced by half, for we still need a long-lived fd to inter-process lock the shared memory.
 * Add **Mayfly FD** (short-lived file descriptor) enhancement. Reduce the fd footprint by half. For a single-process mode MMKV instance, we still need a long-lived fd to support the **legacy name upgrading**. In the far future, when all legacy names have been upgraded, we might drop the long-lived fd like other platforms.
