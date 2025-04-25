@@ -56,6 +56,7 @@ struct Index {
           .fontSize(18)
           .onClick(() => {
             this.testImportPreferences();
+            this.testImport();
           })
         Button('Backup & Restore Test')
           .type(ButtonType.Normal)
@@ -720,5 +721,46 @@ struct Index {
     }
     baseline.mmkvBaselineTest();
     baseline.preferencesBaselineTest();
+  }
+
+  private async testImport(): Promise<void> {
+    const mmapID: string = "testImportSrc";
+    const src: MMKV = MMKV.mmkvWithID(mmapID);
+    src.encodeBool("bool", true);
+    src.encodeInt32("int", -2147483648); // Integer.MIN_VALUE
+    src.encodeUInt64("long", 9223372036854775807n); // Long.MAX_VALUE as bigint
+    src.encodeString("string", "test import");
+
+    const dst: MMKV = MMKV.mmkvWithID("testImportDst");
+    dst.clearAll();
+    dst.enableAutoKeyExpire(1);
+    dst.encodeBool("bool", false);
+    dst.encodeInt32("int", -1);
+    dst.encodeUInt64("long", 0n);
+    dst.encodeString("string", mmapID);
+
+    const count: bigint = dst.importFrom(src);
+    if (count !== BigInt(4) || dst.count() !== BigInt(4)) {
+      hilog.error(0x0000, 'mmkvdemo', 'import check count fail');
+    }
+    if (!dst.decodeBool("bool")) {
+      hilog.error(0x0000, 'mmkvdemo', 'import check bool fail');
+    }
+    if (dst.decodeInt32("int") !== -2147483648) {
+      hilog.error(0x0000, 'mmkvdemo', 'import check int fail');
+    }
+    if (dst.decodeUInt64("long") !== 9223372036854775807n) {
+      hilog.error(0x0000, 'mmkvdemo', 'import check long fail');
+    }
+    if (dst.decodeString("string") !== "test import") {
+      hilog.error(0x0000, 'mmkvdemo', 'import check string fail');
+    }
+
+    // ArkTS/TypeScript equivalent of sleep
+    await new Promise<void>(resolve => setTimeout(resolve, 1000 * 2));
+
+    if (dst.count(true) !== BigInt(0)) {
+      console.error("MMKV: import check expire fail");
+    }
   }
 }

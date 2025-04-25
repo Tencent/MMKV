@@ -680,4 +680,13 @@ MMKV_EXPORT bool checkExist(const char *mmapID, const char *rootPath) {
     return MMKV::checkExist(mmapID, nullptr);
 }
 
+MMKV_EXPORT uint64_t importFrom(void *handle, void *srcHandle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    MMKV *kvSrc = static_cast<MMKV *>(srcHandle);
+    if (kv && kvSrc) {
+        return kv->importFrom(kvSrc);
+    }
+    return 0;
+}
+
 #endif // MMKV_DISABLE_FLUTTER

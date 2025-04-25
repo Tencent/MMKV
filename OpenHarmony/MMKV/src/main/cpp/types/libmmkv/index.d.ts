@@ -77,3 +77,4 @@ export const isReadOnly: (handle: bigint) => boolean;
 export const checkContentChanged:(handle: bigint) => void;
 export const getNameSpace:(rootPath: string) => boolean;
 export const checkExist: (mmapID: string, rootPath?: string) => boolean;
+export const importFrom: (handle: bigint, srcHandle: bigint) => bigint;
