@@ -340,6 +340,10 @@ class MMKVPluginPlatform {
   Pointer<Utf8> Function() groupPathFunc() {
     throw UnimplementedError();
   }
+
+  int Function(Pointer<Void> handle, Pointer<Void> srcHandle) importFromFunc() {
+    throw UnimplementedError();
+  }
 }
 
 typedef LogCallbackWrap = Void Function(Uint32, Pointer<Utf8>, Int32, Pointer<Utf8>, Pointer<Utf8>);

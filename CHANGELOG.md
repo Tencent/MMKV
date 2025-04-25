@@ -1,4 +1,11 @@
 # MMKV Change Log
+## v2.2.1 / 2025-04-25
+### Changes for All platforms
+* Add `importFrom()`.
+
+### Android
+* Fix a bug on initialization.
+
 ## v2.2.0 / 2025-04-24
 We introduce the **Mayfly FD** (short-lived file descriptor) enhancement, reducing MMKV's fd footprint by half and more. For a single-process mode MMKV instance, the fd footprint is reduced to zero (except Android/OHOS, details below). For a multi-process mode MMKV instance, the fd footprint is reduced by half, for we still need a long-lived fd to inter-process lock the shared memory.
 ### Changes for All platforms

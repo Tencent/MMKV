@@ -356,6 +356,13 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->trim();
 }
 
+- (size_t)importFrom:(MMKV *)src {
+    if (!src) {
+        return 0;
+    }
+    return m_mmkv->importFrom(src->m_mmkv);
+}
+
 #pragma mark - encryption & decryption
 
 #ifndef MMKV_DISABLE_CRYPT

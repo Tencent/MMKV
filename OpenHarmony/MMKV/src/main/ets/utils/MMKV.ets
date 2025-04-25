@@ -643,6 +643,14 @@ export class MMKV {
     }
 
     /**
+     * import all key-value items from src
+     * @returns count of items imported
+     */
+    public importFrom(src: MMKV): bigint {
+        return native.importFrom(this.nativeHandle, src.nativeHandle);
+    }
+
+    /**
      * Call this method if the MMKV instance is no longer needed in the near future.
      * Any subsequent call to any MMKV instances with the same ID is undefined behavior.
      */

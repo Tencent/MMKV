@@ -1112,6 +1112,16 @@ MMKV_JNI void enableDisableProcessMode(JNIEnv *env, jclass type, jboolean notify
     }
 }
 
+MMKV_JNI jlong importFrom(JNIEnv *env, jobject instance, jlong handle, jlong srcHandle) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    MMKV *src = reinterpret_cast<MMKV *>(srcHandle);
+    if (kv && src) {
+        jlong size = kv->importFrom(src);
+        return size;
+    }
+    return 0;
+}
+
 } // namespace mmkv
 
 static JNINativeMethod g_methods[] = {
@@ -1199,6 +1209,7 @@ static JNINativeMethod g_methods[] = {
     {"getNameSpace", "(Ljava/lang/String;)Z", (void *)mmkv::getNameSpace},
     {"checkExist", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::checkExist},
     {"enableDisableProcessMode", "(Z)V", (void *) mmkv::enableDisableProcessMode},
+    {"importFrom", "(JJ)J", (void *) mmkv::importFrom},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

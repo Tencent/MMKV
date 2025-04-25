@@ -246,6 +246,39 @@ def test_read_only():
     os.chmod(crc_path, 0o666)
 
 
+def test_import():
+    mmap_id = "testImportSrc"
+    src = mmkv.MMKV(mmap_id)
+    src.set(True, "bool")
+    src.set(-2147483648, "int")  # Integer.MIN_VALUE
+    src.set(9223372036854775807, "long")  # Long.MAX_VALUE
+    src.set("test import", "string")
+
+    dst = mmkv.MMKV("testImportDst")
+    dst.clearAll()
+    dst.enableAutoKeyExpire(1)
+    dst.set(False, "bool")
+    dst.set(-1, "int")  # Integer.MIN_VALUE
+    dst.set(0, "long")  # Long.MAX_VALUE
+    dst.set(mmap_id, "string")
+
+    count = dst.importFrom(src)
+    if count != 4 or dst.count() != 4:
+        print("MMKV: import check count fail")
+    if not dst.getBool("bool"):
+        print("MMKV: import check bool fail:", dst.getBool("bool"))
+    if dst.getInt("int") != -2147483648:
+        print("MMKV: import check int fail:", dst.getInt("int"))
+    if dst.getLongUInt("long") != 9223372036854775807:
+        print("MMKV: import check long fail", dst.getLongUInt("long"))
+    if dst.getString("string") != "test import":
+        print("MMKV: import check string fail", dst.getString("string"))
+
+    time.sleep(2)  # Sleep for 2 seconds
+    if dst.count(True) != 0:
+        print("MMKV: import check expire fail")
+
+
 def test_namespace():
     root_dir = tempfile.gettempdir() + "/dev/mmkv_namespace"
     ns = mmkv.MMKV.nameSpace(root_dir)
@@ -304,6 +337,7 @@ if __name__ == '__main__':
     test_compare_before_set()
     test_remove_storage()
     test_read_only()
+    test_import()
 
     # mmkv.MMKV.unRegisterLogHandler()
     # mmkv.MMKV.unRegisterErrorHandler()

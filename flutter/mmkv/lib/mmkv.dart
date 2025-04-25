@@ -686,6 +686,13 @@ class MMKV {
     _trim(_handle);
   }
 
+  /// import all key-value items from src
+  ///
+  /// * Return count of items imported.
+  int importFrom(MMKV src) {
+    return _importFrom(_handle, src._handle);
+  }
+
   /// Close the instance when it's no longer needed in the near future.
   /// Any subsequent call to the instance is **undefined behavior**.
   void close() {
@@ -1024,3 +1031,5 @@ final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _checkExist = _
 final int Function(Pointer<Utf8> mmapID, Pointer<Utf8> rootPath) _isFileValid = _mmkvPlatform.isFileValidFunc();
 
 final Pointer<Utf8> Function() _groupPath = _mmkvPlatform.groupPathFunc();
+
+final int Function(Pointer<Void>, Pointer<Void>) _importFrom = _mmkvPlatform.importFromFunc();
