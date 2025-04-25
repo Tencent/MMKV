@@ -51,7 +51,9 @@ static void freeStringArray(GoStringWrap_t *a, size_t size) {
 }
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 import "math"
 
 const (
@@ -170,6 +172,10 @@ type MMKV interface {
 	// ClearAll clear all key-values
 	ClearAll()
 	ClearAllKeepSpace()
+
+	// ImportFrom import all key-value items from src
+	// Return count of items imported
+	ImportFrom(src MMKV) uint64
 
 	// Count return count of keys
 	Count() uint64
@@ -661,6 +667,14 @@ func (kv ctorMMKV) ClearMemoryCache() {
 
 func (kv ctorMMKV) Trim() {
 	C.trim(unsafe.Pointer(kv))
+}
+
+func (kv ctorMMKV) ImportFrom(src MMKV) uint64 {
+	srcCtor, ok := src.(ctorMMKV)
+	if !ok {
+		return 0
+	}
+	return uint64(C.importFrom(unsafe.Pointer(kv), unsafe.Pointer(srcCtor)))
 }
 
 func (kv ctorMMKV) Close() {

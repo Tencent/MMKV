@@ -285,6 +285,7 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("remove", &MMKV::removeValuesForKeys, py::arg("keys"));
     clsMMKV.def("clearAll", &MMKV::clearAll, py::arg("keepSpace") = false, "remove all key-values");
     clsMMKV.def("trim", &MMKV::trim, "call this method after lots of removing if you care about disk usage");
+    clsMMKV.def("importFrom", &MMKV::importFrom, "import all key-value items from others");
     clsMMKV.def("clearMemoryCache", &MMKV::clearMemoryCache, "call this method if you are facing memory-warning");
 
     clsMMKV.def("sync", &MMKV::sync, py::arg("flag") = MMKV_SYNC,

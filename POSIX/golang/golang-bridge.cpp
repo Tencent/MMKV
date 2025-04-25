@@ -719,4 +719,13 @@ MMKV_EXPORT bool checkExist(GoStringWrap_t mmapID, GoStringWrap_t rootPath) {
     return MMKV::checkExist(id, nullptr);
 }
 
+MMKV_EXPORT uint64_t importFrom(void *handle, void *srcHandle) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    MMKV *kvSrc = static_cast<MMKV *>(srcHandle);
+    if (kv && kvSrc) {
+        return kv->importFrom(kvSrc);
+    }
+    return 0;
+}
+
 #endif // CGO
