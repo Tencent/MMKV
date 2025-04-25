@@ -1133,6 +1133,14 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native void trim();
 
     /**
+     * import all key-value items from src
+     * @return count of items imported
+     */
+    public long importFrom(MMKV src) {
+        return importFrom(nativeHandle, src.nativeHandle);
+    }
+
+    /**
      * Call this method if the MMKV instance is no longer needed in the near future.
      * Any subsequent call to any MMKV instances with the same ID is undefined behavior.
      */
@@ -1842,4 +1850,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private static native boolean checkProcessMode(long handle);
 
     private static native boolean getNameSpace(String rootPath);
+
+    private native long importFrom(long handle, long srcHandle);
 }
