@@ -98,7 +98,7 @@ repositories {
 }
 
 // Define the mmkv version to use
-def mmkvVersion = '2.2.0'
+def mmkvVersion = '2.2.1'
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
