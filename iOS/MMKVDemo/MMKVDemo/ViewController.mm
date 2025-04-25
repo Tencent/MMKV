@@ -101,6 +101,7 @@
     [self testClearAllWithKeepingSpace];
     [self testRemoveStorage];
     [self testReadOnly:NO];
+    [self testImport];
 
     m_loops = 10000;
     m_arrStrings = [NSMutableArray arrayWithCapacity:m_loops];
@@ -1211,6 +1212,34 @@ MMKV *getMMKVForBatchTest() {
         // also check if it tolerate update operations without crash
         [ViewController testMMKV:mmkv decodeOnly:NO];
     }
+}
+
+- (void)testImport {
+    auto mmapID = @"test_import_src";
+    auto src = [MMKV mmkvWithID:mmapID];
+    [src setBool:YES forKey:@"bool"];
+    [src setInt32:std::numeric_limits<int32_t>::min() forKey:@"int32"];
+    [src setUInt64:std::numeric_limits<uint64_t>::max() forKey:@"uint64"];
+    [src setString:mmapID forKey:@"string"];
+
+    auto dst = [MMKV mmkvWithID:@"test_import_dst"];
+    [dst clearAll];
+    [dst enableAutoKeyExpire:1];
+    [dst setBool:NO forKey:@"bool"];
+    [dst setInt32:-1 forKey:@"int32"];
+    [dst setUInt64:1 forKey:@"uint64"];
+    [dst setString:@"mmkv" forKey:@"string"];
+
+    auto count = [dst importFrom:src];
+    assert(count == 4 && dst.count == 4);
+    assert([dst getBoolForKey:@"bool"] == YES);
+    assert([dst getInt32ForKey:@"int32"] == std::numeric_limits<int32_t>::min());
+    assert([dst getUInt64ForKey:@"uint64"] == std::numeric_limits<uint64_t>::max());
+    assert([[dst getStringForKey:@"string"] isEqualToString:mmapID]);
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        assert([dst countNonExpiredKeys] == 0);
+    });
 }
 
 @end

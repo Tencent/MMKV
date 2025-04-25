@@ -1331,15 +1331,15 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *, bool nee
 
 #ifndef MMKV_DISABLE_CRYPT
 bool MMKV::reKey(const string &cryptKey) {
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
     if (!isFileValid()) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
-        return false;
-    }
-    if (isReadOnly()) {
-        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
         return false;
     }
 
@@ -1403,17 +1403,16 @@ bool MMKV::reKey(const string &cryptKey) {
 #endif
 
 void MMKV::trim() {
-    SCOPED_LOCK(m_lock);
     MMKVInfo("prepare to trim %s", m_mmapID.c_str());
-
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return;
+    }
+    SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
     if (!isFileValid()) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
-        return;
-    }
-    if (isReadOnly()) {
-        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
         return;
     }
 
@@ -1452,16 +1451,15 @@ void MMKV::trim() {
 
 void MMKV::clearAll(bool keepSpace) {
     MMKVInfo("cleaning all key-values from [%s]", m_mmapID.c_str());
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return;
+    }
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
-
     checkLoadData();
     if (!isFileValid()) {
         MMKVWarning("[%s] file not valid", m_mmapID.c_str());
-        return;
-    }
-    if (isReadOnly()) {
-        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
         return;
     }
 
@@ -1489,6 +1487,52 @@ void MMKV::clearAll(bool keepSpace) {
 
     clearMemoryCache(keepSpace);
     loadFromFile();
+}
+
+size_t MMKV::importFrom(MMKV *src) {
+    if (!src) {
+        return 0;
+    }
+    MMKVInfo("importing from [%s] to [%s]", src->m_mmapID.c_str(), m_mmapID.c_str());
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return 0;
+    }
+
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    SCOPED_LOCK(src->m_lock);
+    SCOPED_LOCK(src->m_exclusiveProcessLock);
+
+    checkLoadData();
+    src->checkLoadData();
+    if (!isFileValid() || !src->isFileValid()) {
+        MMKVWarning("[%s] or [%s] file not valid", m_mmapID.c_str(), src->m_mmapID.c_str());
+        return 0;
+    }
+
+    size_t count = 0;
+    bool notAutoExpire = !m_enableKeyExpire;
+    auto time = UInt32ToInt32((m_expiredInSeconds != ExpireNever) ? getCurrentTimeInSecond() + m_expiredInSeconds : ExpireNever);
+    for (auto &key : src->allKeys(false)) {
+        auto value = src->getDataForKey(key);
+        if (value.length() > 0) {
+            if (mmkv_likely(notAutoExpire)) {
+                setDataForKey(std::move(value), key, false);
+            } else {
+                auto tmp = MMBuffer(value.length() + Fixed32Size);
+                CodedOutputData output(tmp.getPtr(), tmp.length());
+                // no need write size, it's already written in value
+                output.writeRawData(value);
+                output.writeRawLittleEndian32(time);
+                setDataForKey(std::move(tmp), key, false);
+            }
+            count++;
+        }
+    }
+
+    MMKVInfo("imported %llu from [%s] to [%s]", count, src->m_mmapID.c_str(), m_mmapID.c_str());
+    return count;
 }
 
 static std::pair<MMKVPath_t, MMKVPath_t> getStorage(const std::string &mmapID, const MMKVPath_t *relatePath, std::string& realID, std::string& mmapKey) {
@@ -1660,6 +1704,10 @@ bool MMKV::doFullWriteBack(MMKVVector &&vec) {
 }
 
 bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
@@ -1680,10 +1728,6 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     m_enableKeyExpire = true;
     if (m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
         return true;
-    }
-    if (isReadOnly()) {
-        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
-        return false;
     }
 
     auto autoRecordExpireTime = (m_expiredInSeconds != 0);
@@ -1732,6 +1776,10 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
 }
 
 bool MMKV::disableAutoKeyExpire() {
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
@@ -1744,10 +1792,6 @@ bool MMKV::disableAutoKeyExpire() {
     m_enableKeyExpire = false;
     if (!m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
         return true;
-    }
-    if (isReadOnly()) {
-        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
-        return false;
     }
 
     MMKVInfo("erase previous recorded expire date for all keys inside [%s]", m_mmapID.c_str());
