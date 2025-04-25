@@ -346,4 +346,9 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   Pointer<Utf8> Function() groupPathFunc() {
     return nativeLib().lookup<NativeFunction<Pointer<Utf8> Function()>>(nativeFuncName("groupPath")).asFunction();
   }
+
+  @override
+  int Function(Pointer<Void> handle, Pointer<Void> srcHandle) importFromFunc() {
+    return nativeLib().lookup<NativeFunction<Uint64 Function(Pointer<Void>, Pointer<Void>)>>(nativeFuncName("importFrom")).asFunction();
+  }
 }

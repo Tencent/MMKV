@@ -681,3 +681,12 @@ MMKV_EXPORT const char *MMKV_FUNC(groupPath)() {
     auto groupPath = [MMKV mmkvGroupPath];
     return groupPath ? [groupPath UTF8String] : nullptr;
 }
+
+MMKV_EXPORT size_t MMKV_FUNC(importFrom)(const void *handle, const void *srcHandle) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    MMKV *kvSrc = (__bridge MMKV *) srcHandle;
+    if (kv && kvSrc) {
+        return [kv importFrom:kvSrc];
+    }
+    return 0;
+}

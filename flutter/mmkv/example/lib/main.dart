@@ -187,6 +187,7 @@ class _MyAppState extends State<MyApp> {
               onPressed: () {
                 functionalTest();
                 // testReadOnly();
+                testImport();
               },
               child: const Text("Functional Test", style: TextStyle(fontSize: 18))),
           TextButton(
@@ -507,5 +508,45 @@ class _MyAppState extends State<MyApp> {
     chmod(path, "666");
     chmod(crcPath, "666");
     */
+  }
+
+  void testImport() {
+    const String mmapID = "testImportSrc";
+    final MMKV src = MMKV(mmapID);
+    src.encodeBool("bool", true);
+    src.encodeInt32("int", -2147483648); // Integer.MIN_VALUE in Dart
+    src.encodeInt("long", 9223372036854775807); // Long.MAX_VALUE in Dart
+    src.encodeString("string", "test import");
+
+    final MMKV dst = MMKV("testImportDst");
+    dst.clearAll();
+    dst.enableAutoKeyExpire(1);
+    dst.encodeBool("bool", false);
+    dst.encodeInt32("int", -1);
+    dst.encodeInt("long", 0);
+    dst.encodeString("string", mmapID);
+
+    final int count = dst.importFrom(src);
+    if (count != 4 || dst.count != 4) {
+      print("MMKV: import check count fail");
+    }
+    if (!dst.decodeBool("bool")) {
+      print("MMKV: import check bool fail");
+    }
+    if (dst.decodeInt32("int") != -2147483648) {
+      print("MMKV: import check int fail");
+    }
+    if (dst.decodeInt("long") != 9223372036854775807) {
+      print("MMKV: import check long fail");
+    }
+    if (dst.decodeString("string") != "test import") {
+      print("MMKV: import check string fail");
+    }
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (dst.countNonExpiredKeys != 0) {
+        print("MMKV: import check expire fail");
+      }
+    });
   }
 }

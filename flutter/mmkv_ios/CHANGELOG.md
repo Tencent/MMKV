@@ -1,4 +1,7 @@
 # MMKV Platform iOS Change Log
+## v2.2.1 / 2025-4-25
+Keep up with native lib v2.2.1.
+
 ## v2.2.0 / 2025-4-24
 Keep up with native lib v2.2.0.
 
