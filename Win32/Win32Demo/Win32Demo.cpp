@@ -428,6 +428,34 @@ void testNameSpace() {
     functionalTest(kv, false);
 }
 
+void testImport() {
+    string mmapID = "test_import_src";
+    auto src = MMKV::mmkvWithID(mmapID);
+    src->set(true, "bool");
+    src->set(std::numeric_limits<int32_t>::min(), "int");
+    src->set(std::numeric_limits<uint64_t>::max(), "long");
+    src->set("test import", "string");
+
+    auto dst = MMKV::mmkvWithID("test_import_dst");
+    dst->clearAll();
+    dst->enableAutoKeyExpire(1);
+    dst->set(true, "bool");
+    dst->set(-1, "int");
+    dst->set(0, "long");
+    dst->set(mmapID, "string");
+
+    auto count = dst->importFrom(src);
+    assert(count == 4 && dst->count() == 4);
+    assert(dst->getBool("bool"));
+    assert(dst->getInt32("int") == std::numeric_limits<int32_t>::min());
+    assert(dst->getUInt64("long") == std::numeric_limits<uint64_t>::max());
+    string result;
+    dst->getString("string", result);
+    assert(result == "test import");
+    Sleep(2 * 1000);
+    assert(dst->count(true) == 0);
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -489,4 +517,5 @@ int main() {
     testExpectedCapacity();
     testRemoveStorage();
     testReadOnly();
+    testImport();
 }
