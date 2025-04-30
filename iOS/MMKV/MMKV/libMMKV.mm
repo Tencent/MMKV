@@ -90,7 +90,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         MMKVWarning("already called +initializeMMKV before, ignore this request");
         return [self mmkvBasePath];
     }
-    g_callbackHandler = handler;
+    g_callbackHandler = [handler retain];
     mmkv::LogHandler logHandler = nullptr;
     if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
         g_isLogRedirecting = true;
