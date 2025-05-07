@@ -52,6 +52,7 @@ void brutleTest(DWORD processID) {
 
     auto mmkv = MMKV::mmkvWithID(MMKV_ID, MMKV_MULTI_PROCESS);
     for (size_t i = 0; i < keyCount; i++) {
+        // auto mmkv = MMKV::mmkvWithID(MMKV_ID + "." + std::to_string(i), MMKV_MULTI_PROCESS);
         mmkv->set(i, arrIntKeys[i]);
         mmkv->set("str-" + to_string(i), arrStringKeys[i]);
         mmkv->getInt32(arrIntKeys[i]);

@@ -36,6 +36,7 @@
 #include <ctime>
 #include <cmath>
 #include <cinttypes> // For PRId64 & PRIu64
+#include <sys/mman.h>
 
 // it's not a must-have for most app so do it the handy way
 #include "../../Core/InterProcessLock.h"
@@ -310,6 +311,14 @@ void testInterProcessLock() {
 
     auto fd = open("/tmp/mmkv/TestInterProcessLock.file", O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
     FileLock flock(fd);
+
+//    auto fd2 = open("/tmp/mmkv/TestInterProcessLock2.file", O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+//    FileLock flock2(fd2);
+//    flock2.lock(SharedLockType);
+//    auto ptr = ::mmap(nullptr, DEFAULT_MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd2, 0);
+//    printf("mmap fd %d to %p\n", fd2, ptr);
+//    ::close(fd2);
+//    flock2.destroyLock();
 
     auto pid = fork();
     // this is child

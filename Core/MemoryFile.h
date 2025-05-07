@@ -68,6 +68,8 @@ T roundUp(T numToRound, T multiple) {
     return ((numToRound + multiple - 1) / multiple) * multiple;
 }
 
+class FileLock;
+
 class File {
     MMKVPath_t m_path;
     MMKVFileHandle_t m_fd;
@@ -119,7 +121,7 @@ class MemoryFile {
     const bool m_readOnly;
     const bool m_isMayflyFD;
 
-    bool mmapOrCleanup();
+    bool mmapOrCleanup(FileLock *fileLock);
 
     void doCleanMemoryCache(bool forceClean);
 
@@ -151,7 +153,7 @@ public:
     void cleanMayflyFD();
 
     // the newly expanded file content will be zeroed
-    bool truncate(size_t size);
+    bool truncate(size_t size, FileLock *fileLock = nullptr);
 
     bool msync(SyncFlag syncFlag);
 

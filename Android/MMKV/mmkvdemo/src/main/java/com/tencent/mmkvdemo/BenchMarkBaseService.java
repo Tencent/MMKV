@@ -110,6 +110,7 @@ public abstract class BenchMarkBaseService extends Service {
         for (int index = 0; index < m_loops; index++) {
             int tmp = r.nextInt();
             String key = m_arrIntKeys[index];
+//            MMKV mmkv =  MMKV.mmkvWithID(MMKV_ID + key, MMKV.MULTI_PROCESS_MODE, CryptKey);
             mmkv.encode(key, tmp);
         }
         long endTime = System.currentTimeMillis();

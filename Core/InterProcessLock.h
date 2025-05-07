@@ -78,8 +78,8 @@ public:
 
     bool unlock(LockType lockType);
 
-    // the fd is invalid, destroy file lock
-    void destroyLock();
+    // unlock all and destroy file lock
+    void destroyAndUnLock();
 
     // just forbid it for possibly misuse
     explicit FileLock(const FileLock &other) = delete;

@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstring>
+#include <sys/mman.h>
 
 // it's not a must-have for most app so do it the handy way
 #include "../../Core/InterProcessLock.h"
@@ -108,6 +109,19 @@ int main() {
 
     auto processID = getpid();
     cout << "TestInterProcessLock: " << processID << " started\n";
+
+//    auto fd3 = open("/tmp/mmkv/TestInterProcessLock2.file", O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+//    FileLock flock3(fd3);
+//
+//    auto ptr = ::mmap(nullptr, DEFAULT_MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd3, 0);
+//    printf("mmap fd %d to %p\n", fd3, ptr);
+//
+//    printf("trying flock.try_lock %d\n", fd3);
+//    flock3.try_lock(ExclusiveLockType, nullptr);
+//    printf("trying flock.lock %d\n", fd3);
+//    flock3.lock(ExclusiveLockType);
+//    printf("finish flock.lock %d\n", fd3);
+
     auto ret = threadTest();
     cout << "TestInterProcessLock: " << (ret ? "pass" : "failed") << endl;
     cout << "TestInterProcessLock: " << processID << " ended\n";
