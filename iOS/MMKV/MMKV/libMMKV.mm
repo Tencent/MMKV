@@ -80,7 +80,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     g_lock = new mmkv::ThreadLock();
     g_lock->initialize();
 
-    g_callbackHandler = handler;
+    [g_callbackHandler release];
+    g_callbackHandler = [handler retain];
     mmkv::LogHandler logHandler = nullptr;
     if (g_callbackHandler && [g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
         g_isLogRedirecting = true;
@@ -1006,7 +1007,8 @@ static NSString *md5(NSString *value) {
 
 + (void)registerHandler:(id<MMKVHandler>)handler {
     SCOPED_LOCK(g_lock);
-    g_callbackHandler = handler;
+    [g_callbackHandler release];
+    g_callbackHandler = [handler retain];
 
     if ([g_callbackHandler respondsToSelector:@selector(mmkvLogWithLevel:file:line:func:message:)]) {
         g_isLogRedirecting = true;
@@ -1025,6 +1027,7 @@ static NSString *md5(NSString *value) {
     SCOPED_LOCK(g_lock);
 
     g_isLogRedirecting = false;
+    [g_callbackHandler release];
     g_callbackHandler = nil;
 
     mmkv::MMKV::unRegisterLogHandler();
