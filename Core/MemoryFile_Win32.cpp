@@ -227,13 +227,16 @@ void MemoryFile::reloadFromFile(size_t expectedCapacity) {
     }
     if (openIfNeeded()) {
         FileLock fileLock(m_diskFile.getFd());
-        InterProcessLock lock(&fileLock, ExclusiveLockType);
+        InterProcessLock lock(&fileLock, SharedLockType);
         SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_diskFile.getFd(), m_size);
         size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE));
         // round up to (n * pagesize)
         if (!m_readOnly && (m_size < expectedSize || (m_size % DEFAULT_MMAP_SIZE != 0))) {
+            InterProcessLock exclusiveLock(&fileLock, ExclusiveLockType);
+            SCOPED_LOCK(&exclusiveLock);
+
             size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;;
             roundSize = std::max<size_t>(expectedSize, roundSize);
             truncate(roundSize, &fileLock);
