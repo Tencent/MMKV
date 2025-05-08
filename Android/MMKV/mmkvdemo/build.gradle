@@ -26,7 +26,7 @@ android {
             cmake {
                 arguments = ["-DANDROID_STL=c++_shared"]
                 // use prefab or not: Gradle has bug handling local prefab modules, fails on linking
-//                 arguments += ["-DHAS_PREFAB=1"]
+//                arguments += ["-DHAS_PREFAB=1"]
                 cppFlags "-fvisibility=hidden", "-funwind-tables", "-fasynchronous-unwind-tables", "-O2",
                         "-Wl,-z,max-page-size=16384"
             }
@@ -98,7 +98,7 @@ repositories {
 }
 
 // Define the mmkv version to use
-def mmkvVersion = '2.2.1'
+def mmkvVersion = '2.2.2'
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
