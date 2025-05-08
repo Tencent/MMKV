@@ -200,11 +200,12 @@ bool FileLock::unlock(LockType lockType) {
     return ret;
 }
 
-void FileLock::destroyLock() {
-    m_fd = MMKVFileHandleInvalidValue;
+void FileLock::destroyAndUnLock() {
+    platformUnLock(false);
 
-    // m_sharedLockCount = 0;
-    // m_exclusiveLockCount = 0;
+    m_sharedLockCount = 0;
+    m_exclusiveLockCount = 0;
+    m_fd = MMKVFileHandleInvalidValue;
 }
 
 } // namespace mmkv

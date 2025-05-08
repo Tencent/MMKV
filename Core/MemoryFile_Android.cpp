@@ -78,7 +78,7 @@ MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expec
     } else {
         if (m_diskFile.isFileValid()) {
             m_size = m_diskFile.m_size;
-            mmapOrCleanup();
+            mmapOrCleanup(nullptr);
         }
     }
 }
@@ -91,7 +91,7 @@ MemoryFile::MemoryFile(int ashmemFD)
     } else {
         m_size = m_diskFile.m_size;
         MMKVInfo("ashmem name:%s, size:%zu", m_diskFile.m_path.c_str(), m_size);
-        mmapOrCleanup();
+        mmapOrCleanup(nullptr);
     }
 }
 

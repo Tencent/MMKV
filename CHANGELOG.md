@@ -1,4 +1,21 @@
 # MMKV Change Log
+## v2.2.2 / 2025-05-08
+This is a hot fix version mainly **for Android/Linux platforms**. It’s highly recommended for v2.2.0~v2.2.1 users.
+### Changes for All platforms
+* Improve file lock consistency for Mayfly FD MMKV instances.
+
+### Android
+* Fix a potential ANR on multi-process mode MMKV init/creation.
+
+### POSIX
+* Fix a potential ANR on multi-process mode MMKV init/creation on Linux.
+
+### iOS/macOS
+* Retain the callback handler to prevent a potential short-lived callback handler from crashing.
+
+### Win32
+* Improve efficiency on MMKV instance init/creation.
+
 ## v2.2.1 / 2025-04-25
 ### Changes for All platforms
 * Add `importFrom()`.

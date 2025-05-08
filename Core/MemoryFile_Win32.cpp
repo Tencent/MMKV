@@ -111,7 +111,7 @@ MemoryFile::MemoryFile(MMKVPath_t path, size_t expectedCapacity, bool readOnly, 
     reloadFromFile(expectedCapacity);
 }
 
-bool MemoryFile::truncate(size_t size) {
+bool MemoryFile::truncate(size_t size, FileLock *fileLock) {
     if (m_isMayflyFD) {
         openIfNeeded();
     }
@@ -152,7 +152,7 @@ bool MemoryFile::truncate(size_t size) {
         MMKVError("fail to truncate [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
         m_size = oldSize;
         if (needMMapOnFailure) {
-            mmapOrCleanup();
+            mmapOrCleanup(fileLock);
         }
         return false;
     }
@@ -161,13 +161,13 @@ bool MemoryFile::truncate(size_t size) {
             MMKVError("fail to zeroFile [%ls] to size %zu", m_diskFile.m_path.c_str(), m_size);
             m_size = oldSize;
             if (needMMapOnFailure) {
-                mmapOrCleanup();
+                mmapOrCleanup(fileLock);
             }
             return false;
         }
     }
 
-    return mmapOrCleanup();
+    return mmapOrCleanup(fileLock);
 }
 
 bool MemoryFile::msync(SyncFlag syncFlag) {
@@ -193,7 +193,7 @@ bool MemoryFile::msync(SyncFlag syncFlag) {
     return false;
 }
 
-bool MemoryFile::mmapOrCleanup() {
+bool MemoryFile::mmapOrCleanup(FileLock *fileLock) {
     auto mode = m_readOnly ? PAGE_READONLY : PAGE_READWRITE;
     m_fileMapping = CreateFileMapping(m_diskFile.getFd(), nullptr, mode, 0, 0, nullptr);
     if (!m_fileMapping) {
@@ -210,6 +210,10 @@ bool MemoryFile::mmapOrCleanup() {
         }
         MMKVInfo("mmap to address [%p], [%ls]", m_ptr, m_diskFile.m_path.c_str());
 
+        if (m_isMayflyFD && fileLock) {
+            fileLock->destroyAndUnLock();
+        }
+
         cleanMayflyFD();
         return true;
     }
@@ -223,26 +227,21 @@ void MemoryFile::reloadFromFile(size_t expectedCapacity) {
     }
     if (openIfNeeded()) {
         FileLock fileLock(m_diskFile.getFd());
-        InterProcessLock lock(&fileLock, ExclusiveLockType);
+        InterProcessLock lock(&fileLock, SharedLockType);
         SCOPED_LOCK(&lock);
 
         mmkv::getFileSize(m_diskFile.getFd(), m_size);
         size_t expectedSize = std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE));
         // round up to (n * pagesize)
         if (!m_readOnly && (m_size < expectedSize || (m_size % DEFAULT_MMAP_SIZE != 0))) {
+            InterProcessLock exclusiveLock(&fileLock, ExclusiveLockType);
+            SCOPED_LOCK(&exclusiveLock);
+
             size_t roundSize = ((m_size / DEFAULT_MMAP_SIZE) + 1) * DEFAULT_MMAP_SIZE;;
             roundSize = std::max<size_t>(expectedSize, roundSize);
-            truncate(roundSize);
-
-            if (m_isMayflyFD) {
-                fileLock.destroyLock();
-            }
+            truncate(roundSize, &fileLock);
         } else {
-            mmapOrCleanup();
-
-            if (m_isMayflyFD) {
-                fileLock.destroyLock();
-            }
+            mmapOrCleanup(&fileLock);
         }
     }
 }

@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@ohos/flutter_ohos": "file:./har/flutter.har",
-    "@tencent/mmkv": ">=2.2.1 <2.3"
+    "@tencent/mmkv": ">=2.2.2 <2.3"
 //    "@tencent/mmkv": "file:/Users/lingol/Developer/mmkv/OpenHarmony/MMKV/build/default/outputs/default/MMKV.har"
   },
   "devDependencies": {},
