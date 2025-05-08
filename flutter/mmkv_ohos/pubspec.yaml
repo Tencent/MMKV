@@ -1,7 +1,7 @@
 name: mmkv_ohos
 description: OHOS platform implementation of MMKV.
 repository: https://github.com/Tencent/MMKV/tree/master/flutter/mmkv_ohos
-version: 2.2.1
+version: 2.2.2
 homepage: https://github.com/Tencent/mmkv
 
 environment:

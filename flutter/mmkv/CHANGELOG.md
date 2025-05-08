@@ -1,4 +1,9 @@
 # MMKV for Flutter Change Log
+## v2.2.2 / 2025-05-08
+This is a hot fix version mainly **for Android platforms**. It’s highly recommended for v2.2.0~v2.2.1 users.
+* Improve file lock consistency for Mayfly FD MMKV instances.
+* Fix a potential Android ANR on multi-process mode MMKV init/creation.
+
 ## v2.2.1 / 2025-4-25
 * Add `importFrom()`.
 * Fix Android initialize bug.
