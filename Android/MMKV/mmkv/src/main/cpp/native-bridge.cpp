@@ -232,6 +232,7 @@ MMKVRecoverStrategic onMMKVError(const std::string &mmapID, MMKVErrorType errorT
     if (currentEnv && methodID) {
         jstring str = string2jstring(currentEnv, mmapID);
         auto strategic = currentEnv->CallStaticIntMethod(g_cls, methodID, str);
+        currentEnv->DeleteLocalRef(str);
         return static_cast<MMKVRecoverStrategic>(strategic);
     }
     return OnErrorDiscard;
@@ -273,7 +274,12 @@ static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *
         jstring oFunction = string2jstring(currentEnv, string(function));
         jstring oMessage = string2jstring(currentEnv, message);
         int readLevel = level;
+
         currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, readLevel, oFile, line, oFunction, oMessage);
+
+        currentEnv->DeleteLocalRef(oMessage);
+        currentEnv->DeleteLocalRef(oFunction);
+        currentEnv->DeleteLocalRef(oFile);
     }
 }
 
@@ -282,6 +288,7 @@ static void onContentChangedByOuterProcess(const std::string &mmapID) {
     if (currentEnv && g_callbackOnContentChange) {
         jstring str = string2jstring(currentEnv, mmapID);
         currentEnv->CallStaticVoidMethod(g_cls, g_callbackOnContentChange, str);
+        currentEnv->DeleteLocalRef(str);
     }
 }
 
