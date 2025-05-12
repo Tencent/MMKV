@@ -98,14 +98,14 @@ repositories {
 }
 
 // Define the mmkv version to use
-def mmkvVersion = '2.2.2'
+def mmkvVersion = "${VERSION_NAME_PREFIX}${VERSION_NAME_SUFFIX}"
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation project(':mmkv')
+//    implementation project(':mmkv')
 //    implementation "com.tencent:mmkv:$mmkvVersion"
 //    implementation "com.tencent:mmkv-static:$mmkvVersion" // this is identical to 'com.tencent:mmkv'
-//    implementation "com.tencent:mmkv-shared:$mmkvVersion" // with prefab functionality
+    implementation "com.tencent:mmkv-shared:$mmkvVersion" // with prefab functionality
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     testImplementation 'junit:junit:4.13.2'

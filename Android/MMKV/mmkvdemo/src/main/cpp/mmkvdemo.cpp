@@ -28,7 +28,7 @@
 #endif
 using namespace std;
 
-constexpr auto APP_NAME = "MMKV";
+constexpr auto APP_NAME = "MMKVNativeDemo";
 
 void _MMKVLogWithLevel(android_LogPriority level, const char *filename, const char *func, int line, const char *format, ...) {
     string message;
@@ -180,8 +180,43 @@ static void testNameSpaceInNative(JNIEnv *env, jobject obj, jstring rootDir, jst
 #endif
 }
 
+#ifndef ENABLE_MMKV_NATIVE
+enum MMKVLogLevel : int {
+    MMKVLogDebug = 0, // not available for release/product build
+    MMKVLogInfo = 1,  // default level
+    MMKVLogWarning,
+    MMKVLogError,
+    MMKVLogNone, // special level used to disable all log messages
+};
+#endif
+
+static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
+    switch (level) {
+    case MMKVLogDebug:
+        return ANDROID_LOG_DEBUG;
+    case MMKVLogInfo:
+        return ANDROID_LOG_INFO;
+    case MMKVLogWarning:
+        return ANDROID_LOG_WARN;
+    case MMKVLogError:
+        return ANDROID_LOG_ERROR;
+    default:
+        return ANDROID_LOG_UNKNOWN;
+    }
+}
+
+static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
+    auto desc = MMKVLogLevelDesc(level);
+    __android_log_print(desc, APP_NAME, "<%s:%d::%s> %s", file, line, function, message.c_str());
+}
+
+static jlong getNativeLogHandler(JNIEnv *env, jobject obj) {
+    return (jlong) mmkvLog;
+}
+
 static JNINativeMethod g_methods[] = {
     {"testNameSpaceInNative", "(Ljava/lang/String;Ljava/lang/String;)V", (void *) testNameSpaceInNative},
+    {"getNativeLogHandler", "()J", (void *) getNativeLogHandler},
 };
 
 static int registerNativeMethods(JNIEnv *env, jclass cls) {

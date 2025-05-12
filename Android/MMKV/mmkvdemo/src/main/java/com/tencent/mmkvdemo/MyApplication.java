@@ -105,6 +105,9 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
     }
 
     @Override
+    public native long getNativeLogHandler();
+
+    @Override
     public void onContentChangedByOuterProcess(String mmapID) {
         Log.i("MMKV", "other process has changed content of : " + mmapID);
     }
@@ -116,6 +119,10 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
         MainActivity.testMMKV(mmkv, false);
 
         System.loadLibrary("mmkvdemo");
+
+        long nativeLogger = getNativeLogHandler();
+        Log.i("MMKVDemo", "native log handler: " + nativeLogger);
+
         testNameSpaceInNative(nsRoot, "testNameSpaceInNative");
     }
 

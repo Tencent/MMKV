@@ -196,15 +196,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         String cacheDir = context.getCacheDir().getAbsolutePath();
 
         gCallbackHandler = handler;
-        if (gCallbackHandler != null && gCallbackHandler.wantLogRedirecting()) {
-            gWantLogReDirecting = true;
-        }
-
-        String ret = doInitialize(rootDir, cacheDir, loader, logLevel, gWantLogReDirecting);
-
+        boolean hasCallback = false;
         if (gCallbackHandler != null) {
-            setCallbackHandler(gWantLogReDirecting, true);
+            hasCallback = true;
+            if (gCallbackHandler.wantLogRedirecting()) {
+                gWantLogReDirecting = true;
+                gNativeLogHandler = gCallbackHandler.getNativeLogHandler();
+            }
         }
+
+        String ret = doInitialize(rootDir, cacheDir, loader, logLevel, gWantLogReDirecting, hasCallback, gNativeLogHandler);
 
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
@@ -218,9 +219,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return ret;
     }
 
-    private static String doInitialize(String rootDir, String cacheDir, LibLoader loader, MMKVLogLevel logLevel, boolean wantLogReDirecting) {
+    private static String doInitialize(String rootDir, String cacheDir, LibLoader loader, MMKVLogLevel logLevel, boolean wantLogReDirecting, boolean hasCallback, long nativeHandler) {
         tryLoadNativeLib(loader);
-        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel), wantLogReDirecting);
+        jniInitialize(rootDir, cacheDir, logLevel2Int(logLevel), wantLogReDirecting, hasCallback, nativeHandler);
         MMKV.rootDir = rootDir;
         return MMKV.rootDir;
     }
@@ -252,7 +253,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false, false, 0);
     }
 
     /**
@@ -261,7 +262,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false);
+        return doInitialize(rootDir, rootDir + "/.tmp", null, logLevel, false, false, 0);
     }
 
     /**
@@ -271,7 +272,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader) {
         MMKVLogLevel logLevel = BuildConfig.DEBUG ? MMKVLogLevel.LevelDebug : MMKVLogLevel.LevelInfo;
-        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
+        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false, false, 0);
     }
 
     /**
@@ -280,7 +281,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      */
     @Deprecated
     public static String initialize(String rootDir, LibLoader loader, MMKVLogLevel logLevel) {
-        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false);
+        return doInitialize(rootDir, rootDir + "/.tmp", loader, logLevel, false, false, 0);
     }
 
     /**
@@ -1622,6 +1623,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // callback handler
     private static MMKVHandler gCallbackHandler;
     private static boolean gWantLogReDirecting = false;
+    private static long gNativeLogHandler = 0;
 
     /**
      * Register a handler for MMKV log redirecting, and error handling.
@@ -1632,7 +1634,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static void registerHandler(MMKVHandler handler) {
         gCallbackHandler = handler;
         gWantLogReDirecting = gCallbackHandler.wantLogRedirecting();
-        setCallbackHandler(gWantLogReDirecting, true);
+        gNativeLogHandler = gCallbackHandler.getNativeLogHandler();
+        setCallbackHandler(gWantLogReDirecting, true, gNativeLogHandler);
     }
 
     /**
@@ -1641,8 +1644,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static void unregisterHandler() {
         gCallbackHandler = null;
 
-        setCallbackHandler(false, false);
+        setCallbackHandler(false, false, 0);
         gWantLogReDirecting = false;
+        gNativeLogHandler = 0;
     }
 
     private static int onMMKVCRCCheckFail(String mmapID) {
@@ -1750,7 +1754,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         nativeHandle = handle;
     }
 
-    private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting);
+    private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting, boolean hasCallback, long nativeHandler);
 
     native static long
     getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath,
@@ -1829,7 +1833,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void setLogLevel(int level);
 
-    private static native void setCallbackHandler(boolean logReDirecting, boolean hasCallback);
+    private static native void setCallbackHandler(boolean logReDirecting, boolean hasCallback, long nativeHandle);
 
     private static native long createNB(int size);
 
