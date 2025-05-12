@@ -1,4 +1,20 @@
 # MMKV Change Log
+## v1.3.14 / 2025-05-13
+**This is a Long Term Support (LTS) release.**
+**This is a hot-fix release for Android/iOS/macOS users.** So it is only available on Maven Central and CocoaPods.
+
+### Android
+* Support 16K pagesize.
+* Fix a potential log callback OOM crash.
+
+### iOS
+* Retain the callback handler to prevent a potential short-lived callback handler from crashing.
+
+## v1.3.13 / 2025-01-13
+**This is a hot-fix release for iOS/macOS users.** So it is only available on CocoaPods.
+### iOS/macOS
+* Fix a compile error on the Debug build.
+
 ## v1.3.12 / 2025-01-02
 **This is a Long Term Support (LTS) release.**
 ### Changes for All platforms
