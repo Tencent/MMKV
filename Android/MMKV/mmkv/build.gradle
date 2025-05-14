@@ -43,8 +43,7 @@ android {
             minifyEnabled false
             externalNativeBuild {
                 cmake {
-                    cppFlags "-fvisibility=hidden", "-funwind-tables", "-fasynchronous-unwind-tables", "-O2",
-                            "-Wl,-z,max-page-size=16384"
+                    cppFlags "-fvisibility=hidden", "-funwind-tables", "-fasynchronous-unwind-tables", "-O2"
                 }
             }
             consumerProguardFiles 'proguard-rules.pro'
