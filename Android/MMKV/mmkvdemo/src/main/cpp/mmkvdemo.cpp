@@ -205,9 +205,9 @@ static android_LogPriority MMKVLogLevelDesc(MMKVLogLevel level) {
     }
 }
 
-static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
+static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const char *message) {
     auto desc = MMKVLogLevelDesc(level);
-    __android_log_print(desc, APP_NAME, "<%s:%d::%s> %s", file, line, function, message.c_str());
+    __android_log_print(desc, APP_NAME, "<%s:%d::%s> %s", file, line, function, message);
 }
 
 static jlong getNativeLogHandler(JNIEnv *env, jobject obj) {

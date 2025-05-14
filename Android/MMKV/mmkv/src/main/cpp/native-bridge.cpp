@@ -48,6 +48,10 @@ extern MMKVLogLevel g_currentLogLevel;
 
 namespace mmkv {
     static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message);
+
+    typedef void (*AndroidLogHandler)(MMKVLogLevel level, const char *file, int line, const char *function, const char *message);
+    static AndroidLogHandler g_androidLogHandler = nullptr;
+    static void androidLogWrapper(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message);
 }
 
 #define InternalLogError(format, ...) \
@@ -138,7 +142,8 @@ MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jstring c
         mmkv::LogHandler logHandler = nullptr;
         if (logReDirecting) {
             if (nativeLogHandler != 0) {
-                logHandler = (mmkv::LogHandler ) nativeLogHandler;
+                g_androidLogHandler = (AndroidLogHandler) nativeLogHandler;
+                logHandler = androidLogWrapper;
             } else {
                 logHandler = mmkvLog;
             }
@@ -283,6 +288,10 @@ static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *
         currentEnv->DeleteLocalRef(oFunction);
         currentEnv->DeleteLocalRef(oFile);
     }
+}
+
+static void androidLogWrapper(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
+    g_androidLogHandler(level, file, line, function, message.c_str());
 }
 
 static void onContentChangedByOuterProcess(const std::string &mmapID) {
@@ -917,17 +926,16 @@ MMKV_JNI void setLogLevel(JNIEnv *env, jclass type, jint level) {
     MMKV::setLogLevel((MMKVLogLevel) level);
 }
 
-// set a native function callback of type
-// void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message)
-
 MMKV_JNI void setCallbackHandler(JNIEnv *env, jclass type, jboolean logReDirecting, jboolean hasCallback, jlong nativeHandler) {
     if (logReDirecting == JNI_TRUE) {
         if (nativeHandler != 0) {
-            MMKV::registerLogHandler((mmkv::LogHandler) nativeHandler);
+            g_androidLogHandler = (AndroidLogHandler) nativeHandler;
+            MMKV::registerLogHandler(androidLogWrapper);
         } else {
             MMKV::registerLogHandler(mmkvLog);
         }
     } else {
+        g_androidLogHandler = nullptr;
         MMKV::unRegisterLogHandler();
     }
 

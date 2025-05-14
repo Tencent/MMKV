@@ -197,15 +197,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
         gCallbackHandler = handler;
         boolean hasCallback = false;
+        long nativeLogHandler = 0;
         if (gCallbackHandler != null) {
             hasCallback = true;
             if (gCallbackHandler.wantLogRedirecting()) {
                 gWantLogReDirecting = true;
-                gNativeLogHandler = gCallbackHandler.getNativeLogHandler();
+                nativeLogHandler = gCallbackHandler.getNativeLogHandler();
             }
         }
 
-        String ret = doInitialize(rootDir, cacheDir, loader, logLevel, gWantLogReDirecting, hasCallback, gNativeLogHandler);
+        String ret = doInitialize(rootDir, cacheDir, loader, logLevel, gWantLogReDirecting, hasCallback, nativeLogHandler);
 
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
@@ -1623,7 +1624,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     // callback handler
     private static MMKVHandler gCallbackHandler;
     private static boolean gWantLogReDirecting = false;
-    private static long gNativeLogHandler = 0;
 
     /**
      * Register a handler for MMKV log redirecting, and error handling.
@@ -1634,8 +1634,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static void registerHandler(MMKVHandler handler) {
         gCallbackHandler = handler;
         gWantLogReDirecting = gCallbackHandler.wantLogRedirecting();
-        gNativeLogHandler = gCallbackHandler.getNativeLogHandler();
-        setCallbackHandler(gWantLogReDirecting, true, gNativeLogHandler);
+        long nativeLogHandler = gCallbackHandler.getNativeLogHandler();
+        setCallbackHandler(gWantLogReDirecting, true, nativeLogHandler);
     }
 
     /**
@@ -1646,7 +1646,6 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
         setCallbackHandler(false, false, 0);
         gWantLogReDirecting = false;
-        gNativeLogHandler = 0;
     }
 
     private static int onMMKVCRCCheckFail(String mmapID) {

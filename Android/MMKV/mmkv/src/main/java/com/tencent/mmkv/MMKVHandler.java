@@ -54,7 +54,10 @@ public interface MMKVHandler {
      */
     void mmkvLog(MMKVLogLevel level, String file, int line, String function, String message);
 
-    // return a native log handler if you prefer to handle the log in NDK native code
-    // return 0 to indicate that you don't have a native handler
+    /**
+     * handle the log in NDK native code
+     * @return a native log handler with signature of void log(int level, const char *file, int line, const char *function, const char *message)
+     * return 0 to indicate no native handler
+     */
     long getNativeLogHandler();
 }
