@@ -10,9 +10,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                // uncomment this line to support 32-bit ABIs (armeabi-v7a & x86)
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-                // abiFilters 'arm64-v8a', 'x86_64'
             }
         }
         ndkVersion "28.1.13356709"
