@@ -1,4 +1,8 @@
 # MMKV Platform Android Change Log
+## v1.0.10 / 2025-05-28
+* Fix Android compile error on Dart 3.29+.
+* Keep up with native lib v1.3.14.
+
 ## v1.0.9 / 2024-11-12
 Keep up with native lib v1.3.11.
 
