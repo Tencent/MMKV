@@ -697,6 +697,7 @@ bool MMKV::getVector(MMKVKey_t key, T &result) {
     return ret;
 }
 
+#ifdef MMKV_APPLE
 #ifdef __OBJC__
 template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
 bool getVector(std::string_view key, T &result) {
@@ -704,6 +705,7 @@ bool getVector(std::string_view key, T &result) {
     return getVector(hybridKey.str, result);
 }
 #endif // __OBJC__
+#endif // MMKV_APPLE
 
 #endif // MMKV_HAS_CPP20
 
