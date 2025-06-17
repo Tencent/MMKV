@@ -191,12 +191,17 @@ MMBuffer::~MMBuffer() {
         if (isNoCopy == MMBufferCopy) {
             [m_data release];
         }
-        return;
     }
 #endif
 
     if (isNoCopy == MMBufferCopy && ptr) {
+#ifdef MMKV_APPLE
+        if (!m_data || ptr != [m_data bytes]) {
+            free(ptr);
+        }
+#else
         free(ptr);
+#endif
     }
 }
 
