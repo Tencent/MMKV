@@ -93,7 +93,7 @@ android.libraryVariants.all { variant ->
         source = variant.javaCompile.source // TODO: deprecated
         options.encoding = 'utf-8'
         destinationDir = file("${buildDir}/docs/javadoc${hasFlavors ? artifactIdSuffix : ""}")
-        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdk}/android.jar"
         classpath += files(ext.androidJar)
         classpath += files(configurations.compile)
         exclude '**/BuildConfig.java'
