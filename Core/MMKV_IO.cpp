@@ -72,7 +72,7 @@ void MMKV::loadFromFile() {
 #endif
     if (!m_file->isFileValid()) {
         m_file->reloadFromFile(m_expectedCapacity);
-    } else if (isMultiProcess()) {
+    } else if (m_isInterProcess) {
         // the file size may change by other process between instance creation and loadFromFile
         // because we have lazy load
         auto actualFileSize = m_file->getActualFileSize();
@@ -1046,7 +1046,12 @@ KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, const KeyValueHold
         }
     }
     auto basePtr = (uint8_t *) m_file->getMemory() + Fixed32Size;
-    MMBuffer keyData(basePtr + kvHolder.offset, rawKeySize, MMBufferNoCopy);
+    MMBuffer keyData;
+    if (kvHolder.offset < ItemSizeHolderSize) {
+        keyData = MMBuffer(basePtr + kvHolder.offset, rawKeySize, MMBufferCopy);
+    } else {
+        keyData = MMBuffer(basePtr + kvHolder.offset, rawKeySize, MMBufferNoCopy);
+    }
 
     return doOverrideDataWithKey(data, keyData, isDataHolder, keyLength);
 }
