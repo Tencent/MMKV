@@ -72,6 +72,13 @@ void MMKV::loadFromFile() {
 #endif
     if (!m_file->isFileValid()) {
         m_file->reloadFromFile(m_expectedCapacity);
+    } else if (isMultiProcess()) {
+        // the file size may change by other process between instance creation and loadFromFile
+        // because we have lazy load
+        auto actualFileSize = m_file->getActualFileSize();
+        if (actualFileSize != m_file->getFileSize()) {
+            m_file->reloadFromFile(m_expectedCapacity);
+        }
     }
     if (!m_file->isFileValid()) {
         MMKVError("file [%s] not valid", m_path.c_str());
