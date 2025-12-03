@@ -1,4 +1,8 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v1.3.15 / 2025-12-03
+* **Fix:** Fixed an issue where the file size could change during multi-process loading.
+* **Fix:** Corrected a bug where a single key could be overridden incorrectly when upgrading from a v1.1.x version.
+
 ## v1.3.12 / 2025-01-02
 * Fix a bug that MMKV might fail to backup/restore across different filesystems.
 * Add protection from invalid value size of auto-key-expire mmkv.

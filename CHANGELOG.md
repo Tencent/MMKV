@@ -1,4 +1,11 @@
 # MMKV Change Log
+## v1.3.15 / 2025-12-03
+**This is a Long Term Support (LTS) release.**
+
+### All Platforms
+* **Fix:** Fixed an issue where the file size could change during multi-process loading.
+* **Fix:** Corrected a bug where a single key could be overridden incorrectly when upgrading from a v1.1.x version.
+
 ## v1.3.14 / 2025-05-13
 **This is a Long Term Support (LTS) release.**
 **This is a hot-fix release for Android/iOS/macOS users.** So it is only available on Maven Central and CocoaPods.
