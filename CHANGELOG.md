@@ -15,6 +15,7 @@ This release is a **breaking change** and introduces **AES-256 encryption** for 
 
 * **Change:** Dropped support for the **armv7k** architecture on Apple Watch. To adapt, you should add `armv7k` to the **"Excluded Architectures"** setting for your Apple Watch App or Extension target.
 * **Important:** Do not upgrade to this version if you need to maintain `armv7k` support.
+* **Change:** Dropped deprecated methods that use the `relativePath:` parameter. If you were using these methods, please migrate to those using the `rootPath:` parameter instead.
 
 ### POSIX
 
