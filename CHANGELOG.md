@@ -1,5 +1,5 @@
 # MMKV Change Log
-## v1.3.15 / 2025-12-03
+## v1.3.16 / 2025-12-03
 **This is a Long Term Support (LTS) release.**
 
 ### All Platforms

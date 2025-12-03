@@ -1,6 +1,6 @@
 # MMKV Platform OHOS Change Log
 ## v1.0.5 / 2025-12-03
-* Keep up with native lib v1.3.15.
+* Keep up with native lib v1.3.16.
 
 ## v1.0.4 / 2024-11-12
 Keep up with native lib v1.3.11.

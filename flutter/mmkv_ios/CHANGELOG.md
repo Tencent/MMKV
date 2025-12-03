@@ -1,6 +1,6 @@
 # MMKV Platform iOS Change Log
 ## v1.0.9 / 2025-12-03
-* Keep up with native lib v1.3.15.
+* Keep up with native lib v1.3.16.
 
 ## v1.0.8 / 2024-10-24
 Rollback native lib to v1.3.x.
