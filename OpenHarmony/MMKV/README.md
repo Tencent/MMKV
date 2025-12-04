@@ -160,11 +160,11 @@ Due to the current limitation of NAPI runtime, we **can't efficiently** redirect
     // an unencrypted MMKV instance
     let mmkv = MMKV.mmkvWithID('test-encryption');
 
-    // change from unencrypted to encrypted
+    // change from unencrypted to encrypted with AES-128 key length
     mmkv.reKey('Key_seq_1');
 
-    // change encryption key
-    mmkv.reKey('Key_seq_2');
+    // change encryption key with AES-258 key length
+    mmkv.reKey('Key_Seq_Very_Looooooooong', true);
 
     // change from encrypted to unencrypted
     kmmkv.reKey();

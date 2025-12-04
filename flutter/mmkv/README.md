@@ -171,11 +171,11 @@ Due to the current limitation of Flutter runtime, we can't redirect log on the F
     // an unencrypted MMKV instance
     var mmkv = MMKV("test-encryption");
 
-    // change from unencrypted to encrypted
+    // change from unencrypted to encrypted with AES-128 key length
     mmkv.reKey("Key_seq_1");
 
-    // change encryption key
-    mmkv.reKey("Key_seq_2");
+    // change encryption key with AES-256 key length
+    mmkv.reKey("Key_Seq_Very_Looooooooong", aes256: true);
 
     // change from encrypted to unencrypted
     kmmkv.reKey(null);
