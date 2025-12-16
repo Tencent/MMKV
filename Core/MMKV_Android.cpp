@@ -38,6 +38,7 @@ using namespace mmkv;
 
 extern unordered_map<string, MMKV *> *g_instanceDic;
 extern ThreadLock *g_instanceLock;
+extern MMKVPath_t g_realRootDir;
 
 #ifndef MMKV_OHOS
 static bool g_enableProcessModeCheck = false;
@@ -46,7 +47,7 @@ static bool g_enableProcessModeCheck = false;
 MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity, bool aes256)
     : m_mmapID(mmapID)
     , m_mode(mode)
-    , m_path(mappedKVPathWithID(m_mmapID, rootPath, mode))
+    , m_path(mappedKVPathWithID(m_mmapID, rootPath, mode, true))
     , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
@@ -165,14 +166,14 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
 }
 
 // historically Android mistakenly use mmapKey as mmapID, we try migrate back to normal when possible
-MigrateStatus tryMigrateLegacyMMKVFile(const string &mmapID, const string *rootPath) {
+MigrateStatus tryMigrateLegacyMMKVFile(const string &mmapID, const string *rootPath, bool alreadyAbsolute) {
     auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
     if (legacyID == mmapID) {
         // it's not specially encoded
         return MigrateStatus::NotSpecial;
     }
-    auto path = mappedKVPathWithID(legacyID, rootPath);
-    auto targetPath = mappedKVPathWithID(mmapID, rootPath);
+    auto path = mappedKVPathWithID(legacyID, rootPath, MMKV_MULTI_PROCESS, alreadyAbsolute);
+    auto targetPath = mappedKVPathWithID(mmapID, rootPath, MMKV_MULTI_PROCESS, alreadyAbsolute);
     bool oldExit = isFileExist(path);
     bool newExist = isFileExist(targetPath);
     if (oldExit) {
@@ -204,30 +205,28 @@ MigrateStatus tryMigrateLegacyMMKVFile(const string &mmapID, const string *rootP
     return newExist ? MigrateStatus::NewExist : MigrateStatus::NoneExist;
 }
 
-MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity, bool aes256) {
+MMKV *MMKV::getMMKVWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity, bool aes256) {
     if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
 
-    auto mmapKey = mmapedKVKey(mmapID, rootPath);
+    auto mmapKey = mmapedKVKey(mmapID, rootPath, true);
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
         MMKV *kv = itr->second;
         return kv;
     }
-    if (rootPath) {
-        if (!isFileExist(*rootPath)) {
-            MMKVPath_t specialPath = (*rootPath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-            if (!isFileExist(specialPath)) {
-                mkPath(specialPath);
-            }
+    if (rootPath && (rootPath != &g_realRootDir) && !(mode & MMKV_READ_ONLY)) {
+        MMKVPath_t specialPath = (*rootPath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
+        if (!isFileExist(specialPath)) {
+            mkPath(specialPath);
         }
         MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), rootPath->c_str());
     }
 
     MMKV *kv = nullptr;
-    auto migrateStatus = (mode & MMKV_ASHMEM) ? MigrateStatus::NoneExist : tryMigrateLegacyMMKVFile(mmapID, rootPath);
+    auto migrateStatus = (mode & MMKV_ASHMEM) ? MigrateStatus::NoneExist : tryMigrateLegacyMMKVFile(mmapID, rootPath, true);
     switch (migrateStatus) {
         case MigrateStatus::NotSpecial:
         case MigrateStatus::NoneExist:
@@ -246,6 +245,15 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const stri
 
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
+}
+
+MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity, bool aes256) {
+
+    if (mmapID.empty() || !g_instanceLock) {
+        return nullptr;
+    }
+    auto ns = rootPath ? nameSpace(*rootPath) : defaultNameSpace();
+    return getMMKVWithID(mmapID, size, mode, cryptKey, &ns.m_rootDir, expectedCapacity, aes256);
 }
 
 MMKV *MMKV::mmkvWithAshmemFD(const string &mmapID, int fd, int metaFD, const string *cryptKey, bool aes256) {
@@ -359,7 +367,7 @@ void MMKV::enableDisableProcessMode(bool enable) {
 #endif // !MMKV_OHOS
 
 MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, size_t expectedCapacity, bool aes256) {
-    return MMKV::mmkvWithID(mmapID, size, mode, cryptKey, &m_rootDir, expectedCapacity, aes256);
+    return MMKV::getMMKVWithID(mmapID, size, mode, cryptKey, &m_rootDir, expectedCapacity, aes256);
 }
 
 #endif // MMKV_ANDROID

@@ -264,6 +264,24 @@ class MMKV_EXPORT MMKV {
     void shared_lock();
     void shared_unlock();
 
+    // assuming rootPath is absolute
+#ifndef MMKV_ANDROID
+    static MMKV *getMMKVWithID(const std::string &mmapID,
+                               MMKVMode mode = MMKV_SINGLE_PROCESS,
+                               const std::string *cryptKey = nullptr,
+                               const MMKVPath_t *rootPath = nullptr,
+                               size_t expectedCapacity = 0,
+                               bool aes256 = false);
+#else
+    static MMKV *getMMKVWithID(const std::string &mmapID,
+                               int size = mmkv::DEFAULT_MMAP_SIZE,
+                               MMKVMode mode = MMKV_SINGLE_PROCESS,
+                               const std::string *cryptKey = nullptr,
+                               const MMKVPath_t *rootPath = nullptr,
+                               size_t expectedCapacity = 0,
+                               bool aes256 = false);
+#endif
+
 public:
     // call this before getting any MMKV instance
     static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo, mmkv::LogHandler handler = nullptr);
@@ -658,6 +676,8 @@ public:
     // just forbid it for possibly misuse
     explicit MMKV(const MMKV &other) = delete;
     MMKV &operator=(const MMKV &other) = delete;
+
+    friend class mmkv::NameSpace;
 };
 
 #if defined(MMKV_HAS_CPP20)
@@ -772,7 +792,7 @@ public:
     // check the existence of the MMKV file
     bool checkExist(const std::string &mmapID);
 
-   friend class MMKV_NAMESPACE_PREFIX::MMKV;
+    friend class MMKV_NAMESPACE_PREFIX::MMKV;
 };
 
 }

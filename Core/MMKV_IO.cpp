@@ -58,6 +58,7 @@ using namespace mmkv;
 using KVHolderRet_t = std::pair<bool, KeyValueHolder>;
 extern ThreadLock *g_instanceLock;
 extern unordered_map<string, MMKV *> *g_instanceDic;
+extern MMKVPath_t g_realRootDir;
 
 MMKV_NAMESPACE_BEGIN
 
@@ -1563,23 +1564,27 @@ size_t MMKV::importFrom(MMKV *src) {
 }
 
 static std::pair<MMKVPath_t, MMKVPath_t> getStorage(const std::string &mmapID, const MMKVPath_t *relatePath, std::string& realID, std::string& mmapKey) {
+    relatePath = relatePath ? relatePath : &g_realRootDir;
+    auto ns = MMKV::nameSpace(*relatePath);
+    relatePath = &ns.getRootDir();
 #ifdef MMKV_ANDROID
-    auto migrateStatus = tryMigrateLegacyMMKVFile(mmapID, relatePath);
+    auto migrateStatus = tryMigrateLegacyMMKVFile(mmapID, relatePath, true);
     if (migrateStatus == MigrateStatus::NoneExist) {
-        MMKVWarning("file id [%s] not exist in path %s", mmapID.c_str(), relatePath ? relatePath->c_str() : "default");
+        MMKVWarning("file id [%s] not exist in path %s", mmapID.c_str(), relatePath->c_str());
         return {};
     } else if (migrateStatus == MigrateStatus::OldToNewMigrateFail) {
         realID = legacyMmapedKVKey(mmapID, relatePath);
     } else {
         realID = mmapID;
     }
+    MMKVPath_t kvPath = mappedKVPathWithID(realID, relatePath, MMKV_MULTI_PROCESS, true);
 #else
     realID = mmapID;
+    MMKVPath_t kvPath = mappedKVPathWithID(realID, relatePath, true);
 #endif
-    mmapKey = mmapedKVKey(realID, relatePath);
+    mmapKey = mmapedKVKey(realID, relatePath, true);
     MMKVDebug("mmapKey %s, real ID %s", mmapKey.c_str(), realID.c_str());
 
-    MMKVPath_t kvPath = mappedKVPathWithID(realID, relatePath);
     MMKVPath_t crcPath = crcPathWithPath(kvPath);
     if (!isFileExist(kvPath)) {
 #ifdef MMKV_WIN32
