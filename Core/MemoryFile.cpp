@@ -36,6 +36,7 @@
 #    include <dirent.h>
 #    include <cstring>
 #    include <filesystem>
+#    include <random>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -711,6 +712,48 @@ bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail) {
 }
 #endif
 
+std::optional<MMKVPath_t> getUniqueFileName(const MMKVPath_t &folder, const MMKVPath_t &prefix) {
+    fs::path folderPath(folder);
+    fs::path prefixPath(prefix);
+
+    // Ensure the directory exists
+    std::error_code ec;
+    if (!fs::exists(folderPath, ec)) {
+        // Attempt to create it or fail if preferred.
+        // GetTempFileName fails if dir doesn't exist, so we adhere to that.
+        return std::nullopt;
+    }
+
+    // Behavior: Generate random unique filename, CREATE the file to reserve it.
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::uniform_int_distribution<uint64_t> dis;
+
+    constexpr int maxAttempts = 64;
+    for (int i = 0; i < maxAttempts; ++i) {
+        uint64_t randomVal = dis(gen);
+        MMKVPath_t suffix = to_string(randomVal);
+        MMKVPath_t fileName = prefix + "." + suffix + ".tmp";
+        fs::path candidatePath = folderPath / fileName;
+
+        // Atomic check and create logic "mimic"
+        // std::filesystem::exists is not atomic, but standard C++17 <fstream> doesn't
+        // support O_EXCL (exclusive create) easily without platform headers.
+        // We check existence first to avoid clobbering existing files.
+        if (fs::exists(candidatePath, ec)) {
+            continue; // Collision found, try next
+        }
+
+        // Try to create the file to "reserve" it
+        File file(candidatePath.native(), OpenFlag::ReadWrite | OpenFlag::Create);
+        if (file.isFileValid()) {
+            return candidatePath.native();
+        }
+    }
+
+    // Failed to find unique name after max attempts
+    return std::nullopt;
+}
 } // namespace mmkv
 
 #endif // !defined(MMKV_WIN32)

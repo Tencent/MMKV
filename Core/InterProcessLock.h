@@ -56,7 +56,7 @@ class FileLock {
 #    else  // defined(MMKV_WIN32)
     OVERLAPPED m_overLapped;
 
-    bool isFileLockValid() { return m_fd != INVALID_HANDLE_VALUE; }
+    bool isFileLockValid() const { return m_fd != INVALID_HANDLE_VALUE; }
 #    endif // MMKV_WIN32
 
 public:
@@ -68,7 +68,7 @@ public:
     explicit FileLock(MMKVFileHandle_t fd, bool isAshmem = false, int64_t lockPos = 0, int64_t lockLen = 0);
 #        endif // MMKV_ANDROID
 #    else      // defined(MMKV_WIN32)
-    explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_overLapped{}, m_sharedLockCount(0), m_exclusiveLockCount(0) {}
+    explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_overLapped{} {}
 #    endif     // MMKV_WIN32
     ~FileLock();
 

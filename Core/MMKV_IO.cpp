@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cstring>
 #include <ctime>
+#include <filesystem>
 
 #ifdef MMKV_IOS
 #    include "MMKV_OSX.h"
@@ -55,6 +56,7 @@
 
 using namespace std;
 using namespace mmkv;
+namespace fs = std::filesystem;
 using KVHolderRet_t = std::pair<bool, KeyValueHolder>;
 extern ThreadLock *g_instanceLock;
 extern unordered_map<string, MMKV *> *g_instanceDic;
@@ -199,6 +201,19 @@ void MMKV::partialLoadFromFile() {
 }
 
 //#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
+static bool deleteOrRenameFile(const MMKVPath_t &src) {
+    if (!deleteFile(src)) {
+        fs::path path = src;
+        auto folder = path.parent_path().native();
+        auto filename = path.filename().native();
+        if (auto tmpPath = getUniqueFileName(folder, filename)) {
+            return tryAtomicRename(src, tmpPath.value());
+        }
+        return false;
+    }
+    return true;
+}
+
 bool MMKV::checkFileHasDiskError() {
     if (m_isSecondLoad) {
         return false;
@@ -208,12 +223,12 @@ bool MMKV::checkFileHasDiskError() {
     bool needReportReadFail = false;
     if (isDiskOfMMAPFileCorrupted(m_metaFile, needReportReadFail)) {
         m_metaFile->clearMemoryCache();
-        deleteFile(m_metaFile->getPath());
+        deleteOrRenameFile(m_metaFile->getPath());
         m_metaFile->reloadFromFile();
     }
     if (isDiskOfMMAPFileCorrupted(m_file, needReportReadFail)) {
         m_file->clearMemoryCache();
-        deleteFile(m_file->getPath());
+        deleteOrRenameFile(m_file->getPath());
         m_file->reloadFromFile(m_expectedCapacity);
     }
     return needReportReadFail;

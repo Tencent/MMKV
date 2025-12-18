@@ -385,7 +385,7 @@ bool zeroFillFile(MMKVFileHandle_t file, size_t startPos, size_t size) {
         return true;
     }
 
-    LARGE_INTEGER position;
+    LARGE_INTEGER position = {};
     position.QuadPart = startPos;
     if (!SetFilePointerEx(file, position, nullptr, FILE_BEGIN)) {
         MMKVError("fail to lseek fd[%p], error:%d", file, GetLastError());
@@ -412,7 +412,7 @@ bool zeroFillFile(MMKVFileHandle_t file, size_t startPos, size_t size) {
 }
 
 static bool ftruncate(MMKVFileHandle_t file, size_t size) {
-    LARGE_INTEGER large;
+    LARGE_INTEGER large = {};
     large.QuadPart = size;
     if (SetFilePointerEx(file, large, 0, FILE_BEGIN)) {
         if (SetEndOfFile(file)) {
@@ -436,7 +436,7 @@ static bool getFileSize(MMKVFileHandle_t fd, size_t &size) {
 }
 
 bool getFileSize(const wchar_t *filename, size_t &size) {
-    WIN32_FILE_ATTRIBUTE_DATA fileAttr;
+    WIN32_FILE_ATTRIBUTE_DATA fileAttr = {};
     if (GetFileAttributesEx(filename, GetFileExInfoStandard, &fileAttr)) {
         size = ((ULONGLONG)fileAttr.nFileSizeHigh << 32) | fileAttr.nFileSizeLow;
         return true;
@@ -630,6 +630,20 @@ bool deleteFile(const MMKVPath_t &path) {
         return false;
     }
     return true;
+}
+
+std::optional<MMKVPath_t> getUniqueFileName(const MMKVPath_t &folder, const MMKVPath_t &prefix) {
+    // Buffer for the resulting path
+    wchar_t tempFileName[MAX_PATH];
+    UINT uUnique = 0;
+
+    UINT result = GetTempFileName(folder.c_str(), prefix.c_str(), uUnique, tempFileName);
+    if (result == 0) {
+        MMKVError("failed to GetTempFileName file [%ls], %d", folder.c_str(), GetLastError());
+        return std::nullopt;
+    }
+
+    return std::wstring(tempFileName);
 }
 
 } // namespace mmkv

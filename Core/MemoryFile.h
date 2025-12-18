@@ -25,6 +25,7 @@
 #include "MMKVPredef.h"
 #include <cstdint>
 #include <functional>
+#include <optional>
 
 #ifdef MMKV_ANDROID
 MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
@@ -91,7 +92,7 @@ public:
 
     void close();
 
-    MMKVFileHandle_t getFd() { return m_fd; }
+    MMKVFileHandle_t getFd() const { return m_fd; }
 
     const MMKVPath_t &getPath() const { return m_path; }
 
@@ -199,6 +200,8 @@ bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail);
 //#endif
 
 bool deleteFile(const MMKVPath_t &path);
+
+std::optional<MMKVPath_t> getUniqueFileName(const MMKVPath_t &folder, const MMKVPath_t &prefix);
 
 enum WalkType : uint32_t {
     WalkFile = 1 << 0,

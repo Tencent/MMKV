@@ -203,10 +203,10 @@ void fastRemoveCornetSizeTest() {
     auto cryptKey = string("aes");
     auto mmkv = MMKV::mmkvWithID("fastRemoveCornerSize", MMKV_MULTI_PROCESS, &cryptKey);
     mmkv->clearAll();
-    auto size = getpagesize() - 4;
+    int64_t size = getpagesize() - 4;
     size -= 4;
     string key = "key";
-    auto keySize = 3 + 1;
+    int64_t keySize = 3LL + 1LL;
     size -= keySize;
     auto valueSize = 3;
     size -= valueSize;
@@ -512,7 +512,7 @@ int main() {
     std::cout << "New locale: " << newLocale.name() << std::endl;
     // wcout.imbue(locale(""));
 
-    srand(GetTickCount());
+    srand((unsigned) GetTickCount64());
 
     // test NameSpace before initializeMMKV()
     testNameSpace();
