@@ -55,6 +55,10 @@ typedef NS_ENUM(NSUInteger, MMKVLogLevel) {
 // doesn't guarantee real-time notification
 - (void)onMMKVContentChange:(NSString *)mmapID;
 
+// called when an MMKV file is loaded successfully.
+// This is triggered only when MMKV actually opens and maps the file.
+- (void)onMMKVContentLoadSuccessfully:(NSString *)mmapID;
+
 @end
 
 #endif /* MMKVHandler_h */
