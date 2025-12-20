@@ -245,7 +245,7 @@ class MMKV_EXPORT MMKV {
                                       bool isDataHolder = false);
 #endif
 
-    void notifyContentChanged();
+    void notifyContent(MMKVContentNotifyType notifyType);
 
 #if defined(MMKV_ANDROID) && !defined(MMKV_DISABLE_CRYPT)
     void checkReSetCryptKey(int fd, int metaFD, const std::string *cryptKey, bool aes256);
@@ -643,10 +643,11 @@ public:
     // check if content been changed by other process
     void checkContentChanged();
 
-    // called when content is changed by other process
+    // notify handler for content
+    // MMKVContentChanged is called when content is changed by other process
     // doesn't guarantee real-time notification
-    static void registerContentChangeHandler(mmkv::ContentChangeHandler handler);
-    static void unRegisterContentChangeHandler();
+    static void registerContentNotifyHandler(mmkv::ContentNotifyHandler handler);
+    static void unRegisterContentNotifyHandler();
 
     // by default MMKV will discard all datas on failure
     // return `OnErrorRecover` to recover any data from file

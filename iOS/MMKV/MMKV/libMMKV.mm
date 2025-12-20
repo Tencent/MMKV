@@ -50,7 +50,7 @@ static BOOL g_isRunningInAppExtension = NO;
 
 static void LogHandler(mmkv::MMKVLogLevel level, const char *file, int line, const char *function, NSString *message);
 static mmkv::MMKVRecoverStrategic ErrorHandler(const string &mmapID, mmkv::MMKVErrorType errorType);
-static void ContentChangeHandler(const string &mmapID);
+static void ContentNotifyHandler(const string &mmapID, mmkv::MMKVContentNotifyType notifyType);
 
 @interface MMKVNameSpace ()
 
@@ -111,8 +111,9 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         [g_callbackHandler respondsToSelector:@selector(onMMKVFileLengthError:)]) {
         mmkv::MMKV::registerErrorHandler(ErrorHandler);
     }
-    if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
-        mmkv::MMKV::registerContentChangeHandler(ContentChangeHandler);
+    if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)] ||
+        [g_callbackHandler respondsToSelector:@selector(onMMKVContentLoadSuccessfully:)]) {
+        mmkv::MMKV::registerContentNotifyHandler(ContentNotifyHandler);
     }
 
 #if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !defined(TARGET_OS_MACCATALYST)
@@ -1088,7 +1089,7 @@ static NSString *md5(NSString *value) {
         mmkv::MMKV::registerErrorHandler(ErrorHandler);
     }
     if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
-        mmkv::MMKV::registerContentChangeHandler(ContentChangeHandler);
+        mmkv::MMKV::registerContentNotifyHandler(ContentNotifyHandler);
     }
 }
 
@@ -1101,7 +1102,7 @@ static NSString *md5(NSString *value) {
 
     mmkv::MMKV::unRegisterLogHandler();
     mmkv::MMKV::unRegisterErrorHandler();
-    mmkv::MMKV::unRegisterContentChangeHandler();
+    mmkv::MMKV::unRegisterContentNotifyHandler();
 }
 
 + (void)setLogLevel:(MMKVLogLevel)logLevel {
@@ -1252,9 +1253,15 @@ static mmkv::MMKVRecoverStrategic ErrorHandler(const string &mmapID, mmkv::MMKVE
     return mmkv::OnErrorDiscard;
 }
 
-static void ContentChangeHandler(const string &mmapID) {
-    if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
-        [g_callbackHandler onMMKVContentChange:[NSString stringWithUTF8String:mmapID.c_str()]];
+static void ContentNotifyHandler(const string &mmapID, mmkv::MMKVContentNotifyType notifyType) {
+    if (notifyType == mmkv::MMKVContentChanged) {
+        if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
+            [g_callbackHandler onMMKVContentChange:[NSString stringWithUTF8String:mmapID.c_str()]];
+        }
+    } else {
+        if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentLoadSuccessfully:)]) {
+            [g_callbackHandler onMMKVContentLoadSuccessfully:[NSString stringWithUTF8String:mmapID.c_str()]];
+        }
     }
 }
 

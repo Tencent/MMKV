@@ -165,6 +165,11 @@ enum MMKVErrorType : int {
     MMKVFileLength,
 };
 
+enum MMKVContentNotifyType : int {
+    MMKVContentChanged = 0,
+    MMKVContentLoaded,
+};
+
 enum SyncFlag : bool { MMKV_SYNC = true, MMKV_ASYNC = false };
 
 MMKV_NAMESPACE_END
@@ -177,9 +182,10 @@ typedef void (*LogHandler)(MMKVLogLevel level, const char *file, int line, const
 // return `OnErrorRecover` to recover any data from file
 typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErrorType errorType);
 
-// called when content is changed by other process
-// doesn't guarantee real-time notification
-typedef void (*ContentChangeHandler)(const std::string &mmapID);
+    // notify handler for content
+    // MMKVContentChanged is called when content is changed by other process
+    // doesn't guarantee real-time notification
+typedef void (*ContentNotifyHandler)(const std::string &mmapID, MMKVContentNotifyType notifyType);
 
 
 extern MMKV_EXPORT size_t DEFAULT_MMAP_SIZE;

@@ -294,11 +294,11 @@ const string &MMKV::mmapID() const {
     return m_mmapID;
 }
 
-mmkv::ContentChangeHandler g_contentChangeHandler = nullptr;
+mmkv::ContentNotifyHandler g_contentNotifyHandler = nullptr;
 
-void MMKV::notifyContentChanged() {
-    if (g_contentChangeHandler) {
-        g_contentChangeHandler(m_mmapID);
+void MMKV::notifyContent(MMKVContentNotifyType notifyType) {
+    if (g_contentNotifyHandler) {
+        g_contentNotifyHandler(m_mmapID, notifyType);
     }
 }
 
@@ -307,12 +307,12 @@ void MMKV::checkContentChanged() {
     checkLoadData();
 }
 
-void MMKV::registerContentChangeHandler(mmkv::ContentChangeHandler handler) {
-    g_contentChangeHandler = handler;
+void MMKV::registerContentNotifyHandler(mmkv::ContentNotifyHandler handler) {
+    g_contentNotifyHandler = handler;
 }
 
-void MMKV::unRegisterContentChangeHandler() {
-    g_contentChangeHandler = nullptr;
+void MMKV::unRegisterContentNotifyHandler() {
+    g_contentNotifyHandler = nullptr;
 }
 
 void MMKV::clearMemoryCache(bool keepSpace) {
@@ -1486,7 +1486,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         kv->clearMemoryCache();
         kv->loadFromFile();
         if (kv->isMultiProcess()) {
-            kv->notifyContentChanged();
+            kv->notifyContent(MMKVContentChanged);
         }
 
         MMKVInfo("finish restore one mmkv[%s], ret: %d", mmapKey.c_str(), ret);
