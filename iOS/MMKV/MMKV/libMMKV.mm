@@ -1088,7 +1088,8 @@ static NSString *md5(NSString *value) {
         [g_callbackHandler respondsToSelector:@selector(onMMKVFileLengthError:)]) {
         mmkv::MMKV::registerErrorHandler(ErrorHandler);
     }
-    if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)]) {
+    if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentChange:)] ||
+        [g_callbackHandler respondsToSelector:@selector(onMMKVContentLoadSuccessfully:)]) {
         mmkv::MMKV::registerContentNotifyHandler(ContentNotifyHandler);
     }
 }
