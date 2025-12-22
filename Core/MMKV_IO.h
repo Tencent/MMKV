@@ -38,6 +38,13 @@ MMKVPath_t crcPathWithPath(const MMKVPath_t &kvPath);
 MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID);
 MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID);
 
+// called when content is changed by other process
+// doesn't guarantee real-time notification
+void onMMKVContentChange(const std::string &mmapID);
+
+// called when content is loaded successfully
+void onMMKVContentLoadSuccessfully(const std::string &mmapID);;
+
 #ifndef MMKV_WIN32
 constexpr auto SPECIAL_CHARACTER_DIRECTORY_NAME = "specialCharacter";
 constexpr auto CRC_SUFFIX = ".crc";

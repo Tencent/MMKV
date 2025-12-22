@@ -182,9 +182,7 @@ typedef void (*LogHandler)(MMKVLogLevel level, const char *file, int line, const
 // return `OnErrorRecover` to recover any data from file
 typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErrorType errorType);
 
-    // notify handler for content
-    // MMKVContentChanged is called when content is changed by other process
-    // doesn't guarantee real-time notification
+// notify handler for content
 typedef void (*ContentNotifyHandler)(const std::string &mmapID, MMKVContentNotifyType notifyType);
 
 

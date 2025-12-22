@@ -143,7 +143,7 @@ void MMKV::loadFromFile() {
         }
         auto count = m_crypter ? m_dicCrypt->size() : m_dic->size();
         MMKVInfo("loaded [%s] with %zu key-values", m_mmapID.c_str(), count);
-        notifyContent(MMKVContentLoaded);
+        onMMKVContentLoadSuccessfully(m_mmapID.c_str());
 //        auto keys = allKeys();
 //        for (size_t index = 0; index < count; index++) {
 //            MMKVInfo("key[%llu]: %s", index, keys[index].c_str());
@@ -381,7 +381,7 @@ void MMKV::checkLoadData() {
 
         clearMemoryCache();
         loadFromFile();
-        notifyContent(MMKVContentChanged);
+        onMMKVContentChange(m_mmapID.c_str());
     } else if ((m_metaInfo->m_crcDigest != metaInfo.m_crcDigest) || (m_metaInfo->m_actualSize != metaInfo.m_actualSize)) {
         MMKVDebug("[%s] crcDigest %u -> %u, actualSize %u -> %u", m_mmapID.c_str(), m_metaInfo->m_crcDigest,
                   metaInfo.m_crcDigest, m_metaInfo->m_actualSize, metaInfo.m_actualSize);
@@ -397,7 +397,7 @@ void MMKV::checkLoadData() {
         } else*/ {
             partialLoadFromFile();
         }
-        notifyContent(MMKVContentChanged);
+        onMMKVContentChange(m_mmapID.c_str());
     }
 }
 

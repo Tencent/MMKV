@@ -296,9 +296,17 @@ const string &MMKV::mmapID() const {
 
 mmkv::ContentNotifyHandler g_contentNotifyHandler = nullptr;
 
-void MMKV::notifyContent(MMKVContentNotifyType notifyType) {
+// called when content is changed by other process
+// doesn't guarantee real-time notification
+void onMMKVContentChange(const string &mmapID) {
     if (g_contentNotifyHandler) {
-        g_contentNotifyHandler(m_mmapID, notifyType);
+        g_contentNotifyHandler(mmapID, MMKVContentChanged);
+    }
+}
+
+void onMMKVContentLoadSuccessfully(const string &mmapID) {
+    if (g_contentNotifyHandler) {
+        g_contentNotifyHandler(mmapID, MMKVContentLoaded);
     }
 }
 
@@ -1486,7 +1494,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         kv->clearMemoryCache();
         kv->loadFromFile();
         if (kv->isMultiProcess()) {
-            kv->notifyContent(MMKVContentChanged);
+            onMMKVContentChange(mmapKey.c_str());
         }
 
         MMKVInfo("finish restore one mmkv[%s], ret: %d", mmapKey.c_str(), ret);
