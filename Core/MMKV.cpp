@@ -294,19 +294,18 @@ const string &MMKV::mmapID() const {
     return m_mmapID;
 }
 
-mmkv::ContentNotifyHandler g_contentNotifyHandler = nullptr;
+mmkv::ContentChangeHandler g_contentChangeHandler = nullptr;
+mmkv::ContentLoadedHandler g_contentLoadedHandler = nullptr;
 
-// called when content is changed by other process
-// doesn't guarantee real-time notification
-void onMMKVContentChange(const string &mmapID) {
-    if (g_contentNotifyHandler) {
-        g_contentNotifyHandler(mmapID, MMKVContentChanged);
+void MMKV::notifyContentChanged() {
+    if (g_contentChangeHandler) {
+        g_contentChangeHandler(m_mmapID);
     }
 }
 
-void onMMKVContentLoadSuccessfully(const string &mmapID) {
-    if (g_contentNotifyHandler) {
-        g_contentNotifyHandler(mmapID, MMKVContentLoaded);
+void MMKV::notifyContentLoaded() {
+    if (g_contentLoadedHandler) {
+        g_contentLoadedHandler(m_mmapID);
     }
 }
 
@@ -315,12 +314,20 @@ void MMKV::checkContentChanged() {
     checkLoadData();
 }
 
-void MMKV::registerContentNotifyHandler(mmkv::ContentNotifyHandler handler) {
-    g_contentNotifyHandler = handler;
+void MMKV::registerContentChangeHandler(mmkv::ContentChangeHandler handler) {
+    g_contentChangeHandler = handler;
 }
 
-void MMKV::unRegisterContentNotifyHandler() {
-    g_contentNotifyHandler = nullptr;
+void MMKV::unRegisterContentChangeHandler() {
+    g_contentChangeHandler = nullptr;
+}
+
+void MMKV::registerContentLoadedHandler(mmkv::ContentChangeHandler handler) {
+    g_contentLoadedHandler = handler;
+}
+
+void MMKV::unRegisterContentLoadedHandler() {
+    g_contentLoadedHandler = nullptr;
 }
 
 void MMKV::clearMemoryCache(bool keepSpace) {
@@ -1494,7 +1501,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         kv->clearMemoryCache();
         kv->loadFromFile();
         if (kv->isMultiProcess()) {
-            onMMKVContentChange(mmapKey.c_str());
+            kv->notifyContentChanged();
         }
 
         MMKVInfo("finish restore one mmkv[%s], ret: %d", mmapKey.c_str(), ret);
