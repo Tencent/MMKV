@@ -181,6 +181,9 @@ typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErro
 // doesn't guarantee real-time notification
 typedef void (*ContentChangeHandler)(const std::string &mmapID);
 
+// called when content is loaded successfully
+typedef void (*ContentLoadedHandler)(const std::string &mmapID);
+
 
 extern MMKV_EXPORT size_t DEFAULT_MMAP_SIZE;
 #define DEFAULT_MMAP_ID "mmkv.default"

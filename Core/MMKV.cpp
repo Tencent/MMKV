@@ -295,10 +295,17 @@ const string &MMKV::mmapID() const {
 }
 
 mmkv::ContentChangeHandler g_contentChangeHandler = nullptr;
+mmkv::ContentLoadedHandler g_contentLoadedHandler = nullptr;
 
 void MMKV::notifyContentChanged() {
     if (g_contentChangeHandler) {
         g_contentChangeHandler(m_mmapID);
+    }
+}
+
+void MMKV::notifyContentLoaded() {
+    if (g_contentLoadedHandler) {
+        g_contentLoadedHandler(m_mmapID);
     }
 }
 
@@ -313,6 +320,14 @@ void MMKV::registerContentChangeHandler(mmkv::ContentChangeHandler handler) {
 
 void MMKV::unRegisterContentChangeHandler() {
     g_contentChangeHandler = nullptr;
+}
+
+void MMKV::registerContentLoadedHandler(mmkv::ContentChangeHandler handler) {
+    g_contentLoadedHandler = handler;
+}
+
+void MMKV::unRegisterContentLoadedHandler() {
+    g_contentLoadedHandler = nullptr;
 }
 
 void MMKV::clearMemoryCache(bool keepSpace) {
