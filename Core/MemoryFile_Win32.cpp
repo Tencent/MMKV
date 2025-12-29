@@ -339,7 +339,7 @@ bool mkPath(const MMKVPath_t &str) {
                 return false;
             }
         } else if (!(attribute & FILE_ATTRIBUTE_DIRECTORY)) {
-            MMKVError("%ls attribute:%d not a directry", str.c_str(), attribute);
+            MMKVError("%ls attribute:%d not a directory", str.c_str(), attribute);
             free(path);
             return false;
         }
@@ -541,7 +541,7 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
 
     bool renamed = false;
     if (copyFileContent(srcPath, tmpFD, false)) {
-        MMKVInfo("copyed file [%ls] to [%ls]", srcPath.c_str(), tmpPath.c_str());
+        MMKVInfo("copied file [%ls] to [%ls]", srcPath.c_str(), tmpPath.c_str());
         CloseHandle(tmpFD);
         renamed = tryAtomicRename(tmpPath.c_str(), dstPath.c_str());
         if (renamed) {
