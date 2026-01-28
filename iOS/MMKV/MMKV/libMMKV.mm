@@ -23,11 +23,11 @@
 #import <MMKVCore/MMKVLog.h>
 #import <MMKVCore/ScopedLock.hpp>
 #import <MMKVCore/ThreadLock.h>
-#import <MMKVCore/openssl_md5.h>
+#import <CommonCrypto/CommonDigest.h>
 #import <TargetConditionals.h>
 #import "AutoCleanInfo.hpp"
 
-#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !defined(TARGET_OS_MACCATALYST)
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !(TARGET_OS_MACCATALYST)
 #import <UIKit/UIKit.h>
 #endif
 
@@ -44,7 +44,7 @@ static bool g_isLogRedirecting = false;
 static NSString *g_basePath = nil;
 static NSString *g_groupPath = nil;
 
-#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !defined(TARGET_OS_MACCATALYST)
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !(TARGET_OS_MACCATALYST)
 static BOOL g_isRunningInAppExtension = NO;
 #endif
 
@@ -118,8 +118,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     if ([g_callbackHandler respondsToSelector:@selector(onMMKVContentLoadSuccessfully:)]) {
         mmkv::MMKV::registerContentLoadedHandler(ContentLoadedHandler);
     }
-
-#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !defined(TARGET_OS_MACCATALYST)
+    
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !(TARGET_OS_MACCATALYST)
     // just in case someone forget to set the MMKV_IOS_EXTENSION macro
     if ([[[NSBundle mainBundle] bundlePath] hasSuffix:@".appex"]) {
         g_isRunningInAppExtension = YES;
@@ -298,7 +298,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         }
         m_mmapID = [[NSString alloc] initWithUTF8String:m_mmkv->mmapID().c_str()];
 
-#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !defined(TARGET_OS_MACCATALYST)
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !(TARGET_OS_MACCATALYST)
         if (!g_isRunningInAppExtension) {
             [[NSNotificationCenter defaultCenter] addObserver:self
                                                      selector:@selector(onMemoryWarning)
@@ -332,7 +332,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 #pragma mark - Application state
 
-#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !defined(TARGET_OS_MACCATALYST)
+#if defined(MMKV_IOS) && !defined(MMKV_IOS_EXTENSION) && !(TARGET_OS_MACCATALYST)
 - (void)onMemoryWarning {
     MMKVInfo("cleaning on memory warning %@", m_mmapID);
 
@@ -860,7 +860,7 @@ static AutoCleanInfoQueue_t g_cleanQueue = {};
 + (void)tryAutoCleanUpInstances {
     SCOPED_LOCK(g_lock);
 
-#if defined(MMKV_IOS) && !defined(TARGET_OS_MACCATALYST)
+#if defined(MMKV_IOS) && !(TARGET_OS_MACCATALYST)
     if (mmkv::MMKV::isInBackground()) {
         MMKVInfo("don't cleanup in background, might just wakeup from suspend");
         return;
@@ -972,10 +972,10 @@ static AutoCleanInfoQueue_t g_cleanQueue = {};
 }
 
 static NSString *md5(NSString *value) {
-    uint8_t md[MD5_DIGEST_LENGTH] = {};
+    uint8_t md[CC_MD5_DIGEST_LENGTH] = {};
     char tmp[3] = {}, buf[33] = {};
     auto data = [value dataUsingEncoding:NSUTF8StringEncoding];
-    openssl::MD5((uint8_t *) data.bytes, data.length, md);
+    CC_MD5((uint8_t *) data.bytes, data.length, md);
     for (auto ch : md) {
         snprintf(tmp, sizeof(tmp), "%2.2x", ch);
         strcat(buf, tmp);
