@@ -255,6 +255,12 @@ void MMKV::loadMetaInfoAndCheck() {
         // let user know?
     }
 
+    // check again, the meta file might get reloaded
+    if (!m_metaFile->isFileValid()) {
+        MMKVError("file [%s] not valid", m_metaFile->getPath().c_str());
+        return;
+    }
+
     m_metaInfo->read(m_metaFile->getMemory());
 
     if (isReadOnly()) {

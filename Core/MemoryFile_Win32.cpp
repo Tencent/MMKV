@@ -612,10 +612,21 @@ void walkInDir(const MMKVPath_t &dirPath,
 bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail) {
     // make sure the file is valid
     __try {
-        auto data = *((uint32_t*) file->getMemory());
-        MMKVInfo("first byte of the file: 0x%x", data);
+        auto filesize = file->getFileSize();
+        volatile uint8_t* ptr = (uint8_t*) file->getMemory();
+        // check the head of every page
+        for (size_t index = 0; index < filesize; index += DEFAULT_MMAP_SIZE) {
+            volatile uint8_t byte = ptr[index];
+            MMKVInfo("%zu byte of the file: 0x%x", index, byte);
+        }
+        // check the very last byte of the file
+        if (filesize > 1) {
+            volatile uint8_t byte = ptr[filesize - 1];
+            MMKVInfo("%zu byte of the file: 0x%x", filesize - 1, byte);
+        }
     }
-    __except (GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
+    __except ((GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR || GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+              ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
         needReportReadFail = true;
         DWORD errorCode = GetExceptionCode();
         MMKVError("fail to mmap [%ls], %d", file->getPath().c_str(), errorCode);
