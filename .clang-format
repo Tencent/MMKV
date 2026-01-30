@@ -6,7 +6,7 @@ AlwaysBreakTemplateDeclarations: true
 AllowShortFunctionsOnASingleLine: InlineOnly
 #AllowShortLambdasOnASingleLine: Inline
 BreakAfterJavaFieldAnnotations: true
-BreakBeforeBraces: Linux
+#BreakBeforeBraces: Linux
 SpaceAfterCStyleCast: true
 IndentCaseLabels: true
 AccessModifierOffset: -4

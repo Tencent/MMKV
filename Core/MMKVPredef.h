@@ -95,7 +95,6 @@ constexpr auto MMKV_VERSION = "v2.3.0";
 #    include <windows.h>
 
 constexpr auto MMKV_PATH_SLASH = L"\\";
-#    define MMKV_PATH_FORMAT "%ls"
 using MMKVFileHandle_t = HANDLE;
 #define MMKVFileHandleInvalidValue INVALID_HANDLE_VALUE
 using MMKVPath_t = std::wstring;
@@ -109,7 +108,6 @@ extern std::string MMKVPath_t2String(const MMKVPath_t &str);
 #else // MMKV_WIN32
 
 constexpr auto MMKV_PATH_SLASH = "/";
-#    define MMKV_PATH_FORMAT "%s"
 using MMKVFileHandle_t = int;
 constexpr MMKVFileHandle_t MMKVFileHandleInvalidValue = -1;
 using MMKVPath_t = std::string;

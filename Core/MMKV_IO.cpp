@@ -1615,19 +1615,13 @@ static std::pair<MMKVPath_t, MMKVPath_t> getStorage(const std::string &mmapID, c
 
     MMKVPath_t crcPath = crcPathWithPath(kvPath);
     if (!isFileExist(kvPath)) {
-#ifdef MMKV_WIN32
-        MMKVInfo("file not exist %ls", kvPath.c_str());
-#else
-        MMKVInfo("file not exist %s", kvPath.c_str());
-#endif
+        const auto &kvPathUTF8 = MMKVPath_t2String(kvPath);
+        MMKVInfo("file not exist %s", kvPathUTF8.c_str());
         kvPath.resize(0);
     }
     if (!isFileExist(crcPath)) {
-#ifdef MMKV_WIN32
-        MMKVInfo("crc file not exist %ls", crcPath.c_str());
-#else
-        MMKVInfo("crc file not exist %s", crcPath.c_str());
-#endif // MMKV_WIN32
+        const auto &crcPathUTF8 = MMKVPath_t2String(crcPath);
+        MMKVInfo("crc file not exist %s", crcPathUTF8.c_str());
         crcPath.resize(0);
     }
     return {kvPath, crcPath};

@@ -506,9 +506,9 @@ int main() {
     // Get the original global locale
     std::locale originalLocale = std::locale::global(std::locale());
     std::cout << "Original locale: " << originalLocale.name() << std::endl;
-    locale::global(locale(".UTF8"));
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
+    //locale::global(locale(".UTF8"));
+    //SetConsoleOutputCP(CP_UTF8);
+    //SetConsoleCP(CP_UTF8);
 
     std::locale newLocale = std::locale();
     std::cout << "New locale: " << newLocale.name() << std::endl;

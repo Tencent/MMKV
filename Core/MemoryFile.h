@@ -73,7 +73,11 @@ class FileLock;
 
 class File {
     MMKVPath_t m_path;
+#ifdef MMKV_WIN32
+    std::string m_utf8Path;
+#endif
     MMKVFileHandle_t m_fd;
+
 public:
     const OpenFlag m_flag;
 #ifndef MMKV_ANDROID
@@ -98,8 +102,12 @@ public:
 
 #ifndef MMKV_WIN32
     bool isFileValid() const { return m_fd >= 0; }
+
+    const std::string &getUTF8Path() const { return m_path; }
 #else
     bool isFileValid() const { return m_fd != MMKVFileHandleInvalidValue; }
+
+    const std::string &getUTF8Path() const { return m_utf8Path; }
 #endif
 
     // get the actual file size on disk
@@ -148,6 +156,8 @@ public:
     void *getMemory() { return m_ptr; }
 
     const MMKVPath_t &getPath() { return m_diskFile.getPath(); }
+
+    const std::string &getUTF8Path() const { return m_diskFile.getUTF8Path(); }
 
     MMKVFileHandle_t getFd();
 
