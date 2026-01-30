@@ -617,12 +617,12 @@ bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail) {
         // check the head of every page
         for (size_t index = 0; index < filesize; index += DEFAULT_MMAP_SIZE) {
             volatile uint8_t byte = ptr[index];
-            MMKVInfo("%zu byte of the file: 0x%x", index, byte);
+            MMKVDebug("%zu byte of the file: 0x%x", index, byte);
         }
         // check the very last byte of the file
         if (filesize > 1) {
             volatile uint8_t byte = ptr[filesize - 1];
-            MMKVInfo("%zu byte of the file: 0x%x", filesize - 1, byte);
+            MMKVDebug("%zu byte of the file: 0x%x", filesize - 1, byte);
         }
     }
     __except ((GetExceptionCode() == EXCEPTION_IN_PAGE_ERROR || GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
