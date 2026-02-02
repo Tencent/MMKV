@@ -47,10 +47,11 @@ class FileLock {
 #    ifndef MMKV_WIN32
     bool isFileLockValid() const { return m_fd >= 0; }
 #        ifdef MMKV_ANDROID
-    const bool m_isAshmem;
+    const bool m_useFcntlLock; // fcntl(F_OFD_SETLK)
+    const bool m_isAshmem; // fcntl(F_SETLK)
     struct flock m_lockInfo;
-    bool ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain);
-    bool ashmemUnLock(bool unLockFirstIfNeeded);
+    bool fcntlLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain);
+    bool fcntlUnLock(bool unLockFirstIfNeeded);
 #        endif
 
 #    else  // defined(MMKV_WIN32)
@@ -64,8 +65,8 @@ public:
 #        ifndef MMKV_ANDROID
     explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0) {}
 #        else
-    // locking with pos & len only works in ashmem lock type (fcntl)
-    explicit FileLock(MMKVFileHandle_t fd, bool isAshmem = false, int64_t lockPos = 0, int64_t lockLen = 0);
+    // locking with pos & len only works in fcntl lock type
+    explicit FileLock(MMKVFileHandle_t fd, bool useFcntlLock = false, bool isAshmem = false, int64_t lockPos = 0, int64_t lockLen = 0);
 #        endif // MMKV_ANDROID
 #    else      // defined(MMKV_WIN32)
     explicit FileLock(MMKVFileHandle_t fd) : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_overLapped{} {}

@@ -28,8 +28,9 @@
 
 namespace mmkv {
 
-FileLock::FileLock(MMKVFileHandle_t fd, bool isAshmem, int64_t lockPos, int64_t lockLen)
-    : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_isAshmem(isAshmem), m_lockInfo() {
+FileLock::FileLock(MMKVFileHandle_t fd, bool useFcntlLock, bool isAshmem, int64_t lockPos, int64_t lockLen)
+    : m_fd(fd), m_sharedLockCount(0), m_exclusiveLockCount(0), m_useFcntlLock(useFcntlLock), m_isAshmem(isAshmem),
+        m_lockInfo() {
     m_lockInfo.l_type = F_WRLCK;
     m_lockInfo.l_start = lockPos;
     m_lockInfo.l_whence = SEEK_SET;
@@ -46,25 +47,27 @@ static short LockType2FlockType(LockType lockType) {
     }
 }
 
-bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain) {
+bool FileLock::fcntlLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain) {
     m_lockInfo.l_type = LockType2FlockType(lockType);
+    auto FcntlLockOp = m_isAshmem ? F_SETLK : F_OFD_SETLK;
+    auto FcntlLockOpW = m_isAshmem ? F_SETLKW : F_OFD_SETLKW;
     if (unLockFirstIfNeeded) {
         // try lock
-        auto ret = fcntl(m_fd, F_OFD_SETLK, &m_lockInfo);
+        auto ret = fcntl(m_fd, FcntlLockOp, &m_lockInfo);
         if (ret == 0) {
             return true;
         }
         // lets be gentleman: unlock my shared-lock to prevent deadlock
         auto type = m_lockInfo.l_type;
         m_lockInfo.l_type = F_UNLCK;
-        ret = fcntl(m_fd, F_OFD_SETLK, &m_lockInfo);
+        ret = fcntl(m_fd, FcntlLockOp, &m_lockInfo);
         if (ret != 0) {
             MMKVError("fail to try unlock first fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         }
         m_lockInfo.l_type = type;
     }
 
-    int cmd = wait ? F_OFD_SETLKW : F_OFD_SETLK;
+    int cmd = wait ? FcntlLockOpW : FcntlLockOp;
     auto ret = fcntl(m_fd, cmd, &m_lockInfo);
     if (ret != 0) {
         if (tryAgain) {
@@ -88,9 +91,10 @@ bool FileLock::ashmemLock(LockType lockType, bool wait, bool unLockFirstIfNeeded
     }
 }
 
-bool FileLock::ashmemUnLock(bool unlockToSharedLock) {
+bool FileLock::fcntlUnLock(bool unlockToSharedLock) {
     m_lockInfo.l_type = static_cast<short>(unlockToSharedLock ? F_RDLCK : F_UNLCK);
-    auto ret = fcntl(m_fd, F_OFD_SETLK, &m_lockInfo);
+    auto FcntlLockOp = m_isAshmem ? F_SETLK : F_OFD_SETLK;
+    auto ret = fcntl(m_fd, FcntlLockOp, &m_lockInfo);
     if (ret != 0) {
         MMKVError("fail to unlock fd=%d, ret=%d, error:%s", m_fd, ret, strerror(errno));
         return false;

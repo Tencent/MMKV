@@ -57,7 +57,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile->getFd(), isAshmem(), 0, 1))
+    , m_fileLock(new FileLock(m_metaFile->getFd(), isAshmem(), isAshmem(), 0, 1))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType)) {
     m_actualSize = 0;
@@ -66,7 +66,7 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
 #ifndef MMKV_OHOS
     if (g_enableProcessModeCheck) {
         // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
+        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, isAshmem(), 1, 2);
         m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     } else {
         m_fileModeLock = nullptr;
@@ -75,9 +75,14 @@ MMKV::MMKV(const string &mmapID, int size, MMKVMode mode, const string *cryptKey
     m_exclusiveProcessModeLock = nullptr;
 #endif
 
-    m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
-    m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
-    m_sharedMigrationLock->try_lock();
+    if (isAshmem()) {
+        m_fileMigrationLock = nullptr;
+        m_sharedMigrationLock = nullptr;
+    } else {
+        m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, false, 2, 3);
+        m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
+        m_sharedMigrationLock->try_lock();
+    }
 
 #    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
@@ -117,7 +122,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
-    , m_fileLock(new FileLock(m_metaFile->getFd(), true, 0, 1))
+    , m_fileLock(new FileLock(m_metaFile->getFd(), true, true, 0, 1))
     , m_sharedProcessLock(new InterProcessLock(m_fileLock, SharedLockType))
     , m_exclusiveProcessLock(new InterProcessLock(m_fileLock, ExclusiveLockType)) {
 
@@ -127,7 +132,7 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
 #ifndef MMKV_OHOS
     if (g_enableProcessModeCheck) {
         // force use fcntl(), otherwise will conflict with MemoryFile::reloadFromFile()
-        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, 1, 2);
+        m_fileModeLock = new FileLock(m_metaFile->getFd(), true, true, 1, 2);
         m_sharedProcessModeLock = new InterProcessLock(m_fileModeLock, SharedLockType);
     } else {
         m_fileModeLock = nullptr;
@@ -136,9 +141,8 @@ MMKV::MMKV(const string &mmapID, int ashmemFD, int ashmemMetaFD, const string *c
     m_exclusiveProcessModeLock = nullptr;
 #endif
 
-    m_fileMigrationLock = new FileLock(m_metaFile->getFd(), true, 2, 3);
-    m_sharedMigrationLock = new InterProcessLock(m_fileMigrationLock, SharedLockType);
-    m_sharedMigrationLock->try_lock();
+    m_fileMigrationLock = nullptr;
+    m_sharedMigrationLock = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey && cryptKey->length() > 0) {
@@ -186,7 +190,7 @@ MigrateStatus tryMigrateLegacyMMKVFile(const string &mmapID, const string *rootP
         auto file = File(path, OpenFlag::ReadWrite);
         if (file.isFileValid()) {
             // check if it's opened by other process
-            auto fileMigrationLock = FileLock(file.getFd(), true, 2, 3);
+            auto fileMigrationLock = FileLock(file.getFd(), true, false, 2, 3);
             auto exclusiveMigrationLock = InterProcessLock(&fileMigrationLock, ExclusiveLockType);
             // works even if it's opened by us
             if (exclusiveMigrationLock.try_lock()) {
