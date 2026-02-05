@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Tencent is pleased to support the open source community by making
  * MMKV available.
  *
@@ -293,13 +293,25 @@ void testRestore() {
 
 void testAutoExpire() {
     string mmapID = "testAutoExpire";
-    auto mmkv = MMKV::mmkvWithID(mmapID);
+    // disable auto expire by config
+    auto config = MMKVConfig();
+    config.enableKeyExpire = false;
+    config.recover = OnErrorRecover;
+    // config.itemSizeLimit = 1;
+    auto mmkv = MMKV::mmkvWithID(mmapID, config);
     mmkv->clearAll();
     mmkv->trim();
-    mmkv->disableAutoKeyExpire();
+    mmkv->disableAutoKeyExpire(); // this call become a no-op
 
     mmkv->set(true, "auto_expire_key_1");
-    mmkv->enableAutoKeyExpire(1);
+
+    // enable auto expire by config
+    mmkv->close();
+    config.enableKeyExpire = true;
+    config.expiredInSeconds = 1;
+    mmkv = MMKV::mmkvWithID(mmapID, config);
+    mmkv->enableAutoKeyExpire(1); // this call become a no-op
+
     mmkv->set("never_expire_key_1", "never_expire_key_1", MMKV::ExpireNever);
 
     Sleep(2 * 1000);
@@ -482,6 +494,59 @@ void testReKey() {
     testMMKV(mmapID, nullptr, false, true, nullptr);
 }
 
+// Helper to write raw bytes or convert to WideChar based on destination
+void WriteUTF8ToStream(const char* utf8_str) {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD consoleMode;
+
+    if (GetConsoleMode(hOut, &consoleMode)) {
+        // --- CONSOLE: Convert to UTF-16 and write ---
+        int wlen = MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, NULL, 0);
+        if (wlen > 0) {
+            wchar_t* wbuf = (wchar_t*)malloc(wlen * sizeof(wchar_t));
+            if (wbuf) {
+                MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, wbuf, wlen);
+                WriteConsoleW(hOut, wbuf, wlen - 1, NULL, NULL);
+                free(wbuf);
+            }
+        }
+    }
+    else {
+        // --- FILE/PIPE: Write raw UTF-8 bytes ---
+        DWORD bytesWritten;
+        WriteFile(hOut, utf8_str, (DWORD)strlen(utf8_str), &bytesWritten, NULL);
+    }
+}
+
+// Main VarArg Function
+void PrintUTF8(const char* format, ...) {
+    va_list args;
+
+    // 1. Calculate required length
+    // We pass NULL/0 to vsnprintf just to get the required size (excluding null terminator)
+    va_start(args, format);
+    int len = vsnprintf(NULL, 0, format, args);
+    va_end(args);
+
+    if (len < 0) return; // Encoding error or invalid format
+
+    // 2. Allocate buffer (len + 1 for null terminator)
+    // Using malloc ensures we don't overflow the stack with huge strings
+    char* buf = (char*)malloc(len + 1);
+    if (!buf) return; // Out of memory
+
+    // 3. Format the string into the buffer
+    va_start(args, format);
+    vsnprintf(buf, len + 1, format, args);
+    va_end(args);
+
+    // 4. Send to output helper
+    WriteUTF8ToStream(buf);
+
+    // 5. Cleanup
+    free(buf);
+}
+
 static void
 LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
 
@@ -499,13 +564,14 @@ LogHandler(MMKVLogLevel level, const char *file, int line, const char *function,
                 return "N";
         }
     }();
-    printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
+    PrintUTF8("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
 }
 
 int main() {
     // Get the original global locale
     std::locale originalLocale = std::locale::global(std::locale());
     std::cout << "Original locale: " << originalLocale.name() << std::endl;
+    //locale::global(locale(""));
     //locale::global(locale(".UTF8"));
     //SetConsoleOutputCP(CP_UTF8);
     //SetConsoleCP(CP_UTF8);

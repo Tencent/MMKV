@@ -73,14 +73,14 @@ bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix);
 MMKVPath_t filename(const MMKVPath_t &path);
 
 #ifndef MMKV_ANDROID
-MMKV::MMKV(const string &mmapID, MMKVMode mode, const string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity, bool aes256)
+MMKV::MMKV(const string &mmapID, const MMKVConfig &config)
     : m_mmapID(mmapID)
-    , m_mode(mode)
-    , m_path(mappedKVPathWithID(m_mmapID, rootPath, true))
+    , m_mode(config.mode)
+    , m_path(mappedKVPathWithID(m_mmapID, config.rootPath, true))
     , m_crcPath(crcPathWithPath(m_path))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
-    , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(expectedCapacity, DEFAULT_MMAP_SIZE)))
+    , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(config.expectedCapacity, DEFAULT_MMAP_SIZE)))
     , m_file(new MemoryFile(m_path, m_expectedCapacity, isReadOnly(), true))
     , m_metaFile(new MemoryFile(m_crcPath, 0, isReadOnly(), !isMultiProcess()))
     , m_metaInfo(new MMKVMetaInfo())
@@ -94,9 +94,10 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, const string *cryptKey, const MM
     m_output = nullptr;
 
 #    ifndef MMKV_DISABLE_CRYPT
+    auto cryptKey = config.cryptKey;
     if (cryptKey && !cryptKey->empty()) {
         m_dicCrypt = new MMKVMapCrypt();
-        m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length(), nullptr, 0, aes256);
+        m_crypter = new AESCrypt(cryptKey->data(), cryptKey->length(), nullptr, 0, config.aes256);
     } else {
         m_dic = new MMKVMap();
     }
@@ -113,11 +114,16 @@ MMKV::MMKV(const string &mmapID, MMKVMode mode, const string *cryptKey, const MM
     m_sharedProcessLock->m_enable = isMultiProcess();
     m_exclusiveProcessLock->m_enable = isMultiProcess();
 
-    // sensitive zone
-    /*{
-        SCOPED_LOCK(m_sharedProcessLock);
-        loadFromFile();
-    }*/
+    m_recoverStrategic = config.recover;
+    m_itemSizeLimit = config.itemSizeLimit;
+
+    if (config.enableKeyExpire.has_value()) {
+        configAutoExipreIfNeeded(config);
+    }
+
+    if (config.enableCompareBeforeSet) {
+        enableCompareBeforeSet();
+    }
 }
 #endif
 
@@ -229,13 +235,13 @@ const MMKVPath_t &MMKV::getRootDir() {
 }
 
 #ifndef MMKV_ANDROID
-MMKV *MMKV::getMMKVWithID(const std::string &mmapID, MMKVMode mode, const std::string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity, bool aes256) {
-
+MMKV *MMKV::getMMKVWithID(const std::string &mmapID, const MMKVConfig &config) {
     if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
     SCOPED_LOCK(g_instanceLock);
 
+    auto rootPath = config.rootPath;
     auto mmapKey = mmapedKVKey(mmapID, rootPath, true);
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
@@ -243,7 +249,7 @@ MMKV *MMKV::getMMKVWithID(const std::string &mmapID, MMKVMode mode, const std::s
         return kv;
     }
 
-    if (rootPath && (rootPath != &g_realRootDir) && !(mode & MMKV_READ_ONLY)) {
+    if (rootPath && (rootPath != &g_realRootDir) && !(config.mode & MMKV_READ_ONLY)) {
         MMKVPath_t specialPath = (*rootPath) + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
         if (!isFileExist(specialPath)) {
             mkPath(specialPath);
@@ -253,20 +259,36 @@ MMKV *MMKV::getMMKVWithID(const std::string &mmapID, MMKVMode mode, const std::s
     const auto &theRoot = MMKVPath_t2String(*theRootDir);
     MMKVInfo("prepare to load %s (id %s) from rootPath %s", mmapID.c_str(), mmapKey.c_str(), theRoot.c_str());
 
-    auto kv = new MMKV(mmapID, mode, cryptKey, rootPath, expectedCapacity, aes256);
+    auto kv = new MMKV(mmapID, config);
     kv->m_mmapKey = mmapKey;
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity, bool aes256) {
+    MMKVConfig config;
+    config.mode = mode;
+#ifndef MMKV_DISABLE_CRYPT
+    config.aes256 = aes256;
+    config.cryptKey = cryptKey;
+#endif
+    config.rootPath = rootPath;
+    config.expectedCapacity = expectedCapacity;
 
+    return mmkvWithID(mmapID, config);
+}
+
+MMKV *MMKV::mmkvWithID(const std::string &mmapID, const MMKVConfig &config) {
     if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
     }
-    auto ns = rootPath ? nameSpace(*rootPath) : defaultNameSpace();
-    return getMMKVWithID(mmapID, mode, cryptKey, &ns.m_rootDir, expectedCapacity, aes256);
+    auto ns = config.rootPath ? nameSpace(*config.rootPath) : defaultNameSpace();
+
+    auto newConfig = config;
+    newConfig.rootPath = &ns.m_rootDir;
+    return getMMKVWithID(mmapID, newConfig);
 }
+
 #endif
 
 void MMKV::onExit() {
@@ -1782,7 +1804,24 @@ NameSpace MMKV::defaultNameSpace() {
 
 #ifndef MMKV_ANDROID
 MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, size_t expectedCapacity, bool aes256) {
-    return MMKV::getMMKVWithID(mmapID, mode, cryptKey, &m_rootDir, expectedCapacity, aes256);
+    MMKVConfig config;
+    config.mode = mode;
+#ifndef MMKV_DISABLE_CRYPT
+    config.aes256 = aes256;
+    config.cryptKey = cryptKey;
+#endif
+    config.rootPath = &m_rootDir;
+    config.expectedCapacity = expectedCapacity;
+    return MMKV::getMMKVWithID(mmapID, config);
+}
+
+MMKV *NameSpace::mmkvWithID(const string &mmapID, const MMKVConfig &config) {
+    if (!config.rootPath || *config.rootPath != m_rootDir) {
+        auto newConfig = config;
+        newConfig.rootPath = &m_rootDir;
+        return MMKV::getMMKVWithID(mmapID, newConfig);
+    }
+    return MMKV::getMMKVWithID(mmapID, config);
 }
 #endif
 

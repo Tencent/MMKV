@@ -343,6 +343,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
             if (!loadFromFile) {
 
                 auto strategic = onMMKVCRCCheckFail(m_mmapID);
+                strategic = m_recoverStrategic.has_value() ? m_recoverStrategic.value() : strategic;
                 if (strategic == OnErrorRecover) {
                     loadFromFile = true;
                     needFullWriteback = true;
@@ -357,6 +358,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
 
         if (!loadFromFile) {
             auto strategic = onMMKVFileLengthError(m_mmapID);
+            strategic = m_recoverStrategic.has_value() ? m_recoverStrategic.value() : strategic;
             if (strategic == OnErrorRecover) {
                 // make sure we don't over read the file
                 m_actualSize = fileSize - Fixed32Size;
@@ -486,6 +488,23 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         auto preparedData = m_crypter ? prepareEncode(*m_dicCrypt) : prepareEncode(*m_dic);
         // dic.empty() means inserting key-value for the first time, no need to call msync()
         return expandAndWriteBack(newSize, std::move(preparedData), m_crypter ? !m_dicCrypt->empty() : !m_dic->empty());
+    }
+    return true;
+}
+
+bool MMKV::checkSizeLimit(size_t size, const MMBuffer &keyData, uint32_t originKeyLength) {
+    if (m_itemSizeLimit != 0 && size > m_itemSizeLimit) {
+        auto isKeyEncoded = (originKeyLength < keyData.length());
+        uint8_t *keyPtr = nullptr;
+        if (isKeyEncoded) {
+            auto keyLen = pbRawVarint32Size(originKeyLength);
+            keyPtr = (uint8_t *) keyData.getPtr() + keyLen;
+        } else {
+            keyPtr = (uint8_t *) keyData.getPtr();
+        }
+        MMKVError("[%s] itemSizeLimit %u: ignore value size %zu of key [%.*s] too large",
+                  m_mmapID.c_str(), m_itemSizeLimit, size, originKeyLength, keyPtr);
+        return false;
     }
     return true;
 }
@@ -897,6 +916,9 @@ MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool is
 
     SCOPED_LOCK(m_exclusiveProcessLock);
 
+    if (!checkSizeLimit(size, keyData, originKeyLength)) {
+        return make_pair(false, KeyValueHolder());
+    }
     bool hasEnoughSize = ensureMemorySize(size);
     if (!hasEnoughSize || !isFileValid()) {
         return make_pair(false, KeyValueHolder());
@@ -954,6 +976,10 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
     size_t size = isKeyEncoded ? keyLength : (keyLength + pbRawVarint32Size(keyLength));
     // size needed to encode the value
     size += valueLength + pbRawVarint32Size(valueLength);
+
+    if (!checkSizeLimit(size, keyData, originKeyLength)) {
+        return make_pair(false, KeyValueHolder());
+    }
 
     if (!checkSizeForOverride(size)) {
         return doAppendDataWithKey(data, keyData, isDataHolder, originKeyLength);
@@ -1755,6 +1781,39 @@ bool MMKV::doFullWriteBack(MMKVVector &&vec) {
 
     clearMemoryCache();
     return ret;
+}
+
+void MMKV::configAutoExipreIfNeeded(const MMKVConfig &config) {
+    if (!config.enableKeyExpire.has_value()) {
+        return;
+    }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return;
+    }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+
+    // it will set m_enableKeyExpire from meta file
+    loadMetaInfoAndCheck();
+
+    if (!m_metaFile->isFileValid()) {
+        return;
+    }
+
+    if (m_enableKeyExpire) {
+        if (config.enableKeyExpire.value()) {
+            m_expiredInSeconds = config.expiredInSeconds;
+        } else {
+            disableAutoKeyExpire();
+        }
+    } else {
+        if (config.enableKeyExpire.value()) {
+            enableAutoKeyExpire(config.expiredInSeconds);
+        } else {
+            // no action
+        }
+    }
 }
 
 bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {

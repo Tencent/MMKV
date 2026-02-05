@@ -407,14 +407,28 @@
 
 - (void)testAutoExpire {
     NSString *mmapID = @"testAutoExpire";
-    auto mmkv = [MMKV mmkvWithID:mmapID];
+
+    // disable auto expire by config
+    auto config = MMKVConfigDefault();
+    config.enableKeyExpire = @NO;
+    // config.recover = MMKVOnErrorRecover;
+    // config.itemSizeLimit = 1;
+    auto mmkv = [MMKV mmkvWithID:mmapID config:config];
     [mmkv clearAll];
     [mmkv trim];
-    [mmkv disableAutoKeyExpire];
+    // [mmkv disableAutoKeyExpire]; // this call become a no-op
 
     [self testMMKV:mmapID withCryptKey:nil aes256:NO decodeOnly:NO];
     [mmkv setBool:YES forKey:@"auto_expire_key_1"];
-    [mmkv enableAutoKeyExpire:1];
+
+    // enable auto expire by config
+    [mmkv close];
+    mmkv = nil;
+    config.enableKeyExpire = @YES;
+    config.expiredInSeconds = 1;
+    mmkv = [MMKV mmkvWithID:mmapID config:config];
+    // [mmkv enableAutoKeyExpire:1]; // this call become a no-op
+
     [mmkv setString:@"never_expire_key_1" forKey:@"never_expire_key_1" expireDuration:MMKVExpireNever];
 
     auto arr = @[ @"str1", @"str2" ];

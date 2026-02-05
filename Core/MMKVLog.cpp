@@ -94,72 +94,59 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
 
 #        else
 
-//#if defined(MMKV_WIN32)
-//inline std::string WideToUTF8(const wchar_t* wstr) {
-//    if (!wstr || *wstr == L'\0') {
-//        return "";
-//    }
-//    int u8len = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nullptr, 0, nullptr, nullptr);
-//    if (u8len <= 1) {
-//        return ""; // Only null terminator or error
-//    }
-//    std::string utf8Result(u8len - 1, '\0');
-//    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, &utf8Result[0], u8len, nullptr, nullptr);
-//    return utf8Result;
-//}
-//
-//void _MMKVLogWithLevel(MMKVLogLevel level, const char* filename, const char* func, int line, const wchar_t* format, ...) {
-//    if (level >= g_currentLogLevel) {
-//        wchar_t translatedBuf[128];
-//        size_t i = 0, j = 0;
-//
-//        // quick stack-based translation: %s -> %S
-//        // allow narrow char* args to work with a wchar_t* format string.
-//        while (format[i] != L'\0' && j < 128-2) {
-//            if (format[i] == L'%' && format[i + 1] == L's') {
-//                translatedBuf[j++] = L'%';
-//                translatedBuf[j++] = L'S'; // Force Win32 to treat next arg as narrow char*
-//                i += 2;
-//            } else {
-//                translatedBuf[j++] = format[i++];
-//            }
-//        }
-//        translatedBuf[j] = L'\0';
-//
-//        std::string message;
-//        wchar_t buffer[64];
-//        int bufferSize = static_cast<int>(sizeof(buffer) / sizeof(wchar_t));
-//
-//        va_list args;
-//        va_start(args, format);
-//        auto length = _vsnwprintf_s(buffer, bufferSize, _TRUNCATE, translatedBuf, args);
-//        va_end(args);
-//
-//        if (length > 0 && length < bufferSize) {
-//            message = WideToUTF8(buffer);
-//        } else {
-//            va_start(args, format);
-//            length = _vscwprintf(translatedBuf, args);
-//            va_end(args);
-//
-//            if (length > 0) {
-//                std::wstring heapWStr(length, L'\0');
-//                va_start(args, format);
-//                _vsnwprintf_s(heapWStr.data(), heapWStr.size() + 1, _TRUNCATE, translatedBuf, args);
-//                va_end(args);
-//                message = WideToUTF8(heapWStr.c_str());
-//            }
-//        }
-//
-//        if (g_logHandler) {
-//            g_logHandler(level, filename, line, func, message);
-//        } else {
-//            printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), filename, line, func, message.c_str());
-//            //fflush(stdout);
-//        }
-//    }
-//}
-//#endif
+#if defined(MMKV_WIN32)
+// Helper to write raw bytes or convert to WideChar based on destination
+static void WriteUTF8ToStream(const char* utf8_str) {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD consoleMode;
+
+    if (GetConsoleMode(hOut, &consoleMode)) {
+        // --- CONSOLE: Convert to UTF-16 and write ---
+        int wlen = MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, NULL, 0);
+        if (wlen > 0) {
+            wchar_t* wbuf = (wchar_t*)malloc(wlen * sizeof(wchar_t));
+            if (wbuf) {
+                MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, wbuf, wlen);
+                WriteConsoleW(hOut, wbuf, wlen - 1, NULL, NULL);
+                free(wbuf);
+            }
+        }
+    } else {
+        // --- FILE/PIPE: Write raw UTF-8 bytes ---
+        DWORD bytesWritten;
+        WriteFile(hOut, utf8_str, (DWORD)strlen(utf8_str), &bytesWritten, NULL);
+    }
+}
+
+// Main VarArg Function
+static void PrintUTF8(const char* format, ...) {
+    va_list args;
+
+    // 1. Calculate required length
+    // We pass NULL/0 to vsnprintf just to get the required size (excluding null terminator)
+    va_start(args, format);
+    int len = vsnprintf(NULL, 0, format, args);
+    va_end(args);
+
+    if (len < 0) return; // Encoding error or invalid format
+
+    // 2. Allocate buffer (len + 1 for null terminator)
+    // Using malloc ensures we don't overflow the stack with huge strings
+    char* buf = (char*)malloc(len + 1);
+    if (!buf) return; // Out of memory
+
+    // 3. Format the string into the buffer
+    va_start(args, format);
+    vsnprintf(buf, len + 1, format, args);
+    va_end(args);
+
+    // 4. Send to output helper
+    WriteUTF8ToStream(buf);
+
+    // 5. Cleanup
+    free(buf);
+}
+#endif
 
 void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
@@ -185,7 +172,11 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
         if (g_logHandler) {
             g_logHandler(level, filename, line, func, message);
         } else {
+#if defined(MMKV_WIN32)
+            PrintUTF8("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), filename, line, func, message.c_str());
+#else
             printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), filename, line, func, message.c_str());
+#endif
             //fflush(stdout);
         }
     }

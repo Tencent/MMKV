@@ -25,6 +25,7 @@
 typedef NS_ENUM(NSUInteger, MMKVRecoverStrategic) {
     MMKVOnErrorDiscard = 0,
     MMKVOnErrorRecover,
+    MMKVOnErrorNotSet,
 };
 
 typedef NS_ENUM(NSUInteger, MMKVLogLevel) {

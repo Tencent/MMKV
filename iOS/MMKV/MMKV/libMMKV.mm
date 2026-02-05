@@ -176,6 +176,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:mmapID cryptKey:nil aes256:NO rootPath:nil mode:MMKVSingleProcess expectedCapacity:0];
 }
 
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID config:(MMKVConfig)config {
+    return [MMKV doGetWithID:mmapID config:config];
+}
+
 + (instancetype)mmkvWithID:(NSString *)mmapID expectedCapacity:(size_t)expectedCapacity {
     return [MMKV mmkvWithID:mmapID
                    cryptKey:nil
@@ -259,15 +263,26 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 + (instancetype)doGetWithID:(NSString *)mmapID cryptKey:(NSData *)cryptKey aes256:(BOOL)aes256 rootPath:(nullable NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
+    auto config = MMKVConfigDefault();
+    config.mode = mode;
+    config.aes256 = aes256;
+    config.cryptKey = cryptKey;
+    config.rootPath = rootPath;
+    config.expectedCapacity = expectedCapacity;
+
+    return [MMKV doGetWithID:mmapID config:config];
+}
+
++ (instancetype)doGetWithID:(NSString *)mmapID config:(const MMKVConfig&)config {
     if (mmapID.length <= 0) {
         return nil;
     }
     SCOPED_LOCK(g_lock);
 
-    NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID rootPath:rootPath];
+    NSString *kvKey = [MMKV mmapKeyWithMMapID:mmapID rootPath:config.rootPath];
     MMKV *kv = [g_instanceDic objectForKey:kvKey];
     if (kv == nil) {
-        kv = [[MMKV alloc] initWithMMapID:mmapID cryptKey:cryptKey aes256:aes256 rootPath:rootPath mode:mode expectedCapacity:expectedCapacity];
+        kv = [[MMKV alloc] initWithMMapID:mmapID config:config];
         if (!kv->m_mmkv) {
             [kv release];
             return nil;
@@ -280,19 +295,40 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return kv;
 }
 
-- (instancetype)initWithMMapID:(NSString *)mmapID cryptKey:(NSData *)cryptKey aes256:(BOOL)aes256 rootPath:(NSString *)rootPath mode:(MMKVMode)mode expectedCapacity:(size_t)expectedCapacity {
+- (instancetype)initWithMMapID:(NSString *)mmapID config:(const MMKVConfig&)config {
     if (self = [super init]) {
+        mmkv::MMKVConfig cppConfig;
+        cppConfig.mode = (mmkv::MMKVMode) config.mode;
+        cppConfig.aes256 = config.aes256;
+
+        auto rootPath = config.rootPath;
         string pathTmp;
         if (rootPath.length > 0) {
             pathTmp = rootPath.UTF8String;
         }
         string cryptKeyTmp;
+        auto cryptKey = config.cryptKey;
         if (cryptKey.length > 0) {
             cryptKeyTmp = string((char *) cryptKey.bytes, cryptKey.length);
         }
-        string *rootPathPtr = pathTmp.empty() ? nullptr : &pathTmp;
-        string *cryptKeyPtr = cryptKeyTmp.empty() ? nullptr : &cryptKeyTmp;
-        m_mmkv = mmkv::MMKV::mmkvWithID(mmapID.UTF8String, (mmkv::MMKVMode) mode, cryptKeyPtr, rootPathPtr, expectedCapacity, aes256);
+        cppConfig.rootPath = pathTmp.empty() ? nullptr : &pathTmp;
+        cppConfig.cryptKey = cryptKeyTmp.empty() ? nullptr : &cryptKeyTmp;
+
+        cppConfig.expectedCapacity = config.expectedCapacity;
+
+        if (config.enableKeyExpire != nil) {
+            cppConfig.enableKeyExpire = (config.enableKeyExpire.boolValue == YES);
+        }
+        cppConfig.expiredInSeconds = config.expiredInSeconds;
+        cppConfig.enableCompareBeforeSet = (config.enableCompareBeforeSet == YES);
+
+        if (config.recover != MMKVOnErrorNotSet) {
+            cppConfig.recover = (mmkv::MMKVRecoverStrategic) config.recover;
+        }
+
+        cppConfig.itemSizeLimit = config.itemSizeLimit;
+
+        m_mmkv = mmkv::MMKV::mmkvWithID(mmapID.UTF8String, cppConfig);
         if (!m_mmkv) {
             return self;
         }

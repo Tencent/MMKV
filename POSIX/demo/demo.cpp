@@ -553,13 +553,25 @@ void testRestore() {
 
 void testAutoExpiration() {
     string mmapID = "testAutoExpire";
-    auto mmkv = MMKV::mmkvWithID(mmapID);
+    // disable auto expire by config
+    auto config = MMKVConfig();
+    config.enableKeyExpire = false;
+    config.recover = OnErrorRecover;
+    // config.itemSizeLimit = 1;
+    auto mmkv = MMKV::mmkvWithID(mmapID, config);
     mmkv->clearAll();
     mmkv->trim();
-    mmkv->disableAutoKeyExpire();
+    mmkv->disableAutoKeyExpire(); // this call become a no-op
 
     mmkv->set(true, "auto_expire_key_1");
-    mmkv->enableAutoKeyExpire(1);
+
+    // enable auto expire by config
+    mmkv->close();
+    config.enableKeyExpire = true;
+    config.expiredInSeconds = 1;
+    mmkv = MMKV::mmkvWithID(mmapID, config);
+    mmkv->enableAutoKeyExpire(1); // this call become a no-op
+
     mmkv->set("never_expire_value_1", "never_expire_key_1", MMKV::ExpireNever);
     mmkv->set("", "never_expire_key_2", MMKV::ExpireNever);
     mmkv->set(MMBuffer(), "never_expire_key_3", MMKV::ExpireNever);

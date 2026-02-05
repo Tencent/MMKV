@@ -40,6 +40,42 @@ typedef NS_ENUM(UInt32, MMKVExpireDuration) {
     MMKVExpireInYear = 365 * 30 * 24 * 60 * 60,
 };
 
+// all-in-one configuration for creating MMKV instance
+typedef struct {
+    MMKVMode mode; // = MMKVSingleProcess;
+
+    // using AES-256 key length
+    BOOL aes256; // = NO;
+    NSData * _Nullable cryptKey; // = nil;
+
+    NSString * _Nullable rootPath; // = nil;
+
+    // the initial file size
+    size_t expectedCapacity; // = 0;
+
+    /// @YES / @NO to set this value
+    /// if nil, auto expire is off
+    NSNumber * _Nullable enableKeyExpire; // = nil;
+    uint32_t expiredInSeconds; // = MMKVExpireNever;
+
+    BOOL enableCompareBeforeSet; // = NO;
+
+    // if not set, use the old style callback
+    MMKVRecoverStrategic recover; // = MMKVOnErrorNotSet;
+
+    // the size limit of a key-value pair, reject insert if pass limit
+    size_t itemSizeLimit; // = 0;
+} MMKVConfig;
+
+static inline MMKVConfig MMKVConfigDefault(void) {
+    MMKVConfig config = {
+        .mode = MMKVSingleProcess, .aes256 = NO, .cryptKey = nil, .rootPath = nil,
+        .expectedCapacity = 0, .enableKeyExpire = nil, .expiredInSeconds = MMKVExpireNever,
+        .enableCompareBeforeSet = NO, .recover = MMKVOnErrorNotSet, .itemSizeLimit = 0,
+    };
+    return config;
+}
+
 NS_ASSUME_NONNULL_BEGIN
 
 #ifdef __cplusplus
@@ -95,6 +131,9 @@ class MMKV;
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(init(mmapID:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
++ (nullable instancetype)mmkvWithID:(NSString *)mmapID config:(MMKVConfig)config NS_SWIFT_NAME(init(mmapID:config:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param expectedCapacity the file size you expected when opening or creating file
