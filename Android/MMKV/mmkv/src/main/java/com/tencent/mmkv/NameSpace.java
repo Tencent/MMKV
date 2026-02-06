@@ -50,8 +50,26 @@ public final class NameSpace {
      */
     @NonNull
     public MMKV mmkvWithID(String mmapID) throws RuntimeException {
-        long handle = MMKV.getMMKVWithID(mmapID, SINGLE_PROCESS_MODE, null, rootDir, 0, false);
-        return MMKV.checkProcessMode(handle, mmapID, SINGLE_PROCESS_MODE);
+        return mmkvWithID(mmapID, new MMKVConfig());
+    }
+
+    /**
+     * Create an MMKV instance with an unique ID (in single-process mode).
+     *
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param config The all-in-one configuration for the MMKV instance.
+     * @throws RuntimeException if there's an runtime error.
+     */
+    @NonNull
+    public MMKV mmkvWithID(String mmapID, MMKVConfig config) throws RuntimeException {
+        int enableKeyExpire = (config.enableKeyExpire != null) ? (config.enableKeyExpire ? 1 : 0) : -1;
+        int recover = (config.recover == null) ? -1 : ((config.recover == MMKVRecoverStrategic.OnErrorDiscard) ? 0 : 1);
+
+        long handle = MMKV.getMMKVWithID(mmapID, config.mode, config.cryptKey, rootDir, config.expectedCapacity,
+                config.aes256, config.size, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet,
+                recover, config.itemSizeLimit);
+
+        return MMKV.checkProcessMode(handle, mmapID, config.mode);
     }
 
     /**
@@ -63,8 +81,9 @@ public final class NameSpace {
      */
     @NonNull
     public MMKV mmkvWithID(String mmapID, int mode) throws RuntimeException {
-        long handle = MMKV.getMMKVWithID(mmapID, mode, null, rootDir, 0, false);
-        return MMKV.checkProcessMode(handle, mmapID, mode);
+        MMKVConfig config = new MMKVConfig();
+        config.mode = mode;
+        return mmkvWithID(mmapID, config);
     }
 
     /**
@@ -77,8 +96,10 @@ public final class NameSpace {
      */
     @NonNull
     public MMKV mmkvWithID(String mmapID, int mode, long expectedCapacity) throws RuntimeException {
-        long handle = MMKV.getMMKVWithID(mmapID, mode, null, rootDir, expectedCapacity, false);
-        return MMKV.checkProcessMode(handle, mmapID, mode);
+        MMKVConfig config = new MMKVConfig();
+        config.mode = mode;
+        config.expectedCapacity = expectedCapacity;
+        return mmkvWithID(mmapID, config);
     }
 
     /**
@@ -91,8 +112,10 @@ public final class NameSpace {
      */
     @NonNull
     public MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey) throws RuntimeException {
-        long handle = MMKV.getMMKVWithID(mmapID, mode, cryptKey, rootDir, 0, false);
-        return MMKV.checkProcessMode(handle, mmapID, mode);
+        MMKVConfig config = new MMKVConfig();
+        config.mode = mode;
+        config.cryptKey = cryptKey;
+        return mmkvWithID(mmapID, config);
     }
 
     /**
@@ -106,8 +129,11 @@ public final class NameSpace {
      */
     @NonNull
     public MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, boolean aes256) throws RuntimeException {
-        long handle = MMKV.getMMKVWithID(mmapID, mode, cryptKey, rootDir, 0, aes256);
-        return MMKV.checkProcessMode(handle, mmapID, mode);
+        MMKVConfig config = new MMKVConfig();
+        config.mode = mode;
+        config.aes256 = aes256;
+        config.cryptKey = cryptKey;
+        return mmkvWithID(mmapID, config);
     }
 
     /**
@@ -122,8 +148,11 @@ public final class NameSpace {
     @NonNull
     public MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, long expectedCapacity)
             throws RuntimeException {
-        long handle = MMKV.getMMKVWithID(mmapID, mode, cryptKey, rootDir, expectedCapacity, false);
-        return MMKV.checkProcessMode(handle, mmapID, mode);
+        MMKVConfig config = new MMKVConfig();
+        config.mode = mode;
+        config.cryptKey = cryptKey;
+        config.expectedCapacity = expectedCapacity;
+        return mmkvWithID(mmapID, config);
     }
 
     /**
@@ -139,8 +168,12 @@ public final class NameSpace {
     @NonNull
     public MMKV mmkvWithID(String mmapID, int mode, @Nullable String cryptKey, boolean aes256, long expectedCapacity)
             throws RuntimeException {
-        long handle = MMKV.getMMKVWithID(mmapID, mode, cryptKey, rootDir, expectedCapacity, aes256);
-        return MMKV.checkProcessMode(handle, mmapID, mode);
+        MMKVConfig config = new MMKVConfig();
+        config.mode = mode;
+        config.aes256 = aes256;
+        config.cryptKey = cryptKey;
+        config.expectedCapacity = expectedCapacity;
+        return mmkvWithID(mmapID, config);
     }
 
     /**

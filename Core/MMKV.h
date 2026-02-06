@@ -79,7 +79,7 @@ struct MMKVConfig {
     const MMKVPath_t *rootPath = nullptr;
 
 #ifdef MMKV_ANDROID
-    int size = mmkv::DEFAULT_MMAP_SIZE; // for ashmem size
+    int size = static_cast<int>(mmkv::DEFAULT_MMAP_SIZE); // for ashmem size
 #endif
     size_t expectedCapacity = 0; // the initial file size
 
@@ -305,6 +305,7 @@ public:
 
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, const std::string *cryptKey = nullptr, bool aes256 = false);
+    static MMKV *defaultMMKV(const MMKVConfig &config);
 
     // mmapID: any unique ID (com.tencent.xin.pay, etc.)
     // if you want a per-user mmkv, you could merge user-id within mmapID
@@ -332,6 +333,8 @@ public:
                             const MMKVPath_t *rootPath = nullptr,
                             size_t expectedCapacity = 0,
                             bool aes256 = false);
+
+    static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, const MMKVConfig &config);
 
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, const std::string *cryptKey = nullptr,
                                   bool aes256 = false);

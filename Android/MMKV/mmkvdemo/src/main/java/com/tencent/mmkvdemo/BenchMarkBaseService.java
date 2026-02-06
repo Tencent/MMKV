@@ -27,6 +27,7 @@ import android.os.IBinder;
 import android.util.Log;
 import androidx.annotation.Nullable;
 import com.tencent.mmkv.MMKV;
+import com.tencent.mmkv.MMKVConfig;
 import com.tencent.mmkv.ParcelableMMKV;
 import java.util.Random;
 
@@ -331,8 +332,11 @@ public abstract class BenchMarkBaseService extends Service {
             // 1M, ashmem cannot change size after opened
             final String id = "tetAshmemMMKV";
             try {
-                m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, AshmemMMKV_Size,
-                        MMKV.MULTI_PROCESS_MODE, CryptKey);
+                MMKVConfig config = new MMKVConfig();
+                config.size = AshmemMMKV_Size;
+                config.mode = MMKV.MULTI_PROCESS_MODE;
+                config.cryptKey = CryptKey;
+                m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, config);
                 m_ashmemMMKV.encode("bool", true);
             } catch (Exception e) {
                 Log.e("MMKV", e.getMessage());

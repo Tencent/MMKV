@@ -156,11 +156,15 @@ MMKV::~MMKV() {
 }
 
 MMKV *MMKV::defaultMMKV(MMKVMode mode, const string *cryptKey, bool aes256) {
-#ifndef MMKV_ANDROID
-    return mmkvWithID(DEFAULT_MMAP_ID, mode, cryptKey, nullptr, 0, aes256);
-#else
-    return mmkvWithID(DEFAULT_MMAP_ID, DEFAULT_MMAP_SIZE, mode, cryptKey, nullptr, 0, aes256);
-#endif
+    auto config = MMKVConfig();
+    config.mode = mode;
+    config.aes256 = aes256;
+    config.cryptKey = cryptKey;
+    return mmkvWithID(DEFAULT_MMAP_ID, config);
+}
+
+MMKV *MMKV::defaultMMKV(const MMKVConfig &config) {
+    return mmkvWithID(DEFAULT_MMAP_ID, config);
 }
 
 static void initialize() {
@@ -278,6 +282,8 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptK
     return mmkvWithID(mmapID, config);
 }
 
+#endif
+
 MMKV *MMKV::mmkvWithID(const std::string &mmapID, const MMKVConfig &config) {
     if (mmapID.empty() || !g_instanceLock) {
         return nullptr;
@@ -288,8 +294,6 @@ MMKV *MMKV::mmkvWithID(const std::string &mmapID, const MMKVConfig &config) {
     newConfig.rootPath = &ns.m_rootDir;
     return getMMKVWithID(mmapID, newConfig);
 }
-
-#endif
 
 void MMKV::onExit() {
     if (!g_instanceLock) {
@@ -1814,6 +1818,7 @@ MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *c
     config.expectedCapacity = expectedCapacity;
     return MMKV::getMMKVWithID(mmapID, config);
 }
+#endif
 
 MMKV *NameSpace::mmkvWithID(const string &mmapID, const MMKVConfig &config) {
     if (!config.rootPath || *config.rootPath != m_rootDir) {
@@ -1823,7 +1828,6 @@ MMKV *NameSpace::mmkvWithID(const string &mmapID, const MMKVConfig &config) {
     }
     return MMKV::getMMKVWithID(mmapID, config);
 }
-#endif
 
 bool NameSpace::backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir) {
     return MMKV::backupOneToDirectory(mmapID, dstDir, &m_rootDir);
