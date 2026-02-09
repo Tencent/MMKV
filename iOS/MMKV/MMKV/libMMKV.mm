@@ -163,6 +163,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return [MMKV mmkvWithID:(@"" DEFAULT_MMAP_ID) cryptKey:nil aes256:NO rootPath:nil mode:MMKVSingleProcess expectedCapacity:0];
 }
 
++ (nullable instancetype)defaultMMKVWithConfig:(MMKVConfig)config {
+    return [MMKV mmkvWithID:(@"" DEFAULT_MMAP_ID) config:config];
+}
+
 + (nullable instancetype)defaultMMKVWithCryptKey:(nullable NSData *)cryptKey {
     return [MMKV mmkvWithID:(@"" DEFAULT_MMAP_ID) cryptKey:cryptKey aes256:NO rootPath:nil mode:MMKVSingleProcess expectedCapacity:0];
 }
@@ -1346,6 +1350,11 @@ static void ContentLoadedHandler(const string &mmapID) {
 
 - (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID {
     return [MMKV doGetWithID:mmapID cryptKey:nil aes256:NO rootPath:_rootPath mode:MMKVSingleProcess expectedCapacity:0];
+}
+
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID config:(MMKVConfig)config NS_SWIFT_NAME(init(mmapID:config:)) {
+    config.rootPath = _rootPath;
+    return [MMKV doGetWithID:mmapID config:config];
 }
 
 - (nullable MMKV *)mmkvWithID:(nonnull NSString *)mmapID cryptKey:(nullable NSData *)cryptKey {

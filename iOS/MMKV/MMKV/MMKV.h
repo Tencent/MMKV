@@ -123,6 +123,9 @@ class MMKV;
 + (nullable instancetype)defaultMMKV;
 
 /// an encrypted generic purpose instance (in MMKVSingleProcess mode)
++ (nullable instancetype)defaultMMKVWithConfig:(MMKVConfig)config;
+
+/// an encrypted generic purpose instance (in MMKVSingleProcess mode)
 + (nullable instancetype)defaultMMKVWithCryptKey:(nullable NSData *)cryptKey;
 
 /// an encrypted generic purpose instance (in MMKVSingleProcess mode)
@@ -512,6 +515,9 @@ class MMKV;
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 - (nullable MMKV *)mmkvWithID:(NSString *)mmapID NS_SWIFT_NAME(mmkv(mmapID:));
+
+/// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
+- (nullable MMKV *)mmkvWithID:(NSString *)mmapID config:(MMKVConfig)config NS_SWIFT_NAME(init(mmapID:config:));
 
 /// @param mmapID any unique ID (com.tencent.xin.pay, etc), if you want a per-user mmkv, you could merge user-id within mmapID
 /// @param expectedCapacity the file size you expected when opening or creating file

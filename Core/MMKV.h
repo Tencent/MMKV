@@ -89,7 +89,7 @@ struct MMKVConfig {
     bool enableCompareBeforeSet = false;
 
     std::optional<MMKVRecoverStrategic> recover = std::nullopt; // if not set, use the old style callback
-    size_t itemSizeLimit = 0; // the size limit of a key-value pair, reject insert if pass limit
+    uint32_t itemSizeLimit = 0; // the size limit of a key-value pair, reject insert if pass limit
 };
 
 #define MMKV_OUT
@@ -171,7 +171,7 @@ class MMKV_EXPORT MMKV {
 
     std::optional<MMKVRecoverStrategic> m_recoverStrategic = std::nullopt;
 
-    size_t m_itemSizeLimit = 0;
+    uint32_t m_itemSizeLimit = 0;
 
 #ifdef MMKV_APPLE
 #ifdef __OBJC__
