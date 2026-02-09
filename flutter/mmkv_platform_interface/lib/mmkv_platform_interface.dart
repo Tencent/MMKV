@@ -105,15 +105,13 @@ class MMKVPluginPlatform {
     throw UnimplementedError();
   }
 
-  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) getMMKVWithIDFunc() {
+  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256,
+      int enableKeyExpire, int expiredInSeconds, int enableCompareBeforeSet, int recover, int itemSizeLimit) getMMKVWithIDFunc() {
     throw UnimplementedError();
   }
 
-  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256) getMMKVWithIDFunc2() {
-    throw UnimplementedError();
-  }
-
-  Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256) getDefaultMMKVFunc() {
+  Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256, int expectedCapacity, int enableKeyExpire, int expiredInSeconds,
+      int enableCompareBeforeSet, int recover, int itemSizeLimit) getDefaultMMKVFunc() {
     throw UnimplementedError();
   }
 

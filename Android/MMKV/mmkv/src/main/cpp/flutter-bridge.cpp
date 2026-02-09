@@ -81,28 +81,47 @@ MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
     mmkvInitialize_v2(rootDir, nullptr, 0, logLevel, nullptr);
 }
 
-MMKV_EXPORT void *getMMKVWithID2(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath,
-                                 size_t expectedCapacity, bool fromNameSpace, bool aes256) {
+MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath,
+                                size_t expectedCapacity, bool fromNameSpace, bool aes256, int32_t enableKeyExpire,
+                                int32_t expiredInSeconds, bool enableCompareBeforeSet, int32_t recover,
+                                uint32_t itemSizeLimit) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return kv;
     }
     string str = mmapID;
 
+    auto config = MMKVConfig();
+    config.mode = (MMKVMode) mode;
+    config.aes256 = aes256;
+    config.expectedCapacity = expectedCapacity;
+    if (enableKeyExpire >= 0) {
+        config.enableKeyExpire = (enableKeyExpire != 0);
+    }
+    config.expiredInSeconds = expiredInSeconds;
+    config.enableCompareBeforeSet = enableCompareBeforeSet;
+    if (recover >= 0) {
+        config.recover = static_cast<MMKVRecoverStrategic>(recover);
+    }
+    config.itemSizeLimit = itemSizeLimit;
+
     bool done = false;
     if (cryptKey) {
         string crypt = cryptKey;
         if (!crypt.empty()) {
+            config.cryptKey = &crypt;
             if (rootPath) {
                 string path = rootPath;
                 if (fromNameSpace) {
                     auto ns = MMKV::nameSpace(path);
-                    kv = ns.mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, expectedCapacity, aes256);
+                    config.rootPath = &ns.getRootDir();
+                    kv = ns.mmkvWithID(str, config);
                 } else {
-                    kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, &path, expectedCapacity, aes256);
+                    config.rootPath = &path;
+                    kv = MMKV::mmkvWithID(str, config);
                 }
             } else {
-                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, nullptr, expectedCapacity, aes256);
+                kv = MMKV::mmkvWithID(str, config);
             }
             done = true;
         }
@@ -112,33 +131,48 @@ MMKV_EXPORT void *getMMKVWithID2(const char *mmapID, int32_t mode, const char *c
             string path = rootPath;
             if (fromNameSpace) {
                 auto ns = MMKV::nameSpace(path);
-                kv = ns.mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, expectedCapacity, aes256);
+                config.rootPath = &ns.getRootDir();
+                kv = ns.mmkvWithID(str, config);
             } else {
-                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, &path, expectedCapacity, aes256);
+                config.rootPath = &path;
+                kv = MMKV::mmkvWithID(str, config);
             }
         } else {
-            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, nullptr, expectedCapacity, aes256);
+            kv = MMKV::mmkvWithID(str, config);
         }
     }
 
     return kv;
 }
 
-MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity) {
-    return getMMKVWithID2(mmapID, mode, cryptKey, rootPath, expectedCapacity, false, false);
-}
-
-MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey, bool aes256) {
+MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey, bool aes256, size_t expectedCapacity,
+                                 int32_t enableKeyExpire, int32_t expiredInSeconds, bool enableCompareBeforeSet,
+                                 int32_t recover, uint32_t itemSizeLimit) {
     MMKV *kv = nullptr;
+
+    auto config = MMKVConfig();
+    config.mode = (MMKVMode) mode;
+    config.aes256 = aes256;
+    config.expectedCapacity = expectedCapacity;
+    if (enableKeyExpire >= 0) {
+        config.enableKeyExpire = (enableKeyExpire != 0);
+    }
+    config.expiredInSeconds = expiredInSeconds;
+    config.enableCompareBeforeSet = enableCompareBeforeSet;
+    if (recover >= 0) {
+        config.recover = static_cast<MMKVRecoverStrategic>(recover);
+    }
+    config.itemSizeLimit = itemSizeLimit;
 
     if (cryptKey) {
         string crypt = cryptKey;
         if (crypt.length() > 0) {
-            kv = MMKV::defaultMMKV((MMKVMode) mode, &crypt, aes256);
+            config.cryptKey = &crypt;
+            kv = MMKV::defaultMMKV(config);
         }
     }
     if (!kv) {
-        kv = MMKV::defaultMMKV((MMKVMode) mode, nullptr, aes256);
+        kv = MMKV::defaultMMKV(config);
     }
 
     return kv;

@@ -9,7 +9,7 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 
 # Set the version of MMKV to use. This should match the version used in the
 # mmkv_flutter plugin.
-set(MMKV_VERSION "v2.3.0")
+set(MMKV_VERSION "v2.4.0")
 
 include(FetchContent)
 FetchContent_Declare(mmkv

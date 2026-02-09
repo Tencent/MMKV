@@ -36,22 +36,18 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   }
 
   @override
-  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) getMMKVWithIDFunc() {
+  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256,
+      int enableKeyExpire, int expiredInSeconds, int enableCompareBeforeSet, int recover, int itemSizeLimit) getMMKVWithIDFunc() {
     return nativeLib()
-        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>, Pointer<Utf8>, Uint64)>>("getMMKVWithID")
+        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>, Pointer<Utf8>, Uint64, Int8, Int8,
+        Int32, Uint32, Int8, Int32, Uint32)>>("getMMKVWithID")
         .asFunction();
   }
 
   @override
-  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256) getMMKVWithIDFunc2() {
-    return nativeLib()
-        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Utf8>, Uint32, Pointer<Utf8>, Pointer<Utf8>, Uint64, Int8, Int8)>>("getMMKVWithID2")
-        .asFunction();
-  }
-
-  @override
-  Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256) getDefaultMMKVFunc() {
-    return nativeLib().lookup<NativeFunction<Pointer<Void> Function(Uint32, Pointer<Utf8>, Int8)>>("getDefaultMMKV").asFunction();
+  Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256, int expectedCapacity, int enableKeyExpire, int expiredInSeconds, int enableCompareBeforeSet, int recover,
+      int itemSizeLimit) getDefaultMMKVFunc() {
+    return nativeLib().lookup<NativeFunction<Pointer<Void> Function(Uint32, Pointer<Utf8>, Int8, Uint64, Int32, Uint32, Int8, Int32, Uint32)>>("getDefaultMMKV").asFunction();
   }
 
   @override

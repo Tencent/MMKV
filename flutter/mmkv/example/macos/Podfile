@@ -32,8 +32,8 @@ target 'Runner' do
   flutter_install_all_macos_pods File.dirname(File.realpath(__FILE__))
 
   # Specify the dependency from a specific branch
-#     pod 'MMKVCore', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev'
-#     pod 'MMKV', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev'
+    pod 'MMKVCore', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev'
+    pod 'MMKV', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev'
 
   target 'RunnerTests' do
     inherit! :search_paths
