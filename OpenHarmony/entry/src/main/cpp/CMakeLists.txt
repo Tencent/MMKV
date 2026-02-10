@@ -24,6 +24,7 @@ include_directories(${NATIVERENDER_ROOT_PATH}
 
 add_library(entry SHARED napi_init.cpp)
 target_link_libraries(entry PUBLIC libace_napi.z.so libhilog_ndk.z.so)
+set_target_properties(entry PROPERTIES CXX_STANDARD 17)
 
 # setup mmkv include path
 target_include_directories(entry PRIVATE ${MMKV_INCLUDE_PATH})
