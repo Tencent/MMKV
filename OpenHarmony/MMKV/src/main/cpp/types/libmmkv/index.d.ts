@@ -1,8 +1,12 @@
 export const initialize: (rootDir: string, cacheDir: string, logLevel: number, handler?: MMKVHandler) => string;
 export const version: () => string;
 export const pageSize: () => number;
-export const getDefaultMMKV: (mode: number, cryptKey?: string, aes256?: boolean) => bigint;
-export const mmkvWithID: (mmapID: string, mode: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint, aes256?: boolean) => bigint;
+export const getDefaultMMKV: (mode: number, cryptKey?: string, aes256?: boolean, expectedCapacity?: bigint,
+  enableKeyExpire?: number, expiredInSeconds?: number, enableCompareBeforeSet?: boolean, recover?: number,
+  itemSizeLimit?: number) => bigint;
+export const mmkvWithID: (mmapID: string, mode: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint,
+  aes256?: boolean, enableKeyExpire?: number, expiredInSeconds?: number, enableCompareBeforeSet?: boolean,
+  recover?: number, itemSizeLimit?: number) => bigint;
 export const mmapID: (handle: bigint) => string;
 export const encodeBool: (handle: bigint, key: string, value: boolean, expiration?: number) => boolean;
 export const decodeBool: (handle: bigint, key: string, defaultValue?: boolean) => boolean;
@@ -65,8 +69,9 @@ export const enableAutoKeyExpire: (handle: bigint, expireDurationInSecond: numbe
 export const disableAutoKeyExpire: (handle: bigint) => boolean;
 export const enableCompareBeforeSet: (handle: bigint) => void;
 export const disableCompareBeforeSet: (handle: bigint) => void;
-export const mmkvWithIDAndSize: (mmapID: string, size: number, mode: number, cryptKey?: string) => bigint;
-export const mmkvWithAshmemFD: (mmapID: string, fd: number, metaFD: number, cryptKey?: string) => bigint;
+export const mmkvWithAshmemFD: (mmapID: string, fd: number, metaFD: number, cryptKey?: string, aes256?: boolean,
+  enableKeyExpire?: number, expiredInSeconds?: number, enableCompareBeforeSet?: boolean, recover?: number,
+  itemSizeLimit?: number) => bigint;
 export const ashmemFD: (handle: bigint) => number;
 export const ashmemMetaFD: (handle: bigint) => number;
 export const createNativeBuffer: (size: number) => bigint;

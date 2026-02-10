@@ -284,6 +284,13 @@ static int32_t NValueToInt32(napi_env env, napi_value value) {
     return result;
 }
 
+static int32_t NValueToInt32(napi_env env, napi_value value, int32_t defaultValue) {
+    if (IsNValueUndefined(env, value)) {
+        return defaultValue;
+    }
+    return NValueToInt32(env, value);
+}
+
 static napi_value UInt32ToNValue(napi_env env, uint32_t value) {
     napi_value result;
     napi_create_uint32(env, value, &result);
@@ -294,6 +301,13 @@ static uint32_t NValueToUInt32(napi_env env, napi_value value) {
     uint32_t result;
     napi_get_value_uint32(env, value, &result);
     return result;
+}
+
+static uint32_t NValueToUInt32(napi_env env, napi_value value, uint32_t defaultValue) {
+    if (IsNValueUndefined(env, value)) {
+        return defaultValue;
+    }
+    return NValueToUInt32(env, value);
 }
 
 static napi_value DoubleToNValue(napi_env env, double value) {
@@ -527,31 +541,45 @@ static napi_value pageSize(napi_env env, napi_callback_info info) {
 }
 
 static napi_value getDefaultMMKV(napi_env env, napi_callback_info info) {
-    size_t argc = 3;
-    napi_value args[3] = {nullptr};
+    size_t argc = 9;
+    napi_value args[9] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     int32_t mode;
     NAPI_CALL(napi_get_value_int32(env, args[0], &mode));
     auto crypt = NValueToString(env, args[1], true);
     auto aes256 = NValueToBool(env, args[2], true);
+    auto expectedCapacity = NValueToUInt64(env, args[3], true);
+    auto enableKeyExpire = NValueToInt32(env, args[4], -1);
+    auto expiredInSeconds = NValueToInt32(env, args[5], 0);
+    auto enableCompareBeforeSet = NValueToBool(env, args[6], true);
+    auto recover = NValueToInt32(env, args[7], -1);
+    auto itemSizeLimit = NValueToUInt32(env, args[8], 0);
 
-    MMKV *kv = nullptr;
-    if (crypt.length() > 0) {
-        kv = MMKV::defaultMMKV((MMKVMode)mode, &crypt, aes256);
+    auto config = MMKVConfig();
+    config.mode = (MMKVMode) mode;
+    config.aes256 = aes256;
+    config.cryptKey = crypt.empty() ? nullptr : &crypt;
+    config.expectedCapacity = expectedCapacity;
+    if (enableKeyExpire >= 0) {
+        config.enableKeyExpire = (enableKeyExpire != 0);
     }
+    config.expiredInSeconds = expiredInSeconds;
+    config.enableCompareBeforeSet = enableCompareBeforeSet;
+    if (recover >= 0) {
+        config.recover = static_cast<MMKVRecoverStrategic>(recover);
+    }
+    config.itemSizeLimit = itemSizeLimit;
 
-    if (!kv) {
-        kv = MMKV::defaultMMKV((MMKVMode)mode, nullptr, aes256);
-    }
+    MMKV *kv = MMKV::defaultMMKV(config);
 
     return UInt64ToNValue(env,(uint64_t)kv);
 }
 
 // mmkvWithID(mmapID: string, mode: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint): bigint
 static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
-    size_t argc = 6;
-    napi_value args[6] = {nullptr};
+    size_t argc = 11;
+    napi_value args[11] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     MMKV *kv = nullptr;
@@ -562,14 +590,73 @@ static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
         auto rootPath = NValueToString(env, args[3], true);
         auto expectedCapacity = NValueToUInt64(env, args[4], true);
         auto aes256 = NValueToBool(env, args[5], true);
+        auto enableKeyExpire = NValueToInt32(env, args[6], -1);
+        auto expiredInSeconds = NValueToInt32(env, args[7], 0);
+        auto enableCompareBeforeSet = NValueToBool(env, args[8], true);
+        auto recover = NValueToInt32(env, args[9], -1);
+        auto itemSizeLimit = NValueToUInt32(env, args[10], 0);
 
-        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
-        auto rootPathPtr = rootPath.empty() ? nullptr : &rootPath;
+        auto config = MMKVConfig();
+        config.mode = (MMKVMode) mode;
+        config.rootPath = rootPath.empty() ? nullptr : &rootPath;
+        config.aes256 = aes256;
+        config.cryptKey = cryptKey.empty() ? nullptr : &cryptKey;
+        config.expectedCapacity = expectedCapacity;
+        if (expectedCapacity != 0) {
+            config.size = expectedCapacity;
+        }
+        if (enableKeyExpire >= 0) {
+            config.enableKeyExpire = (enableKeyExpire != 0);
+        }
+        config.expiredInSeconds = expiredInSeconds;
+        config.enableCompareBeforeSet = enableCompareBeforeSet;
+        if (recover >= 0) {
+            config.recover = static_cast<MMKVRecoverStrategic>(recover);
+        }
+        config.itemSizeLimit = itemSizeLimit;
+
         // MMKVInfo("rootPath: %p, %s, %s", rootPathPtr, rootPath.c_str(), rootPathPtr ? rootPathPtr->c_str() : "");
-        kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, expectedCapacity, aes256);
+        kv = MMKV::mmkvWithID(mmapID, config);
     }
 
     return UInt64ToNValue(env, (uint64_t) kv);
+}
+
+static napi_value mmkvWithAshmemFD(napi_env env, napi_callback_info info) {
+    size_t argc = 10;
+    napi_value args[10] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    MMKV *kv = nullptr;
+    auto mmapID = NValueToString(env, args[0]);
+    if (!mmapID.empty()) {
+        int32_t fd = NValueToInt32(env, args[1]);
+        int32_t metaFD = NValueToInt32(env, args[2]);
+        auto cryptKey = NValueToString(env, args[3], true);
+        auto aes256 = NValueToBool(env, args[4], true);
+        auto enableKeyExpire = NValueToInt32(env, args[5], -1);
+        auto expiredInSeconds = NValueToInt32(env, args[6], 0);
+        auto enableCompareBeforeSet = NValueToBool(env, args[7], true);
+        auto recover = NValueToInt32(env, args[8], -1);
+        auto itemSizeLimit = NValueToUInt32(env, args[9], 0);
+
+        auto config = MMKVConfig();
+        config.aes256 = aes256;
+        config.cryptKey = cryptKey.empty() ? nullptr : &cryptKey;
+        if (enableKeyExpire >= 0) {
+            config.enableKeyExpire = (enableKeyExpire != 0);
+        }
+        config.expiredInSeconds = expiredInSeconds;
+        config.enableCompareBeforeSet = enableCompareBeforeSet;
+        if (recover >= 0) {
+            config.recover = static_cast<MMKVRecoverStrategic>(recover);
+        }
+        config.itemSizeLimit = itemSizeLimit;
+
+        kv = MMKV::mmkvWithAshmemFD(mmapID, fd, metaFD, config);
+    }
+
+    return UInt64ToNValue(env, (uint64_t)kv);
 }
 
 static napi_value mmapID(napi_env env, napi_callback_info info) {
@@ -1558,46 +1645,6 @@ static napi_value disableCompareBeforeSet(napi_env env, napi_callback_info info)
     return NAPIUndefined(env);
 }
 
-// mmkvWithIDAndSize(mmapID: string, size: number, mode: number, cryptKey?: string): bigint
-static napi_value mmkvWithIDAndSize(napi_env env, napi_callback_info info) {
-    size_t argc = 5;
-    napi_value args[5] = {nullptr};
-    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
-
-    MMKV *kv = nullptr;
-    auto mmapID = NValueToString(env, args[0]);
-    if (!mmapID.empty()) {
-        int32_t size = NValueToInt32(env, args[1]);
-        int32_t mode = NValueToInt32(env, args[2]);
-        auto cryptKey = NValueToString(env, args[3], true);
-
-        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
-        kv = MMKV::mmkvWithID(mmapID, size, (MMKVMode)mode, cryptKeyPtr);
-    }
-
-    return UInt64ToNValue(env, (uint64_t)kv);
-}
-
-// mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): bigint
-static napi_value mmkvWithAshmemFD(napi_env env, napi_callback_info info) {
-    size_t argc = 5;
-    napi_value args[5] = {nullptr};
-    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
-
-    MMKV *kv = nullptr;
-    auto mmapID = NValueToString(env, args[0]);
-    if (!mmapID.empty()) {
-        int32_t fd = NValueToInt32(env, args[1]);
-        int32_t metaFD = NValueToInt32(env, args[2]);
-        auto cryptKey = NValueToString(env, args[3], true);
-
-        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
-        kv = MMKV::mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKeyPtr);
-    }
-
-    return UInt64ToNValue(env, (uint64_t)kv);
-}
-
 static napi_value ashmemFD(napi_env env, napi_callback_info info) {
     size_t argc = 1;
     napi_value args[1] = {nullptr};
@@ -1806,7 +1853,6 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "disableAutoKeyExpire", nullptr, disableAutoKeyExpire, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "enableCompareBeforeSet", nullptr, enableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "disableCompareBeforeSet", nullptr, disableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
-        { "mmkvWithIDAndSize", nullptr, mmkvWithIDAndSize, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "mmkvWithAshmemFD", nullptr, mmkvWithAshmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "ashmemFD", nullptr, ashmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "ashmemMetaFD", nullptr, ashmemMetaFD, nullptr, nullptr, nullptr, napi_default, nullptr },

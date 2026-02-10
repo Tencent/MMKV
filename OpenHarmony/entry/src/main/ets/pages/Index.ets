@@ -602,11 +602,16 @@ struct Index {
   }
 
   private async testAutoExpire(): Promise<void> {
-    let mmkv = MMKV.mmkvWithID('test_auto_expire');
+    // test disable expire by config
+    let mmkv = MMKV.mmkvWithConfig('test_auto_expire', {enableKeyExpire: false, itemSizeLimit: 1});
+    // mmkv.encodeBool('never_expire_key_1', true, MMKV.ExpireNever);
     mmkv.clearAll();
-    mmkv.disableAutoKeyExpire();
+    // mmkv.disableAutoKeyExpire();
 
-    mmkv.enableAutoKeyExpire(1);
+    // test enable expire by config
+    mmkv.close();
+    mmkv = MMKV.mmkvWithConfig('test_auto_expire', {enableKeyExpire: true, expiredInSeconds: 1});
+    // mmkv.enableAutoKeyExpire(1);
     mmkv.encodeBool('auto_expire_key_1', true);
     mmkv.encodeBool('never_expire_key_1', true, MMKV.ExpireNever);
 
