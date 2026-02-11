@@ -410,7 +410,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         int recover = (value == null) ? -1 : value;
 
         long handle = getMMKVWithID(mmapID, config.mode, config.cryptKey, config.rootPath, config.expectedCapacity,
-                config.aes256, config.size, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet,
+                config.aes256, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet,
                 recover, config.itemSizeLimit);
 
         return checkProcessMode(handle, mmapID, config.mode);
@@ -668,7 +668,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
                                         boolean aes256) throws RuntimeException {
         MMKVConfig config = new MMKVConfig();
         config.mode = mode | ASHMEM_MODE;
-        config.size = size;
+        config.expectedCapacity = size;
         config.aes256 = aes256;
         config.cryptKey = cryptKey;
         return mmkvWithAshmemID(context, mmapID, config);
@@ -704,7 +704,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
             simpleLog(MMKVLogLevel.LevelInfo, "getting parcelable mmkv in process, Uri = " + uri);
 
             Bundle extras = new Bundle();
-            extras.putInt(MMKVContentProvider.KEY_SIZE, config.size);
+            extras.putInt(MMKVContentProvider.KEY_SIZE, (int) config.expectedCapacity);
             extras.putInt(MMKVContentProvider.KEY_MODE, config.mode);
             if (config.cryptKey != null) {
                 extras.putString(MMKVContentProvider.KEY_CRYPT, config.cryptKey);
@@ -790,8 +790,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         int recover = (value == null) ? -1 : value;
 
         long handle = getDefaultMMKV(config.mode, config.cryptKey, config.expectedCapacity, config.aes256,
-                config.size, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet,
-                recover, config.itemSizeLimit);
+                enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet, recover, config.itemSizeLimit);
 
         return checkProcessMode(handle, "DefaultMMKV", config.mode);
     }
@@ -1961,11 +1960,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     native static long
     getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath,
-                  long expectedCapacity, boolean aes256, int size, int enableKeyExpire, int expiredInSeconds,
+                  long expectedCapacity, boolean aes256, int enableKeyExpire, int expiredInSeconds,
                   boolean enableCompareBeforeSet, int recover, int itemSizeLimit);
 
     private native static long getDefaultMMKV(int mode, @Nullable String cryptKey, long expectedCapacity,
-                                              boolean aes256, int size, int enableKeyExpire, int expiredInSeconds,
+                                              boolean aes256, int enableKeyExpire, int expiredInSeconds,
                                               boolean enableCompareBeforeSet, int recover, int itemSizeLimit);
 
     private native static long getMMKVWithAshmemFD(String mmapID, int fd, int metaFD, @Nullable String cryptKey, boolean aes256);

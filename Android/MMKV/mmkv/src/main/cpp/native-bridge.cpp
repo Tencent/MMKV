@@ -304,8 +304,8 @@ static void onContentChangedByOuterProcess(const std::string &mmapID) {
 }
 
 MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, jstring cryptKey, jstring rootPath,
-                             jlong expectedCapacity, jboolean aes256, jint size, jint enableKeyExpire,
-                             jint expiredInSeconds, jboolean enableCompareBeforeSet, jint recover, jint itemSizeLimit) {
+                             jlong expectedCapacity, jboolean aes256, jint enableKeyExpire, jint expiredInSeconds,
+                             jboolean enableCompareBeforeSet, jint recover, jint itemSizeLimit) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return (jlong) kv;
@@ -316,9 +316,6 @@ MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, js
     config.mode = (MMKVMode) mode;
     config.aes256 = aes256;
     config.expectedCapacity = expectedCapacity;
-    if (size != 0) {
-        config.size = size;
-    }
     if (enableKeyExpire >= 0) {
         config.enableKeyExpire = (enableKeyExpire != 0);
     }
@@ -358,7 +355,7 @@ MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, js
 }
 
 MMKV_JNI jlong getDefaultMMKV(JNIEnv *env, jobject obj, jint mode, jstring cryptKey, jlong expectedCapacity,
-                              jboolean aes256, jint size, jint enableKeyExpire, jint expiredInSeconds,
+                              jboolean aes256, jint enableKeyExpire, jint expiredInSeconds,
                               jboolean enableCompareBeforeSet, jint recover, jint itemSizeLimit) {
     MMKV *kv = nullptr;
 
@@ -366,9 +363,6 @@ MMKV_JNI jlong getDefaultMMKV(JNIEnv *env, jobject obj, jint mode, jstring crypt
     config.mode = (MMKVMode) mode;
     config.aes256 = aes256;
     config.expectedCapacity = expectedCapacity;
-    if (size != 0) {
-        config.size = size;
-    }
     if (enableKeyExpire >= 0) {
         config.enableKeyExpire = (enableKeyExpire != 0);
     }
@@ -1196,8 +1190,8 @@ static JNINativeMethod g_methods[] = {
     {"ashmemFD", "()I", (void *) mmkv::ashmemFD},
     {"ashmemMetaFD", "()I", (void *) mmkv::ashmemMetaFD},
     {"jniInitialize", "(Ljava/lang/String;Ljava/lang/String;IZZJ)V", (void *) mmkv::jniInitialize},
-    {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;JZIIIZII)J", (void *) mmkv::getMMKVWithID},
-    {"getDefaultMMKV", "(ILjava/lang/String;JZIIIZII)J", (void *) mmkv::getDefaultMMKV},
+    {"getMMKVWithID", "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;JZIIZII)J", (void *) mmkv::getMMKVWithID},
+    {"getDefaultMMKV", "(ILjava/lang/String;JZIIZII)J", (void *) mmkv::getDefaultMMKV},
     {"getMMKVWithAshmemFD", "(Ljava/lang/String;IILjava/lang/String;Z)J", (void *) mmkv::getMMKVWithAshmemFD},
     {"encodeBool", "(JLjava/lang/String;Z)Z", (void *) mmkv::encodeBool},
     {"encodeBool_2", "(JLjava/lang/String;ZI)Z", (void *) mmkv::encodeBool_2},

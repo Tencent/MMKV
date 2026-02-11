@@ -268,6 +268,7 @@ MMKV *MMKV::getMMKVWithID(const std::string &mmapID, const MMKVConfig &config) {
     (*g_instanceDic)[mmapKey] = kv;
     return kv;
 }
+#endif
 
 MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, const MMKVPath_t *rootPath, size_t expectedCapacity, bool aes256) {
     MMKVConfig config;
@@ -281,8 +282,6 @@ MMKV *MMKV::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptK
 
     return mmkvWithID(mmapID, config);
 }
-
-#endif
 
 MMKV *MMKV::mmkvWithID(const std::string &mmapID, const MMKVConfig &config) {
     if (mmapID.empty() || !g_instanceLock) {
@@ -1502,7 +1501,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
 #ifndef MMKV_ANDROID
             MemoryFile srcCRCFile(srcCRCPath);
 #else
-            MemoryFile srcCRCFile(srcCRCPath, DEFAULT_MMAP_SIZE, MMFILE_TYPE_FILE);
+            MemoryFile srcCRCFile(srcCRCPath, MMFILE_TYPE_FILE);
 #endif
             if (srcCRCFile.isFileValid()) {
                 memcpy(kv->m_metaFile->getMemory(), srcCRCFile.getMemory(), sizeof(MMKVMetaInfo));
@@ -1806,7 +1805,6 @@ NameSpace MMKV::defaultNameSpace() {
     return NameSpace(g_realRootDir);
 }
 
-#ifndef MMKV_ANDROID
 MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *cryptKey, size_t expectedCapacity, bool aes256) {
     MMKVConfig config;
     config.mode = mode;
@@ -1818,7 +1816,6 @@ MMKV *NameSpace::mmkvWithID(const string &mmapID, MMKVMode mode, const string *c
     config.expectedCapacity = expectedCapacity;
     return MMKV::getMMKVWithID(mmapID, config);
 }
-#endif
 
 MMKV *NameSpace::mmkvWithID(const string &mmapID, const MMKVConfig &config) {
     if (!config.rootPath || *config.rootPath != m_rootDir) {

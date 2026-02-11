@@ -20,6 +20,9 @@
 
 package com.tencent.mmkv;
 
+/**
+ * The all-in-one configuration for creating an MMKV instance.
+ */
 public class MMKVConfig {
     public int mode = MMKV.SINGLE_PROCESS_MODE;
 
@@ -29,7 +32,6 @@ public class MMKVConfig {
     public String cryptKey = null;
 
     public String rootPath = null;
-    public int size = MMKV.pageSize(); // for ashmem size
 
     public long expectedCapacity = 0; // the initial file size
 

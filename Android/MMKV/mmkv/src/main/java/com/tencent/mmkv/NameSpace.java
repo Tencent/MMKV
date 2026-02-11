@@ -66,7 +66,7 @@ public final class NameSpace {
         int recover = (config.recover == null) ? -1 : ((config.recover == MMKVRecoverStrategic.OnErrorDiscard) ? 0 : 1);
 
         long handle = MMKV.getMMKVWithID(mmapID, config.mode, config.cryptKey, rootDir, config.expectedCapacity,
-                config.aes256, config.size, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet,
+                config.aes256, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet,
                 recover, config.itemSizeLimit);
 
         return MMKV.checkProcessMode(handle, mmapID, config.mode);

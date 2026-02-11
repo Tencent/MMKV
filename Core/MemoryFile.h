@@ -140,7 +140,7 @@ public:
 #ifndef MMKV_ANDROID
     explicit MemoryFile(MMKVPath_t path, size_t expectedCapacity = 0, bool readOnly = false, bool mayflyFD = false);
 #else
-    MemoryFile(MMKVPath_t path, size_t size, FileType fileType, size_t expectedCapacity = 0, bool readOnly = false, bool mayflyFD = false);
+    MemoryFile(MMKVPath_t path, FileType fileType, size_t expectedCapacity = 0, bool readOnly = false, bool mayflyFD = false);
     explicit MemoryFile(MMKVFileHandle_t ashmemFD);
 
     const FileType m_fileType;

@@ -333,7 +333,7 @@ public abstract class BenchMarkBaseService extends Service {
             final String id = "tetAshmemMMKV";
             try {
                 MMKVConfig config = new MMKVConfig();
-                config.size = AshmemMMKV_Size;
+                config.expectedCapacity = AshmemMMKV_Size;
                 config.mode = MMKV.MULTI_PROCESS_MODE;
                 config.cryptKey = CryptKey;
                 m_ashmemMMKV = MMKV.mmkvWithAshmemID(BenchMarkBaseService.this, id, config);

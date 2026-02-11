@@ -602,9 +602,6 @@ static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
         config.aes256 = aes256;
         config.cryptKey = cryptKey.empty() ? nullptr : &cryptKey;
         config.expectedCapacity = expectedCapacity;
-        if (expectedCapacity != 0) {
-            config.size = expectedCapacity;
-        }
         if (enableKeyExpire >= 0) {
             config.enableKeyExpire = (enableKeyExpire != 0);
         }

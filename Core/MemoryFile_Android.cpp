@@ -70,8 +70,9 @@ File::File(MMKVFileHandle_t ashmemFD)
     }
 }
 
-MemoryFile::MemoryFile(string path, size_t size, FileType fileType, size_t expectedCapacity, bool isReadOnly, bool mayflyFD)
-    : m_diskFile(std::move(path), isReadOnly ? OpenFlag::ReadOnly : (OpenFlag::ReadWrite | OpenFlag::Create), size, fileType),
+MemoryFile::MemoryFile(string path, FileType fileType, size_t expectedCapacity, bool isReadOnly, bool mayflyFD)
+    : m_diskFile(std::move(path), isReadOnly ? OpenFlag::ReadOnly : (OpenFlag::ReadWrite | OpenFlag::Create),
+                 expectedCapacity, fileType),
     m_ptr(nullptr), m_size(0), m_fileType(fileType), m_readOnly(isReadOnly), m_isMayflyFD(mayflyFD) {
     if (m_fileType == MMFILE_TYPE_FILE) {
         reloadFromFile(expectedCapacity);

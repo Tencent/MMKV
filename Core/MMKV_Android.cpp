@@ -52,8 +52,8 @@ MMKV::MMKV(const string &mmapID, const MMKVConfig &config)
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
     , m_expectedCapacity(std::max<size_t>(DEFAULT_MMAP_SIZE, roundUp<size_t>(config.expectedCapacity, DEFAULT_MMAP_SIZE)))
-    , m_file(new MemoryFile(m_path, config.size, isAshmem() ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity, isReadOnly(), !isAshmem()))
-    , m_metaFile(new MemoryFile(m_crcPath, DEFAULT_MMAP_SIZE, m_file->m_fileType, 0, isReadOnly()))
+    , m_file(new MemoryFile(m_path, isAshmem() ? MMFILE_TYPE_ASHMEM : MMFILE_TYPE_FILE, m_expectedCapacity, isReadOnly(), !isAshmem()))
+    , m_metaFile(new MemoryFile(m_crcPath, m_file->m_fileType, DEFAULT_MMAP_SIZE, isReadOnly()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
@@ -265,17 +265,6 @@ MMKV *MMKV::getMMKVWithID(const string &mmapID, const MMKVConfig &config) {
     return kv;
 }
 
-MMKV *MMKV::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, const string *rootPath, size_t expectedCapacity, bool aes256) {
-    MMKVConfig config;
-    config.mode = mode;
-    config.rootPath = rootPath;
-    config.aes256 = aes256;
-    config.cryptKey = cryptKey;
-    config.size = size;
-    config.expectedCapacity = expectedCapacity;
-    return getMMKVWithID(mmapID, config);
-}
-
 MMKV *MMKV::mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, const std::string *cryptKey, bool aes256) {
     MMKVConfig config;
     config.aes256 = aes256;
@@ -391,18 +380,5 @@ void MMKV::enableDisableProcessMode(bool enable) {
 }
 
 #endif // !MMKV_OHOS
-
-MMKV *NameSpace::mmkvWithID(const string &mmapID, int size, MMKVMode mode, const string *cryptKey, size_t expectedCapacity, bool aes256) {
-    MMKVConfig config;
-    config.mode = mode;
-#ifndef MMKV_DISABLE_CRYPT
-    config.aes256 = aes256;
-    config.cryptKey = cryptKey;
-#endif
-    config.size = size;
-    config.rootPath = &m_rootDir;
-    config.expectedCapacity = expectedCapacity;
-    return MMKV::getMMKVWithID(mmapID, config);
-}
 
 #endif // MMKV_ANDROID

@@ -78,9 +78,6 @@ struct MMKVConfig {
 
     const MMKVPath_t *rootPath = nullptr;
 
-#ifdef MMKV_ANDROID
-    int size = static_cast<int>(mmkv::DEFAULT_MMAP_SIZE); // for ashmem size
-#endif
     size_t expectedCapacity = 0; // the initial file size
 
     std::optional<bool> enableKeyExpire = std::nullopt;
@@ -311,7 +308,6 @@ public:
     // if you want a per-user mmkv, you could merge user-id within mmapID
     static MMKV *mmkvWithID(const std::string &mmapID, const MMKVConfig &config);
 
-#ifndef MMKV_ANDROID
     // mmapID: any unique ID (com.tencent.xin.pay, etc.)
     // if you want a per-user mmkv, you could merge user-id within mmapID
     // cryptKey: 16 bytes at most
@@ -322,18 +318,7 @@ public:
                             size_t expectedCapacity = 0,
                             bool aes256 = false);
 
-#else // defined(MMKV_ANDROID)
-    // mmapID: any unique ID (com.tencent.xin.pay, etc.)
-    // if you want a per-user mmkv, you could merge user-id within mmapID
-    // cryptKey: 16 bytes at most
-    static MMKV *mmkvWithID(const std::string &mmapID,
-                            int size = mmkv::DEFAULT_MMAP_SIZE,
-                            MMKVMode mode = MMKV_SINGLE_PROCESS,
-                            const std::string *cryptKey = nullptr,
-                            const MMKVPath_t *rootPath = nullptr,
-                            size_t expectedCapacity = 0,
-                            bool aes256 = false);
-
+#ifdef MMKV_ANDROID
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, const MMKVConfig &config);
 
     static MMKV *mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, const std::string *cryptKey = nullptr,
@@ -772,7 +757,6 @@ public:
 
     MMKV *mmkvWithID(const std::string &mmapID, const MMKVConfig &config);
 
-#ifndef MMKV_ANDROID
     // mmapID: any unique ID (com.tencent.xin.pay, etc.)
     // if you want a per-user mmkv, you could merge user-id within mmapID
     // cryptKey: 16 bytes at most
@@ -781,19 +765,6 @@ public:
                      const std::string *cryptKey = nullptr,
                      size_t expectedCapacity = 0,
                      bool aes256 = false);
-
-#else // defined(MMKV_ANDROID)
-
-    // mmapID: any unique ID (com.tencent.xin.pay, etc.)
-    // if you want a per-user mmkv, you could merge user-id within mmapID
-    // cryptKey: 16 bytes at most
-    MMKV *mmkvWithID(const std::string &mmapID,
-                     int size = mmkv::DEFAULT_MMAP_SIZE,
-                     MMKVMode mode = MMKV_SINGLE_PROCESS,
-                     const std::string *cryptKey = nullptr,
-                     size_t expectedCapacity = 0,
-                     bool aes256 = false);
-#endif // MMKV_ANDROID
 
     // backup one MMKV instance to dstDir
     bool backupOneToDirectory(const std::string &mmapID, const MMKVPath_t &dstDir);
