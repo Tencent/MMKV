@@ -225,6 +225,16 @@ bool MMKV::getString(std::string_view key, std::string &result, bool inplaceModi
     return getString(hybridKey.str, result, inplaceModification);
 }
 
+mmkv::MMBuffer MMKV::getBytes(std::string_view key) {
+    HybridString hybridKey = key;
+    return getBytes(hybridKey.str);
+}
+
+bool MMKV::getBytes(std::string_view key, mmkv::MMBuffer &result) {
+    HybridString hybridKey = key;
+    return getBytes(hybridKey.str, result);
+}
+
 mmkv::MMBuffer MMKV::getDataForKey(std::string_view key) {
     HybridString hybridKey = key;
     return getDataForKey(hybridKey.str);

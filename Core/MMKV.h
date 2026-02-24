@@ -465,6 +465,10 @@ public:
 
     bool getString(std::string_view key, std::string &result, bool inplaceModification = true);
 
+    mmkv::MMBuffer getBytes(std::string_view key);
+
+    bool getBytes(std::string_view key, mmkv::MMBuffer &result);
+
 #ifdef MMKV_HAS_CPP20
     template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
     bool getVector(std::string_view key, T &result);
