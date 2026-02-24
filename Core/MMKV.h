@@ -563,8 +563,8 @@ public:
     bool disableCompareBeforeSet();
 
     bool isExpirationEnabled() const { return m_enableKeyExpire; }
-    bool isEncryptionEnabled() const { return m_dicCrypt; }
-    bool isCompareBeforeSetEnabled() const { return m_enableCompareBeforeSet && !m_enableKeyExpire && !m_dicCrypt; }
+    bool isEncryptionEnabled() const { return m_crypter != nullptr; }
+    bool isCompareBeforeSetEnabled() const { return m_enableCompareBeforeSet && !m_enableKeyExpire && !m_crypter; }
 
 #ifdef MMKV_APPLE
 #ifdef __OBJC__

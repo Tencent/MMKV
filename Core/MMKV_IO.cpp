@@ -2108,8 +2108,8 @@ bool MMKV::enableCompareBeforeSet() {
     SCOPED_LOCK(m_exclusiveProcessLock);
 
     assert(!m_enableKeyExpire && "enableCompareBeforeSet is invalid when Expiration is on");
-    assert(!m_dicCrypt && "enableCompareBeforeSet is invalid when key encryption is on");
-    if (m_enableKeyExpire || m_dicCrypt) {
+    assert(!m_crypter && "enableCompareBeforeSet is invalid when key encryption is on");
+    if (m_enableKeyExpire || m_crypter) {
         return false;
     }
 
@@ -2123,8 +2123,8 @@ bool MMKV::disableCompareBeforeSet() {
     SCOPED_LOCK(m_exclusiveProcessLock);
 
     assert(!m_enableKeyExpire && "disableCompareBeforeSet is invalid when Expiration is on");
-    assert(!m_dicCrypt && "disableCompareBeforeSet is invalid when key encryption is on");
-    if (m_enableKeyExpire || m_dicCrypt) {
+    assert(!m_crypter && "disableCompareBeforeSet is invalid when key encryption is on");
+    if (m_enableKeyExpire || m_crypter) {
         return false;
     }
 
