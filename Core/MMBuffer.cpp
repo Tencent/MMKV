@@ -204,4 +204,36 @@ void MMBuffer::detach() {
     *memsetPtr = 0;
 }
 
+#ifdef MMKV_APPLE
+NSData *MMBuffer::toNSData(bool transferOwnerShip) {
+    if (!transferOwnerShip) {
+        if (m_data) {
+            return m_data;
+        } else {
+            return [NSData dataWithBytesNoCopy:getPtr() length:length() freeWhenDone:NO];
+        }
+    }
+    if (m_data != nil) {
+        if (isNoCopy == MMBufferNoCopy) {
+            return m_data;
+        } else {
+            auto result = [m_data autorelease];
+            m_data = nil;
+            return result;
+        }
+    }
+    if (isStoredOnStack()) {
+        return [NSData dataWithBytes:getPtr() length:length()];
+    } else {
+        if (isNoCopy == MMBufferNoCopy) {
+            return [NSData dataWithBytesNoCopy:getPtr() length:length() freeWhenDone:NO];
+        } else {
+            auto result = [NSData dataWithBytesNoCopy:getPtr() length:length()];
+            detach();
+            return result;
+        }
+    }
+}
+#endif
+
 } // namespace mmkv

@@ -545,19 +545,15 @@ bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> 
 }
 
 size_t MMKV::readActualSize() {
-    MMKV_ASSERT(m_file->getMemory());
-    MMKV_ASSERT(m_metaFile->isFileValid());
-
-    uint32_t actualSize = 0;
-    memcpy(&actualSize, m_file->getMemory(), Fixed32Size);
-
     if (m_metaInfo->m_version >= MMKVVersionActualSize) {
-        if (m_metaInfo->m_actualSize != actualSize) {
-            MMKVWarning("[%s] actual size %u, meta actual size %u", m_mmapID.c_str(), actualSize,
-                        m_metaInfo->m_actualSize);
-        }
+        MMKV_ASSERT(m_metaFile->isFileValid());
+
         return m_metaInfo->m_actualSize;
     } else {
+        MMKV_ASSERT(m_file->isFileValid());
+
+        uint32_t actualSize = 0;
+        memcpy(&actualSize, m_file->getMemory(), Fixed32Size);
         return actualSize;
     }
 }
@@ -575,7 +571,9 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
     }
 
     // backward compatibility
-    oldStyleWriteActualSize(size);
+    if (!increaseSequence && m_metaInfo->m_version < MMKVVersionActualSize) {
+        oldStyleWriteActualSize(size);
+    }
 
     if (!m_metaFile->isFileValid()) {
         return false;
