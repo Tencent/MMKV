@@ -64,7 +64,7 @@ typedef struct {
     MMKVRecoverStrategic recover; // = MMKVOnErrorNotSet;
 
     // the size limit of a key-value pair, reject insert if pass limit
-    size_t itemSizeLimit; // = 0;
+    uint32_t itemSizeLimit; // = 0;
 } MMKVConfig;
 
 static inline MMKVConfig MMKVConfigDefault(void) {

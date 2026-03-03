@@ -181,6 +181,11 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 + (nullable instancetype)mmkvWithID:(NSString *)mmapID config:(MMKVConfig)config {
+    if (config.rootPath == nil) {
+        if (config.mode & MMKVMultiProcess) {
+            config.rootPath = g_groupPath;
+        }
+    }
     return [MMKV doGetWithID:mmapID config:config];
 }
 
@@ -1266,7 +1271,7 @@ static NSString *md5(NSString *value) {
 
 + (MMKVNameSpace *)nameSpace:(NSString *)rootPath {
     mmkv::MMKV::nameSpace(rootPath.UTF8String);
-    return [[MMKVNameSpace alloc] initWith:rootPath];
+    return [[[MMKVNameSpace alloc] initWith:rootPath] autorelease];
 }
 
 + (MMKVNameSpace *)defaultNameSpace {
@@ -1274,7 +1279,7 @@ static NSString *md5(NSString *value) {
         MMKVWarning("MMKV not initialized properly, must call +initializeMMKV: in main thread before calling any other MMKV methods");
         return nil;
     }
-    return [[MMKVNameSpace alloc] initWith:[self mmkvBasePath]];
+    return [[[MMKVNameSpace alloc] initWith:[self mmkvBasePath]] autorelease];
 }
 
 @end
