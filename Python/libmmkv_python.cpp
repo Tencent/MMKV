@@ -98,15 +98,41 @@ PYBIND11_MODULE(mmkv, m) {
 
     py::class_<NameSpace, unique_ptr<NameSpace>> clsNameSpace(m, "NameSpace");
 
-    clsNameSpace.def("mmkvWithID", &NameSpace::mmkvWithID,
+    clsNameSpace.def("mmkvWithID", [](NameSpace &self, const string &mmapID, MMKVMode mode, const string &cryptKey,
+                const size_t expectedCapacity, bool aes256, std::optional<bool> enableKeyExpire,
+                uint32_t expiredInSeconds, bool enableCompareBeforeSet,std::optional<MMKVRecoverStrategic> recover,
+                uint32_t itemSizeLimit) {
+                    MMKVConfig config;
+                    config.mode = mode;
+                    config.aes256 = aes256;
+                    config.cryptKey = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
+                    config.rootPath = (!self.getRootDir().empty()) ? (MMKVPath_t *) &self.getRootDir() : nullptr;
+                    config.expectedCapacity = expectedCapacity;
+                    config.enableKeyExpire = enableKeyExpire;
+                    config.expiredInSeconds = expiredInSeconds;
+                    config.enableCompareBeforeSet = enableCompareBeforeSet;
+                    config.recover = recover;
+                    config.itemSizeLimit = itemSizeLimit;
+                    return MMKV::mmkvWithID(mmapID, config);
+                },
                 "Parameters:\n"
                 "  mmapID: all instances of the same mmapID share the same data and file storage\n"
                 "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
                 "  cryptKey: pass a non-empty string for an encrypted MMKV, 32 bytes at most\n"
                 "  expectedCapacity: the file size you expected when opening or creating file\n"
-                "  aes256: use AES 256 key length",
+                "  aes256: use AES 256 key length\n"
+                "  enableKeyExpire: enable auto key expiration\n"
+                "  expiredInSeconds: expiration in seconds\n"
+                "  enableCompareBeforeSet: enable compare before set, if new value is the same, dont update/insert\n"
+                "  recover: recover strategy on file corruption\n"
+                "  itemSizeLimit: size limit for a key-value pair\n",
                 py::arg("mmapID"), py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string(),
-                py::arg("expectedCapacity") = 0, py::arg("aes256") = false);
+                py::arg("expectedCapacity") = 0, py::arg("aes256") = false,
+                py::arg("enableKeyExpire") = std::nullopt, py::arg("expiredInSeconds") = 0,
+                py::arg("enableCompareBeforeSet") = false,
+                py::arg("recover") = std::nullopt,
+                py::arg("itemSizeLimit") = 0
+    );
 
     clsNameSpace.def("rootDir", &NameSpace::getRootDir, "get the root directory of NameSpace");
 
@@ -138,21 +164,41 @@ PYBIND11_MODULE(mmkv, m) {
     //             py::arg("rootDir") = (string*) nullptr);
 
     clsMMKV.def(py::init([](const string &mmapID, MMKVMode mode, const string &cryptKey, const MMKVPath_t &rootDir,
-                            const size_t expectedCapacity, bool aes256) {
-                    string *cryptKeyPtr = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
-                    MMKVPath_t *rootDirPtr = (rootDir.length() > 0) ? (MMKVPath_t *) &rootDir : nullptr;
-                    return MMKV::mmkvWithID(mmapID, mode, cryptKeyPtr, rootDirPtr, expectedCapacity, aes256);
+                const size_t expectedCapacity, bool aes256, std::optional<bool> enableKeyExpire,
+                uint32_t expiredInSeconds, bool enableCompareBeforeSet,std::optional<MMKVRecoverStrategic> recover,
+                uint32_t itemSizeLimit) {
+                    MMKVConfig config;
+                    config.mode = mode;
+                    config.aes256 = aes256;
+                    config.cryptKey = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
+                    config.rootPath = (rootDir.length() > 0) ? (MMKVPath_t *) &rootDir : nullptr;
+                    config.expectedCapacity = expectedCapacity;
+                    config.enableKeyExpire = enableKeyExpire;
+                    config.expiredInSeconds = expiredInSeconds;
+                    config.enableCompareBeforeSet = enableCompareBeforeSet;
+                    config.recover = recover;
+                    config.itemSizeLimit = itemSizeLimit;
+                    return MMKV::mmkvWithID(mmapID, config);
                 }),
                 "Parameters:\n"
                 "  mmapID: all instances of the same mmapID share the same data and file storage\n"
                 "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
                 "  cryptKey: pass a non-empty string for an encrypted MMKV, 32 bytes at most\n"
-                "  rootDir: custom root directory",
-                "  expectedCapacity: the file size you expected when opening or creating file\n",
-                "  aes256: use AES 256 key length",
+                "  rootDir: custom root directory\n"
+                "  expectedCapacity: the file size you expected when opening or creating file\n"
+                "  aes256: use AES 256 key length\n"
+                "  enableKeyExpire: enable auto key expiration\n"
+                "  expiredInSeconds: expiration in seconds\n"
+                "  enableCompareBeforeSet: enable compare before set, if new value is the same, dont update/insert\n"
+                "  recover: recover strategy on file corruption\n"
+                "  itemSizeLimit: size limit for a key-value pair\n",
                 py::arg("mmapID"), py::arg("mode") = MMKV_SINGLE_PROCESS,
                 py::arg("cryptKey") = string(), py::arg("rootDir") = string(),
-                py::arg("expectedCapacity") = 0, py::arg("aes256") = false);
+                py::arg("expectedCapacity") = 0, py::arg("aes256") = false,
+                py::arg("enableKeyExpire") = std::nullopt, py::arg("expiredInSeconds") = 0,
+                py::arg("enableCompareBeforeSet") = false,
+                py::arg("recover") = std::nullopt,
+                py::arg("itemSizeLimit") = 0);
 
     clsMMKV.def("__eq__", [](MMKV &kv, const MMKV &other) { return kv.mmapID() == other.mmapID(); });
 

@@ -131,12 +131,14 @@ def test_restore():
 
 
 def test_auto_expire():
-    kv = mmkv.MMKV("test_auto_expire")
+    kv = mmkv.MMKV("test_auto_expire", enableKeyExpire = False)
     kv.clearAll(True)
-    kv.disableAutoKeyExpire()
+    kv.disableAutoKeyExpire() # this call become a no-op
 
     kv.set(True, "auto_expire_key_1")
-    kv.enableAutoKeyExpire(1)
+    kv.close()
+    kv = mmkv.MMKV("test_auto_expire", enableKeyExpire = True, expiredInSeconds = 1)
+    kv.enableAutoKeyExpire(1) # this call become a no-op
     kv.set("never_expire_value_1", "never_expire_key_1", 0)
 
     time.sleep(2)
