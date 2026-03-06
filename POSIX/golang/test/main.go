@@ -251,13 +251,17 @@ func testRestore() {
 }
 
 func testAutoExpire() {
-	kv := mmkv.MMKVWithID("testAutoExpire")
+	kv := mmkv.MMKVWithIDAndConfig("testAutoExpire", mmkv.Config{
+		Expiration: &mmkv.ExpirationConfig{Enabled: false}})
 	kv.ClearAllKeepSpace()
 	kv.Trim()
-	kv.DisableAutoKeyExpire()
+	//kv.DisableAutoKeyExpire()
 
 	kv.SetBool(true, "auto_expire_key_1")
-	kv.EnableAutoKeyExpire(1)
+	kv.Close()
+	kv = mmkv.MMKVWithIDAndConfig("testAutoExpire", mmkv.Config{
+		Expiration: &mmkv.ExpirationConfig{Enabled: true, ExpiredInSeconds: 1}})
+	//kv.EnableAutoKeyExpire(1)
 	kv.SetBoolExpire(true, "never_expire_key_1", mmkv.MMKV_Expire_Never)
 
 	time.Sleep(2 * time.Second)
