@@ -356,30 +356,29 @@ func PageSize() int32 {
 
 // DefaultMMKV a generic purpose instance in single-process mode.
 func DefaultMMKV() MMKV {
-	cfg := configToC(&Config{})
-	mmkv := ctorMMKV(C.getDefaultMMKV(cfg))
-	return MMKV(mmkv)
+	return DefaultMMKVWithConfig(Config{})
 }
 
 // DefaultMMKVWithMode a generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithMode(mode int) MMKV {
-	cfg := configToC(&Config{Mode: mode})
-	mmkv := ctorMMKV(C.getDefaultMMKV(cfg))
-	return MMKV(mmkv)
+	return DefaultMMKVWithConfig(Config{Mode: mode})
 }
 
 // DefaultMMKVWithModeAndCryptKey an encrypted generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithModeAndCryptKey(mode int, cryptKey string, aes256 bool) MMKV {
-	cfg := configToC(&Config{Mode: mode, Encryption: &EncryptionConfig{AES256: aes256, Key: []byte(cryptKey)}})
+	return DefaultMMKVWithConfig(Config{Mode: mode, Encryption: &EncryptionConfig{AES256: aes256, Key: []byte(cryptKey)}})
+}
+
+// DefaultMMKVWithConfig a generic purpose instance with all-in-one configuration.
+func DefaultMMKVWithConfig(config Config) MMKV {
+	cfg := configToC(&config)
 	mmkv := ctorMMKV(C.getDefaultMMKV(cfg))
 	return MMKV(mmkv)
 }
 
 // MMKVWithID an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithID(mmapID string) MMKV {
-	cfg := configToC(&Config{})
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
-	return MMKV(mmkv)
+	return MMKVWithIDAndConfig(mmapID, Config{})
 }
 
 func MMKVWithIDAndConfig(mmapID string, config Config) MMKV {
@@ -390,23 +389,17 @@ func MMKVWithIDAndConfig(mmapID string, config Config) MMKV {
 
 // MMKVWithIDAndExpectedCapacity an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithIDAndExpectedCapacity(mmapID string, expectedCapacity uint64) MMKV {
-	cfg := configToC(&Config{ExpectedCapacity: expectedCapacity})
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
-	return MMKV(mmkv)
+	return MMKVWithIDAndConfig(mmapID, Config{ExpectedCapacity: expectedCapacity})
 }
 
 // MMKVWithIDAndMode an instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndMode(mmapID string, mode int) MMKV {
-	cfg := configToC(&Config{Mode: mode})
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
-	return MMKV(mmkv)
+	return MMKVWithIDAndConfig(mmapID, Config{Mode: mode})
 }
 
 // MMKVWithIDAndModeAndCryptKey an encrypted instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string, aes256 bool) MMKV {
-	cfg := configToC(&Config{Mode: mode, Encryption: &EncryptionConfig{AES256: aes256, Key: []byte(cryptKey)}})
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
-	return MMKV(mmkv)
+	return MMKVWithIDAndConfig(mmapID, Config{Mode: mode, Encryption: &EncryptionConfig{AES256: aes256, Key: []byte(cryptKey)}})
 }
 
 // BackupOneToDirectory backup one MMKV instance (from the root dir of MMKV) to dstDir
