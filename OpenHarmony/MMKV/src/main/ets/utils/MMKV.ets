@@ -147,10 +147,23 @@ export class MMKV {
      * @returns The default MMKV instance.
      */
     public static defaultMMKV(mode?: number, cryptKey?: string, aes256?: boolean): MMKV {
+        return MMKV.defaultMMKVWithConfig({mode: mode, cryptKey: cryptKey, aes256: aes256});
+    }
+
+    /**
+     * Create the default MMKV instance with all-in-one configuration.
+     * @param config The all-in-one configuration.
+     * @returns The default MMKV instance.
+     */
+    public static defaultMMKVWithConfig(config: MMKVConfig): MMKV {
         if (!MMKV.g_rootDir) {
             throw new Error('You should Call MMKV.initialize() first.')
         }
-        let handle: bigint = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, aes256);
+        let enableKeyExpire = (config.enableKeyExpire == undefined) ? -1 : (config.enableKeyExpire == true ? 1 : 0);
+        let mode = config.mode ?? MMKV.SINGLE_PROCESS_MODE;
+        let handle: bigint = native.getDefaultMMKV(mode, config.cryptKey, config.aes256, config.expectedCapacity,
+            enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet, config.recover,
+            config.itemSizeLimit);
         if (!handle) {
             throw new Error('Fail to create the default MMKV instance in NAPI.');
         }
