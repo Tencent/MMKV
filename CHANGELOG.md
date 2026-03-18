@@ -1,4 +1,42 @@
 # MMKV Change Log
+## v2.4.0 / 2026-03-18
+
+This release introduces a **unified `MMKVHandler` callback interface** across all platforms, replacing scattered per-callback registration with a single, OO-style handler. It also adds the `MMKVConfig` all-in-one configuration and several bug fixes.
+
+### Changes for All Platforms
+* **Feature:** Refactored the callback system into a **unified `MMKVHandler`** interface. All callbacks (log redirecting, error handling, content change notification, content loaded notification) are now grouped in a single handler registered via `registerHandler()`. The old per-callback `registerLogHandler()` / `registerErrorHandler()` / `registerContentChangeHandler()` / `registerContentLoadedHandler()` APIs have been removed.
+* **Feature:** Added `onMMKVContentLoadSuccessfully` callback, triggered when an MMKV file is loaded/mapped successfully.
+* **Feature:** Added `MMKVConfig` for all-in-one instance configuration, supporting all options (`mode`, `cryptKey`, `aes256`, `expectedCapacity`, `enableKeyExpire`, `expiredInSeconds`, `enableCompareBeforeSet`, `recover`, `itemSizeLimit`) in a single struct/class.
+* **Feature:** Added `defaultMMKV(config)` variant for creating the default instance with full configuration.
+* **Fix:** Robust check on encryption mode ([#1642](https://github.com/nicksunday/mmkv/issues/1642)).
+* **Fix:** Protect from `delete` file failure on corrupted files.
+* **Fix:** Protect from `m_file` not valid for `isDiskOfMMAPFileCorrupted()`.
+* **Fix:** Reduce `absolutePath()` calls as much as possible.
+* Drop old-style actual size downgrade support.
+* MMKV must be compiled with **C++17**.
+
+### Android
+* **Change:** Merged `MMKVContentChangeNotification` into `MMKVHandler`. The old `MMKVContentChangeNotification` interface is now `@Deprecated`.
+* **Fix:** Fix `fcntl()` OFD lock failure on ashmem ([#1637](https://github.com/nicksunday/mmkv/issues/1637)).
+* Merge ashmem size with `expectedCapacity`.
+* Correctly collect so-symbols.
+
+### iOS/macOS
+* **Feature:** Added `getBytes()` with `string_view` key for ObjC++.
+* **Fix:** Fixed a memory leak on getting `NameSpace` instance.
+* Support **Swift Package Manager** ([#535](https://github.com/nicksunday/mmkv/issues/535)).
+* Fix compile error on `tryAtomicRename()`.
+
+### HarmonyOS NEXT
+* Merge ashmem size with `expectedCapacity`.
+
+### Flutter
+* Updated to use the unified `MMKVHandler` callback interface.
+
+### Win32
+* Fix: Convert log message to UTF-8 for Win32 client.
+* Verify all pages for corrupted file detection.
+
 ## v2.3.0 / 2025-12-03 (Breaking Change)
 
 This release is a **breaking change** and introduces **AES-256 encryption** for enhanced security.
