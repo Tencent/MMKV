@@ -670,6 +670,12 @@ MMKV_EXPORT bool MMKV_FUNC(isReadOnly)(const void *handle) {
     }
 }
 
+- (void)onMMKVContentLoadSuccessfully:(NSString *)mmapID {
+    if (self.contentLoadedCallback) {
+        self.contentLoadedCallback(mmapID.UTF8String);
+    }
+}
+
 @end
 
 MMKV_EXPORT void MMKV_FUNC(registerErrorHandler)(ErrorCallback_t callback) {
@@ -678,6 +684,10 @@ MMKV_EXPORT void MMKV_FUNC(registerErrorHandler)(ErrorCallback_t callback) {
 
 MMKV_EXPORT void MMKV_FUNC(registerContentChangeNotify)(ContenctChangeCallback_t callback) {
     [MyMMKVHandler getHandler].contenctChangeCallback = callback;
+}
+
+MMKV_EXPORT void MMKV_FUNC(registerContentLoadedNotify)(ContenctChangeCallback_t callback) {
+    [MyMMKVHandler getHandler].contentLoadedCallback = callback;
 }
 
 MMKV_EXPORT void MMKV_FUNC(checkContentChanged)(const void *handle) {

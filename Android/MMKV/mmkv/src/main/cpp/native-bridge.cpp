@@ -40,6 +40,7 @@ static jmethodID g_callbackOnCRCFailID = nullptr;
 static jmethodID g_callbackOnFileLengthErrorID = nullptr;
 static jmethodID g_mmkvLogID = nullptr;
 static jmethodID g_callbackOnContentChange = nullptr;
+static jmethodID g_callbackOnContentLoaded = nullptr;
 static JavaVM *g_currentJVM = nullptr;
 
 static int registerNativeMethods(JNIEnv *env, jclass cls);
@@ -52,6 +53,79 @@ namespace mmkv {
     typedef void (*AndroidLogHandler)(MMKVLogLevel level, const char *file, int line, const char *function, const char *message);
     static AndroidLogHandler g_androidLogHandler = nullptr;
     static void androidLogWrapper(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message);
+
+    static JNIEnv *getCurrentEnv();
+    static jstring string2jstring(JNIEnv *env, const string &str);
+
+// C++ adapter class that bridges mmkv::MMKVHandler to JNI
+class JNIMMKVHandler : public mmkv::MMKVHandler {
+    bool m_logRedirecting = false;
+    bool m_hasCallback = false;
+    bool m_wantsContentChange = false;
+public:
+    void setLogRedirecting(bool logRedirecting) { m_logRedirecting = logRedirecting; }
+    void setHasCallback(bool hasCallback) { m_hasCallback = hasCallback; }
+    void setWantsContentChange(bool wantsContentChange) { m_wantsContentChange = wantsContentChange; }
+    bool isLogRedirecting() const { return m_logRedirecting; }
+
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) override {
+        if (m_logRedirecting) {
+            if (g_androidLogHandler) {
+                g_androidLogHandler(level, file, line, function, message.c_str());
+            } else {
+                mmkv::mmkvLog(level, file, line, function, message);
+            }
+        }
+    }
+
+    MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) override {
+        if (!m_hasCallback) {
+            return OnErrorDiscard;
+        }
+        auto currentEnv = getCurrentEnv();
+        if (currentEnv && g_callbackOnCRCFailID) {
+            jstring str = string2jstring(currentEnv, mmapID);
+            auto strategic = currentEnv->CallStaticIntMethod(g_cls, g_callbackOnCRCFailID, str);
+            currentEnv->DeleteLocalRef(str);
+            return static_cast<MMKVRecoverStrategic>(strategic);
+        }
+        return OnErrorDiscard;
+    }
+
+    MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) override {
+        if (!m_hasCallback) {
+            return OnErrorDiscard;
+        }
+        auto currentEnv = getCurrentEnv();
+        if (currentEnv && g_callbackOnFileLengthErrorID) {
+            jstring str = string2jstring(currentEnv, mmapID);
+            auto strategic = currentEnv->CallStaticIntMethod(g_cls, g_callbackOnFileLengthErrorID, str);
+            currentEnv->DeleteLocalRef(str);
+            return static_cast<MMKVRecoverStrategic>(strategic);
+        }
+        return OnErrorDiscard;
+    }
+
+    void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        auto currentEnv = getCurrentEnv();
+        if (currentEnv && g_callbackOnContentChange) {
+            jstring str = string2jstring(currentEnv, mmapID);
+            currentEnv->CallStaticVoidMethod(g_cls, g_callbackOnContentChange, str);
+            currentEnv->DeleteLocalRef(str);
+        }
+    }
+
+    void onMMKVContentLoadSuccessfully(const std::string &mmapID) override {
+        auto currentEnv = getCurrentEnv();
+        if (currentEnv && g_callbackOnContentLoaded) {
+            jstring str = string2jstring(currentEnv, mmapID);
+            currentEnv->CallStaticVoidMethod(g_cls, g_callbackOnContentLoaded, str);
+            currentEnv->DeleteLocalRef(str);
+        }
+    }
+};
+
+static JNIMMKVHandler g_jniHandler;
 }
 
 #define InternalLogError(format, ...) \
@@ -112,6 +186,11 @@ extern "C" JNIEXPORT JNICALL jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     if (!g_callbackOnContentChange) {
         InternalLogError("fail to get method id for onContentChangedByOuterProcess()");
     }
+    g_callbackOnContentLoaded =
+        env->GetStaticMethodID(g_cls, "onMMKVContentLoadSuccessfully", "(Ljava/lang/String;)V");
+    if (!g_callbackOnContentLoaded) {
+        InternalLogError("fail to get method id for onMMKVContentLoadSuccessfully()");
+    }
 
     // Note: If you use NDK r23 or older, you can get API level by accessing android.os.Build.VERSION.SDK_INT
     g_android_api = android_get_device_api_level();
@@ -131,32 +210,29 @@ namespace mmkv {
 
 static string jstring2string(JNIEnv *env, jstring str);
 
-MMKVRecoverStrategic onMMKVError(const std::string &mmapID, MMKVErrorType errorType);
-
 MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jstring cacheDir, jint logLevel, jboolean logReDirecting, jboolean hasCallback, jlong nativeLogHandler) {
     if (!rootDir) {
         return;
     }
     const char *kstr = env->GetStringUTFChars(rootDir, nullptr);
     if (kstr) {
-        mmkv::LogHandler logHandler = nullptr;
-        if (logReDirecting) {
-            if (nativeLogHandler != 0) {
-                g_androidLogHandler = (AndroidLogHandler) nativeLogHandler;
-                logHandler = androidLogWrapper;
-            } else {
-                logHandler = mmkvLog;
-            }
+        g_jniHandler.setLogRedirecting(logReDirecting == JNI_TRUE);
+        g_jniHandler.setHasCallback(hasCallback == JNI_TRUE);
+        if (logReDirecting && nativeLogHandler != 0) {
+            g_androidLogHandler = (AndroidLogHandler) nativeLogHandler;
+        } else {
+            g_androidLogHandler = nullptr;
         }
-        MMKV::initializeMMKV(kstr, (MMKVLogLevel) logLevel, logHandler);
+        mmkv::MMKVHandler *handler = (logReDirecting || hasCallback) ? &g_jniHandler : nullptr;
+        MMKV::initializeMMKV(kstr, (MMKVLogLevel) logLevel, handler);
         env->ReleaseStringUTFChars(rootDir, kstr);
 
         g_android_tmpDir = jstring2string(env, cacheDir);
 
-        if (hasCallback == JNI_TRUE) {
-            MMKV::registerErrorHandler(onMMKVError);
+        if (hasCallback == JNI_TRUE || logReDirecting == JNI_TRUE) {
+            MMKV::registerHandler(&g_jniHandler);
         } else {
-            MMKV::unRegisterErrorHandler();
+            MMKV::unRegisterHandler();
         }
     }
 }
@@ -227,24 +303,6 @@ static JNIEnv *getCurrentEnv() {
     return nullptr;
 }
 
-MMKVRecoverStrategic onMMKVError(const std::string &mmapID, MMKVErrorType errorType) {
-    jmethodID methodID = nullptr;
-    if (errorType == MMKVCRCCheckFail) {
-        methodID = g_callbackOnCRCFailID;
-    } else if (errorType == MMKVFileLength) {
-        methodID = g_callbackOnFileLengthErrorID;
-    }
-
-    auto currentEnv = getCurrentEnv();
-    if (currentEnv && methodID) {
-        jstring str = string2jstring(currentEnv, mmapID);
-        auto strategic = currentEnv->CallStaticIntMethod(g_cls, methodID, str);
-        currentEnv->DeleteLocalRef(str);
-        return static_cast<MMKVRecoverStrategic>(strategic);
-    }
-    return OnErrorDiscard;
-}
-
 extern "C" void internalLogWithLevel(MMKVLogLevel level, const char *filename, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
         std::string message;
@@ -292,15 +350,6 @@ static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *
 
 static void androidLogWrapper(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
     g_androidLogHandler(level, file, line, function, message.c_str());
-}
-
-static void onContentChangedByOuterProcess(const std::string &mmapID) {
-    auto currentEnv = getCurrentEnv();
-    if (currentEnv && g_callbackOnContentChange) {
-        jstring str = string2jstring(currentEnv, mmapID);
-        currentEnv->CallStaticVoidMethod(g_cls, g_callbackOnContentChange, str);
-        currentEnv->DeleteLocalRef(str);
-    }
 }
 
 MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, jstring cryptKey, jstring rootPath,
@@ -944,22 +993,18 @@ MMKV_JNI void setLogLevel(JNIEnv *env, jclass type, jint level) {
 }
 
 MMKV_JNI void setCallbackHandler(JNIEnv *env, jclass type, jboolean logReDirecting, jboolean hasCallback, jlong nativeHandler) {
-    if (logReDirecting == JNI_TRUE) {
-        if (nativeHandler != 0) {
-            g_androidLogHandler = (AndroidLogHandler) nativeHandler;
-            MMKV::registerLogHandler(androidLogWrapper);
-        } else {
-            MMKV::registerLogHandler(mmkvLog);
-        }
+    g_jniHandler.setLogRedirecting(logReDirecting == JNI_TRUE);
+    g_jniHandler.setHasCallback(hasCallback == JNI_TRUE);
+    if (logReDirecting && nativeHandler != 0) {
+        g_androidLogHandler = (AndroidLogHandler) nativeHandler;
     } else {
         g_androidLogHandler = nullptr;
-        MMKV::unRegisterLogHandler();
     }
 
-    if (hasCallback == JNI_TRUE) {
-        MMKV::registerErrorHandler(onMMKVError);
+    if (hasCallback == JNI_TRUE || logReDirecting == JNI_TRUE) {
+        MMKV::registerHandler(&g_jniHandler);
     } else {
-        MMKV::unRegisterErrorHandler();
+        MMKV::unRegisterHandler();
     }
 }
 
@@ -986,10 +1031,10 @@ MMKV_JNI jint writeValueToNB(JNIEnv *env, jobject instance, jlong handle, jstrin
 }
 
 MMKV_JNI void setWantsContentChangeNotify(JNIEnv *env, jclass type, jboolean notify) {
+    g_jniHandler.setWantsContentChange(notify == JNI_TRUE);
+    // ensure handler is registered when content change is wanted
     if (notify == JNI_TRUE) {
-        MMKV::registerContentChangeHandler(onContentChangedByOuterProcess);
-    } else {
-        MMKV::unRegisterContentChangeHandler();
+        MMKV::registerHandler(&g_jniHandler);
     }
 }
 

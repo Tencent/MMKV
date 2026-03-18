@@ -81,6 +81,12 @@ class MMKVHandler {
   void onContentChangedByOuterProcess(String mmapID) {
     return;
   }
+
+  /// Called when an MMKV file is loaded successfully.
+  /// [mmapID] The unique ID of the loaded MMKV instance.
+  void onMMKVContentLoadSuccessfully(String mmapID) {
+    return;
+  }
 }
 
 /// The interface class that all implementation of MMKV platform plugin must extend
@@ -304,6 +310,10 @@ class MMKVPluginPlatform {
   }
 
   ContentCallbackRegister registerContentHandlerFunc() {
+    throw UnimplementedError();
+  }
+
+  ContentCallbackRegister registerContentLoadedHandlerFunc() {
     throw UnimplementedError();
   }
 

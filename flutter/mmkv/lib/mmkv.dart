@@ -235,6 +235,9 @@ class MMKV {
         final contentHandler = Pointer.fromFunction<ContentCallbackWrap>(_contentChangeHandler);
         _registerContentHandler(contentHandler);
       }
+
+      final contentLoadedHandler = Pointer.fromFunction<ContentCallbackWrap>(_contentLoadedHandler);
+      _registerContentLoadedHandler(contentLoadedHandler);
     }
     return result;
   }
@@ -919,6 +922,13 @@ void _contentChangeHandler(Pointer<Utf8> mmapIDPtr) {
   }
 }
 
+void _contentLoadedHandler(Pointer<Utf8> mmapIDPtr) {
+  if (_mmkvPlatform.theHandler != null && mmapIDPtr != nullptr) {
+    final mmapID = _pointer2String(mmapIDPtr);
+    _mmkvPlatform.theHandler!.onMMKVContentLoadSuccessfully(mmapID!);
+  }
+}
+
 int _bool2Int(bool value) {
   return value ? 1 : 0;
 }
@@ -1052,6 +1062,8 @@ final bool Function(Pointer<Void>) _isReadOnly = _mmkvPlatform.isReadOnlyFunc();
 final ErrorCallbackRegister _registerErrorHandler = _mmkvPlatform.registerErrorHandlerFunc();
 
 final ContentCallbackRegister _registerContentHandler = _mmkvPlatform.registerContentHandlerFunc();
+
+final ContentCallbackRegister _registerContentLoadedHandler = _mmkvPlatform.registerContentLoadedHandlerFunc();
 
 final void Function(Pointer<Void>) _checkContentChanged = _mmkvPlatform.checkContentChangedFunc();
 

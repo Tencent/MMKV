@@ -34,13 +34,58 @@ using namespace std;
 #    endif
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
-void cLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message);
+extern "C" void myLogHandler(int64_t level, GoStringWrap file, int64_t line, GoStringWrap function, GoStringWrap message);
+extern "C" int64_t myErrorHandler(GoStringWrap mmapID, int64_t error);
+extern "C" void myContentChangeHandler(GoStringWrap mmapID);
+extern "C" void myContentLoadedHandler(GoStringWrap mmapID);
+
+class GoMMKVHandler : public mmkv::MMKVHandler {
+public:
+    bool m_wantLog = false;
+    bool m_wantContentChange = false;
+
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) override {
+        if (!m_wantLog) {
+            return;
+        }
+        GoStringWrap oFile { file, static_cast<int64_t>(strlen(file)) };
+        GoStringWrap oFunction { function, static_cast<int64_t>(strlen(function)) };
+        GoStringWrap oMessage { message.data(), static_cast<int64_t>(message.length()) };
+        myLogHandler(level, oFile, line, oFunction, oMessage);
+    }
+
+    MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) override {
+        GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
+        return static_cast<MMKVRecoverStrategic>(myErrorHandler(oID, static_cast<int64_t>(MMKVCRCCheckFail)));
+    }
+
+    MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) override {
+        GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
+        return static_cast<MMKVRecoverStrategic>(myErrorHandler(oID, static_cast<int64_t>(MMKVFileLength)));
+    }
+
+    void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        if (!m_wantContentChange) {
+            return;
+        }
+        GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
+        myContentChangeHandler(oID);
+    }
+
+    void onMMKVContentLoadSuccessfully(const std::string &mmapID) override {
+        GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
+        myContentLoadedHandler(oID);
+    }
+};
+
+static GoMMKVHandler g_goHandler;
 
 MMKV_EXPORT void mmkvInitialize(GoStringWrap rootDir, int32_t logLevel, bool redirect) {
     if (!rootDir.ptr) {
         return;
     }
-    mmkv::LogHandler handler = redirect ? cLogHandler : nullptr;
+    g_goHandler.m_wantLog = redirect;
+    mmkv::MMKVHandler *handler = redirect ? &g_goHandler : nullptr;
     MMKV::initializeMMKV(string(rootDir.ptr, rootDir.length), (MMKVLogLevel) logLevel, handler);
 }
 
@@ -654,53 +699,15 @@ MMKV_EXPORT bool disableCompareBeforeSet(void *handle) {
     return false;
 }
 
-extern "C" void myLogHandler(int64_t level, GoStringWrap file, int64_t line, GoStringWrap function, GoStringWrap message);
-
-void cLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
-    GoStringWrap oFile { file, static_cast<int64_t>(strlen(file)) };
-    GoStringWrap oFunction { function, static_cast<int64_t>(strlen(function)) };
-    GoStringWrap oMessage { message.data(), static_cast<int64_t>(message.length()) };
-
-    myLogHandler(level, oFile, line, oFunction, oMessage);
-}
-
-void setWantsLogRedirect(bool redirect) {
-    if (redirect) {
-        MMKV::registerLogHandler(&cLogHandler);
+void setWantsHandler(bool hasHandler, bool wantLog, bool wantContent) {
+    if (hasHandler) {
+        g_goHandler.m_wantLog = wantLog;
+        g_goHandler.m_wantContentChange = wantContent;
+        MMKV::registerHandler(&g_goHandler);
     } else {
-        MMKV::unRegisterLogHandler();
-    }
-}
-
-extern "C" int64_t myErrorHandler(GoStringWrap mmapID, int64_t error);
-
-static MMKVRecoverStrategic cErrorHandler(const std::string &mmapID, MMKVErrorType errorType) {
-    GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
-
-    return static_cast<MMKVRecoverStrategic>(myErrorHandler(oID, static_cast<int64_t>(errorType)));
-}
-
-void setWantsErrorHandle(bool errorHandle) {
-    if (errorHandle) {
-        MMKV::registerErrorHandler(&cErrorHandler);
-    } else {
-        MMKV::unRegisterErrorHandler();
-    }
-}
-
-extern "C" void myContentChangeHandler(GoStringWrap mmapID);
-
-static void cContentChangeHandler(const std::string &mmapID) {
-    GoStringWrap oID { mmapID.data(), static_cast<int64_t>(mmapID.length()) };
-
-    myContentChangeHandler(oID);
-}
-
-void setWantsContentChangeHandle(bool errorHandle) {
-    if (errorHandle) {
-        MMKV::registerContentChangeHandler(&cContentChangeHandler);
-    } else {
-        MMKV::unRegisterContentChangeHandler();
+        g_goHandler.m_wantLog = false;
+        g_goHandler.m_wantContentChange = false;
+        MMKV::unRegisterHandler();
     }
 }
 

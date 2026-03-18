@@ -32,8 +32,6 @@ MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
 MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
 #endif
 
-mmkv::LogHandler g_logHandler = nullptr;
-
 #ifndef __FILE_NAME__
 const char *_getFileName(const char *path) {
     const char *ptr = strrchr(path, '/');
@@ -47,6 +45,8 @@ const char *_getFileName(const char *path) {
     }
 }
 #endif
+
+mmkv::MMKVHandler *g_handler = nullptr;
 
 MMKV_NAMESPACE_END
 
@@ -84,8 +84,8 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
         NSString *message = [[NSString alloc] initWithFormat:nsFormat arguments:argList];
         va_end(argList);
 
-        if (g_logHandler) {
-            g_logHandler(level, filename, line, func, message);
+        if (g_handler) {
+            g_handler->mmkvLog(level, filename, line, func, message);
         } else {
             NSLog(@"[%s] <%s:%d::%s> %@", MMKVLogLevelDesc(level), filename, line, func, message);
         }
@@ -169,8 +169,8 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
             va_end(args);
         }
 
-        if (g_logHandler) {
-            g_logHandler(level, filename, line, func, message);
+        if (g_handler) {
+            g_handler->mmkvLog(level, filename, line, func, message);
         } else {
 #if defined(MMKV_WIN32)
             PrintUTF8("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), filename, line, func, message.c_str());

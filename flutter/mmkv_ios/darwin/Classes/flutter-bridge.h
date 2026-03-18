@@ -24,6 +24,7 @@ using LogCallback_t = void (*)(uint32_t level, const char *file, int32_t line, c
 @property (atomic, assign) ErrorCallback_t errorCallback;
 @property (atomic, assign) LogCallback_t logCallback;
 @property (atomic, assign) ContenctChangeCallback_t contenctChangeCallback;
+@property (atomic, assign) ContenctChangeCallback_t contentLoadedCallback;
 
 +(MyMMKVHandler *) getHandler;
 

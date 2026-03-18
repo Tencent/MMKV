@@ -33,6 +33,7 @@
 #endif
 
 #include "MiniPBCoder.h"
+#include "MMKVHandler.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -298,7 +299,7 @@ class MMKV_EXPORT MMKV {
 
 public:
     // call this before getting any MMKV instance
-    static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo, mmkv::LogHandler handler = nullptr);
+    static void initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel = MMKVLogInfo, mmkv::MMKVHandler *handler = nullptr);
 
     // a generic purpose instance
     static MMKV *defaultMMKV(MMKVMode mode = MMKV_SINGLE_PROCESS, const std::string *cryptKey = nullptr, bool aes256 = false);
@@ -654,28 +655,13 @@ public:
     // check if content been changed by other process
     void checkContentChanged();
 
-    // called when content is changed by other process
-    // doesn't guarantee real-time notification
-    static void registerContentChangeHandler(mmkv::ContentChangeHandler handler);
-    static void unRegisterContentChangeHandler();
-
-    // called when content is loaded successfully
-    static void registerContentLoadedHandler(mmkv::ContentLoadedHandler handler);
-    static void unRegisterContentLoadedHandler();
-
-    // by default MMKV will discard all datas on failure
-    // return `OnErrorRecover` to recover any data from file
-    static void registerErrorHandler(mmkv::ErrorHandler handler);
-    static void unRegisterErrorHandler();
+    // register a unified callback handler for MMKV
+    static void registerHandler(mmkv::MMKVHandler *handler);
+    static void unRegisterHandler();
 
     // MMKVLogInfo by default
     // pass MMKVLogNone to disable all logging
     static void setLogLevel(MMKVLogLevel level);
-
-    // by default MMKV will print log to the console
-    // implement this method to redirect MMKV's log
-    static void registerLogHandler(mmkv::LogHandler handler);
-    static void unRegisterLogHandler();
 
     // detect if the MMKV file is valid or not
     // Note: Don't use this to check the existence of the instance, the return value is undefined if the file was never created.

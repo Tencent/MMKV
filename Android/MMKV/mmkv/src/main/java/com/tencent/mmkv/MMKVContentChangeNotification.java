@@ -23,7 +23,9 @@ package com.tencent.mmkv;
 /**
  * Inter-process content change notification.
  * Triggered by any method call, such as getXXX() or setXXX() or {@link MMKV#checkContentChangedByOuterProcess()}.
+ * @deprecated Use {@link MMKVHandler#onContentChangedByOuterProcess(String)} instead.
  */
+@Deprecated
 public interface MMKVContentChangeNotification {
     /**
      * Inter-process content change notification.

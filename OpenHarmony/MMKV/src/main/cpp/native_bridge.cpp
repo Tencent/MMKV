@@ -354,13 +354,14 @@ static uint64_t NValueToUInt64(napi_env env, napi_value value, bool maybeUndefin
 struct CallbackInfo {
     napi_ref handlerRef = nullptr;
 
-    napi_ref callbacks[6] = {};
+    napi_ref callbacks[7] = {};
     napi_ref &wantLogRedirect = callbacks[0];
     napi_ref &mmkvLog = callbacks[1];
     napi_ref &onMMKVCRCCheckFail = callbacks[2];
     napi_ref &onMMKVFileLengthError = callbacks[3];
     napi_ref &wantContentChangeNotification = callbacks[4];
     napi_ref &onContentChangedByOuterProcess = callbacks[5];
+    napi_ref &onMMKVContentLoadSuccessfully = callbacks[6];
 };
 
 static const char *g_arrCallbackNames[] = {
@@ -369,7 +370,8 @@ static const char *g_arrCallbackNames[] = {
     "onMMKVCRCCheckFail",
     "onMMKVFileLengthError",
     "wantContentChangeNotification",
-    "onContentChangedByOuterProcess"
+    "onContentChangedByOuterProcess",
+    "onMMKVContentLoadSuccessfully"
 };
 
 static CallbackInfo g_callbackInfo;
@@ -431,70 +433,102 @@ static std::tuple<bool, bool, bool> initCallbacks(napi_env env, napi_value callb
 
 static napi_env g_env = nullptr;
 
-void myLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) {
-    if (!g_env) {
-        return;
-    }
-
-    napi_value handler;
-    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
-    napi_value callback;
-    napi_get_reference_value(g_env, g_callbackInfo.mmkvLog, &callback);
-
-    napi_value args[] = {
-        Int32ToNValue(g_env, level),
-        StringToNValue(g_env, file),
-        Int32ToNValue(g_env, line),
-        StringToNValue(g_env, function),
-        StringToNValue(g_env, message)
-    };
-
-    napi_value result;
-    napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
-}
-
-static MMKVRecoverStrategic myErrorHandler(const std::string &mmapID, MMKVErrorType errorType) {
-    if (!g_env) {
-        return OnErrorDiscard;
-    }
-
-    napi_value handler;
-    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
-    napi_value callback;
-    if (errorType == MMKVCRCCheckFail) {
-        napi_get_reference_value(g_env, g_callbackInfo.onMMKVCRCCheckFail, &callback);
-    } else if (errorType == MMKVFileLength) {
-        napi_get_reference_value(g_env, g_callbackInfo.onMMKVFileLengthError, &callback);
-    } else {
-        return OnErrorDiscard;
-    }
-
-    napi_value args[] = { StringToNValue(g_env, mmapID) };
-
-    napi_value result;
-    if (napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result) == napi_ok) {
-        if (!IsNValueUndefined(g_env, result)) {
-            return ( MMKVRecoverStrategic ) NValueToInt32(g_env, result);
+// C++ adapter class that bridges mmkv::MMKVHandler to NAPI
+class NAPIMMKVHandler : public mmkv::MMKVHandler {
+public:
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) override {
+        if (!g_env || !g_callbackInfo.mmkvLog) {
+            return;
         }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.mmkvLog, &callback);
+
+        napi_value args[] = {
+            Int32ToNValue(g_env, level),
+            StringToNValue(g_env, file),
+            Int32ToNValue(g_env, line),
+            StringToNValue(g_env, function),
+            StringToNValue(g_env, message)
+        };
+
+        napi_value result;
+        napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
     }
-    return OnErrorDiscard;
-}
 
-static void myContentNotificationHandler(const std::string &mmapID) {
-    if (!g_env) {
-        return;
+    MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onMMKVCRCCheckFail) {
+            return OnErrorDiscard;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVCRCCheckFail, &callback);
+
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+        napi_value result;
+        if (napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result) == napi_ok) {
+            if (!IsNValueUndefined(g_env, result)) {
+                return ( MMKVRecoverStrategic ) NValueToInt32(g_env, result);
+            }
+        }
+        return OnErrorDiscard;
     }
 
-    napi_value handler;
-    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
-    napi_value callback;
-    napi_get_reference_value(g_env, g_callbackInfo.onContentChangedByOuterProcess, &callback);
+    MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onMMKVFileLengthError) {
+            return OnErrorDiscard;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVFileLengthError, &callback);
 
-    napi_value args[] = { StringToNValue(g_env, mmapID) };
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
 
-    napi_value result;
-    napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
-}
+        napi_value result;
+        if (napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result) == napi_ok) {
+            if (!IsNValueUndefined(g_env, result)) {
+                return ( MMKVRecoverStrategic ) NValueToInt32(g_env, result);
+            }
+        }
+        return OnErrorDiscard;
+    }
+
+    void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onContentChangedByOuterProcess) {
+            return;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onContentChangedByOuterProcess, &callback);
+
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+        napi_value result;
+        napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
+    }
+
+    void onMMKVContentLoadSuccessfully(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onMMKVContentLoadSuccessfully) {
+            return;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVContentLoadSuccessfully, &callback);
+
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+        napi_value result;
+        napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
+    }
+};
+
+static NAPIMMKVHandler g_napiHandler;
 
 static napi_value initialize(napi_env env, napi_callback_info info) {
     g_env = env;
@@ -510,19 +544,16 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_value_int32(env, args[2], &logLevel));
 
     auto [hasCallback, wantLogRedirect, wantContentChangeNotification] = initCallbacks(env, args[3]);
-    auto logHandler = wantLogRedirect ? myLogHandler : nullptr;
+    mmkv::MMKVHandler *handler = (hasCallback || wantLogRedirect) ? &g_napiHandler : nullptr;
 
     MMKVInfo("rootDir: %s, cacheDir: %s, log level:%d, has callback: %d, want log redirect: %d",
         rootDir.c_str(), cacheDir.c_str(), logLevel, hasCallback, wantLogRedirect);
 
-    MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, logHandler);
+    MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, handler);
     g_android_tmpDir = cacheDir;
 
-    if (hasCallback) {
-        MMKV::registerErrorHandler(myErrorHandler);
-    }
-    if (wantContentChangeNotification) {
-        MMKV::registerContentChangeHandler(myContentNotificationHandler);
+    if (hasCallback || wantLogRedirect || wantContentChangeNotification) {
+        MMKV::registerHandler(&g_napiHandler);
     }
 
     return StringToNValue(env, MMKV::getRootDir());

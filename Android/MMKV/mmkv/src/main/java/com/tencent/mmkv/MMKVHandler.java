@@ -21,7 +21,7 @@
 package com.tencent.mmkv;
 
 /**
- * Callback handler for MMKV.
+ * Unified callback handler for MMKV.
  * Callback is called on the operating thread of the MMKV instance.
  */
 public interface MMKVHandler {
@@ -59,5 +59,23 @@ public interface MMKVHandler {
      * @return a native log handler with signature of void log(int level, const char *file, int line, const char *function, const char *message)
      * return 0 to indicate no native handler
      */
-    long getNativeLogHandler();
+    default long getNativeLogHandler() { return 0; }
+
+    /**
+     * @return Return true if you want inter-process content change notification.
+     */
+    default boolean wantContentChangeNotification() { return false; }
+
+    /**
+     * Inter-process content change notification.
+     * Triggered by any method call, such as getXXX() or setXXX() or {@link MMKV#checkContentChangedByOuterProcess()}.
+     * @param mmapID The unique ID of the changed MMKV instance.
+     */
+    default void onContentChangedByOuterProcess(String mmapID) {}
+
+    /**
+     * Called when an MMKV file is loaded successfully.
+     * @param mmapID The unique ID of the loaded MMKV instance.
+     */
+    default void onMMKVContentLoadSuccessfully(String mmapID) {}
 }

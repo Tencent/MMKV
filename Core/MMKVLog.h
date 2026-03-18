@@ -23,6 +23,7 @@
 #ifdef __cplusplus
 
 #include "MMKVPredef.h"
+#include "MMKVHandler.h"
 
 #include <cerrno>
 #include <cstdint>
@@ -39,7 +40,7 @@ void _MMKVLogWithLevel(
 MMKV_NAMESPACE_BEGIN
 
 extern MMKVLogLevel g_currentLogLevel;
-extern mmkv::LogHandler g_logHandler;
+extern mmkv::MMKVHandler *g_handler;
 
 // enable logging
 #define ENABLE_MMKV_LOG

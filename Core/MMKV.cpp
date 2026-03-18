@@ -63,7 +63,6 @@ MMKVPath_t g_rootDir;
 MMKVPath_t g_realRootDir;
 static ThreadLock *g_namespaceLock;
 static unordered_map<MMKVPath_t, MMKVPath_t> g_realRootMap;
-static mmkv::ErrorHandler g_errorHandler;
 size_t mmkv::DEFAULT_MMAP_SIZE;
 
 MMKV_NAMESPACE_BEGIN
@@ -210,9 +209,9 @@ static void ensureMinimalInitialize() {
     ThreadLock::ThreadOnce(&once_control, initialize);
 }
 
-void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::LogHandler handler) {
+void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::MMKVHandler *handler) {
     g_currentLogLevel = logLevel;
-    g_logHandler = handler;
+    g_handler = handler;
 
     ensureMinimalInitialize();
 
@@ -316,40 +315,21 @@ const string &MMKV::mmapID() const {
     return m_mmapID;
 }
 
-mmkv::ContentChangeHandler g_contentChangeHandler = nullptr;
-mmkv::ContentLoadedHandler g_contentLoadedHandler = nullptr;
-
 void MMKV::notifyContentChanged() {
-    if (g_contentChangeHandler) {
-        g_contentChangeHandler(m_mmapID);
+    if (g_handler) {
+        g_handler->onContentChangedByOuterProcess(m_mmapID);
     }
 }
 
 void MMKV::notifyContentLoaded() {
-    if (g_contentLoadedHandler) {
-        g_contentLoadedHandler(m_mmapID);
+    if (g_handler) {
+        g_handler->onMMKVContentLoadSuccessfully(m_mmapID);
     }
 }
 
 void MMKV::checkContentChanged() {
     SCOPED_LOCK(m_lock);
     checkLoadData();
-}
-
-void MMKV::registerContentChangeHandler(mmkv::ContentChangeHandler handler) {
-    g_contentChangeHandler = handler;
-}
-
-void MMKV::unRegisterContentChangeHandler() {
-    g_contentChangeHandler = nullptr;
-}
-
-void MMKV::registerContentLoadedHandler(mmkv::ContentChangeHandler handler) {
-    g_contentLoadedHandler = handler;
-}
-
-void MMKV::unRegisterContentLoadedHandler() {
-    g_contentLoadedHandler = nullptr;
 }
 
 void MMKV::clearMemoryCache(bool keepSpace) {
@@ -1603,36 +1583,20 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
 
 // callbacks
 
-void MMKV::registerErrorHandler(ErrorHandler handler) {
+void MMKV::registerHandler(mmkv::MMKVHandler *handler) {
     if (!g_instanceLock) {
         return;
     }
     SCOPED_LOCK(g_instanceLock);
-    g_errorHandler = handler;
+    g_handler = handler;
 }
 
-void MMKV::unRegisterErrorHandler() {
+void MMKV::unRegisterHandler() {
     if (!g_instanceLock) {
         return;
     }
     SCOPED_LOCK(g_instanceLock);
-    g_errorHandler = nullptr;
-}
-
-void MMKV::registerLogHandler(LogHandler handler) {
-    if (!g_instanceLock) {
-        return;
-    }
-    SCOPED_LOCK(g_instanceLock);
-    g_logHandler = handler;
-}
-
-void MMKV::unRegisterLogHandler() {
-    if (!g_instanceLock) {
-        return;
-    }
-    SCOPED_LOCK(g_instanceLock);
-    g_logHandler = nullptr;
+    g_handler = nullptr;
 }
 
 void MMKV::setLogLevel(MMKVLogLevel level) {
@@ -1759,15 +1723,15 @@ MMKVPath_t crcPathWithPath(const MMKVPath_t &kvPath) {
 }
 
 MMKVRecoverStrategic onMMKVCRCCheckFail(const string &mmapID) {
-    if (g_errorHandler) {
-        return g_errorHandler(mmapID, MMKVErrorType::MMKVCRCCheckFail);
+    if (g_handler) {
+        return g_handler->onMMKVCRCCheckFail(mmapID);
     }
     return OnErrorDiscard;
 }
 
 MMKVRecoverStrategic onMMKVFileLengthError(const string &mmapID) {
-    if (g_errorHandler) {
-        return g_errorHandler(mmapID, MMKVErrorType::MMKVFileLength);
+    if (g_handler) {
+        return g_handler->onMMKVFileLengthError(mmapID);
     }
     return OnErrorDiscard;
 }

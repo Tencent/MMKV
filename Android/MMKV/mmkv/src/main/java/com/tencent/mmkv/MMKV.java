@@ -209,6 +209,10 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
         String ret = doInitialize(rootDir, cacheDir, loader, logLevel, gWantLogReDirecting, hasCallback, nativeLogHandler);
 
+        if (handler != null && handler.wantContentChangeNotification()) {
+            setWantsContentChangeNotify(true);
+        }
+
         // disable process mode in release build
         // FIXME: Find a better way to getApplicationInfo() without using context.
         //  If any one knows how, you're welcome to make a contribution.
@@ -1836,6 +1840,9 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         gWantLogReDirecting = gCallbackHandler.wantLogRedirecting();
         long nativeLogHandler = gCallbackHandler.getNativeLogHandler();
         setCallbackHandler(gWantLogReDirecting, true, nativeLogHandler);
+        if (gCallbackHandler.wantContentChangeNotification()) {
+            setWantsContentChangeNotify(true);
+        }
     }
 
     /**
@@ -1846,6 +1853,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
         setCallbackHandler(false, false, 0);
         gWantLogReDirecting = false;
+        setWantsContentChangeNotify(gContentChangeNotify != null);
     }
 
     private static int onMMKVCRCCheckFail(String mmapID) {
@@ -1912,23 +1920,37 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
      * For example {@link #checkContentChangedByOuterProcess()}.
      *
      * @param notify The notification handler.
+     * @deprecated Use {@link MMKVHandler#onContentChangedByOuterProcess(String)} instead.
      */
+    @Deprecated
     public static void registerContentChangeNotify(MMKVContentChangeNotification notify) {
         gContentChangeNotify = notify;
-        setWantsContentChangeNotify(gContentChangeNotify != null);
+        setWantsContentChangeNotify(gContentChangeNotify != null || (gCallbackHandler != null && gCallbackHandler.wantContentChangeNotification()));
     }
 
     /**
      * Unregister for MMKV inter-process content change notification.
+     * @deprecated Use {@link MMKVHandler#onContentChangedByOuterProcess(String)} instead.
      */
+    @Deprecated
     public static void unregisterContentChangeNotify() {
         gContentChangeNotify = null;
-        setWantsContentChangeNotify(false);
+        setWantsContentChangeNotify(gCallbackHandler != null && gCallbackHandler.wantContentChangeNotification());
     }
 
     private static void onContentChangedByOuterProcess(String mmapID) {
-        if (gContentChangeNotify != null) {
+        MMKVHandler handler = gCallbackHandler;
+        if (handler != null && handler.wantContentChangeNotification()) {
+            handler.onContentChangedByOuterProcess(mmapID);
+        } else if (gContentChangeNotify != null) {
             gContentChangeNotify.onContentChangedByOuterProcess(mmapID);
+        }
+    }
+
+    private static void onMMKVContentLoadSuccessfully(String mmapID) {
+        MMKVHandler handler = gCallbackHandler;
+        if (handler != null) {
+            handler.onMMKVContentLoadSuccessfully(mmapID);
         }
     }
 

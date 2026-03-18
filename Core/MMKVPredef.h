@@ -169,20 +169,6 @@ MMKV_NAMESPACE_END
 
 namespace mmkv {
 
-typedef void (*LogHandler)(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message);
-
-// by default MMKV will discard all datas on failure
-// return `OnErrorRecover` to recover any data from file
-typedef MMKVRecoverStrategic (*ErrorHandler)(const std::string &mmapID, MMKVErrorType errorType);
-
-// called when content is changed by other process
-// doesn't guarantee real-time notification
-typedef void (*ContentChangeHandler)(const std::string &mmapID);
-
-// called when content is loaded successfully
-typedef void (*ContentLoadedHandler)(const std::string &mmapID);
-
-
 extern MMKV_EXPORT size_t DEFAULT_MMAP_SIZE;
 #define DEFAULT_MMAP_ID "mmkv.default"
 

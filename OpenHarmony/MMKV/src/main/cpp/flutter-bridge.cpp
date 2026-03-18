@@ -38,13 +38,50 @@ extern string g_android_tmpDir;
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
 using LogCallback_t = void (*)(uint32_t level, const char *file, int32_t line, const char *funcname, const char *message);
-LogCallback_t g_logCallback = nullptr;
+using ErrorCallback_t = int (*)(const char *mmapID, int32_t errorType);
+using ContenctChangeCallback_t = void (*)(const char *mmapID);
 
-static void myLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) {
-    if (g_logCallback) {
-        g_logCallback(level, file, line, function, message.c_str());
+class FlutterMMKVHandler : public mmkv::MMKVHandler {
+public:
+    LogCallback_t logCallback = nullptr;
+    ErrorCallback_t errorCallback = nullptr;
+    ContenctChangeCallback_t contentChangeCallback = nullptr;
+    ContenctChangeCallback_t contentLoadedCallback = nullptr;
+
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) override {
+        if (logCallback) {
+            logCallback(level, file, line, function, message.c_str());
+        }
     }
-}
+
+    MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) override {
+        if (errorCallback) {
+            return (MMKVRecoverStrategic) errorCallback(mmapID.c_str(), MMKVCRCCheckFail);
+        }
+        return OnErrorDiscard;
+    }
+
+    MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) override {
+        if (errorCallback) {
+            return (MMKVRecoverStrategic) errorCallback(mmapID.c_str(), MMKVFileLength);
+        }
+        return OnErrorDiscard;
+    }
+
+    void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        if (contentChangeCallback) {
+            contentChangeCallback(mmapID.c_str());
+        }
+    }
+
+    void onMMKVContentLoadSuccessfully(const std::string &mmapID) override {
+        if (contentLoadedCallback) {
+            contentLoadedCallback(mmapID.c_str());
+        }
+    }
+};
+
+static FlutterMMKVHandler g_flutterHandler;
 
 MMKV_EXPORT void *mmkvInitialize_v2(const char *rootDir, const char *cacheDir, int32_t sdkInt, int32_t logLevel, LogCallback_t callback) {
     if (!rootDir) {
@@ -62,8 +99,8 @@ MMKV_EXPORT void *mmkvInitialize_v2(const char *rootDir, const char *cacheDir, i
 #endif
 
     if (callback) {
-        g_logCallback = callback;
-        MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, myLogHandler);
+        g_flutterHandler.logCallback = callback;
+        MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, &g_flutterHandler);
     } else {
         MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
     }
@@ -660,40 +697,24 @@ MMKV_EXPORT bool isReadOnly(void *handle) {
     return false;
 }
 
-using ErrorCallback_t = int (*)(const char *mmapID, int32_t errorType);
-static ErrorCallback_t g_errorCallback = nullptr;
-
-static MMKVRecoverStrategic myErrorHandler(const std::string &mmapID, MMKVErrorType errorType) {
-    if (g_errorCallback) {
-        return (MMKVRecoverStrategic) g_errorCallback(mmapID.c_str(), errorType);
-    }
-    return OnErrorDiscard;
-}
-
 MMKV_EXPORT void registerErrorHandler(ErrorCallback_t callback) {
-    g_errorCallback = callback;
-    if (callback) {
-        MMKV::registerErrorHandler(myErrorHandler);
-    } else {
-        MMKV::unRegisterErrorHandler();
-    }
-}
-
-using ContenctChangeCallback_t = void (*)(const char *mmapID);
-static ContenctChangeCallback_t g_contentChanceCallback = nullptr;
-
-static void myContentChangeHandler(const std::string &mmapID) {
-    if (g_contentChanceCallback) {
-        g_contentChanceCallback(mmapID.c_str());
+    g_flutterHandler.errorCallback = callback;
+    if (callback || g_flutterHandler.logCallback || g_flutterHandler.contentChangeCallback || g_flutterHandler.contentLoadedCallback) {
+        MMKV::registerHandler(&g_flutterHandler);
     }
 }
 
 MMKV_EXPORT void registerContentChangeNotify(ContenctChangeCallback_t callback) {
-    g_contentChanceCallback = callback;
-    if (callback) {
-        MMKV::registerContentChangeHandler(myContentChangeHandler);
-    } else {
-        MMKV::unRegisterContentChangeHandler();
+    g_flutterHandler.contentChangeCallback = callback;
+    if (callback || g_flutterHandler.logCallback || g_flutterHandler.errorCallback || g_flutterHandler.contentLoadedCallback) {
+        MMKV::registerHandler(&g_flutterHandler);
+    }
+}
+
+MMKV_EXPORT void registerContentLoadedNotify(ContenctChangeCallback_t callback) {
+    g_flutterHandler.contentLoadedCallback = callback;
+    if (callback || g_flutterHandler.logCallback || g_flutterHandler.errorCallback || g_flutterHandler.contentChangeCallback) {
+        MMKV::registerHandler(&g_flutterHandler);
     }
 }
 

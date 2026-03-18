@@ -132,9 +132,7 @@ int32_t pageSize();
 const char *version();
 const char *getRootDir();
 
-void setWantsLogRedirect(bool redirect);
-void setWantsErrorHandle(bool errorHandle);
-void setWantsContentChangeHandle(bool contentChange);
+void setWantsHandler(bool hasHandler, bool wantLog, bool wantContent);
 
 bool removeStorage(GoStringWrap_t mmapID, GoStringWrap_t rootPath);
 

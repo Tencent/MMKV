@@ -14,8 +14,8 @@ func main() {
 	// test NameSpace before mmkv.Initialize()
 	testNameSpace()
 
-	// init MMKV with root dir and log redirecting
-	mmkv.InitializeMMKVWithLogLevelAndHandler("/tmp/mmkv", mmkv.MMKVLogInfo, logHandler)
+	// init MMKV with root dir
+	mmkv.InitializeMMKVWithLogLevel("/tmp/mmkv", mmkv.MMKVLogInfo)
 
 	{
 		fmt.Println("rootDir:", mmkv.GetRootDir())
@@ -23,13 +23,8 @@ func main() {
 		fmt.Println("DefaultNameSpace:", ns.GetRootDir())
 	}
 
-	// you can set log redirecting
-	// mmkv.RegisterLogHandler(logHandler)
-
-	// you can set error handler
-	mmkv.RegisterErrorHandler(errorHandler)
-	// you can get notify content change by other process (not in realtime)
-	mmkv.RegisterContentChangeHandler(contentChangeNotify)
+	// register unified callback handler (log redirect, error handler, content change)
+	mmkv.RegisterHandler(&myHandler{})
 
 	testExpectedCapacity()
 	functionalTest()
@@ -425,7 +420,14 @@ func testImport() {
 	}
 }
 
-func logHandler(level int, file string, line int, function string, message string) {
+// myHandler implements mmkv.Handler with DefaultHandler for defaults
+type myHandler struct {
+	mmkv.DefaultHandler
+}
+
+func (h *myHandler) WantLogRedirect() bool { return true }
+
+func (h *myHandler) MMKVLog(level int, file string, line int, function string, message string) {
 	var levelStr string
 	switch level {
 	case mmkv.MMKVLogDebug:
@@ -442,18 +444,22 @@ func logHandler(level int, file string, line int, function string, message strin
 	fmt.Printf("Redirect %v <%v:%v::%v> %v\n", levelStr, file, line, function, message)
 }
 
-func errorHandler(mmapID string, error int) int {
-	var errorDesc string
-	if error == mmkv.MMKVCRCCheckFail {
-		errorDesc = "CRC-Error"
-	} else {
-		errorDesc = "File-Length-Error"
-	}
-	fmt.Println(mmapID, "has error type:", errorDesc)
-
+func (h *myHandler) OnMMKVCRCCheckFail(mmapID string) int {
+	fmt.Println(mmapID, "has error type: CRC-Error")
 	return mmkv.OnErrorRecover
 }
 
-func contentChangeNotify(mmapID string) {
+func (h *myHandler) OnMMKVFileLengthError(mmapID string) int {
+	fmt.Println(mmapID, "has error type: File-Length-Error")
+	return mmkv.OnErrorRecover
+}
+
+func (h *myHandler) WantContentChangeNotification() bool { return true }
+
+func (h *myHandler) OnContentChangedByOuterProcess(mmapID string) {
 	fmt.Println(mmapID, "content changed by other process")
+}
+
+func (h *myHandler) OnMMKVContentLoadSuccessfully(mmapID string) {
+	fmt.Println(mmapID, "content loaded successfully")
 }

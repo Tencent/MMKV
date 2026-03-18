@@ -319,6 +319,11 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   }
 
   @override
+  ContentCallbackRegister registerContentLoadedHandlerFunc() {
+    return nativeLib().lookup<NativeFunction<ContentCallbackRegisterWrap>>(nativeFuncName("registerContentLoadedNotify")).asFunction();
+  }
+
+  @override
   void Function(Pointer<Void> p1) checkContentChangedFunc() {
     return nativeLib().lookup<NativeFunction<Void Function(Pointer<Void>)>>(nativeFuncName("checkContentChanged")).asFunction();
   }

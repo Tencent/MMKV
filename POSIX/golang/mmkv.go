@@ -338,10 +338,23 @@ func InitializeMMKVWithLogLevel(rootDir string, logLevel int) {
 	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(false))
 }
 
-// InitializeMMKVWithLogLevelAndHandler Same as the function InitializeMMKVWithLogLevel() above, except that you can provide a logHandler at the very beginning.
-func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandler LogHandler) {
-	gLogHandler = logHandler
-	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(true))
+// Deprecated: Use InitializeMMKVWithLogLevel() + RegisterHandler() instead.
+func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandler func(level int, file string, line int, function string, message string)) {
+	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(false))
+	if logHandler != nil {
+		RegisterHandler(&logHandlerAdapter{logHandler: logHandler})
+	}
+}
+
+// logHandlerAdapter wraps a legacy log handler function into the Handler interface.
+type logHandlerAdapter struct {
+	DefaultHandler
+	logHandler func(level int, file string, line int, function string, message string)
+}
+
+func (a *logHandlerAdapter) WantLogRedirect() bool { return true }
+func (a *logHandlerAdapter) MMKVLog(level int, file string, line int, function string, message string) {
+	a.logHandler(level, file, line, function, message)
 }
 
 // OnExit Call before App exists, it's just fine not calling it on most case (except when the device shutdown suddenly).
