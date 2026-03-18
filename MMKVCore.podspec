@@ -24,7 +24,7 @@ Pod::Spec.new do |s|
 #s.source       = { :git => "https://github.com/Tencent/MMKV.git", :branch => "dev_namespace" }
 
   s.source_files = "Core", "Core/*.{h,cpp,hpp}", "Core/aes/*", "Core/aes/openssl/*", "Core/crc32/*.h"
-  s.public_header_files = "Core/MMBuffer.h", "Core/MMKV.h", "Core/MMKVLog.h", "Core/MMKVPredef.h", "Core/MiniPBCoder.h", "Core/PBUtility.h", "Core/ScopedLock.hpp", "Core/ThreadLock.h", "Core/aes/openssl/openssl_md5.h", "Core/aes/openssl/openssl_opensslconf.h"
+  s.public_header_files = "Core/MMBuffer.h", "Core/MMKV.h", "Core/MMKVHandler.h", "Core/MMKVLog.h", "Core/MMKVPredef.h", "Core/MiniPBCoder.h", "Core/PBUtility.h", "Core/ScopedLock.hpp", "Core/ThreadLock.h", "Core/aes/openssl/openssl_md5.h", "Core/aes/openssl/openssl_opensslconf.h"
   s.compiler_flags = '-x objective-c++'
 
   s.requires_arc = ['Core/MemoryFile.cpp', 'Core/ThreadLock.cpp', 'Core/InterProcessLock.cpp', 'Core/MMKVLog.cpp', 'Core/PBUtility.cpp', 'Core/MemoryFile_OSX.cpp', 'aes/openssl/openssl_cfb128.cpp', 'aes/openssl/openssl_aes_core.cpp', 'aes/openssl/openssl_md5_one.cpp', 'aes/openssl/openssl_md5_dgst.cpp', 'aes/AESCrypt.cpp']
