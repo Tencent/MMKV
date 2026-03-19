@@ -23,6 +23,8 @@
 
 #include "MMKVPredef.h"
 
+#ifdef __cplusplus
+
 namespace mmkv {
 
 // unified callback handler for MMKV
@@ -51,5 +53,7 @@ public:
 };
 
 } // namespace mmkv
+
+#endif
 
 #endif /* MMKVHandler_h */
