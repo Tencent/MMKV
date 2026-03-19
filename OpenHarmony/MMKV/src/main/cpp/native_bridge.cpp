@@ -284,6 +284,13 @@ static int32_t NValueToInt32(napi_env env, napi_value value) {
     return result;
 }
 
+static int32_t NValueToInt32(napi_env env, napi_value value, int32_t defaultValue) {
+    if (IsNValueUndefined(env, value)) {
+        return defaultValue;
+    }
+    return NValueToInt32(env, value);
+}
+
 static napi_value UInt32ToNValue(napi_env env, uint32_t value) {
     napi_value result;
     napi_create_uint32(env, value, &result);
@@ -294,6 +301,13 @@ static uint32_t NValueToUInt32(napi_env env, napi_value value) {
     uint32_t result;
     napi_get_value_uint32(env, value, &result);
     return result;
+}
+
+static uint32_t NValueToUInt32(napi_env env, napi_value value, uint32_t defaultValue) {
+    if (IsNValueUndefined(env, value)) {
+        return defaultValue;
+    }
+    return NValueToUInt32(env, value);
 }
 
 static napi_value DoubleToNValue(napi_env env, double value) {
@@ -340,13 +354,14 @@ static uint64_t NValueToUInt64(napi_env env, napi_value value, bool maybeUndefin
 struct CallbackInfo {
     napi_ref handlerRef = nullptr;
 
-    napi_ref callbacks[6] = {};
+    napi_ref callbacks[7] = {};
     napi_ref &wantLogRedirect = callbacks[0];
     napi_ref &mmkvLog = callbacks[1];
     napi_ref &onMMKVCRCCheckFail = callbacks[2];
     napi_ref &onMMKVFileLengthError = callbacks[3];
     napi_ref &wantContentChangeNotification = callbacks[4];
     napi_ref &onContentChangedByOuterProcess = callbacks[5];
+    napi_ref &onMMKVContentLoadSuccessfully = callbacks[6];
 };
 
 static const char *g_arrCallbackNames[] = {
@@ -355,7 +370,8 @@ static const char *g_arrCallbackNames[] = {
     "onMMKVCRCCheckFail",
     "onMMKVFileLengthError",
     "wantContentChangeNotification",
-    "onContentChangedByOuterProcess"
+    "onContentChangedByOuterProcess",
+    "onMMKVContentLoadSuccessfully"
 };
 
 static CallbackInfo g_callbackInfo;
@@ -417,70 +433,102 @@ static std::tuple<bool, bool, bool> initCallbacks(napi_env env, napi_value callb
 
 static napi_env g_env = nullptr;
 
-void myLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) {
-    if (!g_env) {
-        return;
-    }
-
-    napi_value handler;
-    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
-    napi_value callback;
-    napi_get_reference_value(g_env, g_callbackInfo.mmkvLog, &callback);
-
-    napi_value args[] = {
-        Int32ToNValue(g_env, level),
-        StringToNValue(g_env, file),
-        Int32ToNValue(g_env, line),
-        StringToNValue(g_env, function),
-        StringToNValue(g_env, message)
-    };
-
-    napi_value result;
-    napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
-}
-
-static MMKVRecoverStrategic myErrorHandler(const std::string &mmapID, MMKVErrorType errorType) {
-    if (!g_env) {
-        return OnErrorDiscard;
-    }
-
-    napi_value handler;
-    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
-    napi_value callback;
-    if (errorType == MMKVCRCCheckFail) {
-        napi_get_reference_value(g_env, g_callbackInfo.onMMKVCRCCheckFail, &callback);
-    } else if (errorType == MMKVFileLength) {
-        napi_get_reference_value(g_env, g_callbackInfo.onMMKVFileLengthError, &callback);
-    } else {
-        return OnErrorDiscard;
-    }
-
-    napi_value args[] = { StringToNValue(g_env, mmapID) };
-
-    napi_value result;
-    if (napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result) == napi_ok) {
-        if (!IsNValueUndefined(g_env, result)) {
-            return ( MMKVRecoverStrategic ) NValueToInt32(g_env, result);
+// C++ adapter class that bridges mmkv::MMKVHandler to NAPI
+class NAPIMMKVHandler : public mmkv::MMKVHandler {
+public:
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) override {
+        if (!g_env || !g_callbackInfo.mmkvLog) {
+            return;
         }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.mmkvLog, &callback);
+
+        napi_value args[] = {
+            Int32ToNValue(g_env, level),
+            StringToNValue(g_env, file),
+            Int32ToNValue(g_env, line),
+            StringToNValue(g_env, function),
+            StringToNValue(g_env, message)
+        };
+
+        napi_value result;
+        napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
     }
-    return OnErrorDiscard;
-}
 
-static void myContentNotificationHandler(const std::string &mmapID) {
-    if (!g_env) {
-        return;
+    MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onMMKVCRCCheckFail) {
+            return OnErrorDiscard;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVCRCCheckFail, &callback);
+
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+        napi_value result;
+        if (napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result) == napi_ok) {
+            if (!IsNValueUndefined(g_env, result)) {
+                return ( MMKVRecoverStrategic ) NValueToInt32(g_env, result);
+            }
+        }
+        return OnErrorDiscard;
     }
 
-    napi_value handler;
-    napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
-    napi_value callback;
-    napi_get_reference_value(g_env, g_callbackInfo.onContentChangedByOuterProcess, &callback);
+    MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onMMKVFileLengthError) {
+            return OnErrorDiscard;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVFileLengthError, &callback);
 
-    napi_value args[] = { StringToNValue(g_env, mmapID) };
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
 
-    napi_value result;
-    napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
-}
+        napi_value result;
+        if (napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result) == napi_ok) {
+            if (!IsNValueUndefined(g_env, result)) {
+                return ( MMKVRecoverStrategic ) NValueToInt32(g_env, result);
+            }
+        }
+        return OnErrorDiscard;
+    }
+
+    void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onContentChangedByOuterProcess) {
+            return;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onContentChangedByOuterProcess, &callback);
+
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+        napi_value result;
+        napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
+    }
+
+    void onMMKVContentLoadSuccessfully(const std::string &mmapID) override {
+        if (!g_env || !g_callbackInfo.onMMKVContentLoadSuccessfully) {
+            return;
+        }
+        napi_value handler;
+        napi_get_reference_value(g_env, g_callbackInfo.handlerRef, &handler);
+        napi_value callback;
+        napi_get_reference_value(g_env, g_callbackInfo.onMMKVContentLoadSuccessfully, &callback);
+
+        napi_value args[] = { StringToNValue(g_env, mmapID) };
+
+        napi_value result;
+        napi_call_function(g_env, handler, callback, sizeof(args) / sizeof(args[0]), args, &result);
+    }
+};
+
+static NAPIMMKVHandler g_napiHandler;
 
 static napi_value initialize(napi_env env, napi_callback_info info) {
     g_env = env;
@@ -496,19 +544,16 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
     NAPI_CALL(napi_get_value_int32(env, args[2], &logLevel));
 
     auto [hasCallback, wantLogRedirect, wantContentChangeNotification] = initCallbacks(env, args[3]);
-    auto logHandler = wantLogRedirect ? myLogHandler : nullptr;
+    mmkv::MMKVHandler *handler = (hasCallback || wantLogRedirect) ? &g_napiHandler : nullptr;
 
     MMKVInfo("rootDir: %s, cacheDir: %s, log level:%d, has callback: %d, want log redirect: %d",
         rootDir.c_str(), cacheDir.c_str(), logLevel, hasCallback, wantLogRedirect);
 
-    MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, logHandler);
+    MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, handler);
     g_android_tmpDir = cacheDir;
 
-    if (hasCallback) {
-        MMKV::registerErrorHandler(myErrorHandler);
-    }
-    if (wantContentChangeNotification) {
-        MMKV::registerContentChangeHandler(myContentNotificationHandler);
+    if (hasCallback || wantLogRedirect || wantContentChangeNotification) {
+        MMKV::registerHandler(&g_napiHandler);
     }
 
     return StringToNValue(env, MMKV::getRootDir());
@@ -527,31 +572,45 @@ static napi_value pageSize(napi_env env, napi_callback_info info) {
 }
 
 static napi_value getDefaultMMKV(napi_env env, napi_callback_info info) {
-    size_t argc = 3;
-    napi_value args[3] = {nullptr};
+    size_t argc = 9;
+    napi_value args[9] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     int32_t mode;
     NAPI_CALL(napi_get_value_int32(env, args[0], &mode));
     auto crypt = NValueToString(env, args[1], true);
     auto aes256 = NValueToBool(env, args[2], true);
+    auto expectedCapacity = NValueToUInt64(env, args[3], true);
+    auto enableKeyExpire = NValueToInt32(env, args[4], -1);
+    auto expiredInSeconds = NValueToInt32(env, args[5], 0);
+    auto enableCompareBeforeSet = NValueToBool(env, args[6], true);
+    auto recover = NValueToInt32(env, args[7], -1);
+    auto itemSizeLimit = NValueToUInt32(env, args[8], 0);
 
-    MMKV *kv = nullptr;
-    if (crypt.length() > 0) {
-        kv = MMKV::defaultMMKV((MMKVMode)mode, &crypt, aes256);
+    auto config = MMKVConfig();
+    config.mode = (MMKVMode) mode;
+    config.aes256 = aes256;
+    config.cryptKey = crypt.empty() ? nullptr : &crypt;
+    config.expectedCapacity = expectedCapacity;
+    if (enableKeyExpire >= 0) {
+        config.enableKeyExpire = (enableKeyExpire != 0);
     }
+    config.expiredInSeconds = expiredInSeconds;
+    config.enableCompareBeforeSet = enableCompareBeforeSet;
+    if (recover >= 0) {
+        config.recover = static_cast<MMKVRecoverStrategic>(recover);
+    }
+    config.itemSizeLimit = itemSizeLimit;
 
-    if (!kv) {
-        kv = MMKV::defaultMMKV((MMKVMode)mode, nullptr, aes256);
-    }
+    MMKV *kv = MMKV::defaultMMKV(config);
 
     return UInt64ToNValue(env,(uint64_t)kv);
 }
 
 // mmkvWithID(mmapID: string, mode: number, cryptKey?: string, rootPath?: string, expectedCapacity?: bigint): bigint
 static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
-    size_t argc = 6;
-    napi_value args[6] = {nullptr};
+    size_t argc = 11;
+    napi_value args[11] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
     MMKV *kv = nullptr;
@@ -562,14 +621,70 @@ static napi_value mmkvWithID(napi_env env, napi_callback_info info) {
         auto rootPath = NValueToString(env, args[3], true);
         auto expectedCapacity = NValueToUInt64(env, args[4], true);
         auto aes256 = NValueToBool(env, args[5], true);
+        auto enableKeyExpire = NValueToInt32(env, args[6], -1);
+        auto expiredInSeconds = NValueToInt32(env, args[7], 0);
+        auto enableCompareBeforeSet = NValueToBool(env, args[8], true);
+        auto recover = NValueToInt32(env, args[9], -1);
+        auto itemSizeLimit = NValueToUInt32(env, args[10], 0);
 
-        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
-        auto rootPathPtr = rootPath.empty() ? nullptr : &rootPath;
+        auto config = MMKVConfig();
+        config.mode = (MMKVMode) mode;
+        config.rootPath = rootPath.empty() ? nullptr : &rootPath;
+        config.aes256 = aes256;
+        config.cryptKey = cryptKey.empty() ? nullptr : &cryptKey;
+        config.expectedCapacity = expectedCapacity;
+        if (enableKeyExpire >= 0) {
+            config.enableKeyExpire = (enableKeyExpire != 0);
+        }
+        config.expiredInSeconds = expiredInSeconds;
+        config.enableCompareBeforeSet = enableCompareBeforeSet;
+        if (recover >= 0) {
+            config.recover = static_cast<MMKVRecoverStrategic>(recover);
+        }
+        config.itemSizeLimit = itemSizeLimit;
+
         // MMKVInfo("rootPath: %p, %s, %s", rootPathPtr, rootPath.c_str(), rootPathPtr ? rootPathPtr->c_str() : "");
-        kv = MMKV::mmkvWithID(mmapID, DEFAULT_MMAP_SIZE, (MMKVMode)mode, cryptKeyPtr, rootPathPtr, expectedCapacity, aes256);
+        kv = MMKV::mmkvWithID(mmapID, config);
     }
 
     return UInt64ToNValue(env, (uint64_t) kv);
+}
+
+static napi_value mmkvWithAshmemFD(napi_env env, napi_callback_info info) {
+    size_t argc = 10;
+    napi_value args[10] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    MMKV *kv = nullptr;
+    auto mmapID = NValueToString(env, args[0]);
+    if (!mmapID.empty()) {
+        int32_t fd = NValueToInt32(env, args[1]);
+        int32_t metaFD = NValueToInt32(env, args[2]);
+        auto cryptKey = NValueToString(env, args[3], true);
+        auto aes256 = NValueToBool(env, args[4], true);
+        auto enableKeyExpire = NValueToInt32(env, args[5], -1);
+        auto expiredInSeconds = NValueToInt32(env, args[6], 0);
+        auto enableCompareBeforeSet = NValueToBool(env, args[7], true);
+        auto recover = NValueToInt32(env, args[8], -1);
+        auto itemSizeLimit = NValueToUInt32(env, args[9], 0);
+
+        auto config = MMKVConfig();
+        config.aes256 = aes256;
+        config.cryptKey = cryptKey.empty() ? nullptr : &cryptKey;
+        if (enableKeyExpire >= 0) {
+            config.enableKeyExpire = (enableKeyExpire != 0);
+        }
+        config.expiredInSeconds = expiredInSeconds;
+        config.enableCompareBeforeSet = enableCompareBeforeSet;
+        if (recover >= 0) {
+            config.recover = static_cast<MMKVRecoverStrategic>(recover);
+        }
+        config.itemSizeLimit = itemSizeLimit;
+
+        kv = MMKV::mmkvWithAshmemFD(mmapID, fd, metaFD, config);
+    }
+
+    return UInt64ToNValue(env, (uint64_t)kv);
 }
 
 static napi_value mmapID(napi_env env, napi_callback_info info) {
@@ -1558,46 +1673,6 @@ static napi_value disableCompareBeforeSet(napi_env env, napi_callback_info info)
     return NAPIUndefined(env);
 }
 
-// mmkvWithIDAndSize(mmapID: string, size: number, mode: number, cryptKey?: string): bigint
-static napi_value mmkvWithIDAndSize(napi_env env, napi_callback_info info) {
-    size_t argc = 5;
-    napi_value args[5] = {nullptr};
-    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
-
-    MMKV *kv = nullptr;
-    auto mmapID = NValueToString(env, args[0]);
-    if (!mmapID.empty()) {
-        int32_t size = NValueToInt32(env, args[1]);
-        int32_t mode = NValueToInt32(env, args[2]);
-        auto cryptKey = NValueToString(env, args[3], true);
-
-        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
-        kv = MMKV::mmkvWithID(mmapID, size, (MMKVMode)mode, cryptKeyPtr);
-    }
-
-    return UInt64ToNValue(env, (uint64_t)kv);
-}
-
-// mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): bigint
-static napi_value mmkvWithAshmemFD(napi_env env, napi_callback_info info) {
-    size_t argc = 5;
-    napi_value args[5] = {nullptr};
-    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
-
-    MMKV *kv = nullptr;
-    auto mmapID = NValueToString(env, args[0]);
-    if (!mmapID.empty()) {
-        int32_t fd = NValueToInt32(env, args[1]);
-        int32_t metaFD = NValueToInt32(env, args[2]);
-        auto cryptKey = NValueToString(env, args[3], true);
-
-        auto cryptKeyPtr = cryptKey.empty() ? nullptr : &cryptKey;
-        kv = MMKV::mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKeyPtr);
-    }
-
-    return UInt64ToNValue(env, (uint64_t)kv);
-}
-
 static napi_value ashmemFD(napi_env env, napi_callback_info info) {
     size_t argc = 1;
     napi_value args[1] = {nullptr};
@@ -1806,7 +1881,6 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "disableAutoKeyExpire", nullptr, disableAutoKeyExpire, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "enableCompareBeforeSet", nullptr, enableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "disableCompareBeforeSet", nullptr, disableCompareBeforeSet, nullptr, nullptr, nullptr, napi_default, nullptr },
-        { "mmkvWithIDAndSize", nullptr, mmkvWithIDAndSize, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "mmkvWithAshmemFD", nullptr, mmkvWithAshmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "ashmemFD", nullptr, ashmemFD, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "ashmemMetaFD", nullptr, ashmemMetaFD, nullptr, nullptr, nullptr, napi_default, nullptr },

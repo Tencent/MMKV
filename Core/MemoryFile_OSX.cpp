@@ -57,8 +57,8 @@ void tryResetFileProtection(const string &path) {
 
 namespace mmkv {
 
-bool tryAtomicRename(const char *src, const char *dst) {
-    if (!src || !dst) {
+bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
+    if (srcPath.empty() || dstPath.empty()) {
         return false;
     }
     bool renamed = false;
@@ -66,20 +66,20 @@ bool tryAtomicRename(const char *src, const char *dst) {
     // try atomic swap first
     if (@available(iOS 10.0, watchOS 3.0, macOS 10.12, *)) {
         // renameat2() equivalent
-        if (renamex_np(src, dst, RENAME_SWAP) == 0) {
+        if (renamex_np(srcPath.c_str(), dstPath.c_str(), RENAME_SWAP) == 0) {
             renamed = true;
-            if (strcmp(src, dst) != 0) {
-                ::unlink(src);
+            if (srcPath != dstPath) {
+                ::unlink(srcPath.c_str());
             }
         } else if (errno != ENOENT) {
-            MMKVError("fail to renamex_np %s to %s, %s", src, dst, strerror(errno));
+            MMKVError("fail to renamex_np %s to %s, %s", srcPath.c_str(), dstPath.c_str(), strerror(errno));
         }
     }
 
     if (!renamed) {
         // try old style rename
-        if (rename(src, dst) != 0) {
-            MMKVError("fail to rename %s to %s, %s", src, dst, strerror(errno));
+        if (rename(srcPath.c_str(), dstPath.c_str()) != 0) {
+            MMKVError("fail to rename %s to %s, %s", srcPath.c_str(), dstPath.c_str(), strerror(errno));
             return false;
         }
     }
@@ -88,7 +88,7 @@ bool tryAtomicRename(const char *src, const char *dst) {
 }
 
 bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    // prepare a temp file for atomic rename, avoid data corruption of suddent crash
+    // prepare a temp file for atomic rename, avoid data corruption of sudden crash
     NSString *uniqueFileName = [NSString stringWithFormat:@"mmkv_%zu", (size_t) NSDate.timeIntervalSinceReferenceDate];
     NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:uniqueFileName];
     if (copyfile(srcPath.c_str(), tmpFile.UTF8String, nullptr, COPYFILE_UNLINK | COPYFILE_CLONE) != 0) {

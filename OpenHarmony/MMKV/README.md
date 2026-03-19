@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-2.3.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-2.4.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's now available on **HarmonyOS NEXT**.
@@ -37,7 +37,7 @@ Or, you can add it to your project manually.
 
   ```json
   "dependencies": {
-      "@tencent/mmkv": "~2.3.0",
+      "@tencent/mmkv": "~2.4.0",
   }
   ```
 * Then run
@@ -160,11 +160,11 @@ Due to the current limitation of NAPI runtime, we **can't efficiently** redirect
     // an unencrypted MMKV instance
     let mmkv = MMKV.mmkvWithID('test-encryption');
 
-    // change from unencrypted to encrypted
+    // change from unencrypted to encrypted with AES-128 key length
     mmkv.reKey('Key_seq_1');
 
-    // change encryption key
-    mmkv.reKey('Key_seq_2');
+    // change encryption key with AES-258 key length
+    mmkv.reKey('Key_Seq_Very_Looooooooong', true);
 
     // change from encrypted to unencrypted
     kmmkv.reKey();

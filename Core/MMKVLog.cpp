@@ -19,6 +19,10 @@
  */
 
 #include "MMKVLog.h"
+#ifdef MMKV_WIN32
+#include <windows.h>
+#endif // MMKV_WIN32
+
 
 MMKV_NAMESPACE_BEGIN
 
@@ -27,8 +31,6 @@ MMKVLogLevel g_currentLogLevel = MMKVLogDebug;
 #else
 MMKVLogLevel g_currentLogLevel = MMKVLogInfo;
 #endif
-
-mmkv::LogHandler g_logHandler = nullptr;
 
 #ifndef __FILE_NAME__
 const char *_getFileName(const char *path) {
@@ -43,6 +45,8 @@ const char *_getFileName(const char *path) {
     }
 }
 #endif
+
+mmkv::MMKVHandler *g_handler = nullptr;
 
 MMKV_NAMESPACE_END
 
@@ -80,8 +84,8 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
         NSString *message = [[NSString alloc] initWithFormat:nsFormat arguments:argList];
         va_end(argList);
 
-        if (g_logHandler) {
-            g_logHandler(level, filename, line, func, message);
+        if (g_handler) {
+            g_handler->mmkvLog(level, filename, line, func, message);
         } else {
             NSLog(@"[%s] <%s:%d::%s> %@", MMKVLogLevelDesc(level), filename, line, func, message);
         }
@@ -89,6 +93,60 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
 }
 
 #        else
+
+#if defined(MMKV_WIN32)
+// Helper to write raw bytes or convert to WideChar based on destination
+static void WriteUTF8ToStream(const char* utf8_str) {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD consoleMode;
+
+    if (GetConsoleMode(hOut, &consoleMode)) {
+        // --- CONSOLE: Convert to UTF-16 and write ---
+        int wlen = MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, NULL, 0);
+        if (wlen > 0) {
+            wchar_t* wbuf = (wchar_t*)malloc(wlen * sizeof(wchar_t));
+            if (wbuf) {
+                MultiByteToWideChar(CP_UTF8, 0, utf8_str, -1, wbuf, wlen);
+                WriteConsoleW(hOut, wbuf, wlen - 1, NULL, NULL);
+                free(wbuf);
+            }
+        }
+    } else {
+        // --- FILE/PIPE: Write raw UTF-8 bytes ---
+        DWORD bytesWritten;
+        WriteFile(hOut, utf8_str, (DWORD)strlen(utf8_str), &bytesWritten, NULL);
+    }
+}
+
+// Main VarArg Function
+static void PrintUTF8(const char* format, ...) {
+    va_list args;
+
+    // 1. Calculate required length
+    // We pass NULL/0 to vsnprintf just to get the required size (excluding null terminator)
+    va_start(args, format);
+    int len = vsnprintf(NULL, 0, format, args);
+    va_end(args);
+
+    if (len < 0) return; // Encoding error or invalid format
+
+    // 2. Allocate buffer (len + 1 for null terminator)
+    // Using malloc ensures we don't overflow the stack with huge strings
+    char* buf = (char*)malloc(len + 1);
+    if (!buf) return; // Out of memory
+
+    // 3. Format the string into the buffer
+    va_start(args, format);
+    vsnprintf(buf, len + 1, format, args);
+    va_end(args);
+
+    // 4. Send to output helper
+    WriteUTF8ToStream(buf);
+
+    // 5. Cleanup
+    free(buf);
+}
+#endif
 
 void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *func, int line, const char *format, ...) {
     if (level >= g_currentLogLevel) {
@@ -111,10 +169,14 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
             va_end(args);
         }
 
-        if (g_logHandler) {
-            g_logHandler(level, filename, line, func, message);
+        if (g_handler) {
+            g_handler->mmkvLog(level, filename, line, func, message);
         } else {
+#if defined(MMKV_WIN32)
+            PrintUTF8("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), filename, line, func, message.c_str());
+#else
             printf("[%s] <%s:%d::%s> %s\n", MMKVLogLevelDesc(level), filename, line, func, message.c_str());
+#endif
             //fflush(stdout);
         }
     }

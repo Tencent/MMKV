@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "MMKVAppExtension"
-  s.version      = "2.3.0"
+  s.version      = "2.4.0"
   s.summary      = "MMKV is a cross-platform key-value storage framework developed by WeChat."
   s.module_name  = "MMKVAppExtension"
 
@@ -20,6 +20,9 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/Tencent/MMKV.git", :tag => "v#{s.version}" }
   s.source_files =  "iOS/MMKV/MMKV", "iOS/MMKV/MMKV/*.{h,mm,hpp}"
   s.public_header_files = "iOS/MMKV/MMKV/MMKV.h", "iOS/MMKV/MMKV/MMKVHandler.h"
+  s.resource_bundles = {
+    "MMKVAppExtension_Privacy" => ["iOS/MMKV/MMKV/Resources/PrivacyInfo.xcprivacy"]
+  }
 
   s.framework    = "CoreFoundation"
   s.libraries    = "z", "c++"
@@ -31,7 +34,7 @@ Pod::Spec.new do |s|
     "GCC_PREPROCESSOR_DEFINITIONS" => "MMKV_IOS_EXTENSION",
   }
 
-  s.dependency 'MMKVCore', '~> 2.3.0'
+  s.dependency 'MMKVCore', '~> 2.4.0'
 
 end
 

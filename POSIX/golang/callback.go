@@ -27,34 +27,6 @@ package mmkv
 */
 import "C"
 
-// the callback type of Logger
-type LogHandler func(level int, file string, line int, function string, message string)
-
-var gLogHandler LogHandler
-
-// register a log callback
-//
-// Deprecated: use mmkv.InitializeMMKVWithLogLevelAndHandler(rootDir, logLevel, logHandler) instead.
-func RegisterLogHandler(logHandler LogHandler) {
-	gLogHandler = logHandler
-
-	C.setWantsLogRedirect(C.bool(true))
-}
-
-// unregister a log callback
-func UnRegisterLogHandler() {
-	gLogHandler = nil
-
-	C.setWantsLogRedirect(C.bool(false))
-}
-
-//export myLogHandler
-func myLogHandler(level int, file string, line int, function string, message string) {
-	if gLogHandler != nil {
-		gLogHandler(level, file, line, function, message)
-	}
-}
-
 const (
 	OnErrorDiscard = iota // When there's an error, MMKV will discard everything by default.
 	OnErrorRecover        // When there's an error, MMKV will try to recover as much data as possible.
@@ -65,57 +37,91 @@ const (
 	MMKVFileLength
 )
 
-// the callback type of error handler
-// error is either MMKVCRCCheckFail or MMKVFileLength
-// return OnErrorDiscard (default) or OnErrorRecover
-type ErrorHandler func(mmapID string, error int) int
+// Handler is the unified callback interface for MMKV.
+type Handler interface {
+	// WantLogRedirect returns true to enable log redirecting.
+	WantLogRedirect() bool
 
-var gErrorHandler ErrorHandler
+	// MMKVLog is called for each log message when log redirecting is enabled.
+	MMKVLog(level int, file string, line int, function string, message string)
 
-// register a error callback
-func RegisterErrorHandler(errorHandler ErrorHandler) {
-	gErrorHandler = errorHandler
+	// OnMMKVCRCCheckFail is called when a CRC check fails.
+	// Return OnErrorDiscard (default) or OnErrorRecover.
+	OnMMKVCRCCheckFail(mmapID string) int
 
-	C.setWantsErrorHandle(C.bool(true))
+	// OnMMKVFileLengthError is called when a file length mismatch is detected.
+	// Return OnErrorDiscard (default) or OnErrorRecover.
+	OnMMKVFileLengthError(mmapID string) int
+
+	// WantContentChangeNotification returns true to enable inter-process content change notifications.
+	WantContentChangeNotification() bool
+
+	// OnContentChangedByOuterProcess is called when content is changed by another process.
+	OnContentChangedByOuterProcess(mmapID string)
+
+	// OnMMKVContentLoadSuccessfully is called when an MMKV file is loaded successfully.
+	OnMMKVContentLoadSuccessfully(mmapID string)
 }
 
-// unregister a error callback
-func UnRegisterErrorHandler() {
-	gErrorHandler = nil
+// DefaultHandler provides default implementations for all Handler methods.
+// Embed this in your handler struct to only override the methods you need.
+type DefaultHandler struct{}
 
-	C.setWantsErrorHandle(C.bool(false))
+func (d DefaultHandler) WantLogRedirect() bool                     { return false }
+func (d DefaultHandler) MMKVLog(level int, file string, line int, function string, message string) {}
+func (d DefaultHandler) OnMMKVCRCCheckFail(mmapID string) int      { return OnErrorDiscard }
+func (d DefaultHandler) OnMMKVFileLengthError(mmapID string) int   { return OnErrorDiscard }
+func (d DefaultHandler) WantContentChangeNotification() bool       { return false }
+func (d DefaultHandler) OnContentChangedByOuterProcess(mmapID string) {}
+func (d DefaultHandler) OnMMKVContentLoadSuccessfully(mmapID string) {}
+
+var gHandler Handler
+
+// RegisterHandler registers a unified callback handler for MMKV.
+func RegisterHandler(handler Handler) {
+	gHandler = handler
+
+	wantLog := handler.WantLogRedirect()
+	wantContent := handler.WantContentChangeNotification()
+	C.setWantsHandler(C.bool(true), C.bool(wantLog), C.bool(wantContent))
+}
+
+// UnRegisterHandler unregisters the callback handler for MMKV.
+func UnRegisterHandler() {
+	gHandler = nil
+
+	C.setWantsHandler(C.bool(false), C.bool(false), C.bool(false))
+}
+
+//export myLogHandler
+func myLogHandler(level int, file string, line int, function string, message string) {
+	if gHandler != nil {
+		gHandler.MMKVLog(level, file, line, function, message)
+	}
 }
 
 //export myErrorHandler
 func myErrorHandler(mmapID string, error int) int {
-	if gErrorHandler != nil {
-		return gErrorHandler(mmapID, error)
+	if gHandler != nil {
+		if error == MMKVCRCCheckFail {
+			return gHandler.OnMMKVCRCCheckFail(mmapID)
+		} else if error == MMKVFileLength {
+			return gHandler.OnMMKVFileLengthError(mmapID)
+		}
 	}
 	return OnErrorDiscard
 }
 
-// the type of content change handler
-type ContentChangeHandler func(mmapID string)
-
-var gContentChangeHandler ContentChangeHandler
-
-// register a content change callback
-func RegisterContentChangeHandler(contentChangeHandler ContentChangeHandler) {
-	gContentChangeHandler = contentChangeHandler
-
-	C.setWantsContentChangeHandle(C.bool(true))
-}
-
-// unregister a content change callback
-func UnRegisterContentChangeHandler() {
-	gContentChangeHandler = nil
-
-	C.setWantsContentChangeHandle(C.bool(false))
-}
-
 //export myContentChangeHandler
 func myContentChangeHandler(mmapID string) {
-	if gContentChangeHandler != nil {
-		gContentChangeHandler(mmapID)
+	if gHandler != nil {
+		gHandler.OnContentChangedByOuterProcess(mmapID)
+	}
+}
+
+//export myContentLoadedHandler
+func myContentLoadedHandler(mmapID string) {
+	if gHandler != nil {
+		gHandler.OnMMKVContentLoadSuccessfully(mmapID)
 	}
 }

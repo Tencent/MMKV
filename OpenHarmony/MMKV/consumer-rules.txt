@@ -25,6 +25,7 @@ MMKVLogLevel
 NativeBuffer
 getObjKeys
 NameSpace
+MMKVConfig
 
 -keep-property-name
 *_MODE
@@ -55,6 +56,16 @@ encodeTypedArray
 importFromPreferences
 mmkvWithAshmemID
 rootDir
+mode
+aes256
+cryptKey
+rootPath
+expectedCapacity
+enableKeyExpire
+expiredInSeconds
+enableCompareBeforeSet
+recover
+itemSizeLimit
 
 -keep-dts
 /Users/lingol/Developer/mmkv/OpenHarmony/MMKV/src/main/cpp/types/libmmkv/

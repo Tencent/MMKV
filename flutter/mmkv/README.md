@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-2.3.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-2.4.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android** and **iOS**.
@@ -26,7 +26,7 @@ Add the following lines to `pubspec.yaml` on your app module. Then run `flutter 
 
 ```yaml
 dependencies:
-  mmkv: "^2.3.0"
+  mmkv: "^2.4.0"
 ```
 
 If you already include MMKV native lib in your App, you need to upgrade to version newer than v2.0.0.  
@@ -171,11 +171,11 @@ Due to the current limitation of Flutter runtime, we can't redirect log on the F
     // an unencrypted MMKV instance
     var mmkv = MMKV("test-encryption");
 
-    // change from unencrypted to encrypted
+    // change from unencrypted to encrypted with AES-128 key length
     mmkv.reKey("Key_seq_1");
 
-    // change encryption key
-    mmkv.reKey("Key_seq_2");
+    // change encryption key with AES-256 key length
+    mmkv.reKey("Key_Seq_Very_Looooooooong", aes256: true);
 
     // change from encrypted to unencrypted
     kmmkv.reKey(null);

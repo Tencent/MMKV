@@ -39,12 +39,31 @@ struct GoSliceWrap {
 };
 typedef struct GoSliceWrap GoSliceWrap_t;
 
+typedef struct {
+    int32_t mode;
+
+    GoStringWrap_t cryptKey;
+    bool aes256;
+
+    GoStringWrap_t rootPath;
+
+    uint64_t expectedCapacity;
+
+    int32_t enableKeyExpire;
+    uint32_t expiredInSeconds;
+
+    bool enableCompareBeforeSet;
+
+    int32_t recover;
+
+    uint32_t itemSizeLimit;
+} MMKVCreationConfig_t;
+
 void mmkvInitialize(GoStringWrap_t rootDir, int32_t logLevel, bool redirect);
 void onExit();
 
-void *getMMKVWithID(GoStringWrap_t mmapID, int32_t mode, GoStringWrap_t cryptKey, 
-                    GoStringWrap_t rootPath, uint64_t expectedCapacity, bool aes256);
-void *getDefaultMMKV(int32_t mode, GoStringWrap_t cryptKey, bool aes256);
+void *getMMKVWithID(GoStringWrap_t mmapID, MMKVCreationConfig_t config);
+void *getDefaultMMKV(MMKVCreationConfig_t config);
 const char *mmapID(void *handle);
 
 bool encodeBool(void *handle, GoStringWrap_t oKey, bool value);
@@ -113,9 +132,7 @@ int32_t pageSize();
 const char *version();
 const char *getRootDir();
 
-void setWantsLogRedirect(bool redirect);
-void setWantsErrorHandle(bool errorHandle);
-void setWantsContentChangeHandle(bool contentChange);
+void setWantsHandler(bool hasHandler, bool wantLog, bool wantContent);
 
 bool removeStorage(GoStringWrap_t mmapID, GoStringWrap_t rootPath);
 

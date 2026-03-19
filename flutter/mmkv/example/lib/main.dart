@@ -384,11 +384,17 @@ class _MyAppState extends State<MyApp> {
   }
 
   void testAutoExpire() {
-    final mmkv = MMKV("test_auto_expire");
+    // test disable auto expire by constructor
+    var mmkv = MMKV("test_auto_expire", enableKeyExpire: false);
+    // var mmkv = MMKV("test_auto_expire", enableKeyExpire: false, itemSizeLimit: 1);
+    // mmkv.encodeBool("never_expire_key_1", true, MMKV.ExpireNever);
     mmkv.clearAll(keepSpace: true);
-    mmkv.disableAutoKeyExpire();
+    // mmkv.disableAutoKeyExpire();
 
-    mmkv.enableAutoKeyExpire(1);
+    // test enable auto expire by constructor
+    mmkv.close();
+    mmkv = MMKV("test_auto_expire", enableKeyExpire: true, expiredInSeconds: 1);
+    // mmkv.enableAutoKeyExpire(1);
     mmkv.encodeBool("auto_expire_key_1", true);
     mmkv.encodeInt32("auto_expire_key_2", 1, 1);
     mmkv.encodeInt("auto_expire_key_3", 2, 1);

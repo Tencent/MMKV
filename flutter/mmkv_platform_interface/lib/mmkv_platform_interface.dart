@@ -81,6 +81,12 @@ class MMKVHandler {
   void onContentChangedByOuterProcess(String mmapID) {
     return;
   }
+
+  /// Called when an MMKV file is loaded successfully.
+  /// [mmapID] The unique ID of the loaded MMKV instance.
+  void onMMKVContentLoadSuccessfully(String mmapID) {
+    return;
+  }
 }
 
 /// The interface class that all implementation of MMKV platform plugin must extend
@@ -105,15 +111,13 @@ class MMKVPluginPlatform {
     throw UnimplementedError();
   }
 
-  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity) getMMKVWithIDFunc() {
+  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256,
+      int enableKeyExpire, int expiredInSeconds, int enableCompareBeforeSet, int recover, int itemSizeLimit) getMMKVWithIDFunc() {
     throw UnimplementedError();
   }
 
-  Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256) getMMKVWithIDFunc2() {
-    throw UnimplementedError();
-  }
-
-  Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256) getDefaultMMKVFunc() {
+  Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256, int expectedCapacity, int enableKeyExpire, int expiredInSeconds,
+      int enableCompareBeforeSet, int recover, int itemSizeLimit) getDefaultMMKVFunc() {
     throw UnimplementedError();
   }
 
@@ -306,6 +310,10 @@ class MMKVPluginPlatform {
   }
 
   ContentCallbackRegister registerContentHandlerFunc() {
+    throw UnimplementedError();
+  }
+
+  ContentCallbackRegister registerContentLoadedHandlerFunc() {
     throw UnimplementedError();
   }
 

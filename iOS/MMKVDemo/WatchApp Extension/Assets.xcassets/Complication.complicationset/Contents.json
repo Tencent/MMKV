@@ -26,6 +26,11 @@
       "role" : "graphic-corner"
     },
     {
+      "filename" : "Graphic Extra Large.imageset",
+      "idiom" : "watch",
+      "role" : "graphic-extra-large"
+    },
+    {
       "filename" : "Graphic Large Rectangular.imageset",
       "idiom" : "watch",
       "role" : "graphic-large-rectangular"

@@ -37,6 +37,8 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.tencent.mmkv.MMKV;
+import com.tencent.mmkv.MMKVConfig;
+import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.NameSpace;
 import com.tencent.mmkv.NativeBuffer;
 
@@ -743,11 +745,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testAutoExpire() {
-        MMKV mmkv = MMKV.mmkvWithID("test_auto_expire");
+        // disable auto expire by configuration
+        MMKVConfig config = new MMKVConfig();
+        config.enableKeyExpire = false;
+//        config.recover = MMKVRecoverStrategic.OnErrorRecover;
+//        config.itemSizeLimit = 1;
+        MMKV mmkv = MMKV.mmkvWithID("test_auto_expire", config);
         mmkv.clearAll();
-        mmkv.disableAutoKeyExpire();
+        mmkv.disableAutoKeyExpire(); // this become a no-op
 
-        mmkv.enableAutoKeyExpire(1);
+        // enable auto expire by configuration
+        mmkv.close();
+        config.enableKeyExpire = true;
+        config.expiredInSeconds = 1;
+        mmkv = MMKV.mmkvWithID("test_auto_expire", config);
+        mmkv.enableAutoKeyExpire(1); // this become a no-op
         mmkv.encode("auto_expire_key_1", true);
         mmkv.encode("never_expire_key_1", true, MMKV.ExpireNever);
 

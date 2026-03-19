@@ -43,8 +43,11 @@ enum MMKVVersion : uint32_t {
     // store extra flags
     MMKVVersionFlag = 4,
 
+    // preserved for internal use
+    MMKVVersionPreserved = 5,
+
     // preserved for next use
-    MMKVVersionNext = 5,
+    MMKVVersionNext = 6,
 
     // always large than next, a placeholder for error check
     MMKVVersionHolder = MMKVVersionNext + 1,

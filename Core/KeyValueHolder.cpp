@@ -102,7 +102,7 @@ KeyValueHolderCrypt &KeyValueHolderCrypt::operator=(KeyValueHolderCrypt &&other)
 
 void KeyValueHolderCrypt::move(KeyValueHolderCrypt &&other) noexcept {
     if (other.type == KeyValueHolderType_Direct || other.type == KeyValueHolderType_Offset) {
-        memcpy(this, &other, sizeof(other));
+        memcpy(reinterpret_cast<void*>(this), &other, sizeof(other));
     } else if (other.type == KeyValueHolderType_Memory) {
         type = KeyValueHolderType_Memory;
         memSize = other.memSize;

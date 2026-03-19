@@ -26,12 +26,12 @@
 
 MMKV_NAMESPACE_BEGIN
 
-std::string mmapedKVKey(const std::string &mmapID, const MMKVPath_t *rootPath = nullptr);
+std::string mmapedKVKey(const std::string &mmapID, const MMKVPath_t *rootPath = nullptr, bool alreadyAbsolute = false);
 std::string legacyMmapedKVKey(const std::string &mmapID, const MMKVPath_t *rootPath = nullptr);
 #ifndef MMKV_ANDROID
-MMKVPath_t mappedKVPathWithID(const std::string &mmapID, const MMKVPath_t *rootPath);
+MMKVPath_t mappedKVPathWithID(const std::string &mmapID, const MMKVPath_t *rootPath, bool alreadyAbsolute = false);
 #else
-MMKVPath_t mappedKVPathWithID(const std::string &mmapID, const MMKVPath_t *rootPath, MMKVMode mode = MMKV_MULTI_PROCESS);
+MMKVPath_t mappedKVPathWithID(const std::string &mmapID, const MMKVPath_t *rootPath, MMKVMode mode = MMKV_MULTI_PROCESS, bool alreadyAbsolute = false);
 #endif
 MMKVPath_t crcPathWithPath(const MMKVPath_t &kvPath);
 
@@ -76,7 +76,7 @@ enum class MigrateStatus: uint32_t {
 };
 
 // historically Android mistakenly use mmapKey as mmapID, we try migrate back to normal when possible
-MigrateStatus tryMigrateLegacyMMKVFile(const std::string &mmapID, const MMKVPath_t *rootPath);
+MigrateStatus tryMigrateLegacyMMKVFile(const std::string &mmapID, const MMKVPath_t *rootPath, bool alreadyAbsolute = false);
 #endif // MMKV_ANDROID
 
 MMKV_NAMESPACE_END

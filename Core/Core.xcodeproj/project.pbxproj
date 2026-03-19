@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CB0798F02F6A4B3C00B74BB8 /* MMKVHandler.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB0798EF2F6A4A6D00B74BB8 /* MMKVHandler.h */; };
+		CB0798F12F6A4B4200B74BB8 /* MMKVHandler.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB0798EF2F6A4A6D00B74BB8 /* MMKVHandler.h */; };
 		CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640223AB2E9100ACCD39 /* openssl_md5.h */; };
 		CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = CB95640023AB2E9100ACCD39 /* openssl_opensslconf.h */; };
 		CB0DCC6D242B5786009AFE59 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CBF3450323B4BABA00168AC7 /* libz.tbd */; };
@@ -88,6 +90,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CB0798F02F6A4B3C00B74BB8 /* MMKVHandler.h in CopyFiles */,
 				CBE668A32D5C8746005C184E /* MiniPBCoder.h in CopyFiles */,
 				CB0DCC46242B3856009AFE59 /* openssl_opensslconf.h in CopyFiles */,
 				CB0DCC45242B384E009AFE59 /* openssl_md5.h in CopyFiles */,
@@ -107,6 +110,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
+				CB0798F12F6A4B4200B74BB8 /* MMKVHandler.h in CopyFiles */,
 				CBE668A42D5C9467005C184E /* MiniPBCoder.h in CopyFiles */,
 				CBF1906A243D70BA001C82ED /* openssl_opensslconf.h in CopyFiles */,
 				CBF1906B243D70BA001C82ED /* openssl_md5.h in CopyFiles */,
@@ -123,6 +127,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CB0798EF2F6A4A6D00B74BB8 /* MMKVHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MMKVHandler.h; sourceTree = "<group>"; };
 		CB0DCC70242B57E5009AFE59 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
 		CB30A3EC24987C32007171B1 /* CodedInputDataCrypt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = CodedInputDataCrypt.cpp; sourceTree = "<group>"; };
 		CB30A3ED24987C32007171B1 /* CodedInputDataCrypt.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CodedInputDataCrypt.h; sourceTree = "<group>"; };
@@ -244,6 +249,7 @@
 				CB7C029924A0F65B008D77E6 /* MMKV_IO.cpp */,
 				CB467F862431D3ED00FD7421 /* MMKV_OSX.h */,
 				CBD723BE23B5C22800D3CDAF /* MMKV_OSX.cpp */,
+				CB0798EF2F6A4A6D00B74BB8 /* MMKVHandler.h */,
 				CB95641123AB2E9100ACCD39 /* MMKVLog.cpp */,
 				CB9563F423AB2E9100ACCD39 /* MMKVLog.h */,
 				CB9563EC23AB2E9100ACCD39 /* MMKVMetaInfo.hpp */,

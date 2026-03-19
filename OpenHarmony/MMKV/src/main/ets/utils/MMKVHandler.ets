@@ -108,4 +108,12 @@ export abstract class MMKVHandler {
   public onContentChangedByOuterProcess(mmapID: string): void {
     return;
   }
+
+  /**
+   * Called when an MMKV file is loaded successfully.
+   * @param mmapID The unique ID of the loaded MMKV instance.
+   */
+  public onMMKVContentLoadSuccessfully(mmapID: string): void {
+    return;
+  }
 }

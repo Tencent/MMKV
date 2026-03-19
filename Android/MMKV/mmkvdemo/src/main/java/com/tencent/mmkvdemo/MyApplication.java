@@ -24,13 +24,12 @@ import android.app.Application;
 import android.util.Log;
 import com.getkeepsafe.relinker.ReLinker;
 import com.tencent.mmkv.MMKV;
-import com.tencent.mmkv.MMKVContentChangeNotification;
 import com.tencent.mmkv.MMKVHandler;
 import com.tencent.mmkv.MMKVLogLevel;
 import com.tencent.mmkv.MMKVRecoverStrategic;
 import com.tencent.mmkv.NameSpace;
 
-public class MyApplication extends Application implements MMKVHandler, MMKVContentChangeNotification {
+public class MyApplication extends Application implements MMKVHandler {
     @Override
     public void onCreate() {
         super.onCreate();
@@ -46,7 +45,7 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
             public void loadLibrary(String libName) {
                 ReLinker.loadLibrary(MyApplication.this, libName);
             }
-        }, MMKVLogLevel.LevelInfo,this);
+        }, MMKVLogLevel.LevelInfo, this);
         Log.i("MMKV", "mmkv root: " + rootDir);
 
         // set log level
@@ -58,8 +57,8 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
         // register log redirecting & recover handler is moved into MMKV.initialize()
         // MMKV.registerHandler(this);
 
-        // content change notification
-        MMKV.registerContentChangeNotify(this);
+        // deprecated: content change notification
+        // MMKV.registerContentChangeNotify(this);
     }
 
     @Override
@@ -110,6 +109,16 @@ public class MyApplication extends Application implements MMKVHandler, MMKVConte
     @Override
     public void onContentChangedByOuterProcess(String mmapID) {
         Log.i("MMKV", "other process has changed content of : " + mmapID);
+    }
+
+    @Override
+    public boolean wantContentChangeNotification() {
+        return true;
+    }
+
+    @Override
+    public void onMMKVContentLoadSuccessfully(String mmapID) {
+        Log.i("MMKV", "content load successfully : " + mmapID);
     }
 
     private void testNameSpace() {

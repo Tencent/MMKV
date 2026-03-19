@@ -26,6 +26,7 @@ import { NativeBuffer } from './NativeBuffer';
 import { MMKVHandler } from './MMKVHandler';
 import common from '@ohos.app.ability.common';
 import dataPreferences from '@ohos.data.preferences';
+import { MMKVConfig } from './MMKVConfig';
 
 declare namespace internal {
     type ArrayValueType = Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | BigInt64Array | BigUint64Array | Float32Array | Float64Array;
@@ -146,10 +147,23 @@ export class MMKV {
      * @returns The default MMKV instance.
      */
     public static defaultMMKV(mode?: number, cryptKey?: string, aes256?: boolean): MMKV {
+        return MMKV.defaultMMKVWithConfig({mode: mode, cryptKey: cryptKey, aes256: aes256});
+    }
+
+    /**
+     * Create the default MMKV instance with all-in-one configuration.
+     * @param config The all-in-one configuration.
+     * @returns The default MMKV instance.
+     */
+    public static defaultMMKVWithConfig(config: MMKVConfig): MMKV {
         if (!MMKV.g_rootDir) {
             throw new Error('You should Call MMKV.initialize() first.')
         }
-        let handle: bigint = native.getDefaultMMKV(mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, aes256);
+        let enableKeyExpire = (config.enableKeyExpire == undefined) ? -1 : (config.enableKeyExpire == true ? 1 : 0);
+        let mode = config.mode ?? MMKV.SINGLE_PROCESS_MODE;
+        let handle: bigint = native.getDefaultMMKV(mode, config.cryptKey, config.aes256, config.expectedCapacity,
+            enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet, config.recover,
+            config.itemSizeLimit);
         if (!handle) {
             throw new Error('Fail to create the default MMKV instance in NAPI.');
         }
@@ -167,11 +181,25 @@ export class MMKV {
      */
     public static mmkvWithID(mmapID: string, mode?: number, cryptKey?: string, rootPath?: string,
         expectedCapacity?: bigint, aes256?: boolean): MMKV {
+        return MMKV.mmkvWithConfig(mmapID, {mode: mode, cryptKey: cryptKey, rootPath: rootPath,
+            expectedCapacity: expectedCapacity, aes256: aes256});
+    }
+
+    /**
+     * Creat an MMKV instance with all-in-one configuration
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param config The all-in-one configuration.
+     * @returns The MMKV instance.
+     */
+    public static mmkvWithConfig(mmapID: string, config: MMKVConfig): MMKV {
         if (!MMKV.g_rootDir) {
             throw new Error('You should Call MMKV.initialize() first.')
         }
-        let handle: bigint = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, rootPath,
-            expectedCapacity, aes256);
+        let enableKeyExpire = (config.enableKeyExpire == undefined) ? -1 : (config.enableKeyExpire == true ? 1 : 0);
+        let mode = config.mode ?? MMKV.SINGLE_PROCESS_MODE;
+        let handle: bigint = native.mmkvWithID(mmapID, mode, config.cryptKey, config.rootPath, config.expectedCapacity,
+            config.aes256, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet, config.recover,
+            config.itemSizeLimit);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }
@@ -905,16 +933,22 @@ export class MMKV {
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      */
     public static mmkvWithAshmemID(mmapID: string, size: number, mode: number, cryptKey?: string): MMKV {
-        let handle: bigint = native.mmkvWithIDAndSize(mmapID, size, (mode | MMKV.ASHMEM_MODE), cryptKey);
-        if (!handle) {
-            throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
-        }
-        return new MMKV(handle);
+        return MMKV.mmkvWithAshmemConfig(mmapID, {mode: mode, cryptKey: cryptKey, expectedCapacity: BigInt(size)});
+    }
+
+    /**
+     * Create an MMKV instance base on Anonymous Shared Memory, aka not synced to any disk files.
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param config The all-in-one configuration.
+     */
+    public static mmkvWithAshmemConfig(mmapID: string, config: MMKVConfig): MMKV {
+        config.mode = (config.mode ?? MMKV.SINGLE_PROCESS_MODE) | MMKV.ASHMEM_MODE;
+        return MMKV.mmkvWithConfig(mmapID, config);
     }
 
     /**
      * Get an ashmem MMKV instance that has been initiated by another process.
-     * Normally you should just call {@link #mmkvWithAshmemID(Context, String, int, int, String)} instead.
+     * Normally you should just call {@link #mmkvWithAshmemID(String, int, int, String)} instead.
      *
      * @param mmapID   The unique ID of the MMKV instance.
      * @param fd       The file descriptor of the ashmem of the MMKV file, transferred from another process by binder.
@@ -922,7 +956,22 @@ export class MMKV {
      * @param cryptKey The encryption key of the MMKV instance (no more than 16 bytes).
      */
     public static mmkvWithAshmemFD(mmapID: string, fd: number, metaFD: number, cryptKey?: string): MMKV {
-        let handle: bigint = native.mmkvWithAshmemFD(mmapID, fd, metaFD, cryptKey);
+        return MMKV.mmkvWithAshmemFDConfig(mmapID, fd, metaFD, {cryptKey: cryptKey});
+    }
+
+    /**
+     * Get an ashmem MMKV instance that has been initiated by another process.
+     * Normally you should just call {@link #mmkvWithAshmemID(String, MMKVConfig)} instead.
+     *
+     * @param mmapID   The unique ID of the MMKV instance.
+     * @param fd       The file descriptor of the ashmem of the MMKV file, transferred from another process by binder.
+     * @param metaFD   The file descriptor of the ashmem of the MMKV crc file, transferred from another process by binder.
+     * @param config    The all-in-one configuration.
+     */
+    public static mmkvWithAshmemFDConfig(mmapID: string, fd: number, metaFD: number, config: MMKVConfig): MMKV {
+        let enableKeyExpire = (config.enableKeyExpire == undefined) ? -1 : (config.enableKeyExpire == true ? 1 : 0);
+        let handle: bigint = native.mmkvWithAshmemFD(mmapID, fd, metaFD, config.cryptKey, config.aes256, enableKeyExpire,
+            config.expiredInSeconds, config.enableCompareBeforeSet, config.recover, config.itemSizeLimit);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }
@@ -1021,8 +1070,23 @@ class NameSpace {
      * @returns The MMKV instance.
      */
     public mmkvWithID(mmapID: string, mode?: number, cryptKey?: string, expectedCapacity?: bigint, aes256?: boolean): MMKV {
-        let handle: bigint = native.mmkvWithID(mmapID, mode ?? MMKV.SINGLE_PROCESS_MODE, cryptKey, this._rootDir,
-            expectedCapacity, aes256);
+        return this.mmkvWithConfig(mmapID, {mode: mode, aes256: aes256, cryptKey: cryptKey,
+            expectedCapacity: expectedCapacity});
+    }
+
+    /**
+     * Creat an MMKV instance with all-in-one configuration
+     * @param mmapID The unique ID of the MMKV instance.
+     * @param config The all-in-one configuration.
+     * @returns The MMKV instance.
+     */
+    public mmkvWithConfig(mmapID: string, config: MMKVConfig): MMKV {
+        config.rootPath = this._rootDir;
+        let enableKeyExpire = (config.enableKeyExpire == undefined) ? -1 : (config.enableKeyExpire == true ? 1 : 0);
+        let mode = config.mode ?? MMKV.SINGLE_PROCESS_MODE;
+        let handle: bigint = native.mmkvWithID(mmapID, mode, config.cryptKey, config.rootPath, config.expectedCapacity,
+            config.aes256, enableKeyExpire, config.expiredInSeconds, config.enableCompareBeforeSet, config.recover,
+            config.itemSizeLimit);
         if (!handle) {
             throw new Error('Fail to create an MMKV instance [' + mmapID + '] in NAPI.');
         }

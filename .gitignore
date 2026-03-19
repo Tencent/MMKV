@@ -57,3 +57,6 @@ Podfile.lock
 
 #docker
 output/
+
+#swiftpm
+.swiftpm

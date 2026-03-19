@@ -1,4 +1,12 @@
 # MMKV for Flutter Change Log
+## v2.4.0 / 2026-03-18
+* **Feature:** Refactored the callback system into a unified `MMKVHandler` interface. Added `onMMKVContentLoadSuccessfully` callback.
+* **Feature:** Added `MMKVConfig` for all-in-one instance configuration.
+* **Feature:** Added `defaultMMKV(config)` for creating the default instance with full configuration.
+* **Fix:** Robust check on encryption mode.
+* Android: Fix `fcntl()` OFD lock failure on ashmem.
+* iOS: Fixed a memory leak on getting `NameSpace` instance.
+
 ## v2.3.0 / 2025-12-03
 This release is a **breaking change** and introduces **AES-256 encryption** for enhanced security.
 * **Feature:** Added **AES-256 encryption** functionality. To upgrade an existing encrypted MMKV instance to AES-256, first load it using the old key. Then, call the `reKey()` method with the new key and set the `aes256` parameter to `true`, e.g., `reKey(newKey, aes256: true)`. After this, you should use the new key for all future loads of this instance.

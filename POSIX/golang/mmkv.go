@@ -82,6 +82,11 @@ const (
 	MMKV_Expire_Year   = 365 * 30 * 24 * 60 * 60
 )
 
+const (
+	MMKV_ON_ERROR_DISCARD = iota
+	MMKV_ON_ERROR_RECOVER
+)
+
 // MMBuffer a wrapper of native C memory, efficient for simple usage
 // must call MMBuffer.Destroy() after no longer usage
 type MMBuffer struct {
@@ -115,6 +120,72 @@ func (buffer MMBuffer) StringView() string {
 // Destroy must call Destroy() after no longer usage
 func (buffer MMBuffer) Destroy() {
 	C.free(unsafe.Pointer(buffer.ptr))
+}
+
+// Config all-in-one configuration for creating MMKV instance
+type Config struct {
+	Mode                   int
+	Encryption             *EncryptionConfig
+	RootPath               string
+	ExpectedCapacity       uint64
+	Expiration             *ExpirationConfig
+	EnableCompareBeforeSet bool
+	Recover                int
+	ItemSizeLimit          uint32
+}
+
+type EncryptionConfig struct {
+	Key    []byte
+	AES256 bool
+}
+
+type ExpirationConfig struct {
+	Enabled          bool
+	ExpiredInSeconds uint32
+}
+
+func configToC(cfg *Config) C.MMKVCreationConfig_t {
+	if cfg == nil {
+		return C.MMKVCreationConfig_t{}
+	}
+
+	var cCfg C.MMKVCreationConfig_t
+	cCfg.mode = C.int32_t(cfg.Mode)
+	cCfg.expectedCapacity = C.uint64_t(cfg.ExpectedCapacity)
+	cCfg.enableCompareBeforeSet = C.bool(cfg.EnableCompareBeforeSet)
+	cCfg.itemSizeLimit = C.uint32_t(cfg.ItemSizeLimit)
+
+	if cfg.Encryption != nil {
+		if len(cfg.Encryption.Key) > 0 {
+			cCfg.cryptKey = C.wrapGoByteSlice(unsafe.Pointer(&cfg.Encryption.Key[0]), C.size_t(len(cfg.Encryption.Key)))
+		} else {
+			cCfg.cryptKey = C.GoStringWrapNil()
+		}
+		cCfg.aes256 = C.bool(cfg.Encryption.AES256)
+	} else {
+		cCfg.cryptKey = C.GoStringWrapNil()
+	}
+
+	if cfg.RootPath != "" {
+		cCfg.rootPath = C.wrapGoString(cfg.RootPath)
+	} else {
+		cCfg.rootPath = C.GoStringWrapNil()
+	}
+
+	if cfg.Expiration != nil {
+		if cfg.Expiration.Enabled {
+			cCfg.enableKeyExpire = 1
+		} else {
+			cCfg.enableKeyExpire = 0
+		}
+		cCfg.expiredInSeconds = C.uint32_t(cfg.Expiration.ExpiredInSeconds)
+	} else {
+		cCfg.enableKeyExpire = -1
+	}
+
+	cCfg.recover = C.int32_t(cfg.Recover)
+
+	return cCfg
 }
 
 type MMKV interface {
@@ -267,10 +338,23 @@ func InitializeMMKVWithLogLevel(rootDir string, logLevel int) {
 	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(false))
 }
 
-// InitializeMMKVWithLogLevelAndHandler Same as the function InitializeMMKVWithLogLevel() above, except that you can provide a logHandler at the very beginning.
-func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandler LogHandler) {
-	gLogHandler = logHandler
-	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(true))
+// Deprecated: Use InitializeMMKVWithLogLevel() + RegisterHandler() instead.
+func InitializeMMKVWithLogLevelAndHandler(rootDir string, logLevel int, logHandler func(level int, file string, line int, function string, message string)) {
+	C.mmkvInitialize(C.wrapGoString(rootDir), C.int32_t(logLevel), C.bool(false))
+	if logHandler != nil {
+		RegisterHandler(&logHandlerAdapter{logHandler: logHandler})
+	}
+}
+
+// logHandlerAdapter wraps a legacy log handler function into the Handler interface.
+type logHandlerAdapter struct {
+	DefaultHandler
+	logHandler func(level int, file string, line int, function string, message string)
+}
+
+func (a *logHandlerAdapter) WantLogRedirect() bool { return true }
+func (a *logHandlerAdapter) MMKVLog(level int, file string, line int, function string, message string) {
+	a.logHandler(level, file, line, function, message)
 }
 
 // OnExit Call before App exists, it's just fine not calling it on most case (except when the device shutdown suddenly).
@@ -285,49 +369,50 @@ func PageSize() int32 {
 
 // DefaultMMKV a generic purpose instance in single-process mode.
 func DefaultMMKV() MMKV {
-	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.GoStringWrapNil(), C.bool(false)))
-	return MMKV(mmkv)
+	return DefaultMMKVWithConfig(Config{})
 }
 
 // DefaultMMKVWithMode a generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithMode(mode int) MMKV {
-	mmkv := ctorMMKV(C.getDefaultMMKV(C.int(mode), C.GoStringWrapNil(), C.bool(false)))
-	return MMKV(mmkv)
+	return DefaultMMKVWithConfig(Config{Mode: mode})
 }
 
 // DefaultMMKVWithModeAndCryptKey an encrypted generic purpose instance in single-process or multi-process mode.
 func DefaultMMKVWithModeAndCryptKey(mode int, cryptKey string, aes256 bool) MMKV {
-	mmkv := ctorMMKV(C.getDefaultMMKV(MMKV_SINGLE_PROCESS, C.wrapGoString(cryptKey), C.bool(aes256)))
+	return DefaultMMKVWithConfig(Config{Mode: mode, Encryption: &EncryptionConfig{AES256: aes256, Key: []byte(cryptKey)}})
+}
+
+// DefaultMMKVWithConfig a generic purpose instance with all-in-one configuration.
+func DefaultMMKVWithConfig(config Config) MMKV {
+	cfg := configToC(&config)
+	mmkv := ctorMMKV(C.getDefaultMMKV(cfg))
 	return MMKV(mmkv)
 }
 
 // MMKVWithID an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithID(mmapID string) MMKV {
-	cStrNull := C.GoStringWrapNil()
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull, 0, C.bool(false)))
+	return MMKVWithIDAndConfig(mmapID, Config{})
+}
+
+func MMKVWithIDAndConfig(mmapID string, config Config) MMKV {
+	cfg := configToC(&config)
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
 	return MMKV(mmkv)
 }
 
 // MMKVWithIDAndExpectedCapacity an instance with specific location ${MMKV Root}/mmapID, in single-process mode.
 func MMKVWithIDAndExpectedCapacity(mmapID string, expectedCapacity uint64) MMKV {
-	cStrNull := C.GoStringWrapNil()
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, cStrNull,
-		C.uint64_t(expectedCapacity), C.bool(false)))
-	return MMKV(mmkv)
+	return MMKVWithIDAndConfig(mmapID, Config{ExpectedCapacity: expectedCapacity})
 }
 
 // MMKVWithIDAndMode an instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndMode(mmapID string, mode int) MMKV {
-	cStrNull := C.GoStringWrapNil()
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, cStrNull, 0, C.bool(false)))
-	return MMKV(mmkv)
+	return MMKVWithIDAndConfig(mmapID, Config{Mode: mode})
 }
 
 // MMKVWithIDAndModeAndCryptKey an encrypted instance with specific location ${MMKV Root}/mmapID, in single-process or multi-process mode.
 func MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string, aes256 bool) MMKV {
-	cStrNull := C.GoStringWrapNil()
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), cStrNull, 0, C.bool(aes256)))
-	return MMKV(mmkv)
+	return MMKVWithIDAndConfig(mmapID, Config{Mode: mode, Encryption: &EncryptionConfig{AES256: aes256, Key: []byte(cryptKey)}})
 }
 
 // BackupOneToDirectory backup one MMKV instance (from the root dir of MMKV) to dstDir
@@ -741,33 +826,36 @@ func (ns *NameSpace) GetRootDir() string {
 
 // MMKVWithID an instance with specific location ${NameSpace Root}/mmapID, in single-process mode.
 func (ns *NameSpace) MMKVWithID(mmapID string) MMKV {
-	cStrNull := C.GoStringWrapNil()
-	root := C.wrapGoString(ns.rootDir)
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, root, 0, C.bool(false)))
+	cfg := configToC(&Config{RootPath: ns.rootDir})
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
+	return MMKV(mmkv)
+}
+
+func (ns *NameSpace) MMKVWithIDAndConfig(mmapID string, config Config) MMKV {
+	config.RootPath = ns.rootDir
+	cfg := configToC(&config)
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
 	return MMKV(mmkv)
 }
 
 // MMKVWithIDAndExpectedCapacity an instance with specific location ${NameSpace Root}/mmapID, in single-process mode.
 func (ns *NameSpace) MMKVWithIDAndExpectedCapacity(mmapID string, expectedCapacity uint64) MMKV {
-	cStrNull := C.GoStringWrapNil()
-	root := C.wrapGoString(ns.rootDir)
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), MMKV_SINGLE_PROCESS, cStrNull, root,
-		C.uint64_t(expectedCapacity), C.bool(false)))
+	cfg := configToC(&Config{RootPath: ns.rootDir, ExpectedCapacity: expectedCapacity})
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
 	return MMKV(mmkv)
 }
 
 // MMKVWithIDAndMode an instance with specific location ${NameSpace Root}/mmapID, in single-process or multi-process mode.
 func (ns *NameSpace) MMKVWithIDAndMode(mmapID string, mode int) MMKV {
-	cStrNull := C.GoStringWrapNil()
-	root := C.wrapGoString(ns.rootDir)
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), cStrNull, root, 0, C.bool(false)))
+	cfg := configToC(&Config{Mode: mode, RootPath: ns.rootDir})
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
 	return MMKV(mmkv)
 }
 
 // MMKVWithIDAndModeAndCryptKey an encrypted instance with specific location ${NameSpace Root}/mmapID, in single-process or multi-process mode.
 func (ns *NameSpace) MMKVWithIDAndModeAndCryptKey(mmapID string, mode int, cryptKey string, aes256 bool) MMKV {
-	root := C.wrapGoString(ns.rootDir)
-	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), C.int(mode), C.wrapGoString(cryptKey), root, 0, C.bool(aes256)))
+	cfg := configToC(&Config{Mode: mode, RootPath: ns.rootDir, Encryption: &EncryptionConfig{AES256: aes256, Key: []byte(cryptKey)}})
+	mmkv := ctorMMKV(C.getMMKVWithID(C.wrapGoString(mmapID), cfg))
 	return MMKV(mmkv)
 }
 

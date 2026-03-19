@@ -66,8 +66,8 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
             va_end(args);
         }
 
-        if (g_logHandler) {
-            g_logHandler(level, filename, line, func, message);
+        if (g_handler) {
+            g_handler->mmkvLog(level, filename, line, func, message);
         } else {
             auto desc = MMKVLogLevelDesc(level);
             OH_LOG_Print(LOG_APP, desc, 0, APP_NAME, "<%{public}s:%{public}d::%{public}s> %{public}s",
@@ -121,8 +121,8 @@ void _MMKVLogWithLevel(MMKVLogLevel level, const char *filename, const char *fun
             va_end(args);
         }
 
-        if (g_logHandler) {
-            g_logHandler(level, filename, line, func, message);
+        if (g_handler) {
+            g_handler->mmkvLog(level, filename, line, func, message);
         } else {
             auto desc = MMKVLogLevelDesc(level);
             __android_log_print(desc, APP_NAME, "<%s:%d::%s> %s", filename, line, func, message.c_str());

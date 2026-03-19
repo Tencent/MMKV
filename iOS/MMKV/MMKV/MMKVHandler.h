@@ -25,6 +25,7 @@
 typedef NS_ENUM(NSUInteger, MMKVRecoverStrategic) {
     MMKVOnErrorDiscard = 0,
     MMKVOnErrorRecover,
+    MMKVOnErrorNotSet,
 };
 
 typedef NS_ENUM(NSUInteger, MMKVLogLevel) {
@@ -54,6 +55,10 @@ typedef NS_ENUM(NSUInteger, MMKVLogLevel) {
 // called when content is changed by other process
 // doesn't guarantee real-time notification
 - (void)onMMKVContentChange:(NSString *)mmapID;
+
+// called when an MMKV file is loaded successfully.
+// This is triggered only when MMKV actually opens and maps the file.
+- (void)onMMKVContentLoadSuccessfully:(NSString *)mmapID;
 
 @end
 

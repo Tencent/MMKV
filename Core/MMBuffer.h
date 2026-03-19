@@ -82,6 +82,8 @@ public:
     MMBuffer(void *source, size_t length, MMBufferCopyFlag flag = MMBufferCopy);
 #ifdef MMKV_APPLE
     explicit MMBuffer(NSDataType *data, MMBufferCopyFlag flag = MMBufferCopy);
+
+    NSDataType *toNSData(bool transferOwnerShip);
 #endif
 
     MMBuffer(MMBuffer &&other) noexcept;

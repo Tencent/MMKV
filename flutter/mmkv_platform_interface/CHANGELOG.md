@@ -1,4 +1,8 @@
 # MMKV Platform Interface Change Log
+## v2.4.0 / 2026-03-18
+* Add `onMMKVContentLoadSuccessfully` to `MMKVHandler`.
+* Add `MMKVConfig` and `defaultMMKV(config)` support.
+
 ## v2.3.0 / 2025-12-03
 * Alter `getMMKVWithID2()`, `getDefaultMMKV()`, `reKey()` and `checkReSetCryptKey()` to support **AES-256 encryption** functionality.
 

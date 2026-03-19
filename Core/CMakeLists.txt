@@ -193,6 +193,7 @@ copy_files(
         MMKVPredef.h
         MMBuffer.h
         MiniPBCoder.h
+        MMKVHandler.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV)
 
 #message(STATUS "copying headers to ${CMAKE_CURRENT_SOURCE_DIR}/include/MMKV")

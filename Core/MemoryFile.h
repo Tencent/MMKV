@@ -25,6 +25,7 @@
 #include "MMKVPredef.h"
 #include <cstdint>
 #include <functional>
+#include <optional>
 
 #ifdef MMKV_ANDROID
 MMKVPath_t ashmemMMKVPathWithID(const MMKVPath_t &mmapID);
@@ -72,7 +73,11 @@ class FileLock;
 
 class File {
     MMKVPath_t m_path;
+#ifdef MMKV_WIN32
+    std::string m_utf8Path;
+#endif
     MMKVFileHandle_t m_fd;
+
 public:
     const OpenFlag m_flag;
 #ifndef MMKV_ANDROID
@@ -91,14 +96,18 @@ public:
 
     void close();
 
-    MMKVFileHandle_t getFd() { return m_fd; }
+    MMKVFileHandle_t getFd() const { return m_fd; }
 
     const MMKVPath_t &getPath() const { return m_path; }
 
 #ifndef MMKV_WIN32
     bool isFileValid() const { return m_fd >= 0; }
+
+    const std::string &getUTF8Path() const { return m_path; }
 #else
     bool isFileValid() const { return m_fd != MMKVFileHandleInvalidValue; }
+
+    const std::string &getUTF8Path() const { return m_utf8Path; }
 #endif
 
     // get the actual file size on disk
@@ -131,7 +140,7 @@ public:
 #ifndef MMKV_ANDROID
     explicit MemoryFile(MMKVPath_t path, size_t expectedCapacity = 0, bool readOnly = false, bool mayflyFD = false);
 #else
-    MemoryFile(MMKVPath_t path, size_t size, FileType fileType, size_t expectedCapacity = 0, bool readOnly = false, bool mayflyFD = false);
+    MemoryFile(MMKVPath_t path, FileType fileType, size_t expectedCapacity = 0, bool readOnly = false, bool mayflyFD = false);
     explicit MemoryFile(MMKVFileHandle_t ashmemFD);
 
     const FileType m_fileType;
@@ -147,6 +156,8 @@ public:
     void *getMemory() { return m_ptr; }
 
     const MMKVPath_t &getPath() { return m_diskFile.getPath(); }
+
+    const std::string &getUTF8Path() const { return m_diskFile.getUTF8Path(); }
 
     MMKVFileHandle_t getFd();
 
@@ -199,6 +210,8 @@ bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail);
 //#endif
 
 bool deleteFile(const MMKVPath_t &path);
+
+std::optional<MMKVPath_t> getUniqueFileName(const MMKVPath_t &folder, const MMKVPath_t &prefix);
 
 enum WalkType : uint32_t {
     WalkFile = 1 << 0,

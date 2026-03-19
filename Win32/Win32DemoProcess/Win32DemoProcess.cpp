@@ -68,8 +68,10 @@ void brutleTest(DWORD processID) {
 }
 
 int main() {
-    locale::global(locale(""));
-    wcout.imbue(locale(""));
+    //locale::global(locale(".UTF8"));
+    //SetConsoleOutputCP(CP_UTF8);
+    //SetConsoleCP(CP_UTF8);
+    //wcout.imbue(locale(""));
     srand(GetTickCount());
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"微信-MMKV");

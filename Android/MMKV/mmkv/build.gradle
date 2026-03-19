@@ -157,12 +157,28 @@ afterEvaluate {
             def artifactIdSuffix = flavorSuffixes.join("-")
             def fullArtifactId = "${POM_ARTIFACT_ID}${artifactIdSuffix ? "-$artifactIdSuffix" : ""}"
 
-            // Create debug symbols task per variant
+            // 1. Find the task that merges native libs (unstripped).
+            //    Name pattern is typically: mergeReleaseNativeLibs or mergeFlavorReleaseNativeLibs
+            def mergeTaskName = "merge${variant.name.capitalize()}NativeLibs"
+            def mergeTask = tasks.findByName(mergeTaskName)
+
+            if (!mergeTask) {
+                println "Warning: Could not find Native Merge task: $mergeTaskName"
+                return // Skip creating the symbols jar if we can't find the source
+            }
+
+            // Create debug symbols task
             def symbolsTask = tasks.register("bundleSymbols${variant.name.capitalize()}", Jar) {
-                from file("build/intermediates/cmake/${variant.name}/obj/")
+                // 2. FIX: Don't use a hardcoded path string.
+                //    Use the output files of the merge task directly.
+                from(mergeTask.outputs.files)
+
+                // 3. Ensure we only grab the .so files (the merge task might output a tree structure like /lib/arm64/...)
+                include '**/*.so'
+
                 archiveClassifier.set("so-symbols")
                 destinationDirectory.set(file("$buildDir/intermediates/so-symbols/${variant.name}"))
-                dependsOn('build')
+                dependsOn mergeTask
             }
 
             // Create publication per variant
@@ -218,7 +234,10 @@ afterEvaluate {
     }
 
     signing {
-        sign publishing.publications
+        // Ensure signing only targets publications that were successfully created
+        sign publishing.publications.matching {
+            it.name in android.libraryVariants.collect { v -> v.name }
+        }
     }
 }
 

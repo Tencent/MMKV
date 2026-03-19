@@ -32,6 +32,24 @@ using namespace mmkv;
 using namespace std;
 namespace py = pybind11;
 
+static MMKVConfig pyArgsToConfig(MMKVMode mode, const string &cryptKey, const MMKVPath_t &rootDir,
+        size_t expectedCapacity, bool aes256, std::optional<bool> enableKeyExpire,
+        uint32_t expiredInSeconds, bool enableCompareBeforeSet,
+        std::optional<MMKVRecoverStrategic> recover, uint32_t itemSizeLimit) {
+    MMKVConfig config;
+    config.mode = mode;
+    config.aes256 = aes256;
+    config.cryptKey = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
+    config.rootPath = (rootDir.length() > 0) ? (MMKVPath_t *) &rootDir : nullptr;
+    config.expectedCapacity = expectedCapacity;
+    config.enableKeyExpire = enableKeyExpire;
+    config.expiredInSeconds = expiredInSeconds;
+    config.enableCompareBeforeSet = enableCompareBeforeSet;
+    config.recover = recover;
+    config.itemSizeLimit = itemSizeLimit;
+    return config;
+}
+
 static MMBuffer pyBytes2MMBuffer(const py::bytes &bytes) {
     char *buffer = nullptr;
     ssize_t length = 0;
@@ -43,26 +61,47 @@ static MMBuffer pyBytes2MMBuffer(const py::bytes &bytes) {
 
 static function<void(MMKVLogLevel level, const char *file, int line, const char *function, const string &message)>
     g_logHandler = nullptr;
-static void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
-    if (g_logHandler) {
-        g_logHandler(level, file, line, function, message);
-    }
-}
-
 static function<MMKVRecoverStrategic(const string &mmapID, MMKVErrorType errorType)> g_errorHandler = nullptr;
-static MMKVRecoverStrategic MyErrorHandler(const string &mmapID, MMKVErrorType errorType) {
-    if (g_errorHandler) {
-        return g_errorHandler(mmapID, errorType);
-    }
-    return OnErrorDiscard;
-}
-
 static function<void(const string &mmapID)> g_contentHandler = nullptr;
-static void MyContentChangeHandler(const std::string &mmapID) {
-    if (g_contentHandler) {
-        g_contentHandler(mmapID);
+static function<void(const string &mmapID)> g_contentLoadedHandler = nullptr;
+
+// C++ handler that bridges to Python callbacks
+class PyMMKVHandler : public mmkv::MMKVHandler {
+public:
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) override {
+        if (g_logHandler) {
+            g_logHandler(level, file, line, function, message);
+        }
     }
-}
+
+    MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) override {
+        if (g_errorHandler) {
+            return g_errorHandler(mmapID, MMKVErrorType::MMKVCRCCheckFail);
+        }
+        return OnErrorDiscard;
+    }
+
+    MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) override {
+        if (g_errorHandler) {
+            return g_errorHandler(mmapID, MMKVErrorType::MMKVFileLength);
+        }
+        return OnErrorDiscard;
+    }
+
+    void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        if (g_contentHandler) {
+            g_contentHandler(mmapID);
+        }
+    }
+
+    void onMMKVContentLoadSuccessfully(const std::string &mmapID) override {
+        if (g_contentLoadedHandler) {
+            g_contentLoadedHandler(mmapID);
+        }
+    }
+};
+
+static PyMMKVHandler g_pyHandler;
 
 PYBIND11_MODULE(mmkv, m) {
     m.doc() = "An efficient, small key-value storage framework developed by WeChat Team.";
@@ -98,15 +137,32 @@ PYBIND11_MODULE(mmkv, m) {
 
     py::class_<NameSpace, unique_ptr<NameSpace>> clsNameSpace(m, "NameSpace");
 
-    clsNameSpace.def("mmkvWithID", &NameSpace::mmkvWithID,
+    clsNameSpace.def("mmkvWithID", [](NameSpace &self, const string &mmapID, MMKVMode mode, const string &cryptKey,
+                const size_t expectedCapacity, bool aes256, std::optional<bool> enableKeyExpire,
+                uint32_t expiredInSeconds, bool enableCompareBeforeSet,std::optional<MMKVRecoverStrategic> recover,
+                uint32_t itemSizeLimit) {
+                    auto config = pyArgsToConfig(mode, cryptKey, self.getRootDir(), expectedCapacity, aes256,
+                        enableKeyExpire, expiredInSeconds, enableCompareBeforeSet, recover, itemSizeLimit);
+                    return MMKV::mmkvWithID(mmapID, config);
+                },
                 "Parameters:\n"
                 "  mmapID: all instances of the same mmapID share the same data and file storage\n"
                 "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
                 "  cryptKey: pass a non-empty string for an encrypted MMKV, 32 bytes at most\n"
                 "  expectedCapacity: the file size you expected when opening or creating file\n"
-                "  aes256: use AES 256 key length",
+                "  aes256: use AES 256 key length\n"
+                "  enableKeyExpire: enable auto key expiration\n"
+                "  expiredInSeconds: expiration in seconds\n"
+                "  enableCompareBeforeSet: enable compare before set, if new value is the same, dont update/insert\n"
+                "  recover: recover strategy on file corruption\n"
+                "  itemSizeLimit: size limit for a key-value pair\n",
                 py::arg("mmapID"), py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string(),
-                py::arg("expectedCapacity") = 0, py::arg("aes256") = false);
+                py::arg("expectedCapacity") = 0, py::arg("aes256") = false,
+                py::arg("enableKeyExpire") = std::nullopt, py::arg("expiredInSeconds") = 0,
+                py::arg("enableCompareBeforeSet") = false,
+                py::arg("recover") = std::nullopt,
+                py::arg("itemSizeLimit") = 0
+    );
 
     clsNameSpace.def("rootDir", &NameSpace::getRootDir, "get the root directory of NameSpace");
 
@@ -138,21 +194,32 @@ PYBIND11_MODULE(mmkv, m) {
     //             py::arg("rootDir") = (string*) nullptr);
 
     clsMMKV.def(py::init([](const string &mmapID, MMKVMode mode, const string &cryptKey, const MMKVPath_t &rootDir,
-                            const size_t expectedCapacity, bool aes256) {
-                    string *cryptKeyPtr = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
-                    MMKVPath_t *rootDirPtr = (rootDir.length() > 0) ? (MMKVPath_t *) &rootDir : nullptr;
-                    return MMKV::mmkvWithID(mmapID, mode, cryptKeyPtr, rootDirPtr, expectedCapacity, aes256);
+                const size_t expectedCapacity, bool aes256, std::optional<bool> enableKeyExpire,
+                uint32_t expiredInSeconds, bool enableCompareBeforeSet,std::optional<MMKVRecoverStrategic> recover,
+                uint32_t itemSizeLimit) {
+                    auto config = pyArgsToConfig(mode, cryptKey, rootDir, expectedCapacity, aes256,
+                        enableKeyExpire, expiredInSeconds, enableCompareBeforeSet, recover, itemSizeLimit);
+                    return MMKV::mmkvWithID(mmapID, config);
                 }),
                 "Parameters:\n"
                 "  mmapID: all instances of the same mmapID share the same data and file storage\n"
                 "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
                 "  cryptKey: pass a non-empty string for an encrypted MMKV, 32 bytes at most\n"
-                "  rootDir: custom root directory",
-                "  expectedCapacity: the file size you expected when opening or creating file\n",
-                "  aes256: use AES 256 key length",
+                "  rootDir: custom root directory\n"
+                "  expectedCapacity: the file size you expected when opening or creating file\n"
+                "  aes256: use AES 256 key length\n"
+                "  enableKeyExpire: enable auto key expiration\n"
+                "  expiredInSeconds: expiration in seconds\n"
+                "  enableCompareBeforeSet: enable compare before set, if new value is the same, dont update/insert\n"
+                "  recover: recover strategy on file corruption\n"
+                "  itemSizeLimit: size limit for a key-value pair\n",
                 py::arg("mmapID"), py::arg("mode") = MMKV_SINGLE_PROCESS,
                 py::arg("cryptKey") = string(), py::arg("rootDir") = string(),
-                py::arg("expectedCapacity") = 0, py::arg("aes256") = false);
+                py::arg("expectedCapacity") = 0, py::arg("aes256") = false,
+                py::arg("enableKeyExpire") = std::nullopt, py::arg("expiredInSeconds") = 0,
+                py::arg("enableCompareBeforeSet") = false,
+                py::arg("recover") = std::nullopt,
+                py::arg("itemSizeLimit") = 0);
 
     clsMMKV.def("__eq__", [](MMKV &kv, const MMKV &other) { return kv.mmapID() == other.mmapID(); });
 
@@ -161,7 +228,7 @@ PYBIND11_MODULE(mmkv, m) {
         [](const MMKVPath_t &rootDir, MMKVLogLevel logLevel, decltype(g_logHandler) logHandler) {
             if (logHandler) {
                 g_logHandler = std::move(logHandler);
-                MMKV::initializeMMKV(rootDir, logLevel, MyLogHandler);
+                MMKV::initializeMMKV(rootDir, logLevel, &g_pyHandler);
             } else {
                 MMKV::initializeMMKV(rootDir, logLevel, nullptr);
             }
@@ -171,12 +238,30 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsMMKV.def_static(
         "defaultMMKV",
-        [](MMKVMode mode, const string &cryptKey, bool aes256) {
-            string *cryptKeyPtr = (cryptKey.length() > 0) ? (string *) &cryptKey : nullptr;
-            return MMKV::defaultMMKV(mode, cryptKeyPtr, aes256);
+        [](MMKVMode mode, const string &cryptKey, bool aes256, size_t expectedCapacity,
+            std::optional<bool> enableKeyExpire, uint32_t expiredInSeconds, bool enableCompareBeforeSet,
+            std::optional<MMKVRecoverStrategic> recover, uint32_t itemSizeLimit) {
+            auto config = pyArgsToConfig(mode, cryptKey, string(), expectedCapacity, aes256,
+                enableKeyExpire, expiredInSeconds, enableCompareBeforeSet, recover, itemSizeLimit);
+            return MMKV::defaultMMKV(config);
         },
-        "a generic purpose instance", py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string(),
-        py::arg("aes256") = false);
+        "a generic purpose instance\n"
+        "Parameters:\n"
+        "  mode: pass MMKVMode.MultiProcess for a multi-process MMKV\n"
+        "  cryptKey: pass a non-empty string for an encrypted MMKV, 32 bytes at most\n"
+        "  aes256: use AES 256 key length\n"
+        "  expectedCapacity: the file size you expected when opening or creating file\n"
+        "  enableKeyExpire: enable auto key expiration\n"
+        "  expiredInSeconds: expiration in seconds\n"
+        "  enableCompareBeforeSet: enable compare before set, if new value is the same, dont update/insert\n"
+        "  recover: recover strategy on file corruption\n"
+        "  itemSizeLimit: size limit for a key-value pair\n",
+        py::arg("mode") = MMKV_SINGLE_PROCESS, py::arg("cryptKey") = string(),
+        py::arg("aes256") = false, py::arg("expectedCapacity") = 0,
+        py::arg("enableKeyExpire") = std::nullopt, py::arg("expiredInSeconds") = 0,
+        py::arg("enableCompareBeforeSet") = false,
+        py::arg("recover") = std::nullopt,
+        py::arg("itemSizeLimit") = 0);
 
     clsMMKV.def_static("nameSpace", &MMKV::nameSpace, "get a namespace with custom root dir");
     clsMMKV.def_static("defaultNameSpace", &MMKV::defaultNameSpace, "identical with the original MMKV with the global root dir");
@@ -316,69 +401,41 @@ PYBIND11_MODULE(mmkv, m) {
 
     clsMMKV.def_static("rootDir", &MMKV::getRootDir, "get the root directory of MMKV");
 
-    // log callback handler
-    clsMMKV.def_static(
-        "registerLogHandler",
-        [](decltype(g_logHandler) callback) {
-            g_logHandler = std::move(callback);
-            MMKV::registerLogHandler(MyLogHandler);
-        },
-        "call this method to redirect MMKV's log,\n"
-        "must call MMKV.unRegisterLogHandler() or MMKV.onExit() before exit\n"
-        "Parameters:\n"
-        "  log_handler: (logLevel: mmkv.MMKVLogLevel, file: str, line: int, function: str, message: str) -> None",
-        py::arg("log_handler"));
-    clsMMKV.def_static(
-        "unRegisterLogHandler",
-        [] {
-            g_logHandler = nullptr;
-            MMKV::unRegisterLogHandler();
-        },
-        "If you have registered a log handler, you must call this method or MMKV.onExit() before exit. "
-        "Otherwise your app/script won't exit properly.");
-
-    // error callback handler
-    clsMMKV.def_static(
-        "registerErrorHandler",
-        [](decltype(g_errorHandler) callback) {
-            g_errorHandler = std::move(callback);
-            MMKV::registerErrorHandler(MyErrorHandler);
-        },
-        "call this method to handle MMKV failure,\n"
-        "must call MMKV.unRegisterErrorHandler() or MMKV.onExit() before exit\n"
-        "Parameters:\n"
-        "  error_handler: (mmapID: str, errorType: mmkv.MMKVErrorType) -> mmkv.MMKVRecoverStrategic",
-        py::arg("error_handler"));
-    clsMMKV.def_static(
-        "unRegisterErrorHandler",
-        [] {
-            g_errorHandler = nullptr;
-            MMKV::unRegisterErrorHandler();
-        },
-        "If you have registered an error handler, you must call this method or MMKV.onExit() before exit. "
-        "Otherwise your app/script won't exit properly.");
-
-    // content change callback handler
+    // unified callback handler
     clsMMKV.def("checkContentChanged", &MMKV::checkContentChanged, "check if content been changed by other process");
     clsMMKV.def_static(
-        "registerContentChangeHandler",
-        [](decltype(g_contentHandler) callback) {
-            g_contentHandler = std::move(callback);
-            MMKV::registerContentChangeHandler(MyContentChangeHandler);
+        "registerHandler",
+        [](decltype(g_logHandler) logHandler,
+           decltype(g_errorHandler) errorHandler,
+           decltype(g_contentHandler) contentChangeHandler,
+           decltype(g_contentLoadedHandler) contentLoadedHandler) {
+            g_logHandler = logHandler ? std::move(logHandler) : nullptr;
+            g_errorHandler = errorHandler ? std::move(errorHandler) : nullptr;
+            g_contentHandler = contentChangeHandler ? std::move(contentChangeHandler) : nullptr;
+            g_contentLoadedHandler = contentLoadedHandler ? std::move(contentLoadedHandler) : nullptr;
+            MMKV::registerHandler(&g_pyHandler);
         },
-        "register a content change handler,\n"
-        "get notified when an MMKV instance has been changed by other process (not guarantee real-time notification),\n"
-        "must call MMKV.unRegisterContentChangeHandler() or MMKV.onExit() before exit\n"
+        "register a unified callback handler for MMKV,\n"
+        "must call MMKV.unRegisterHandler() or MMKV.onExit() before exit\n"
         "Parameters:\n"
-        "  content_change_handler: (mmapID: str) -> None",
-        py::arg("content_change_handler"));
+        "  log_handler: (logLevel: mmkv.MMKVLogLevel, file: str, line: int, function: str, message: str) -> None\n"
+        "  error_handler: (mmapID: str, errorType: mmkv.MMKVErrorType) -> mmkv.MMKVRecoverStrategic\n"
+        "  content_change_handler: (mmapID: str) -> None\n"
+        "  content_loaded_handler: (mmapID: str) -> None",
+        py::arg("log_handler") = nullptr,
+        py::arg("error_handler") = nullptr,
+        py::arg("content_change_handler") = nullptr,
+        py::arg("content_loaded_handler") = nullptr);
     clsMMKV.def_static(
-        "unRegisterContentChangeHandler",
+        "unRegisterHandler",
         [] {
+            g_logHandler = nullptr;
+            g_errorHandler = nullptr;
             g_contentHandler = nullptr;
-            MMKV::unRegisterContentChangeHandler();
+            g_contentLoadedHandler = nullptr;
+            MMKV::unRegisterHandler();
         },
-        "If you have registered a content change handler, you must call this method or MMKV.onExit() before exit. "
+        "If you have registered a handler, you must call this method or MMKV.onExit() before exit. "
         "Otherwise your app/script won't exit properly.");
 
     clsMMKV.def_static(
@@ -388,6 +445,7 @@ PYBIND11_MODULE(mmkv, m) {
             g_logHandler = nullptr;
             g_errorHandler = nullptr;
             g_contentHandler = nullptr;
+            g_contentLoadedHandler = nullptr;
         },
         "call this method before exit, especially if you have registered any callback handlers");
 

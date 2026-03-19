@@ -103,8 +103,8 @@ static int32_t LockType2FlockType(LockType lockType) {
 
 bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeeded, bool *tryAgain) {
 #    ifdef MMKV_ANDROID
-    if (m_isAshmem) {
-        return ashmemLock(lockType, wait, unLockFirstIfNeeded, tryAgain);
+    if (m_useFcntlLock) {
+        return fcntlLock(lockType, wait, unLockFirstIfNeeded, tryAgain);
     }
 #    endif
     auto realLockType = LockType2FlockType(lockType);
@@ -146,8 +146,8 @@ bool FileLock::platformLock(LockType lockType, bool wait, bool unLockFirstIfNeed
 
 bool FileLock::platformUnLock(bool unlockToSharedLock) {
 #    ifdef MMKV_ANDROID
-    if (m_isAshmem) {
-        return ashmemUnLock(unlockToSharedLock);
+    if (m_useFcntlLock) {
+        return fcntlUnLock(unlockToSharedLock);
     }
 #    endif
     int cmd = unlockToSharedLock ? LOCK_SH : LOCK_UN;

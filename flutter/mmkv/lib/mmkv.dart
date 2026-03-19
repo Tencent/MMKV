@@ -153,8 +153,11 @@ class NameSpace {
   /// * You can get a multi-process MMKV instance by passing [MMKVMode.MULTI_PROCESS_MODE].
   /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
   MMKV mmkv(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, bool aes256 = false, int expectedCapacity = 0
-    , bool readOnly = false}) {
-    final kv = MMKV._init(mmapID, mode: mode, cryptKey: cryptKey, aes256:aes256, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly, fromNameSpace: true);
+    , bool readOnly = false, bool? enableKeyExpire, int expiredInSeconds = 0, bool enableCompareBeforeSet = false, MMKVRecoverStrategic? recover
+    , int itemSizeLimit = 0}) {
+    final kv = MMKV._init(mmapID, mode: mode, cryptKey: cryptKey, aes256:aes256, rootDir: rootDir, expectedCapacity: expectedCapacity
+        , readOnly: readOnly, fromNameSpace: true, enableKeyExpire: enableKeyExpire, expiredInSeconds: expiredInSeconds
+        , enableCompareBeforeSet: enableCompareBeforeSet, recover: recover, itemSizeLimit: itemSizeLimit);
     return kv;
   }
 
@@ -232,6 +235,9 @@ class MMKV {
         final contentHandler = Pointer.fromFunction<ContentCallbackWrap>(_contentChangeHandler);
         _registerContentHandler(contentHandler);
       }
+
+      final contentLoadedHandler = Pointer.fromFunction<ContentCallbackWrap>(_contentLoadedHandler);
+      _registerContentLoadedHandler(contentLoadedHandler);
     }
     return result;
   }
@@ -268,11 +274,15 @@ class MMKV {
   /// ```dart
   /// var mmkv = MMKV.defaultMMKV(cryptKey: '\u{2}U');
   /// ```
-  static MMKV defaultMMKV({String? cryptKey, bool aes256 = false}) {
+  static MMKV defaultMMKV({String? cryptKey, bool aes256 = false, int expectedCapacity = 0, bool? enableKeyExpire, int expiredInSeconds = 0, bool enableCompareBeforeSet = false
+    , MMKVRecoverStrategic? recover, int itemSizeLimit = 0}) {
     final mmkv = MMKV("");
     final cryptKeyPtr = _string2Pointer(cryptKey);
     const mode = MMKVMode.SINGLE_PROCESS_MODE;
-    mmkv._handle = _getDefaultMMKV(mode.index, cryptKeyPtr, _bool2Int(aes256));
+    final int enableExpire = (enableKeyExpire == null) ? -1 : _bool2Int(enableKeyExpire);
+    final int recoverStrategy = (recover == null) ? -1 : (recover == MMKVRecoverStrategic.OnErrorDiscard ? 0 : 1);
+    mmkv._handle = _getDefaultMMKV(mode.index, cryptKeyPtr, _bool2Int(aes256), expectedCapacity, enableExpire, expiredInSeconds, _bool2Int(enableCompareBeforeSet)
+        , recoverStrategy, itemSizeLimit);
     if (mmkv._handle == nullptr) {
       throw StateError("Invalid state, forget initialize MMKV first?");
     }
@@ -287,18 +297,25 @@ class MMKV {
   /// * You can encrypt with [cryptKey], which limits to 16 bytes at most.
   /// * You can customize the [rootDir] of the file.
   MMKV(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, bool aes256 = false, String? rootDir, int expectedCapacity = 0
-    , bool readOnly = false}) :
-    this._init(mmapID, mode: mode, cryptKey: cryptKey, aes256: aes256, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly, fromNameSpace: false);
+    , bool readOnly = false, bool? enableKeyExpire, int expiredInSeconds = 0, bool enableCompareBeforeSet = false, MMKVRecoverStrategic? recover
+    , int itemSizeLimit = 0}) :
+    this._init(mmapID, mode: mode, cryptKey: cryptKey, aes256: aes256, rootDir: rootDir, expectedCapacity: expectedCapacity, readOnly: readOnly
+          , fromNameSpace: false, enableKeyExpire: enableKeyExpire, expiredInSeconds: expiredInSeconds, enableCompareBeforeSet: enableCompareBeforeSet
+          , recover: recover, itemSizeLimit: itemSizeLimit);
 
   MMKV._init(String mmapID, {MMKVMode mode = MMKVMode.SINGLE_PROCESS_MODE, String? cryptKey, String? rootDir, int expectedCapacity = 0
-    , bool readOnly = false, bool fromNameSpace = false, bool aes256 = false}) {
+    , bool readOnly = false, bool fromNameSpace = false, bool aes256 = false, bool? enableKeyExpire, int expiredInSeconds = 0
+    , bool enableCompareBeforeSet = false, MMKVRecoverStrategic? recover, int itemSizeLimit = 0}) {
     if (mmapID.isNotEmpty) {
       final mmapIDPtr = _string2Pointer(mmapID);
       final cryptKeyPtr = _string2Pointer(cryptKey);
       final rootDirPtr = _string2Pointer(rootDir);
 
       final realMode = readOnly ? (mode.index | _READ_ONLY_MODE) : mode.index;
-      _handle = _getMMKVWithID2(mmapIDPtr, realMode, cryptKeyPtr, rootDirPtr, expectedCapacity, _bool2Int(fromNameSpace), _bool2Int(aes256));
+      final int enableExpire = (enableKeyExpire == null) ? -1 : _bool2Int(enableKeyExpire);
+      final int recoverStrategy = (recover == null) ? -1 : (recover == MMKVRecoverStrategic.OnErrorDiscard ? 0 : 1);
+      _handle = _getMMKVWithID(mmapIDPtr, realMode, cryptKeyPtr, rootDirPtr, expectedCapacity, _bool2Int(fromNameSpace), _bool2Int(aes256)
+      , enableExpire, expiredInSeconds, _bool2Int(enableCompareBeforeSet), recoverStrategy, itemSizeLimit);
       if (_handle == nullptr) {
         throw StateError("Invalid state, forget initialize MMKV first?");
       }
@@ -905,6 +922,13 @@ void _contentChangeHandler(Pointer<Utf8> mmapIDPtr) {
   }
 }
 
+void _contentLoadedHandler(Pointer<Utf8> mmapIDPtr) {
+  if (_mmkvPlatform.theHandler != null && mmapIDPtr != nullptr) {
+    final mmapID = _pointer2String(mmapIDPtr);
+    _mmkvPlatform.theHandler!.onMMKVContentLoadSuccessfully(mmapID!);
+  }
+}
+
 int _bool2Int(bool value) {
   return value ? 1 : 0;
 }
@@ -937,10 +961,12 @@ String? _buffer2String(Pointer<Uint8>? ptr, int length) {
 
 final MMKVPluginPlatform _mmkvPlatform = MMKVPluginPlatform.instance!;
 
-final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256) _getMMKVWithID2 =
-_mmkvPlatform.getMMKVWithIDFunc2();
+final Pointer<Void> Function(Pointer<Utf8> mmapID, int, Pointer<Utf8> cryptKey, Pointer<Utf8> rootDir, int expectedCapacity, int isNameSpace, int aes256,
+    int enableKeyExpire, int expiredInSeconds, int enableCompareBeforeSet, int recover, int itemSizeLimit) _getMMKVWithID =
+_mmkvPlatform.getMMKVWithIDFunc();
 
-final Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256) _getDefaultMMKV = _mmkvPlatform.getDefaultMMKVFunc();
+final Pointer<Void> Function(int, Pointer<Utf8> cryptKey, int aes256, int expectedCapacity, int enableKeyExpire, int expiredInSeconds, int enableCompareBeforeSet, int recover,
+    int itemSizeLimit) _getDefaultMMKV = _mmkvPlatform.getDefaultMMKVFunc();
 
 final Pointer<Utf8> Function(Pointer<Void>) _mmapID = _mmkvPlatform.mmapIDFunc();
 
@@ -1036,6 +1062,8 @@ final bool Function(Pointer<Void>) _isReadOnly = _mmkvPlatform.isReadOnlyFunc();
 final ErrorCallbackRegister _registerErrorHandler = _mmkvPlatform.registerErrorHandlerFunc();
 
 final ContentCallbackRegister _registerContentHandler = _mmkvPlatform.registerContentHandlerFunc();
+
+final ContentCallbackRegister _registerContentLoadedHandler = _mmkvPlatform.registerContentLoadedHandlerFunc();
 
 final void Function(Pointer<Void>) _checkContentChanged = _mmkvPlatform.checkContentChangedFunc();
 

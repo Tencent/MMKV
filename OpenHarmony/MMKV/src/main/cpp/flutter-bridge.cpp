@@ -38,13 +38,50 @@ extern string g_android_tmpDir;
 #    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
 
 using LogCallback_t = void (*)(uint32_t level, const char *file, int32_t line, const char *funcname, const char *message);
-LogCallback_t g_logCallback = nullptr;
+using ErrorCallback_t = int (*)(const char *mmapID, int32_t errorType);
+using ContenctChangeCallback_t = void (*)(const char *mmapID);
 
-static void myLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) {
-    if (g_logCallback) {
-        g_logCallback(level, file, line, function, message.c_str());
+class FlutterMMKVHandler : public mmkv::MMKVHandler {
+public:
+    LogCallback_t logCallback = nullptr;
+    ErrorCallback_t errorCallback = nullptr;
+    ContenctChangeCallback_t contentChangeCallback = nullptr;
+    ContenctChangeCallback_t contentLoadedCallback = nullptr;
+
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) override {
+        if (logCallback) {
+            logCallback(level, file, line, function, message.c_str());
+        }
     }
-}
+
+    MMKVRecoverStrategic onMMKVCRCCheckFail(const std::string &mmapID) override {
+        if (errorCallback) {
+            return (MMKVRecoverStrategic) errorCallback(mmapID.c_str(), MMKVCRCCheckFail);
+        }
+        return OnErrorDiscard;
+    }
+
+    MMKVRecoverStrategic onMMKVFileLengthError(const std::string &mmapID) override {
+        if (errorCallback) {
+            return (MMKVRecoverStrategic) errorCallback(mmapID.c_str(), MMKVFileLength);
+        }
+        return OnErrorDiscard;
+    }
+
+    void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        if (contentChangeCallback) {
+            contentChangeCallback(mmapID.c_str());
+        }
+    }
+
+    void onMMKVContentLoadSuccessfully(const std::string &mmapID) override {
+        if (contentLoadedCallback) {
+            contentLoadedCallback(mmapID.c_str());
+        }
+    }
+};
+
+static FlutterMMKVHandler g_flutterHandler;
 
 MMKV_EXPORT void *mmkvInitialize_v2(const char *rootDir, const char *cacheDir, int32_t sdkInt, int32_t logLevel, LogCallback_t callback) {
     if (!rootDir) {
@@ -62,8 +99,8 @@ MMKV_EXPORT void *mmkvInitialize_v2(const char *rootDir, const char *cacheDir, i
 #endif
 
     if (callback) {
-        g_logCallback = callback;
-        MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, myLogHandler);
+        g_flutterHandler.logCallback = callback;
+        MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, &g_flutterHandler);
     } else {
         MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel);
     }
@@ -78,28 +115,47 @@ MMKV_EXPORT void mmkvInitialize(const char *rootDir, int32_t logLevel) {
     mmkvInitialize_v2(rootDir, nullptr, 0, logLevel, nullptr);
 }
 
-MMKV_EXPORT void *getMMKVWithID2(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath,
-                                 size_t expectedCapacity, bool fromNameSpace, bool aes256) {
+MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath,
+                                size_t expectedCapacity, bool fromNameSpace, bool aes256, int32_t enableKeyExpire,
+                                int32_t expiredInSeconds, bool enableCompareBeforeSet, int32_t recover,
+                                uint32_t itemSizeLimit) {
     MMKV *kv = nullptr;
     if (!mmapID) {
         return kv;
     }
     string str = mmapID;
 
+    auto config = MMKVConfig();
+    config.mode = (MMKVMode) mode;
+    config.aes256 = aes256;
+    config.expectedCapacity = expectedCapacity;
+    if (enableKeyExpire >= 0) {
+        config.enableKeyExpire = (enableKeyExpire != 0);
+    }
+    config.expiredInSeconds = expiredInSeconds;
+    config.enableCompareBeforeSet = enableCompareBeforeSet;
+    if (recover >= 0) {
+        config.recover = static_cast<MMKVRecoverStrategic>(recover);
+    }
+    config.itemSizeLimit = itemSizeLimit;
+
     bool done = false;
     if (cryptKey) {
         string crypt = cryptKey;
         if (crypt.length() > 0) {
+            config.cryptKey = &crypt;
             if (rootPath) {
                 string path = rootPath;
                 if (fromNameSpace) {
                     auto ns = MMKV::nameSpace(path);
-                    kv = ns.mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, expectedCapacity, aes256);
+                    config.rootPath = &ns.getRootDir();
+                    kv = ns.mmkvWithID(str, config);
                 } else {
-                    kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, &path, expectedCapacity, aes256);
+                    config.rootPath = &path;
+                    kv = MMKV::mmkvWithID(str, config);
                 }
             } else {
-                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, &crypt, nullptr, expectedCapacity, aes256);
+                kv = MMKV::mmkvWithID(str, config);
             }
             done = true;
         }
@@ -109,33 +165,48 @@ MMKV_EXPORT void *getMMKVWithID2(const char *mmapID, int32_t mode, const char *c
             string path = rootPath;
             if (fromNameSpace) {
                 auto ns = MMKV::nameSpace(path);
-                kv = ns.mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, expectedCapacity, aes256);
+                config.rootPath = &ns.getRootDir();
+                kv = ns.mmkvWithID(str, config);
             } else {
-                kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, &path, expectedCapacity, aes256);
+                config.rootPath = &path;
+                kv = MMKV::mmkvWithID(str, config);
             }
         } else {
-            kv = MMKV::mmkvWithID(str, DEFAULT_MMAP_SIZE, (MMKVMode) mode, nullptr, nullptr, expectedCapacity, aes256);
+            kv = MMKV::mmkvWithID(str, config);
         }
     }
 
     return kv;
 }
 
-MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cryptKey, const char *rootPath, size_t expectedCapacity) {
-    return getMMKVWithID2(mmapID, mode, cryptKey, rootPath, expectedCapacity, false, false);
-}
-
-MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey, bool aes256) {
+MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey, bool aes256, size_t expectedCapacity,
+                                 int32_t enableKeyExpire, int32_t expiredInSeconds, bool enableCompareBeforeSet,
+                                 int32_t recover, uint32_t itemSizeLimit) {
     MMKV *kv = nullptr;
+
+    auto config = MMKVConfig();
+    config.mode = (MMKVMode) mode;
+    config.aes256 = aes256;
+    config.expectedCapacity = expectedCapacity;
+    if (enableKeyExpire >= 0) {
+        config.enableKeyExpire = (enableKeyExpire != 0);
+    }
+    config.expiredInSeconds = expiredInSeconds;
+    config.enableCompareBeforeSet = enableCompareBeforeSet;
+    if (recover >= 0) {
+        config.recover = static_cast<MMKVRecoverStrategic>(recover);
+    }
+    config.itemSizeLimit = itemSizeLimit;
 
     if (cryptKey) {
         string crypt = cryptKey;
         if (crypt.length() > 0) {
-            kv = MMKV::defaultMMKV((MMKVMode) mode, &crypt, aes256);
+            config.cryptKey = &crypt;
+            kv = MMKV::defaultMMKV(config);
         }
     }
     if (!kv) {
-        kv = MMKV::defaultMMKV((MMKVMode) mode, nullptr, aes256);
+        kv = MMKV::defaultMMKV(config);
     }
 
     return kv;
@@ -626,40 +697,24 @@ MMKV_EXPORT bool isReadOnly(void *handle) {
     return false;
 }
 
-using ErrorCallback_t = int (*)(const char *mmapID, int32_t errorType);
-static ErrorCallback_t g_errorCallback = nullptr;
-
-static MMKVRecoverStrategic myErrorHandler(const std::string &mmapID, MMKVErrorType errorType) {
-    if (g_errorCallback) {
-        return (MMKVRecoverStrategic) g_errorCallback(mmapID.c_str(), errorType);
-    }
-    return OnErrorDiscard;
-}
-
 MMKV_EXPORT void registerErrorHandler(ErrorCallback_t callback) {
-    g_errorCallback = callback;
-    if (callback) {
-        MMKV::registerErrorHandler(myErrorHandler);
-    } else {
-        MMKV::unRegisterErrorHandler();
-    }
-}
-
-using ContenctChangeCallback_t = void (*)(const char *mmapID);
-static ContenctChangeCallback_t g_contentChanceCallback = nullptr;
-
-static void myContentChangeHandler(const std::string &mmapID) {
-    if (g_contentChanceCallback) {
-        g_contentChanceCallback(mmapID.c_str());
+    g_flutterHandler.errorCallback = callback;
+    if (callback || g_flutterHandler.logCallback || g_flutterHandler.contentChangeCallback || g_flutterHandler.contentLoadedCallback) {
+        MMKV::registerHandler(&g_flutterHandler);
     }
 }
 
 MMKV_EXPORT void registerContentChangeNotify(ContenctChangeCallback_t callback) {
-    g_contentChanceCallback = callback;
-    if (callback) {
-        MMKV::registerContentChangeHandler(myContentChangeHandler);
-    } else {
-        MMKV::unRegisterContentChangeHandler();
+    g_flutterHandler.contentChangeCallback = callback;
+    if (callback || g_flutterHandler.logCallback || g_flutterHandler.errorCallback || g_flutterHandler.contentLoadedCallback) {
+        MMKV::registerHandler(&g_flutterHandler);
+    }
+}
+
+MMKV_EXPORT void registerContentLoadedNotify(ContenctChangeCallback_t callback) {
+    g_flutterHandler.contentLoadedCallback = callback;
+    if (callback || g_flutterHandler.logCallback || g_flutterHandler.errorCallback || g_flutterHandler.contentChangeCallback) {
+        MMKV::registerHandler(&g_flutterHandler);
     }
 }
 
