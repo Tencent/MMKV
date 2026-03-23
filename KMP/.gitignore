@@ -1,0 +1,9 @@
+.gradle
+build
+.kotlin
+local.properties
+*.podspec
+Pods
+Podfile.lock
+*.xcworkspace
+*.xcuserdata
