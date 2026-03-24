@@ -4,6 +4,7 @@ import com.tencent.mmkv.kmp.MMKV
 import com.tencent.mmkv.kmp.MMKVConfig
 import com.tencent.mmkv.kmp.MMKVExpireDuration
 import com.tencent.mmkv.kmp.MMKVMode
+import com.tencent.mmkv.kmp.MMKVNameSpace
 
 /**
  * Platform-agnostic MMKV demo logic, ported from the Flutter example app.
@@ -414,6 +415,63 @@ class MMKVDemo {
             print("storage successfully removed")
         }
 
+        return log.toList()
+    }
+
+    // endregion
+
+    // region NameSpace Test
+
+    fun testNameSpace(): List<String> {
+        log.clear()
+        print("=== NameSpace Test ===")
+
+        val rootDir = "${MMKV.rootDir()}_ns"
+        val ns = MMKVNameSpace.of(rootDir)
+        print("namespace rootDir: ${ns.rootDir}")
+
+        // Create an instance within the namespace
+        val mmapID = "ns_test"
+        val kv = ns.mmkvWithID(mmapID)
+        kv.encodeString("ns_key", "namespace value")
+        kv.encodeInt("ns_int", 42)
+        kv.encodeBool("ns_bool", true)
+        print("ns_key = ${kv.decodeString("ns_key")}")
+        print("ns_int = ${kv.decodeInt("ns_int")}")
+        print("ns_bool = ${kv.decodeBool("ns_bool")}")
+        print("count = ${kv.count}")
+
+        // checkExist / isFileValid within namespace
+        print("checkExist(ns_test) = ${ns.checkExist(mmapID)}")
+
+        // backup within namespace
+        val backupDir = "${MMKV.rootDir()}_ns_backup"
+        val backupRet = ns.backupOneToDirectory(mmapID, backupDir)
+        print("backup one = $backupRet")
+
+        // clear, then restore
+        kv.clearAll()
+        print("count after clearAll = ${kv.count}")
+
+        val restoreRet = ns.restoreOneFromDirectory(mmapID, backupDir)
+        print("restore one = $restoreRet")
+        print("count after restore = ${kv.count}")
+        print("ns_key after restore = ${kv.decodeString("ns_key")}")
+
+        // removeStorage within namespace
+        kv.close()
+        val removeRet = ns.removeStorage(mmapID)
+        print("removeStorage = $removeRet")
+        print("checkExist after remove = ${ns.checkExist(mmapID)}")
+
+        // default namespace
+        val defaultNs = MMKVNameSpace.default()
+        print("default namespace rootDir: ${defaultNs.rootDir}")
+        defaultNs.close()
+
+        ns.close()
+        print("")
+        print("namespace test passed")
         return log.toList()
     }
 

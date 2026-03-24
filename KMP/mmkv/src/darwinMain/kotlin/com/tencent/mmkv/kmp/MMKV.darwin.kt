@@ -298,6 +298,38 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
 
     actual fun checkContentChanged() = impl.checkContentChanged()
 
+    actual fun getValueSize(key: String, actualSize: Boolean): Long = impl.getValueSizeForKey(key, actualSize = actualSize).toLong()
+
+    @OptIn(ExperimentalForeignApi::class)
+    actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
+        if (buffer.isEmpty()) return -1
+        val nsData = platform.Foundation.NSMutableData.create(length = buffer.size.toULong())!!
+        val written = impl.writeValueForKey(key, toBuffer = nsData)
+        if (written > 0) {
+            val len = minOf(written, buffer.size)
+            buffer.usePinned { pinned ->
+                memcpy(pinned.addressOf(0), nsData.bytes, len.toULong())
+            }
+        }
+        return written
+    }
+
+    actual fun lock() {
+        // lock() is not exposed in the ObjC MMKV API.
+        // Inter-process lock is handled automatically on Darwin.
+    }
+    actual fun unlock() {
+        // unlock() is not exposed in the ObjC MMKV API.
+    }
+    actual fun tryLock(): Boolean {
+        // tryLock() is not exposed in the ObjC MMKV API.
+        return false
+    }
+
+    actual val isExpirationEnabled: Boolean get() = false // not exposed in ObjC API
+    actual val isEncryptionEnabled: Boolean get() = (cryptKey != null)
+    actual val isCompareBeforeSetEnabled: Boolean get() = false // not exposed in ObjC API
+
     // endregion
 }
 
@@ -335,7 +367,7 @@ private fun darwinRecoverToCommon(value: DarwinMMKVRecoverStrategic): MMKVRecove
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun MMKVConfig.toDarwinCValue(): CValue<DarwinMMKVConfig> = cValue {
+internal fun MMKVConfig.toDarwinCValue(): CValue<DarwinMMKVConfig> = cValue {
     mode = when {
         this@toDarwinCValue.mode and MMKVMode.READ_ONLY != 0 -> MMKVReadOnly
         this@toDarwinCValue.mode and MMKVMode.MULTI_PROCESS != 0 -> MMKVMultiProcess

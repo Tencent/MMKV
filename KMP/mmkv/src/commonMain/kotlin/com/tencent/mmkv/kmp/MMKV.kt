@@ -317,5 +317,43 @@ expect class MMKV {
      */
     fun checkContentChanged()
 
+    /**
+     * Get the actual size consumption of the key's value.
+     * @param key The key to query.
+     * @param actualSize Pass true to get value's length (not including metadata overhead).
+     */
+    fun getValueSize(key: String, actualSize: Boolean): Long
+
+    /**
+     * Write value directly into a caller-provided [ByteArray].
+     * @return Bytes written, or -1 on error.
+     */
+    fun writeValueToBuffer(key: String, buffer: ByteArray): Int
+
+    /**
+     * Get exclusive inter-process lock. Use with [unlock] for inter-process synchronization.
+     */
+    fun lock()
+
+    /**
+     * Release the exclusive inter-process lock.
+     */
+    fun unlock()
+
+    /**
+     * Try to get the exclusive inter-process lock without blocking.
+     * @return true if the lock was acquired.
+     */
+    fun tryLock(): Boolean
+
+    /** Whether auto key expiration is enabled. */
+    val isExpirationEnabled: Boolean
+
+    /** Whether encryption is enabled. */
+    val isEncryptionEnabled: Boolean
+
+    /** Whether compare-before-set is effectively enabled. */
+    val isCompareBeforeSetEnabled: Boolean
+
     // endregion
 }

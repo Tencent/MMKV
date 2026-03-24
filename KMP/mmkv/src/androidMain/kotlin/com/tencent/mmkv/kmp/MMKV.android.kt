@@ -201,6 +201,50 @@ actual class MMKV internal constructor(private val impl: AndroidMMKV) {
 
     actual fun checkContentChanged() = impl.checkContentChangedByOuterProcess()
 
+    actual fun getValueSize(key: String, actualSize: Boolean): Long {
+        return if (actualSize) {
+            impl.getValueActualSize(key).toLong()
+        } else {
+            impl.getValueSize(key).toLong()
+        }
+    }
+
+    actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
+        // Android MMKV uses NativeBuffer, not byte[].
+        // Use decode + copy as a fallback.
+        val bytes = impl.decodeBytes(key) ?: return -1
+        val len = minOf(bytes.size, buffer.size)
+        bytes.copyInto(buffer, endIndex = len)
+        return len
+    }
+
+    actual fun lock() = impl.lock()
+    actual fun unlock() = impl.unlock()
+    actual fun tryLock(): Boolean = impl.tryLock()
+
+    // These are private native on Android; use reflection or JNI.
+    // For now, return conservative defaults that match the Core C++ behavior.
+    actual val isExpirationEnabled: Boolean
+        get() = try {
+            val method = impl.javaClass.getDeclaredMethod("isExpirationEnabled")
+            method.isAccessible = true
+            method.invoke(impl) as Boolean
+        } catch (_: Exception) { false }
+
+    actual val isEncryptionEnabled: Boolean
+        get() = try {
+            val method = impl.javaClass.getDeclaredMethod("isEncryptionEnabled")
+            method.isAccessible = true
+            method.invoke(impl) as Boolean
+        } catch (_: Exception) { false }
+
+    actual val isCompareBeforeSetEnabled: Boolean
+        get() = try {
+            val method = impl.javaClass.getDeclaredMethod("isCompareBeforeSetEnabled")
+            method.isAccessible = true
+            method.invoke(impl) as Boolean
+        } catch (_: Exception) { false }
+
     // endregion
 }
 
@@ -231,7 +275,7 @@ private fun MMKVRecoverStrategic.toAndroid(): AndroidMMKVRecoverStrategic = when
 
 // region Config conversion
 
-private fun MMKVConfig.toAndroid(): AndroidMMKVConfig {
+internal fun MMKVConfig.toAndroid(): AndroidMMKVConfig {
     val config = AndroidMMKVConfig()
     config.mode = mode
     config.cryptKey = cryptKey

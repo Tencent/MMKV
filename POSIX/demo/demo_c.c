@@ -156,7 +156,7 @@ static void functionalTest(MMKVHandle_t kv) {
     }
 
     /* clearMemoryCache + reload */
-    mmkv_clear_memory_cache(kv);
+    mmkv_clear_memory_cache(kv, false);
     printf("count after clearMemoryCache = %" PRIu64 "\n", mmkv_count(kv, false));
 
     /* trim */
@@ -211,6 +211,110 @@ static void encryptionTest(void) {
     printf("=== Encryption Test Done ===\n");
 }
 
+/* ── Value inspection & lock test ──────────────────────────────────── */
+
+static void valueInspectionTest(MMKVHandle_t kv) {
+    printf("\n=== Value Inspection & Lock Test (C Bridge) ===\n");
+
+    mmkv_encode_string(kv, "inspect_str", "hello world");
+    uint64_t size = mmkv_get_value_size(kv, "inspect_str", true);
+    printf("getValueSize(inspect_str, actualSize=true) = %" PRIu64 "\n", size);
+    size = mmkv_get_value_size(kv, "inspect_str", false);
+    printf("getValueSize(inspect_str, actualSize=false) = %" PRIu64 "\n", size);
+
+    /* writeValueToBuffer */
+    {
+        char buf[64];
+        memset(buf, 0, sizeof(buf));
+        int32_t written = mmkv_write_value_to_buffer(kv, "inspect_str", buf, sizeof(buf));
+        printf("writeValueToBuffer returned %d, buf = \"%.*s\"\n", written, written > 0 ? written : 0, buf);
+    }
+
+    /* lock / unlock / try_lock */
+    mmkv_lock(kv);
+    printf("locked\n");
+    mmkv_unlock(kv);
+    printf("unlocked\n");
+    bool got = mmkv_try_lock(kv);
+    printf("try_lock = %d\n", got);
+    if (got) { mmkv_unlock(kv); }
+
+    /* feature queries */
+    printf("isExpirationEnabled = %d\n", mmkv_is_expiration_enabled(kv));
+    printf("isEncryptionEnabled = %d\n", mmkv_is_encryption_enabled(kv));
+    printf("isCompareBeforeSetEnabled = %d\n", mmkv_is_compare_before_set_enabled(kv));
+
+    mmkv_remove_value(kv, "inspect_str");
+    printf("=== Value Inspection & Lock Test Done ===\n");
+}
+
+/* ── NameSpace test ────────────────────────────────────────────────── */
+
+static void namespaceTest(void) {
+    printf("\n=== NameSpace Test (C Bridge) ===\n");
+
+    /* Create a namespace with custom root dir */
+    MMKVNameSpace_t ns = mmkv_namespace("/tmp/mmkv_c_ns");
+    if (!ns) {
+        printf("Failed to create namespace\n");
+        return;
+    }
+    printf("namespace rootDir: %s\n", mmkv_namespace_root_dir(ns));
+
+    /* Create an instance within the namespace */
+    MMKVConfig_t cfg;
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.enableKeyExpire = -1;
+    cfg.recover = -1;
+    MMKVHandle_t kv = mmkv_namespace_mmkv_with_id(ns, "ns_test", cfg);
+    if (!kv) {
+        printf("Failed to create MMKV in namespace\n");
+        return;
+    }
+
+    mmkv_encode_string(kv, "ns_key", "namespace value");
+    {
+        char *s = mmkv_decode_string(kv, "ns_key");
+        printf("ns_key = %s\n", s ? s : "(null)");
+        mmkv_free(s);
+    }
+    printf("count = %" PRIu64 "\n", mmkv_count(kv, false));
+
+    /* checkExist / isFileValid within namespace */
+    printf("namespace checkExist(ns_test) = %d\n", mmkv_namespace_check_exist(ns, "ns_test"));
+    printf("namespace isFileValid(ns_test) = %d\n", mmkv_namespace_is_file_valid(ns, "ns_test"));
+
+    /* backup / restore within namespace */
+    bool backupRet = mmkv_namespace_backup_one(ns, "ns_test", "/tmp/mmkv_c_ns_backup");
+    printf("namespace backup one = %d\n", backupRet);
+
+    mmkv_clear_all(kv, false);
+    printf("count after clearAll = %" PRIu64 "\n", mmkv_count(kv, false));
+
+    bool restoreRet = mmkv_namespace_restore_one(ns, "ns_test", "/tmp/mmkv_c_ns_backup");
+    printf("namespace restore one = %d\n", restoreRet);
+    printf("count after restore = %" PRIu64 "\n", mmkv_count(kv, false));
+    {
+        char *s = mmkv_decode_string(kv, "ns_key");
+        printf("ns_key after restore = %s\n", s ? s : "(null)");
+        mmkv_free(s);
+    }
+
+    /* removeStorage within namespace */
+    mmkv_close(kv);
+    bool removeRet = mmkv_namespace_remove_storage(ns, "ns_test");
+    printf("namespace removeStorage = %d\n", removeRet);
+    printf("namespace checkExist after remove = %d\n", mmkv_namespace_check_exist(ns, "ns_test"));
+
+    /* default namespace */
+    MMKVNameSpace_t defaultNs = mmkv_default_namespace();
+    printf("default namespace rootDir: %s\n", mmkv_namespace_root_dir(defaultNs));
+    mmkv_namespace_free(defaultNs);
+
+    mmkv_namespace_free(ns);
+    printf("=== NameSpace Test Done ===\n");
+}
+
 /* ── main ──────────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -245,6 +349,8 @@ int main(void) {
 
     functionalTest(kv);
     encryptionTest();
+    valueInspectionTest(kv);
+    namespaceTest();
 
     mmkv_on_exit();
     printf("\nAll C bridge tests passed.\n");

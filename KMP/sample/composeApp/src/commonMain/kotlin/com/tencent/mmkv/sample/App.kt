@@ -85,6 +85,12 @@ fun App() {
                     ) {
                         Text("Remove Storage & Check Exist")
                     }
+                    Button(
+                        onClick = { results = demo.testNameSpace() },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("NameSpace Test")
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))

@@ -326,7 +326,7 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
     actual fun async() = mmkv_sync(handle, false)
     actual fun trim() = mmkv_trim(handle)
     actual fun close() = mmkv_close(handle)
-    actual fun clearMemoryCache() = mmkv_clear_memory_cache(handle)
+    actual fun clearMemoryCache() = mmkv_clear_memory_cache(handle, false)
 
     actual fun importFrom(source: MMKV): Long = mmkv_import_from(handle, source.handle).toLong()
 
@@ -337,6 +337,25 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
     actual fun disableCompareBeforeSet(): Boolean = mmkv_disable_compare_before_set(handle)
 
     actual fun checkContentChanged() = mmkv_check_content_changed(handle)
+
+    @OptIn(ExperimentalForeignApi::class)
+    actual fun getValueSize(key: String, actualSize: Boolean): Long = mmkv_get_value_size(handle, key, actualSize).toLong()
+
+    @OptIn(ExperimentalForeignApi::class)
+    actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
+        if (buffer.isEmpty()) return -1
+        return buffer.usePinned { pinned ->
+            mmkv_write_value_to_buffer(handle, key, pinned.addressOf(0), buffer.size)
+        }
+    }
+
+    actual fun lock() = mmkv_lock(handle)
+    actual fun unlock() = mmkv_unlock(handle)
+    actual fun tryLock(): Boolean = mmkv_try_lock(handle)
+
+    actual val isExpirationEnabled: Boolean get() = mmkv_is_expiration_enabled(handle)
+    actual val isEncryptionEnabled: Boolean get() = mmkv_is_encryption_enabled(handle)
+    actual val isCompareBeforeSetEnabled: Boolean get() = mmkv_is_compare_before_set_enabled(handle)
 
     // endregion
 }
@@ -381,7 +400,7 @@ private fun buildDefaultNativeConfig(): CValue<MMKVConfig_t> = cValue {
  * String fields survive as C pointers until the MMKV C call completes.
  */
 @OptIn(ExperimentalForeignApi::class)
-private inline fun <R> withNativeConfig(config: MMKVConfig, block: (CValue<MMKVConfig_t>) -> R): R = memScoped {
+internal inline fun <R> withNativeConfig(config: MMKVConfig, block: (CValue<MMKVConfig_t>) -> R): R = memScoped {
     val cfg = alloc<MMKVConfig_t>()
     cfg.mode = config.mode
     cfg.cryptKey = config.cryptKey?.cstr?.getPointer(this)

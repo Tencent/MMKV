@@ -535,14 +535,14 @@ MMKV_EXPORT uint64_t mmkv_import_from(MMKVHandle_t handle, MMKVHandle_t srcHandl
 
 /* ── Sync ──────────────────────────────────────────────────────────── */
 
-MMKV_EXPORT void mmkv_sync(MMKVHandle_t handle, bool sync) {
+MMKV_EXPORT void mmkv_sync(MMKVHandle_t handle, bool syncFlag) {
     MMKV *kv = kvFromHandle(handle);
-    if (kv) { kv->sync(static_cast<SyncFlag>(sync)); }
+    if (kv) { kv->sync(static_cast<SyncFlag>(syncFlag)); }
 }
 
-MMKV_EXPORT void mmkv_clear_memory_cache(MMKVHandle_t handle) {
+MMKV_EXPORT void mmkv_clear_memory_cache(MMKVHandle_t handle, bool keepSpace) {
     MMKV *kv = kvFromHandle(handle);
-    if (kv) { kv->clearMemoryCache(); }
+    if (kv) { kv->clearMemoryCache(keepSpace); }
 }
 
 MMKV_EXPORT void mmkv_trim(MMKVHandle_t handle) {
@@ -550,40 +550,58 @@ MMKV_EXPORT void mmkv_trim(MMKVHandle_t handle) {
     if (kv) { kv->trim(); }
 }
 
+/* ── Lock ──────────────────────────────────────────────────────────── */
+
+MMKV_EXPORT void mmkv_lock(MMKVHandle_t handle) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv) { kv->lock(); }
+}
+
+MMKV_EXPORT void mmkv_unlock(MMKVHandle_t handle) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv) { kv->unlock(); }
+}
+
+MMKV_EXPORT bool mmkv_try_lock(MMKVHandle_t handle) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv) { return kv->try_lock(); }
+    return false;
+}
+
 /* ── Backup / Restore ──────────────────────────────────────────────── */
 
-MMKV_EXPORT bool mmkv_backup_one(const char *mmapID, const char *dstDir, const char *srcDir) {
+MMKV_EXPORT bool mmkv_backup_one(const char *mmapID, const char *dstDir, const char *rootPath) {
     if (!mmapID || !dstDir) { return false; }
-    if (srcDir) {
-        string src(srcDir);
-        return MMKV::backupOneToDirectory(string(mmapID), string(dstDir), &src);
+    if (rootPath) {
+        string path(rootPath);
+        return MMKV::backupOneToDirectory(string(mmapID), string(dstDir), &path);
     }
     return MMKV::backupOneToDirectory(string(mmapID), string(dstDir), nullptr);
 }
 
-MMKV_EXPORT bool mmkv_restore_one(const char *mmapID, const char *srcDir, const char *dstDir) {
+MMKV_EXPORT bool mmkv_restore_one(const char *mmapID, const char *srcDir, const char *rootPath) {
     if (!mmapID || !srcDir) { return false; }
-    if (dstDir) {
-        string dst(dstDir);
-        return MMKV::restoreOneFromDirectory(string(mmapID), string(srcDir), &dst);
+    if (rootPath) {
+        string path(rootPath);
+        return MMKV::restoreOneFromDirectory(string(mmapID), string(srcDir), &path);
     }
     return MMKV::restoreOneFromDirectory(string(mmapID), string(srcDir), nullptr);
 }
 
-MMKV_EXPORT uint64_t mmkv_backup_all(const char *dstDir, const char *srcDir) {
+MMKV_EXPORT uint64_t mmkv_backup_all(const char *dstDir, const char *rootPath) {
     if (!dstDir) { return 0; }
-    if (srcDir) {
-        string src(srcDir);
-        return MMKV::backupAllToDirectory(string(dstDir), &src);
+    if (rootPath) {
+        string path(rootPath);
+        return MMKV::backupAllToDirectory(string(dstDir), &path);
     }
     return MMKV::backupAllToDirectory(string(dstDir), nullptr);
 }
 
-MMKV_EXPORT uint64_t mmkv_restore_all(const char *srcDir, const char *dstDir) {
+MMKV_EXPORT uint64_t mmkv_restore_all(const char *srcDir, const char *rootPath) {
     if (!srcDir) { return 0; }
-    if (dstDir) {
-        string dst(dstDir);
-        return MMKV::restoreAllFromDirectory(string(srcDir), &dst);
+    if (rootPath) {
+        string path(rootPath);
+        return MMKV::restoreAllFromDirectory(string(srcDir), &path);
     }
     return MMKV::restoreAllFromDirectory(string(srcDir), nullptr);
 }
@@ -612,6 +630,38 @@ MMKV_EXPORT bool mmkv_disable_compare_before_set(MMKVHandle_t handle) {
     MMKV *kv = kvFromHandle(handle);
     if (kv) { return kv->disableCompareBeforeSet(); }
     return false;
+}
+
+MMKV_EXPORT bool mmkv_is_expiration_enabled(MMKVHandle_t handle) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv) { return kv->isExpirationEnabled(); }
+    return false;
+}
+
+MMKV_EXPORT bool mmkv_is_encryption_enabled(MMKVHandle_t handle) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv) { return kv->isEncryptionEnabled(); }
+    return false;
+}
+
+MMKV_EXPORT bool mmkv_is_compare_before_set_enabled(MMKVHandle_t handle) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv) { return kv->isCompareBeforeSetEnabled(); }
+    return false;
+}
+
+/* ── Value inspection ──────────────────────────────────────────────── */
+
+MMKV_EXPORT uint64_t mmkv_get_value_size(MMKVHandle_t handle, const char *key, bool actualSize) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv && key) { return kv->getValueSize(key, actualSize); }
+    return 0;
+}
+
+MMKV_EXPORT int32_t mmkv_write_value_to_buffer(MMKVHandle_t handle, const char *key, void *ptr, int32_t size) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv && key && ptr && size > 0) { return kv->writeValueToBuffer(key, ptr, size); }
+    return -1;
 }
 
 /* ── Info ──────────────────────────────────────────────────────────── */
@@ -674,6 +724,85 @@ MMKV_EXPORT bool mmkv_is_file_valid(const char *mmapID, const char *rootPath) {
 MMKV_EXPORT void mmkv_check_content_changed(MMKVHandle_t handle) {
     MMKV *kv = kvFromHandle(handle);
     if (kv) { kv->checkContentChanged(); }
+}
+
+/* ── NameSpace ─────────────────────────────────────────────────────── */
+
+static inline mmkv::NameSpace *nsFromHandle(void *handle) {
+    return static_cast<mmkv::NameSpace *>(handle);
+}
+
+MMKV_EXPORT MMKVNameSpace_t mmkv_namespace(const char *rootDir) {
+    if (!rootDir) { return nullptr; }
+    // NameSpace is a lightweight POD-like facade; we heap-allocate to return as opaque handle.
+    auto *ns = new mmkv::NameSpace(MMKV::nameSpace(string(rootDir)));
+    return ns;
+}
+
+MMKV_EXPORT MMKVNameSpace_t mmkv_default_namespace(void) {
+    auto *ns = new mmkv::NameSpace(MMKV::defaultNameSpace());
+    return ns;
+}
+
+MMKV_EXPORT void mmkv_namespace_free(MMKVNameSpace_t handle) {
+    auto *ns = nsFromHandle(handle);
+    delete ns;
+}
+
+MMKV_EXPORT const char *mmkv_namespace_root_dir(MMKVNameSpace_t handle) {
+    auto *ns = nsFromHandle(handle);
+    if (ns) { return ns->getRootDir().c_str(); }
+    return nullptr;
+}
+
+MMKV_EXPORT MMKVHandle_t mmkv_namespace_mmkv_with_id(MMKVNameSpace_t handle, const char *mmapID, MMKVConfig_t cfg) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !mmapID) { return nullptr; }
+    string cryptStorage, pathStorage;
+    auto config = buildConfig(cfg, cryptStorage, pathStorage);
+    return ns->mmkvWithID(string(mmapID), config);
+}
+
+MMKV_EXPORT bool mmkv_namespace_backup_one(MMKVNameSpace_t handle, const char *mmapID, const char *dstDir) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !mmapID || !dstDir) { return false; }
+    return ns->backupOneToDirectory(string(mmapID), string(dstDir));
+}
+
+MMKV_EXPORT bool mmkv_namespace_restore_one(MMKVNameSpace_t handle, const char *mmapID, const char *srcDir) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !mmapID || !srcDir) { return false; }
+    return ns->restoreOneFromDirectory(string(mmapID), string(srcDir));
+}
+
+MMKV_EXPORT uint64_t mmkv_namespace_backup_all(MMKVNameSpace_t handle, const char *dstDir) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !dstDir) { return 0; }
+    return ns->backupAllToDirectory(string(dstDir));
+}
+
+MMKV_EXPORT uint64_t mmkv_namespace_restore_all(MMKVNameSpace_t handle, const char *srcDir) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !srcDir) { return 0; }
+    return ns->restoreAllFromDirectory(string(srcDir));
+}
+
+MMKV_EXPORT bool mmkv_namespace_is_file_valid(MMKVNameSpace_t handle, const char *mmapID) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !mmapID) { return false; }
+    return ns->isFileValid(string(mmapID));
+}
+
+MMKV_EXPORT bool mmkv_namespace_remove_storage(MMKVNameSpace_t handle, const char *mmapID) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !mmapID) { return false; }
+    return ns->removeStorage(string(mmapID));
+}
+
+MMKV_EXPORT bool mmkv_namespace_check_exist(MMKVNameSpace_t handle, const char *mmapID) {
+    auto *ns = nsFromHandle(handle);
+    if (!ns || !mmapID) { return false; }
+    return ns->checkExist(string(mmapID));
 }
 
 /* ── Memory management ─────────────────────────────────────────────── */

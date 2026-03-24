@@ -27,7 +27,7 @@ import com.sun.jna.ptr.LongByReference
 // region JNA interface mapping the C bridge
 
 @Suppress("FunctionName")
-private interface MMKVLib : Library {
+internal interface MMKVLib : Library {
     fun mmkv_initialize(rootDir: String, logLevel: Int)
     fun mmkv_on_exit()
 
@@ -75,7 +75,7 @@ private interface MMKVLib : Library {
     fun mmkv_import_from(handle: Pointer, srcHandle: Pointer): Long
 
     fun mmkv_sync(handle: Pointer, sync: Boolean)
-    fun mmkv_clear_memory_cache(handle: Pointer)
+    fun mmkv_clear_memory_cache(handle: Pointer, keepSpace: Boolean)
     fun mmkv_trim(handle: Pointer)
 
     fun mmkv_backup_one(mmapID: String, dstDir: String, srcDir: String?): Boolean
@@ -87,6 +87,16 @@ private interface MMKVLib : Library {
     fun mmkv_disable_auto_expire(handle: Pointer): Boolean
     fun mmkv_enable_compare_before_set(handle: Pointer): Boolean
     fun mmkv_disable_compare_before_set(handle: Pointer): Boolean
+    fun mmkv_is_expiration_enabled(handle: Pointer): Boolean
+    fun mmkv_is_encryption_enabled(handle: Pointer): Boolean
+    fun mmkv_is_compare_before_set_enabled(handle: Pointer): Boolean
+
+    fun mmkv_get_value_size(handle: Pointer, key: String, actualSize: Boolean): Long
+    fun mmkv_write_value_to_buffer(handle: Pointer, key: String, ptr: Pointer, size: Int): Int
+
+    fun mmkv_lock(handle: Pointer)
+    fun mmkv_unlock(handle: Pointer)
+    fun mmkv_try_lock(handle: Pointer): Boolean
 
     fun mmkv_page_size(): Int
     fun mmkv_version(): String?
@@ -100,6 +110,17 @@ private interface MMKVLib : Library {
     fun mmkv_check_content_changed(handle: Pointer)
 
     fun mmkv_free(ptr: Pointer)
+
+    fun mmkv_namespace(rootDir: String): Pointer?
+    fun mmkv_default_namespace(): Pointer?
+    fun mmkv_namespace_free(ns: Pointer)
+    fun mmkv_namespace_root_dir(ns: Pointer): String?
+    fun mmkv_namespace_mmkv_with_id(ns: Pointer, mmapID: String, config: JnaMMKVConfig.ByValue): Pointer?
+    fun mmkv_namespace_backup_one(ns: Pointer, mmapID: String, dstDir: String): Boolean
+    fun mmkv_namespace_restore_one(ns: Pointer, mmapID: String, srcDir: String): Boolean
+    fun mmkv_namespace_is_file_valid(ns: Pointer, mmapID: String): Boolean
+    fun mmkv_namespace_remove_storage(ns: Pointer, mmapID: String): Boolean
+    fun mmkv_namespace_check_exist(ns: Pointer, mmapID: String): Boolean
 
     companion object {
         val INSTANCE: MMKVLib = Native.load("mmkv-kmp", MMKVLib::class.java)
@@ -326,13 +347,33 @@ actual class MMKV internal constructor(private val handle: Pointer) {
     actual fun async() = lib.mmkv_sync(handle, false)
     actual fun trim() = lib.mmkv_trim(handle)
     actual fun close() = lib.mmkv_close(handle)
-    actual fun clearMemoryCache() = lib.mmkv_clear_memory_cache(handle)
+    actual fun clearMemoryCache() = lib.mmkv_clear_memory_cache(handle, false)
     actual fun importFrom(source: MMKV): Long = lib.mmkv_import_from(handle, source.handle)
     actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = lib.mmkv_enable_auto_expire(handle, expiredInSeconds.toInt())
     actual fun disableAutoKeyExpire(): Boolean = lib.mmkv_disable_auto_expire(handle)
     actual fun enableCompareBeforeSet(): Boolean = lib.mmkv_enable_compare_before_set(handle)
     actual fun disableCompareBeforeSet(): Boolean = lib.mmkv_disable_compare_before_set(handle)
     actual fun checkContentChanged() = lib.mmkv_check_content_changed(handle)
+
+    actual fun getValueSize(key: String, actualSize: Boolean): Long = lib.mmkv_get_value_size(handle, key, actualSize)
+
+    actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
+        if (buffer.isEmpty()) return -1
+        val mem = Memory(buffer.size.toLong())
+        val written = lib.mmkv_write_value_to_buffer(handle, key, mem, buffer.size)
+        if (written > 0) {
+            mem.read(0, buffer, 0, written)
+        }
+        return written
+    }
+
+    actual fun lock() = lib.mmkv_lock(handle)
+    actual fun unlock() = lib.mmkv_unlock(handle)
+    actual fun tryLock(): Boolean = lib.mmkv_try_lock(handle)
+
+    actual val isExpirationEnabled: Boolean get() = lib.mmkv_is_expiration_enabled(handle)
+    actual val isEncryptionEnabled: Boolean get() = lib.mmkv_is_encryption_enabled(handle)
+    actual val isCompareBeforeSetEnabled: Boolean get() = lib.mmkv_is_compare_before_set_enabled(handle)
 
     // endregion
 }
@@ -349,7 +390,7 @@ private fun MMKVLogLevel.toNativeLevel(): Int = when (this) {
 
 private fun buildDefaultConfig(): JnaMMKVConfig.ByValue = JnaMMKVConfig.ByValue()
 
-private fun MMKVConfig.toJna(): JnaMMKVConfig.ByValue {
+internal fun MMKVConfig.toJna(): JnaMMKVConfig.ByValue {
     val cfg = JnaMMKVConfig.ByValue()
     cfg.mode = mode
     cfg.cryptKey = cryptKey
