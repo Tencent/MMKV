@@ -58,8 +58,17 @@ set_target_properties(UnitTest PROPERTIES
         CXX_STANDARD 20
         )
 
+add_executable(demo_c
+        demo_c.c)
+target_link_libraries(demo_c
+        mmkv stdc++)
+set_target_properties(demo_c PROPERTIES
+        C_STANDARD 99
+        )
+
 add_dependencies(demo
         process
         TestInterProcessLock
-        UnitTest)
+        UnitTest
+        demo_c)
 

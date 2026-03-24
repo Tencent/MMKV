@@ -205,4 +205,8 @@ ELSE()
     file(REMOVE include/MMKV/MemoryFile.h include/MMKV/MMKVLog.h)
 ENDIF()
 
+# Add cbridge C interface sources
+target_sources(core PRIVATE cbridge/MMKVBridge.cpp)
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cbridge)
+
 target_include_directories(core INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
