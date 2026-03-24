@@ -18,4 +18,3 @@ dependencyResolutionManagement {
 
 include(":mmkv")
 include(":sample:composeApp")
-include(":sample:nativeApp")

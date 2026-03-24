@@ -70,20 +70,24 @@ kotlin {
 
     // Configure cinterop for native desktop targets (Linux & Windows)
     val nativeDesktopTargets = listOf(linuxX64(), mingwX64())
-    val cinteropDir = project.file("nativeInterop/cinterop").absolutePath
-    val nativeLibDir = project.file("nativeInterop/build").absolutePath
+    val nativeBuildDir = project.file("nativeInterop/build")
+    // CMake writes the resolved cbridge header path during configure
+    val cbridgeIncludeDir = nativeBuildDir.resolve("cbridge_include_dir.txt")
+        .let { if (it.exists()) it.readText().trim() else "" }
     nativeDesktopTargets.forEach { target ->
         target.compilations.getByName("main") {
             cinterops {
                 val mmkv by creating {
                     defFile("nativeInterop/cinterop/mmkv.def")
-                    compilerOpts("-I$cinteropDir")
-                    includeDirs(cinteropDir)
+                    if (cbridgeIncludeDir.isNotEmpty()) {
+                        compilerOpts("-I$cbridgeIncludeDir")
+                        includeDirs(cbridgeIncludeDir)
+                    }
                 }
             }
         }
         target.binaries.all {
-            linkerOpts("-L$nativeLibDir", "-lmmkv-kmp")
+            linkerOpts("-L${nativeBuildDir.absolutePath}", "-lmmkv-kmp")
         }
     }
 
