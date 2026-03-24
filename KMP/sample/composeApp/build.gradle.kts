@@ -13,6 +13,13 @@ kotlin {
         }
     }
 
+    // JVM desktop target
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+
     iosArm64()
     iosSimulatorArm64()
     iosX64()
@@ -45,6 +52,22 @@ kotlin {
                 implementation("androidx.activity:activity-compose:1.10.1")
             }
         }
+        val desktopMain by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+            }
+        }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.tencent.mmkv.sample.MainKt"
+        nativeDistributions {
+            packageName = "MMKV KMP Sample"
+            packageVersion = "1.0.0"
+        }
+        jvmArgs("-Djna.library.path=${project(":mmkv").file("nativeInterop/build").absolutePath}")
     }
 }
 

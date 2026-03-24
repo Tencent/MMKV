@@ -24,12 +24,23 @@ project(mmkv-kmp)
 # Set the version of MMKV to use.
 set(MMKV_VERSION "v2.4.0")
 
+# For local development, allow overriding the MMKV source directory.
+# Usage: cmake -DMMKV_LOCAL_SOURCE=ON ..
+option(MMKV_LOCAL_SOURCE "Use local MMKV source instead of fetching from GitHub" OFF)
+
 include(FetchContent)
-FetchContent_Declare(mmkv
-  GIT_REPOSITORY "https://github.com/Tencent/MMKV.git"
-  GIT_TAG ${MMKV_VERSION}
-  SOURCE_SUBDIR "Core"
-)
+IF(MMKV_LOCAL_SOURCE)
+    FetchContent_Declare(mmkv
+      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../"
+      SOURCE_SUBDIR "Core"
+    )
+ELSE()
+    FetchContent_Declare(mmkv
+      GIT_REPOSITORY "https://github.com/Tencent/MMKV.git"
+      GIT_TAG ${MMKV_VERSION}
+      SOURCE_SUBDIR "Core"
+    )
+ENDIF()
 FetchContent_MakeAvailable(mmkv)
 
 # The Core CMakeLists.txt builds the 'core' static library which
@@ -47,3 +58,25 @@ add_custom_command(
 )
 
 add_custom_target(mmkv-kmp ALL DEPENDS ${OUTPUT_LIB})
+
+# Also build a shared library for JVM desktop (JNA).
+# Use whole-archive to re-export all C bridge symbols from core.
+file(WRITE ${CMAKE_BINARY_DIR}/empty.cpp "")
+add_library(mmkv-kmp-shared SHARED ${CMAKE_BINARY_DIR}/empty.cpp)
+set_target_properties(mmkv-kmp-shared PROPERTIES
+    OUTPUT_NAME "mmkv-kmp"
+    CXX_STANDARD 20
+    CXX_EXTENSIONS OFF
+    POSITION_INDEPENDENT_CODE ON
+)
+
+IF(APPLE)
+    target_link_libraries(mmkv-kmp-shared -Wl,-force_load core)
+ELSE()
+    target_link_libraries(mmkv-kmp-shared -Wl,--whole-archive core -Wl,--no-whole-archive)
+ENDIF()
+
+find_library(zlib z)
+IF(zlib)
+    target_link_libraries(mmkv-kmp-shared ${zlib})
+ENDIF()

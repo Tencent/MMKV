@@ -32,6 +32,13 @@ kotlin {
         }
     }
 
+    // JVM desktop target
+    jvm("desktop") {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+
     // iOS targets
     iosArm64()
     iosSimulatorArm64()
@@ -98,6 +105,11 @@ kotlin {
         androidMain {
             dependencies {
                 implementation("com.tencent:mmkv:2.4.0")
+            }
+        }
+        val desktopMain by getting {
+            dependencies {
+                implementation("net.java.dev.jna:jna:5.17.0")
             }
         }
     }
