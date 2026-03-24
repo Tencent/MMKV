@@ -8,7 +8,7 @@ This release introduces a **unified `MMKVHandler` callback interface** across al
 * **Feature:** Added `onMMKVContentLoadSuccessfully` callback, triggered when an MMKV file is loaded/mapped successfully.
 * **Feature:** Added `MMKVConfig` for all-in-one instance configuration, supporting all options (`mode`, `cryptKey`, `aes256`, `expectedCapacity`, `enableKeyExpire`, `expiredInSeconds`, `enableCompareBeforeSet`, `recover`, `itemSizeLimit`) in a single struct/class.
 * **Feature:** Added `defaultMMKV(config)` variant for creating the default instance with full configuration.
-* **Fix:** Robust check on encryption mode ([#1642](https://github.com/nicksunday/mmkv/issues/1642)).
+* **Fix:** Robust check on encryption mode ([#1642](https://github.com/tencent/mmkv/issues/1642)).
 * **Fix:** Protect from `delete` file failure on corrupted files.
 * **Fix:** Protect from `m_file` not valid for `isDiskOfMMAPFileCorrupted()`.
 * **Fix:** Reduce `absolutePath()` calls as much as possible.
@@ -17,14 +17,14 @@ This release introduces a **unified `MMKVHandler` callback interface** across al
 
 ### Android
 * **Change:** Merged `MMKVContentChangeNotification` into `MMKVHandler`. The old `MMKVContentChangeNotification` interface is now `@Deprecated`.
-* **Fix:** Fix `fcntl()` OFD lock failure on ashmem ([#1637](https://github.com/nicksunday/mmkv/issues/1637)).
+* **Fix:** Fix `fcntl()` OFD lock failure on ashmem ([#1637](https://github.com/tencent/mmkv/issues/1637)).
 * Merge ashmem size with `expectedCapacity`.
 * Correctly collect so-symbols.
 
 ### iOS/macOS
 * **Feature:** Added `getBytes()` with `string_view` key for ObjC++.
 * **Fix:** Fixed a memory leak on getting `NameSpace` instance.
-* Support **Swift Package Manager** ([#535](https://github.com/nicksunday/mmkv/issues/535)).
+* Support **Swift Package Manager** ([#535](https://github.com/tencent/mmkv/issues/535)).
 * Fix compile error on `tryAtomicRename()`.
 
 ### HarmonyOS NEXT
