@@ -660,6 +660,22 @@ MMKV_EXPORT bool mmkv_is_read_only(MMKVHandle_t handle) {
     return false;
 }
 
+/* ── File validation & content change ──────────────────────────────── */
+
+MMKV_EXPORT bool mmkv_is_file_valid(const char *mmapID, const char *rootPath) {
+    if (!mmapID) { return false; }
+    if (rootPath) {
+        string path(rootPath);
+        return MMKV::isFileValid(string(mmapID), &path);
+    }
+    return MMKV::isFileValid(string(mmapID), nullptr);
+}
+
+MMKV_EXPORT void mmkv_check_content_changed(MMKVHandle_t handle) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv) { kv->checkContentChanged(); }
+}
+
 /* ── Memory management ─────────────────────────────────────────────── */
 
 MMKV_EXPORT void mmkv_free(void *ptr) {

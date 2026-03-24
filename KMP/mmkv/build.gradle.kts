@@ -41,15 +41,42 @@ kotlin {
     macosArm64()
     macosX64()
 
+    // Linux & Windows native desktop targets
+    linuxX64()
+    mingwX64()
+
     // Use the default hierarchy template which automatically creates
     // appleMain, iosMain, macosMain, etc. intermediate source sets.
-    // We add a custom darwinMain that covers both iOS and macOS.
+    // We add custom groups for darwinMain and nativeDesktopMain.
     applyDefaultHierarchyTemplate {
         common {
             group("darwin") {
                 group("ios")
                 group("macos")
             }
+            group("nativeDesktop") {
+                withLinuxX64()
+                withMingwX64()
+            }
+        }
+    }
+
+    // Configure cinterop for native desktop targets (Linux & Windows)
+    val nativeDesktopTargets = listOf(linuxX64(), mingwX64())
+    val cinteropDir = project.file("nativeInterop/cinterop").absolutePath
+    val nativeLibDir = project.file("nativeInterop/build").absolutePath
+    nativeDesktopTargets.forEach { target ->
+        target.compilations.getByName("main") {
+            cinterops {
+                val mmkv by creating {
+                    defFile("nativeInterop/cinterop/mmkv.def")
+                    compilerOpts("-I$cinteropDir")
+                    includeDirs(cinteropDir)
+                }
+            }
+        }
+        target.binaries.all {
+            linkerOpts("-L$nativeLibDir", "-lmmkv-kmp")
         }
     }
 
