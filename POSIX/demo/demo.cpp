@@ -1363,24 +1363,28 @@ void testReKey() {
     testMMKV(mmapID, nullptr, false, true, nullptr);
 }
 
-void MyLogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const string &message) {
+class MyMMKVHandler : public mmkv::MMKVHandler {
+public:
+    void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *function, MMKVLog_t message) override {
+        auto desc = [level] {
+            switch (level) {
+                case MMKVLogDebug:
+                    return "D";
+                case MMKVLogInfo:
+                    return "I";
+                case MMKVLogWarning:
+                    return "W";
+                case MMKVLogError:
+                    return "E";
+                default:
+                    return "N";
+            }
+        }();
+        printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
+    }
+};
 
-    auto desc = [level] {
-        switch (level) {
-            case MMKVLogDebug:
-                return "D";
-            case MMKVLogInfo:
-                return "I";
-            case MMKVLogWarning:
-                return "W";
-            case MMKVLogError:
-                return "E";
-            default:
-                return "N";
-        }
-    }();
-    printf("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
-}
+static MyMMKVHandler g_handler;
 
 void testReadonlyCrash() {
     std::string *key = nullptr;
@@ -1403,7 +1407,7 @@ int main() {
     testNameSpace();
 
     string rootDir = "/tmp/mmkv";
-    MMKV::initializeMMKV(rootDir, MMKVLogInfo, MyLogHandler);
+    MMKV::initializeMMKV(rootDir, MMKVLogInfo, &g_handler);
     // MMKV::setLogLevel(MMKVLogNone);
     // MMKV::registerLogHandler(MyLogHandler);
 
