@@ -124,6 +124,10 @@ void MMKV::loadFromFile() {
             }
             m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
             m_output->seek(m_actualSize);
+            // upgrade to random iv immediately by triggering a full writeback
+            if (!needFullWriteback && m_crypter && m_metaInfo->m_version < MMKVVersionRandomIV) {
+                needFullWriteback = true;
+            }
             if (needFullWriteback && !isReadOnly()) {
                 fullWriteback();
             }
@@ -988,11 +992,8 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
 
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
-        if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
-            m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
-        } else {
-            m_crypter->resetIV();
-        }
+        assert(m_metaInfo->m_version >= MMKVVersionRandomIV);
+        m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
     }
 #endif
     try {

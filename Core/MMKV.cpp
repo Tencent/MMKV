@@ -345,6 +345,7 @@ void MMKV::clearMemoryCache(bool keepSpace) {
 #ifndef MMKV_DISABLE_CRYPT
     clearDictionary(m_dicCrypt);
     if (m_crypter) {
+        // if read-only, cannot garrentee we have random iv
         if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
             m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
         } else {

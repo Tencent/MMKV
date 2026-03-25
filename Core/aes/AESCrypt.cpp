@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#define __STDC_WANT_LIB_EXT1__ 1
+
 #include "AESCrypt.h"
 #include "openssl/openssl_aes.h"
 #include <cstdint>
@@ -68,10 +70,39 @@ AESCrypt::AESCrypt(const AESCrypt &other, const AESCryptStatus &status)
     m_aesKey = other.m_aesKey;
 }
 
+// Wipes a memory region in a way intended to resist dead-store elimination.
+static void secure_wipe(void* ptr, size_t len) noexcept {
+    if (!ptr || len == 0) {
+        return;
+    }
+#if defined(MMKV_WIN32)
+    // Documented Windows primitive for this purpose.
+    SecureZeroMemory(ptr, len);
+#elif defined(__STDC_LIB_EXT1__) || defined(MMKV_APPLE)
+    // C11 Annex K, if the implementation actually provides it.
+    (void)memset_s(ptr, len, 0, len);
+#elif defined(__GLIBC__)
+    // Common non-Windows platforms often provide explicit_bzero.
+    explicit_bzero(ptr, len);
+#else
+    // Fallback: volatile byte loop
+    volatile unsigned char* p = static_cast<volatile unsigned char*>(ptr);
+    while (len--) {
+        *p++ = 0;
+    }
+#endif
+}
+
 AESCrypt::~AESCrypt() {
     if (!m_isClone) {
-        delete m_aesKey;
-        delete m_aesRollbackKey;
+        if (m_aesKey) {
+            secure_wipe(m_aesKey, sizeof(AES_KEY));
+            delete m_aesKey;
+        }
+        if (m_aesRollbackKey) {
+            secure_wipe(m_aesRollbackKey, sizeof(AES_KEY));
+            delete m_aesRollbackKey;
+        }
     }
 }
 
