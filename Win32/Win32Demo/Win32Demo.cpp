@@ -547,11 +547,11 @@ void PrintUTF8(const char* format, ...) {
     free(buf);
 }
 
-static void
-LogHandler(MMKVLogLevel level, const char *file, int line, const char *function, const std::string &message) {
-
-    auto desc = [level] {
-        switch (level) {
+class MyMMKVHandler : public mmkv::MMKVHandler {
+public:
+    void mmkvLog(MMKVLogLevel level, const char* file, int line, const char* function, MMKVLog_t message) override {
+        auto desc = [level] {
+            switch (level) {
             case MMKVLogDebug:
                 return "D";
             case MMKVLogInfo:
@@ -562,10 +562,13 @@ LogHandler(MMKVLogLevel level, const char *file, int line, const char *function,
                 return "E";
             default:
                 return "N";
-        }
-    }();
-    PrintUTF8("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
-}
+            }
+        }();
+        PrintUTF8("redirecting-[%s] <%s:%d::%s> %s\n", desc, file, line, function, message.c_str());
+    }
+};
+
+static MyMMKVHandler g_handler;
 
 int main() {
     // Get the original global locale
@@ -586,7 +589,7 @@ int main() {
     testNameSpace();
 
     wstring rootDir = getAppDataRoaming(L"Tencent", L"微信-MMKV");
-    MMKV::initializeMMKV(rootDir, MMKVLogInfo, LogHandler);
+    MMKV::initializeMMKV(rootDir, MMKVLogInfo, &g_handler);
     //MMKV::setLogLevel(MMKVLogNone);
     //MMKV::registerLogHandler(LogHandler);
 
