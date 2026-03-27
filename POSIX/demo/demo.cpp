@@ -253,7 +253,7 @@ void *threadFunction(void *lpParam) {
 }
 
 void threadTest() {
-    pthread_t threadHandles[threadCount] = {0};
+    pthread_t threadHandles[threadCount] = {};
     for (size_t index = 0; index < threadCount; index++) {
         pthread_create(&threadHandles[index], nullptr, threadFunction, (void *) index);
     }
@@ -282,7 +282,7 @@ void brutleTest() {
 
 void processTest() {
     constexpr auto processCount = 2;
-    pid_t processHandles[processCount] = {0};
+    pid_t processHandles[processCount] = {};
     for (int &processHandle : processHandles) {
         auto pid = fork();
         // this is child
