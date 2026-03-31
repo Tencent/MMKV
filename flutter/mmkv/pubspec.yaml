@@ -13,8 +13,8 @@ dependencies:
     sdk: flutter
   ffi: ^2.0.0
   mmkv_ios:
-    '>=2.4.0 <2.5.0'
-#    path: ../mmkv_ios
+#    '>=2.4.0 <2.5.0'
+    path: ../mmkv_ios
   mmkv_android:
     '>=2.4.0 <2.5.0'
 #    path: ../mmkv_android

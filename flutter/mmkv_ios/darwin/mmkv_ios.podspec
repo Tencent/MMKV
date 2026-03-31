@@ -16,8 +16,8 @@ Pod::Spec.new do |s|
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Tencent' => 'guoling@tencent.com' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
-  s.public_header_files = 'Classes/**/MMKVPlugin.h'
+  s.source_files = 'mmkv_ios/Sources/mmkv_ios/**/*.{h,mm}'
+  s.public_header_files = 'mmkv_ios/Sources/mmkv_ios/include/**/*.h'
   s.ios.dependency 'Flutter'
   s.osx.dependency 'FlutterMacOS'
   s.ios.deployment_target = '13.0'
