@@ -199,6 +199,35 @@ void testVector(MMKV *mmkv) {
     printf("test vector: passed\n");
 }
 
+void testOversizedKey(MMKV *mmkv) {
+    // Keys at or below 65531 bytes should work normally
+    {
+        string key(65531, 'A');
+        auto ret = mmkv->set("V", key);
+        assert(ret);
+        string out;
+        ret = mmkv->getString(key, out);
+        assert(ret && out == "V");
+        mmkv->removeValueForKey(key);
+    }
+    // Keys at 65532 bytes and above must be rejected (would overflow uint16_t fields)
+    {
+        string key(65532, 'B');
+        auto ret = mmkv->set("V", key);
+        assert(!ret);
+        string out;
+        ret = mmkv->getString(key, out);
+        assert(!ret);
+    }
+    {
+        string key(70000, 'C');
+        auto ret = mmkv->set("V", key);
+        assert(!ret);
+    }
+
+    printf("test oversized key: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -269,4 +298,5 @@ int main() {
     testBytes(mmkv);
     testVector(mmkv);
     testRemove(mmkv);
+    testOversizedKey(mmkv);
 }

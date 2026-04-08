@@ -905,6 +905,10 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
 KVHolderRet_t
 MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
+    if (originKeyLength > KeySizeLimit) {
+        MMKVError("[%s] reject oversized key, keyLength=%u, limit=%u", m_mmapID.c_str(), originKeyLength, KeySizeLimit);
+        return make_pair(false, KeyValueHolder());
+    }
     auto isKeyEncoded = (originKeyLength < keyData.length());
     auto keyLength = static_cast<uint32_t>(keyData.length());
     auto valueLength = static_cast<uint32_t>(data.length());
@@ -968,6 +972,10 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
                                           const MMBuffer &keyData,
                                           bool isDataHolder,
                                           uint32_t originKeyLength) {
+    if (originKeyLength > KeySizeLimit) {
+        MMKVError("[%s] reject oversized key, keyLength=%u, limit=%u", m_mmapID.c_str(), originKeyLength, KeySizeLimit);
+        return make_pair(false, KeyValueHolder());
+    }
     auto isKeyEncoded = (originKeyLength < keyData.length());
     auto keyLength = static_cast<uint32_t>(keyData.length());
     auto valueLength = static_cast<uint32_t>(data.length());

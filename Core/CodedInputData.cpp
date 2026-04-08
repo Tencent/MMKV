@@ -19,6 +19,7 @@
  */
 
 #include "CodedInputData.h"
+#include "KeyValueHolder.h"
 #include "PBUtility.h"
 #include <stdexcept>
 #include <cstring>
@@ -125,6 +126,9 @@ string CodedInputData::readString(KeyValueHolder &kvHolder) {
 
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
+        if (s_size > mmkv::KeySizeLimit) {
+            throw length_error("MMKV key too large for uint16 holder");
+        }
         kvHolder.keySize = static_cast<uint16_t>(s_size);
 
         auto ptr = m_ptr + m_position;
@@ -167,7 +171,11 @@ void CodedInputData::readData(KeyValueHolder &kvHolder) {
 
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
-        kvHolder.computedKVSize = static_cast<uint16_t>(m_position - kvHolder.offset);
+        auto kvSize = m_position - kvHolder.offset;
+        if (kvSize > UINT16_MAX) {
+            throw length_error("MMKV computed KV size too large for uint16 holder");
+        }
+        kvHolder.computedKVSize = static_cast<uint16_t>(kvSize);
         kvHolder.valueSize = static_cast<uint32_t>(s_size);
 
         m_position += s_size;

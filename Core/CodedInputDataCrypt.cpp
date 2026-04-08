@@ -19,6 +19,7 @@
 */
 
 #include "CodedInputDataCrypt.h"
+#include "KeyValueHolder.h"
 #include "MMKVLog.h"
 #include "PBUtility.h"
 #include <cassert>
@@ -229,6 +230,9 @@ string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     if (s_size <= m_size - m_position) {
         consumeBytes(s_size);
 
+        if (s_size > mmkv::KeySizeLimit) {
+            throw length_error("MMKV key too large for uint16 holder");
+        }
         kvHolder.keySize = static_cast<uint16_t>(s_size);
 
         string result((char *) (m_decryptBuffer + m_decryptBufferPosition), s_size);
