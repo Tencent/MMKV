@@ -13,6 +13,7 @@ let package = Package(
     products: [
         .library(name: "MMKV", targets: ["MMKV"]),
         .library(name: "MMKVAppExtension", type: .dynamic, targets: ["MMKVAppExtension"]),
+        .library(name: "MMKVAppExtension-static", type: .static, targets: ["MMKVAppExtension"]),
         .library(name: "MMKVCore", type: .static, targets: ["MMKVCore"]),
     ],
     targets: [
