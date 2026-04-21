@@ -60,3 +60,5 @@ output/
 
 #swiftpm
 .swiftpm
+
+.claude/
