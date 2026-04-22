@@ -304,6 +304,8 @@ void MemoryFile::doCleanMemoryCache(bool forceClean) {
     if (m_ptr && m_ptr != MAP_FAILED) {
         if (munmap(m_ptr, m_size) != 0) {
             MMKVError("fail to munmap [%s], %s", m_diskFile.m_path.c_str(), strerror(errno));
+        } else {
+            MMKVInfo("munmap from address [%p], [%s]", m_ptr, m_diskFile.m_path.c_str());
         }
     }
     m_ptr = nullptr;
