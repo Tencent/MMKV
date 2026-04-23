@@ -54,48 +54,61 @@ fun registerCMakeBuildTask(
     label: String,
     cmakeTarget: String? = null,
     extraConfigureArgs: List<String> = emptyList(),
-) = tasks.register<Exec>("cmakeBuild${taskSuffix(label)}") {
-    group = "build"
-    description = "Build native MMKV artifacts for $label via CMake"
-
+): TaskProvider<Exec> {
     val buildDir = cmakeBuildDirFor(label)
-    inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
-    inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
-    outputs.dir(buildDir)
+    // Configure-step task. Writes the CMake cache into `buildDir`. Kept
+    // separate from the build step so we can run both via proper Exec
+    // tasks instead of calling `project.exec { }` from within a doFirst —
+    // the latter is deprecated and slated for removal in Gradle 9.
+    val configureTask = tasks.register<Exec>("cmakeConfigure${taskSuffix(label)}") {
+        group = "build"
+        description = "Configure CMake for $label"
 
-    doFirst {
-        buildDir.mkdirs()
-        project.exec {
-            workingDir(nativeInteropDir)
-            commandLine(
-                buildList {
-                    add("cmake")
-                    add("-S")
-                    add(".")
-                    add("-B")
-                    add(buildDir.absolutePath)
-                    add("-DCMAKE_BUILD_TYPE=Release")
-                    add("-DMMKV_VERSION=v$mmkvVersion")
-                    addAll(extraConfigureArgs)
-                }
-            )
-        }
+        inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
+        inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
+        outputs.file(buildDir.resolve("CMakeCache.txt"))
+
+        doFirst { buildDir.mkdirs() }
+
+        workingDir = nativeInteropDir
+        commandLine(
+            buildList {
+                add("cmake")
+                add("-S")
+                add(".")
+                add("-B")
+                add(buildDir.absolutePath)
+                add("-DCMAKE_BUILD_TYPE=Release")
+                add("-DMMKV_VERSION=v$mmkvVersion")
+                addAll(extraConfigureArgs)
+            }
+        )
     }
 
-    workingDir = nativeInteropDir
-    commandLine(
-        buildList {
-            add("cmake")
-            add("--build")
-            add(buildDir.absolutePath)
-            add("--config")
-            add("Release")
-            if (cmakeTarget != null) {
-                add("--target")
-                add(cmakeTarget)
+    return tasks.register<Exec>("cmakeBuild${taskSuffix(label)}") {
+        group = "build"
+        description = "Build native MMKV artifacts for $label via CMake"
+        dependsOn(configureTask)
+
+        inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
+        inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
+        outputs.dir(buildDir)
+
+        workingDir = nativeInteropDir
+        commandLine(
+            buildList {
+                add("cmake")
+                add("--build")
+                add(buildDir.absolutePath)
+                add("--config")
+                add("Release")
+                if (cmakeTarget != null) {
+                    add("--target")
+                    add(cmakeTarget)
+                }
             }
-        }
-    )
+        )
+    }
 }
 
 fun hostOsId(): String {
@@ -318,6 +331,19 @@ tasks.named("desktopProcessResources") {
 
 tasks.matching { it.name == "desktopTest" }.configureEach {
     dependsOn(syncHostDesktopNative)
+}
+
+// AGP 8.13 `checkAarMetadata` reads `aar-metadata.properties` produced
+// by `writeAarMetadata` without declaring a dependency. Gradle
+// validation rejects this on strict runs, which fails
+// `publishToMavenLocal` / `assembleRelease` on a fresh build. Known
+// compatibility gap with the `com.android.library` + KMP + `maven-publish`
+// combination; will go away when the project migrates to
+// `com.android.kotlin.multiplatform.library`.
+listOf("Debug", "Release").forEach { variant ->
+    tasks.matching { it.name == "check${variant}AarMetadata" }.configureEach {
+        dependsOn("write${variant}AarMetadata")
+    }
 }
 
 android {

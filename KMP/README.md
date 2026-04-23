@@ -31,7 +31,11 @@ runtimeOnly("com.tencent:mmkv-kmp-desktop-native-linux-x86_64:2.4.0")
 runtimeOnly("com.tencent:mmkv-kmp-desktop-native-windows-x86_64:2.4.0")
 ```
 
-Only add the runtime artifact for your desktop host. Android, Apple, and Kotlin/Native desktop targets do not need it.
+Which of the four to include depends on where your app will run, not where it is built:
+
+- **Single-host desktop app** (e.g. shipped as a macOS `.app`, a Linux AppImage, or a Windows `.exe`) — add only the runtime artifact matching that host. The other three would bloat the JAR with native code you'll never load.
+- **Cross-platform / multi-host distribution** — e.g. a Compose for Desktop build producing packages for macOS, Linux, and Windows — add **all** four. `MMKV.desktop.kt` contains a `DesktopNativeLoader` that inspects `os.name` / `os.arch` at startup and extracts only the matching `libmmkv-kmp.*` from classpath resources into a temp file before JNA loads it. Extra runtime artifacts that don't match the host are ignored at runtime; they cost JAR size but not correctness.
+- **Android, iOS/macOS, Linux/Windows Kotlin/Native targets** — do not add any of these. Those targets link the native library statically (cinterop) or via CocoaPods / JNI.
 
 ## Local build
 
@@ -97,3 +101,4 @@ Kotlin Multiplatform publication is still host-dependent:
 | Android | `isExpirationEnabled`, `isEncryptionEnabled`, and `isCompareBeforeSetEnabled` still rely on reflection. | The upstream Android MMKV surface keeps them private-native. |
 | JVM desktop | `registerHandler()` / `unRegisterHandler()` are still no-ops. | JNA callback bridging for the unified handler is not implemented yet. |
 | JVM desktop | `setLogLevel()` is a no-op after initialization. | The C bridge configures log level during `initialize()`. |
+| Android publish / test | `./gradlew :mmkv:assembleRelease`, `:mmkv:testDebugUnitTest`, and `:mmkv:publishAndroidReleasePublicationToMavenLocal` fail with `Querying the mapped value of provider(Set) before task ':mmkv:bundleLibCompileToJar[Debug\|Release]' has completed is not supported`. | AGP 8.13 + KGP 2.2.20 with `com.android.library` + `maven-publish` reads the compile classpath before the bundle task has built it; the upstream fix is to migrate to `com.android.kotlin.multiplatform.library` (AGP 8.10+). The other five publications (`mmkv-kmp` metadata, `mmkv-kmp-desktop`, `mmkv-kmp-desktop-native-<host>`, `mmkv-kmp-iosarm64`, `mmkv-kmp-macosarm64`, …) publish cleanly. |
