@@ -2,7 +2,7 @@
 
 ## Context
 
-This branch now combines the original KMP polish pass with the later release-readiness work. It keeps the in-repo fixes from the first pass, adds Maven publishing and GitHub Actions wiring, keeps the desktop native runtime packaging, and restores the remote branch's `linuxArm64` target support.
+This branch now combines the original KMP polish pass with the later release-readiness work. It keeps the in-repo fixes from the first pass, adds Maven publishing wiring, keeps the desktop native runtime packaging, and restores the remote branch's `linuxArm64` target support. GitHub Actions workflow files were removed afterward because pushing workflow changes requires a token with `workflow` scope.
 
 ---
 
@@ -73,15 +73,13 @@ The desktop boolean bridge was fixed by mapping byte-sized bool results correctl
 
 **Verified passing:** `desktopTest`, `macosX64Test`, `testDebugUnitTest`. Linux CI also compiles the `linuxArm64` main and test source sets.
 
-### 9. Publishing, CI, and documentation
+### 9. Publishing and documentation
 
 | File | Change |
 |---|---|
 | `KMP/README.md` | Release-oriented KMP docs: target matrix, Maven coordinates, local build, platform notes, runtime artifact notes, release workflow, and known limitations. |
 | `README.md` | Added `KMP` to the platform badge; mentioned KMP in the intro paragraph with a pointer to `KMP/README.md`. |
 | `CHANGELOG.md` | Added an `Unreleased` section with the KMP polish and release-readiness entries. |
-| `.github/workflows/kmp-ci.yml` | Added a multi-host verification matrix for Linux, macOS, and Windows. Linux also compiles the `linuxArm64` target. |
-| `.github/workflows/kmp-release.yml` | Added host-split publication jobs for Linux, macOS, and Windows artifacts. |
 | `KMP/mmkv/build.gradle.kts` / `KMP/gradle.properties` | Added `maven-publish`, `signing`, Sonatype repository wiring, publication metadata, and the host-specific `desktopNative` runtime artifact. |
 
 ---
@@ -152,6 +150,7 @@ unzip -l mmkv/build/libs/mmkv-desktop.jar | grep native
 ## Remaining follow-ups
 
 - **Credentials-backed publication dry run.** The Gradle and workflow wiring is in place, but real Sonatype/signing credentials are still required for an end-to-end publish.
+- **CI/release workflow automation.** The workflow files were dropped from this branch because updating `.github/workflows/*` requires a token with `workflow` scope. Re-add them later from a credential that has that scope.
 - **`linuxArm64` publication strategy.** The target is wired in the project and compiled in CI, but publishing that artifact still needs an ARM64 Linux runner or a maintained cross-toolchain configuration.
 - **JVM desktop handler callbacks** (`registerHandler` / `unRegisterHandler` no-op today).
 - **Darwin public API expansion**: `lock`/`unlock`/`tryLock`, `isExpirationEnabled`, `isCompareBeforeSetEnabled` not exposed by the ObjC MMKV — needs changes in `iOS/MMKV/`.
