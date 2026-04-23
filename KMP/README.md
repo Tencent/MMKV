@@ -6,7 +6,7 @@ MMKV now ships a Kotlin Multiplatform wrapper under `KMP/`, exposing one common 
 
 | Target | Backend |
 | --- | --- |
-| `androidTarget()` | Published `com.tencent:mmkv` Android library via JNI |
+| `android` | Published `com.tencent:mmkv` Android library via JNI |
 | `iosArm64`, `iosSimulatorArm64`, `iosX64` | CocoaPods `MMKV` framework |
 | `macosArm64`, `macosX64` | CocoaPods `MMKV` framework |
 | `linuxX64`, `linuxArm64`, `mingwX64` | Kotlin/Native cinterop against the MMKV C bridge |
@@ -66,7 +66,7 @@ Platform-specific `MMKV.initialize(...)` extensions live in each platform source
 
 ### Android
 
-The KMP Android target delegates to `com.tencent:mmkv:$MMKV_VERSION`. Consumer ProGuard rules are provided by `consumer-rules.pro`.
+The KMP Android target delegates to `com.tencent:mmkv:$MMKV_VERSION`. Consumer keep rules from `consumer-rules.pro` are published through the Android KMP plugin's `optimization.consumerKeepRules` DSL.
 
 ### iOS / macOS
 
@@ -83,6 +83,8 @@ Linux and Windows Kotlin/Native targets bundle `libmmkv-kmp.a` into the generate
 ## Release notes
 
 Publishing is wired in Gradle, but the repository does not currently carry the GitHub Actions workflows for CI or release publication.
+
+The Android target uses the official `com.android.kotlin.multiplatform.library` plugin, so Android publication and host-side tests follow the standard KMP publishing path instead of the legacy `com.android.library` workaround.
 
 Kotlin Multiplatform publication is still host-dependent:
 - Linux should publish metadata, Android, JVM desktop, and Linux native artifacts.
@@ -101,4 +103,3 @@ Kotlin Multiplatform publication is still host-dependent:
 | Android | `isExpirationEnabled`, `isEncryptionEnabled`, and `isCompareBeforeSetEnabled` still rely on reflection. | The upstream Android MMKV surface keeps them private-native. |
 | JVM desktop | `registerHandler()` / `unRegisterHandler()` are still no-ops. | JNA callback bridging for the unified handler is not implemented yet. |
 | JVM desktop | `setLogLevel()` is a no-op after initialization. | The C bridge configures log level during `initialize()`. |
-| Android publish / test | `./gradlew :mmkv:assembleRelease`, `:mmkv:testDebugUnitTest`, and `:mmkv:publishAndroidReleasePublicationToMavenLocal` fail with `Querying the mapped value of provider(Set) before task ':mmkv:bundleLibCompileToJar[Debug\|Release]' has completed is not supported`. | AGP 8.13 + KGP 2.2.20 with `com.android.library` + `maven-publish` reads the compile classpath before the bundle task has built it; the upstream fix is to migrate to `com.android.kotlin.multiplatform.library` (AGP 8.10+). The other five publications (`mmkv-kmp` metadata, `mmkv-kmp-desktop`, `mmkv-kmp-desktop-native-<host>`, `mmkv-kmp-iosarm64`, `mmkv-kmp-macosarm64`, …) publish cleanly. |

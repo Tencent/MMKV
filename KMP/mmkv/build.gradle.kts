@@ -26,7 +26,7 @@ import org.gradle.api.tasks.bundling.Jar
 plugins {
     kotlin("multiplatform")
     kotlin("native.cocoapods")
-    id("com.android.library")
+    id("com.android.kotlin.multiplatform.library")
     id("maven-publish")
     id("signing")
 }
@@ -35,8 +35,12 @@ val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.0"
 val publishVersion = (findProperty("VERSION_NAME") as? String) ?: mmkvVersion
 val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
 val isSnapshot = publishVersion.endsWith("-SNAPSHOT")
+val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
 
-group = (findProperty("GROUP") as? String) ?: "com.tencent"
+// Keep the build's internal coordinates distinct from the published Android
+// dependency (`com.tencent:mmkv`) so Gradle doesn't substitute that AAR with
+// this wrapper project during same-build resolution.
+group = "$publishedGroup.kmpbuild"
 version = publishVersion
 
 val nativeInteropDir = project.file("nativeInterop")
@@ -141,7 +145,7 @@ val hostDesktopId = "${hostOsId()}-${hostArchId()}"
 
 fun publicationArtifactId(publicationName: String): String = when (publicationName) {
     "kotlinMultiplatform" -> baseArtifactId
-    "androidRelease" -> "$baseArtifactId-android"
+    "android", "androidRelease" -> "$baseArtifactId-android"
     "desktopNative" -> "$baseArtifactId-desktop-native-$hostDesktopId"
     else -> "$baseArtifactId-${publicationName.lowercase()}"
 }
@@ -203,10 +207,19 @@ val desktopNativeJar = tasks.register<Jar>("desktopNativeJar") {
 kotlin {
     withSourcesJar()
 
-    androidTarget {
-        publishLibraryVariants("release")
+    android {
+        namespace = "com.tencent.mmkv.kmp"
+        compileSdk = 35
+        minSdk = 23
+        withHostTest {}
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+        optimization {
+            consumerKeepRules.apply {
+                publish = true
+                file("consumer-rules.pro")
+            }
         }
     }
 
@@ -317,7 +330,7 @@ kotlin {
             }
         }
 
-        val androidUnitTest by getting {
+        val androidHostTest by getting {
             dependencies {
                 implementation(kotlin("test"))
             }
@@ -333,36 +346,9 @@ tasks.matching { it.name == "desktopTest" }.configureEach {
     dependsOn(syncHostDesktopNative)
 }
 
-// AGP 8.13 `checkAarMetadata` reads `aar-metadata.properties` produced
-// by `writeAarMetadata` without declaring a dependency. Gradle
-// validation rejects this on strict runs, which fails
-// `publishToMavenLocal` / `assembleRelease` on a fresh build. Known
-// compatibility gap with the `com.android.library` + KMP + `maven-publish`
-// combination; will go away when the project migrates to
-// `com.android.kotlin.multiplatform.library`.
-listOf("Debug", "Release").forEach { variant ->
-    tasks.matching { it.name == "check${variant}AarMetadata" }.configureEach {
-        dependsOn("write${variant}AarMetadata")
-    }
-}
-
-android {
-    namespace = "com.tencent.mmkv.kmp"
-    compileSdk = 35
-
-    defaultConfig {
-        minSdk = 23
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
 publishing {
     publications.withType<MavenPublication>().configureEach {
+        groupId = publishedGroup
         artifactId = publicationArtifactId(name)
         if (name != "desktopNative") {
             artifact(javadocJar)
@@ -371,7 +357,7 @@ publishing {
     }
 
     publications.create<MavenPublication>("desktopNative") {
-        groupId = project.group.toString()
+        groupId = publishedGroup
         version = project.version.toString()
         artifact(desktopNativeJar)
         configurePom(name)

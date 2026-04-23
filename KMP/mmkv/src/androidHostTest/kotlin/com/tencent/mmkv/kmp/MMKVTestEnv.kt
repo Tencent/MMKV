@@ -16,7 +16,7 @@ package com.tencent.mmkv.kmp
 
 import kotlin.random.Random
 
-// Android unit tests run on a host JVM without a Context, so MMKV native
+// Android host tests run on a JVM without a Context, so MMKV native
 // initialization is not reachable. Instrumented tests would be required to
 // exercise the Android code path. We skip cleanly here rather than NPE.
 internal actual object MMKVTestEnv {
