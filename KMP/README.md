@@ -9,7 +9,7 @@ MMKV now ships a Kotlin Multiplatform wrapper under `KMP/`, exposing one common 
 | `androidTarget()` | Published `com.tencent:mmkv` Android library via JNI |
 | `iosArm64`, `iosSimulatorArm64`, `iosX64` | CocoaPods `MMKV` framework |
 | `macosArm64`, `macosX64` | CocoaPods `MMKV` framework |
-| `linuxX64`, `mingwX64` | Kotlin/Native cinterop against the MMKV C bridge |
+| `linuxX64`, `linuxArm64`, `mingwX64` | Kotlin/Native cinterop against the MMKV C bridge |
 | `jvm("desktop")` | JNA against a packaged `libmmkv-kmp` shared library |
 
 `watchOS`, `tvOS`, `visionOS`, and HarmonyOS are not part of the KMP release scope.
@@ -85,7 +85,7 @@ The KMP release is split across host jobs:
 - Windows publishes the Mingw artifact.
 - Each desktop host can also publish its host-specific `mmkv-kmp-desktop-native-<os>-<arch>` runtime JAR.
 
-That split is necessary because Kotlin Multiplatform target publications are host-dependent.
+That split is necessary because Kotlin Multiplatform target publications are host-dependent. `linuxArm64` is wired in the project and compiled in CI, but publishing it still needs either an ARM64 Linux publisher or an explicit cross-toolchain setup.
 
 ## Known limitations
 

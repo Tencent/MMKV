@@ -1,14 +1,14 @@
-# KMP Polish Pass — Completed
+# KMP Merge State — Completed
 
 ## Context
 
-Five release-readiness reports in `report_kmp/` flagged gaps in the `KMP/` module. This polish pass delivers the in-repo fixes that don't require external credentials or CI infrastructure. Out of scope by user direction: Maven publishing, GitHub Actions, watchOS/tvOS targets. `linuxArm64` was added (common CI/server target). The `unregiserHandler` typo was fixed in iOS MMKV with a deprecated back-compat alias.
+This branch now combines the original KMP polish pass with the later release-readiness work. It keeps the in-repo fixes from the first pass, adds Maven publishing and GitHub Actions wiring, keeps the desktop native runtime packaging, and restores the remote branch's `linuxArm64` target support.
 
 ---
 
-## Work completed
+## Combined result
 
-### 1. Fixed the `unregiserHandler` typo (iOS upstream)
+### 1. Upstream and platform polish kept
 
 | File | Change |
 |---|---|
@@ -17,7 +17,7 @@ Five release-readiness reports in `report_kmp/` flagged gaps in the `KMP/` modul
 
 **KMP Darwin wrapper:** intentionally continues to call the typo'd name via `@Suppress("DEPRECATION")` with an explanatory comment, because the KMP build fetches MMKV via CocoaPods and linker-compatibility with published MMKV pods ≤ 2.4.0 requires the typo'd symbol. Once MMKV 2.4.1 ships, the correct-name call is transparently forwarded by the iOS library.
 
-### 2. Deleted dead `jvmMain` source set
+### 2. Core cleanup kept
 
 `KMP/mmkv/src/jvmMain/` contained only empty directories and was not referenced by `build.gradle.kts`. Entire tree removed.
 
@@ -44,7 +44,7 @@ MMKV_VERSION=2.4.0
 - Included in the `applyDefaultHierarchyTemplate` `nativeDesktop` group via `withLinuxArm64()`.
 - Wired into the `nativeDesktopTargets` list so it picks up the cinterop + CMake task automatically.
 
-Verified: `:mmkv:compileKotlinLinuxArm64`, `:mmkv:compileTestKotlinLinuxArm64`, and `:mmkv:cinteropMmkvLinuxArm64` all succeed.
+Verified in CI scope: `:mmkv:compileKotlinLinuxArm64` and `:mmkv:compileTestKotlinLinuxArm64`.
 
 ### 6. Registered Gradle CMake tasks
 
@@ -56,11 +56,11 @@ After: per-target `cmakeBuild<TargetName>` Exec tasks registered in `build.gradl
 
 The cinterop task's `compilerOpts` reads `cbridge_include_dir.txt` via a Provider (task-execution time, not configure-time), and every `compileKotlin*` / `cinterop*` / `link*` task for each native target declares `dependsOn(cmakeTask)`. Fresh checkout + `./gradlew :mmkv:build` now Just Works — no manual `cmake` pre-step.
 
-### 7. JVM desktop: bundle host native shared library into the JAR
+### 7. JVM desktop: bundle and auto-load host native shared library
 
-`tasks.named("desktopProcessResources")` depends on the host's `cmakeBuildDesktop*Shared` task and copies the resulting `libmmkv-kmp.{dylib,so,dll}` into `build/processedResources/desktop/main/native/<os>-<arch>/`. The resulting `mmkv-desktop.jar` now ships with the native binary inside at `native/<os>-<arch>/libmmkv-kmp.*` (verified: 317 KB `libmmkv-kmp.dylib` in the built jar).
+`tasks.named("desktopProcessResources")` depends on the host's `cmakeBuildDesktop*Shared` task and copies the resulting `libmmkv-kmp.{dylib,so,dll}` into `build/processedResources/desktop/main/native/<os>-<arch>/`. `MMKV.desktop.kt` now extracts that packaged binary to a temp file before JNA loads it, so consumers do not need to pass `-Djna.library.path=...`.
 
-**Out of scope (documented in `KMP/README.md`):** runtime auto-extraction to `java.library.path`. Consumers still set `-Djna.library.path=...` manually. The scaffolding needed for classifier-per-OS/arch publishing lands when publishing itself is wired up.
+Published desktop consumers still need the matching host-specific runtime artifact on the classpath, but no manual JVM flag is required.
 
 ### 8. commonTest smoke suite
 
@@ -69,19 +69,20 @@ New files:
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVSmokeTest.kt` — 5 tests: `primitivesRoundTrip`, `decodeDefaults`, `keyManagement`, `allKeysReflectsContents`, `cryptRoundTrip`.
 - Per-platform `TestEnv` actuals: `androidUnitTest/` (skips — no Context), `desktopTest/` (JVM tmp dir + `MMKV.initialize`), `darwinTest/` (`NSTemporaryDirectory`), `nativeDesktopTest/` (posix `$TMPDIR`).
 
-The `desktopTest` task gets `jna.library.path` pointed at the CMake host-shared build directory so JNA can load the freshly-built `libmmkv-kmp.dylib` without any user setup.
+The desktop boolean bridge was fixed by mapping byte-sized bool results correctly in `MMKV.desktop.kt`, so the common smoke suite now runs without the old desktop boolean gate.
 
-**Boolean assertion gate:** during verification I discovered a pre-existing issue — JVM desktop `decodeBool()` / `containsKey()` return indeterminate values because `MMKV.desktop.kt` maps them as Kotlin `Boolean` → JNA 4-byte `int`, while the C bridge returns 1-byte `bool`; upper bytes of the return register are ABI-indeterminate. Added `MMKVTestEnv.hasKnownBoolRoundTripIssue: Boolean` (true only for desktop) and guarded the boolean-specific assertions behind it so the test suite is green while the real fix lands in a follow-up. Documented in `KMP/README.md` and `CHANGELOG.md`.
+**Verified passing:** `desktopTest`, `macosX64Test`, `testDebugUnitTest`. Linux CI also compiles the `linuxArm64` main and test source sets.
 
-**Verified passing:** `desktopTest`, `macosX64Test`, `testDebugUnitTest` (Android unit tests, all skip by design). Cross-compile targets (`linuxX64Test`, `linuxArm64Test`, `mingwX64Test`) compile but can't execute on a macOS host — will be verified on the appropriate CI runners when CI lands.
-
-### 9. Documentation
+### 9. Publishing, CI, and documentation
 
 | File | Change |
 |---|---|
-| `KMP/README.md` | New. Target matrix, install (pre-publishing), build-from-source, quick start, platform notes (including the Flutter-style "don't also link MMKV directly" warning for iOS/macOS), known limitations table. |
+| `KMP/README.md` | Release-oriented KMP docs: target matrix, Maven coordinates, local build, platform notes, runtime artifact notes, release workflow, and known limitations. |
 | `README.md` | Added `KMP` to the platform badge; mentioned KMP in the intro paragraph with a pointer to `KMP/README.md`. |
-| `CHANGELOG.md` | Added an `Unreleased` section with the KMP polish entries and the iOS `unregisterHandler` change. |
+| `CHANGELOG.md` | Added an `Unreleased` section with the KMP polish and release-readiness entries. |
+| `.github/workflows/kmp-ci.yml` | Added a multi-host verification matrix for Linux, macOS, and Windows. Linux also compiles the `linuxArm64` target. |
+| `.github/workflows/kmp-release.yml` | Added host-split publication jobs for Linux, macOS, and Windows artifacts. |
+| `KMP/mmkv/build.gradle.kts` / `KMP/gradle.properties` | Added `maven-publish`, `signing`, Sonatype repository wiring, publication metadata, and the host-specific `desktopNative` runtime artifact. |
 
 ---
 
@@ -148,14 +149,12 @@ unzip -l mmkv/build/libs/mmkv-desktop.jar | grep native
 
 ---
 
-## Known follow-ups (deferred by user request or scope)
+## Remaining follow-ups
 
-- **Maven publishing + signing + Sonatype + CI.** Explicitly deferred; revisit when credentials are ready.
-- **JNA `Boolean` type-mapping fix** in `MMKV.desktop.kt` so `decodeBool`/`containsKey` round-trip reliably on JVM desktop. Requires either a JNA `TypeMapper` or `Byte`-typed wrapper functions. Tests already detect the issue via `MMKVTestEnv.hasKnownBoolRoundTripIssue`.
-- **JNA runtime extraction of bundled native lib** to `java.library.path`. The binary is in the JAR already; the loader just needs code to extract it on first use.
+- **Credentials-backed publication dry run.** The Gradle and workflow wiring is in place, but real Sonatype/signing credentials are still required for an end-to-end publish.
+- **`linuxArm64` publication strategy.** The target is wired in the project and compiled in CI, but publishing that artifact still needs an ARM64 Linux runner or a maintained cross-toolchain configuration.
 - **JVM desktop handler callbacks** (`registerHandler` / `unRegisterHandler` no-op today).
 - **Darwin public API expansion**: `lock`/`unlock`/`tryLock`, `isExpirationEnabled`, `isCompareBeforeSetEnabled` not exposed by the ObjC MMKV — needs changes in `iOS/MMKV/`.
 - **Android reflection hacks** (`isExpirationEnabled` et al. on `MMKV.android.kt`) — fixable by making the corresponding methods public in `com.tencent.mmkv.MMKV` (Java library).
-- **Cross-OS classifier JARs** for JVM desktop (mac-arm64, mac-x64, linux-x64, linux-arm64, windows-x64) — lands alongside publishing.
 - **`watchOS` / `tvOS` / `visionOS` targets** — explicitly deferred.
 - **`kotlin.native.cacheKind.iosArm64=none`** workaround in `gradle.properties` — investigate after a KGP upgrade.

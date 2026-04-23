@@ -32,7 +32,7 @@ jobs:
           - name: Linux
             os: ubuntu-latest
             shell: bash
-            command: ./gradlew :mmkv:desktopTest :mmkv:linuxX64Test :mmkv:testDebugUnitTest
+            command: ./gradlew :mmkv:desktopTest :mmkv:linuxX64Test :mmkv:compileKotlinLinuxArm64 :mmkv:compileTestKotlinLinuxArm64 :mmkv:testDebugUnitTest
           - name: macOS
             os: macos-latest
             shell: bash
