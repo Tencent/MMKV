@@ -18,103 +18,201 @@
  * limitations under the License.
  */
 
-import org.gradle.internal.os.OperatingSystem
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.bundling.Jar
 
 plugins {
     kotlin("multiplatform")
     kotlin("native.cocoapods")
     id("com.android.library")
+    id("maven-publish")
+    id("signing")
 }
 
-// Single source of truth: read the MMKV version from gradle.properties.
-val mmkvVersion: String = (project.findProperty("MMKV_VERSION") as? String) ?: "2.4.0"
+val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.0"
+val publishVersion = (findProperty("VERSION_NAME") as? String) ?: mmkvVersion
+val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
+val isSnapshot = publishVersion.endsWith("-SNAPSHOT")
 
-// ---------------------------------------------------------------------------
-// Native-library build wiring (Linux / Windows / JVM desktop)
-//
-// The nativeInterop/CMakeLists.txt builds:
-//   * libmmkv-kmp.a           — static archive linked into Kotlin/Native klibs
-//   * libmmkv-kmp.{dylib,so,dll} — shared library consumed by JNA on JVM desktop
-//
-// Historically consumers had to invoke CMake manually before running Gradle,
-// which made `./gradlew :mmkv:build` silently misconfigure cinterop on a fresh
-// checkout. We now register a Gradle Exec task per native target so CMake runs
-// automatically as part of the build.
-// ---------------------------------------------------------------------------
+group = (findProperty("GROUP") as? String) ?: "com.tencent"
+version = publishVersion
 
 val nativeInteropDir = project.file("nativeInterop")
 val nativeBuildRoot = nativeInteropDir.resolve("build")
+val localCBridgeDir = rootProject.projectDir.parentFile.resolve("Core/cbridge")
 
-/** Per-target CMake build directory. */
-fun cmakeBuildDirForTarget(targetName: String): java.io.File =
-    nativeBuildRoot.resolve(targetName)
+fun taskSuffix(label: String): String =
+    label.split('-', '_')
+        .filter { it.isNotBlank() }
+        .joinToString("") { token -> token.replaceFirstChar { it.uppercase() } }
 
-/** The Gradle task name used to build the native library for the given target. */
-fun cmakeTaskName(targetName: String): String = "cmakeBuild${targetName.replaceFirstChar { it.uppercase() }}"
+fun cmakeBuildDirFor(label: String) = nativeBuildRoot.resolve(label)
 
-/**
- * Register an Exec task that runs `cmake -S nativeInterop -B nativeInterop/build/<target>`
- * and builds the `mmkv-kmp` target. Returns the TaskProvider so callers can
- * wire `dependsOn`.
- */
-fun registerCMakeTask(targetName: String, extraConfigureArgs: List<String> = emptyList()) =
-    tasks.register<Exec>(cmakeTaskName(targetName)) {
-        group = "build"
-        description = "Build libmmkv-kmp for $targetName via CMake"
-        val buildDir = cmakeBuildDirForTarget(targetName)
-        inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
-        inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
-        outputs.dir(buildDir)
-        doFirst { buildDir.mkdirs() }
-        workingDir = nativeInteropDir
-        val configureCmd = mutableListOf(
-            "cmake",
-            "-S", ".",
-            "-B", buildDir.absolutePath,
-            "-DCMAKE_BUILD_TYPE=Release",
-            "-DMMKV_VERSION=v$mmkvVersion",
-        ).apply { addAll(extraConfigureArgs) }
-        // Split into two shell invocations: configure, then build.
-        commandLine("sh", "-c", buildString {
-            append(configureCmd.joinToString(" ") { "'$it'" })
-            append(" && cmake --build '")
-            append(buildDir.absolutePath)
-            append("' --config Release")
-        })
+fun registerCMakeBuildTask(
+    label: String,
+    cmakeTarget: String? = null,
+    extraConfigureArgs: List<String> = emptyList(),
+) = tasks.register<Exec>("cmakeBuild${taskSuffix(label)}") {
+    group = "build"
+    description = "Build native MMKV artifacts for $label via CMake"
+
+    val buildDir = cmakeBuildDirFor(label)
+    inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
+    inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
+    outputs.dir(buildDir)
+
+    doFirst {
+        buildDir.mkdirs()
+        project.exec {
+            workingDir(nativeInteropDir)
+            commandLine(
+                buildList {
+                    add("cmake")
+                    add("-S")
+                    add(".")
+                    add("-B")
+                    add(buildDir.absolutePath)
+                    add("-DCMAKE_BUILD_TYPE=Release")
+                    add("-DMMKV_VERSION=v$mmkvVersion")
+                    addAll(extraConfigureArgs)
+                }
+            )
+        }
     }
 
+    workingDir = nativeInteropDir
+    commandLine(
+        buildList {
+            add("cmake")
+            add("--build")
+            add(buildDir.absolutePath)
+            add("--config")
+            add("Release")
+            if (cmakeTarget != null) {
+                add("--target")
+                add(cmakeTarget)
+            }
+        }
+    )
+}
+
+fun hostOsId(): String {
+    val osName = System.getProperty("os.name").lowercase()
+    return when {
+        "mac" in osName || "darwin" in osName -> "macos"
+        "win" in osName -> "windows"
+        "linux" in osName -> "linux"
+        else -> "unknown"
+    }
+}
+
+fun hostArchId(): String {
+    val rawArch = System.getProperty("os.arch").lowercase()
+    return when (rawArch) {
+        "x86_64", "amd64" -> "x86_64"
+        "aarch64", "arm64" -> "arm64"
+        else -> rawArch.replace(Regex("[^a-z0-9_]"), "_")
+    }
+}
+
+fun hostDesktopLibraryName(): String = when (hostOsId()) {
+    "macos" -> "libmmkv-kmp.dylib"
+    "linux" -> "libmmkv-kmp.so"
+    "windows" -> "mmkv-kmp.dll"
+    else -> error("Unsupported desktop host: ${System.getProperty("os.name")}")
+}
+
+val hostDesktopId = "${hostOsId()}-${hostArchId()}"
+
+fun publicationArtifactId(publicationName: String): String = when (publicationName) {
+    "kotlinMultiplatform" -> baseArtifactId
+    "androidRelease" -> "$baseArtifactId-android"
+    "desktopNative" -> "$baseArtifactId-desktop-native-$hostDesktopId"
+    else -> "$baseArtifactId-${publicationName.lowercase()}"
+}
+
+fun pomName(publicationName: String): String = when (publicationName) {
+    "kotlinMultiplatform" -> "MMKV Kotlin Multiplatform"
+    "desktopNative" -> "MMKV Kotlin Multiplatform Desktop Native Runtime"
+    else -> "MMKV Kotlin Multiplatform (${publicationName})"
+}
+
+fun MavenPublication.configurePom(publicationName: String) {
+    pom {
+        name.set(pomName(publicationName))
+        description.set((findProperty("POM_DESCRIPTION") as? String) ?: "Kotlin Multiplatform wrapper for MMKV")
+        url.set((findProperty("POM_URL") as? String) ?: "https://github.com/Tencent/MMKV")
+        licenses {
+            license {
+                name.set((findProperty("POM_LICENCE_NAME") as? String) ?: "BSD 3-Clause License")
+                url.set((findProperty("POM_LICENCE_URL") as? String) ?: "https://opensource.org/licenses/BSD-3-Clause")
+            }
+        }
+        developers {
+            developer {
+                id.set((findProperty("POM_DEVELOPER_ID") as? String) ?: "tencent")
+                name.set((findProperty("POM_DEVELOPER_NAME") as? String) ?: "Tencent")
+            }
+        }
+        scm {
+            url.set((findProperty("POM_SCM_URL") as? String) ?: "https://github.com/Tencent/MMKV")
+            connection.set((findProperty("POM_SCM_CONNECTION") as? String) ?: "scm:git:git://github.com/Tencent/MMKV.git")
+            developerConnection.set((findProperty("POM_SCM_DEV_CONNECTION") as? String) ?: "scm:git:ssh://git@github.com/Tencent/MMKV.git")
+        }
+    }
+}
+val hostDesktopBuildLabel = "desktop-${hostDesktopId}"
+val hostDesktopBuildTask = registerCMakeBuildTask(hostDesktopBuildLabel, cmakeTarget = "mmkv-kmp-shared")
+val hostDesktopBuildDir = cmakeBuildDirFor(hostDesktopBuildLabel)
+val hostDesktopLibrary = hostDesktopBuildDir.resolve(hostDesktopLibraryName())
+
+val desktopNativeResourceDir = layout.buildDirectory.dir("generated/desktopNativeResources/$hostDesktopId")
+val syncHostDesktopNative = tasks.register<Sync>("syncHostDesktopNative") {
+    dependsOn(hostDesktopBuildTask)
+    from(hostDesktopLibrary)
+    into(desktopNativeResourceDir.map { it.dir("native/$hostDesktopId") })
+}
+
+val javadocJar = tasks.register<Jar>("javadocJar") {
+    archiveClassifier.set("javadoc")
+}
+
+val desktopNativeJar = tasks.register<Jar>("desktopNativeJar") {
+    dependsOn(hostDesktopBuildTask)
+    archiveClassifier.set("desktop-native-$hostDesktopId")
+    from(hostDesktopLibrary) {
+        into("native/$hostDesktopId")
+    }
+}
+
 kotlin {
-    // ---- Android ----
+    withSourcesJar()
+
     androidTarget {
+        publishLibraryVariants("release")
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
 
-    // ---- JVM desktop ----
     jvm("desktop") {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
 
-    // ---- iOS ----
     iosArm64()
     iosSimulatorArm64()
     iosX64()
 
-    // ---- macOS ----
     macosArm64()
     macosX64()
 
-    // ---- Linux & Windows native desktop ----
     linuxX64()
-    linuxArm64()
     mingwX64()
 
-    // Intermediate source sets:
-    //   darwinMain = iosMain + macosMain (CocoaPods MMKV framework)
-    //   nativeDesktopMain = linuxX64 + linuxArm64 + mingwX64 (C bridge via cinterop)
     applyDefaultHierarchyTemplate {
         common {
             group("darwin") {
@@ -123,57 +221,49 @@ kotlin {
             }
             group("nativeDesktop") {
                 withLinuxX64()
-                withLinuxArm64()
                 withMingwX64()
             }
         }
     }
 
-    // ---- Native desktop cinterop + link wiring ----
-    val nativeDesktopTargets = listOf(linuxX64(), linuxArm64(), mingwX64())
+    val nativeDesktopTargets = listOf(linuxX64(), mingwX64())
     nativeDesktopTargets.forEach { target ->
-        val targetName = target.targetName
-        val cmakeTask = registerCMakeTask(targetName)
-        val buildDir = cmakeBuildDirForTarget(targetName)
+        val label = target.targetName
+        val cmakeTask = registerCMakeBuildTask(label)
+        val buildDir = cmakeBuildDirFor(label)
+        val includeHintFile = buildDir.resolve("cbridge_include_dir.txt")
 
         target.compilations.getByName("main") {
             cinterops {
                 val mmkv by creating {
                     defFile("nativeInterop/cinterop/mmkv.def")
-                    // Header directory is only known after CMake runs (it's
-                    // written to cbridge_include_dir.txt). Resolve it lazily:
-                    // this closure is invoked during task execution, after
-                    // cmakeBuildTask has produced the file.
-                    val includeHintFile = buildDir.resolve("cbridge_include_dir.txt")
-                    compilerOpts(
-                        providers.provider {
-                            if (includeHintFile.exists()) {
-                                listOf("-I${includeHintFile.readText().trim()}")
-                            } else {
-                                emptyList()
-                            }
-                        }.get()
-                    )
+                    when {
+                        localCBridgeDir.exists() -> {
+                            compilerOpts("-I${localCBridgeDir.absolutePath}")
+                            includeDirs(localCBridgeDir)
+                        }
+                        includeHintFile.exists() -> {
+                            val includeDir = includeHintFile.readText().trim()
+                            compilerOpts("-I$includeDir")
+                            includeDirs(includeDir)
+                        }
+                        else -> {
+                            logger.warn("Unable to resolve MMKV cbridge headers for ${target.targetName} during configuration.")
+                        }
+                    }
+                    extraOpts("-libraryPath", buildDir.absolutePath)
                 }
             }
         }
-        target.binaries.all {
-            linkerOpts("-L${buildDir.absolutePath}", "-lmmkv-kmp")
-        }
 
-        // Make every cinterop / link / compile task depend on the CMake build
-        // so `./gradlew :mmkv:build` Just Works.
-        tasks.matching { it.name.contains(targetName, ignoreCase = true) }.configureEach {
-            if (name.startsWith("cinterop") ||
-                name.startsWith("link") ||
-                name.startsWith("compileKotlin")
-            ) {
-                dependsOn(cmakeTask)
-            }
+        tasks.matching { task ->
+            task.name.contains(target.targetName, ignoreCase = true) &&
+                task.name.startsWith("cinterop")
+        }.configureEach {
+            dependsOn(cmakeTask)
         }
     }
 
-    // ---- CocoaPods (Darwin) ----
     cocoapods {
         summary = "MMKV Kotlin Multiplatform wrapper"
         homepage = "https://github.com/Tencent/MMKV"
@@ -186,70 +276,46 @@ kotlin {
         }
     }
 
-    // ---- Source sets ----
     sourceSets {
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
+
         androidMain {
             dependencies {
                 implementation("com.tencent:mmkv:$mmkvVersion")
             }
         }
+
         val desktopMain by getting {
             dependencies {
                 implementation("net.java.dev.jna:jna:5.17.0")
+            }
+            resources.srcDir(desktopNativeResourceDir)
+        }
+
+        val desktopTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
             }
         }
     }
 }
 
-// ---- JVM desktop: build the shared library for the host and bundle it into
-//      the JAR under resources/native/<os-arch>/ so consumers can extract it
-//      at runtime. Runtime extraction itself is out of scope for this pass
-//      (documented in KMP/README.md) — we bundle the binary so it ships, and
-//      consumers still set java.library.path until extraction lands. ----
-val hostTargetName: String = when {
-    OperatingSystem.current().isMacOsX -> "macos"
-    OperatingSystem.current().isLinux -> "linux"
-    OperatingSystem.current().isWindows -> "windows"
-    else -> "unknown"
-}
-val hostCmakeTask = registerCMakeTask("desktop${hostTargetName.replaceFirstChar { it.uppercase() }}Shared")
-
 tasks.named("desktopProcessResources") {
-    dependsOn(hostCmakeTask)
-    doLast {
-        val hostBuildDir = cmakeBuildDirForTarget("desktop${hostTargetName.replaceFirstChar { it.uppercase() }}Shared")
-        val libName = when {
-            OperatingSystem.current().isMacOsX -> "libmmkv-kmp.dylib"
-            OperatingSystem.current().isLinux -> "libmmkv-kmp.so"
-            OperatingSystem.current().isWindows -> "mmkv-kmp.dll"
-            else -> return@doLast
-        }
-        val lib = hostBuildDir.resolve(libName)
-        if (!lib.exists()) {
-            logger.warn("Native shared library $lib not found after CMake build; skipping resource bundling.")
-            return@doLast
-        }
-        val outputDir = layout.buildDirectory
-            .dir("processedResources/desktop/main/native/$hostTargetName-${System.getProperty("os.arch")}")
-            .get().asFile
-        outputDir.mkdirs()
-        lib.copyTo(outputDir.resolve(libName), overwrite = true)
-    }
+    dependsOn(syncHostDesktopNative)
 }
 
-// Point the JVM-desktop test task at the freshly-built host shared library so
-// tests can load it via JNA without the user setting -Djna.library.path.
-tasks.withType<Test>().configureEach {
-    if (name == "desktopTest") {
-        dependsOn(hostCmakeTask)
-        val hostBuildDir = cmakeBuildDirForTarget("desktop${hostTargetName.replaceFirstChar { it.uppercase() }}Shared")
-        systemProperty("jna.library.path", hostBuildDir.absolutePath)
-    }
+tasks.matching { it.name == "desktopTest" }.configureEach {
+    dependsOn(syncHostDesktopNative)
 }
 
 android {
@@ -264,5 +330,47 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        artifactId = publicationArtifactId(name)
+        if (name != "desktopNative") {
+            artifact(javadocJar)
+        }
+        configurePom(name)
+    }
+
+    publications.create<MavenPublication>("desktopNative") {
+        groupId = project.group.toString()
+        version = project.version.toString()
+        artifact(desktopNativeJar)
+        configurePom(name)
+    }
+
+    repositories {
+        val releaseRepo = findProperty("RELEASE_REPOSITORY_URL") as? String
+        val snapshotRepo = findProperty("SNAPSHOT_REPOSITORY_URL") as? String
+        val repoUrl = if (isSnapshot) snapshotRepo else releaseRepo
+        if (!repoUrl.isNullOrBlank()) {
+            maven {
+                name = "sonatype"
+                url = uri(repoUrl)
+                credentials {
+                    username = (findProperty("SONATYPE_NEXUS_USERNAME") ?: findProperty("mavenCentralUsername")) as String?
+                    password = (findProperty("SONATYPE_NEXUS_PASSWORD") ?: findProperty("mavenCentralPassword")) as String?
+                }
+            }
+        }
+    }
+}
+
+signing {
+    val signingKey = (findProperty("SIGNING_KEY") ?: findProperty("signingInMemoryKey")) as String?
+    val signingPassword = (findProperty("SIGNING_PASSWORD") ?: findProperty("signingInMemoryKeyPassword")) as String?
+    if (!signingKey.isNullOrBlank()) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications)
     }
 }
