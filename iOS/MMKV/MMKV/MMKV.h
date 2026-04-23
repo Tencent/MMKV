@@ -477,7 +477,8 @@ class MMKV;
 - (void)checkContentChanged;
 
 + (void)registerHandler:(id<MMKVHandler>)handler __attribute__((deprecated("use +initializeMMKV:logLevel:handler: instead")));
-+ (void)unregiserHandler;
++ (void)unregisterHandler;
++ (void)unregiserHandler __attribute__((deprecated("typo preserved for backward compatibility; use +unregisterHandler instead")));
 
 /// MMKVLogInfo by default
 /// MMKVLogNone to disable all logging

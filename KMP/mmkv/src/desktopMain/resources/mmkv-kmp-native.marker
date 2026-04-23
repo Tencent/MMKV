@@ -1,0 +1,7 @@
+# Host-native shared library bundling marker
+#
+# The :mmkv:cmakeBuildDesktopMacos/Linux/WindowsShared Gradle task writes
+# libmmkv-kmp.{dylib,so,dll} into processedResources/desktop/main/native/<os-arch>/
+# before the JAR is assembled. This file just ensures the resources source
+# directory is non-empty so Gradle's processResources task does not skip with
+# NO-SOURCE, which would prevent our bundling doLast block from running.
