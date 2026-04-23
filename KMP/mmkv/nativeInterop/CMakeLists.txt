@@ -21,8 +21,10 @@
 cmake_minimum_required(VERSION 3.14)
 project(mmkv-kmp)
 
-# Set the version of MMKV to use.
-set(MMKV_VERSION "v2.4.0")
+# Set the version of MMKV to use. Can be overridden by the Gradle cmakeBuild
+# task via -DMMKV_VERSION=v<x.y.z>. Defaults to the in-repo value when run
+# standalone.
+set(MMKV_VERSION "v2.4.0" CACHE STRING "MMKV version to fetch when built outside the monorepo")
 
 # Auto-detect: if running inside the MMKV monorepo, use local source;
 # otherwise fetch from GitHub (e.g. when built as a standalone package).

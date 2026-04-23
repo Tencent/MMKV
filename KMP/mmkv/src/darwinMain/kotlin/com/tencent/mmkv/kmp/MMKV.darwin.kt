@@ -175,6 +175,13 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
 
         actual fun unRegisterHandler() {
             currentHandler = null
+            // The ObjC class method is `+unregiserHandler` (typo preserved for
+            // back-compat with published MMKV pods <= 2.4.0). In iOS MMKV 2.4.1+
+            // the canonically-spelled `+unregisterHandler` is the primary entry
+            // point and `+unregiserHandler` forwards to it. Calling the typo'd
+            // name here keeps the KMP wrapper linkable against every published
+            // MMKV pod version.
+            @Suppress("DEPRECATION")
             DarwinMMKV.unregiserHandler()
         }
     }

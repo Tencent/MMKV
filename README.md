@@ -1,11 +1,11 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
 [![Release Version](https://img.shields.io/badge/release-2.4.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT%20%7C%20KMP-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./README_CN.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows**, **POSIX** and **HarmonyOS NEXT**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows**, **POSIX**, **HarmonyOS NEXT**, and as a **Kotlin Multiplatform** wrapper (see [KMP/README.md](./KMP/README.md)).
 
 # MMKV for Android
 

@@ -1171,7 +1171,7 @@ static NSString *md5(NSString *value) {
     }
 }
 
-+ (void)unregiserHandler {
++ (void)unregisterHandler {
     SCOPED_LOCK(g_lock);
 
     g_isLogRedirecting = false;
@@ -1179,6 +1179,12 @@ static NSString *md5(NSString *value) {
     g_callbackHandler = nil;
 
     mmkv::MMKV::unRegisterHandler();
+}
+
++ (void)unregiserHandler {
+    // Kept for backward compatibility; delegates to the correctly-spelled
+    // +unregisterHandler introduced in v2.4.1.
+    [MMKV unregisterHandler];
 }
 
 + (void)setLogLevel:(MMKVLogLevel)logLevel {
