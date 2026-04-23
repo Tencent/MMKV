@@ -10,6 +10,7 @@ A new `KMP/` module provides Kotlin Multiplatform bindings for MMKV covering And
 * **Feature:** Added `consumer-rules.pro` so R8/ProGuard-minified Android consumers keep MMKV's JNI-reachable methods and the KMP wrapper surface.
 * **Feature:** Added a `commonTest` smoke suite covering encode/decode round-trips, decode defaults, `containsKey`/`removeValueForKey`/`count`/`clearAll`, and encrypted instances.
 * **Feature:** Added Maven publication and signing wiring for the KMP module, plus CI workflows to validate and publish host-specific target artifacts.
+* **Fix:** Migrated the KMP Android target from legacy `com.android.library` integration to the official `com.android.kotlin.multiplatform.library` plugin, which removes the AGP/KGP publication deadlock that blocked Android host tests and Maven publication.
 * **Fix:** The KMP Darwin wrapper now explicitly documents the `+unregiserHandler` / `+unregisterHandler` split. It still calls the back-compatible typo'd name so it links against every published MMKV pod version, but once a consumer builds against MMKV 2.4.1+ the call is transparently forwarded to the correctly-spelled method.
 * **Change:** Centralized the MMKV version in `KMP/gradle.properties` (`MMKV_VERSION`). Previously it was hardcoded in four separate spots in `build.gradle.kts`, `CMakeLists.txt`, and the podspec.
 * **Cleanup:** Removed the empty, unused `jvmMain` source set.

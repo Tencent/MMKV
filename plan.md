@@ -23,7 +23,7 @@ This branch now combines the original KMP polish pass with the later release-rea
 
 ### 3. Added Android consumer ProGuard rules
 
-Created `KMP/mmkv/consumer-rules.pro` mirroring `Android/MMKV/mmkv/proguard-rules.pro` (keeps JNI-reachable native methods and callback entry points) plus a block keeping the `com.tencent.mmkv.kmp.**` wrapper classes. Wired via `consumerProguardFiles("consumer-rules.pro")` in the `android { defaultConfig { ... } }` block of `KMP/mmkv/build.gradle.kts` — consumer apps automatically pick it up at merge time.
+Created `KMP/mmkv/consumer-rules.pro` mirroring `Android/MMKV/mmkv/proguard-rules.pro` (keeps JNI-reachable native methods and callback entry points) plus a block keeping the `com.tencent.mmkv.kmp.**` wrapper classes. It is now published from the Android KMP target via `kotlin { android { optimization.consumerKeepRules { ... } } }`, which is the supported path for `com.android.kotlin.multiplatform.library`.
 
 ### 4. Centralized `MMKV_VERSION`
 
@@ -67,11 +67,11 @@ Published desktop consumers still need the matching host-specific runtime artifa
 New files:
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt` — `expect` bootstrap.
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVSmokeTest.kt` — 5 tests: `primitivesRoundTrip`, `decodeDefaults`, `keyManagement`, `allKeysReflectsContents`, `cryptRoundTrip`.
-- Per-platform `TestEnv` actuals: `androidUnitTest/` (skips — no Context), `desktopTest/` (JVM tmp dir + `MMKV.initialize`), `darwinTest/` (`NSTemporaryDirectory`), `nativeDesktopTest/` (posix `$TMPDIR`).
+- Per-platform `TestEnv` actuals: `androidHostTest/` (skips — no Context), `desktopTest/` (JVM tmp dir + `MMKV.initialize`), `darwinTest/` (`NSTemporaryDirectory`), `nativeDesktopTest/` (posix `$TMPDIR`).
 
 The desktop boolean bridge was fixed by mapping byte-sized bool results correctly in `MMKV.desktop.kt`, so the common smoke suite now runs without the old desktop boolean gate.
 
-**Verified passing:** `desktopTest`, `macosX64Test`, `testDebugUnitTest`. Linux CI also compiles the `linuxArm64` main and test source sets.
+**Verified passing:** `desktopTest`, `macosX64Test`, `testAndroidHostTest`. Linux CI also compiles the `linuxArm64` main and test source sets.
 
 ### 9. Publishing and documentation
 
@@ -100,7 +100,7 @@ The desktop boolean bridge was fixed by mapping byte-sized bool results correctl
 - `KMP/mmkv/consumer-rules.pro`
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVSmokeTest.kt`
-- `KMP/mmkv/src/androidUnitTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
+- `KMP/mmkv/src/androidHostTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
 - `KMP/mmkv/src/desktopTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
 - `KMP/mmkv/src/darwinTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
 - `KMP/mmkv/src/nativeDesktopTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
@@ -134,7 +134,7 @@ cd KMP
 # Host-executable test suites
 ./gradlew :mmkv:cleanDesktopTest :mmkv:desktopTest \
           :mmkv:cleanMacosX64Test :mmkv:macosX64Test \
-          :mmkv:testDebugUnitTest
+          :mmkv:testAndroidHostTest
 # → BUILD SUCCESSFUL (desktop + macOS X64 run, Android trivially skips)
 
 # Desktop JAR has the native shared library bundled
