@@ -211,6 +211,7 @@ kotlin {
     macosX64()
 
     linuxX64()
+    linuxArm64()
     mingwX64()
 
     applyDefaultHierarchyTemplate {
@@ -221,12 +222,13 @@ kotlin {
             }
             group("nativeDesktop") {
                 withLinuxX64()
+                withLinuxArm64()
                 withMingwX64()
             }
         }
     }
 
-    val nativeDesktopTargets = listOf(linuxX64(), mingwX64())
+    val nativeDesktopTargets = listOf(linuxX64(), linuxArm64(), mingwX64())
     nativeDesktopTargets.forEach { target ->
         val label = target.targetName
         val cmakeTask = registerCMakeBuildTask(label)
