@@ -1,2 +1,3 @@
 headers = MMKVBridge.h
 headerFilter = MMKVBridge.h
+staticLibraries = libmmkv-kmp.a

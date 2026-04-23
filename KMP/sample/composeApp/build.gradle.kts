@@ -67,7 +67,6 @@ compose.desktop {
             packageName = "MMKV KMP Sample"
             packageVersion = "1.0.0"
         }
-        jvmArgs("-Djna.library.path=${project(":mmkv").file("nativeInterop/build").absolutePath}")
     }
 }
 

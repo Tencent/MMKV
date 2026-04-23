@@ -39,15 +39,9 @@ internal expect object MMKVTestEnv {
     fun uniqueID(prefix: String): String
 
     /**
-     * True on platforms whose native-bridge layer has a known boolean
-     * round-trip issue (currently JNA desktop: `Boolean` return values are
-     * marshaled as 4-byte int, and the upper bytes are indeterminate after
-     * a C function returning a 1-byte `bool`). Tests that exercise
-     * `decodeBool` should use [bypassBoolRoundTrip] to skip the boolean
-     * assertion on affected platforms. Removing this once the desktop JNA
-     * bindings use a proper BYTE-sized boolean mapping will let every
-     * target run the full assertion.
+     * True on platforms whose native bridge still has a known boolean
+     * round-trip issue. Tests use this to gate the boolean assertions until
+     * the platform binding is fixed.
      */
     val hasKnownBoolRoundTripIssue: Boolean
 }
-

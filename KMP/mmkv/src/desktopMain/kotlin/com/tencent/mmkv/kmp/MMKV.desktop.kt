@@ -23,8 +23,37 @@ package com.tencent.mmkv.kmp
 import com.sun.jna.*
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.LongByReference
+import java.io.File
 
 // region JNA interface mapping the C bridge
+
+private object DesktopNativeLoader {
+    private val lock = Any()
+
+    @Volatile
+    private var loadedPath: String? = null
+
+    fun libraryLookupName(): String {
+        loadedPath?.let { return it }
+        synchronized(lock) {
+            loadedPath?.let { return it }
+
+            val osId = currentDesktopOsId()
+            val archId = currentDesktopArchId()
+            val libraryName = currentDesktopLibraryName()
+            val resourcePath = "/native/$osId-$archId/$libraryName"
+            val extracted = MMKV::class.java.getResourceAsStream(resourcePath)?.use { input ->
+                val file = File.createTempFile("mmkv-kmp-", "-$libraryName")
+                file.deleteOnExit()
+                file.outputStream().use { output -> input.copyTo(output) }
+                file.absolutePath
+            }
+
+            loadedPath = extracted ?: "mmkv-kmp"
+            return loadedPath!!
+        }
+    }
+}
 
 @Suppress("FunctionName")
 internal interface MMKVLib : Library {
@@ -36,22 +65,22 @@ internal interface MMKVLib : Library {
     fun mmkv_mmap_id(handle: Pointer): String?
     fun mmkv_close(handle: Pointer)
 
-    fun mmkv_encode_bool(handle: Pointer, key: String, value: Boolean): Boolean
-    fun mmkv_encode_bool_v2(handle: Pointer, key: String, value: Boolean, expireDuration: Int): Boolean
-    fun mmkv_encode_int32(handle: Pointer, key: String, value: Int): Boolean
-    fun mmkv_encode_int32_v2(handle: Pointer, key: String, value: Int, expireDuration: Int): Boolean
-    fun mmkv_encode_int64(handle: Pointer, key: String, value: Long): Boolean
-    fun mmkv_encode_int64_v2(handle: Pointer, key: String, value: Long, expireDuration: Int): Boolean
-    fun mmkv_encode_float(handle: Pointer, key: String, value: Float): Boolean
-    fun mmkv_encode_float_v2(handle: Pointer, key: String, value: Float, expireDuration: Int): Boolean
-    fun mmkv_encode_double(handle: Pointer, key: String, value: Double): Boolean
-    fun mmkv_encode_double_v2(handle: Pointer, key: String, value: Double, expireDuration: Int): Boolean
-    fun mmkv_encode_string(handle: Pointer, key: String, value: String?): Boolean
-    fun mmkv_encode_string_v2(handle: Pointer, key: String, value: String?, expireDuration: Int): Boolean
-    fun mmkv_encode_bytes(handle: Pointer, key: String, value: Pointer?, length: Long): Boolean
-    fun mmkv_encode_bytes_v2(handle: Pointer, key: String, value: Pointer?, length: Long, expireDuration: Int): Boolean
+    fun mmkv_encode_bool(handle: Pointer, key: String, value: Byte): Byte
+    fun mmkv_encode_bool_v2(handle: Pointer, key: String, value: Byte, expireDuration: Int): Byte
+    fun mmkv_encode_int32(handle: Pointer, key: String, value: Int): Byte
+    fun mmkv_encode_int32_v2(handle: Pointer, key: String, value: Int, expireDuration: Int): Byte
+    fun mmkv_encode_int64(handle: Pointer, key: String, value: Long): Byte
+    fun mmkv_encode_int64_v2(handle: Pointer, key: String, value: Long, expireDuration: Int): Byte
+    fun mmkv_encode_float(handle: Pointer, key: String, value: Float): Byte
+    fun mmkv_encode_float_v2(handle: Pointer, key: String, value: Float, expireDuration: Int): Byte
+    fun mmkv_encode_double(handle: Pointer, key: String, value: Double): Byte
+    fun mmkv_encode_double_v2(handle: Pointer, key: String, value: Double, expireDuration: Int): Byte
+    fun mmkv_encode_string(handle: Pointer, key: String, value: String?): Byte
+    fun mmkv_encode_string_v2(handle: Pointer, key: String, value: String?, expireDuration: Int): Byte
+    fun mmkv_encode_bytes(handle: Pointer, key: String, value: Pointer?, length: Long): Byte
+    fun mmkv_encode_bytes_v2(handle: Pointer, key: String, value: Pointer?, length: Long, expireDuration: Int): Byte
 
-    fun mmkv_decode_bool(handle: Pointer, key: String, defaultValue: Boolean): Boolean
+    fun mmkv_decode_bool(handle: Pointer, key: String, defaultValue: Byte): Byte
     fun mmkv_decode_int32(handle: Pointer, key: String, defaultValue: Int): Int
     fun mmkv_decode_int64(handle: Pointer, key: String, defaultValue: Long): Long
     fun mmkv_decode_float(handle: Pointer, key: String, defaultValue: Float): Float
@@ -59,12 +88,12 @@ internal interface MMKVLib : Library {
     fun mmkv_decode_string(handle: Pointer, key: String): Pointer?
     fun mmkv_decode_bytes(handle: Pointer, key: String, lengthPtr: LongByReference): Pointer?
 
-    fun mmkv_rekey(handle: Pointer, cryptKey: String?, aes256: Boolean): Boolean
+    fun mmkv_rekey(handle: Pointer, cryptKey: String?, aes256: Boolean): Byte
     fun mmkv_crypt_key(handle: Pointer, lengthPtr: IntByReference): Pointer?
     fun mmkv_check_reset_crypt_key(handle: Pointer, cryptKey: String?, aes256: Boolean)
 
     fun mmkv_all_keys(handle: Pointer, lengthPtr: LongByReference, filterExpire: Boolean): Pointer?
-    fun mmkv_contains_key(handle: Pointer, key: String): Boolean
+    fun mmkv_contains_key(handle: Pointer, key: String): Byte
     fun mmkv_count(handle: Pointer, filterExpire: Boolean): Long
     fun mmkv_total_size(handle: Pointer): Long
     fun mmkv_actual_size(handle: Pointer): Long
@@ -78,35 +107,35 @@ internal interface MMKVLib : Library {
     fun mmkv_clear_memory_cache(handle: Pointer, keepSpace: Boolean)
     fun mmkv_trim(handle: Pointer)
 
-    fun mmkv_backup_one(mmapID: String, dstDir: String, srcDir: String?): Boolean
-    fun mmkv_restore_one(mmapID: String, srcDir: String, dstDir: String?): Boolean
+    fun mmkv_backup_one(mmapID: String, dstDir: String, srcDir: String?): Byte
+    fun mmkv_restore_one(mmapID: String, srcDir: String, dstDir: String?): Byte
     fun mmkv_backup_all(dstDir: String, srcDir: String?): Long
     fun mmkv_restore_all(srcDir: String, dstDir: String?): Long
 
-    fun mmkv_enable_auto_expire(handle: Pointer, expireDuration: Int): Boolean
-    fun mmkv_disable_auto_expire(handle: Pointer): Boolean
-    fun mmkv_enable_compare_before_set(handle: Pointer): Boolean
-    fun mmkv_disable_compare_before_set(handle: Pointer): Boolean
-    fun mmkv_is_expiration_enabled(handle: Pointer): Boolean
-    fun mmkv_is_encryption_enabled(handle: Pointer): Boolean
-    fun mmkv_is_compare_before_set_enabled(handle: Pointer): Boolean
+    fun mmkv_enable_auto_expire(handle: Pointer, expireDuration: Int): Byte
+    fun mmkv_disable_auto_expire(handle: Pointer): Byte
+    fun mmkv_enable_compare_before_set(handle: Pointer): Byte
+    fun mmkv_disable_compare_before_set(handle: Pointer): Byte
+    fun mmkv_is_expiration_enabled(handle: Pointer): Byte
+    fun mmkv_is_encryption_enabled(handle: Pointer): Byte
+    fun mmkv_is_compare_before_set_enabled(handle: Pointer): Byte
 
     fun mmkv_get_value_size(handle: Pointer, key: String, actualSize: Boolean): Long
     fun mmkv_write_value_to_buffer(handle: Pointer, key: String, ptr: Pointer, size: Int): Int
 
     fun mmkv_lock(handle: Pointer)
     fun mmkv_unlock(handle: Pointer)
-    fun mmkv_try_lock(handle: Pointer): Boolean
+    fun mmkv_try_lock(handle: Pointer): Byte
 
     fun mmkv_page_size(): Int
     fun mmkv_version(): String?
     fun mmkv_root_dir(): String?
 
-    fun mmkv_remove_storage(mmapID: String, rootPath: String?): Boolean
-    fun mmkv_check_exist(mmapID: String, rootPath: String?): Boolean
-    fun mmkv_is_multi_process(handle: Pointer): Boolean
-    fun mmkv_is_read_only(handle: Pointer): Boolean
-    fun mmkv_is_file_valid(mmapID: String, rootPath: String?): Boolean
+    fun mmkv_remove_storage(mmapID: String, rootPath: String?): Byte
+    fun mmkv_check_exist(mmapID: String, rootPath: String?): Byte
+    fun mmkv_is_multi_process(handle: Pointer): Byte
+    fun mmkv_is_read_only(handle: Pointer): Byte
+    fun mmkv_is_file_valid(mmapID: String, rootPath: String?): Byte
     fun mmkv_check_content_changed(handle: Pointer)
 
     fun mmkv_free(ptr: Pointer)
@@ -116,14 +145,14 @@ internal interface MMKVLib : Library {
     fun mmkv_namespace_free(ns: Pointer)
     fun mmkv_namespace_root_dir(ns: Pointer): String?
     fun mmkv_namespace_mmkv_with_id(ns: Pointer, mmapID: String, config: JnaMMKVConfig.ByValue): Pointer?
-    fun mmkv_namespace_backup_one(ns: Pointer, mmapID: String, dstDir: String): Boolean
-    fun mmkv_namespace_restore_one(ns: Pointer, mmapID: String, srcDir: String): Boolean
-    fun mmkv_namespace_is_file_valid(ns: Pointer, mmapID: String): Boolean
-    fun mmkv_namespace_remove_storage(ns: Pointer, mmapID: String): Boolean
-    fun mmkv_namespace_check_exist(ns: Pointer, mmapID: String): Boolean
+    fun mmkv_namespace_backup_one(ns: Pointer, mmapID: String, dstDir: String): Byte
+    fun mmkv_namespace_restore_one(ns: Pointer, mmapID: String, srcDir: String): Byte
+    fun mmkv_namespace_is_file_valid(ns: Pointer, mmapID: String): Byte
+    fun mmkv_namespace_remove_storage(ns: Pointer, mmapID: String): Byte
+    fun mmkv_namespace_check_exist(ns: Pointer, mmapID: String): Byte
 
     companion object {
-        val INSTANCE: MMKVLib = Native.load("mmkv-kmp", MMKVLib::class.java)
+        val INSTANCE: MMKVLib = Native.load(DesktopNativeLoader.libraryLookupName(), MMKVLib::class.java)
     }
 }
 
@@ -200,20 +229,20 @@ actual class MMKV internal constructor(private val handle: Pointer) {
         actual fun rootDir(): String = lib.mmkv_root_dir() ?: ""
 
         actual fun backupOneToDirectory(mmapID: String, dstDir: String, rootPath: String?): Boolean =
-            lib.mmkv_backup_one(mmapID, dstDir, rootPath)
+            lib.mmkv_backup_one(mmapID, dstDir, rootPath).asBoolean()
 
         actual fun restoreOneFromDirectory(mmapID: String, srcDir: String, rootPath: String?): Boolean =
-            lib.mmkv_restore_one(mmapID, srcDir, rootPath)
+            lib.mmkv_restore_one(mmapID, srcDir, rootPath).asBoolean()
 
         actual fun backupAllToDirectory(dstDir: String): Long = lib.mmkv_backup_all(dstDir, null)
 
         actual fun restoreAllFromDirectory(srcDir: String): Long = lib.mmkv_restore_all(srcDir, null)
 
-        actual fun isFileValid(mmapID: String, rootPath: String?): Boolean = lib.mmkv_is_file_valid(mmapID, rootPath)
+        actual fun isFileValid(mmapID: String, rootPath: String?): Boolean = lib.mmkv_is_file_valid(mmapID, rootPath).asBoolean()
 
-        actual fun removeStorage(mmapID: String, rootPath: String?): Boolean = lib.mmkv_remove_storage(mmapID, rootPath)
+        actual fun removeStorage(mmapID: String, rootPath: String?): Boolean = lib.mmkv_remove_storage(mmapID, rootPath).asBoolean()
 
-        actual fun checkExist(mmapID: String, rootPath: String?): Boolean = lib.mmkv_check_exist(mmapID, rootPath)
+        actual fun checkExist(mmapID: String, rootPath: String?): Boolean = lib.mmkv_check_exist(mmapID, rootPath).asBoolean()
 
         actual fun registerHandler(handler: MMKVHandler) {
             // JNA callback registration not implemented yet.
@@ -227,8 +256,8 @@ actual class MMKV internal constructor(private val handle: Pointer) {
     // region Properties
 
     actual val mmapID: String get() = lib.mmkv_mmap_id(handle) ?: ""
-    actual val isMultiProcess: Boolean get() = lib.mmkv_is_multi_process(handle)
-    actual val isReadOnly: Boolean get() = lib.mmkv_is_read_only(handle)
+    actual val isMultiProcess: Boolean get() = lib.mmkv_is_multi_process(handle).asBoolean()
+    actual val isReadOnly: Boolean get() = lib.mmkv_is_read_only(handle).asBoolean()
     actual val totalSize: Long get() = lib.mmkv_total_size(handle)
     actual val actualSize: Long get() = lib.mmkv_actual_size(handle)
     actual val count: Long get() = lib.mmkv_count(handle, false)
@@ -255,38 +284,38 @@ actual class MMKV internal constructor(private val handle: Pointer) {
 
     // region Encode
 
-    actual fun encodeBool(key: String, value: Boolean): Boolean = lib.mmkv_encode_bool(handle, key, value)
-    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = lib.mmkv_encode_bool_v2(handle, key, value, expireDuration.toInt())
-    actual fun encodeInt(key: String, value: Int): Boolean = lib.mmkv_encode_int32(handle, key, value)
-    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = lib.mmkv_encode_int32_v2(handle, key, value, expireDuration.toInt())
-    actual fun encodeLong(key: String, value: Long): Boolean = lib.mmkv_encode_int64(handle, key, value)
-    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = lib.mmkv_encode_int64_v2(handle, key, value, expireDuration.toInt())
-    actual fun encodeFloat(key: String, value: Float): Boolean = lib.mmkv_encode_float(handle, key, value)
-    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = lib.mmkv_encode_float_v2(handle, key, value, expireDuration.toInt())
-    actual fun encodeDouble(key: String, value: Double): Boolean = lib.mmkv_encode_double(handle, key, value)
-    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = lib.mmkv_encode_double_v2(handle, key, value, expireDuration.toInt())
-    actual fun encodeString(key: String, value: String): Boolean = lib.mmkv_encode_string(handle, key, value)
-    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = lib.mmkv_encode_string_v2(handle, key, value, expireDuration.toInt())
+    actual fun encodeBool(key: String, value: Boolean): Boolean = lib.mmkv_encode_bool(handle, key, value.toNativeByte()).asBoolean()
+    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = lib.mmkv_encode_bool_v2(handle, key, value.toNativeByte(), expireDuration.toInt()).asBoolean()
+    actual fun encodeInt(key: String, value: Int): Boolean = lib.mmkv_encode_int32(handle, key, value).asBoolean()
+    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = lib.mmkv_encode_int32_v2(handle, key, value, expireDuration.toInt()).asBoolean()
+    actual fun encodeLong(key: String, value: Long): Boolean = lib.mmkv_encode_int64(handle, key, value).asBoolean()
+    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = lib.mmkv_encode_int64_v2(handle, key, value, expireDuration.toInt()).asBoolean()
+    actual fun encodeFloat(key: String, value: Float): Boolean = lib.mmkv_encode_float(handle, key, value).asBoolean()
+    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = lib.mmkv_encode_float_v2(handle, key, value, expireDuration.toInt()).asBoolean()
+    actual fun encodeDouble(key: String, value: Double): Boolean = lib.mmkv_encode_double(handle, key, value).asBoolean()
+    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = lib.mmkv_encode_double_v2(handle, key, value, expireDuration.toInt()).asBoolean()
+    actual fun encodeString(key: String, value: String): Boolean = lib.mmkv_encode_string(handle, key, value).asBoolean()
+    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = lib.mmkv_encode_string_v2(handle, key, value, expireDuration.toInt()).asBoolean()
 
     actual fun encodeBytes(key: String, value: ByteArray): Boolean {
-        if (value.isEmpty()) return lib.mmkv_encode_bytes(handle, key, null, 0)
+        if (value.isEmpty()) return lib.mmkv_encode_bytes(handle, key, null, 0).asBoolean()
         val mem = Memory(value.size.toLong())
         mem.write(0, value, 0, value.size)
-        return lib.mmkv_encode_bytes(handle, key, mem, value.size.toLong())
+        return lib.mmkv_encode_bytes(handle, key, mem, value.size.toLong()).asBoolean()
     }
 
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean {
-        if (value.isEmpty()) return lib.mmkv_encode_bytes_v2(handle, key, null, 0, expireDuration.toInt())
+        if (value.isEmpty()) return lib.mmkv_encode_bytes_v2(handle, key, null, 0, expireDuration.toInt()).asBoolean()
         val mem = Memory(value.size.toLong())
         mem.write(0, value, 0, value.size)
-        return lib.mmkv_encode_bytes_v2(handle, key, mem, value.size.toLong(), expireDuration.toInt())
+        return lib.mmkv_encode_bytes_v2(handle, key, mem, value.size.toLong(), expireDuration.toInt()).asBoolean()
     }
 
     // endregion
 
     // region Decode
 
-    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = lib.mmkv_decode_bool(handle, key, defaultValue)
+    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = lib.mmkv_decode_bool(handle, key, defaultValue.toNativeByte()).asBoolean()
     actual fun decodeInt(key: String, defaultValue: Int): Int = lib.mmkv_decode_int32(handle, key, defaultValue)
     actual fun decodeLong(key: String, defaultValue: Long): Long = lib.mmkv_decode_int64(handle, key, defaultValue)
     actual fun decodeFloat(key: String, defaultValue: Float): Float = lib.mmkv_decode_float(handle, key, defaultValue)
@@ -313,7 +342,7 @@ actual class MMKV internal constructor(private val handle: Pointer) {
 
     // region Key management
 
-    actual fun containsKey(key: String): Boolean = lib.mmkv_contains_key(handle, key)
+    actual fun containsKey(key: String): Boolean = lib.mmkv_contains_key(handle, key).asBoolean()
     actual fun countNonExpiredKeys(): Long = lib.mmkv_count(handle, true)
 
     actual fun allNonExpiredKeys(): List<String> {
@@ -336,7 +365,7 @@ actual class MMKV internal constructor(private val handle: Pointer) {
 
     // region Encryption
 
-    actual fun reKey(newKey: String?, aes256: Boolean): Boolean = lib.mmkv_rekey(handle, newKey, aes256)
+    actual fun reKey(newKey: String?, aes256: Boolean): Boolean = lib.mmkv_rekey(handle, newKey, aes256).asBoolean()
     actual fun checkReSetCryptKey(cryptKey: String?, aes256: Boolean) = lib.mmkv_check_reset_crypt_key(handle, cryptKey, aes256)
 
     // endregion
@@ -349,10 +378,10 @@ actual class MMKV internal constructor(private val handle: Pointer) {
     actual fun close() = lib.mmkv_close(handle)
     actual fun clearMemoryCache() = lib.mmkv_clear_memory_cache(handle, false)
     actual fun importFrom(source: MMKV): Long = lib.mmkv_import_from(handle, source.handle)
-    actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = lib.mmkv_enable_auto_expire(handle, expiredInSeconds.toInt())
-    actual fun disableAutoKeyExpire(): Boolean = lib.mmkv_disable_auto_expire(handle)
-    actual fun enableCompareBeforeSet(): Boolean = lib.mmkv_enable_compare_before_set(handle)
-    actual fun disableCompareBeforeSet(): Boolean = lib.mmkv_disable_compare_before_set(handle)
+    actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = lib.mmkv_enable_auto_expire(handle, expiredInSeconds.toInt()).asBoolean()
+    actual fun disableAutoKeyExpire(): Boolean = lib.mmkv_disable_auto_expire(handle).asBoolean()
+    actual fun enableCompareBeforeSet(): Boolean = lib.mmkv_enable_compare_before_set(handle).asBoolean()
+    actual fun disableCompareBeforeSet(): Boolean = lib.mmkv_disable_compare_before_set(handle).asBoolean()
     actual fun checkContentChanged() = lib.mmkv_check_content_changed(handle)
 
     actual fun getValueSize(key: String, actualSize: Boolean): Long = lib.mmkv_get_value_size(handle, key, actualSize)
@@ -369,11 +398,11 @@ actual class MMKV internal constructor(private val handle: Pointer) {
 
     actual fun lock() = lib.mmkv_lock(handle)
     actual fun unlock() = lib.mmkv_unlock(handle)
-    actual fun tryLock(): Boolean = lib.mmkv_try_lock(handle)
+    actual fun tryLock(): Boolean = lib.mmkv_try_lock(handle).asBoolean()
 
-    actual val isExpirationEnabled: Boolean get() = lib.mmkv_is_expiration_enabled(handle)
-    actual val isEncryptionEnabled: Boolean get() = lib.mmkv_is_encryption_enabled(handle)
-    actual val isCompareBeforeSetEnabled: Boolean get() = lib.mmkv_is_compare_before_set_enabled(handle)
+    actual val isExpirationEnabled: Boolean get() = lib.mmkv_is_expiration_enabled(handle).asBoolean()
+    actual val isEncryptionEnabled: Boolean get() = lib.mmkv_is_encryption_enabled(handle).asBoolean()
+    actual val isCompareBeforeSetEnabled: Boolean get() = lib.mmkv_is_compare_before_set_enabled(handle).asBoolean()
 
     // endregion
 }
@@ -386,6 +415,36 @@ private fun MMKVLogLevel.toNativeLevel(): Int = when (this) {
     MMKVLogLevel.Warning -> 2
     MMKVLogLevel.Error -> 3
     MMKVLogLevel.None -> 4
+}
+
+internal fun Byte.asBoolean(): Boolean = toInt() != 0
+
+private fun Boolean.toNativeByte(): Byte = if (this) 1 else 0
+
+private fun currentDesktopOsId(): String {
+    val osName = System.getProperty("os.name").lowercase()
+    return when {
+        "mac" in osName || "darwin" in osName -> "macos"
+        "win" in osName -> "windows"
+        "linux" in osName -> "linux"
+        else -> error("Unsupported desktop OS: ${System.getProperty("os.name")}")
+    }
+}
+
+private fun currentDesktopArchId(): String {
+    val rawArch = System.getProperty("os.arch").lowercase()
+    return when (rawArch) {
+        "x86_64", "amd64" -> "x86_64"
+        "aarch64", "arm64" -> "arm64"
+        else -> rawArch.replace(Regex("[^a-z0-9_]"), "_")
+    }
+}
+
+private fun currentDesktopLibraryName(): String = when (currentDesktopOsId()) {
+    "macos" -> "libmmkv-kmp.dylib"
+    "linux" -> "libmmkv-kmp.so"
+    "windows" -> "mmkv-kmp.dll"
+    else -> error("Unsupported desktop OS: ${System.getProperty("os.name")}")
 }
 
 private fun buildDefaultConfig(): JnaMMKVConfig.ByValue = JnaMMKVConfig.ByValue()

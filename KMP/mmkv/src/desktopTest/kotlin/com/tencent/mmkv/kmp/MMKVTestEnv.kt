@@ -35,8 +35,5 @@ internal actual object MMKVTestEnv {
 
     actual fun uniqueID(prefix: String): String = "$prefix-${Random.nextLong()}"
 
-    // JNA Boolean return marshaling reads 4 bytes, but the C bridge returns
-    // 1-byte `bool`; upper bytes are ABI-indeterminate. Fix tracked for a
-    // follow-up pass (needs a custom TypeMapper or BYTE-sized wrapper).
-    actual val hasKnownBoolRoundTripIssue: Boolean = true
+    actual val hasKnownBoolRoundTripIssue: Boolean = false
 }

@@ -33,19 +33,19 @@ actual class MMKVNameSpace internal constructor(private val handle: Pointer) {
         MMKV(lib.mmkv_namespace_mmkv_with_id(handle, mmapID, config.toJna())!!)
 
     actual fun backupOneToDirectory(mmapID: String, dstDir: String): Boolean =
-        lib.mmkv_namespace_backup_one(handle, mmapID, dstDir)
+        lib.mmkv_namespace_backup_one(handle, mmapID, dstDir).asBoolean()
 
     actual fun restoreOneFromDirectory(mmapID: String, srcDir: String): Boolean =
-        lib.mmkv_namespace_restore_one(handle, mmapID, srcDir)
+        lib.mmkv_namespace_restore_one(handle, mmapID, srcDir).asBoolean()
 
     actual fun isFileValid(mmapID: String): Boolean =
-        lib.mmkv_namespace_is_file_valid(handle, mmapID)
+        lib.mmkv_namespace_is_file_valid(handle, mmapID).asBoolean()
 
     actual fun removeStorage(mmapID: String): Boolean =
-        lib.mmkv_namespace_remove_storage(handle, mmapID)
+        lib.mmkv_namespace_remove_storage(handle, mmapID).asBoolean()
 
     actual fun checkExist(mmapID: String): Boolean =
-        lib.mmkv_namespace_check_exist(handle, mmapID)
+        lib.mmkv_namespace_check_exist(handle, mmapID).asBoolean()
 
     actual fun close() = lib.mmkv_namespace_free(handle)
 

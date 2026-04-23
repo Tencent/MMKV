@@ -1,15 +1,15 @@
 # MMKV Change Log
 ## Unreleased
 
-### Kotlin Multiplatform (preview)
-A new `KMP/` module provides Kotlin Multiplatform bindings for MMKV covering Android, iOS (arm64 / simulator arm64 / x64), macOS (arm64 / x64), Linux (x64 / arm64), Windows (mingwX64), and JVM desktop. See [KMP/README.md](./KMP/README.md).
+### Kotlin Multiplatform
+A new `KMP/` module provides Kotlin Multiplatform bindings for MMKV covering Android, iOS (arm64 / simulator arm64 / x64), macOS (arm64 / x64), Linux x64, Windows (mingwX64), and JVM desktop. See [KMP/README.md](./KMP/README.md).
 
-* **Feature:** Added `linuxArm64` target to the KMP native desktop group — common for CI containers and ARM servers.
 * **Feature:** Gradle now drives CMake automatically for native desktop targets. `./gradlew :mmkv:build` no longer requires a manual `cmake` pre-step.
-* **Feature:** Desktop JVM target bundles the host-built `libmmkv-kmp` shared library into the JAR under `resources/native/<os>-<arch>/`. Runtime auto-extraction to `java.library.path` is not yet wired up — consumers still set the library path manually; this will land in a later release.
+* **Feature:** Desktop JVM loads `libmmkv-kmp` from packaged classpath resources instead of requiring a manual `jna.library.path`.
+* **Feature:** Added host-specific `mmkv-kmp-desktop-native-<os>-<arch>` runtime artifacts for published JVM desktop builds.
 * **Feature:** Added `consumer-rules.pro` so R8/ProGuard-minified Android consumers keep MMKV's JNI-reachable methods and the KMP wrapper surface.
 * **Feature:** Added a `commonTest` smoke suite covering encode/decode round-trips, decode defaults, `containsKey`/`removeValueForKey`/`count`/`clearAll`, and encrypted instances.
-* **Known issue:** JVM desktop `decodeBool` / `containsKey` return indeterminate results due to a JNA `Boolean` marshaling gap (4-byte int vs. 1-byte C `bool`). commonTest gates boolean assertions behind `MMKVTestEnv.hasKnownBoolRoundTripIssue` until this is fixed.
+* **Feature:** Added Maven publication and signing wiring for the KMP module, plus CI workflows to validate and publish host-specific target artifacts.
 * **Fix:** The KMP Darwin wrapper now explicitly documents the `+unregiserHandler` / `+unregisterHandler` split. It still calls the back-compatible typo'd name so it links against every published MMKV pod version, but once a consumer builds against MMKV 2.4.1+ the call is transparently forwarded to the correctly-spelled method.
 * **Change:** Centralized the MMKV version in `KMP/gradle.properties` (`MMKV_VERSION`). Previously it was hardcoded in four separate spots in `build.gradle.kts`, `CMakeLists.txt`, and the podspec.
 * **Cleanup:** Removed the empty, unused `jvmMain` source set.
