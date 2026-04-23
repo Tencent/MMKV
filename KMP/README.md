@@ -76,16 +76,17 @@ The desktop target extracts `libmmkv-kmp` from classpath resources automatically
 
 Linux and Windows Kotlin/Native targets bundle `libmmkv-kmp.a` into the generated cinterop klib. Gradle builds that archive through the `cmakeBuild<target>` tasks before cinterop runs.
 
-## Release workflow
+## Release notes
 
-The KMP release is split across host jobs:
+Publishing is wired in Gradle, but the repository does not currently carry the GitHub Actions workflows for CI or release publication.
 
-- Linux publishes metadata, Android, JVM desktop, and Linux native artifacts.
-- macOS publishes iOS and macOS artifacts.
-- Windows publishes the Mingw artifact.
-- Each desktop host can also publish its host-specific `mmkv-kmp-desktop-native-<os>-<arch>` runtime JAR.
+Kotlin Multiplatform publication is still host-dependent:
+- Linux should publish metadata, Android, JVM desktop, and Linux native artifacts.
+- macOS should publish iOS and macOS artifacts.
+- Windows should publish the Mingw artifact.
+- Each desktop host should publish its host-specific `mmkv-kmp-desktop-native-<os>-<arch>` runtime JAR.
 
-That split is necessary because Kotlin Multiplatform target publications are host-dependent. `linuxArm64` is wired in the project and compiled in CI, but publishing it still needs either an ARM64 Linux publisher or an explicit cross-toolchain setup.
+`linuxArm64` is wired in the project and compiles locally, but publishing it still needs either an ARM64 Linux publisher or an explicit cross-toolchain setup.
 
 ## Known limitations
 
