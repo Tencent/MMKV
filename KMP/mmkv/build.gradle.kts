@@ -142,6 +142,23 @@ fun hostDesktopLibraryName(): String = when (hostOsId()) {
 }
 
 val hostDesktopId = "${hostOsId()}-${hostArchId()}"
+val hostPublishableNativeDesktopPublications = when (hostOsId()) {
+    "linux" -> when (hostArchId()) {
+        "x86_64" -> setOf("LinuxX64")
+        "arm64" -> setOf("LinuxArm64")
+        else -> emptySet()
+    }
+    "windows" -> when (hostArchId()) {
+        "x86_64" -> setOf("MingwX64")
+        else -> emptySet()
+    }
+    else -> emptySet()
+}
+val nativeDesktopPublications = setOf("LinuxX64", "LinuxArm64", "MingwX64")
+val disabledNativeDesktopPublications = nativeDesktopPublications - hostPublishableNativeDesktopPublications
+val disabledNativeDesktopTargetNames = disabledNativeDesktopPublications.map {
+    it.replaceFirstChar { char -> char.lowercase() }
+}
 
 fun publicationArtifactId(publicationName: String): String = when (publicationName) {
     "kotlinMultiplatform" -> baseArtifactId
@@ -212,6 +229,7 @@ kotlin {
         compileSdk = 35
         minSdk = 23
         withHostTest {}
+        withDeviceTest {}
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
@@ -335,6 +353,14 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
+
+        val androidDeviceTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation("androidx.test:core:1.7.0")
+                implementation("androidx.test:runner:1.7.0")
+            }
+        }
     }
 }
 
@@ -344,6 +370,12 @@ tasks.named("desktopProcessResources") {
 
 tasks.matching { it.name == "desktopTest" }.configureEach {
     dependsOn(syncHostDesktopNative)
+}
+
+tasks.configureEach {
+    if (disabledNativeDesktopTargetNames.any { targetName -> name.contains(targetName, ignoreCase = true) }) {
+        enabled = false
+    }
 }
 
 publishing {
