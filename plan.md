@@ -68,10 +68,11 @@ New files:
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt` — `expect` bootstrap.
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVSmokeTest.kt` — 5 tests: `primitivesRoundTrip`, `decodeDefaults`, `keyManagement`, `allKeysReflectsContents`, `cryptRoundTrip`.
 - Per-platform `TestEnv` actuals: `androidHostTest/` (skips — no Context), `desktopTest/` (JVM tmp dir + `MMKV.initialize`), `darwinTest/` (`NSTemporaryDirectory`), `nativeDesktopTest/` (posix `$TMPDIR`).
+- `androidDeviceTest/` adds a real instrumentation smoke path using `InstrumentationRegistry` so Android JNI initialization and encode/decode run on a connected device or emulator.
 
 The desktop boolean bridge was fixed by mapping byte-sized bool results correctly in `MMKV.desktop.kt`, so the common smoke suite now runs without the old desktop boolean gate.
 
-**Verified passing:** `desktopTest`, `macosX64Test`, `testAndroidHostTest`. Linux CI also compiles the `linuxArm64` main and test source sets.
+**Verified passing:** `desktopTest`, `macosX64Test`, `testAndroidHostTest`, and `compileAndroidDeviceTest`. Linux CI also compiles the `linuxArm64` main and test source sets.
 
 ### 9. Publishing and documentation
 
@@ -80,7 +81,7 @@ The desktop boolean bridge was fixed by mapping byte-sized bool results correctl
 | `KMP/README.md` | Release-oriented KMP docs: target matrix, Maven coordinates, local build, platform notes, runtime artifact notes, release workflow, and known limitations. |
 | `README.md` | Added `KMP` to the platform badge; mentioned KMP in the intro paragraph with a pointer to `KMP/README.md`. |
 | `CHANGELOG.md` | Added an `Unreleased` section with the KMP polish and release-readiness entries. |
-| `KMP/mmkv/build.gradle.kts` / `KMP/gradle.properties` | Added `maven-publish`, `signing`, Sonatype repository wiring, publication metadata, and the host-specific `desktopNative` runtime artifact. |
+| `KMP/mmkv/build.gradle.kts` / `KMP/gradle.properties` | Added `maven-publish`, `signing`, Sonatype repository wiring, publication metadata, host-gated native desktop publication, and the host-specific `desktopNative` runtime artifact. |
 
 ---
 
@@ -101,6 +102,8 @@ The desktop boolean bridge was fixed by mapping byte-sized bool results correctl
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
 - `KMP/mmkv/src/commonTest/kotlin/com/tencent/mmkv/kmp/MMKVSmokeTest.kt`
 - `KMP/mmkv/src/androidHostTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
+- `KMP/mmkv/src/androidDeviceTest/kotlin/com/tencent/mmkv/kmp/AndroidDeviceTestEnv.kt`
+- `KMP/mmkv/src/androidDeviceTest/kotlin/com/tencent/mmkv/kmp/MMKVAndroidRuntimeTest.kt`
 - `KMP/mmkv/src/desktopTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
 - `KMP/mmkv/src/darwinTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
 - `KMP/mmkv/src/nativeDesktopTest/kotlin/com/tencent/mmkv/kmp/MMKVTestEnv.kt`
@@ -136,6 +139,10 @@ cd KMP
           :mmkv:cleanMacosX64Test :mmkv:macosX64Test \
           :mmkv:testAndroidHostTest
 # → BUILD SUCCESSFUL (desktop + macOS X64 run, Android trivially skips)
+
+# Android device-test compilation
+./gradlew :mmkv:compileAndroidDeviceTest
+# → BUILD SUCCESSFUL
 
 # Desktop JAR has the native shared library bundled
 ./gradlew :mmkv:desktopJar

@@ -43,6 +43,7 @@ Which of the four to include depends on where your app will run, not where it is
 cd KMP
 ./gradlew :mmkv:build
 ./gradlew :mmkv:allTests
+./gradlew :mmkv:connectedAndroidDeviceTest # requires a connected Android device/emulator
 ```
 
 The build invokes CMake automatically for native desktop targets. No manual `cmake` pre-step or `-Djna.library.path=...` workaround is required anymore.
@@ -68,6 +69,8 @@ Platform-specific `MMKV.initialize(...)` extensions live in each platform source
 
 The KMP Android target delegates to `com.tencent:mmkv:$MMKV_VERSION`. Consumer keep rules from `consumer-rules.pro` are published through the Android KMP plugin's `optimization.consumerKeepRules` DSL.
 
+Host tests compile the Android target without a `Context`; device tests exercise real MMKV initialization and JNI encode/decode through the upstream Android AAR.
+
 ### iOS / macOS
 
 The KMP Darwin targets consume the CocoaPods `MMKV` pod. If your app also links MMKV directly through SPM or CocoaPods outside the KMP wrapper, you can end up with duplicate Objective-C classes at runtime.
@@ -92,7 +95,7 @@ Kotlin Multiplatform publication is still host-dependent:
 - Windows should publish the Mingw artifact.
 - Each desktop host should publish its host-specific `mmkv-kmp-desktop-native-<os>-<arch>` runtime JAR.
 
-`linuxArm64` is wired in the project and compiles locally, but publishing it still needs either an ARM64 Linux publisher or an explicit cross-toolchain setup.
+Gradle disables non-host native desktop publication tasks so a macOS build cannot publish Mach-O archives as Linux or Windows KLIB artifacts. `linuxArm64` still needs either an ARM64 Linux publisher or an explicit cross-toolchain setup.
 
 ## Known limitations
 
