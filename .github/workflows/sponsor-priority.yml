@@ -1,0 +1,36 @@
+name: Sponsor Priority Auto-Reply
+
+# This workflow triggers whenever a new issue is opened
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  recommend-sponsorship:
+    runs-on: ubuntu-latest
+    # Grant permission to write comments on issues
+    permissions:
+      issues: write 
+    
+    steps:
+      - name: Add comment to issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Customize your message here
+            const sponsorUrl = 'https://github.com/sponsors/lingol';
+            const message = `👋 Hello! Thanks for opening an issue. 
+
+            > [!NOTE]
+            > New features, bugfixes, updates and other improvements are all handled mostly by @lingol in his free time.
+            > To support \`@lingol\` , please consider 💖 [sponsoring him on GitHub](${sponsorUrl}) 💖.
+            > Sponsored issues will be prioritized.
+
+            *(If you are already a sponsor, thank you! We will get to this shortly.)*`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: message
+            });
