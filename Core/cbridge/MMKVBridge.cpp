@@ -129,6 +129,16 @@ MMKV_EXPORT void mmkv_initialize_with_handler(const char *rootDir, int32_t logLe
     MMKV::initializeMMKV(string(rootDir), static_cast<MMKVLogLevel>(logLevel), &g_cHandler);
 }
 
+MMKV_EXPORT void mmkv_register_handler(MMKVHandler_t handler) {
+    g_cHandler.m_callbacks = handler;
+    MMKV::registerHandler(&g_cHandler);
+}
+
+MMKV_EXPORT void mmkv_unregister_handler(void) {
+    g_cHandler.m_callbacks = {};
+    MMKV::unRegisterHandler();
+}
+
 MMKV_EXPORT void mmkv_on_exit(void) {
     MMKV::onExit();
 }

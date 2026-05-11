@@ -441,6 +441,18 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     }
 }
 
+- (void)lock {
+    m_mmkv->lock();
+}
+
+- (void)unlock {
+    m_mmkv->unlock();
+}
+
+- (BOOL)tryLock {
+    return m_mmkv->try_lock();
+}
+
 - (void)close {
     SCOPED_LOCK(g_lock);
     MMKVInfo("closing %@", m_mmapID);
@@ -831,6 +843,14 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
 - (BOOL)disableCompareBeforeSet {
     return m_mmkv->disableCompareBeforeSet();
+}
+
+- (BOOL)isExpirationEnabled {
+    return m_mmkv->isExpirationEnabled();
+}
+
+- (BOOL)isCompareBeforeSetEnabled {
+    return m_mmkv->isCompareBeforeSetEnabled();
 }
 
 - (void)removeValueForKey:(NSString *)key {

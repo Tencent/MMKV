@@ -48,6 +48,16 @@ cd KMP
 
 The build invokes CMake automatically for native desktop targets. No manual `cmake` pre-step or `-Djna.library.path=...` workaround is required anymore.
 
+Dependency source overrides for local development:
+
+```bash
+./gradlew :mmkv:build -PMMKV_ANDROID_SOURCE=local
+./gradlew :mmkv:build -PMMKV_ANDROID_SOURCE=release -PMMKV_POD_SOURCE=release
+./gradlew :mmkv:build -PMMKV_POD_SOURCE=git -PMMKV_GIT_BRANCH=dev_kmp
+```
+
+When this project is built inside the MMKV monorepo, Android dependencies default to local source so branch-only API changes can be tested before official artifacts are published. CocoaPods dependencies default to the configured version; use `MMKV_POD_SOURCE=git` when testing unpublished Darwin APIs from a branch.
+
 ## Quick start
 
 ```kotlin
@@ -101,8 +111,4 @@ Gradle disables non-host native desktop publication tasks so a macOS build canno
 
 | Area | Limitation | Reason |
 | --- | --- | --- |
-| Darwin | `lock()` / `unlock()` / `tryLock()` are no-ops, and `tryLock()` returns `false`. | The ObjC MMKV API does not expose these methods. |
-| Darwin | `isExpirationEnabled` and `isCompareBeforeSetEnabled` always return `false`. | The ObjC MMKV API does not expose those status flags. |
-| Android | `isExpirationEnabled`, `isEncryptionEnabled`, and `isCompareBeforeSetEnabled` still rely on reflection. | The upstream Android MMKV surface keeps them private-native. |
-| JVM desktop | `registerHandler()` / `unRegisterHandler()` are still no-ops. | JNA callback bridging for the unified handler is not implemented yet. |
-| JVM desktop | `setLogLevel()` is a no-op after initialization. | The C bridge configures log level during `initialize()`. |
+| Android | `enableCompareBeforeSet()` and `disableCompareBeforeSet()` return `true` after invoking the upstream APIs. | The Android MMKV APIs are `void`; use `isCompareBeforeSetEnabled` to observe effective state. |

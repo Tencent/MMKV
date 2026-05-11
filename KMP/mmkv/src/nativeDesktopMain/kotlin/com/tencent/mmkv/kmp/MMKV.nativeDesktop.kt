@@ -42,13 +42,7 @@ fun MMKV.Companion.initialize(
 ): String {
     if (handler != null) {
         NativeDesktopMMKVHandlerHolder.handler = handler
-        val callbacks = cValue<MMKVHandler_t> {
-            log = NativeDesktopMMKVHandlerHolder.logCallback
-            error = NativeDesktopMMKVHandlerHolder.errorCallback
-            contentChange = NativeDesktopMMKVHandlerHolder.contentChangeCallback
-            contentLoad = NativeDesktopMMKVHandlerHolder.contentLoadCallback
-        }
-        mmkv_initialize_with_handler(rootDir, logLevel.toNativeLevel(), callbacks)
+        mmkv_initialize_with_handler(rootDir, logLevel.toNativeLevel(), nativeDesktopCallbacks())
     } else {
         mmkv_initialize(rootDir, logLevel.toNativeLevel())
     }
@@ -63,13 +57,6 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
     actual companion object {
         actual fun onExit() {
             mmkv_on_exit()
-        }
-
-        actual fun setLogLevel(level: MMKVLogLevel) {
-            // C bridge doesn't have a direct setLogLevel function;
-            // log level is set during initialization.
-            // Re-initialize is not ideal, so this is a no-op on native desktop.
-            // Users should set log level during initialize().
         }
 
         actual fun defaultMMKV(): MMKV {
@@ -136,12 +123,12 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
 
         actual fun registerHandler(handler: MMKVHandler) {
             NativeDesktopMMKVHandlerHolder.handler = handler
-            // Note: handler must be set during initialization via initialize() on native desktop.
-            // This is provided for API compatibility.
+            mmkv_register_handler(nativeDesktopCallbacks())
         }
 
         actual fun unRegisterHandler() {
             NativeDesktopMMKVHandlerHolder.handler = null
+            mmkv_unregister_handler()
         }
     }
 
@@ -421,6 +408,14 @@ internal inline fun <R> withNativeConfig(config: MMKVConfig, block: (CValue<MMKV
     }
     cfg.itemSizeLimit = config.itemSizeLimit
     block(cfg.readValue())
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun nativeDesktopCallbacks(): CValue<MMKVHandler_t> = cValue {
+    log = NativeDesktopMMKVHandlerHolder.logCallback
+    error = NativeDesktopMMKVHandlerHolder.errorCallback
+    contentChange = NativeDesktopMMKVHandlerHolder.contentChangeCallback
+    contentLoad = NativeDesktopMMKVHandlerHolder.contentLoadCallback
 }
 
 // endregion

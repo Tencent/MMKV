@@ -384,6 +384,10 @@ class MMKV;
 
 - (BOOL)disableCompareBeforeSet;
 
+- (BOOL)isExpirationEnabled;
+
+- (BOOL)isCompareBeforeSetEnabled;
+
 - (void)removeValueForKey:(NSString *)key NS_SWIFT_NAME(removeValue(forKey:));
 
 - (void)removeValuesForKeys:(NSArray<NSString *> *)arrKeys NS_SWIFT_NAME(removeValues(forKeys:));
@@ -408,6 +412,15 @@ class MMKV;
 /// call this method if you are facing memory-warning
 /// any subsequent call to the instance will load all key-values from file again
 - (void)clearMemoryCache;
+
+/// Get exclusive inter-process lock. Use with unlock for inter-process synchronization.
+- (void)lock;
+
+/// Release the exclusive inter-process lock.
+- (void)unlock;
+
+/// Try to get the exclusive inter-process lock without blocking.
+- (BOOL)tryLock;
 
 /// enable auto cleanup items that not been accessed recently
 /// disable by default

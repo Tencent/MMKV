@@ -37,12 +37,6 @@ expect class MMKV {
         fun onExit()
 
         /**
-         * Set the log level of MMKV.
-         * @param level Defaults to [MMKVLogLevel.Info].
-         */
-        fun setLogLevel(level: MMKVLogLevel)
-
-        /**
          * Create the default MMKV instance in single-process mode.
          */
         fun defaultMMKV(): MMKV

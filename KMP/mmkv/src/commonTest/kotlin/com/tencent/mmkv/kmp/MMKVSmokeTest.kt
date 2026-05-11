@@ -154,6 +154,40 @@ class MMKVSmokeTest {
     }
 
     @Test
+    fun featureStateAndBufferUtilities() = onlyIfReady {
+        val kv = fresh("features")
+        try {
+            assertFalse(kv.isExpirationEnabled)
+            assertFalse(kv.isEncryptionEnabled)
+            assertFalse(kv.isCompareBeforeSetEnabled)
+
+            val bytes = "hello".encodeToByteArray()
+            assertTrue(kv.encodeBytes("buffer", bytes))
+            val buffer = ByteArray(bytes.size)
+            assertEquals(bytes.size, kv.writeValueToBuffer("buffer", buffer))
+            assertContentEquals(bytes, buffer)
+
+            assertTrue(kv.enableCompareBeforeSet())
+            assertTrue(kv.isCompareBeforeSetEnabled)
+            assertTrue(kv.disableCompareBeforeSet())
+            assertFalse(kv.isCompareBeforeSetEnabled)
+
+            assertTrue(kv.enableAutoKeyExpire())
+            assertTrue(kv.isExpirationEnabled)
+            assertTrue(kv.disableAutoKeyExpire())
+            assertFalse(kv.isExpirationEnabled)
+
+            kv.lock()
+            kv.unlock()
+            if (kv.tryLock()) {
+                kv.unlock()
+            }
+        } finally {
+            kv.clearAll()
+        }
+    }
+
+    @Test
     fun cryptRoundTrip() = onlyIfReady {
         if (!MMKVTestEnv.initializeIfPossible()) return@onlyIfReady
         val id = MMKVTestEnv.uniqueID("crypt")

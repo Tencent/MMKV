@@ -56,11 +56,9 @@ After: per-target `cmakeBuild<TargetName>` Exec tasks registered in `build.gradl
 
 The cinterop task's `compilerOpts` reads `cbridge_include_dir.txt` via a Provider (task-execution time, not configure-time), and every `compileKotlin*` / `cinterop*` / `link*` task for each native target declares `dependsOn(cmakeTask)`. Fresh checkout + `./gradlew :mmkv:build` now Just Works — no manual `cmake` pre-step.
 
-### 7. JVM desktop: bundle and auto-load host native shared library
+### 7. JVM desktop kept for Compose Desktop
 
-`tasks.named("desktopProcessResources")` depends on the host's `cmakeBuildDesktop*Shared` task and copies the resulting `libmmkv-kmp.{dylib,so,dll}` into `build/processedResources/desktop/main/native/<os>-<arch>/`. `MMKV.desktop.kt` now extracts that packaged binary to a temp file before JNA loads it, so consumers do not need to pass `-Djna.library.path=...`.
-
-Published desktop consumers still need the matching host-specific runtime artifact on the classpath, but no manual JVM flag is required.
+The attempt to drop `jvm("desktop")` was reverted on 2026-05-11. Compose Desktop is the standard KMP desktop app path, so the branch keeps the JVM desktop target while also keeping Kotlin/Native desktop targets (`linuxX64`, `linuxArm64`, `mingwX64`).
 
 ### 8. commonTest smoke suite
 
@@ -70,9 +68,7 @@ New files:
 - Per-platform `TestEnv` actuals: `androidHostTest/` (skips — no Context), `desktopTest/` (JVM tmp dir + `MMKV.initialize`), `darwinTest/` (`NSTemporaryDirectory`), `nativeDesktopTest/` (posix `$TMPDIR`).
 - `androidDeviceTest/` adds a real instrumentation smoke path using `InstrumentationRegistry` so Android JNI initialization and encode/decode run on a connected device or emulator.
 
-The desktop boolean bridge was fixed by mapping byte-sized bool results correctly in `MMKV.desktop.kt`, so the common smoke suite now runs without the old desktop boolean gate.
-
-**Verified passing:** `desktopTest`, `macosX64Test`, `testAndroidHostTest`, and `compileAndroidDeviceTest`. Linux CI also compiles the `linuxArm64` main and test source sets.
+The desktop boolean bridge was fixed by mapping byte-sized bool results correctly in `MMKV.desktop.kt`, so the common smoke suite now runs without the old desktop boolean gate. Linux CI also compiles the `linuxArm64` main and test source sets.
 
 ### 9. Publishing and documentation
 
@@ -91,7 +87,7 @@ The desktop boolean bridge was fixed by mapping byte-sized bool results correctl
 - `iOS/MMKV/MMKV/MMKV.h`
 - `iOS/MMKV/MMKV/libMMKV.mm`
 - `KMP/mmkv/src/darwinMain/kotlin/com/tencent/mmkv/kmp/MMKV.darwin.kt` (comment-only change reaffirming the upstream typo story; the actual ObjC call stays the same for pod back-compat)
-- `KMP/mmkv/build.gradle.kts` (rewritten: CMake tasks, linuxArm64, consumer ProGuard, commonTest, version centralization, desktop JAR bundling, desktopTest jna.library.path)
+- `KMP/mmkv/build.gradle.kts` (rewritten: CMake tasks, linuxArm64, consumer ProGuard, commonTest, version centralization, desktop JAR bundling, desktopTest jna.library.path, and native desktop publication gating)
 - `KMP/mmkv/nativeInterop/CMakeLists.txt` (CACHE-able MMKV_VERSION)
 - `KMP/gradle.properties` (added MMKV_VERSION)
 - `README.md`
@@ -125,42 +121,66 @@ cd KMP
           :mmkv:compileKotlinIosArm64 :mmkv:compileKotlinIosSimulatorArm64 :mmkv:compileKotlinIosX64 \
           :mmkv:compileKotlinLinuxX64 :mmkv:compileKotlinLinuxArm64 :mmkv:compileKotlinMingwX64 \
           :mmkv:compileKotlinDesktop :mmkv:compileDebugKotlinAndroid
-# → BUILD SUCCESSFUL
 
 # All 10 test-source-set compilations
 ./gradlew :mmkv:compileTestKotlinMacosArm64 :mmkv:compileTestKotlinMacosX64 \
           :mmkv:compileTestKotlinIosArm64 :mmkv:compileTestKotlinIosSimulatorArm64 :mmkv:compileTestKotlinIosX64 \
           :mmkv:compileTestKotlinLinuxX64 :mmkv:compileTestKotlinLinuxArm64 :mmkv:compileTestKotlinMingwX64 \
           :mmkv:compileTestKotlinDesktop :mmkv:compileDebugUnitTestKotlinAndroid
-# → BUILD SUCCESSFUL
 
 # Host-executable test suites
 ./gradlew :mmkv:cleanDesktopTest :mmkv:desktopTest \
           :mmkv:cleanMacosX64Test :mmkv:macosX64Test \
           :mmkv:testAndroidHostTest
-# → BUILD SUCCESSFUL (desktop + macOS X64 run, Android trivially skips)
 
 # Android device-test compilation
 ./gradlew :mmkv:compileAndroidDeviceTest
-# → BUILD SUCCESSFUL
 
 # Desktop JAR has the native shared library bundled
 ./gradlew :mmkv:desktopJar
 unzip -l mmkv/build/libs/mmkv-desktop.jar | grep native
-#   0    native/
-#   0    native/macos-x86_64/
-#   317744  native/macos-x86_64/libmmkv-kmp.dylib   ← 310 KB dylib packaged
 ```
 
 ---
 
 ## Remaining follow-ups
 
-- **Credentials-backed publication dry run.** The Gradle and workflow wiring is in place, but real Sonatype/signing credentials are still required for an end-to-end publish.
-- **CI/release workflow automation.** The workflow files were dropped from this branch because updating `.github/workflows/*` requires a token with `workflow` scope. Re-add them later from a credential that has that scope.
+- **Darwin pod verification.** The KMP Darwin source now calls new ObjC APIs. Verify with `-PMMKV_POD_SOURCE=git` against a branch/tag containing the updated `MMKV.h` / `libMMKV.mm`, then with the official pod once released.
+- **Android native build include issue.** `Android/MMKV :mmkv:assembleDefaultCppDebug` currently fails because `MMKV/MMKVLog.h` is missing from `Core/include`; investigate include generation/copying before treating Android native verification as complete.
+- **Credentials-backed publication dry run.** The Gradle wiring is in place, but real Sonatype/signing credentials are still required for an end-to-end publish.
 - **`linuxArm64` publication strategy.** The target is wired in the project and compiled in CI, but publishing that artifact still needs an ARM64 Linux runner or a maintained cross-toolchain configuration.
-- **JVM desktop handler callbacks** (`registerHandler` / `unRegisterHandler` no-op today).
-- **Darwin public API expansion**: `lock`/`unlock`/`tryLock`, `isExpirationEnabled`, `isCompareBeforeSetEnabled` not exposed by the ObjC MMKV — needs changes in `iOS/MMKV/`.
-- **Android reflection hacks** (`isExpirationEnabled` et al. on `MMKV.android.kt`) — fixable by making the corresponding methods public in `com.tencent.mmkv.MMKV` (Java library).
+- **Expand parity tests.** Smoke coverage now includes feature-state properties, buffer write, compare-before-set, expiration, and lock calls. Add backup/restore, namespace, `getValueSize`, `importFrom`, `clearAllKeepSpace`, `trim`, handler callbacks, and empty `ByteArray` behavior.
+- **Harden desktop lifecycle/concurrency.** Native desktop handler storage still needs thread-safety review; JVM/native desktop wrappers still have undefined use-after-close behavior.
+- **CI/release workflow automation.** Explicitly skipped for now; re-add `.github/workflows/*` later from a credential with `workflow` scope.
 - **`watchOS` / `tvOS` / `visionOS` targets** — explicitly deferred.
 - **`kotlin.native.cacheKind.iosArm64=none`** workaround in `gradle.properties` — investigate after a KGP upgrade.
+
+---
+
+## Release-readiness review findings — 2026-05-11
+
+### Release blockers
+
+1. **Version/source consistency.** `KMP/gradle.properties` still publishes and depends on `2.4.0`, while KMP native desktop depends on new branch-only `Core/cbridge/*` code. The CMake fallback in `KMP/mmkv/nativeInterop/CMakeLists.txt` fetches `v2.4.0`, so the release tag/artifacts must include the C bridge and any required Android/iOS API additions before KMP can be published reliably.
+2. **Maven Central publication is unproven.** Gradle publishing/signing exists, but staging publish with real credentials still needs verification for metadata, POMs, sources/javadoc, Android variant, K/N klibs, JVM/native runtime artifacts, and host-specific artifact IDs.
+3. **Host publication matrix is unfinished.** `linuxArm64` requires an ARM64 Linux publisher or maintained cross-toolchain. If kept, docs should list the matching desktop-native runtime artifact.
+4. **Windows desktop native linker path needs proof.** `KMP/mmkv/nativeInterop/CMakeLists.txt` uses GNU-style `--whole-archive` for non-Apple shared builds; verify Windows publisher/toolchain or add MSVC-compatible handling.
+5. **CI/release workflows are absent.** `.github/workflows/*` is not present, while `CHANGELOG.md` says CI workflows were added. This is explicitly skipped for now.
+
+### API and behavior gaps
+
+1. **API parity pass in progress.** Darwin lock/status APIs, Android public status APIs/native buffer helper, and desktop C bridge handler APIs were added on 2026-05-11. KMP `setLogLevel()` was dropped because upstream runtime set-log-level APIs are deprecated; use `MMKV.initialize(..., logLevel = ...)`.
+2. **Android compare semantics differ.** `enableCompareBeforeSet()` / `disableCompareBeforeSet()` return true in KMP because Android upstream APIs are void; use `isCompareBeforeSetEnabled` to observe effective state.
+3. **API parity scope is undecided.** Common KMP omits Android `StringSet` and platform-serializable/Parcelable APIs. Decide whether to add portable `Set<String>` support or document omission.
+
+### Reliability and test gaps
+
+1. **Tests are still limited.** Smoke coverage now includes feature-state properties, `writeValueToBuffer`, compare-before-set, expiration, and lock calls, but still needs backup/restore, namespace, `getValueSize`, `importFrom`, `clearAllKeepSpace`, `trim`, handler callbacks, and empty `ByteArray` behavior.
+2. **Android host tests skip.** `androidHostTest` cannot initialize MMKV and returns false; add Robolectric or require emulator/device CI beyond the one Android device string round-trip.
+3. **Native desktop handler holder is not thread-safe.** `NativeDesktopMMKVHandlerHolder.handler` is a plain mutable var read from C callback threads.
+4. **Use-after-close is undefined.** JVM/native desktop wrappers keep raw handles after `close()`. Either null/guard handles or explicitly document matching core undefined behavior.
+
+### Branch cleanup before release
+
+1. Remove dev-only files from the public release branch, especially `.claude/settings.json` and this planning file if it should not ship.
+2. Audit unrelated Flutter/OpenHarmony changes. Notable risks: `flutter/mmkv/pubspec.yaml` uses a local path dependency for `mmkv_ios`; OpenHarmony imports ignored `sign-config.json`; OpenHarmony dependency tarballs were removed.

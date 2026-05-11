@@ -58,6 +58,9 @@ private object DesktopNativeLoader {
 @Suppress("FunctionName")
 internal interface MMKVLib : Library {
     fun mmkv_initialize(rootDir: String, logLevel: Int)
+    fun mmkv_initialize_with_handler(rootDir: String, logLevel: Int, handler: JnaMMKVHandler.ByValue)
+    fun mmkv_register_handler(handler: JnaMMKVHandler.ByValue)
+    fun mmkv_unregister_handler()
     fun mmkv_on_exit()
 
     fun mmkv_default(config: JnaMMKVConfig.ByValue): Pointer?
@@ -181,6 +184,32 @@ internal open class JnaMMKVConfig : Structure() {
     class ByValue : JnaMMKVConfig(), Structure.ByValue
 }
 
+internal fun interface JnaMMKVLogCallback : Callback {
+    fun invoke(level: Int, file: String?, line: Int, function: String?, message: String?)
+}
+
+internal fun interface JnaMMKVErrorCallback : Callback {
+    fun invoke(mmapID: String?, error: Int): Int
+}
+
+internal fun interface JnaMMKVContentChangeCallback : Callback {
+    fun invoke(mmapID: String?)
+}
+
+internal fun interface JnaMMKVContentLoadCallback : Callback {
+    fun invoke(mmapID: String?)
+}
+
+@Structure.FieldOrder("log", "error", "contentChange", "contentLoad")
+internal open class JnaMMKVHandler : Structure() {
+    @JvmField var log: JnaMMKVLogCallback? = null
+    @JvmField var error: JnaMMKVErrorCallback? = null
+    @JvmField var contentChange: JnaMMKVContentChangeCallback? = null
+    @JvmField var contentLoad: JnaMMKVContentLoadCallback? = null
+
+    class ByValue : JnaMMKVHandler(), Structure.ByValue
+}
+
 // endregion
 
 // region Platform-specific initialization (JVM desktop, no Context needed)
@@ -196,9 +225,16 @@ internal open class JnaMMKVConfig : Structure() {
 fun MMKV.Companion.initialize(
     rootDir: String,
     logLevel: MMKVLogLevel = MMKVLogLevel.Info,
+    handler: MMKVHandler? = null,
 ): String {
-    MMKVLib.INSTANCE.mmkv_initialize(rootDir, logLevel.toNativeLevel())
-    return MMKVLib.INSTANCE.mmkv_root_dir() ?: ""
+    val lib = MMKVLib.INSTANCE
+    if (handler != null) {
+        DesktopMMKVHandlerHolder.handler = handler
+        lib.mmkv_initialize_with_handler(rootDir, logLevel.toNativeLevel(), DesktopMMKVHandlerHolder.nativeHandler)
+    } else {
+        lib.mmkv_initialize(rootDir, logLevel.toNativeLevel())
+    }
+    return lib.mmkv_root_dir() ?: ""
 }
 
 // endregion
@@ -209,10 +245,6 @@ actual class MMKV internal constructor(private val handle: Pointer) {
         private val lib = MMKVLib.INSTANCE
 
         actual fun onExit() = lib.mmkv_on_exit()
-
-        actual fun setLogLevel(level: MMKVLogLevel) {
-            // Log level is set during initialization on desktop.
-        }
 
         actual fun defaultMMKV(): MMKV = MMKV(lib.mmkv_default(buildDefaultConfig())!!)
 
@@ -245,11 +277,13 @@ actual class MMKV internal constructor(private val handle: Pointer) {
         actual fun checkExist(mmapID: String, rootPath: String?): Boolean = lib.mmkv_check_exist(mmapID, rootPath).asBoolean()
 
         actual fun registerHandler(handler: MMKVHandler) {
-            // JNA callback registration not implemented yet.
+            DesktopMMKVHandlerHolder.handler = handler
+            lib.mmkv_register_handler(DesktopMMKVHandlerHolder.nativeHandler)
         }
 
         actual fun unRegisterHandler() {
-            // JNA callback registration not implemented yet.
+            DesktopMMKVHandlerHolder.handler = null
+            lib.mmkv_unregister_handler()
         }
     }
 
@@ -415,6 +449,56 @@ private fun MMKVLogLevel.toNativeLevel(): Int = when (this) {
     MMKVLogLevel.Warning -> 2
     MMKVLogLevel.Error -> 3
     MMKVLogLevel.None -> 4
+}
+
+private fun nativeLogLevelToCommon(level: Int): MMKVLogLevel = when (level) {
+    0 -> MMKVLogLevel.Debug
+    1 -> MMKVLogLevel.Info
+    2 -> MMKVLogLevel.Warning
+    3 -> MMKVLogLevel.Error
+    4 -> MMKVLogLevel.None
+    else -> MMKVLogLevel.Info
+}
+
+private object DesktopMMKVHandlerHolder {
+    @Volatile
+    var handler: MMKVHandler? = null
+
+    private val logCallback = JnaMMKVLogCallback { level, file, line, function, message ->
+        handler?.mmkvLog(
+            nativeLogLevelToCommon(level),
+            file ?: "",
+            line,
+            function ?: "",
+            message ?: ""
+        )
+    }
+
+    private val errorCallback = JnaMMKVErrorCallback { mmapID, error ->
+        val result = when (error) {
+            0 -> handler?.onMMKVCRCCheckFail(mmapID ?: "")
+            else -> handler?.onMMKVFileLengthError(mmapID ?: "")
+        }
+        when (result) {
+            MMKVRecoverStrategic.OnErrorRecover -> 1
+            else -> 0
+        }
+    }
+
+    private val contentChangeCallback = JnaMMKVContentChangeCallback { mmapID ->
+        handler?.onContentChangedByOuterProcess(mmapID ?: "")
+    }
+
+    private val contentLoadCallback = JnaMMKVContentLoadCallback { mmapID ->
+        handler?.onMMKVContentLoadSuccessfully(mmapID ?: "")
+    }
+
+    val nativeHandler: JnaMMKVHandler.ByValue = JnaMMKVHandler.ByValue().apply {
+        log = logCallback
+        error = errorCallback
+        contentChange = contentChangeCallback
+        contentLoad = contentLoadCallback
+    }
 }
 
 internal fun Byte.asBoolean(): Boolean = toInt() != 0

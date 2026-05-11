@@ -103,11 +103,6 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
             DarwinMMKV.onAppTerminate()
         }
 
-        actual fun setLogLevel(level: MMKVLogLevel) {
-            @Suppress("DEPRECATION")
-            DarwinMMKV.setLogLevel(level.toDarwin())
-        }
-
         actual fun defaultMMKV(): MMKV {
             return MMKV(DarwinMMKV.defaultMMKV()!!)
         }
@@ -321,21 +316,13 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
         return written
     }
 
-    actual fun lock() {
-        // lock() is not exposed in the ObjC MMKV API.
-        // Inter-process lock is handled automatically on Darwin.
-    }
-    actual fun unlock() {
-        // unlock() is not exposed in the ObjC MMKV API.
-    }
-    actual fun tryLock(): Boolean {
-        // tryLock() is not exposed in the ObjC MMKV API.
-        return false
-    }
+    actual fun lock() = impl.lock()
+    actual fun unlock() = impl.unlock()
+    actual fun tryLock(): Boolean = impl.tryLock()
 
-    actual val isExpirationEnabled: Boolean get() = false // not exposed in ObjC API
+    actual val isExpirationEnabled: Boolean get() = impl.isExpirationEnabled()
     actual val isEncryptionEnabled: Boolean get() = (cryptKey != null)
-    actual val isCompareBeforeSetEnabled: Boolean get() = false // not exposed in ObjC API
+    actual val isCompareBeforeSetEnabled: Boolean get() = impl.isCompareBeforeSetEnabled()
 
     // endregion
 }
