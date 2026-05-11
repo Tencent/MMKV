@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+import org.gradle.api.attributes.Attribute
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.Sync
@@ -36,6 +37,8 @@ val publishVersion = (findProperty("VERSION_NAME") as? String) ?: mmkvVersion
 val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
 val isSnapshot = publishVersion.endsWith("-SNAPSHOT")
 val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
+val mmkvGitRepository = findProperty("MMKV_GIT_REPOSITORY") as? String
+val mmkvGitTag = findProperty("MMKV_GIT_TAG") as? String
 
 // Keep the build's internal coordinates distinct from the published Android
 // dependency (`com.tencent:mmkv`) so Gradle doesn't substitute that AAR with
@@ -84,6 +87,12 @@ fun registerCMakeBuildTask(
                 add(buildDir.absolutePath)
                 add("-DCMAKE_BUILD_TYPE=Release")
                 add("-DMMKV_VERSION=v$mmkvVersion")
+                if (!mmkvGitRepository.isNullOrBlank()) {
+                    add("-DMMKV_GIT_REPOSITORY=$mmkvGitRepository")
+                }
+                if (!mmkvGitTag.isNullOrBlank()) {
+                    add("-DMMKV_GIT_TAG=$mmkvGitTag")
+                }
                 addAll(extraConfigureArgs)
             }
         )
@@ -318,7 +327,21 @@ kotlin {
         osx.deploymentTarget = "10.15"
 
         pod("MMKV") {
-            version = mmkvVersion
+            val podSource = (findProperty("MMKV_POD_SOURCE") as? String)?.lowercase()
+            when {
+                podSource == "git" -> {
+                    source = git(mmkvGitRepository ?: "https://github.com/Tencent/MMKV.git") {
+                        if (!mmkvGitTag.isNullOrBlank()) {
+                            tag = mmkvGitTag
+                        }
+                        (findProperty("MMKV_GIT_BRANCH") as? String)?.takeIf { it.isNotBlank() }?.let { branch = it }
+                        (findProperty("MMKV_GIT_COMMIT") as? String)?.takeIf { it.isNotBlank() }?.let { commit = it }
+                    }
+                }
+                else -> {
+                    version = mmkvVersion
+                }
+            }
         }
     }
 
@@ -331,7 +354,11 @@ kotlin {
 
         androidMain {
             dependencies {
-                implementation("com.tencent:mmkv:$mmkvVersion")
+                implementation("com.tencent:mmkv:$mmkvVersion") {
+                    attributes {
+                        attribute(Attribute.of("com.android.build.api.attributes.ProductFlavor:stl_mode", String::class.java), "DefaultCpp")
+                    }
+                }
             }
         }
 
@@ -370,6 +397,14 @@ tasks.named("desktopProcessResources") {
 
 tasks.matching { it.name == "desktopTest" }.configureEach {
     dependsOn(syncHostDesktopNative)
+}
+
+tasks.matching { it.name == "generateDefMMKV" || it.name.startsWith("podGen") }.configureEach {
+    mustRunAfter(tasks.matching { task ->
+        task.name == "compileKotlinDesktop" ||
+            task.name == "compileAndroidMain" ||
+            task.name == "xcodeVersion"
+    })
 }
 
 tasks.configureEach {

@@ -25,6 +25,8 @@ project(mmkv-kmp)
 # task via -DMMKV_VERSION=v<x.y.z>. Defaults to the in-repo value when run
 # standalone.
 set(MMKV_VERSION "v2.4.0" CACHE STRING "MMKV version to fetch when built outside the monorepo")
+set(MMKV_GIT_REPOSITORY "https://github.com/Tencent/MMKV.git" CACHE STRING "MMKV git repository to fetch when built outside the monorepo")
+set(MMKV_GIT_TAG "${MMKV_VERSION}" CACHE STRING "MMKV git tag, branch, or commit to fetch when built outside the monorepo")
 
 # Auto-detect: if running inside the MMKV monorepo, use local source;
 # otherwise fetch from GitHub (e.g. when built as a standalone package).
@@ -38,10 +40,10 @@ IF(EXISTS "${MMKV_ROOT}/Core/cbridge/MMKVBridge.h")
       SOURCE_SUBDIR "Core"
     )
 ELSE()
-    message(STATUS "Fetching MMKV ${MMKV_VERSION} from GitHub")
+    message(STATUS "Fetching MMKV ${MMKV_GIT_TAG} from ${MMKV_GIT_REPOSITORY}")
     FetchContent_Declare(mmkv
-      GIT_REPOSITORY "https://github.com/Tencent/MMKV.git"
-      GIT_TAG ${MMKV_VERSION}
+      GIT_REPOSITORY "${MMKV_GIT_REPOSITORY}"
+      GIT_TAG "${MMKV_GIT_TAG}"
       SOURCE_SUBDIR "Core"
     )
 ENDIF()

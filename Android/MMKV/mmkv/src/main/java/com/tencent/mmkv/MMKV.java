@@ -1825,6 +1825,30 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
         return writeValueToNB(nativeHandle, key, buffer.pointer, buffer.size);
     }
 
+    /**
+     * Write the value of the key to the byte array.
+     *
+     * @return The size written. Return -1 on any error.
+     */
+    public int writeValueToBuffer(String key, @NonNull byte[] buffer) {
+        if (buffer.length == 0) {
+            return -1;
+        }
+        NativeBuffer nativeBuffer = createNativeBuffer(buffer.length);
+        if (nativeBuffer == null) {
+            return -1;
+        }
+        try {
+            int size = writeValueToNativeBuffer(key, nativeBuffer);
+            if (size > 0) {
+                readNB(nativeBuffer.pointer, buffer, Math.min(size, buffer.length));
+            }
+            return size;
+        } finally {
+            destroyNativeBuffer(nativeBuffer);
+        }
+    }
+
     // callback handler
     private static MMKVHandler gCallbackHandler = null;
     private static boolean gWantLogReDirecting = false;
@@ -2064,15 +2088,17 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static native void destroyNB(long pointer, int size);
 
+    private static native void readNB(long pointer, byte[] buffer, int size);
+
     private native int writeValueToNB(long handle, String key, long pointer, int size);
 
-    private native boolean isCompareBeforeSetEnabled();
+    public native boolean isCompareBeforeSetEnabled();
 
     @FastNative
-    private native boolean isEncryptionEnabled();
+    public native boolean isEncryptionEnabled();
 
     @FastNative
-    private native boolean isExpirationEnabled();
+    public native boolean isExpirationEnabled();
 
     private static native void enableDisableProcessMode(boolean enable);
 

@@ -1021,6 +1021,14 @@ MMKV_JNI void destroyNB(JNIEnv *env, jobject instance, jlong pointer, jint size)
     free(reinterpret_cast<void *>(pointer));
 }
 
+MMKV_JNI void readNB(JNIEnv *env, jobject instance, jlong pointer, jbyteArray buffer, jint size) {
+    if (pointer && buffer && size > 0) {
+        auto arraySize = env->GetArrayLength(buffer);
+        auto copySize = size < arraySize ? size : arraySize;
+        env->SetByteArrayRegion(buffer, 0, copySize, reinterpret_cast<jbyte *>(pointer));
+    }
+}
+
 MMKV_JNI jint writeValueToNB(JNIEnv *env, jobject instance, jlong handle, jstring oKey, jlong pointer, jint size) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && oKey) {
@@ -1272,6 +1280,7 @@ static JNINativeMethod g_methods[] = {
     {"setCallbackHandler", "(ZZJ)V", (void *) mmkv::setCallbackHandler},
     {"createNB", "(I)J", (void *) mmkv::createNB},
     {"destroyNB", "(JI)V", (void *) mmkv::destroyNB},
+    {"readNB", "(J[BI)V", (void *) mmkv::readNB},
     {"writeValueToNB", "(JLjava/lang/String;JI)I", (void *) mmkv::writeValueToNB},
     {"setWantsContentChangeNotify", "(Z)V", (void *) mmkv::setWantsContentChangeNotify},
     {"checkContentChangedByOuterProcess", "()V", (void *) mmkv::checkContentChanged},

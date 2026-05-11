@@ -14,6 +14,7 @@ A new `KMP/` module provides Kotlin Multiplatform bindings for MMKV covering And
 * **Fix:** Migrated the KMP Android target from legacy `com.android.library` integration to the official `com.android.kotlin.multiplatform.library` plugin, which removes the AGP/KGP publication deadlock that blocked Android host tests and Maven publication.
 * **Fix:** Native desktop publication tasks are now host-gated, preventing macOS builds from publishing host-compiled Mach-O archives as Linux or Windows KLIB artifacts.
 * **Fix:** The KMP Darwin wrapper now explicitly documents the `+unregiserHandler` / `+unregisterHandler` split. It still calls the back-compatible typo'd name so it links against every published MMKV pod version, but once a consumer builds against MMKV 2.4.1+ the call is transparently forwarded to the correctly-spelled method.
+* **Fix:** Added Darwin bindings for lock status and feature-state APIs, removed Android reflection for status getters, and wired JVM/native desktop handler APIs through the C bridge. The KMP `setLogLevel()` API was dropped; configure log level through `MMKV.initialize(...)`.
 * **Change:** Centralized the MMKV version in `KMP/gradle.properties` (`MMKV_VERSION`). Previously it was hardcoded in four separate spots in `build.gradle.kts`, `CMakeLists.txt`, and the podspec.
 * **Cleanup:** Removed the empty, unused `jvmMain` source set.
 
