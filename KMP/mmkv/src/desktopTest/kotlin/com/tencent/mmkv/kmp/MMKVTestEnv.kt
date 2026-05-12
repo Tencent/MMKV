@@ -35,5 +35,12 @@ internal actual object MMKVTestEnv {
 
     actual fun uniqueID(prefix: String): String = "$prefix-${Random.nextLong()}"
 
+    actual fun uniquePath(prefix: String): String {
+        val tmp = System.getProperty("java.io.tmpdir") ?: "/tmp"
+        val path = "$tmp/mmkv-kmp-$prefix-${Random.nextLong()}"
+        java.io.File(path).mkdirs()
+        return path
+    }
+
     actual val hasKnownBoolRoundTripIssue: Boolean = false
 }

@@ -18,6 +18,7 @@ import kotlin.random.Random
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import platform.posix.getenv
+import platform.posix.mkdir
 
 private var initialized = false
 
@@ -37,6 +38,15 @@ internal actual object MMKVTestEnv {
     }
 
     actual fun uniqueID(prefix: String): String = "$prefix-${Random.nextLong()}"
+
+    actual fun uniquePath(prefix: String): String {
+        val tmpBase = getenv("TMPDIR")?.toKString()
+            ?: getenv("TEMP")?.toKString()
+            ?: "/tmp"
+        val path = "$tmpBase/mmkv-kmp-$prefix-${Random.nextLong()}"
+        mkdir(path, 0x1C0u)
+        return path
+    }
 
     actual val hasKnownBoolRoundTripIssue: Boolean = false
 }

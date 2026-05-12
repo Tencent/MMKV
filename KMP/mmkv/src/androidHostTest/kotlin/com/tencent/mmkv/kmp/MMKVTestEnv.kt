@@ -22,5 +22,6 @@ import kotlin.random.Random
 internal actual object MMKVTestEnv {
     actual fun initializeIfPossible(): Boolean = false
     actual fun uniqueID(prefix: String): String = "$prefix-${Random.nextLong()}"
+    actual fun uniquePath(prefix: String): String = "/tmp/mmkv-kmp-$prefix-${Random.nextLong()}"
     actual val hasKnownBoolRoundTripIssue: Boolean = false
 }

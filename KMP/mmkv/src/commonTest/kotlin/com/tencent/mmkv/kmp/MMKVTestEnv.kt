@@ -38,6 +38,9 @@ internal expect object MMKVTestEnv {
     /** Generate a unique MMKV ID for a test to avoid cross-test state. */
     fun uniqueID(prefix: String): String
 
+    /** Generate a unique writable directory path for filesystem-based tests. */
+    fun uniquePath(prefix: String): String
+
     /**
      * True on platforms whose native bridge still has a known boolean
      * round-trip issue. Tests use this to gate the boolean assertions until
