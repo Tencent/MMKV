@@ -2,8 +2,19 @@ source 'https://cdn.cocoapods.org'
 
 platform :ios, '15.0'
 
+mmkv_source = ENV.fetch('MMKV_POD_SOURCE', 'git')
+
+if mmkv_source == 'local'
+  mmkv_pod = { :path => '../../..' }
+else
+  mmkv_pod = {
+    :git => ENV.fetch('MMKV_GIT_REPOSITORY', 'https://github.com/Tencent/MMKV.git'),
+    :branch => ENV.fetch('MMKV_GIT_BRANCH', 'dev_kmp')
+  }
+end
+
 target 'iosApp' do
   use_frameworks!
   pod 'composeApp', :path => '../composeApp'
-  pod 'MMKV', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev_kmp'
+  pod 'MMKV', mmkv_pod
 end
