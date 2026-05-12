@@ -5,5 +5,5 @@ platform :ios, '15.0'
 target 'iosApp' do
   use_frameworks!
   pod 'composeApp', :path => '../composeApp'
-  pod 'MMKV', '~> 2.4.0'
+  pod 'MMKV', :git => 'https://github.com/Tencent/MMKV.git', :branch => 'dev_kmp'
 end
