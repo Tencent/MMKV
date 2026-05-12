@@ -96,7 +96,11 @@ fun MMKV.Companion.initialize(
 // endregion
 
 @OptIn(ExperimentalForeignApi::class)
-actual class MMKV internal constructor(private val impl: DarwinMMKV) {
+actual class MMKV internal constructor(impl: DarwinMMKV) {
+
+    private var impl: DarwinMMKV? = impl
+
+    private fun checkedImpl(): DarwinMMKV = impl ?: error("MMKV instance has been closed")
 
     actual companion object {
         actual fun onExit() {
@@ -183,24 +187,24 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
 
     // region Properties
 
-    actual val mmapID: String get() = impl.mmapID()
+    actual val mmapID: String get() = checkedImpl().mmapID()
 
-    actual val isMultiProcess: Boolean get() = impl.isMultiProcess()
+    actual val isMultiProcess: Boolean get() = checkedImpl().isMultiProcess()
 
-    actual val isReadOnly: Boolean get() = impl.isReadOnly()
+    actual val isReadOnly: Boolean get() = checkedImpl().isReadOnly()
 
-    actual val totalSize: Long get() = impl.totalSize().toLong()
+    actual val totalSize: Long get() = checkedImpl().totalSize().toLong()
 
-    actual val actualSize: Long get() = impl.actualSize().toLong()
+    actual val actualSize: Long get() = checkedImpl().actualSize().toLong()
 
-    actual val count: Long get() = impl.count().toLong()
+    actual val count: Long get() = checkedImpl().count().toLong()
 
     @Suppress("UNCHECKED_CAST")
-    actual val allKeys: List<String> get() = (impl.allKeys() as? List<String>) ?: emptyList()
+    actual val allKeys: List<String> get() = (checkedImpl().allKeys() as? List<String>) ?: emptyList()
 
     actual val cryptKey: String?
         get() {
-            val data = impl.cryptKey() ?: return null
+            val data = checkedImpl().cryptKey() ?: return null
             return NSString.create(data = data, encoding = NSUTF8StringEncoding) as? String
         }
 
@@ -208,42 +212,42 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
 
     // region Encode
 
-    actual fun encodeBool(key: String, value: Boolean): Boolean = impl.setBool(value, forKey = key)
-    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = impl.setBool(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeInt(key: String, value: Int): Boolean = impl.setInt32(value, forKey = key)
-    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = impl.setInt32(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeLong(key: String, value: Long): Boolean = impl.setInt64(value, forKey = key)
-    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = impl.setInt64(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeFloat(key: String, value: Float): Boolean = impl.setFloat(value, forKey = key)
-    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = impl.setFloat(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeDouble(key: String, value: Double): Boolean = impl.setDouble(value, forKey = key)
-    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = impl.setDouble(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeString(key: String, value: String): Boolean = impl.setString(value, forKey = key)
-    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = impl.setString(value, forKey = key, expireDuration = expireDuration)
+    actual fun encodeBool(key: String, value: Boolean): Boolean = checkedImpl().setBool(value, forKey = key)
+    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = checkedImpl().setBool(value, forKey = key, expireDuration = expireDuration)
+    actual fun encodeInt(key: String, value: Int): Boolean = checkedImpl().setInt32(value, forKey = key)
+    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = checkedImpl().setInt32(value, forKey = key, expireDuration = expireDuration)
+    actual fun encodeLong(key: String, value: Long): Boolean = checkedImpl().setInt64(value, forKey = key)
+    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = checkedImpl().setInt64(value, forKey = key, expireDuration = expireDuration)
+    actual fun encodeFloat(key: String, value: Float): Boolean = checkedImpl().setFloat(value, forKey = key)
+    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = checkedImpl().setFloat(value, forKey = key, expireDuration = expireDuration)
+    actual fun encodeDouble(key: String, value: Double): Boolean = checkedImpl().setDouble(value, forKey = key)
+    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = checkedImpl().setDouble(value, forKey = key, expireDuration = expireDuration)
+    actual fun encodeString(key: String, value: String): Boolean = checkedImpl().setString(value, forKey = key)
+    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = checkedImpl().setString(value, forKey = key, expireDuration = expireDuration)
 
     actual fun encodeBytes(key: String, value: ByteArray): Boolean {
         val data = value.toNSData()
-        return impl.setData(data, forKey = key)
+        return checkedImpl().setData(data, forKey = key)
     }
 
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean {
         val data = value.toNSData()
-        return impl.setData(data, forKey = key, expireDuration = expireDuration)
+        return checkedImpl().setData(data, forKey = key, expireDuration = expireDuration)
     }
 
     // endregion
 
     // region Decode
 
-    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = impl.getBoolForKey(key, defaultValue = defaultValue)
-    actual fun decodeInt(key: String, defaultValue: Int): Int = impl.getInt32ForKey(key, defaultValue = defaultValue)
-    actual fun decodeLong(key: String, defaultValue: Long): Long = impl.getInt64ForKey(key, defaultValue = defaultValue)
-    actual fun decodeFloat(key: String, defaultValue: Float): Float = impl.getFloatForKey(key, defaultValue = defaultValue)
-    actual fun decodeDouble(key: String, defaultValue: Double): Double = impl.getDoubleForKey(key, defaultValue = defaultValue)
-    actual fun decodeString(key: String, defaultValue: String?): String? = impl.getStringForKey(key, defaultValue = defaultValue)
+    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = checkedImpl().getBoolForKey(key, defaultValue = defaultValue)
+    actual fun decodeInt(key: String, defaultValue: Int): Int = checkedImpl().getInt32ForKey(key, defaultValue = defaultValue)
+    actual fun decodeLong(key: String, defaultValue: Long): Long = checkedImpl().getInt64ForKey(key, defaultValue = defaultValue)
+    actual fun decodeFloat(key: String, defaultValue: Float): Float = checkedImpl().getFloatForKey(key, defaultValue = defaultValue)
+    actual fun decodeDouble(key: String, defaultValue: Double): Double = checkedImpl().getDoubleForKey(key, defaultValue = defaultValue)
+    actual fun decodeString(key: String, defaultValue: String?): String? = checkedImpl().getStringForKey(key, defaultValue = defaultValue)
 
     actual fun decodeBytes(key: String): ByteArray? {
-        val data = impl.getDataForKey(key) ?: return null
+        val data = checkedImpl().getDataForKey(key) ?: return null
         return data.toByteArray()
     }
 
@@ -251,20 +255,20 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
 
     // region Key management
 
-    actual fun containsKey(key: String): Boolean = impl.containsKey(key)
+    actual fun containsKey(key: String): Boolean = checkedImpl().containsKey(key)
 
-    actual fun countNonExpiredKeys(): Long = impl.countNonExpiredKeys().toLong()
+    actual fun countNonExpiredKeys(): Long = checkedImpl().countNonExpiredKeys().toLong()
 
     @Suppress("UNCHECKED_CAST")
-    actual fun allNonExpiredKeys(): List<String> = (impl.allNonExpiredKeys() as? List<String>) ?: emptyList()
+    actual fun allNonExpiredKeys(): List<String> = (checkedImpl().allNonExpiredKeys() as? List<String>) ?: emptyList()
 
-    actual fun removeValueForKey(key: String) = impl.removeValueForKey(key)
+    actual fun removeValueForKey(key: String) = checkedImpl().removeValueForKey(key)
 
-    actual fun removeValuesForKeys(keys: List<String>) = impl.removeValuesForKeys(keys)
+    actual fun removeValuesForKeys(keys: List<String>) = checkedImpl().removeValuesForKeys(keys)
 
-    actual fun clearAll() = impl.clearAll()
+    actual fun clearAll() = checkedImpl().clearAll()
 
-    actual fun clearAllKeepSpace() = impl.clearAllWithKeepingSpace()
+    actual fun clearAllKeepSpace() = checkedImpl().clearAllWithKeepingSpace()
 
     // endregion
 
@@ -272,41 +276,44 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
 
     actual fun reKey(newKey: String?, aes256: Boolean): Boolean {
         val keyData = newKey?.toNSData()
-        return impl.reKey(keyData, aes256 = aes256)
+        return checkedImpl().reKey(keyData, aes256 = aes256)
     }
 
     actual fun checkReSetCryptKey(cryptKey: String?, aes256: Boolean) {
         val keyData = cryptKey?.toNSData()
-        impl.checkReSetCryptKey(keyData, aes256 = aes256)
+        checkedImpl().checkReSetCryptKey(keyData, aes256 = aes256)
     }
 
     // endregion
 
     // region Utility
 
-    actual fun sync() = impl.sync()
-    actual fun async() = impl.async()
-    actual fun trim() = impl.trim()
-    actual fun close() = impl.close()
-    actual fun clearMemoryCache() = impl.clearMemoryCache()
+    actual fun sync() = checkedImpl().sync()
+    actual fun async() = checkedImpl().async()
+    actual fun trim() = checkedImpl().trim()
+    actual fun close() {
+        // impl?.close()
+        impl = null
+    }
+    actual fun clearMemoryCache() = checkedImpl().clearMemoryCache()
 
-    actual fun importFrom(source: MMKV): Long = impl.importFrom(source.impl).toLong()
+    actual fun importFrom(source: MMKV): Long = checkedImpl().importFrom(source.checkedImpl()).toLong()
 
-    actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = impl.enableAutoKeyExpire(expiredInSeconds)
-    actual fun disableAutoKeyExpire(): Boolean = impl.disableAutoKeyExpire()
+    actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = checkedImpl().enableAutoKeyExpire(expiredInSeconds)
+    actual fun disableAutoKeyExpire(): Boolean = checkedImpl().disableAutoKeyExpire()
 
-    actual fun enableCompareBeforeSet(): Boolean = impl.enableCompareBeforeSet()
-    actual fun disableCompareBeforeSet(): Boolean = impl.disableCompareBeforeSet()
+    actual fun enableCompareBeforeSet(): Boolean = checkedImpl().enableCompareBeforeSet()
+    actual fun disableCompareBeforeSet(): Boolean = checkedImpl().disableCompareBeforeSet()
 
-    actual fun checkContentChanged() = impl.checkContentChanged()
+    actual fun checkContentChanged() = checkedImpl().checkContentChanged()
 
-    actual fun getValueSize(key: String, actualSize: Boolean): Long = impl.getValueSizeForKey(key, actualSize = actualSize).toLong()
+    actual fun getValueSize(key: String, actualSize: Boolean): Long = checkedImpl().getValueSizeForKey(key, actualSize = actualSize).toLong()
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
         if (buffer.isEmpty()) return -1
         val nsData = platform.Foundation.NSMutableData.create(length = buffer.size.toULong())!!
-        val written = impl.writeValueForKey(key, toBuffer = nsData)
+        val written = checkedImpl().writeValueForKey(key, toBuffer = nsData)
         if (written > 0) {
             val len = minOf(written, buffer.size)
             buffer.usePinned { pinned ->
@@ -316,13 +323,13 @@ actual class MMKV internal constructor(private val impl: DarwinMMKV) {
         return written
     }
 
-    actual fun lock() = impl.lock()
-    actual fun unlock() = impl.unlock()
-    actual fun tryLock(): Boolean = impl.tryLock()
+    actual fun lock() = checkedImpl().lock()
+    actual fun unlock() = checkedImpl().unlock()
+    actual fun tryLock(): Boolean = checkedImpl().tryLock()
 
-    actual val isExpirationEnabled: Boolean get() = impl.isExpirationEnabled()
+    actual val isExpirationEnabled: Boolean get() = checkedImpl().isExpirationEnabled()
     actual val isEncryptionEnabled: Boolean get() = (cryptKey != null)
-    actual val isCompareBeforeSetEnabled: Boolean get() = impl.isCompareBeforeSetEnabled()
+    actual val isCompareBeforeSetEnabled: Boolean get() = checkedImpl().isCompareBeforeSetEnabled()
 
     // endregion
 }
