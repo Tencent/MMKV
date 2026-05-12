@@ -42,5 +42,16 @@ internal actual object MMKVTestEnv {
 
     actual fun uniqueID(prefix: String): String = "$prefix-${Random.nextLong()}"
 
+    actual fun uniquePath(prefix: String): String {
+        val path = "${NSTemporaryDirectory()}mmkv-kmp-$prefix-${Random.nextLong()}"
+        NSFileManager.defaultManager.createDirectoryAtPath(
+            path = path,
+            withIntermediateDirectories = true,
+            attributes = null,
+            error = null,
+        )
+        return path
+    }
+
     actual val hasKnownBoolRoundTripIssue: Boolean = false
 }

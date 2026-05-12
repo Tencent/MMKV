@@ -145,11 +145,9 @@ unzip -l mmkv/build/libs/mmkv-desktop.jar | grep native
 
 ## Remaining follow-ups
 
-- **Darwin pod verification.** The KMP Darwin source now calls new ObjC APIs. Verify with `-PMMKV_POD_SOURCE=git` against a branch/tag containing the updated `MMKV.h` / `libMMKV.mm`, then with the official pod once released.
-- **Android native build include issue.** `Android/MMKV :mmkv:assembleDefaultCppDebug` currently fails because `MMKV/MMKVLog.h` is missing from `Core/include`; investigate include generation/copying before treating Android native verification as complete.
 - **Credentials-backed publication dry run.** The Gradle wiring is in place, but real Sonatype/signing credentials are still required for an end-to-end publish.
 - **`linuxArm64` publication strategy.** The target is wired in the project and compiled in CI, but publishing that artifact still needs an ARM64 Linux runner or a maintained cross-toolchain configuration.
-- **Expand parity tests.** Smoke coverage now includes feature-state properties, buffer write, compare-before-set, expiration, and lock calls. Add backup/restore, namespace, `getValueSize`, `importFrom`, `clearAllKeepSpace`, `trim`, handler callbacks, and empty `ByteArray` behavior.
+- **Finish deeper parity tests.** Smoke coverage now includes feature-state properties, buffer write, compare-before-set, expiration, lock calls, namespace, backup/restore, `getValueSize`, `importFrom`, `clearAllKeepSpace`, `trim`, handler registration, and empty `ByteArray` behavior. Still add explicit handler callback delivery tests and Android device/emulator coverage beyond host compile.
 - **Harden desktop lifecycle/concurrency.** Native desktop handler storage still needs thread-safety review; JVM/native desktop wrappers still have undefined use-after-close behavior.
 - **CI/release workflow automation.** Explicitly skipped for now; re-add `.github/workflows/*` later from a credential with `workflow` scope.
 - **`watchOS` / `tvOS` / `visionOS` targets** — explicitly deferred.
@@ -169,13 +167,13 @@ unzip -l mmkv/build/libs/mmkv-desktop.jar | grep native
 
 ### API and behavior gaps
 
-1. **API parity pass in progress.** Darwin lock/status APIs, Android public status APIs/native buffer helper, and desktop C bridge handler APIs were added on 2026-05-11. KMP `setLogLevel()` was dropped because upstream runtime set-log-level APIs are deprecated; use `MMKV.initialize(..., logLevel = ...)`.
+1. **API parity pass mostly complete.** Darwin lock/status APIs, Android public status APIs/native buffer helper, and desktop C bridge handler APIs were added and verified against `dev_kmp` where needed on 2026-05-11. KMP `setLogLevel()` was dropped because upstream runtime set-log-level APIs are deprecated; use `MMKV.initialize(..., logLevel = ...)`.
 2. **Android compare semantics differ.** `enableCompareBeforeSet()` / `disableCompareBeforeSet()` return true in KMP because Android upstream APIs are void; use `isCompareBeforeSetEnabled` to observe effective state.
 3. **API parity scope is undecided.** Common KMP omits Android `StringSet` and platform-serializable/Parcelable APIs. Decide whether to add portable `Set<String>` support or document omission.
 
 ### Reliability and test gaps
 
-1. **Tests are still limited.** Smoke coverage now includes feature-state properties, `writeValueToBuffer`, compare-before-set, expiration, and lock calls, but still needs backup/restore, namespace, `getValueSize`, `importFrom`, `clearAllKeepSpace`, `trim`, handler callbacks, and empty `ByteArray` behavior.
+1. **Handler callback delivery is still shallow-tested.** Common smoke tests register/unregister handlers, but should assert actual log/error/content callback delivery on supported platforms.
 2. **Android host tests skip.** `androidHostTest` cannot initialize MMKV and returns false; add Robolectric or require emulator/device CI beyond the one Android device string round-trip.
 3. **Native desktop handler holder is not thread-safe.** `NativeDesktopMMKVHandlerHolder.handler` is a plain mutable var read from C callback threads.
 4. **Use-after-close is undefined.** JVM/native desktop wrappers keep raw handles after `close()`. Either null/guard handles or explicitly document matching core undefined behavior.

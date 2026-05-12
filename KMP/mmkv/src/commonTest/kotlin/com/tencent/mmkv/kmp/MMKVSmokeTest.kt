@@ -188,6 +188,63 @@ class MMKVSmokeTest {
     }
 
     @Test
+    fun storageUtilitiesAndNamespace() = onlyIfReady {
+        val source = fresh("source")
+        val dest = fresh("dest")
+        try {
+            val bytes = byteArrayOf(10, 20, 30, 40)
+            assertTrue(source.encodeBytes("payload", bytes))
+            assertEquals(bytes.size.toLong(), source.getValueSize("payload", actualSize = true))
+            assertEquals(1L, dest.importFrom(source))
+            assertContentEquals(bytes, dest.decodeBytes("payload"))
+
+            dest.clearAllKeepSpace()
+            assertEquals(0L, dest.count)
+            dest.trim()
+
+            assertTrue(dest.encodeBytes("empty", ByteArray(0)))
+            val decodedEmpty = dest.decodeBytes("empty")
+            if (decodedEmpty != null) {
+                assertContentEquals(ByteArray(0), decodedEmpty)
+            }
+
+            val namespace = MMKVNameSpace.of(MMKVTestEnv.uniquePath("namespace"))
+            val nsID = MMKVTestEnv.uniqueID("ns")
+            val nsKV = namespace.mmkvWithID(nsID)
+            nsKV.clearAll()
+            assertTrue(nsKV.encodeString("scoped", "value"))
+            assertTrue(namespace.checkExist(nsID))
+
+            val backupDir = MMKVTestEnv.uniquePath("backup")
+            assertTrue(namespace.backupOneToDirectory(nsID, backupDir))
+            nsKV.clearAll()
+            assertNull(nsKV.decodeString("scoped"))
+            assertTrue(namespace.restoreOneFromDirectory(nsID, backupDir))
+            assertEquals("value", namespace.mmkvWithID(nsID).decodeString("scoped"))
+            namespace.close()
+        } finally {
+            source.clearAll()
+            dest.clearAll()
+        }
+    }
+
+    @Test
+    fun handlerRegistrationDoesNotCrash() = onlyIfReady {
+        MMKV.registerHandler(object : MMKVHandler() {
+            override fun wantLogRedirect(): Boolean = true
+            override fun wantContentChangeNotification(): Boolean = true
+        })
+        val kv = fresh("handler")
+        try {
+            assertTrue(kv.encodeString("key", "value"))
+            kv.checkContentChanged()
+        } finally {
+            MMKV.unRegisterHandler()
+            kv.clearAll()
+        }
+    }
+
+    @Test
     fun cryptRoundTrip() = onlyIfReady {
         if (!MMKVTestEnv.initializeIfPossible()) return@onlyIfReady
         val id = MMKVTestEnv.uniqueID("crypt")
