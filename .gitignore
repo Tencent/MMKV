@@ -49,6 +49,9 @@ dist/
 #CLion
 .idea
 
+# CodeBuddy / Claude local metadata
+.claude/
+
 #Android Studio
 .cxx
 

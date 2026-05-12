@@ -29,4 +29,11 @@ internal object AndroidDeviceTestEnv {
     }
 
     fun uniqueID(prefix: String): String = "$prefix-${Random.nextLong()}"
+
+    fun uniquePath(prefix: String): String {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dir = java.io.File(context.cacheDir, "mmkv-kmp-$prefix-${Random.nextLong()}")
+        dir.mkdirs()
+        return dir.absolutePath
+    }
 }

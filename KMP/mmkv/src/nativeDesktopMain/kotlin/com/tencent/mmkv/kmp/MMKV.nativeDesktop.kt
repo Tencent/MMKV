@@ -424,6 +424,7 @@ private fun nativeDesktopCallbacks(): CValue<MMKVHandler_t> = cValue {
 
 @OptIn(ExperimentalForeignApi::class)
 private object NativeDesktopMMKVHandlerHolder {
+    @Volatile
     var handler: MMKVHandler? = null
 
     val logCallback: mmkv_log_callback_t = staticCFunction { level, file, line, function, message ->
