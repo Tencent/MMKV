@@ -20,37 +20,15 @@
 
 package com.tencent.mmkv.kmp
 
-import cocoapods.MMKV.MMKV as DarwinMMKV
-import cocoapods.MMKV.MMKVConfig as DarwinMMKVConfig
-import cocoapods.MMKV.MMKVHandlerProtocol
-import cocoapods.MMKV.MMKVLogDebug
-import cocoapods.MMKV.MMKVLogError
-import cocoapods.MMKV.MMKVLogInfo
-import cocoapods.MMKV.MMKVLogLevel as DarwinMMKVLogLevel
-import cocoapods.MMKV.MMKVLogNone
-import cocoapods.MMKV.MMKVLogWarning
-import cocoapods.MMKV.MMKVMultiProcess
-import cocoapods.MMKV.MMKVOnErrorDiscard
-import cocoapods.MMKV.MMKVOnErrorNotSet
-import cocoapods.MMKV.MMKVOnErrorRecover
-import cocoapods.MMKV.MMKVReadOnly
-import cocoapods.MMKV.MMKVRecoverStrategic as DarwinMMKVRecoverStrategic
-import cocoapods.MMKV.MMKVSingleProcess
-import kotlinx.cinterop.CValue
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.cValue
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.toKString
-import kotlinx.cinterop.usePinned
-import platform.Foundation.NSData
-import platform.Foundation.NSNumber
-import platform.Foundation.NSString
-import platform.Foundation.create
-import platform.Foundation.dataUsingEncoding
-import platform.Foundation.NSUTF8StringEncoding
-import platform.darwin.NSObject
+import kotlinx.cinterop.*
+import kotlin.concurrent.Volatile
+import mmkv.*
+import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSUserDomainMask
 import platform.posix.memcpy
+
+private var darwinGroupRootDir: String? = null
 
 // region Platform-specific initialization (Darwin doesn't need Context)
 
@@ -69,8 +47,14 @@ fun MMKV.Companion.initialize(
     logLevel: MMKVLogLevel = MMKVLogLevel.Info,
     handler: MMKVHandler? = null,
 ): String {
-    val darwinHandler = handler?.let { DarwinMMKVHandlerAdapter(it) }
-    return DarwinMMKV.initializeMMKV(rootDir, logLevel = logLevel.toDarwin(), handler = darwinHandler) ?: ""
+    val effectiveRootDir = rootDir ?: defaultDarwinRootDir()
+    if (handler != null) {
+        DarwinMMKVHandlerHolder.handler = handler
+        mmkv_initialize_with_handler(effectiveRootDir, logLevel.toNativeLevel(), darwinCallbacks())
+    } else {
+        mmkv_initialize(effectiveRootDir, logLevel.toNativeLevel())
+    }
+    return mmkv_root_dir()?.toKString() ?: ""
 }
 
 /**
@@ -89,363 +73,418 @@ fun MMKV.Companion.initialize(
     logLevel: MMKVLogLevel = MMKVLogLevel.Info,
     handler: MMKVHandler? = null,
 ): String {
-    val darwinHandler = handler?.let { DarwinMMKVHandlerAdapter(it) }
-    return DarwinMMKV.initializeMMKV(rootDir, groupDir = groupDir, logLevel = logLevel.toDarwin(), handler = darwinHandler) ?: ""
+    darwinGroupRootDir = groupDir.trimEnd('/') + "/mmkv"
+    return initialize(rootDir, logLevel, handler)
 }
 
 // endregion
 
 @OptIn(ExperimentalForeignApi::class)
-actual class MMKV internal constructor(impl: DarwinMMKV) {
-
-    private var impl: DarwinMMKV? = impl
-
-    private fun checkedImpl(): DarwinMMKV = impl ?: error("MMKV instance has been closed")
+actual class MMKV internal constructor(private val handle: COpaquePointer) {
 
     actual companion object {
         actual fun onExit() {
-            DarwinMMKV.onAppTerminate()
+            mmkv_on_exit()
         }
 
         actual fun defaultMMKV(): MMKV {
-            return MMKV(DarwinMMKV.defaultMMKV()!!)
+            val config = buildDefaultNativeConfig()
+            return MMKV(mmkv_default(config)!!)
         }
 
         actual fun defaultMMKV(config: MMKVConfig): MMKV {
-            return MMKV(DarwinMMKV.defaultMMKVWithConfig(config.toDarwinCValue())!!)
+            return withNativeConfig(config) { cfg ->
+                MMKV(mmkv_default(cfg)!!)
+            }
         }
 
         actual fun mmkvWithID(mmapID: String): MMKV {
-            return MMKV(DarwinMMKV.mmkvWithID(mmapID)!!)
+            val config = buildDefaultNativeConfig()
+            return MMKV(mmkv_with_id(mmapID, config)!!)
         }
 
         actual fun mmkvWithID(mmapID: String, config: MMKVConfig): MMKV {
-            return MMKV(DarwinMMKV.mmkvWithID(mmapID, config = config.toDarwinCValue())!!)
+            return withNativeConfig(config.withDarwinGroupRootIfNeeded()) { cfg ->
+                MMKV(mmkv_with_id(mmapID, cfg)!!)
+            }
         }
 
         actual fun pageSize(): Int {
-            return DarwinMMKV.pageSize().toInt()
+            return mmkv_page_size()
         }
 
         actual fun version(): String {
-            return DarwinMMKV.version()
+            return mmkv_version()?.toKString() ?: ""
         }
 
         actual fun rootDir(): String {
-            return DarwinMMKV.mmkvBasePath()
+            return mmkv_root_dir()?.toKString() ?: ""
         }
 
         actual fun backupOneToDirectory(mmapID: String, dstDir: String, rootPath: String?): Boolean {
-            return DarwinMMKV.backupOneMMKV(mmapID, rootPath = rootPath, toDirectory = dstDir)
+            return mmkv_backup_one(mmapID, dstDir, rootPath)
         }
 
         actual fun restoreOneFromDirectory(mmapID: String, srcDir: String, rootPath: String?): Boolean {
-            return DarwinMMKV.restoreOneMMKV(mmapID, rootPath = rootPath, fromDirectory = srcDir)
+            return mmkv_restore_one(mmapID, srcDir, rootPath)
         }
 
         actual fun backupAllToDirectory(dstDir: String): Long {
-            return DarwinMMKV.backupAll(null, toDirectory = dstDir).toLong()
+            return mmkv_backup_all(dstDir, null).toLong()
         }
 
         actual fun restoreAllFromDirectory(srcDir: String): Long {
-            return DarwinMMKV.restoreAll(null, fromDirectory = srcDir).toLong()
+            return mmkv_restore_all(srcDir, null).toLong()
         }
 
         actual fun isFileValid(mmapID: String, rootPath: String?): Boolean {
-            return DarwinMMKV.isFileValid(mmapID, rootPath = rootPath)
+            return mmkv_is_file_valid(mmapID, rootPath)
         }
 
         actual fun removeStorage(mmapID: String, rootPath: String?): Boolean {
-            return DarwinMMKV.removeStorage(mmapID, rootPath = rootPath)
+            return mmkv_remove_storage(mmapID, rootPath)
         }
 
         actual fun checkExist(mmapID: String, rootPath: String?): Boolean {
-            return DarwinMMKV.checkExist(mmapID, rootPath = rootPath)
+            return mmkv_check_exist(mmapID, rootPath)
         }
 
-        private var currentHandler: DarwinMMKVHandlerAdapter? = null
-
         actual fun registerHandler(handler: MMKVHandler) {
-            val adapter = DarwinMMKVHandlerAdapter(handler)
-            currentHandler = adapter
-            @Suppress("DEPRECATION")
-            DarwinMMKV.registerHandler(adapter)
+            DarwinMMKVHandlerHolder.handler = handler
+            mmkv_register_handler(darwinCallbacks())
         }
 
         actual fun unRegisterHandler() {
-            currentHandler = null
-            // The ObjC class method is `+unregiserHandler` (typo preserved for
-            // back-compat with published MMKV pods <= 2.4.0). In iOS MMKV 2.4.1+
-            // the canonically-spelled `+unregisterHandler` is the primary entry
-            // point and `+unregiserHandler` forwards to it. Calling the typo'd
-            // name here keeps the KMP wrapper linkable against every published
-            // MMKV pod version.
-            @Suppress("DEPRECATION")
-            DarwinMMKV.unregiserHandler()
+            DarwinMMKVHandlerHolder.handler = null
+            mmkv_unregister_handler()
         }
     }
 
     // region Properties
 
-    actual val mmapID: String get() = checkedImpl().mmapID()
+    actual val mmapID: String
+        get() = mmkv_mmap_id(handle)?.toKString() ?: ""
 
-    actual val isMultiProcess: Boolean get() = checkedImpl().isMultiProcess()
+    actual val isMultiProcess: Boolean
+        get() = mmkv_is_multi_process(handle)
 
-    actual val isReadOnly: Boolean get() = checkedImpl().isReadOnly()
+    actual val isReadOnly: Boolean
+        get() = mmkv_is_read_only(handle)
 
-    actual val totalSize: Long get() = checkedImpl().totalSize().toLong()
+    actual val totalSize: Long
+        get() = mmkv_total_size(handle).toLong()
 
-    actual val actualSize: Long get() = checkedImpl().actualSize().toLong()
+    actual val actualSize: Long
+        get() = mmkv_actual_size(handle).toLong()
 
-    actual val count: Long get() = checkedImpl().count().toLong()
+    actual val count: Long
+        get() = mmkv_count(handle, false).toLong()
 
-    @Suppress("UNCHECKED_CAST")
-    actual val allKeys: List<String> get() = (checkedImpl().allKeys() as? List<String>) ?: emptyList()
+    actual val allKeys: List<String>
+        get() = memScoped {
+            val lengthPtr = alloc<ULongVar>()
+            val keys = mmkv_all_keys(handle, lengthPtr.ptr, false) ?: return@memScoped emptyList()
+            val count = lengthPtr.value.toInt()
+            val result = (0 until count).map { i ->
+                keys[i]?.toKString() ?: ""
+            }
+            for (i in 0 until count) {
+                mmkv_free(keys[i])
+            }
+            mmkv_free(keys)
+            result
+        }
 
     actual val cryptKey: String?
         get() {
-            val data = checkedImpl().cryptKey() ?: return null
-            return NSString.create(data = data, encoding = NSUTF8StringEncoding) as? String
+            memScoped {
+                val lengthPtr = alloc<UIntVar>()
+                val ptr = mmkv_crypt_key(handle, lengthPtr.ptr) ?: return null
+                val length = lengthPtr.value.toInt()
+                if (length == 0) {
+                    mmkv_free(ptr)
+                    return null
+                }
+                val bytes = ByteArray(length)
+                bytes.usePinned { pinned ->
+                    memcpy(pinned.addressOf(0), ptr, length.toULong())
+                }
+                mmkv_free(ptr)
+                return bytes.decodeToString()
+            }
         }
 
     // endregion
 
     // region Encode
 
-    actual fun encodeBool(key: String, value: Boolean): Boolean = checkedImpl().setBool(value, forKey = key)
-    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = checkedImpl().setBool(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeInt(key: String, value: Int): Boolean = checkedImpl().setInt32(value, forKey = key)
-    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = checkedImpl().setInt32(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeLong(key: String, value: Long): Boolean = checkedImpl().setInt64(value, forKey = key)
-    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = checkedImpl().setInt64(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeFloat(key: String, value: Float): Boolean = checkedImpl().setFloat(value, forKey = key)
-    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = checkedImpl().setFloat(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeDouble(key: String, value: Double): Boolean = checkedImpl().setDouble(value, forKey = key)
-    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = checkedImpl().setDouble(value, forKey = key, expireDuration = expireDuration)
-    actual fun encodeString(key: String, value: String): Boolean = checkedImpl().setString(value, forKey = key)
-    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = checkedImpl().setString(value, forKey = key, expireDuration = expireDuration)
+    actual fun encodeBool(key: String, value: Boolean): Boolean = mmkv_encode_bool(handle, key, value)
+    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = mmkv_encode_bool_v2(handle, key, value, expireDuration)
+    actual fun encodeInt(key: String, value: Int): Boolean = mmkv_encode_int32(handle, key, value)
+    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = mmkv_encode_int32_v2(handle, key, value, expireDuration)
+    actual fun encodeLong(key: String, value: Long): Boolean = mmkv_encode_int64(handle, key, value)
+    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = mmkv_encode_int64_v2(handle, key, value, expireDuration)
+    actual fun encodeFloat(key: String, value: Float): Boolean = mmkv_encode_float(handle, key, value)
+    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = mmkv_encode_float_v2(handle, key, value, expireDuration)
+    actual fun encodeDouble(key: String, value: Double): Boolean = mmkv_encode_double(handle, key, value)
+    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = mmkv_encode_double_v2(handle, key, value, expireDuration)
+    actual fun encodeString(key: String, value: String): Boolean = mmkv_encode_string(handle, key, value)
+    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = mmkv_encode_string_v2(handle, key, value, expireDuration)
 
     actual fun encodeBytes(key: String, value: ByteArray): Boolean {
-        val data = value.toNSData()
-        return checkedImpl().setData(data, forKey = key)
+        if (value.isEmpty()) return mmkv_encode_bytes(handle, key, null, 0)
+        return value.usePinned { pinned ->
+            mmkv_encode_bytes(handle, key, pinned.addressOf(0), value.size.toLong())
+        }
     }
 
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean {
-        val data = value.toNSData()
-        return checkedImpl().setData(data, forKey = key, expireDuration = expireDuration)
+        if (value.isEmpty()) return mmkv_encode_bytes_v2(handle, key, null, 0, expireDuration)
+        return value.usePinned { pinned ->
+            mmkv_encode_bytes_v2(handle, key, pinned.addressOf(0), value.size.toLong(), expireDuration)
+        }
     }
 
     // endregion
 
     // region Decode
 
-    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = checkedImpl().getBoolForKey(key, defaultValue = defaultValue)
-    actual fun decodeInt(key: String, defaultValue: Int): Int = checkedImpl().getInt32ForKey(key, defaultValue = defaultValue)
-    actual fun decodeLong(key: String, defaultValue: Long): Long = checkedImpl().getInt64ForKey(key, defaultValue = defaultValue)
-    actual fun decodeFloat(key: String, defaultValue: Float): Float = checkedImpl().getFloatForKey(key, defaultValue = defaultValue)
-    actual fun decodeDouble(key: String, defaultValue: Double): Double = checkedImpl().getDoubleForKey(key, defaultValue = defaultValue)
-    actual fun decodeString(key: String, defaultValue: String?): String? = checkedImpl().getStringForKey(key, defaultValue = defaultValue)
+    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = mmkv_decode_bool(handle, key, defaultValue)
+    actual fun decodeInt(key: String, defaultValue: Int): Int = mmkv_decode_int32(handle, key, defaultValue)
+    actual fun decodeLong(key: String, defaultValue: Long): Long = mmkv_decode_int64(handle, key, defaultValue)
+    actual fun decodeFloat(key: String, defaultValue: Float): Float = mmkv_decode_float(handle, key, defaultValue)
+    actual fun decodeDouble(key: String, defaultValue: Double): Double = mmkv_decode_double(handle, key, defaultValue)
+    actual fun decodeString(key: String, defaultValue: String?): String? {
+        val ptr = mmkv_decode_string(handle, key) ?: return defaultValue
+        val result = ptr.toKString()
+        mmkv_free(ptr)
+        return result
+    }
 
     actual fun decodeBytes(key: String): ByteArray? {
-        val data = checkedImpl().getDataForKey(key) ?: return null
-        return data.toByteArray()
+        memScoped {
+            val lengthPtr = alloc<ULongVar>()
+            val ptr = mmkv_decode_bytes(handle, key, lengthPtr.ptr) ?: return null
+            val length = lengthPtr.value.toInt()
+            if (length == 0) {
+                mmkv_free(ptr)
+                return null
+            }
+            val bytes = ByteArray(length)
+            bytes.usePinned { pinned ->
+                memcpy(pinned.addressOf(0), ptr, length.toULong())
+            }
+            mmkv_free(ptr)
+            return bytes
+        }
     }
 
     // endregion
 
     // region Key management
 
-    actual fun containsKey(key: String): Boolean = checkedImpl().containsKey(key)
+    actual fun containsKey(key: String): Boolean = mmkv_contains_key(handle, key)
 
-    actual fun countNonExpiredKeys(): Long = checkedImpl().countNonExpiredKeys().toLong()
+    actual fun countNonExpiredKeys(): Long = mmkv_count(handle, true).toLong()
 
-    @Suppress("UNCHECKED_CAST")
-    actual fun allNonExpiredKeys(): List<String> = (checkedImpl().allNonExpiredKeys() as? List<String>) ?: emptyList()
+    actual fun allNonExpiredKeys(): List<String> {
+        memScoped {
+            val lengthPtr = alloc<ULongVar>()
+            val keys = mmkv_all_keys(handle, lengthPtr.ptr, true) ?: return emptyList()
+            val count = lengthPtr.value.toInt()
+            val result = (0 until count).map { i ->
+                keys[i]?.toKString() ?: ""
+            }
+            for (i in 0 until count) {
+                mmkv_free(keys[i])
+            }
+            mmkv_free(keys)
+            return result
+        }
+    }
 
-    actual fun removeValueForKey(key: String) = checkedImpl().removeValueForKey(key)
+    actual fun removeValueForKey(key: String) = mmkv_remove_value(handle, key)
 
-    actual fun removeValuesForKeys(keys: List<String>) = checkedImpl().removeValuesForKeys(keys)
+    actual fun removeValuesForKeys(keys: List<String>) {
+        if (keys.isEmpty()) return
+        memScoped {
+            val cArray = allocArray<CPointerVar<ByteVar>>(keys.size)
+            keys.forEachIndexed { index, key ->
+                cArray[index] = key.cstr.ptr
+            }
+            mmkv_remove_values(handle, cArray, keys.size.toULong())
+        }
+    }
 
-    actual fun clearAll() = checkedImpl().clearAll()
+    actual fun clearAll() = mmkv_clear_all(handle, false)
 
-    actual fun clearAllKeepSpace() = checkedImpl().clearAllWithKeepingSpace()
+    actual fun clearAllKeepSpace() = mmkv_clear_all(handle, true)
 
     // endregion
 
     // region Encryption
 
-    actual fun reKey(newKey: String?, aes256: Boolean): Boolean {
-        val keyData = newKey?.toNSData()
-        return checkedImpl().reKey(keyData, aes256 = aes256)
-    }
+    actual fun reKey(newKey: String?, aes256: Boolean): Boolean = mmkv_rekey(handle, newKey, aes256)
 
-    actual fun checkReSetCryptKey(cryptKey: String?, aes256: Boolean) {
-        val keyData = cryptKey?.toNSData()
-        checkedImpl().checkReSetCryptKey(keyData, aes256 = aes256)
-    }
+    actual fun checkReSetCryptKey(cryptKey: String?, aes256: Boolean) = mmkv_check_reset_crypt_key(handle, cryptKey, aes256)
 
     // endregion
 
     // region Utility
 
-    actual fun sync() = checkedImpl().sync()
-    actual fun async() = checkedImpl().async()
-    actual fun trim() = checkedImpl().trim()
-    actual fun close() {
-        // impl?.close()
-        impl = null
-    }
-    actual fun clearMemoryCache() = checkedImpl().clearMemoryCache()
+    actual fun sync() = mmkv_sync(handle, true)
+    actual fun async() = mmkv_sync(handle, false)
+    actual fun trim() = mmkv_trim(handle)
+    actual fun close() = mmkv_close(handle)
+    actual fun clearMemoryCache() = mmkv_clear_memory_cache(handle, false)
 
-    actual fun importFrom(source: MMKV): Long = checkedImpl().importFrom(source.checkedImpl()).toLong()
+    actual fun importFrom(source: MMKV): Long = mmkv_import_from(handle, source.handle).toLong()
 
-    actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = checkedImpl().enableAutoKeyExpire(expiredInSeconds)
-    actual fun disableAutoKeyExpire(): Boolean = checkedImpl().disableAutoKeyExpire()
+    actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = mmkv_enable_auto_expire(handle, expiredInSeconds)
+    actual fun disableAutoKeyExpire(): Boolean = mmkv_disable_auto_expire(handle)
 
-    actual fun enableCompareBeforeSet(): Boolean = checkedImpl().enableCompareBeforeSet()
-    actual fun disableCompareBeforeSet(): Boolean = checkedImpl().disableCompareBeforeSet()
+    actual fun enableCompareBeforeSet(): Boolean = mmkv_enable_compare_before_set(handle)
+    actual fun disableCompareBeforeSet(): Boolean = mmkv_disable_compare_before_set(handle)
 
-    actual fun checkContentChanged() = checkedImpl().checkContentChanged()
+    actual fun checkContentChanged() = mmkv_check_content_changed(handle)
 
-    actual fun getValueSize(key: String, actualSize: Boolean): Long = checkedImpl().getValueSizeForKey(key, actualSize = actualSize).toLong()
+    actual fun getValueSize(key: String, actualSize: Boolean): Long = mmkv_get_value_size(handle, key, actualSize).toLong()
 
-    @OptIn(ExperimentalForeignApi::class)
     actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
         if (buffer.isEmpty()) return -1
-        val nsData = platform.Foundation.NSMutableData.create(length = buffer.size.toULong())!!
-        val written = checkedImpl().writeValueForKey(key, toBuffer = nsData)
-        if (written > 0) {
-            val len = minOf(written, buffer.size)
-            buffer.usePinned { pinned ->
-                memcpy(pinned.addressOf(0), nsData.bytes, len.toULong())
-            }
+        return buffer.usePinned { pinned ->
+            mmkv_write_value_to_buffer(handle, key, pinned.addressOf(0), buffer.size)
         }
-        return written
     }
 
-    actual fun lock() = checkedImpl().lock()
-    actual fun unlock() = checkedImpl().unlock()
-    actual fun tryLock(): Boolean = checkedImpl().tryLock()
+    actual fun lock() = mmkv_lock(handle)
+    actual fun unlock() = mmkv_unlock(handle)
+    actual fun tryLock(): Boolean = mmkv_try_lock(handle)
 
-    actual val isExpirationEnabled: Boolean get() = checkedImpl().isExpirationEnabled()
-    actual val isEncryptionEnabled: Boolean get() = (cryptKey != null)
-    actual val isCompareBeforeSetEnabled: Boolean get() = checkedImpl().isCompareBeforeSetEnabled()
+    actual val isExpirationEnabled: Boolean get() = mmkv_is_expiration_enabled(handle)
+    actual val isEncryptionEnabled: Boolean get() = mmkv_is_encryption_enabled(handle)
+    actual val isCompareBeforeSetEnabled: Boolean get() = mmkv_is_compare_before_set_enabled(handle)
 
     // endregion
 }
 
-// region Conversion helpers
+// region Helper functions
 
-@OptIn(ExperimentalForeignApi::class)
-private fun MMKVLogLevel.toDarwin(): DarwinMMKVLogLevel = when (this) {
-    MMKVLogLevel.Debug -> MMKVLogDebug
-    MMKVLogLevel.Info -> MMKVLogInfo
-    MMKVLogLevel.Warning -> MMKVLogWarning
-    MMKVLogLevel.Error -> MMKVLogError
-    MMKVLogLevel.None -> MMKVLogNone
+private fun MMKVLogLevel.toNativeLevel(): Int = when (this) {
+    MMKVLogLevel.Debug -> 0
+    MMKVLogLevel.Info -> 1
+    MMKVLogLevel.Warning -> 2
+    MMKVLogLevel.Error -> 3
+    MMKVLogLevel.None -> 4
 }
 
-@OptIn(ExperimentalForeignApi::class)
-private fun darwinLogLevelToCommon(level: DarwinMMKVLogLevel): MMKVLogLevel = when (level) {
-    MMKVLogDebug -> MMKVLogLevel.Debug
-    MMKVLogInfo -> MMKVLogLevel.Info
-    MMKVLogWarning -> MMKVLogLevel.Warning
-    MMKVLogError -> MMKVLogLevel.Error
-    MMKVLogNone -> MMKVLogLevel.None
+private fun nativeLogLevelToCommon(level: Int): MMKVLogLevel = when (level) {
+    0 -> MMKVLogLevel.Debug
+    1 -> MMKVLogLevel.Info
+    2 -> MMKVLogLevel.Warning
+    3 -> MMKVLogLevel.Error
+    4 -> MMKVLogLevel.None
     else -> MMKVLogLevel.Info
 }
 
-@OptIn(ExperimentalForeignApi::class)
-private fun MMKVRecoverStrategic.toDarwin(): DarwinMMKVRecoverStrategic = when (this) {
-    MMKVRecoverStrategic.OnErrorDiscard -> MMKVOnErrorDiscard
-    MMKVRecoverStrategic.OnErrorRecover -> MMKVOnErrorRecover
+private fun defaultDarwinRootDir(): String {
+    val paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
+    val documentDir = paths.firstOrNull() as? String
+        ?: error("Unable to resolve NSDocumentDirectory for MMKV root")
+    return documentDir.trimEnd('/') + "/mmkv"
 }
 
-@OptIn(ExperimentalForeignApi::class)
-private fun darwinRecoverToCommon(value: DarwinMMKVRecoverStrategic): MMKVRecoverStrategic = when (value) {
-    MMKVOnErrorRecover -> MMKVRecoverStrategic.OnErrorRecover
-    else -> MMKVRecoverStrategic.OnErrorDiscard
-}
-
-@OptIn(ExperimentalForeignApi::class)
-internal fun MMKVConfig.toDarwinCValue(): CValue<DarwinMMKVConfig> = cValue {
-    mode = when {
-        this@toDarwinCValue.mode and MMKVMode.READ_ONLY != 0 -> MMKVReadOnly
-        this@toDarwinCValue.mode and MMKVMode.MULTI_PROCESS != 0 -> MMKVMultiProcess
-        else -> MMKVSingleProcess
+private fun MMKVConfig.withDarwinGroupRootIfNeeded(): MMKVConfig {
+    val groupRoot = darwinGroupRootDir
+    return if (rootPath == null && mode != MMKVMode.SINGLE_PROCESS && groupRoot != null) {
+        copy(rootPath = groupRoot)
+    } else {
+        this
     }
-    aes256 = this@toDarwinCValue.aes256
-    cryptKey = this@toDarwinCValue.cryptKey?.toNSData()
-    rootPath = this@toDarwinCValue.rootPath
-    expectedCapacity = this@toDarwinCValue.expectedCapacity.toULong()
-    enableKeyExpire = this@toDarwinCValue.enableKeyExpire?.let { NSNumber(bool = it) }
-    expiredInSeconds = this@toDarwinCValue.expiredInSeconds
-    enableCompareBeforeSet = this@toDarwinCValue.enableCompareBeforeSet
-    recover = this@toDarwinCValue.recover?.toDarwin() ?: MMKVOnErrorNotSet
-    itemSizeLimit = this@toDarwinCValue.itemSizeLimit
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun buildDefaultNativeConfig(): CValue<MMKVConfig_t> = cValue {
+    mode = MMKVMode.SINGLE_PROCESS
+    cryptKey = null
+    aes256 = false
+    rootPath = null
+    expectedCapacity = 0u
+    enableKeyExpire = -1
+    expiredInSeconds = 0u
+    enableCompareBeforeSet = false
+    recover = -1
+    itemSizeLimit = 0u
+}
+
+@OptIn(ExperimentalForeignApi::class)
+internal inline fun <R> withNativeConfig(config: MMKVConfig, block: (CValue<MMKVConfig_t>) -> R): R = memScoped {
+    val cfg = alloc<MMKVConfig_t>()
+    cfg.mode = config.mode
+    cfg.cryptKey = config.cryptKey?.cstr?.getPointer(this)
+    cfg.aes256 = config.aes256
+    cfg.rootPath = config.rootPath?.cstr?.getPointer(this)
+    cfg.expectedCapacity = config.expectedCapacity.toULong()
+    cfg.enableKeyExpire = when (config.enableKeyExpire) {
+        null -> -1
+        false -> 0
+        true -> 1
+    }
+    cfg.expiredInSeconds = config.expiredInSeconds
+    cfg.enableCompareBeforeSet = config.enableCompareBeforeSet
+    cfg.recover = when (config.recover) {
+        null -> -1
+        MMKVRecoverStrategic.OnErrorDiscard -> 0
+        MMKVRecoverStrategic.OnErrorRecover -> 1
+    }
+    cfg.itemSizeLimit = config.itemSizeLimit
+    block(cfg.readValue())
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun darwinCallbacks(): CValue<MMKVHandler_t> = cValue {
+    log = DarwinMMKVHandlerHolder.logCallback
+    error = DarwinMMKVHandlerHolder.errorCallback
+    contentChange = DarwinMMKVHandlerHolder.contentChangeCallback
+    contentLoad = DarwinMMKVHandlerHolder.contentLoadCallback
 }
 
 // endregion
 
-// region NSData <-> ByteArray helpers
+// region Handler holder with static C function callbacks
 
 @OptIn(ExperimentalForeignApi::class)
-private fun ByteArray.toNSData(): NSData {
-    if (isEmpty()) return NSData()
-    return usePinned { pinned ->
-        NSData.create(bytes = pinned.addressOf(0), length = size.toULong())
-    }
-}
+private object DarwinMMKVHandlerHolder {
+    @Volatile
+    var handler: MMKVHandler? = null
 
-@OptIn(ExperimentalForeignApi::class)
-private fun NSData.toByteArray(): ByteArray {
-    val length = this.length.toInt()
-    if (length == 0) return ByteArray(0)
-    val bytes = ByteArray(length)
-    bytes.usePinned { pinned ->
-        memcpy(pinned.addressOf(0), this@toByteArray.bytes, this@toByteArray.length)
-    }
-    return bytes
-}
-
-@OptIn(ExperimentalForeignApi::class)
-private fun String.toNSData(): NSData {
-    @Suppress("CAST_NEVER_SUCCEEDS")
-    return (this as NSString).dataUsingEncoding(NSUTF8StringEncoding) ?: NSData()
-}
-
-// endregion
-
-// region Handler adapter
-
-/**
- * Adapts the common [MMKVHandler] abstract class to the Darwin MMKVHandler ObjC protocol.
- */
-@OptIn(ExperimentalForeignApi::class)
-private class DarwinMMKVHandlerAdapter(
-    private val handler: MMKVHandler,
-) : NSObject(), MMKVHandlerProtocol {
-
-    override fun onMMKVCRCCheckFail(mmapID: String?): DarwinMMKVRecoverStrategic {
-        return handler.onMMKVCRCCheckFail(mmapID ?: "").toDarwin()
+    val logCallback: mmkv_log_callback_t = staticCFunction { level, file, line, function, message ->
+        DarwinMMKVHandlerHolder.handler?.mmkvLog(
+            nativeLogLevelToCommon(level),
+            file?.toKString() ?: "",
+            line,
+            function?.toKString() ?: "",
+            message?.toKString() ?: ""
+        )
     }
 
-    override fun onMMKVFileLengthError(mmapID: String?): DarwinMMKVRecoverStrategic {
-        return handler.onMMKVFileLengthError(mmapID ?: "").toDarwin()
+    val errorCallback: mmkv_error_callback_t = staticCFunction { mmapID, error ->
+        val result = when (error) {
+            0 -> DarwinMMKVHandlerHolder.handler?.onMMKVCRCCheckFail(mmapID?.toKString() ?: "")
+            else -> DarwinMMKVHandlerHolder.handler?.onMMKVFileLengthError(mmapID?.toKString() ?: "")
+        }
+        when (result) {
+            MMKVRecoverStrategic.OnErrorRecover -> 1
+            else -> 0
+        }
     }
 
-    override fun mmkvLogWithLevel(level: DarwinMMKVLogLevel, file: kotlinx.cinterop.CPointer<kotlinx.cinterop.ByteVar>?, line: Int, func: kotlinx.cinterop.CPointer<kotlinx.cinterop.ByteVar>?, message: String?) {
-        val fileName = file?.toKString() ?: ""
-        val funcName = func?.toKString() ?: ""
-        handler.mmkvLog(darwinLogLevelToCommon(level), fileName, line, funcName, message ?: "")
+    val contentChangeCallback: mmkv_content_change_callback_t = staticCFunction { mmapID ->
+        DarwinMMKVHandlerHolder.handler?.onContentChangedByOuterProcess(mmapID?.toKString() ?: "")
     }
 
-    override fun onMMKVContentChange(mmapID: String?) {
-        handler.onContentChangedByOuterProcess(mmapID ?: "")
-    }
-
-    override fun onMMKVContentLoadSuccessfully(mmapID: String?) {
-        handler.onMMKVContentLoadSuccessfully(mmapID ?: "")
+    val contentLoadCallback: mmkv_content_load_callback_t = staticCFunction { mmapID ->
+        DarwinMMKVHandlerHolder.handler?.onMMKVContentLoadSuccessfully(mmapID?.toKString() ?: "")
     }
 }
 

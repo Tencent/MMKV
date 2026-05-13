@@ -7,8 +7,8 @@ MMKV now ships a Kotlin Multiplatform wrapper under `KMP/`, exposing one common 
 | Target | Backend |
 | --- | --- |
 | `android` | Published `com.tencent:mmkv` Android library via JNI |
-| `iosArm64`, `iosSimulatorArm64`, `iosX64` | CocoaPods `MMKV` framework |
-| `macosArm64`, `macosX64` | CocoaPods `MMKV` framework |
+| `iosArm64`, `iosSimulatorArm64`, `iosX64` | Kotlin/Native cinterop against the MMKV C bridge |
+| `macosArm64`, `macosX64` | Kotlin/Native cinterop against the MMKV C bridge |
 | `linuxX64`, `linuxArm64`, `mingwX64` | Kotlin/Native cinterop against the MMKV C bridge |
 | `jvm("desktop")` | JNA against a packaged `libmmkv-kmp` shared library |
 
@@ -35,7 +35,7 @@ Which of the four to include depends on where your app will run, not where it is
 
 - **Single-host desktop app** (e.g. shipped as a macOS `.app`, a Linux AppImage, or a Windows `.exe`) — add only the runtime artifact matching that host. The other three would bloat the JAR with native code you'll never load.
 - **Cross-platform / multi-host distribution** — e.g. a Compose for Desktop build producing packages for macOS, Linux, and Windows — add **all** four. `MMKV.desktop.kt` contains a `DesktopNativeLoader` that inspects `os.name` / `os.arch` at startup and extracts only the matching `libmmkv-kmp.*` from classpath resources into a temp file before JNA loads it. Extra runtime artifacts that don't match the host are ignored at runtime; they cost JAR size but not correctness.
-- **Android, iOS/macOS, Linux/Windows Kotlin/Native targets** — do not add any of these. Those targets link the native library statically (cinterop) or via CocoaPods / JNI.
+- **Android, iOS/macOS, Linux/Windows Kotlin/Native targets** — do not add any of these. Android uses JNI through the Android artifact; Kotlin/Native targets link the native library statically through cinterop.
 
 ## Local build
 
@@ -52,11 +52,11 @@ Dependency source overrides for local development:
 
 ```bash
 ./gradlew :mmkv:build -PMMKV_ANDROID_SOURCE=local
-./gradlew :mmkv:build -PMMKV_ANDROID_SOURCE=release -PMMKV_POD_SOURCE=release
-./gradlew :mmkv:build -PMMKV_POD_SOURCE=git -PMMKV_GIT_BRANCH=dev_kmp
+./gradlew :mmkv:build -PMMKV_ANDROID_SOURCE=release
+./gradlew :mmkv:build -PMMKV_GIT_BRANCH=dev_kmp
 ```
 
-When this project is built inside the MMKV monorepo, Android dependencies default to local source so branch-only API changes can be tested before official artifacts are published. CocoaPods dependencies default to the configured version; use `MMKV_POD_SOURCE=git` when testing unpublished Darwin APIs from a branch.
+When this project is built inside the MMKV monorepo, Android and native C bridge builds default to local source so branch-only API changes can be tested before official artifacts are published. Outside the monorepo, CMake can fetch MMKV from `MMKV_GIT_REPOSITORY` plus `MMKV_GIT_TAG`, `MMKV_GIT_BRANCH`, or `MMKV_GIT_COMMIT`.
 
 ## Quick start
 
@@ -83,7 +83,7 @@ Host tests compile the Android target without a `Context`; device tests exercise
 
 ### iOS / macOS
 
-The KMP Darwin targets consume the CocoaPods `MMKV` pod. If your app also links MMKV directly through SPM or CocoaPods outside the KMP wrapper, you can end up with duplicate Objective-C classes at runtime.
+The KMP Darwin targets use the same MMKV C bridge as the other Kotlin/Native targets and no longer require CocoaPods. The sample iOS app builds `ComposeApp.framework` directly from Gradle/Xcode instead of using a Podfile.
 
 ### JVM desktop
 

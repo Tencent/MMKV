@@ -20,45 +20,53 @@
 
 package com.tencent.mmkv.kmp
 
-import cocoapods.MMKV.MMKV as DarwinMMKV
-import cocoapods.MMKV.MMKVNameSpace as DarwinMMKVNameSpace
-import cocoapods.MMKV.MMKVConfig as DarwinMMKVConfig
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.cValue
+import kotlinx.cinterop.toKString
+import mmkv.mmkv_default_namespace
+import mmkv.mmkv_namespace
+import mmkv.mmkv_namespace_backup_one
+import mmkv.mmkv_namespace_check_exist
+import mmkv.mmkv_namespace_free
+import mmkv.mmkv_namespace_is_file_valid
+import mmkv.mmkv_namespace_mmkv_with_id
+import mmkv.mmkv_namespace_remove_storage
+import mmkv.mmkv_namespace_restore_one
+import mmkv.mmkv_namespace_root_dir
 
 @OptIn(ExperimentalForeignApi::class)
-actual class MMKVNameSpace internal constructor(private val impl: DarwinMMKVNameSpace) {
+actual class MMKVNameSpace internal constructor(private val handle: COpaquePointer) {
 
     actual val rootDir: String
-        get() = impl.rootPath()
+        get() = mmkv_namespace_root_dir(handle)?.toKString() ?: ""
 
     actual fun mmkvWithID(mmapID: String, config: MMKVConfig): MMKV =
-        MMKV(impl.mmkvWithID(mmapID, config = config.toDarwinCValue())!!)
+        withNativeConfig(config) { cfg ->
+            MMKV(mmkv_namespace_mmkv_with_id(handle, mmapID, cfg)!!)
+        }
 
     actual fun backupOneToDirectory(mmapID: String, dstDir: String): Boolean =
-        impl.backupOneMMKV(mmapID, toDirectory = dstDir)
+        mmkv_namespace_backup_one(handle, mmapID, dstDir)
 
     actual fun restoreOneFromDirectory(mmapID: String, srcDir: String): Boolean =
-        impl.restoreOneMMKV(mmapID, fromDirectory = srcDir)
+        mmkv_namespace_restore_one(handle, mmapID, srcDir)
 
     actual fun isFileValid(mmapID: String): Boolean =
-        impl.isFileValid(mmapID)
+        mmkv_namespace_is_file_valid(handle, mmapID)
 
     actual fun removeStorage(mmapID: String): Boolean =
-        impl.removeStorage(mmapID)
+        mmkv_namespace_remove_storage(handle, mmapID)
 
     actual fun checkExist(mmapID: String): Boolean =
-        impl.checkExist(mmapID)
+        mmkv_namespace_check_exist(handle, mmapID)
 
-    actual fun close() {
-        // Darwin MMKVNameSpace is autoreleased by ObjC; no explicit free needed.
-    }
+    actual fun close() = mmkv_namespace_free(handle)
 
     actual companion object {
         actual fun of(rootDir: String): MMKVNameSpace =
-            MMKVNameSpace(DarwinMMKV.nameSpace(rootDir)!!)
+            MMKVNameSpace(mmkv_namespace(rootDir)!!)
 
         actual fun default(): MMKVNameSpace =
-            MMKVNameSpace(DarwinMMKV.defaultNameSpace()!!)
+            MMKVNameSpace(mmkv_default_namespace()!!)
     }
 }
