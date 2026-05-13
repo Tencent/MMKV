@@ -26,7 +26,6 @@ import org.gradle.api.tasks.bundling.Jar
 
 plugins {
     kotlin("multiplatform")
-    kotlin("native.cocoapods")
     id("com.android.kotlin.multiplatform.library")
     id("maven-publish")
     id("signing")
@@ -39,6 +38,11 @@ val isSnapshot = publishVersion.endsWith("-SNAPSHOT")
 val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
 val mmkvGitRepository = findProperty("MMKV_GIT_REPOSITORY") as? String
 val mmkvGitTag = findProperty("MMKV_GIT_TAG") as? String
+val mmkvGitBranch = findProperty("MMKV_GIT_BRANCH") as? String
+val mmkvGitCommit = findProperty("MMKV_GIT_COMMIT") as? String
+val mmkvGitRef = mmkvGitCommit?.takeIf { it.isNotBlank() }
+    ?: mmkvGitBranch?.takeIf { it.isNotBlank() }
+    ?: mmkvGitTag?.takeIf { it.isNotBlank() }
 
 // Keep the build's internal coordinates distinct from the published Android
 // dependency (`com.tencent:mmkv`) so Gradle doesn't substitute that AAR with
@@ -90,8 +94,8 @@ fun registerCMakeBuildTask(
                 if (!mmkvGitRepository.isNullOrBlank()) {
                     add("-DMMKV_GIT_REPOSITORY=$mmkvGitRepository")
                 }
-                if (!mmkvGitTag.isNullOrBlank()) {
-                    add("-DMMKV_GIT_TAG=$mmkvGitTag")
+                if (!mmkvGitRef.isNullOrBlank()) {
+                    add("-DMMKV_GIT_TAG=$mmkvGitRef")
                 }
                 addAll(extraConfigureArgs)
             }
@@ -319,29 +323,60 @@ kotlin {
         }
     }
 
-    cocoapods {
-        summary = "MMKV Kotlin Multiplatform wrapper"
-        homepage = "https://github.com/Tencent/MMKV"
-        version = mmkvVersion
-        ios.deploymentTarget = "13.0"
-        osx.deploymentTarget = "10.15"
+    val darwinBuildSettings = mapOf(
+        "iosArm64" to listOf("iOS", "iphoneos", "arm64", "13.0"),
+        "iosSimulatorArm64" to listOf("iOS", "iphonesimulator", "arm64", "13.0"),
+        "iosX64" to listOf("iOS", "iphonesimulator", "x86_64", "13.0"),
+        "macosArm64" to listOf("Darwin", "macosx", "arm64", "10.15"),
+        "macosX64" to listOf("Darwin", "macosx", "x86_64", "10.15"),
+    )
 
-        pod("MMKV") {
-            val podSource = (findProperty("MMKV_POD_SOURCE") as? String)?.lowercase()
-            when {
-                podSource == "git" -> {
-                    source = git(mmkvGitRepository ?: "https://github.com/Tencent/MMKV.git") {
-                        if (!mmkvGitTag.isNullOrBlank()) {
-                            tag = mmkvGitTag
+    val darwinTargets = listOf(iosArm64(), iosSimulatorArm64(), iosX64(), macosArm64(), macosX64())
+    darwinTargets.forEach { target ->
+        val label = target.targetName
+        val settings = darwinBuildSettings.getValue(label)
+        val cmakeTask = registerCMakeBuildTask(
+            label = label,
+            cmakeTarget = "mmkv-kmp",
+            extraConfigureArgs = listOf(
+                "-DCMAKE_SYSTEM_NAME=${settings[0]}",
+                "-DCMAKE_OSX_SYSROOT=${settings[1]}",
+                "-DCMAKE_OSX_ARCHITECTURES=${settings[2]}",
+                "-DCMAKE_OSX_DEPLOYMENT_TARGET=${settings[3]}",
+                "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY",
+            ),
+        )
+        val buildDir = cmakeBuildDirFor(label)
+        val includeHintFile = buildDir.resolve("cbridge_include_dir.txt")
+
+        target.compilations.getByName("main") {
+            cinterops {
+                val mmkv by creating {
+                    defFile("nativeInterop/cinterop/mmkv.def")
+                    when {
+                        localCBridgeDir.exists() -> {
+                            compilerOpts("-I${localCBridgeDir.absolutePath}")
+                            includeDirs(localCBridgeDir)
                         }
-                        (findProperty("MMKV_GIT_BRANCH") as? String)?.takeIf { it.isNotBlank() }?.let { branch = it }
-                        (findProperty("MMKV_GIT_COMMIT") as? String)?.takeIf { it.isNotBlank() }?.let { commit = it }
+                        includeHintFile.exists() -> {
+                            val includeDir = includeHintFile.readText().trim()
+                            compilerOpts("-I$includeDir")
+                            includeDirs(includeDir)
+                        }
+                        else -> {
+                            logger.warn("Unable to resolve MMKV cbridge headers for ${target.targetName} during configuration.")
+                        }
                     }
-                }
-                else -> {
-                    version = mmkvVersion
+                    extraOpts("-libraryPath", buildDir.absolutePath)
                 }
             }
+        }
+
+        tasks.matching { task ->
+            task.name.contains(target.targetName, ignoreCase = true) &&
+                task.name.startsWith("cinterop")
+        }.configureEach {
+            dependsOn(cmakeTask)
         }
     }
 
@@ -397,14 +432,6 @@ tasks.named("desktopProcessResources") {
 
 tasks.matching { it.name == "desktopTest" }.configureEach {
     dependsOn(syncHostDesktopNative)
-}
-
-tasks.matching { it.name == "generateDefMMKV" || it.name.startsWith("podGen") }.configureEach {
-    mustRunAfter(tasks.matching { task ->
-        task.name == "compileKotlinDesktop" ||
-            task.name == "compileAndroidMain" ||
-            task.name == "xcodeVersion"
-    })
 }
 
 tasks.configureEach {

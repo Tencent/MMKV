@@ -1,6 +1,5 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("native.cocoapods")
     kotlin("plugin.compose") version "2.2.20"
     id("com.android.application")
     id("org.jetbrains.compose") version "1.8.1"
@@ -20,18 +19,12 @@ kotlin {
         }
     }
 
-    iosArm64()
-    iosSimulatorArm64()
-    iosX64()
-
-    cocoapods {
-        summary = "MMKV KMP Sample App"
-        homepage = "https://github.com/Tencent/MMKV"
-        version = "1.0.0"
-        ios.deploymentTarget = "15.0"
-        podfile = project.file("../iosApp/Podfile")
-
-        framework {
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+        iosX64(),
+    ).forEach { target ->
+        target.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
         }

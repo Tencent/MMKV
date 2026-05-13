@@ -1,3 +1,5 @@
 headers = MMKVBridge.h
 headerFilter = MMKVBridge.h
 staticLibraries = libmmkv-kmp.a
+linkerOpts.osx = -lz -framework Foundation
+linkerOpts.ios = -lz -framework Foundation
