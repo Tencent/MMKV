@@ -91,23 +91,23 @@ internal interface MMKVLib : Library {
     fun mmkv_decode_string(handle: Pointer, key: String): Pointer?
     fun mmkv_decode_bytes(handle: Pointer, key: String, lengthPtr: LongByReference): Pointer?
 
-    fun mmkv_rekey(handle: Pointer, cryptKey: String?, aes256: Boolean): Byte
+    fun mmkv_rekey(handle: Pointer, cryptKey: String?, aes256: Byte): Byte
     fun mmkv_crypt_key(handle: Pointer, lengthPtr: IntByReference): Pointer?
-    fun mmkv_check_reset_crypt_key(handle: Pointer, cryptKey: String?, aes256: Boolean)
+    fun mmkv_check_reset_crypt_key(handle: Pointer, cryptKey: String?, aes256: Byte)
 
-    fun mmkv_all_keys(handle: Pointer, lengthPtr: LongByReference, filterExpire: Boolean): Pointer?
+    fun mmkv_all_keys(handle: Pointer, lengthPtr: LongByReference, filterExpire: Byte): Pointer?
     fun mmkv_contains_key(handle: Pointer, key: String): Byte
-    fun mmkv_count(handle: Pointer, filterExpire: Boolean): Long
+    fun mmkv_count(handle: Pointer, filterExpire: Byte): Long
     fun mmkv_total_size(handle: Pointer): Long
     fun mmkv_actual_size(handle: Pointer): Long
 
     fun mmkv_remove_value(handle: Pointer, key: String)
     fun mmkv_remove_values(handle: Pointer, keyArray: Array<String>, count: Long)
-    fun mmkv_clear_all(handle: Pointer, keepSpace: Boolean)
+    fun mmkv_clear_all(handle: Pointer, keepSpace: Byte)
     fun mmkv_import_from(handle: Pointer, srcHandle: Pointer): Long
 
-    fun mmkv_sync(handle: Pointer, sync: Boolean)
-    fun mmkv_clear_memory_cache(handle: Pointer, keepSpace: Boolean)
+    fun mmkv_sync(handle: Pointer, sync: Byte)
+    fun mmkv_clear_memory_cache(handle: Pointer, keepSpace: Byte)
     fun mmkv_trim(handle: Pointer)
 
     fun mmkv_backup_one(mmapID: String, dstDir: String, srcDir: String?): Byte
@@ -123,7 +123,7 @@ internal interface MMKVLib : Library {
     fun mmkv_is_encryption_enabled(handle: Pointer): Byte
     fun mmkv_is_compare_before_set_enabled(handle: Pointer): Byte
 
-    fun mmkv_get_value_size(handle: Pointer, key: String, actualSize: Boolean): Long
+    fun mmkv_get_value_size(handle: Pointer, key: String, actualSize: Byte): Long
     fun mmkv_write_value_to_buffer(handle: Pointer, key: String, ptr: Pointer, size: Int): Int
 
     fun mmkv_lock(handle: Pointer)
@@ -172,12 +172,12 @@ internal interface MMKVLib : Library {
 internal open class JnaMMKVConfig : Structure() {
     @JvmField var mode: Int = MMKVMode.SINGLE_PROCESS
     @JvmField var cryptKey: String? = null
-    @JvmField var aes256: Boolean = false
+    @JvmField var aes256: Byte = 0
     @JvmField var rootPath: String? = null
     @JvmField var expectedCapacity: Long = 0
     @JvmField var enableKeyExpire: Int = -1
     @JvmField var expiredInSeconds: Int = 0
-    @JvmField var enableCompareBeforeSet: Boolean = false
+    @JvmField var enableCompareBeforeSet: Byte = 0
     @JvmField var recover: Int = -1
     @JvmField var itemSizeLimit: Int = 0
 
@@ -294,12 +294,12 @@ actual class MMKV internal constructor(private val handle: Pointer) {
     actual val isReadOnly: Boolean get() = lib.mmkv_is_read_only(handle).asBoolean()
     actual val totalSize: Long get() = lib.mmkv_total_size(handle)
     actual val actualSize: Long get() = lib.mmkv_actual_size(handle)
-    actual val count: Long get() = lib.mmkv_count(handle, false)
+    actual val count: Long get() = lib.mmkv_count(handle, false.toNativeByte())
 
     actual val allKeys: List<String>
         get() {
             val lengthPtr = LongByReference()
-            val ptr = lib.mmkv_all_keys(handle, lengthPtr, false) ?: return emptyList()
+            val ptr = lib.mmkv_all_keys(handle, lengthPtr, false.toNativeByte()) ?: return emptyList()
             return readAndFreeStringArray(ptr, lengthPtr.value.toInt())
         }
 
@@ -377,11 +377,11 @@ actual class MMKV internal constructor(private val handle: Pointer) {
     // region Key management
 
     actual fun containsKey(key: String): Boolean = lib.mmkv_contains_key(handle, key).asBoolean()
-    actual fun countNonExpiredKeys(): Long = lib.mmkv_count(handle, true)
+    actual fun countNonExpiredKeys(): Long = lib.mmkv_count(handle, true.toNativeByte())
 
     actual fun allNonExpiredKeys(): List<String> {
         val lengthPtr = LongByReference()
-        val ptr = lib.mmkv_all_keys(handle, lengthPtr, true) ?: return emptyList()
+        val ptr = lib.mmkv_all_keys(handle, lengthPtr, true.toNativeByte()) ?: return emptyList()
         return readAndFreeStringArray(ptr, lengthPtr.value.toInt())
     }
 
@@ -392,25 +392,25 @@ actual class MMKV internal constructor(private val handle: Pointer) {
         lib.mmkv_remove_values(handle, keys.toTypedArray(), keys.size.toLong())
     }
 
-    actual fun clearAll() = lib.mmkv_clear_all(handle, false)
-    actual fun clearAllKeepSpace() = lib.mmkv_clear_all(handle, true)
+    actual fun clearAll() = lib.mmkv_clear_all(handle, false.toNativeByte())
+    actual fun clearAllKeepSpace() = lib.mmkv_clear_all(handle, true.toNativeByte())
 
     // endregion
 
     // region Encryption
 
-    actual fun reKey(newKey: String?, aes256: Boolean): Boolean = lib.mmkv_rekey(handle, newKey, aes256).asBoolean()
-    actual fun checkReSetCryptKey(cryptKey: String?, aes256: Boolean) = lib.mmkv_check_reset_crypt_key(handle, cryptKey, aes256)
+    actual fun reKey(newKey: String?, aes256: Boolean): Boolean = lib.mmkv_rekey(handle, newKey, aes256.toNativeByte()).asBoolean()
+    actual fun checkReSetCryptKey(cryptKey: String?, aes256: Boolean) = lib.mmkv_check_reset_crypt_key(handle, cryptKey, aes256.toNativeByte())
 
     // endregion
 
     // region Utility
 
-    actual fun sync() = lib.mmkv_sync(handle, true)
-    actual fun async() = lib.mmkv_sync(handle, false)
+    actual fun sync() = lib.mmkv_sync(handle, true.toNativeByte())
+    actual fun async() = lib.mmkv_sync(handle, false.toNativeByte())
     actual fun trim() = lib.mmkv_trim(handle)
     actual fun close() = lib.mmkv_close(handle)
-    actual fun clearMemoryCache() = lib.mmkv_clear_memory_cache(handle, false)
+    actual fun clearMemoryCache() = lib.mmkv_clear_memory_cache(handle, false.toNativeByte())
     actual fun importFrom(source: MMKV): Long = lib.mmkv_import_from(handle, source.handle)
     actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = lib.mmkv_enable_auto_expire(handle, expiredInSeconds.toInt()).asBoolean()
     actual fun disableAutoKeyExpire(): Boolean = lib.mmkv_disable_auto_expire(handle).asBoolean()
@@ -418,7 +418,7 @@ actual class MMKV internal constructor(private val handle: Pointer) {
     actual fun disableCompareBeforeSet(): Boolean = lib.mmkv_disable_compare_before_set(handle).asBoolean()
     actual fun checkContentChanged() = lib.mmkv_check_content_changed(handle)
 
-    actual fun getValueSize(key: String, actualSize: Boolean): Long = lib.mmkv_get_value_size(handle, key, actualSize)
+    actual fun getValueSize(key: String, actualSize: Boolean): Long = lib.mmkv_get_value_size(handle, key, actualSize.toNativeByte())
 
     actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
         if (buffer.isEmpty()) return -1
@@ -537,14 +537,14 @@ internal fun MMKVConfig.toJna(): JnaMMKVConfig.ByValue {
     val cfg = JnaMMKVConfig.ByValue()
     cfg.mode = mode
     cfg.cryptKey = cryptKey
-    cfg.aes256 = aes256
+    cfg.aes256 = aes256.toNativeByte()
     cfg.rootPath = rootPath
     cfg.expectedCapacity = expectedCapacity
     cfg.enableKeyExpire = when (enableKeyExpire) {
         null -> -1; false -> 0; true -> 1
     }
     cfg.expiredInSeconds = expiredInSeconds.toInt()
-    cfg.enableCompareBeforeSet = enableCompareBeforeSet
+    cfg.enableCompareBeforeSet = enableCompareBeforeSet.toNativeByte()
     cfg.recover = when (recover) {
         null -> -1
         MMKVRecoverStrategic.OnErrorDiscard -> 0
