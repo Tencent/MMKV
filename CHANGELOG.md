@@ -2,21 +2,10 @@
 ## Unreleased
 
 ### Kotlin Multiplatform
-A new `KMP/` module provides Kotlin Multiplatform bindings for MMKV covering Android, iOS (arm64 / simulator arm64 / x64), macOS (arm64 / x64), Linux x64, Windows (mingwX64), and JVM desktop. See [KMP/README.md](./KMP/README.md).
-
-* **Feature:** Gradle now drives CMake automatically for native desktop targets. `./gradlew :mmkv:build` no longer requires a manual `cmake` pre-step.
-* **Feature:** Desktop JVM loads `libmmkv-kmp` from packaged classpath resources instead of requiring a manual `jna.library.path`.
-* **Feature:** Added host-specific `mmkv-kmp-desktop-native-<os>-<arch>` runtime artifacts for published JVM desktop builds.
-* **Feature:** Added `consumer-rules.pro` so R8/ProGuard-minified Android consumers keep MMKV's JNI-reachable methods and the KMP wrapper surface.
-* **Feature:** Added a `commonTest` smoke suite covering encode/decode round-trips, decode defaults, `containsKey`/`removeValueForKey`/`count`/`clearAll`, and encrypted instances.
-* **Feature:** Added an Android device-test smoke path that initializes MMKV with an instrumentation `Context` and exercises JNI encode/decode through the upstream Android AAR.
-* **Feature:** Added Maven publication and signing wiring for the KMP module, plus CI workflows to validate and publish host-specific target artifacts.
-* **Fix:** Migrated the KMP Android target from legacy `com.android.library` integration to the official `com.android.kotlin.multiplatform.library` plugin, which removes the AGP/KGP publication deadlock that blocked Android host tests and Maven publication.
-* **Fix:** Native desktop publication tasks are now host-gated, preventing macOS builds from publishing host-compiled Mach-O archives as Linux or Windows KLIB artifacts.
-* **Fix:** The KMP Darwin wrapper now explicitly documents the `+unregiserHandler` / `+unregisterHandler` split. It still calls the back-compatible typo'd name so it links against every published MMKV pod version, but once a consumer builds against MMKV 2.4.1+ the call is transparently forwarded to the correctly-spelled method.
-* **Fix:** Added Darwin bindings for lock status and feature-state APIs, removed Android reflection for status getters, and wired JVM/native desktop handler APIs through the C bridge. The KMP `setLogLevel()` API was dropped; configure log level through `MMKV.initialize(...)`.
-* **Change:** Centralized the MMKV version in `KMP/gradle.properties` (`MMKV_VERSION`). Previously it was hardcoded in four separate spots in `build.gradle.kts`, `CMakeLists.txt`, and the podspec.
-* **Cleanup:** Removed the empty, unused `jvmMain` source set.
+* **Feature:** Added Kotlin Multiplatform support for Android, iOS, macOS, Linux, Windows, and JVM desktop. See [KMP/README.md](./KMP/README.md).
+* **Feature:** Published the common KMP wrapper as `com.tencent:mmkv-kmp`, with host-specific native runtime artifacts for JVM desktop.
+* **Feature:** Added a common Kotlin API for MMKV initialization, instance configuration, primitive/string/byte-array access, encryption, key management, backup/restore, namespaces, handlers, locking, expiration, compare-before-set, value-size queries, imports, and buffer writes.
+* **Feature:** Added Android consumer keep rules for minified apps.
 
 ### iOS/macOS
 * **Feature:** Added `+[MMKV unregisterHandler]` as the canonically-spelled class method. The previous `+unregiserHandler` is preserved and now delegates to the new method, but is marked `__deprecated_msg` — existing callers continue to link, new code should switch to the correctly-spelled name.
