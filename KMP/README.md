@@ -1,114 +1,280 @@
-# MMKV Kotlin Multiplatform
+# MMKV for Kotlin Multiplatform
 
-MMKV now ships a Kotlin Multiplatform wrapper under `KMP/`, exposing one common Kotlin API in `com.tencent.mmkv.kmp` while delegating to the native MMKV implementation on each target.
+MMKV is an **efficient**, **small**, **easy-to-use** key-value storage framework used in the WeChat application. The Kotlin Multiplatform wrapper exposes one common Kotlin API in `com.tencent.mmkv.kmp` for Android, iOS, macOS, Linux, Windows, and JVM desktop.
 
-## Supported targets
+## Features
 
-| Target | Backend |
+* **Efficient**. MMKV uses mmap to keep memory synced with files and protobuf to encode/decode values.
+  * **Multi-process concurrency**: MMKV supports concurrent read-read and read-write access between processes.
+
+* **Easy to use**. You can use MMKV as you go. Changes are saved immediately; no `sync` or `apply` calls are required.
+
+* **Multiplatform**. One Kotlin API covers Android, iOS, macOS, Linux, Windows, and JVM desktop.
+
+## Getting Started
+
+### Installation
+
+Add the common KMP artifact to your shared module:
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("com.tencent:mmkv-kmp:2.4.0")
+        }
+    }
+}
+```
+
+For JVM desktop, also add the native runtime artifacts for the platforms you ship to the desktop source set:
+
+```kotlin
+kotlin {
+    sourceSets {
+        val desktopMain by getting {
+            dependencies {
+                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-macos-arm64:2.4.0")
+                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-macos-x86_64:2.4.0")
+                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-linux-x86_64:2.4.0")
+                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-windows-x86_64:2.4.0")
+            }
+        }
+    }
+}
+```
+
+For a single-platform desktop app, include only the matching runtime artifact. For a multi-platform desktop distribution, include every runtime artifact you plan to ship; MMKV loads the matching native library at runtime.
+
+Android, iOS, macOS, Linux, and Windows Kotlin/Native targets do not need the JVM desktop runtime artifacts.
+
+### Supported targets
+
+| Target | Status |
 | --- | --- |
-| `android` | Published `com.tencent:mmkv` Android library via JNI |
-| `iosArm64`, `iosSimulatorArm64`, `iosX64` | Kotlin/Native cinterop against the MMKV C bridge |
-| `macosArm64`, `macosX64` | Kotlin/Native cinterop against the MMKV C bridge |
-| `linuxX64`, `linuxArm64`, `mingwX64` | Kotlin/Native cinterop against the MMKV C bridge |
-| `jvm("desktop")` | JNA against a packaged `libmmkv-kmp` shared library |
+| `android` | Supported |
+| `iosArm64`, `iosSimulatorArm64`, `iosX64` | Supported |
+| `macosArm64`, `macosX64` | Supported |
+| `linuxX64`, `linuxArm64`, `mingwX64` | Supported |
+| `jvm("desktop")` | Supported with host-specific runtime artifact |
 
-`watchOS`, `tvOS`, `visionOS`, and HarmonyOS are not part of the KMP release scope.
+`watchOS`, `tvOS`, `visionOS`, and HarmonyOS NEXT are not currently supported.
 
-## Maven coordinates
+### Setup
 
-Core KMP artifact:
+Initialize MMKV once during app startup before accessing any MMKV instance.
 
-```kotlin
-implementation("com.tencent:mmkv-kmp:2.4.0")
-```
-
-JVM desktop runtime needs a host-specific native artifact on the classpath:
+Android:
 
 ```kotlin
-runtimeOnly("com.tencent:mmkv-kmp-desktop-native-macos-arm64:2.4.0")
-runtimeOnly("com.tencent:mmkv-kmp-desktop-native-macos-x86_64:2.4.0")
-runtimeOnly("com.tencent:mmkv-kmp-desktop-native-linux-x86_64:2.4.0")
-runtimeOnly("com.tencent:mmkv-kmp-desktop-native-windows-x86_64:2.4.0")
+import android.app.Application
+import com.tencent.mmkv.kmp.MMKV
+import com.tencent.mmkv.kmp.initialize
+
+class App : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        MMKV.initialize(this)
+    }
+}
 ```
 
-Which of the four to include depends on where your app will run, not where it is built:
-
-- **Single-host desktop app** (e.g. shipped as a macOS `.app`, a Linux AppImage, or a Windows `.exe`) — add only the runtime artifact matching that host. The other three would bloat the JAR with native code you'll never load.
-- **Cross-platform / multi-host distribution** — e.g. a Compose for Desktop build producing packages for macOS, Linux, and Windows — add **all** four. `MMKV.desktop.kt` contains a `DesktopNativeLoader` that inspects `os.name` / `os.arch` at startup and extracts only the matching `libmmkv-kmp.*` from classpath resources into a temp file before JNA loads it. Extra runtime artifacts that don't match the host are ignored at runtime; they cost JAR size but not correctness.
-- **Android, iOS/macOS, Linux/Windows Kotlin/Native targets** — do not add any of these. Android uses JNI through the Android artifact; Kotlin/Native targets link the native library statically through cinterop.
-
-## Local build
-
-```bash
-cd KMP
-./gradlew :mmkv:build
-./gradlew :mmkv:allTests
-./gradlew :mmkv:connectedAndroidDeviceTest # requires a connected Android device/emulator
-```
-
-The build invokes CMake automatically for native desktop targets. No manual `cmake` pre-step or `-Djna.library.path=...` workaround is required anymore.
-
-Dependency source overrides for local development:
-
-```bash
-./gradlew :mmkv:build -PMMKV_ANDROID_SOURCE=local
-./gradlew :mmkv:build -PMMKV_ANDROID_SOURCE=release
-./gradlew :mmkv:build -PMMKV_GIT_BRANCH=dev_kmp
-```
-
-When this project is built inside the MMKV monorepo, Android and native C bridge builds default to local source so branch-only API changes can be tested before official artifacts are published. Outside the monorepo, CMake can fetch MMKV from `MMKV_GIT_REPOSITORY` plus `MMKV_GIT_TAG`, `MMKV_GIT_BRANCH`, or `MMKV_GIT_COMMIT`.
-
-## Quick start
+iOS / macOS:
 
 ```kotlin
 import com.tencent.mmkv.kmp.MMKV
-import com.tencent.mmkv.kmp.MMKVConfig
+import com.tencent.mmkv.kmp.initialize
 
-val kv = MMKV.mmkvWithID("demo")
-kv.encodeString("hello", "world")
-println(kv.decodeString("hello"))
-
-val encrypted = MMKV.mmkvWithID("secure", MMKVConfig(cryptKey = "my-secret-16b"))
+fun initializeStorage() {
+    MMKV.initialize()
+}
 ```
 
-Platform-specific `MMKV.initialize(...)` extensions live in each platform source set. The sample app under `KMP/sample/composeApp/` shows Android, iOS, and desktop bootstrap code.
+JVM desktop and Kotlin/Native desktop:
 
-## Platform notes
+```kotlin
+import com.tencent.mmkv.kmp.MMKV
+import com.tencent.mmkv.kmp.initialize
 
-### Android
+fun initializeStorage(rootDir: String) {
+    MMKV.initialize(rootDir)
+}
+```
 
-The KMP Android target delegates to `com.tencent:mmkv:$MMKV_VERSION`. Consumer keep rules from `consumer-rules.pro` are published through the Android KMP plugin's `optimization.consumerKeepRules` DSL.
+### CRUD Operations
 
-Host tests compile the Android target without a `Context`; device tests exercise real MMKV initialization and JNI encode/decode through the upstream Android AAR.
+MMKV has a global default instance that can be used directly:
 
-### iOS / macOS
+```kotlin
+import com.tencent.mmkv.kmp.MMKV
 
-The KMP Darwin targets use the same MMKV C bridge as the other Kotlin/Native targets and no longer require CocoaPods. The sample iOS app builds `ComposeApp.framework` directly from Gradle/Xcode instead of using a Podfile.
+val kv = MMKV.defaultMMKV()
 
-### JVM desktop
+kv.encodeBool("bool", true)
+println("bool = ${kv.decodeBool("bool")}")
 
-The desktop target extracts `libmmkv-kmp` from classpath resources automatically before JNA loads it. The host-specific runtime artifact is what provides that resource on published builds.
+kv.encodeInt("int", Int.MAX_VALUE)
+println("int = ${kv.decodeInt("int")}")
 
-### Native desktop
+kv.encodeLong("long", Long.MAX_VALUE)
+println("long = ${kv.decodeLong("long")}")
 
-Linux and Windows Kotlin/Native targets bundle `libmmkv-kmp.a` into the generated cinterop klib. Gradle builds that archive through the `cmakeBuild<target>` tasks before cinterop runs.
+kv.encodeString("string", "Hello Kotlin Multiplatform from MMKV")
+println("string = ${kv.decodeString("string")}")
 
-## Release notes
+val bytes = "Hello bytes".encodeToByteArray()
+kv.encodeBytes("bytes", bytes)
+println("bytes = ${kv.decodeBytes("bytes")?.decodeToString()}")
+```
 
-Publishing is wired in Gradle, but the repository does not currently carry the GitHub Actions workflows for CI or release publication.
+Deleting and querying:
 
-The Android target uses the official `com.android.kotlin.multiplatform.library` plugin, so Android publication and host-side tests follow the standard KMP publishing path instead of the legacy `com.android.library` workaround.
+```kotlin
+kv.removeValueForKey("bool")
+println("contains bool: ${kv.containsKey("bool")}")
 
-Kotlin Multiplatform publication is still host-dependent:
-- Linux should publish metadata, Android, JVM desktop, and Linux native artifacts.
-- macOS should publish iOS and macOS artifacts.
-- Windows should publish the Mingw artifact.
-- Each desktop host should publish its host-specific `mmkv-kmp-desktop-native-<os>-<arch>` runtime JAR.
+kv.removeValuesForKeys(listOf("int", "long"))
+println("all keys: ${kv.allKeys}")
+```
 
-Gradle disables non-host native desktop publication tasks so a macOS build cannot publish Mach-O archives as Linux or Windows KLIB artifacts. `linuxArm64` still needs either an ARM64 Linux publisher or an explicit cross-toolchain setup.
+If different modules need isolated storage, create an instance with a unique ID:
 
-## Known limitations
+```kotlin
+val userKv = MMKV.mmkvWithID("user_profile")
+userKv.encodeString("name", "MMKV")
+```
 
-| Area | Limitation | Reason |
-| --- | --- | --- |
-| Android | `enableCompareBeforeSet()` and `disableCompareBeforeSet()` return `true` after invoking the upstream APIs. | The Android MMKV APIs are `void`; use `isCompareBeforeSetEnabled` to observe effective state. |
+For multi-process access, create the instance with multi-process mode:
+
+```kotlin
+import com.tencent.mmkv.kmp.MMKVConfig
+import com.tencent.mmkv.kmp.MMKVMode
+
+val multiProcessKv = MMKV.mmkvWithID(
+    "shared_storage",
+    MMKVConfig(mode = MMKVMode.MULTI_PROCESS)
+)
+```
+
+### Supported Types
+
+* Primitive types:
+  - `Boolean`, `Int`, `Long`, `Float`, `Double`
+
+* Classes and arrays:
+  - `String`, `ByteArray`
+
+* Key list APIs:
+  - `List<String>` for `allKeys`, `allNonExpiredKeys()`, and `removeValuesForKeys(...)`
+
+### Encryption
+
+By default, MMKV stores key-values in plain text inside the app sandbox. Use `cryptKey` to create an encrypted instance:
+
+```kotlin
+val encrypted = MMKV.mmkvWithID(
+    "secure_storage",
+    MMKVConfig(cryptKey = "MyEncryptKey")
+)
+```
+
+You can change the encryption key later, or switch an instance between encrypted and unencrypted states:
+
+```kotlin
+val kv = MMKV.mmkvWithID("secure_storage")
+
+// change from unencrypted to encrypted with AES-128 key length
+kv.reKey("Key_seq_1")
+
+// change encryption key with AES-256 key length
+kv.reKey("Key_Seq_Very_Looooooooong", aes256 = true)
+
+// change from encrypted to unencrypted
+kv.reKey(null)
+```
+
+### Customize Location
+
+You can customize the root directory during initialization. Android requires a `Context`; other targets use the platform-specific `initialize` overload without one:
+
+```kotlin
+// Android
+MMKV.initialize(context, rootDir = "/path/to/mmkv")
+
+// iOS, macOS, JVM desktop, Kotlin/Native desktop
+MMKV.initialize(rootDir = "/path/to/mmkv")
+```
+
+You can also customize an individual instance location:
+
+```kotlin
+val kv = MMKV.mmkvWithID(
+    "custom_storage",
+    MMKVConfig(rootPath = "/path/to/custom/mmkv")
+)
+```
+
+It is recommended to store MMKV files inside your app's sandbox path.
+
+### Namespace
+
+Use `MMKVNameSpace` to group instances under a custom root directory:
+
+```kotlin
+import com.tencent.mmkv.kmp.MMKVNameSpace
+
+val namespace = MMKVNameSpace.of("/path/to/mmkv_namespace")
+val kv = namespace.mmkvWithID("profile")
+kv.encodeString("name", "MMKV")
+```
+
+### Log
+
+By default, MMKV prints logs to the platform console. You can configure the log level during initialization:
+
+```kotlin
+import com.tencent.mmkv.kmp.MMKVLogLevel
+
+MMKV.initialize(rootDir = "/path/to/mmkv", logLevel = MMKVLogLevel.None)
+```
+
+You can also register a handler for log redirection and MMKV callbacks on supported targets:
+
+```kotlin
+import com.tencent.mmkv.kmp.MMKVHandler
+import com.tencent.mmkv.kmp.MMKVLogLevel
+
+MMKV.registerHandler(object : MMKVHandler() {
+    override fun wantLogRedirect(): Boolean = true
+
+    override fun mmkvLog(
+        level: MMKVLogLevel,
+        file: String,
+        line: Int,
+        function: String,
+        message: String,
+    ) {
+        println("[$level] $message")
+    }
+})
+```
+
+## Additional docs
+
+The sample app under `KMP/sample/composeApp/` shows Android, iOS, and desktop bootstrap code.
+
+## License
+
+MMKV is published under the BSD 3-Clause license. For details, check out the [LICENSE.TXT](../LICENSE.TXT).
+
+## Change Log
+
+Check out the [CHANGELOG.md](../CHANGELOG.md) for details of change history.
+
+## Contributing
+
+If you are interested in contributing, check out the [CONTRIBUTING.md](../CONTRIBUTING.md) and [Code of Conduct](../CODE_OF_CONDUCT.md).
+
+## FAQ & Feedback
+
+Check out the [FAQ](https://github.com/Tencent/MMKV/wiki/FAQ) first. If you have questions or issues, please create an issue on GitHub.
