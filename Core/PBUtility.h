@@ -83,6 +83,14 @@ static inline int32_t UInt32ToInt32(uint32_t v) {
     return converter.first;
 }
 
+// Returns now + expireDuration, or 0 (never expire) when addition would overflow uint32.
+static inline uint32_t mmkvComputeExpireTimestamp(uint32_t expireDuration, uint32_t now) {
+    if (expireDuration == 0 || expireDuration > UINT32_MAX - now) {
+        return 0;
+    }
+    return now + expireDuration;
+}
+
 static inline int32_t logicalRightShift32(int32_t value, uint32_t spaces) {
     return UInt32ToInt32((Int32ToUInt32(value) >> spaces));
 }

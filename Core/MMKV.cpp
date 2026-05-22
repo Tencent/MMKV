@@ -490,7 +490,7 @@ bool MMKV::set(bool value, MMKVKey_t key, uint32_t expireDuration) {
     CodedOutputData output(data.getPtr(), size);
     output.writeBool(value);
     if (mmkv_unlikely(m_enableKeyExpire)) {
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -512,7 +512,7 @@ bool MMKV::set(int32_t value, MMKVKey_t key, uint32_t expireDuration) {
     CodedOutputData output(data.getPtr(), size);
     output.writeInt32(value);
     if (mmkv_unlikely(m_enableKeyExpire)) {
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -534,7 +534,7 @@ bool MMKV::set(uint32_t value, MMKVKey_t key, uint32_t expireDuration) {
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt32(value);
     if (mmkv_unlikely(m_enableKeyExpire)) {
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -556,7 +556,7 @@ bool MMKV::set(int64_t value, MMKVKey_t key, uint32_t expireDuration) {
     CodedOutputData output(data.getPtr(), size);
     output.writeInt64(value);
     if (mmkv_unlikely(m_enableKeyExpire)) {
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -578,7 +578,7 @@ bool MMKV::set(uint64_t value, MMKVKey_t key, uint32_t expireDuration) {
     CodedOutputData output(data.getPtr(), size);
     output.writeUInt64(value);
     if (mmkv_unlikely(m_enableKeyExpire)) {
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -600,7 +600,7 @@ bool MMKV::set(float value, MMKVKey_t key, uint32_t expireDuration) {
     CodedOutputData output(data.getPtr(), size);
     output.writeFloat(value);
     if (mmkv_unlikely(m_enableKeyExpire)) {
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -622,7 +622,7 @@ bool MMKV::set(double value, MMKVKey_t key, uint32_t expireDuration) {
     CodedOutputData output(data.getPtr(), size);
     output.writeDouble(value);
     if (mmkv_unlikely(m_enableKeyExpire)) {
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
     } else {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
@@ -639,7 +639,7 @@ bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t ex
         auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
         CodedOutputData output(tmp.getPtr(), tmp.length());
         output.writeData(data);
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         output.writeRawLittleEndian32(UInt32ToInt32(time));
         return setDataForKey(std::move(tmp), key);
     }
@@ -707,7 +707,7 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key, uint32_t expireDuration) 
         auto tmp = MMBuffer(data.length() + Fixed32Size);
         auto ptr = (uint8_t *) tmp.getPtr();
         memcpy(ptr, data.getPtr(), data.length());
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = mmkvComputeExpireTimestamp(expireDuration, getCurrentTimeInSecond());
         memcpy(ptr + data.length(), &time, Fixed32Size);
         data = std::move(tmp);
     }
