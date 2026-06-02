@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cstring>
 #include <ctime>
+#include <limits>
 
 #ifdef MMKV_IOS
 #    include "MMKV_OSX.h"
@@ -1606,6 +1607,14 @@ uint32_t MMKV::getCurrentTimeInSecond() {
     return static_cast<uint32_t>(time);
 }
 
+uint32_t MMKV::safeExpirationPlusCurrentTime(uint32_t expireDuration) {
+    uint64_t time = getCurrentTimeInSecond() + static_cast<uint64_t>(expireDuration);
+    if (time > std::numeric_limits<uint32_t>::max()) {
+        return std::numeric_limits<uint32_t>::max();
+    }
+    return static_cast<uint32_t>(time);
+}
+
 bool MMKV::doFullWriteBack(MMKVVector &&vec) {
     auto preparedData = prepareEncode(std::move(vec));
 
@@ -1654,8 +1663,8 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
         return true;
     }
 
-    auto autoRecordExpireTime = (m_expiredInSeconds != 0);
-    auto time = autoRecordExpireTime ? getCurrentTimeInSecond() + m_expiredInSeconds : 0;
+    auto autoRecordExpireTime = (m_expiredInSeconds != ExpireNever);
+    auto time = autoRecordExpireTime ? safeExpirationPlusCurrentTime(m_expiredInSeconds) : ExpireNever;
     MMKVInfo("turn on recording expire date for all keys inside [%s] from now %u", m_mmapID.c_str(), time);
     m_metaInfo->setFlag(MMKVMetaInfo::EnableKeyExipre);
     m_metaInfo->m_version = MMKVVersionFlag;

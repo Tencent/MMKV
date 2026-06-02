@@ -233,6 +233,27 @@ public class MMKVTest {
     }
 
     @Test
+    public void testExpirationOverflow() {
+        MMKV kv = MMKV.mmkvWithID("expirationOverflowTest");
+        kv.clearAll();
+        // JNI casts int to uint32_t, so -1 exercises UINT32_MAX.
+        assertTrue(kv.enableAutoKeyExpire(-1));
+
+        assertTrue(kv.encode("expiration_overflow_auto", true));
+        assertTrue(kv.decodeBool("expiration_overflow_auto"));
+
+        assertTrue(kv.encode("expiration_overflow_manual", "manual", -1));
+        assertEquals("manual", kv.decodeString("expiration_overflow_manual"));
+
+        byte[] bytes = {'d', 'a', 't', 'a'};
+        assertTrue(kv.encode("expiration_overflow_bytes", bytes, -1));
+        assertArrayEquals(bytes, kv.decodeBytes("expiration_overflow_bytes"));
+
+        assertEquals(3, kv.countNonExpiredKeys());
+        kv.clearAll();
+    }
+
+    @Test
     public void testIPCUpdateInt() {
         MMKV mmkv = MMKV.mmkvWithID(MMKVTestService.SharedMMKVID, MMKV.MULTI_PROCESS_MODE);
         mmkv.encode(MMKVTestService.SharedMMKVKey, 1024);

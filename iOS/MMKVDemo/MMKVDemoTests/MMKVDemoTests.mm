@@ -418,6 +418,29 @@ using namespace std;
     XCTAssertEqualObjects(sValue, @"hello");
 }
 
+- (void)testExpirationOverflow {
+    MMKV *kv = [MMKV mmkvWithID:@"expiration_overflow_test"];
+    [kv clearAll];
+    XCTAssertTrue([kv enableAutoKeyExpire:numeric_limits<uint32_t>::max()]);
+
+    XCTAssertTrue([kv setBool:YES forKey:@"expiration_overflow_auto"]);
+    XCTAssertTrue([kv getBoolForKey:@"expiration_overflow_auto"]);
+
+    XCTAssertTrue([kv setString:@"manual" forKey:@"expiration_overflow_manual" expireDuration:numeric_limits<uint32_t>::max()]);
+    XCTAssertEqualObjects([kv getStringForKey:@"expiration_overflow_manual"], @"manual");
+
+    NSData *data = [@"data" dataUsingEncoding:NSUTF8StringEncoding];
+    XCTAssertTrue([kv setObject:data forKey:@"expiration_overflow_data" expireDuration:numeric_limits<uint32_t>::max()]);
+    XCTAssertEqualObjects([kv getDataForKey:@"expiration_overflow_data"], data);
+
+    NSArray *array = @[ @"object", @"value" ];
+    XCTAssertTrue([kv setObject:array forKey:@"expiration_overflow_object" expireDuration:numeric_limits<uint32_t>::max()]);
+    XCTAssertEqualObjects([kv getObjectOfClass:NSArray.class forKey:@"expiration_overflow_object"], array);
+
+    XCTAssertEqual([kv countNonExpiredKeys], (size_t) 4);
+    [kv clearAll];
+}
+
 - (void)compareDate:(NSDate *)date withDate:(NSDate *)other {
     XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, other.timeIntervalSince1970, 0.001);
 }
@@ -478,7 +501,7 @@ using namespace std;
     number = [NSNumber numberWithUnsignedInteger:std::numeric_limits<NSUInteger>::max()];
     [userDefault setObject:number forKey:@"number_NSUInteger"];
 
-    [mmkv migrateFromUserDefaults:userDefault];
+    [mmkv migrateFromUserDefaultsDictionaryRepresentation:userDefault.dictionaryRepresentation];
 
     XCTAssertEqual([mmkv getBoolForKey:@"bool"], [userDefault boolForKey:@"bool"]);
     XCTAssertEqual([mmkv getInt64ForKey:@"NSInteger"], [userDefault integerForKey:@"NSInteger"]);
