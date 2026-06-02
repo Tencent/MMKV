@@ -282,6 +282,7 @@ class MMKV_EXPORT MMKV {
     static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir);
 
     static uint32_t getCurrentTimeInSecond();
+    static uint32_t safeExpirationPlusCurrentTime(uint32_t expireDuration);
     uint32_t getExpireTimeForKey(MMKVKey_t key);
     mmkv::MMBuffer getDataWithoutMTimeForKey(MMKVKey_t key);
     size_t filterExpiredKeys();
@@ -697,7 +698,7 @@ bool MMKV::set(const T& value, MMKVKey_t key, uint32_t expireDuration) {
         auto tmp = mmkv::MMBuffer(data.length() + ConstFixed32Size);
         auto ptr = (uint8_t *) tmp.getPtr();
         memcpy(ptr, data.getPtr(), data.length());
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = (expireDuration != ExpireNever) ? safeExpirationPlusCurrentTime(expireDuration) : ExpireNever;
         memcpy(ptr + data.length(), &time, ConstFixed32Size);
         data = std::move(tmp);
     }
