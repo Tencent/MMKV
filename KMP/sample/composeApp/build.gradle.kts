@@ -1,8 +1,8 @@
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.compose") version "2.2.20"
+    kotlin("plugin.compose") version "2.3.21"
     id("com.android.application")
-    id("org.jetbrains.compose") version "1.8.1"
+    id("org.jetbrains.compose") version "1.11.0"
 }
 
 kotlin {
@@ -22,7 +22,6 @@ kotlin {
     listOf(
         iosArm64(),
         iosSimulatorArm64(),
-        iosX64(),
     ).forEach { target ->
         target.binaries.framework {
             baseName = "ComposeApp"
@@ -34,15 +33,15 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":mmkv"))
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation(compose.ui)
+                implementation("org.jetbrains.compose.runtime:runtime:1.11.0")
+                implementation("org.jetbrains.compose.foundation:foundation:1.11.0")
+                implementation("org.jetbrains.compose.material3:material3:1.11.0-alpha07")
+                implementation("org.jetbrains.compose.ui:ui:1.11.0")
             }
         }
         androidMain {
             dependencies {
-                implementation("androidx.activity:activity-compose:1.10.1")
+                implementation("androidx.activity:activity-compose:1.13.0")
             }
         }
         val desktopMain by getting {
@@ -65,12 +64,12 @@ compose.desktop {
 
 android {
     namespace = "com.tencent.mmkv.sample"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tencent.mmkv.sample"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
     }

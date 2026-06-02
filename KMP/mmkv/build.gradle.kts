@@ -168,6 +168,13 @@ val hostPublishableNativeDesktopPublications = when (hostOsId()) {
     else -> emptySet()
 }
 val nativeDesktopPublications = setOf("LinuxX64", "LinuxArm64", "MingwX64")
+val desktopNativeRuntimePlatforms = listOf(
+    "macos-arm64",
+    "macos-x86_64",
+    "linux-x86_64",
+    "linux-arm64",
+    "windows-x86_64",
+)
 val disabledNativeDesktopPublications = nativeDesktopPublications - hostPublishableNativeDesktopPublications
 val disabledNativeDesktopTargetNames = disabledNativeDesktopPublications.map {
     it.replaceFirstChar { char -> char.lowercase() }
@@ -234,12 +241,29 @@ val desktopNativeJar = tasks.register<Jar>("desktopNativeJar") {
     }
 }
 
+val desktopNativeRuntimeDependencies by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = false
+}
+
+dependencies {
+    desktopNativeRuntimePlatforms.forEach { platform ->
+        desktopNativeRuntimeDependencies(
+            "$publishedGroup:$baseArtifactId-desktop-native-$platform:$publishVersion"
+        )
+    }
+}
+
+configurations.matching { it.name == "desktopRuntimeElements" }.configureEach {
+    extendsFrom(desktopNativeRuntimeDependencies)
+}
+
 kotlin {
     withSourcesJar()
 
     android {
         namespace = "com.tencent.mmkv.kmp"
-        compileSdk = 35
+        compileSdk = 36
         minSdk = 23
         withHostTest {}
         withDeviceTest {}
@@ -399,7 +423,7 @@ kotlin {
 
         val desktopMain by getting {
             dependencies {
-                implementation("net.java.dev.jna:jna:5.17.0")
+                implementation("net.java.dev.jna:jna:5.18.1")
             }
             resources.srcDir(desktopNativeResourceDir)
         }

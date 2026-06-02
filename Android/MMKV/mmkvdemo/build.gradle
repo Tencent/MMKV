@@ -1,9 +1,8 @@
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
 
 android {
     namespace "com.tencent.mmkvdemo"
-    compileSdk rootProject.ext.compileSdk
+    compileSdk = 36
 
     signingConfigs {
         config {
@@ -36,7 +35,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.config
 //            debuggable true
 //            jniDebuggable true
@@ -64,14 +63,12 @@ android {
     }
 
     buildFeatures {
+        buildConfig true
         aidl true
 
 //        prefab true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
-    }
     /*splits {
         // Configures multiple APKs based on ABI.
         abi {

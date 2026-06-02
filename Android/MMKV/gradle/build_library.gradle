@@ -8,7 +8,7 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdk rootProject.ext.compileSdk
+    compileSdk = 36
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
@@ -40,7 +40,7 @@ android {
         release {
             signingConfig signingConfigs.configRelease
             minifyEnabled true
-            proguardFile getDefaultProguardFile('proguard-android.txt')
+            proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
             proguardFile project.file('proguard-rules-android-lib.pro') // NOTE: default rules for android library if this file exists
         }
     }

@@ -11,6 +11,8 @@ cmake_minimum_required(VERSION 3.10.0)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
+file(COPY ../../../Core/MemoryFile.h ../../../Core/MMKVLog.h DESTINATION ../../../Core/include/MMKV)
+
 add_subdirectory(../../../Core Core)
 
 add_library( mmkv

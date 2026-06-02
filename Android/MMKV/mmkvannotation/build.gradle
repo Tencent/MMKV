@@ -3,7 +3,7 @@ apply plugin: 'com.android.library'
 android {
     namespace "com.tencent.mmkv"
 
-    compileSdk rootProject.ext.compileSdk
+    compileSdk = 36
 
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -17,7 +17,9 @@ android {
         }
     }
 
-
+    sourceSets {
+        main.java.exclude 'dalvik/annotation/optimization/FastNative.java'
+    }
 }
 
 configurations {

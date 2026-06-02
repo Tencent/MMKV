@@ -27,26 +27,28 @@ kotlin {
 }
 ```
 
-For JVM desktop, also add the native runtime artifacts for the platforms you ship to the desktop source set:
+For JVM desktop, the native runtime artifacts are resolved transitively. If you only ship selected desktop platforms, you can exclude unused runtimes to reduce dependency size:
 
 ```kotlin
 kotlin {
     sourceSets {
-        val desktopMain by getting {
-            dependencies {
-                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-macos-arm64:2.4.0")
-                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-macos-x86_64:2.4.0")
-                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-linux-x86_64:2.4.0")
-                runtimeOnly("com.tencent:mmkv-kmp-desktop-native-windows-x86_64:2.4.0")
+        commonMain.dependencies {
+            implementation("com.tencent:mmkv-kmp:2.4.0") {
+                // Example: exclude Windows runtime from a macOS/Linux-only desktop app.
+                exclude(group = "com.tencent", module = "mmkv-kmp-desktop-native-windows-x86_64")
+
+                // Add more exclusions only for platforms your JVM desktop app will never run on.
+                // exclude(group = "com.tencent", module = "mmkv-kmp-desktop-native-macos-arm64")
+                // exclude(group = "com.tencent", module = "mmkv-kmp-desktop-native-macos-x86_64")
+                // exclude(group = "com.tencent", module = "mmkv-kmp-desktop-native-linux-x86_64")
+                // exclude(group = "com.tencent", module = "mmkv-kmp-desktop-native-linux-arm64")
             }
         }
     }
 }
 ```
 
-For a single-platform desktop app, include only the matching runtime artifact. For a multi-platform desktop distribution, include every runtime artifact you plan to ship; MMKV loads the matching native library at runtime.
-
-Android, iOS, macOS, Linux, and Windows Kotlin/Native targets do not need the JVM desktop runtime artifacts.
+These exclusions do not affect Android, iOS, macOS, Linux, or Windows Kotlin/Native targets.
 
 ### Supported targets
 
