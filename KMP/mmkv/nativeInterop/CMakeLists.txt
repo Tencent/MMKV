@@ -21,25 +21,31 @@
 cmake_minimum_required(VERSION 3.14)
 project(mmkv-kmp)
 
-# Set the version of MMKV to use.
-set(MMKV_VERSION "v2.4.0")
+# Set the version of MMKV to use. Can be overridden by Gradle via
+# -DMMKV_VERSION=v<x.y.z>. Defaults to the in-repo value when run standalone.
+set(MMKV_VERSION "v2.4.1" CACHE STRING "MMKV version to fetch when built outside the monorepo")
+set(MMKV_GIT_REPOSITORY "https://github.com/Tencent/MMKV.git" CACHE STRING "MMKV git repository to fetch when built outside the monorepo")
+set(MMKV_GIT_TAG "${MMKV_VERSION}" CACHE STRING "MMKV git tag, branch, or commit to fetch when built outside the monorepo")
 
 # Auto-detect: if running inside the MMKV monorepo, use local source;
 # otherwise fetch from GitHub (e.g. when built as a standalone package).
-set(MMKV_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
+# Set MMKV_FORCE_FETCH=ON to exercise the fetch path locally.
+set(MMKV_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." CACHE PATH "Local MMKV checkout root")
+set(MMKV_FORCE_FETCH OFF CACHE BOOL "Fetch MMKV even when a local checkout is present")
 
 include(FetchContent)
-IF(EXISTS "${MMKV_ROOT}/Core/cbridge/MMKVBridge.h")
+IF(EXISTS "${MMKV_ROOT}/Core/cbridge/MMKVBridge.h" AND NOT MMKV_FORCE_FETCH)
     message(STATUS "Using local MMKV Core from ${MMKV_ROOT}/Core")
     FetchContent_Declare(mmkv
       SOURCE_DIR "${MMKV_ROOT}"
       SOURCE_SUBDIR "Core"
     )
 ELSE()
-    message(STATUS "Fetching MMKV ${MMKV_VERSION} from GitHub")
+    message(STATUS "Fetching MMKV ${MMKV_GIT_TAG} from ${MMKV_GIT_REPOSITORY}")
     FetchContent_Declare(mmkv
-      GIT_REPOSITORY "https://github.com/Tencent/MMKV.git"
-      GIT_TAG ${MMKV_VERSION}
+      GIT_REPOSITORY "${MMKV_GIT_REPOSITORY}"
+      GIT_TAG "${MMKV_GIT_TAG}"
+      GIT_SUBMODULES ""
       SOURCE_SUBDIR "Core"
     )
 ENDIF()
@@ -49,13 +55,11 @@ FetchContent_GetProperties(mmkv SOURCE_DIR MMKV_SOURCE_DIR)
 # Write the resolved cbridge header path so Gradle cinterop can find it.
 file(WRITE ${CMAKE_BINARY_DIR}/cbridge_include_dir.txt "${MMKV_SOURCE_DIR}/Core/cbridge")
 
-# The Core CMakeLists.txt builds the 'core' static library which
-# includes all Core sources plus cbridge/MMKVBridge.cpp.
-# We rename it to libmmkv-kmp.a for cinterop linking.
-
+# The Core CMakeLists.txt builds the 'core' static library which includes all
+# Core sources plus cbridge/MMKVBridge.cpp. Copy it to the name expected by
+# cinterop's staticLibraries entry.
 set(OUTPUT_LIB ${CMAKE_BINARY_DIR}/libmmkv-kmp.a)
 
-# Copy libcore.a -> libmmkv-kmp.a
 add_custom_command(
     OUTPUT ${OUTPUT_LIB}
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:core> ${OUTPUT_LIB}
@@ -64,25 +68,3 @@ add_custom_command(
 )
 
 add_custom_target(mmkv-kmp ALL DEPENDS ${OUTPUT_LIB})
-
-# Also build a shared library for JVM desktop (JNA).
-# Use whole-archive to re-export all C bridge symbols from core.
-file(WRITE ${CMAKE_BINARY_DIR}/empty.cpp "")
-add_library(mmkv-kmp-shared SHARED ${CMAKE_BINARY_DIR}/empty.cpp)
-set_target_properties(mmkv-kmp-shared PROPERTIES
-    OUTPUT_NAME "mmkv-kmp"
-    CXX_STANDARD 20
-    CXX_EXTENSIONS OFF
-    POSITION_INDEPENDENT_CODE ON
-)
-
-IF(APPLE)
-    target_link_libraries(mmkv-kmp-shared -Wl,-force_load core)
-ELSE()
-    target_link_libraries(mmkv-kmp-shared -Wl,--whole-archive core -Wl,--no-whole-archive)
-ENDIF()
-
-find_library(zlib z)
-IF(zlib)
-    target_link_libraries(mmkv-kmp-shared ${zlib})
-ENDIF()

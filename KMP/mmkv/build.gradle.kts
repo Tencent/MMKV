@@ -18,117 +18,279 @@
  * limitations under the License.
  */
 
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.bundling.Jar
+
 plugins {
     kotlin("multiplatform")
-    kotlin("native.cocoapods")
-    id("com.android.library")
+    id("com.android.kotlin.multiplatform.library")
+    id("maven-publish")
+    id("signing")
+}
+
+val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.1"
+val publishVersion = (findProperty("VERSION_NAME") as? String) ?: mmkvVersion
+val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
+val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
+val isSnapshot = publishVersion.endsWith("-SNAPSHOT")
+val mmkvGitRepository = findProperty("MMKV_GIT_REPOSITORY") as? String
+val mmkvGitTag = findProperty("MMKV_GIT_TAG") as? String
+val mmkvGitBranch = findProperty("MMKV_GIT_BRANCH") as? String
+val mmkvGitCommit = findProperty("MMKV_GIT_COMMIT") as? String
+val mmkvForceFetch = (findProperty("MMKV_FORCE_FETCH") as? String)?.toBooleanStrictOrNull() == true
+val mmkvGitRef = mmkvGitCommit?.takeIf { it.isNotBlank() }
+    ?: mmkvGitBranch?.takeIf { it.isNotBlank() }
+    ?: mmkvGitTag?.takeIf { it.isNotBlank() }
+
+// Keep this project's internal coordinates distinct from the published Android
+// dependency (`com.tencent:mmkv`) so same-build resolution never substitutes the
+// native Android AAR with this KMP wrapper project.
+group = "$publishedGroup.kmpbuild"
+version = publishVersion
+
+val nativeInteropDir = project.file("nativeInterop")
+val nativeBuildRoot = nativeInteropDir.resolve("build")
+val localCBridgeDir = rootProject.projectDir.parentFile.resolve("Core/cbridge")
+
+fun taskSuffix(label: String): String =
+    label.split('-', '_')
+        .filter { it.isNotBlank() }
+        .joinToString("") { token -> token.replaceFirstChar { it.uppercase() } }
+
+fun cmakeBuildDirFor(label: String) = nativeBuildRoot.resolve(label)
+
+fun registerCMakeBuildTask(
+    label: String,
+    cmakeTarget: String = "mmkv-kmp",
+    extraConfigureArgs: List<String> = emptyList(),
+): TaskProvider<Exec> {
+    val buildDir = cmakeBuildDirFor(label)
+    val configureTask = tasks.register<Exec>("cmakeConfigure${taskSuffix(label)}") {
+        group = "build"
+        description = "Configure CMake for $label"
+
+        inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
+        inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
+        outputs.file(buildDir.resolve("CMakeCache.txt"))
+
+        doFirst { buildDir.mkdirs() }
+
+        workingDir = nativeInteropDir
+        commandLine(
+            buildList {
+                add("cmake")
+                add("-S")
+                add(".")
+                add("-B")
+                add(buildDir.absolutePath)
+                add("-DCMAKE_BUILD_TYPE=Release")
+                add("-DMMKV_VERSION=v$mmkvVersion")
+                if (!mmkvGitRepository.isNullOrBlank()) {
+                    add("-DMMKV_GIT_REPOSITORY=$mmkvGitRepository")
+                }
+                if (!mmkvGitRef.isNullOrBlank()) {
+                    add("-DMMKV_GIT_TAG=$mmkvGitRef")
+                }
+                if (mmkvForceFetch) {
+                    add("-DMMKV_FORCE_FETCH=ON")
+                }
+                addAll(extraConfigureArgs)
+            }
+        )
+    }
+
+    return tasks.register<Exec>("cmakeBuild${taskSuffix(label)}") {
+        group = "build"
+        description = "Build native MMKV artifact for $label via CMake"
+        dependsOn(configureTask)
+
+        inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
+        inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
+        outputs.file(buildDir.resolve("libmmkv-kmp.a"))
+
+        workingDir = nativeInteropDir
+        commandLine(
+            buildList {
+                add("cmake")
+                add("--build")
+                add(buildDir.absolutePath)
+                add("--config")
+                add("Release")
+                add("--target")
+                add(cmakeTarget)
+            }
+        )
+    }
+}
+
+fun publicationArtifactId(publicationName: String): String = when (publicationName) {
+    "kotlinMultiplatform" -> baseArtifactId
+    "android", "androidRelease" -> "$baseArtifactId-android"
+    else -> "$baseArtifactId-${publicationName.lowercase()}"
+}
+
+fun pomName(publicationName: String): String = when (publicationName) {
+    "kotlinMultiplatform" -> "MMKV Kotlin Multiplatform"
+    else -> "MMKV Kotlin Multiplatform ($publicationName)"
+}
+
+fun MavenPublication.configurePom(publicationName: String) {
+    pom {
+        name.set(pomName(publicationName))
+        description.set((findProperty("POM_DESCRIPTION") as? String) ?: "Kotlin Multiplatform wrapper for MMKV")
+        url.set((findProperty("POM_URL") as? String) ?: "https://github.com/Tencent/MMKV")
+        licenses {
+            license {
+                name.set((findProperty("POM_LICENCE_NAME") as? String) ?: "BSD 3-Clause License")
+                url.set((findProperty("POM_LICENCE_URL") as? String) ?: "https://opensource.org/licenses/BSD-3-Clause")
+            }
+        }
+        developers {
+            developer {
+                id.set((findProperty("POM_DEVELOPER_ID") as? String) ?: "tencent")
+                name.set((findProperty("POM_DEVELOPER_NAME") as? String) ?: "Tencent")
+            }
+        }
+        scm {
+            url.set((findProperty("POM_SCM_URL") as? String) ?: "https://github.com/Tencent/MMKV")
+            connection.set((findProperty("POM_SCM_CONNECTION") as? String) ?: "scm:git:git://github.com/Tencent/MMKV.git")
+            developerConnection.set((findProperty("POM_SCM_DEV_CONNECTION") as? String) ?: "scm:git:ssh://git@github.com/Tencent/MMKV.git")
+        }
+    }
+}
+
+val javadocJar = tasks.register<Jar>("javadocJar") {
+    archiveClassifier.set("javadoc")
 }
 
 kotlin {
-    // Android target
-    androidTarget {
+    withSourcesJar()
+
+    android {
+        namespace = "com.tencent.mmkv.kmp"
+        compileSdk = 35
+        minSdk = 23
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
 
-    // JVM desktop target
-    jvm("desktop") {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-        }
-    }
+    // Minimal KMP support for v2.4.1: Android + iOS only.
+    val darwinTargets = listOf(
+        iosArm64(),
+        iosSimulatorArm64(),
+        iosX64(),
+    )
 
-    // iOS targets
-    iosArm64()
-    iosSimulatorArm64()
-    iosX64()
-
-    // macOS targets
-    macosArm64()
-    macosX64()
-
-    // Linux & Windows native desktop targets
-    linuxX64()
-    mingwX64()
-
-    // Use the default hierarchy template which automatically creates
-    // appleMain, iosMain, macosMain, etc. intermediate source sets.
-    // We add custom groups for darwinMain and nativeDesktopMain.
     applyDefaultHierarchyTemplate {
         common {
+            // Keep Darwin source in one shared source set while publishing only iOS targets for v2.4.1.
             group("darwin") {
                 group("ios")
-                group("macos")
-            }
-            group("nativeDesktop") {
-                withLinuxX64()
-                withMingwX64()
             }
         }
     }
 
-    // Configure cinterop for native desktop targets (Linux & Windows)
-    val nativeDesktopTargets = listOf(linuxX64(), mingwX64())
-    val nativeBuildDir = project.file("nativeInterop/build")
-    // CMake writes the resolved cbridge header path during configure
-    val cbridgeIncludeDir = nativeBuildDir.resolve("cbridge_include_dir.txt")
-        .let { if (it.exists()) it.readText().trim() else "" }
-    nativeDesktopTargets.forEach { target ->
+    val darwinBuildSettings = mapOf(
+        "iosArm64" to listOf("iOS", "iphoneos", "arm64", "13.0"),
+        "iosSimulatorArm64" to listOf("iOS", "iphonesimulator", "arm64", "13.0"),
+        "iosX64" to listOf("iOS", "iphonesimulator", "x86_64", "13.0"),
+    )
+    darwinTargets.forEach { target ->
+        val label = target.targetName
+        val settings = darwinBuildSettings.getValue(label)
+        val cmakeTask = registerCMakeBuildTask(
+            label = label,
+            extraConfigureArgs = listOf(
+                "-DCMAKE_SYSTEM_NAME=${settings[0]}",
+                "-DCMAKE_OSX_SYSROOT=${settings[1]}",
+                "-DCMAKE_OSX_ARCHITECTURES=${settings[2]}",
+                "-DCMAKE_OSX_DEPLOYMENT_TARGET=${settings[3]}",
+                "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY",
+            ),
+        )
+        val buildDir = cmakeBuildDirFor(label)
+        val includeHintFile = buildDir.resolve("cbridge_include_dir.txt")
+
         target.compilations.getByName("main") {
             cinterops {
                 val mmkv by creating {
                     defFile("nativeInterop/cinterop/mmkv.def")
-                    if (cbridgeIncludeDir.isNotEmpty()) {
-                        compilerOpts("-I$cbridgeIncludeDir")
-                        includeDirs(cbridgeIncludeDir)
+                    when {
+                        localCBridgeDir.exists() -> {
+                            compilerOpts("-I${localCBridgeDir.absolutePath}")
+                            includeDirs(localCBridgeDir)
+                        }
+                        includeHintFile.exists() -> {
+                            val includeDir = includeHintFile.readText().trim()
+                            compilerOpts("-I$includeDir")
+                            includeDirs(includeDir)
+                        }
+                        else -> {
+                            logger.warn("Unable to resolve MMKV cbridge headers for ${target.targetName} during configuration.")
+                        }
                     }
+                    extraOpts("-libraryPath", buildDir.absolutePath)
                 }
             }
         }
-        target.binaries.all {
-            linkerOpts("-L${nativeBuildDir.absolutePath}", "-lmmkv-kmp")
+
+        tasks.matching { task ->
+            task.name.contains(target.targetName, ignoreCase = true) &&
+                task.name.startsWith("cinterop")
+        }.configureEach {
+            dependsOn(cmakeTask)
         }
     }
 
-    // CocoaPods integration for Darwin platforms
-    cocoapods {
-        summary = "MMKV Kotlin Multiplatform wrapper"
-        homepage = "https://github.com/Tencent/MMKV"
-        version = "2.4.0"
-        ios.deploymentTarget = "13.0"
-        osx.deploymentTarget = "10.15"
-
-        pod("MMKV") {
-            version = "2.4.0"
-        }
-    }
-
-    // Source set hierarchy
     sourceSets {
         androidMain {
             dependencies {
-                implementation("com.tencent:mmkv:2.4.0")
-            }
-        }
-        val desktopMain by getting {
-            dependencies {
-                implementation("net.java.dev.jna:jna:5.17.0")
+                api("com.tencent:mmkv:$mmkvVersion")
             }
         }
     }
 }
 
-android {
-    namespace = "com.tencent.mmkv.kmp"
-    compileSdk = 35
 
-    defaultConfig {
-        minSdk = 23
+publishing {
+    publications.withType<MavenPublication>().configureEach {
+        groupId = publishedGroup
+        artifactId = publicationArtifactId(name)
+        if (name != "kotlinMultiplatform") {
+            artifact(javadocJar)
+        }
+        configurePom(name)
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+    repositories {
+        maven {
+            name = "localTest"
+            url = uri(layout.buildDirectory.dir("local-maven"))
+        }
+
+        val releaseRepo = findProperty("RELEASE_REPOSITORY_URL") as? String
+        val snapshotRepo = findProperty("SNAPSHOT_REPOSITORY_URL") as? String
+        val repoUrl = if (isSnapshot) snapshotRepo else releaseRepo
+        if (!repoUrl.isNullOrBlank()) {
+            maven {
+                name = "sonatype"
+                url = uri(repoUrl)
+                credentials {
+                    username = (findProperty("SONATYPE_NEXUS_USERNAME") ?: findProperty("mavenCentralUsername")) as String?
+                    password = (findProperty("SONATYPE_NEXUS_PASSWORD") ?: findProperty("mavenCentralPassword")) as String?
+                }
+            }
+        }
+    }
+}
+
+signing {
+    val signingKey = (findProperty("SIGNING_KEY") ?: findProperty("signingInMemoryKey")) as String?
+    val signingPassword = (findProperty("SIGNING_PASSWORD") ?: findProperty("signingInMemoryKeyPassword")) as String?
+    if (!signingKey.isNullOrBlank()) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications)
     }
 }

@@ -74,6 +74,9 @@ typedef struct {
 
 void mmkv_initialize(const char *rootDir, int32_t logLevel);
 void mmkv_initialize_with_handler(const char *rootDir, int32_t logLevel, MMKVHandler_t handler);
+void mmkv_register_handler(MMKVHandler_t handler);
+void mmkv_unregister_handler(void);
+void mmkv_set_log_level(int32_t logLevel);
 void mmkv_on_exit(void);
 
 /* ── Instance creation & management ────────────────────────────────── */

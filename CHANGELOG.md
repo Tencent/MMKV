@@ -1,4 +1,45 @@
 # MMKV Change Log
+## v2.4.1 / 2026-06-26
+
+This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and ready-to-use Kotlin Multiplatform support for Android and iOS.
+
+### Changes for All Platforms
+* **Fix:** Fixed an oversized-key corruption bug where keys longer than the internal `uint16_t` holder limit could overflow key/value metadata and corrupt subsequent reads.
+* **Fix:** Fixed an `expireDuration` overflow bug ([#1665](https://github.com/tencent/mmkv/issues/1665)). Very large expiration durations are now clamped safely instead of wrapping around.
+* **Fix:** Improved encrypted MMKV random-IV upgrade behavior. Existing encrypted files using the older IV format now trigger a full writeback when possible so they are upgraded to the random-IV format.
+* **Fix:** Added safer random-IV reset behavior when clearing memory cache for encrypted instances.
+* **Fix:** Fixed `-Wmissing-braces` warnings in Android, Win32, and POSIX demo code.
+* **Change:** Added extra mmap/munmap logging to help diagnose file mapping lifecycle issues.
+* **Feature:** Added a universal C interface (`Core/cbridge`) for MMKV Core, with NameSpace support and a pure C demo. The C bridge is also used by the KMP iOS package.
+
+### Kotlin Multiplatform
+* **Feature:** Added Kotlin Multiplatform support for Android and iOS via the Gradle package `com.tencent:mmkv-kmp:2.4.1`.
+* Supported targets: Android, `iosArm64`, `iosSimulatorArm64`, and `iosX64`.
+* Android delegates to the native `com.tencent:mmkv:2.4.1` AAR. iOS embeds MMKV Core through the C bridge in the published native KLIBs, so consumers can use the Gradle package directly as a ready-to-use Gradle dependency.
+
+### Android
+* **Fix:** Added regression coverage for the expiration overflow issue.
+* **Fix:** Improved Android CMake header-export detection for builds where `ANDROID_ABI` is defined, including local Android artifact publication builds.
+
+### iOS/macOS
+* **Feature:** Added the static SwiftPM product `MMKVAppExtension-static`.
+* **Feature:** Added `+[MMKV unregisterHandler]` as the correctly spelled handler-unregistration API. The previous typo'd `+unregiserHandler` remains available for source/binary compatibility and forwards to the new API.
+
+### HarmonyOS NEXT
+* **Change:** Cleaned up project signing/build configuration and removed checked-in Hvigor dependency archives.
+* **Fix:** Updated the HarmonyOS package build profile version to v2.4.0.
+
+### Flutter
+* **Change:** Migrated the Flutter iOS/macOS plugin example from CocoaPods to Swift Package Manager ([#1654](https://github.com/tencent/mmkv/issues/1654)).
+* **Change:** Updated the `mmkv_ios` plugin layout to support SwiftPM while keeping CocoaPods fallback support.
+
+### POSIX
+* **Feature:** Added a pure C demo for the new C bridge.
+* **Fix:** Added regression coverage for oversized-key rejection and expiration overflow.
+
+### Win32
+* **Fix:** Fixed `-Wmissing-braces` warnings in Win32 file handling code.
+
 ## v2.4.0 / 2026-03-18
 
 This release introduces a **unified `MMKVHandler` callback interface** across all platforms, replacing scattered per-callback registration with a single, OO-style handler. It also adds the `MMKVConfig` all-in-one configuration and several bug fixes.
