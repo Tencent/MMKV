@@ -35,13 +35,24 @@ val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
 val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
 val isSnapshot = publishVersion.endsWith("-SNAPSHOT")
 val sonatypeUsername =
-    (findProperty("SONATYPE_NEXUS_USERNAME") ?: findProperty("mavenCentralUsername")) as String?
+    (
+        findProperty("SONATYPE_NEXUS_USERNAME")
+            ?: findProperty("mavenCentralUsername")
+            ?: findProperty("REPOSITORY_USERNAME")
+        ) as String?
 val sonatypePassword =
-    (findProperty("SONATYPE_NEXUS_PASSWORD") ?: findProperty("mavenCentralPassword")) as String?
+    (
+        findProperty("SONATYPE_NEXUS_PASSWORD")
+            ?: findProperty("mavenCentralPassword")
+            ?: findProperty("REPOSITORY_PASSWORD")
+        ) as String?
 val signingKey =
     (findProperty("SIGNING_KEY") ?: findProperty("signingInMemoryKey")) as String?
 val signingPassword =
     (findProperty("SIGNING_PASSWORD") ?: findProperty("signingInMemoryKeyPassword")) as String?
+val hasFileBasedSigning =
+    !findProperty("signing.keyId")?.toString().isNullOrBlank() &&
+        !findProperty("signing.secretKeyRingFile")?.toString().isNullOrBlank()
 val mmkvGitRepository = findProperty("MMKV_GIT_REPOSITORY") as? String
 val mmkvGitTag = findProperty("MMKV_GIT_TAG") as? String
 val mmkvGitBranch = findProperty("MMKV_GIT_BRANCH") as? String
@@ -171,10 +182,18 @@ fun MavenPublication.configurePom(publicationName: String) {
     }
 }
 
-val javadocJar = tasks.register<Jar>("javadocJar") {
-    archiveClassifier.set("javadoc")
-    from(rootProject.file("README.md"))
-}
+val javadocJars = mutableMapOf<String, TaskProvider<Jar>>()
+
+fun javadocJarFor(publicationName: String): TaskProvider<Jar> =
+    javadocJars.getOrPut(publicationName) {
+        tasks.register<Jar>("${taskSuffix(publicationName)}JavadocJar") {
+            // Each publication needs a distinct physical file so Gradle's
+            // signing tasks don't race on a shared *.asc output.
+            archiveBaseName.set("$baseArtifactId-$publicationName")
+            archiveClassifier.set("javadoc")
+            from(rootProject.file("README.md"))
+        }
+    }
 
 val verifySonatypePublication = tasks.register("verifySonatypePublication") {
     group = "publishing"
@@ -187,8 +206,8 @@ val verifySonatypePublication = tasks.register("verifySonatypePublication") {
             "Missing SONATYPE_NEXUS_PASSWORD (or mavenCentralPassword)."
         }
         if (!isSnapshot) {
-            check(!signingKey.isNullOrBlank()) {
-                "Missing SIGNING_KEY (or signingInMemoryKey) for a release publication."
+            check(!signingKey.isNullOrBlank() || hasFileBasedSigning) {
+                "Missing an in-memory signing key or Gradle signing.keyId/signing.secretKeyRingFile."
             }
         }
     }
@@ -282,7 +301,7 @@ publishing {
     publications.withType<MavenPublication>().configureEach {
         groupId = publishedGroup
         artifactId = publicationArtifactId(name)
-        artifact(javadocJar)
+        artifact(javadocJarFor(name))
         configurePom(name)
     }
 
@@ -317,6 +336,6 @@ tasks.matching {
 signing {
     if (!signingKey.isNullOrBlank()) {
         useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications)
     }
+    sign(publishing.publications)
 }

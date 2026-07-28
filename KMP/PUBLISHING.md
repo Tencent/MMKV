@@ -65,6 +65,11 @@ SIGNING_KEY
 SIGNING_PASSWORD (when the private key is passphrase-protected)
 ```
 
+It also accepts the Android publication credential names
+`REPOSITORY_USERNAME` / `REPOSITORY_PASSWORD` and Gradle's file-based signing
+properties (`signing.keyId`, `signing.password`, and
+`signing.secretKeyRingFile`).
+
 Use `ORG_GRADLE_PROJECT_<name>` environment variables or user-level
 `~/.gradle/gradle.properties`. Do not commit credentials or signing keys.
 
