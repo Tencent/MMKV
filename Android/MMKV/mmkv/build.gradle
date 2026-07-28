@@ -255,6 +255,8 @@ afterEvaluate {
     }
 }
 
+apply from: rootProject.file('gradle/central-portal.gradle')
+
 configurations {
     javadocDeps
 }

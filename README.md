@@ -1,11 +1,27 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
 [![Release Version](https://img.shields.io/badge/release-2.4.1-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Kotlin%20Multiplatform%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./README_CN.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows**, **POSIX** and **HarmonyOS NEXT**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Kotlin Multiplatform**, **Windows**, **POSIX** and **HarmonyOS NEXT**.
+
+# MMKV for Kotlin Multiplatform
+
+Add the ready-to-use Android and iOS package to the shared module:
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("com.tencent:mmkv-kmp:2.4.1")
+        }
+    }
+}
+```
+
+Supported targets are Android, `iosArm64`, `iosSimulatorArm64`, and `iosX64`. See the [Kotlin Multiplatform guide](./KMP/README.md) for initialization and packaging details.
 
 # MMKV for Android
 

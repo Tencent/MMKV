@@ -96,26 +96,41 @@ cd ../../KMP
 The KMP command publishes the root metadata artifact and all target-specific
 artifacts. Do not publish them individually.
 
-## 6. Finalize the Central Portal deployment
+Both aggregate publication tasks automatically perform the required Central
+Portal handoff after the Maven-style uploads complete. This is necessary
+because Gradle's `maven-publish` plugin sends independent `PUT` requests and
+does not otherwise signal the end of a deployment.
 
-This repository currently uploads through Sonatype's Portal OSSRH Staging API
-compatibility endpoint. After all files are uploaded, finalize the namespace's
-default repository:
+The handoff defaults to:
 
-```bash
-curl -u "$ORG_GRADLE_PROJECT_SONATYPE_NEXUS_USERNAME:$ORG_GRADLE_PROJECT_SONATYPE_NEXUS_PASSWORD" \
-  -X POST \
-  "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/com.tencent"
+```text
+POST /manual/upload/defaultRepository/com.tencent?publishing_type=user_managed
 ```
 
-If credentials are stored in `~/.gradle/gradle.properties` instead of
-environment variables, substitute the corresponding Central Portal username
-and token in the `curl` command.
+`user_managed` transfers the deployment to Central Portal for final review.
+Override it only when desired:
 
-Validate the deployment in Central Portal before selecting **Publish**.
-Released Maven Central coordinates are immutable.
+```bash
+# Transfer and automatically release after validation:
+-PCENTRAL_PORTAL_PUBLISHING_TYPE=automatic
 
-## 7. Verify as an external consumer
+# Transfer only; continue through the Publisher API:
+-PCENTRAL_PORTAL_PUBLISHING_TYPE=portal_api
+```
+
+Useful test/configuration properties:
+
+```text
+CENTRAL_PORTAL_NAMESPACE=com.tencent
+CENTRAL_PORTAL_STAGING_API_URL=https://ossrh-staging-api.central.sonatype.com
+CENTRAL_PORTAL_DRY_RUN=true
+```
+
+The handoff is attached only to the aggregate `publish`/repository publication
+tasks. Publishing a single publication intentionally does not finalize the
+implicit repository.
+
+## 6. Verify as an external consumer
 
 After Maven Central synchronization, test a clean project without
 `mavenLocal()`:

@@ -339,3 +339,5 @@ signing {
     }
     sign(publishing.publications)
 }
+
+apply(from = rootProject.file("gradle/central-portal.gradle.kts"))
