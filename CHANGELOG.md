@@ -1,5 +1,5 @@
 # MMKV Change Log
-## v2.4.1 / 2026-06-26
+## v2.4.1 / 2026-07-28
 
 This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and ready-to-use Kotlin Multiplatform support for Android and iOS.
 
@@ -16,6 +16,7 @@ This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fix
 * **Feature:** Added Kotlin Multiplatform support for Android and iOS via the Gradle package `com.tencent:mmkv-kmp:2.4.1`.
 * Supported targets: Android, `iosArm64`, `iosSimulatorArm64`, and `iosX64`.
 * Android delegates to the native `com.tencent:mmkv:2.4.1` AAR. iOS embeds MMKV Core through the C bridge in the published native KLIBs, so consumers can use the Gradle package directly as a ready-to-use Gradle dependency.
+* **Fix:** Added platform-parity buffer/state APIs, preserved empty byte arrays on iOS, respected handler notification preferences, and added Kotlin/Native smoke tests.
 
 ### Android
 * **Fix:** Added regression coverage for the expiration overflow issue.
@@ -28,10 +29,6 @@ This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fix
 ### HarmonyOS NEXT
 * **Change:** Cleaned up project signing/build configuration and removed checked-in Hvigor dependency archives.
 * **Fix:** Updated the HarmonyOS package build profile version to v2.4.0.
-
-### Flutter
-* **Change:** Migrated the Flutter iOS/macOS plugin example from CocoaPods to Swift Package Manager ([#1654](https://github.com/tencent/mmkv/issues/1654)).
-* **Change:** Updated the `mmkv_ios` plugin layout to support SwiftPM while keeping CocoaPods fallback support.
 
 ### POSIX
 * **Feature:** Added a pure C demo for the new C bridge.

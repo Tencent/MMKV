@@ -52,8 +52,17 @@ ENDIF()
 FetchContent_MakeAvailable(mmkv)
 FetchContent_GetProperties(mmkv SOURCE_DIR MMKV_SOURCE_DIR)
 
-# Write the resolved cbridge header path so Gradle cinterop can find it.
-file(WRITE ${CMAKE_BINARY_DIR}/cbridge_include_dir.txt "${MMKV_SOURCE_DIR}/Core/cbridge")
+# Copy the C bridge header into a stable, build-local include directory.
+# Gradle can configure cinterop with this path before FetchContent has resolved
+# the source checkout, which also makes standalone KMP source builds work.
+set(MMKV_CBRIDGE_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
+file(MAKE_DIRECTORY "${MMKV_CBRIDGE_INCLUDE_DIR}")
+configure_file(
+    "${MMKV_SOURCE_DIR}/Core/cbridge/MMKVBridge.h"
+    "${MMKV_CBRIDGE_INCLUDE_DIR}/MMKVBridge.h"
+    COPYONLY
+)
+file(WRITE "${CMAKE_BINARY_DIR}/cbridge_include_dir.txt" "${MMKV_CBRIDGE_INCLUDE_DIR}")
 
 # The Core CMakeLists.txt builds the 'core' static library which includes all
 # Core sources plus cbridge/MMKVBridge.cpp. Copy it to the name expected by

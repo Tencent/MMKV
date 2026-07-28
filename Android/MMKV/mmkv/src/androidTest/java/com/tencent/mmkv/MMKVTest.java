@@ -176,6 +176,34 @@ public class MMKVTest {
     }
 
     @Test
+    public void testBufferAndFeatureStateAPIs() {
+        MMKV kv = MMKV.mmkvWithID("bufferAndFeatureStateTest");
+        kv.clearAll();
+        try {
+            byte[] bytes = {'m', 'm', 'k', 'v'};
+            assertTrue(kv.encode("buffer", bytes));
+
+            byte[] output = new byte[bytes.length];
+            assertEquals(bytes.length, kv.writeValueToBuffer("buffer", output));
+            assertArrayEquals(bytes, output);
+
+            assertFalse(kv.isExpirationEnabled());
+            assertTrue(kv.enableAutoKeyExpire(MMKV.ExpireNever));
+            assertTrue(kv.isExpirationEnabled());
+            assertTrue(kv.disableAutoKeyExpire());
+            assertFalse(kv.isExpirationEnabled());
+
+            assertFalse(kv.isCompareBeforeSetEnabled());
+            kv.enableCompareBeforeSet();
+            assertTrue(kv.isCompareBeforeSetEnabled());
+            kv.disableCompareBeforeSet();
+            assertFalse(kv.isCompareBeforeSetEnabled());
+        } finally {
+            kv.clearAll();
+        }
+    }
+
+    @Test
     public void testRemove() {
         boolean ret = mmkv.encode("bool_1", true);
         ret &= mmkv.encode("int_1", Integer.MIN_VALUE);

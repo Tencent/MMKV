@@ -103,6 +103,7 @@ android {
         }
     }
     buildFeatures {
+        buildConfig true
         prefab true
         prefabPublishing true
         aidl true

@@ -109,7 +109,8 @@ bool mmkv_encode_double_v2(MMKVHandle_t handle, const char *key, double value, u
 /* For strings: value is null-terminated. Pass NULL to remove the key. */
 bool mmkv_encode_string(MMKVHandle_t handle, const char *key, const char *value);
 bool mmkv_encode_string_v2(MMKVHandle_t handle, const char *key, const char *value, uint32_t expireDuration);
-/* For bytes: value/length pair. Pass NULL/0 to remove the key. */
+/* For bytes: value/length pair. A non-NULL pointer with length 0 stores an
+   empty byte array. Pass NULL/0 to remove the key. */
 bool mmkv_encode_bytes(MMKVHandle_t handle, const char *key, const void *value, int64_t length);
 bool mmkv_encode_bytes_v2(MMKVHandle_t handle, const char *key, const void *value, int64_t length, uint32_t expireDuration);
 
@@ -124,7 +125,9 @@ float mmkv_decode_float(MMKVHandle_t handle, const char *key, float defaultValue
 double mmkv_decode_double(MMKVHandle_t handle, const char *key, double defaultValue);
 /* Returns malloc'd string — caller must call mmkv_free(). Returns NULL if not found. */
 char *mmkv_decode_string(MMKVHandle_t handle, const char *key);
-/* Returns malloc'd bytes — caller must call mmkv_free(). *lengthPtr receives size. Returns NULL if not found. */
+/* Returns malloc'd bytes — caller must call mmkv_free(). *lengthPtr receives
+   size. An empty stored value returns a non-NULL allocation with size 0.
+   Returns NULL if not found. */
 void *mmkv_decode_bytes(MMKVHandle_t handle, const char *key, uint64_t *lengthPtr);
 
 /* ── Value inspection ──────────────────────────────────────────────── */

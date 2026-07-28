@@ -47,9 +47,19 @@ fun MMKV.Companion.initialize(
     logLevel: MMKVLogLevel = MMKVLogLevel.Info,
     handler: MMKVHandler? = null,
 ): String {
+    darwinGroupRootDir = null
+    return initializeDarwin(rootDir, logLevel, handler)
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun initializeDarwin(
+    rootDir: String?,
+    logLevel: MMKVLogLevel,
+    handler: MMKVHandler?,
+): String {
     val effectiveRootDir = rootDir ?: defaultDarwinRootDir()
+    DarwinMMKVHandlerHolder.handler = handler
     if (handler != null) {
-        DarwinMMKVHandlerHolder.handler = handler
         mmkv_initialize_with_handler(effectiveRootDir, logLevel.toNativeLevel(), darwinCallbacks())
     } else {
         mmkv_initialize(effectiveRootDir, logLevel.toNativeLevel())
@@ -74,7 +84,7 @@ fun MMKV.Companion.initialize(
     handler: MMKVHandler? = null,
 ): String {
     darwinGroupRootDir = groupDir.trimEnd('/') + "/mmkv"
-    return initialize(rootDir, logLevel, handler)
+    return initializeDarwin(rootDir, logLevel, handler)
 }
 
 // endregion
@@ -97,7 +107,7 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
         }
 
         actual fun defaultMMKV(config: MMKVConfig): MMKV {
-            return withNativeConfig(config) { cfg ->
+            return withNativeConfig(config.withDarwinGroupRootIfNeeded()) { cfg ->
                 MMKV(mmkv_default(cfg)!!)
             }
         }
@@ -236,14 +246,24 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
     actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = mmkv_encode_string_v2(handle, key, value, expireDuration)
 
     actual fun encodeBytes(key: String, value: ByteArray): Boolean {
-        if (value.isEmpty()) return mmkv_encode_bytes(handle, key, null, 0)
+        if (value.isEmpty()) {
+            return memScoped {
+                val sentinel = alloc<ByteVar>()
+                mmkv_encode_bytes(handle, key, sentinel.ptr, 0)
+            }
+        }
         return value.usePinned { pinned ->
             mmkv_encode_bytes(handle, key, pinned.addressOf(0), value.size.toLong())
         }
     }
 
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean {
-        if (value.isEmpty()) return mmkv_encode_bytes_v2(handle, key, null, 0, expireDuration)
+        if (value.isEmpty()) {
+            return memScoped {
+                val sentinel = alloc<ByteVar>()
+                mmkv_encode_bytes_v2(handle, key, sentinel.ptr, 0, expireDuration)
+            }
+        }
         return value.usePinned { pinned ->
             mmkv_encode_bytes_v2(handle, key, pinned.addressOf(0), value.size.toLong(), expireDuration)
         }
@@ -272,7 +292,7 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
             val length = lengthPtr.value.toInt()
             if (length == 0) {
                 mmkv_free(ptr)
-                return null
+                return ByteArray(0)
             }
             val bytes = ByteArray(length)
             bytes.usePinned { pinned ->
@@ -314,7 +334,7 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
         memScoped {
             val cArray = allocArray<CPointerVar<ByteVar>>(keys.size)
             keys.forEachIndexed { index, key ->
-                cArray[index] = key.cstr.ptr
+                cArray[index] = key.cstr.getPointer(this)
             }
             mmkv_remove_values(handle, cArray, keys.size.toULong())
         }
@@ -400,7 +420,7 @@ private fun defaultDarwinRootDir(): String {
 
 private fun MMKVConfig.withDarwinGroupRootIfNeeded(): MMKVConfig {
     val groupRoot = darwinGroupRootDir
-    return if (rootPath == null && mode != MMKVMode.SINGLE_PROCESS && groupRoot != null) {
+    return if (rootPath == null && (mode and MMKVMode.MULTI_PROCESS) != 0 && groupRoot != null) {
         copy(rootPath = groupRoot)
     } else {
         this
@@ -463,13 +483,16 @@ private object DarwinMMKVHandlerHolder {
     var handler: MMKVHandler? = null
 
     val logCallback: mmkv_log_callback_t = staticCFunction { level, file, line, function, message ->
-        DarwinMMKVHandlerHolder.handler?.mmkvLog(
-            nativeLogLevelToCommon(level),
-            file?.toKString() ?: "",
-            line,
-            function?.toKString() ?: "",
-            message?.toKString() ?: ""
-        )
+        val commonLevel = nativeLogLevelToCommon(level)
+        val fileName = file?.toKString() ?: ""
+        val functionName = function?.toKString() ?: ""
+        val text = message?.toKString() ?: ""
+        val handler = DarwinMMKVHandlerHolder.handler
+        if (handler?.wantLogRedirect() == true) {
+            handler.mmkvLog(commonLevel, fileName, line, functionName, text)
+        } else {
+            println("[MMKV/${commonLevel.name}] <$fileName:$line::$functionName> $text")
+        }
     }
 
     val errorCallback: mmkv_error_callback_t = staticCFunction { mmapID, error ->
@@ -484,7 +507,10 @@ private object DarwinMMKVHandlerHolder {
     }
 
     val contentChangeCallback: mmkv_content_change_callback_t = staticCFunction { mmapID ->
-        DarwinMMKVHandlerHolder.handler?.onContentChangedByOuterProcess(mmapID?.toKString() ?: "")
+        val handler = DarwinMMKVHandlerHolder.handler
+        if (handler?.wantContentChangeNotification() == true) {
+            handler.onContentChangedByOuterProcess(mmapID?.toKString() ?: "")
+        }
     }
 
     val contentLoadCallback: mmkv_content_load_callback_t = staticCFunction { mmapID ->

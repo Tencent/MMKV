@@ -20,6 +20,7 @@
 
 #include "MMKV.h"
 #include "MMKVBridge.h"
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -45,6 +46,12 @@ public:
                  const char *function, const std::string &message) override {
         if (m_callbacks.log) {
             m_callbacks.log(static_cast<int32_t>(level), file, line, function, message.c_str());
+        } else {
+            // Registering an error/content handler should not silently discard
+            // normal MMKV logs when no log callback was supplied.
+            fprintf(stderr, "[MMKV/%d] <%s:%d::%s> %s\n",
+                    static_cast<int32_t>(level), file ? file : "", line,
+                    function ? function : "", message.c_str());
         }
     }
 
@@ -306,10 +313,10 @@ MMKV_EXPORT bool mmkv_encode_string_v2(MMKVHandle_t handle, const char *key, con
 MMKV_EXPORT bool mmkv_encode_bytes(MMKVHandle_t handle, const char *key, const void *value, int64_t length) {
     MMKV *kv = kvFromHandle(handle);
     if (kv && key) {
-        if (value && length > 0) {
+        if (value && length >= 0) {
             auto buf = MMBuffer((void *) value, static_cast<size_t>(length), MMBufferNoCopy);
             return kv->set(buf, key);
-        } else {
+        } else if (!value && length == 0) {
             kv->removeValueForKey(key);
             return true;
         }
@@ -320,10 +327,10 @@ MMKV_EXPORT bool mmkv_encode_bytes(MMKVHandle_t handle, const char *key, const v
 MMKV_EXPORT bool mmkv_encode_bytes_v2(MMKVHandle_t handle, const char *key, const void *value, int64_t length, uint32_t expireDuration) {
     MMKV *kv = kvFromHandle(handle);
     if (kv && key) {
-        if (value && length > 0) {
+        if (value && length >= 0) {
             auto buf = MMBuffer((void *) value, static_cast<size_t>(length), MMBufferNoCopy);
             return kv->set(buf, key, expireDuration);
-        } else {
+        } else if (!value && length == 0) {
             kv->removeValueForKey(key);
             return true;
         }
@@ -392,22 +399,20 @@ MMKV_EXPORT char *mmkv_decode_string(MMKVHandle_t handle, const char *key) {
 
 MMKV_EXPORT void *mmkv_decode_bytes(MMKVHandle_t handle, const char *key, uint64_t *lengthPtr) {
     MMKV *kv = kvFromHandle(handle);
-    if (kv && key) {
-        auto value = kv->getBytes(key);
-        if (value.length() > 0) {
-            if (value.isStoredOnStack()) {
-                void *result = malloc(value.length());
-                if (result) {
-                    memcpy(result, value.getPtr(), value.length());
-                    *lengthPtr = value.length();
+    if (kv && key && lengthPtr) {
+        *lengthPtr = 0;
+        MMBuffer value;
+        if (kv->getBytes(key, value)) {
+            const auto length = value.length();
+            // Keep an empty value distinguishable from a missing key.
+            void *result = malloc(length > 0 ? length : 1);
+            if (result) {
+                if (length > 0) {
+                    memcpy(result, value.getPtr(), length);
                 }
-                return result;
-            } else {
-                void *result = value.getPtr();
-                *lengthPtr = value.length();
-                value.detach();
-                return result;
+                *lengthPtr = length;
             }
+            return result;
         }
     }
     return nullptr;
@@ -475,7 +480,8 @@ MMKV_EXPORT void mmkv_check_reset_crypt_key(MMKVHandle_t handle, const char *cry
 
 MMKV_EXPORT char **mmkv_all_keys(MMKVHandle_t handle, uint64_t *lengthPtr, bool filterExpire) {
     MMKV *kv = kvFromHandle(handle);
-    if (kv) {
+    if (kv && lengthPtr) {
+        *lengthPtr = 0;
         auto keys = kv->allKeys(filterExpire);
         if (!keys.empty()) {
             char **arr = static_cast<char **>(calloc(keys.size(), sizeof(char *)));

@@ -34,6 +34,14 @@ val publishVersion = (findProperty("VERSION_NAME") as? String) ?: mmkvVersion
 val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
 val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
 val isSnapshot = publishVersion.endsWith("-SNAPSHOT")
+val sonatypeUsername =
+    (findProperty("SONATYPE_NEXUS_USERNAME") ?: findProperty("mavenCentralUsername")) as String?
+val sonatypePassword =
+    (findProperty("SONATYPE_NEXUS_PASSWORD") ?: findProperty("mavenCentralPassword")) as String?
+val signingKey =
+    (findProperty("SIGNING_KEY") ?: findProperty("signingInMemoryKey")) as String?
+val signingPassword =
+    (findProperty("SIGNING_PASSWORD") ?: findProperty("signingInMemoryKeyPassword")) as String?
 val mmkvGitRepository = findProperty("MMKV_GIT_REPOSITORY") as? String
 val mmkvGitTag = findProperty("MMKV_GIT_TAG") as? String
 val mmkvGitBranch = findProperty("MMKV_GIT_BRANCH") as? String
@@ -51,7 +59,6 @@ version = publishVersion
 
 val nativeInteropDir = project.file("nativeInterop")
 val nativeBuildRoot = nativeInteropDir.resolve("build")
-val localCBridgeDir = rootProject.projectDir.parentFile.resolve("Core/cbridge")
 
 fun taskSuffix(label: String): String =
     label.split('-', '_')
@@ -73,6 +80,7 @@ fun registerCMakeBuildTask(
         inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
         inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
         outputs.file(buildDir.resolve("CMakeCache.txt"))
+        outputs.file(buildDir.resolve("include/MMKVBridge.h"))
 
         doFirst { buildDir.mkdirs() }
 
@@ -108,6 +116,9 @@ fun registerCMakeBuildTask(
         inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
         inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
         outputs.file(buildDir.resolve("libmmkv-kmp.a"))
+        // Let CMake perform its own incremental source check. Gradle cannot
+        // reliably model FetchContent/local Core source inputs here.
+        outputs.upToDateWhen { false }
 
         workingDir = nativeInteropDir
         commandLine(
@@ -162,6 +173,25 @@ fun MavenPublication.configurePom(publicationName: String) {
 
 val javadocJar = tasks.register<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
+    from(rootProject.file("README.md"))
+}
+
+val verifySonatypePublication = tasks.register("verifySonatypePublication") {
+    group = "publishing"
+    description = "Fail early when Maven Central credentials or release signing are missing."
+    doLast {
+        check(!sonatypeUsername.isNullOrBlank()) {
+            "Missing SONATYPE_NEXUS_USERNAME (or mavenCentralUsername)."
+        }
+        check(!sonatypePassword.isNullOrBlank()) {
+            "Missing SONATYPE_NEXUS_PASSWORD (or mavenCentralPassword)."
+        }
+        if (!isSnapshot) {
+            check(!signingKey.isNullOrBlank()) {
+                "Missing SIGNING_KEY (or signingInMemoryKey) for a release publication."
+            }
+        }
+    }
 }
 
 kotlin {
@@ -211,26 +241,14 @@ kotlin {
             ),
         )
         val buildDir = cmakeBuildDirFor(label)
-        val includeHintFile = buildDir.resolve("cbridge_include_dir.txt")
+        val generatedIncludeDir = buildDir.resolve("include")
 
         target.compilations.getByName("main") {
             cinterops {
                 val mmkv by creating {
                     defFile("nativeInterop/cinterop/mmkv.def")
-                    when {
-                        localCBridgeDir.exists() -> {
-                            compilerOpts("-I${localCBridgeDir.absolutePath}")
-                            includeDirs(localCBridgeDir)
-                        }
-                        includeHintFile.exists() -> {
-                            val includeDir = includeHintFile.readText().trim()
-                            compilerOpts("-I$includeDir")
-                            includeDirs(includeDir)
-                        }
-                        else -> {
-                            logger.warn("Unable to resolve MMKV cbridge headers for ${target.targetName} during configuration.")
-                        }
-                    }
+                    compilerOpts("-I${generatedIncludeDir.absolutePath}")
+                    includeDirs(generatedIncludeDir)
                     extraOpts("-libraryPath", buildDir.absolutePath)
                 }
             }
@@ -245,9 +263,15 @@ kotlin {
     }
 
     sourceSets {
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+
         androidMain {
             dependencies {
-                api("com.tencent:mmkv:$mmkvVersion")
+                implementation("com.tencent:mmkv:$mmkvVersion")
             }
         }
     }
@@ -258,9 +282,7 @@ publishing {
     publications.withType<MavenPublication>().configureEach {
         groupId = publishedGroup
         artifactId = publicationArtifactId(name)
-        if (name != "kotlinMultiplatform") {
-            artifact(javadocJar)
-        }
+        artifact(javadocJar)
         configurePom(name)
     }
 
@@ -278,17 +300,21 @@ publishing {
                 name = "sonatype"
                 url = uri(repoUrl)
                 credentials {
-                    username = (findProperty("SONATYPE_NEXUS_USERNAME") ?: findProperty("mavenCentralUsername")) as String?
-                    password = (findProperty("SONATYPE_NEXUS_PASSWORD") ?: findProperty("mavenCentralPassword")) as String?
+                    username = sonatypeUsername
+                    password = sonatypePassword
                 }
             }
         }
     }
 }
 
+tasks.matching {
+    it.name.startsWith("publish") && it.name.endsWith("ToSonatypeRepository")
+}.configureEach {
+    dependsOn(verifySonatypePublication)
+}
+
 signing {
-    val signingKey = (findProperty("SIGNING_KEY") ?: findProperty("signingInMemoryKey")) as String?
-    val signingPassword = (findProperty("SIGNING_PASSWORD") ?: findProperty("signingInMemoryKeyPassword")) as String?
     if (!signingKey.isNullOrBlank()) {
         useInMemoryPgpKeys(signingKey, signingPassword)
         sign(publishing.publications)
