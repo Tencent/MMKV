@@ -397,7 +397,10 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("isMultiProcess", &MMKV::isMultiProcess, "check multi-process mode");
     clsMMKV.def("isReadOnly", &MMKV::isReadOnly, "check read-only mode");
 
-    clsMMKV.def("close", &MMKV::close, "close the instance");
+    clsMMKV.def("close", &MMKV::close,
+        "Permanently close the instance. This is terminal: all Python aliases "
+        "to the same native instance become invalid, and close must not race "
+        "with another operation.");
 
     clsMMKV.def_static("rootDir", &MMKV::getRootDir, "get the root directory of MMKV");
 

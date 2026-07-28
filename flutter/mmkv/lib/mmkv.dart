@@ -721,10 +721,18 @@ class MMKV {
     return _importFrom(_handle, src._handle);
   }
 
-  /// Close the instance when it's no longer needed in the near future.
-  /// Any subsequent call to the instance is **undefined behavior**.
+  /// Permanently close the underlying native MMKV instance.
+  ///
+  /// This is terminal and idempotent on this wrapper, and it invalidates every
+  /// wrapper backed by the same native instance. Do not race close with another
+  /// operation. Discard all aliases before reopening the same ID.
   void close() {
-    _mmkvClose(_handle);
+    final handle = _handle;
+    if (handle == nullptr) {
+      return;
+    }
+    _mmkvClose(handle);
+    _handle = nullptr;
   }
 
   /// backup one MMKV instance to [dstDir]

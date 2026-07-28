@@ -25,6 +25,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class MMKVSmokeTest {
@@ -115,6 +116,29 @@ class MMKVSmokeTest {
             assertEquals("value", namespace.mmkvWithID(id).decodeString("key"))
         } finally {
             namespace.close()
+        }
+    }
+
+    @Test
+    fun closeIsIdempotentAndTerminal() {
+        MMKVTestEnv.initialize()
+        val id = MMKVTestEnv.uniqueID("close")
+        val kv = MMKV.mmkvWithID(id)
+        kv.clearAll()
+        assertTrue(kv.encodeString("key", "value"))
+
+        kv.close()
+        kv.close()
+        assertFailsWith<IllegalStateException> {
+            kv.decodeString("key")
+        }
+
+        val reopened = MMKV.mmkvWithID(id)
+        try {
+            assertEquals("value", reopened.decodeString("key"))
+        } finally {
+            reopened.clearAll()
+            reopened.close()
         }
     }
 }

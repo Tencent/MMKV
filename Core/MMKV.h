@@ -608,8 +608,9 @@ public:
     // return count of items imported
     size_t importFrom(MMKV *src);
 
-    // call this method if the instance is no longer needed in the near future
-    // any subsequent call to the instance is undefined behavior
+    // Permanently close and destroy this instance. This is a terminal operation.
+    // All aliases to the pointer become invalid immediately after this call.
+    // The caller must ensure close() does not race with any other operation.
     void close();
 
     // call this method if you are facing memory-warning

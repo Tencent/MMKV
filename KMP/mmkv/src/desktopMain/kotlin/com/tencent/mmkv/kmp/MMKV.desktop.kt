@@ -23,6 +23,7 @@ package com.tencent.mmkv.kmp
 import com.sun.jna.*
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.LongByReference
+import com.sun.jna.ptr.PointerByReference
 
 // region JNA interface mapping the C bridge
 
@@ -34,7 +35,7 @@ internal interface MMKVLib : Library {
     fun mmkv_default(config: JnaMMKVConfig.ByValue): Pointer?
     fun mmkv_with_id(mmapID: String, config: JnaMMKVConfig.ByValue): Pointer?
     fun mmkv_mmap_id(handle: Pointer): String?
-    fun mmkv_close(handle: Pointer)
+    fun mmkv_close_handle(handle: PointerByReference)
 
     fun mmkv_encode_bool(handle: Pointer, key: String, value: Boolean): Boolean
     fun mmkv_encode_bool_v2(handle: Pointer, key: String, value: Boolean, expireDuration: Int): Boolean
@@ -174,7 +175,11 @@ fun MMKV.Companion.initialize(
 
 // endregion
 
-actual class MMKV internal constructor(private val handle: Pointer) {
+actual class MMKV internal constructor(handle: Pointer) : AutoCloseable {
+
+    private var nativeHandle: Pointer? = handle
+    private val handle: Pointer
+        get() = checkNotNull(nativeHandle) { "MMKV instance has been closed" }
 
     actual companion object {
         private val lib = MMKVLib.INSTANCE
@@ -346,7 +351,12 @@ actual class MMKV internal constructor(private val handle: Pointer) {
     actual fun sync() = lib.mmkv_sync(handle, true)
     actual fun async() = lib.mmkv_sync(handle, false)
     actual fun trim() = lib.mmkv_trim(handle)
-    actual fun close() = lib.mmkv_close(handle)
+    actual override fun close() {
+        val current = nativeHandle ?: return
+        val handleRef = PointerByReference(current)
+        lib.mmkv_close_handle(handleRef)
+        nativeHandle = null
+    }
     actual fun clearMemoryCache() = lib.mmkv_clear_memory_cache(handle, false)
     actual fun importFrom(source: MMKV): Long = lib.mmkv_import_from(handle, source.handle)
     actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = lib.mmkv_enable_auto_expire(handle, expiredInSeconds.toInt())

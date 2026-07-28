@@ -85,6 +85,17 @@ kv.encodeString("name", "MMKV")
 val name = kv.decodeString("name")
 ```
 
+`MMKV` implements `AutoCloseable`, so scoped ownership can use Kotlin's
+`use {}` helper. `close()` is terminal and idempotent on that wrapper, but
+it invalidates all wrappers backed by the same native instance. Do not race
+it with another operation, and discard all aliases before reopening the ID.
+
+```kotlin
+MMKV.mmkvWithID("scoped").use { kv ->
+    kv.encodeString("name", "MMKV")
+}
+```
+
 Android delegates to the native `com.tencent:mmkv:2.4.1` AAR. iOS embeds MMKV
 Core through the C bridge in the published native KLIBs, so consumers do not
 need CocoaPods, Swift Package Manager, or a source build.

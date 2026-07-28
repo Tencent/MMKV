@@ -50,7 +50,7 @@ import java.util.Set;
  * An highly efficient, reliable, multi-process key-value storage framework.
  * THE PERFECT drop-in replacement for SharedPreferences and MultiProcessSharedPreferences.
  */
-public class MMKV implements SharedPreferences, SharedPreferences.Editor {
+public class MMKV implements SharedPreferences, SharedPreferences.Editor, AutoCloseable {
 
     private static final EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
     private static final EnumMap<MMKVLogLevel, Integer> logLevel2Index;
@@ -1329,10 +1329,27 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
-     * Call this method if the MMKV instance is no longer needed in the near future.
-     * Any subsequent call to any MMKV instances with the same ID is undefined behavior.
+     * Permanently close the underlying native MMKV instance.
+     * <p>
+     * This is a terminal, idempotent operation on this wrapper. It invalidates every Java
+     * wrapper/reference backed by the same native instance. Make sure no operation is running,
+     * discard all aliases, and only then reopen the same ID. Calls on this wrapper after close
+     * have no effect or return the method's empty/default value.
      */
-    public native void close();
+    @Override
+    public void close() {
+        synchronized (this) {
+            long handle = nativeHandle;
+            if (handle == 0) {
+                return;
+            }
+            close(handle);
+            nativeHandle = 0;
+            synchronized (checkedHandleSet) {
+                checkedHandleSet.remove(handle);
+            }
+        }
+    }
 
     /**
      * Clear memory cache of the MMKV instance.
@@ -1997,13 +2014,15 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public native boolean isReadOnly();
 
     // jni
-    private final long nativeHandle;
+    private volatile long nativeHandle;
 
     private MMKV(long handle) {
         nativeHandle = handle;
     }
 
     private static native void jniInitialize(String rootDir, String cacheDir, int level, boolean wantLogReDirecting, boolean hasCallback, long nativeHandler);
+
+    private static native void close(long handle);
 
     native static long
     getMMKVWithID(String mmapID, int mode, @Nullable String cryptKey, @Nullable String rootPath,

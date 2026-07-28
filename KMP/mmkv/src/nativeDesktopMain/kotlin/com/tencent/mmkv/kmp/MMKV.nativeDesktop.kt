@@ -58,7 +58,11 @@ fun MMKV.Companion.initialize(
 // endregion
 
 @OptIn(ExperimentalForeignApi::class)
-actual class MMKV internal constructor(private val handle: COpaquePointer) {
+actual class MMKV internal constructor(handle: COpaquePointer) : AutoCloseable {
+
+    private var nativeHandle: COpaquePointer? = handle
+    private val handle: COpaquePointer
+        get() = checkNotNull(nativeHandle) { "MMKV instance has been closed" }
 
     actual companion object {
         actual fun onExit() {
@@ -325,7 +329,15 @@ actual class MMKV internal constructor(private val handle: COpaquePointer) {
     actual fun sync() = mmkv_sync(handle, true)
     actual fun async() = mmkv_sync(handle, false)
     actual fun trim() = mmkv_trim(handle)
-    actual fun close() = mmkv_close(handle)
+    actual override fun close() {
+        val current = nativeHandle ?: return
+        memScoped {
+            val handleVar = alloc<COpaquePointerVar>()
+            handleVar.value = current
+            mmkv_close_handle(handleVar.ptr)
+        }
+        nativeHandle = null
+    }
     actual fun clearMemoryCache() = mmkv_clear_memory_cache(handle, false)
 
     actual fun importFrom(source: MMKV): Long = mmkv_import_from(handle, source.handle).toLong()

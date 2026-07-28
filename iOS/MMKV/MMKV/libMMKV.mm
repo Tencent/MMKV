@@ -333,7 +333,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         [kv release];
     }
     kv->m_lastAccessTime = llround([NSDate timeIntervalSinceReferenceDate] * 1000);
-    return kv;
+    // g_instanceDic owns kv while g_lock is held. Establish an autoreleased
+    // ownership handoff before releasing the lock so auto cleanup cannot
+    // deallocate the wrapper before an ARC caller retains the return value.
+    return [[kv retain] autorelease];
 }
 
 - (instancetype)initWithMMapID:(NSString *)mmapID config:(const MMKVConfig&)config {
@@ -442,14 +445,21 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (void)close {
-    SCOPED_LOCK(g_lock);
-    MMKVInfo("closing %@", m_mmapID);
+    // Keep the wrapper alive while removing the dictionary's retain.
+    [self retain];
+    {
+        SCOPED_LOCK(g_lock);
+        MMKVInfo("closing %@", m_mmapID);
 
-    [g_instanceDic removeObjectForKey:m_mmapKey];
+        if ([g_instanceDic objectForKey:m_mmapKey] == self) {
+            [g_instanceDic removeObjectForKey:m_mmapKey];
+        }
 
-    if (self.retainCount > 1) {
-        MMKVWarning("There's still reference on this kv: %@", m_mmapID);
+        // Actual Core destruction remains tied to wrapper deallocation so
+        // existing external references are not turned into nullptr wrappers.
+        // A second close on this wrapper is therefore harmless.
     }
+    [self release];
 }
 
 - (void)trim {

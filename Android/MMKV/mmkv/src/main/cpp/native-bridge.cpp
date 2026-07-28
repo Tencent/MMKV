@@ -976,11 +976,10 @@ MMKV_JNI void trim(JNIEnv *env, jobject instance) {
     }
 }
 
-MMKV_JNI void close(JNIEnv *env, jobject instance) {
-    MMKV *kv = getMMKV(env, instance);
+MMKV_JNI void close(JNIEnv *env, jclass, jlong handle) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
         kv->close();
-        env->SetLongField(instance, g_fileID, 0);
     }
 }
 
@@ -1240,7 +1239,7 @@ static JNINativeMethod g_methods[] = {
     {"removeValuesForKeys", "([Ljava/lang/String;)V", (void *) mmkv::removeValuesForKeys},
     {"clearAll", "()V", (void *) mmkv::clearAll},
     {"trim", "()V", (void *) mmkv::trim},
-    {"close", "()V", (void *) mmkv::close},
+    {"close", "(J)V", (void *) mmkv::close},
     {"clearMemoryCache", "()V", (void *) mmkv::clearMemoryCache},
     {"sync", "(Z)V", (void *) mmkv::sync},
     {"isFileValid", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::isFileValid},

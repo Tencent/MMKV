@@ -301,7 +301,8 @@ static void namespaceTest(void) {
     }
 
     /* removeStorage within namespace */
-    mmkv_close(kv);
+    mmkv_close_handle(&kv);
+    mmkv_close_handle(&kv);
     bool removeRet = mmkv_namespace_remove_storage(ns, "ns_test");
     printf("namespace removeStorage = %d\n", removeRet);
     printf("namespace checkExist after remove = %d\n", mmkv_namespace_check_exist(ns, "ns_test"));

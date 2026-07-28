@@ -179,7 +179,18 @@ MMKV_EXPORT const char *mmkv_mmap_id(MMKVHandle_t handle) {
 
 MMKV_EXPORT void mmkv_close(MMKVHandle_t handle) {
     MMKV *kv = kvFromHandle(handle);
-    if (kv) { kv->close(); }
+    if (kv) {
+        kv->close();
+    }
+}
+
+MMKV_EXPORT void mmkv_close_handle(MMKVHandle_t *handle) {
+    if (!handle || !*handle) {
+        return;
+    }
+    MMKV *kv = kvFromHandle(*handle);
+    *handle = nullptr;
+    kv->close();
 }
 
 /* ── Encode: bool ──────────────────────────────────────────────────── */

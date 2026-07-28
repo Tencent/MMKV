@@ -282,6 +282,22 @@ public class MMKVTest {
     }
 
     @Test
+    public void testCloseIsIdempotentAndAllowsReopen() {
+        String mmapID = "closeLifecycleTest";
+        MMKV kv = MMKV.mmkvWithID(mmapID);
+        assertTrue(kv.encode("value", true));
+
+        kv.close();
+        kv.close();
+        assertFalse(kv.encode("afterClose", true));
+
+        MMKV reopened = MMKV.mmkvWithID(mmapID);
+        assertTrue(reopened.decodeBool("value"));
+        reopened.clearAll();
+        reopened.close();
+    }
+
+    @Test
     public void testIPCUpdateInt() {
         MMKV mmkv = MMKV.mmkvWithID(MMKVTestService.SharedMMKVID, MMKV.MULTI_PROCESS_MODE);
         mmkv.encode(MMKVTestService.SharedMMKVKey, 1024);

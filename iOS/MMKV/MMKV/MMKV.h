@@ -401,8 +401,11 @@ class MMKV;
 // return count of items imported
 - (size_t)importFrom:(MMKV *)src;
 
-/// call this method if the instance is no longer needed in the near future
-/// any subsequent call to the instance is undefined behavior
+/// Release MMKV's cache ownership of this wrapper.
+/// This is a terminal, idempotent operation on this wrapper. It must not race
+/// with another operation. Discard all strong references to this wrapper before
+/// reopening the same ID; reopening while the old wrapper is alive is unsupported.
+/// Any use of this wrapper after close is a programming error.
 - (void)close;
 
 /// call this method if you are facing memory-warning

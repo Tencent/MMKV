@@ -441,6 +441,21 @@ using namespace std;
     [kv clearAll];
 }
 
+- (void)testCloseIsIdempotentAndAllowsReopen {
+    NSString *mmapID = @"close_lifecycle_test";
+    MMKV *kv = [MMKV mmkvWithID:mmapID];
+    XCTAssertTrue([kv setBool:YES forKey:@"value"]);
+
+    [kv close];
+    [kv close];
+    kv = nil;
+
+    MMKV *reopened = [MMKV mmkvWithID:mmapID];
+    XCTAssertTrue([reopened getBoolForKey:@"value"]);
+    [reopened clearAll];
+    [reopened close];
+}
+
 - (void)compareDate:(NSDate *)date withDate:(NSDate *)other {
     XCTAssertEqualWithAccuracy(date.timeIntervalSince1970, other.timeIntervalSince1970, 0.001);
 }
