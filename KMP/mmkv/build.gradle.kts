@@ -160,7 +160,7 @@ fun pomName(publicationName: String): String = when (publicationName) {
 fun MavenPublication.configurePom(publicationName: String) {
     pom {
         name.set(pomName(publicationName))
-        description.set((findProperty("POM_DESCRIPTION") as? String) ?: "Kotlin Multiplatform wrapper for MMKV")
+        description.set((findProperty("POM_DESCRIPTION") as? String) ?: "Experimental Kotlin Multiplatform wrapper for MMKV")
         url.set((findProperty("POM_URL") as? String) ?: "https://github.com/Tencent/MMKV")
         licenses {
             license {
@@ -222,6 +222,11 @@ kotlin {
         minSdk = 23
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
     }
 
@@ -293,6 +298,12 @@ kotlin {
                 implementation("com.tencent:mmkv:$mmkvVersion")
             }
         }
+
+        val androidDeviceTest by getting {
+            dependencies {
+                implementation("androidx.test:runner:1.7.0")
+            }
+        }
     }
 }
 
@@ -308,7 +319,10 @@ publishing {
     repositories {
         maven {
             name = "localTest"
-            url = uri(layout.buildDirectory.dir("local-maven"))
+            url = (findProperty("MMKV_LOCAL_REPOSITORY") as? String)
+                ?.takeIf { it.isNotBlank() }
+                ?.let(::uri)
+                ?: uri(layout.buildDirectory.dir("local-maven"))
         }
 
         val releaseRepo = findProperty("RELEASE_REPOSITORY_URL") as? String

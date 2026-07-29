@@ -1,6 +1,7 @@
 # MMKV Kotlin Multiplatform
 
-MMKV provides a ready-to-use Kotlin Multiplatform package for Android and iOS.
+MMKV provides experimental Kotlin Multiplatform support for Android and iOS.
+The API and published artifact layout may change in a future release.
 
 ## Gradle dependency
 
@@ -34,7 +35,7 @@ iOS 14.
 
 ## Published artifacts
 
-Consumers should depend only on the root artifact:
+For this experimental release, consumers should depend only on the root artifact:
 
 ```text
 com.tencent:mmkv-kmp:2.4.1

@@ -12,6 +12,7 @@ class MainActivity : ComponentActivity() {
 
         // Android-specific initialization (requires Context)
         MMKV.initialize(this)
+        verifyMMKVConsumer()
 
         setContent {
             App()

@@ -39,7 +39,10 @@ expect class MMKVNameSpace {
     fun removeStorage(mmapID: String): Boolean
     fun checkExist(mmapID: String): Boolean
 
-    /** Free native resources. After calling this, the namespace handle is invalid. */
+    /**
+     * Free native resources and invalidate this wrapper.
+     * Repeated calls on the same wrapper are harmless; every other operation fails after close.
+     */
     fun close()
 
     companion object {

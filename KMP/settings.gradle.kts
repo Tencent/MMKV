@@ -10,9 +10,13 @@ pluginManagement {
 
 @Suppress("UnstableApiUsage")
 val useMavenLocal = providers.gradleProperty("MMKV_USE_MAVEN_LOCAL").orNull == "true"
+val localRepository = providers.gradleProperty("MMKV_LOCAL_REPOSITORY").orNull
 
 dependencyResolutionManagement {
     repositories {
+        if (!localRepository.isNullOrBlank()) {
+            maven(localRepository)
+        }
         if (useMavenLocal) {
             mavenLocal()
         }
@@ -22,5 +26,6 @@ dependencyResolutionManagement {
 }
 
 include(":mmkv")
-// Sample app is kept in the repository, but the published v2.4.1 KMP package is Android+iOS only.
-// include(":sample:composeApp")
+if (providers.gradleProperty("MMKV_INCLUDE_SAMPLE").orNull == "true") {
+    include(":sample:composeApp")
+}

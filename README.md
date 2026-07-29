@@ -5,11 +5,13 @@
 
 中文版本请参看[这里](./README_CN.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Kotlin Multiplatform**, **Windows**, **POSIX** and **HarmonyOS NEXT**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows**, **POSIX** and **HarmonyOS NEXT**, with experimental **Kotlin Multiplatform** support.
 
 # MMKV for Kotlin Multiplatform
 
-Add the ready-to-use Android and iOS package to the shared module:
+The v2.4.1 Kotlin Multiplatform package is experimental and currently targets
+Android and iOS. Its API and artifact layout may change in a future release.
+Add it to the shared module:
 
 ```kotlin
 kotlin {

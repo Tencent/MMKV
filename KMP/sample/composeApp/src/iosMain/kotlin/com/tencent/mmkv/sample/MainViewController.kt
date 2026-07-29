@@ -21,4 +21,5 @@ fun initializeMMKV() {
     } else {
         MMKV.initialize()
     }
+    verifyMMKVConsumer()
 }

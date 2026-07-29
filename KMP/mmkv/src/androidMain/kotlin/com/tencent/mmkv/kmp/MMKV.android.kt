@@ -71,7 +71,12 @@ fun MMKV.Companion.initialize(
  * Since the KMP class is now in `com.tencent.mmkv.kmp`, we can reference the Java
  * `com.tencent.mmkv.MMKV` directly via import alias without any naming collision.
  */
-actual class MMKV internal constructor(private val impl: AndroidMMKV) {
+actual class MMKV internal constructor(impl: AndroidMMKV) {
+
+    @Volatile
+    private var nativeImpl: AndroidMMKV? = impl
+    private val impl: AndroidMMKV
+        get() = checkNotNull(nativeImpl) { "MMKV instance has been closed" }
 
     actual companion object {
         actual fun onExit() = AndroidMMKV.onExit()
@@ -182,7 +187,11 @@ actual class MMKV internal constructor(private val impl: AndroidMMKV) {
     actual fun sync() = impl.sync()
     actual fun async() = impl.async()
     actual fun trim() = impl.trim()
-    actual fun close() = impl.close()
+    actual fun close() {
+        val instance = nativeImpl ?: return
+        instance.close()
+        nativeImpl = null
+    }
     actual fun clearMemoryCache() = impl.clearMemoryCache()
 
     actual fun importFrom(source: MMKV): Long = impl.importFrom(source.impl)

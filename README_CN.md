@@ -1,9 +1,10 @@
 # MMKV——基于 mmap 的高性能通用 key-value 组件
-MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今在微信上使用，其性能和稳定性经过了时间的验证。目前已支持 Android / iOS / macOS / Kotlin Multiplatform / Windows / POSIX / HarmonyOS NEXT 等平台。
+MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今在微信上使用，其性能和稳定性经过了时间的验证。目前已支持 Android / iOS / macOS / Windows / POSIX / HarmonyOS NEXT，并提供实验性的 Kotlin Multiplatform 支持。
 
 ## Kotlin Multiplatform 指南
 
-在共享模块中直接引入支持 Android 与 iOS 的 Gradle 包：
+v2.4.1 的 Kotlin Multiplatform 包为实验性功能，目前支持 Android 与 iOS；
+后续版本可能调整 API 或产物结构。在共享模块中引入：
 
 ```kotlin
 kotlin {

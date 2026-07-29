@@ -35,7 +35,11 @@ import mmkv.mmkv_namespace_restore_one
 import mmkv.mmkv_namespace_root_dir
 
 @OptIn(ExperimentalForeignApi::class)
-actual class MMKVNameSpace internal constructor(private val handle: COpaquePointer) {
+actual class MMKVNameSpace internal constructor(handle: COpaquePointer) {
+
+    private var nativeHandle: COpaquePointer? = handle
+    private val handle: COpaquePointer
+        get() = checkNotNull(nativeHandle) { "MMKV NameSpace has been closed" }
 
     actual val rootDir: String
         get() = mmkv_namespace_root_dir(handle)?.toKString() ?: ""
@@ -60,7 +64,11 @@ actual class MMKVNameSpace internal constructor(private val handle: COpaquePoint
     actual fun checkExist(mmapID: String): Boolean =
         mmkv_namespace_check_exist(handle, mmapID)
 
-    actual fun close() = mmkv_namespace_free(handle)
+    actual fun close() {
+        val currentHandle = nativeHandle ?: return
+        mmkv_namespace_free(currentHandle)
+        nativeHandle = null
+    }
 
     actual companion object {
         actual fun of(rootDir: String): MMKVNameSpace =

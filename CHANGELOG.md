@@ -1,7 +1,7 @@
 # MMKV Change Log
 ## v2.4.1 / 2026-07-29
 
-This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and ready-to-use Kotlin Multiplatform support for Android and iOS.
+This is a maintenance release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and experimental Kotlin Multiplatform support for Android and iOS.
 
 ### Changes for All Platforms
 * **Fix:** Fixed an iOS/macOS Objective-C ownership handoff race where auto cleanup could release an MMKV wrapper before an ARC caller retained the returned instance.
@@ -16,10 +16,11 @@ This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fix
 * **Feature:** Added a universal C interface (`Core/cbridge`) for MMKV Core, with NameSpace support and a pure C demo. The C bridge is also used by the KMP iOS package.
 
 ### Kotlin Multiplatform
-* **Feature:** Added Kotlin Multiplatform support for Android and iOS via the Gradle package `com.tencent:mmkv-kmp:2.4.1`.
+* **Experimental:** Added Kotlin Multiplatform support for Android and iOS via the Gradle package `com.tencent:mmkv-kmp:2.4.1`. The API and artifact layout may change in a future release.
 * Supported targets: Android, `iosArm64`, `iosSimulatorArm64`, and `iosX64`.
-* Android delegates to the native `com.tencent:mmkv:2.4.1` AAR. iOS embeds MMKV Core through the C bridge in the published native KLIBs, so consumers can use the Gradle package directly as a ready-to-use Gradle dependency.
-* **Fix:** Added platform-parity buffer/state APIs, preserved empty byte arrays on iOS, respected handler notification preferences, and added Kotlin/Native smoke tests.
+* Android delegates to the native `com.tencent:mmkv:2.4.1` AAR. iOS embeds MMKV Core through the C bridge in the published native KLIBs.
+* **Fix:** Added platform-parity buffer/state APIs, preserved empty byte arrays on iOS, respected handler notification preferences, and added Android device plus Kotlin/Native smoke tests.
+* **Fix:** Made KMP `MMKV` and `MMKVNameSpace` wrappers reject operations after close while keeping repeated close on the same wrapper harmless.
 
 ### Android
 * **Fix:** Added regression coverage for the expiration overflow issue.
@@ -27,6 +28,7 @@ This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fix
 
 ### iOS/macOS
 * **Feature:** Added the static SwiftPM product `MMKVAppExtension-static`.
+* **Fix:** Excluded the standalone C bridge from the Objective-C++ SwiftPM Core target and gave each wrapper target its own privacy manifest resource.
 * **Feature:** Added `+[MMKV unregisterHandler]` as the correctly spelled handler-unregistration API. The previous typo'd `+unregiserHandler` remains available for source/binary compatibility and forwards to the new API.
 
 ### HarmonyOS NEXT

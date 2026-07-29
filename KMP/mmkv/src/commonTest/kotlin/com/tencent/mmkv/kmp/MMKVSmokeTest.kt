@@ -116,6 +116,10 @@ class MMKVSmokeTest {
             assertEquals("value", namespace.mmkvWithID(id).decodeString("key"))
         } finally {
             namespace.close()
+            namespace.close()
+        }
+        assertFailsWith<IllegalStateException> {
+            namespace.checkExist("closed")
         }
     }
 

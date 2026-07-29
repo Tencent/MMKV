@@ -24,6 +24,7 @@ let package = Package(
             path: "Core",
             exclude: [
                 "aes/openssl", // Moved to separate target
+                "cbridge", // Standalone C API uses non-Objective-C Core types
                 "crc32/zlib", // Assuming system zlib
                 "CMakeFiles",
                 "CMakeLists.txt",
@@ -62,7 +63,6 @@ let package = Package(
             path: "iOS/MMKV/MMKV",
             exclude: [
                 "MMKVAppExtension",
-                "MMKVWatchExtension",
             ],
             resources: [
                 // NEW: Required for App Store submission in 2025
@@ -90,7 +90,7 @@ let package = Package(
             path: "iOS/MMKV/MMKV/MMKVAppExtension",
             resources: [
                 // NEW: Required for App Store submission in 2025
-                .copy("../Resources/PrivacyInfo.xcprivacy") 
+                .copy("Resources/PrivacyInfo.xcprivacy")
             ],
             publicHeadersPath: "include",
             cSettings: [

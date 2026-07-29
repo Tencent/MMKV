@@ -24,7 +24,12 @@ import com.tencent.mmkv.MMKV as AndroidMMKV
 import com.tencent.mmkv.NameSpace as AndroidNameSpace
 import com.tencent.mmkv.MMKVConfig as AndroidMMKVConfig
 
-actual class MMKVNameSpace internal constructor(private val impl: AndroidNameSpace) {
+actual class MMKVNameSpace internal constructor(impl: AndroidNameSpace) {
+
+    @Volatile
+    private var nativeImpl: AndroidNameSpace? = impl
+    private val impl: AndroidNameSpace
+        get() = checkNotNull(nativeImpl) { "MMKV NameSpace has been closed" }
 
     actual val rootDir: String
         get() = impl.rootDir
@@ -49,6 +54,7 @@ actual class MMKVNameSpace internal constructor(private val impl: AndroidNameSpa
 
     actual fun close() {
         // Android NameSpace is a plain wrapper; no native resources to free.
+        nativeImpl = null
     }
 
     actual companion object {

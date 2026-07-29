@@ -6,6 +6,9 @@ plugins {
     id("org.jetbrains.compose") version "1.8.1"
 }
 
+val usePublishedMMKV = providers.gradleProperty("MMKV_USE_PUBLISHED").orNull == "true"
+val mmkvVersion = providers.gradleProperty("VERSION_NAME").getOrElse("2.4.1")
+
 kotlin {
     androidTarget {
         compilerOptions {
@@ -13,10 +16,12 @@ kotlin {
         }
     }
 
-    // JVM desktop target
-    jvm("desktop") {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    if (!usePublishedMMKV) {
+        // Desktop is available only when the sample consumes the in-tree project.
+        jvm("desktop") {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            }
         }
     }
 
@@ -40,7 +45,11 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(project(":mmkv"))
+                if (usePublishedMMKV) {
+                    implementation("com.tencent:mmkv-kmp:$mmkvVersion")
+                } else {
+                    implementation(project(":mmkv"))
+                }
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
@@ -52,22 +61,26 @@ kotlin {
                 implementation("androidx.activity:activity-compose:1.10.1")
             }
         }
-        val desktopMain by getting {
-            dependencies {
-                implementation(compose.desktop.currentOs)
+        if (!usePublishedMMKV) {
+            val desktopMain by getting {
+                dependencies {
+                    implementation(compose.desktop.currentOs)
+                }
             }
         }
     }
 }
 
-compose.desktop {
-    application {
-        mainClass = "com.tencent.mmkv.sample.MainKt"
-        nativeDistributions {
-            packageName = "MMKV KMP Sample"
-            packageVersion = "1.0.0"
+if (!usePublishedMMKV) {
+    compose.desktop {
+        application {
+            mainClass = "com.tencent.mmkv.sample.MainKt"
+            nativeDistributions {
+                packageName = "MMKV KMP Sample"
+                packageVersion = "1.0.0"
+            }
+            jvmArgs("-Djna.library.path=${project(":mmkv").file("nativeInterop/build").absolutePath}")
         }
-        jvmArgs("-Djna.library.path=${project(":mmkv").file("nativeInterop/build").absolutePath}")
     }
 }
 
