@@ -723,9 +723,11 @@ class MMKV {
 
   /// Permanently close the underlying native MMKV instance.
   ///
-  /// This is terminal and idempotent on this wrapper, and it invalidates every
-  /// wrapper backed by the same native instance. Do not race close with another
-  /// operation. Discard all aliases before reopening the same ID.
+  /// All references backed by the same native instance become invalid
+  /// immediately. The caller must ensure no operation is running and no
+  /// reference is used afterward. Discard every reference before reopening the
+  /// same ID. Repeated close on this Dart wrapper is a no-op after its handle
+  /// has been cleared.
   void close() {
     final handle = _handle;
     if (handle == nullptr) {

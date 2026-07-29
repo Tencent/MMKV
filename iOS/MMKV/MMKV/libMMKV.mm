@@ -447,6 +447,7 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 - (void)close {
     // Keep the wrapper alive while removing the dictionary's retain.
     [self retain];
+    mmkv::MMKV *kv = nullptr;
     {
         SCOPED_LOCK(g_lock);
         MMKVInfo("closing %@", m_mmapID);
@@ -454,10 +455,11 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         if ([g_instanceDic objectForKey:m_mmapKey] == self) {
             [g_instanceDic removeObjectForKey:m_mmapKey];
         }
-
-        // Actual Core destruction remains tied to wrapper deallocation so
-        // existing external references are not turned into nullptr wrappers.
-        // A second close on this wrapper is therefore harmless.
+        kv = m_mmkv;
+        m_mmkv = nullptr;
+    }
+    if (kv) {
+        kv->close();
     }
     [self release];
 }

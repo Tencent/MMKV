@@ -290,6 +290,9 @@ public class MMKVTest {
         kv.close();
         kv.close();
         assertFalse(kv.encode("afterClose", true));
+        // Two live wrappers backed by the same native instance are outside the
+        // supported close() contract. Discard the closed wrapper before reopen.
+        kv = null;
 
         MMKV reopened = MMKV.mmkvWithID(mmapID);
         assertTrue(reopened.decodeBool("value"));

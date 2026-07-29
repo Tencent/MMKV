@@ -123,16 +123,20 @@ class MMKVSmokeTest {
     fun closeIsIdempotentAndTerminal() {
         MMKVTestEnv.initialize()
         val id = MMKVTestEnv.uniqueID("close")
-        val kv = MMKV.mmkvWithID(id)
-        kv.clearAll()
-        assertTrue(kv.encodeString("key", "value"))
+        run {
+            val kv = MMKV.mmkvWithID(id)
+            kv.clearAll()
+            assertTrue(kv.encodeString("key", "value"))
 
-        kv.close()
-        kv.close()
-        assertFailsWith<IllegalStateException> {
-            kv.decodeString("key")
+            kv.close()
+            kv.close()
+            assertFailsWith<IllegalStateException> {
+                kv.decodeString("key")
+            }
         }
 
+        // Two live wrappers backed by the same native instance are outside the
+        // supported close() contract. The closed wrapper is scoped away before reopen.
         val reopened = MMKV.mmkvWithID(id)
         try {
             assertEquals("value", reopened.decodeString("key"))
@@ -141,4 +145,5 @@ class MMKVSmokeTest {
             reopened.close()
         }
     }
+
 }

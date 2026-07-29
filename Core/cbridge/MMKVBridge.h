@@ -87,8 +87,9 @@ MMKVHandle_t mmkv_default(MMKVConfig_t config);
 MMKVHandle_t mmkv_with_id(const char *mmapID, MMKVConfig_t config);
 /* Returns internal pointer — valid for the lifetime of the instance. Do NOT free. */
 const char *mmkv_mmap_id(MMKVHandle_t handle);
-/* Permanently close an MMKV instance. All aliases to this handle become invalid.
-   This terminal operation must not race with any other operation. */
+/* Permanently close an MMKV instance. All references backed by the same native
+   instance become invalid immediately. This operation must not race with any
+   other operation, and no reference may be used afterward. */
 void mmkv_close(MMKVHandle_t handle);
 /* Close an MMKV instance and clear the caller's handle.
    This is the preferred idempotent form for managed bindings. */

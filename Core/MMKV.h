@@ -609,8 +609,9 @@ public:
     size_t importFrom(MMKV *src);
 
     // Permanently close and destroy this instance. This is a terminal operation.
-    // All aliases to the pointer become invalid immediately after this call.
-    // The caller must ensure close() does not race with any other operation.
+    // All references backed by this native instance become invalid immediately.
+    // The caller must ensure close() does not race with any other operation and
+    // no reference is used afterward.
     void close();
 
     // call this method if you are facing memory-warning

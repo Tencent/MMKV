@@ -1,11 +1,12 @@
 # MMKV Change Log
-## v2.4.1 / 2026-07-28
+## v2.4.1 / 2026-07-29
 
 This is a bugfix-oriented release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and ready-to-use Kotlin Multiplatform support for Android and iOS.
 
 ### Changes for All Platforms
 * **Fix:** Fixed an iOS/macOS Objective-C ownership handoff race where auto cleanup could release an MMKV wrapper before an ARC caller retained the returned instance.
-* **Change:** Hardened and clarified `close()` as a terminal lifecycle operation across public APIs. Managed raw-handle wrappers now make repeated close safe and clear their handle; closing invalidates every alias backed by the same native instance, while raw C++/C/Python/Go handles explicitly require exclusive ownership. Android and KMP MMKV wrappers now implement `AutoCloseable`.
+* **Fix:** Made native `ThreadLock` destruction release all recursive ownership held by the closing thread before destroying the POSIX mutex or Windows critical section.
+* **Change:** Clarified `close()` as a destructive terminal lifecycle operation across public APIs. Closing invalidates every reference backed by the same native instance; callers must ensure no operation is running, discard all references, and only then reopen the same ID. Managed wrappers clear their own handle so repeated close on the same wrapper is harmless.
 * **Fix:** Fixed an oversized-key corruption bug where keys longer than the internal `uint16_t` holder limit could overflow key/value metadata and corrupt subsequent reads.
 * **Fix:** Fixed an `expireDuration` overflow bug ([#1665](https://github.com/tencent/mmkv/issues/1665)). Very large expiration durations are now clamped safely instead of wrapping around.
 * **Fix:** Improved encrypted MMKV random-IV upgrade behavior. Existing encrypted files using the older IV format now trigger a full writeback when possible so they are upgraded to the random-IV format.

@@ -398,9 +398,9 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("isReadOnly", &MMKV::isReadOnly, "check read-only mode");
 
     clsMMKV.def("close", &MMKV::close,
-        "Permanently close the instance. This is terminal: all Python aliases "
-        "to the same native instance become invalid, and close must not race "
-        "with another operation.");
+        "Permanently close the native instance. All Python objects and other "
+        "bindings backed by the same instance become invalid immediately. "
+        "Close must not race with another operation and must not be repeated.");
 
     clsMMKV.def_static("rootDir", &MMKV::getRootDir, "get the root directory of MMKV");
 

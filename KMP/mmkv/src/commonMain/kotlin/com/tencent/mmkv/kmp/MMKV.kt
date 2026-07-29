@@ -28,7 +28,7 @@ package com.tencent.mmkv.kmp
  * on [MMKV.Companion] in each platform source set, since Android requires [Context]
  * while other platforms do not.
  */
-expect class MMKV : AutoCloseable {
+expect class MMKV {
 
     companion object {
         /**
@@ -275,11 +275,11 @@ expect class MMKV : AutoCloseable {
 
     /**
      * Permanently close the underlying native MMKV instance.
-     * This is terminal and idempotent on this wrapper, and it invalidates every
-     * wrapper backed by the same native instance. Do not race close with another
-     * operation. Discard all aliases before reopening the same ID.
+     * All references backed by the same native instance become invalid immediately.
+     * The caller must ensure no operation is running and no reference is used afterward.
+     * Discard every reference before reopening the same ID.
      */
-    override fun close()
+    fun close()
 
     /**
      * Clear memory cache of the MMKV instance.

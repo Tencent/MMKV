@@ -401,11 +401,11 @@ class MMKV;
 // return count of items imported
 - (size_t)importFrom:(MMKV *)src;
 
-/// Release MMKV's cache ownership of this wrapper.
-/// This is a terminal, idempotent operation on this wrapper. It must not race
-/// with another operation. Discard all strong references to this wrapper before
-/// reopening the same ID; reopening while the old wrapper is alive is unsupported.
-/// Any use of this wrapper after close is a programming error.
+/// Permanently close the underlying native MMKV instance.
+/// All references backed by the same native instance become invalid immediately.
+/// The caller must ensure no operation is running and no reference is used
+/// afterward. Discard every reference before reopening the same ID. Repeated
+/// close on this Objective-C wrapper is harmless after its handle is cleared.
 - (void)close;
 
 /// call this method if you are facing memory-warning

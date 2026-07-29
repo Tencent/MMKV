@@ -375,6 +375,10 @@ void MMKV::close() {
     if (itr != g_instanceDic->end()) {
         g_instanceDic->erase(itr);
     }
+    // close() requires the caller to guarantee that no other operation or
+    // alias will use this instance. ThreadLock's destructor releases the
+    // recursive lock ownership held by this close path before destroying the
+    // underlying platform lock.
     delete this;
 }
 

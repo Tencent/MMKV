@@ -281,8 +281,9 @@ type MMKV interface {
 	Trim()
 
 	// Close permanently destroys the native instance.
-	// The copied Go handle and all of its aliases become invalid immediately.
-	// Close must not race with another operation on the same instance.
+	// All Go values and other bindings backed by the same native instance become
+	// invalid immediately. Close must not race with another operation, and the
+	// value-receiver API means repeated Close calls are invalid.
 	Close()
 
 	/* ReKey Change encryption key for the MMKV instance.

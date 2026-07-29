@@ -26,6 +26,10 @@ using namespace std;
 
 #define KeyNotExist @"KeyNotExist"
 
+@interface MMKV (AutoCleanupTesting)
++ (void)tryAutoCleanUpInstances;
+@end
+
 @interface MockNSCoding : NSObject <NSCoding>
 @property NSString *string1;
 @property NSString *string2;
@@ -75,6 +79,11 @@ using namespace std;
 
 @implementation MMKVDemoTests {
     MMKV *mmkv;
+}
+
++ (void)setUp {
+    [super setUp];
+    [MMKV initializeMMKV:nil];
 }
 
 - (void)setUp {
@@ -448,12 +457,49 @@ using namespace std;
 
     [kv close];
     [kv close];
+    // Two live wrappers backed by the same native instance are outside the
+    // supported close contract. Discard the closed wrapper before reopen.
     kv = nil;
 
     MMKV *reopened = [MMKV mmkvWithID:mmapID];
     XCTAssertTrue([reopened getBoolForKey:@"value"]);
     [reopened clearAll];
     [reopened close];
+}
+
+- (void)testConcurrentGetAndAutoCleanupOwnershipHandoff {
+    NSString *mmapID = @"auto_cleanup_handoff_test";
+    @autoreleasepool {
+        MMKV *seed = [MMKV mmkvWithID:mmapID];
+        XCTAssertTrue([seed setBool:YES forKey:@"value"]);
+    }
+
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_queue_t queue = dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0);
+
+    for (NSUInteger worker = 0; worker < 8; ++worker) {
+        dispatch_group_async(group, queue, ^{
+            for (NSUInteger index = 0; index < 2000; ++index) {
+                @autoreleasepool {
+                    MMKV *kv = [MMKV mmkvWithID:mmapID];
+                    XCTAssertTrue([kv setBool:((index & 1) != 0) forKey:@"value"]);
+                }
+            }
+        });
+    }
+    for (NSUInteger cleaner = 0; cleaner < 2; ++cleaner) {
+        dispatch_group_async(group, queue, ^{
+            for (NSUInteger index = 0; index < 2000; ++index) {
+                @autoreleasepool {
+                    [MMKV tryAutoCleanUpInstances];
+                }
+            }
+        });
+    }
+
+    XCTAssertEqual(dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC)), 0);
+    MMKV *kv = [MMKV mmkvWithID:mmapID];
+    [kv clearAll];
 }
 
 - (void)compareDate:(NSDate *)date withDate:(NSDate *)other {

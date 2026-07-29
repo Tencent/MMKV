@@ -38,28 +38,52 @@ ThreadLock::ThreadLock() : m_lock({}) {
 }
 
 ThreadLock::~ThreadLock() {
-    pthread_mutex_unlock(&m_lock);
+    while (m_lockCount > 0) {
+        auto ret = pthread_mutex_unlock(&m_lock);
+        if (ret != 0) {
+            MMKVError("fail to unlock %p while destroying, ret=%d, error=%s",
+                      &m_lock, ret, strerror(ret));
+            break;
+        }
+        --m_lockCount;
+    }
 
-    pthread_mutex_destroy(&m_lock);
+    auto ret = pthread_mutex_destroy(&m_lock);
+    if (ret != 0) {
+        MMKVError("fail to destroy %p, ret=%d, error=%s", &m_lock, ret, strerror(ret));
+    }
 }
 
 void ThreadLock::lock() {
     auto ret = pthread_mutex_lock(&m_lock);
     if (ret != 0) {
-        MMKVError("fail to lock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
+        MMKVError("fail to lock %p, ret=%d, error=%s", &m_lock, ret, strerror(ret));
+        return;
     }
+    ++m_lockCount;
 }
 
 void ThreadLock::unlock() {
+    if (m_lockCount == 0) {
+        MMKVError("attempt to unlock unowned lock %p", &m_lock);
+        return;
+    }
+    --m_lockCount;
     auto ret = pthread_mutex_unlock(&m_lock);
     if (ret != 0) {
-        MMKVError("fail to unlock %p, ret=%d, errno=%s", &m_lock, ret, strerror(errno));
+        ++m_lockCount;
+        MMKVError("fail to unlock %p, ret=%d, error=%s", &m_lock, ret, strerror(ret));
+        return;
     }
 }
 
 bool ThreadLock::try_lock() {
     auto ret = pthread_mutex_trylock(&m_lock);
-    return (ret == 0);
+    if (ret == 0) {
+        ++m_lockCount;
+        return true;
+    }
+    return false;
 }
 
 void ThreadLock::initialize() {

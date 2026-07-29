@@ -175,7 +175,7 @@ fun MMKV.Companion.initialize(
 
 // endregion
 
-actual class MMKV internal constructor(handle: Pointer) : AutoCloseable {
+actual class MMKV internal constructor(handle: Pointer) {
 
     private var nativeHandle: Pointer? = handle
     private val handle: Pointer
@@ -351,7 +351,7 @@ actual class MMKV internal constructor(handle: Pointer) : AutoCloseable {
     actual fun sync() = lib.mmkv_sync(handle, true)
     actual fun async() = lib.mmkv_sync(handle, false)
     actual fun trim() = lib.mmkv_trim(handle)
-    actual override fun close() {
+    actual fun close() {
         val current = nativeHandle ?: return
         val handleRef = PointerByReference(current)
         lib.mmkv_close_handle(handleRef)

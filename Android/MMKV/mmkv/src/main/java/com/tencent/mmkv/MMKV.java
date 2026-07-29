@@ -50,7 +50,7 @@ import java.util.Set;
  * An highly efficient, reliable, multi-process key-value storage framework.
  * THE PERFECT drop-in replacement for SharedPreferences and MultiProcessSharedPreferences.
  */
-public class MMKV implements SharedPreferences, SharedPreferences.Editor, AutoCloseable {
+public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     private static final EnumMap<MMKVRecoverStrategic, Integer> recoverIndex;
     private static final EnumMap<MMKVLogLevel, Integer> logLevel2Index;
@@ -1331,12 +1331,11 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor, AutoCl
     /**
      * Permanently close the underlying native MMKV instance.
      * <p>
-     * This is a terminal, idempotent operation on this wrapper. It invalidates every Java
-     * wrapper/reference backed by the same native instance. Make sure no operation is running,
-     * discard all aliases, and only then reopen the same ID. Calls on this wrapper after close
-     * have no effect or return the method's empty/default value.
+     * All references backed by the same native instance become invalid immediately.
+     * The caller must ensure no operation is running and no reference is used afterward.
+     * Discard every reference before reopening the same ID. Repeated close on this Java
+     * wrapper is a no-op after its handle has been cleared.
      */
-    @Override
     public void close() {
         synchronized (this) {
             long handle = nativeHandle;
