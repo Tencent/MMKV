@@ -33,7 +33,12 @@ This is a maintenance release based on v2.4.0. It focuses on data-safety fixes, 
 
 ### HarmonyOS NEXT
 * **Change:** Cleaned up project signing/build configuration and removed checked-in Hvigor dependency archives.
-* **Fix:** Updated the HarmonyOS package build profile version to v2.4.0.
+* **Change:** Made the ArkTS wrapper clear its handle after `close()`, so repeated close on the same wrapper is harmless while operations through that wrapper fail afterward.
+* **Change:** Prepared the `@tencent/mmkv` package metadata and documentation for v2.4.1.
+
+### Flutter
+* **Feature:** Added Swift Package Manager support for the Apple platform implementation and migrated the iOS/macOS examples to SwiftPM. CocoaPods remains available as a fallback.
+* **Change:** Made the Dart wrapper clear its handle after `close()`, so repeated close on the same wrapper is harmless while operations through that wrapper fail afterward.
 
 ### POSIX
 * **Feature:** Added a pure C demo for the new C bridge.

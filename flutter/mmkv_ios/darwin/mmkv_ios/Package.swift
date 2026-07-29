@@ -1,6 +1,15 @@
 // swift-tools-version: 5.9
 import PackageDescription
 
+// Local demos can use checkout sources without changing the published dependency.
+let mmkvDependency: Package.Dependency
+if let localPath = Context.environment["MMKV_LOCAL_PACKAGE_PATH"], !localPath.isEmpty {
+    mmkvDependency = .package(name: "MMKV", path: localPath)
+} else {
+    mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", from: "2.4.1")
+    // mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", branch: "dev")
+}
+
 let package = Package(
     name: "mmkv_ios",
     platforms: [
@@ -11,7 +20,7 @@ let package = Package(
         .library(name: "mmkv-ios", targets: ["mmkv_ios"])
     ],
     dependencies: [
-        .package(url: "https://github.com/Tencent/MMKV.git", from: "2.4.0"),
+        mmkvDependency,
     ],
     targets: [
         .target(

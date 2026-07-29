@@ -1,6 +1,6 @@
 plugins {
     id "com.android.application"
-//    id "kotlin-android"
+    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.tencent.mmkv_example"
-    compileSdkVersion 35
+    compileSdkVersion 36
 
     lintOptions {
         disable 'InvalidPackage'
@@ -52,7 +52,7 @@ android {
     }
 
     dependencies {
-        implementation('com.tencent:mmkv:2.4.0')
+        implementation('com.tencent:mmkv:2.4.1')
 
         constraints {
             implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {

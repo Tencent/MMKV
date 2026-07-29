@@ -1,4 +1,10 @@
 # MMKV for Flutter Change Log
+## v2.4.1 / 2026-07-29
+* Keep up with MMKV native libraries v2.4.1 and their maintenance/data-safety fixes.
+* **Feature:** Added Swift Package Manager support for iOS and macOS while retaining CocoaPods as a fallback.
+* **Change:** Clarified the destructive `close()` contract and cleared the Dart wrapper handle after closing, making repeated close on the same wrapper harmless.
+* **Build:** Updated the Android example/plugin tooling to Gradle 8.14.3, Android Gradle Plugin 8.13.1, Kotlin 2.2.20, and compile SDK 36.
+
 ## v2.4.0 / 2026-03-18
 * **Feature:** Refactored the callback system into a unified `MMKVHandler` interface. Added `onMMKVContentLoadSuccessfully` callback.
 * **Feature:** Added `MMKVConfig` for all-in-one instance configuration.

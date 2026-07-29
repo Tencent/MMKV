@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Tencent/MMKV.git",
       "state" : {
-        "revision" : "23d652c17e8c2023bb50f1c92e862a2304eaa2a2",
-        "version" : "2.4.0"
+        "branch" : "dev",
+        "revision" : "b48ffdd8ba651fbc2fdb6c16b4d0fee855f3ec53"
       }
     }
   ],
