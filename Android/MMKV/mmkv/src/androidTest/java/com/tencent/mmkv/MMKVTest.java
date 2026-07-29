@@ -25,11 +25,13 @@ import static org.junit.Assert.*;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 import java.util.HashSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 public class MMKVTest {
 
@@ -39,7 +41,7 @@ public class MMKVTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         MMKV.initialize(appContext);
 
         mmkv = MMKV.mmkvWithID("unitTest", MMKV.SINGLE_PROCESS_MODE, "UnitTestCryptKey");
@@ -237,7 +239,7 @@ public class MMKVTest {
         MMKV mmkv = MMKV.mmkvWithID(MMKVTestService.SharedMMKVID, MMKV.MULTI_PROCESS_MODE);
         mmkv.encode(MMKVTestService.SharedMMKVKey, 1024);
 
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Intent intent = new Intent(appContext, MMKVTestService.class);
         intent.putExtra(MMKVTestService.CMD_Key, MMKVTestService.CMD_Update);
         appContext.startService(intent);
@@ -249,7 +251,7 @@ public class MMKVTest {
 
     @Test
     public void testIPCLock() {
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         Intent intent = new Intent(appContext, MMKVTestService.class);
         intent.putExtra(MMKVTestService.CMD_Key, MMKVTestService.CMD_Lock);
