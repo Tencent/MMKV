@@ -1,5 +1,5 @@
 # MMKV for HarmonyOS NEXT Change Log
-## v2.4.1 / 2026-07-29
+## v2.4.1 / 2026-07-30
 * Keep up with MMKV Core v2.4.1 maintenance and data-safety fixes.
 * **Change:** Clarified the destructive `close()` contract and cleared the ArkTS wrapper handle after closing, making repeated close on the same wrapper harmless.
 * **Change:** Cleaned up project signing/build configuration and removed checked-in Hvigor dependency archives.

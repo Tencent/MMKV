@@ -1,5 +1,5 @@
 # MMKV Change Log
-## v2.4.1 / 2026-07-29
+## v2.4.1 / 2026-07-30
 
 This is a maintenance release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and experimental Kotlin Multiplatform support for Android and iOS.
 
