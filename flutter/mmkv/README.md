@@ -1,9 +1,9 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-1.3.16-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Release Version](https://img.shields.io/badge/release-1.3.17-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android** and **iOS**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS**, and **HarmonyOS NEXT**.
 
 # MMKV for Flutter
 
@@ -26,7 +26,7 @@ Add the following lines to `pubspec.yaml` on your app module. Then run `flutter 
 
 ```yaml
 dependencies:
-  mmkv: "^1.3.16"
+  mmkv: "^1.3.17"
 ```
 
 If you already include MMKV native lib in your App, you need to upgrade to version newer than v1.3.9.  

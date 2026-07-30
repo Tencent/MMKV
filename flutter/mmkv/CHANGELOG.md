@@ -1,4 +1,9 @@
 # MMKV for Flutter Change Log
+## v1.3.17 / 2026-07-30
+* **Fix:** Reject oversized keys before their length can overflow and corrupt MMKV data.
+* **Fix:** Prevent auto-expiration timestamps from overflowing for very large durations.
+* **Fix:** Harden native instance close lifecycle and recursive thread-lock destruction.
+
 ## v1.3.16 / 2025-12-03
 * **Fix:** Fixed an issue where the file size could change during multi-process loading.
 * **Fix:** Corrected a bug where a single key could be overridden incorrectly when upgrading from a v1.1.x version.

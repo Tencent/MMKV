@@ -1,4 +1,15 @@
 # MMKV Change Log
+## v1.3.17 / 2026-07-30
+**This is a Long Term Support (LTS) maintenance release.**
+
+### All Platforms
+* **Fix:** Reject oversized keys before their length can overflow and corrupt MMKV data.
+* **Fix:** Prevent auto-expiration timestamps from overflowing for very large durations.
+* **Fix:** Harden native instance close lifecycle and recursive thread-lock destruction.
+
+### Android
+* **Build:** Automatically transfer completed Maven uploads to Central Portal.
+
 ## v1.3.16 / 2025-12-03
 **This is a Long Term Support (LTS) release.**
 
