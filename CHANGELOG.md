@@ -4,9 +4,7 @@
 This is a maintenance release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and experimental Kotlin Multiplatform support for Android and iOS.
 
 ### Changes for All Platforms
-* **Fix:** Fixed an iOS/macOS Objective-C ownership handoff race where auto cleanup could release an MMKV wrapper before an ARC caller retained the returned instance.
-* **Fix:** Made native `ThreadLock` destruction release all recursive ownership held by the closing thread before destroying the POSIX mutex or Windows critical section.
-* **Change:** Clarified `close()` as a destructive terminal lifecycle operation across public APIs. Closing invalidates every reference backed by the same native instance; callers must ensure no operation is running, discard all references, and only then reopen the same ID. Managed wrappers clear their own handle so repeated close on the same wrapper is harmless.
+* **Fix:** Improved MMKV instance lifecycle handling with safer wrapper ownership, native lock teardown, and clarified destructive `close()` semantics.
 * **Fix:** Fixed an oversized-key corruption bug where keys longer than the internal `uint16_t` holder limit could overflow key/value metadata and corrupt subsequent reads.
 * **Fix:** Fixed an `expireDuration` overflow bug ([#1665](https://github.com/tencent/mmkv/issues/1665)). Very large expiration durations are now clamped safely instead of wrapping around.
 * **Fix:** Improved encrypted MMKV random-IV upgrade behavior. Existing encrypted files using the older IV format now trigger a full writeback when possible so they are upgraded to the random-IV format.
@@ -20,7 +18,7 @@ This is a maintenance release based on v2.4.0. It focuses on data-safety fixes, 
 * Supported targets: Android, `iosArm64`, `iosSimulatorArm64`, and `iosX64`.
 * Android delegates to the native `com.tencent:mmkv:2.4.1` AAR. iOS embeds MMKV Core through the C bridge in the published native KLIBs.
 * **Fix:** Added platform-parity buffer/state APIs, preserved empty byte arrays on iOS, respected handler notification preferences, and added Android device plus Kotlin/Native smoke tests.
-* **Fix:** Made KMP `MMKV` and `MMKVNameSpace` wrappers reject operations after close while keeping repeated close on the same wrapper harmless.
+* **Fix:** Improved MMKV instance lifecycle handling and clarified destructive `close()` semantics.
 
 ### Android
 * **Fix:** Added regression coverage for the expiration overflow issue.
@@ -33,12 +31,12 @@ This is a maintenance release based on v2.4.0. It focuses on data-safety fixes, 
 
 ### HarmonyOS NEXT
 * **Change:** Cleaned up project signing/build configuration and removed checked-in Hvigor dependency archives.
-* **Change:** Made the ArkTS wrapper clear its handle after `close()`, so repeated close on the same wrapper is harmless while operations through that wrapper fail afterward.
+* **Fix:** Improved MMKV instance lifecycle handling and clarified destructive `close()` semantics.
 * **Change:** Prepared the `@tencent/mmkv` package metadata and documentation for v2.4.1.
 
 ### Flutter
 * **Feature:** Added Swift Package Manager support for the Apple platform implementation and migrated the iOS/macOS examples to SwiftPM. CocoaPods remains available as a fallback.
-* **Change:** Made the Dart wrapper clear its handle after `close()`, so repeated close on the same wrapper is harmless while operations through that wrapper fail afterward.
+* **Fix:** Improved MMKV instance lifecycle handling and clarified destructive `close()` semantics.
 
 ### POSIX
 * **Feature:** Added a pure C demo for the new C bridge.
