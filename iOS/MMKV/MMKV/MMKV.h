@@ -401,8 +401,11 @@ class MMKV;
 // return count of items imported
 - (size_t)importFrom:(MMKV *)src;
 
-/// call this method if the instance is no longer needed in the near future
-/// any subsequent call to the instance is undefined behavior
+/// Permanently close the underlying native MMKV instance.
+/// All references backed by the same native instance become invalid immediately.
+/// The caller must ensure no operation is running and no reference is used
+/// afterward. Discard every reference before reopening the same ID. Repeated
+/// close on this Objective-C wrapper is harmless after its handle is cleared.
 - (void)close;
 
 /// call this method if you are facing memory-warning
@@ -477,7 +480,8 @@ class MMKV;
 - (void)checkContentChanged;
 
 + (void)registerHandler:(id<MMKVHandler>)handler __attribute__((deprecated("use +initializeMMKV:logLevel:handler: instead")));
-+ (void)unregiserHandler;
++ (void)unregisterHandler;
++ (void)unregiserHandler __attribute__((deprecated("typo preserved for backward compatibility; use +unregisterHandler instead")));
 
 /// MMKVLogInfo by default
 /// MMKVLogNone to disable all logging

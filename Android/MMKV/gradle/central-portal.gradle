@@ -1,0 +1,95 @@
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
+/**
+ * Gradle's built-in maven-publish plugin only performs Maven-style PUT
+ * requests. The Central OSSRH Staging API therefore cannot know when a
+ * deployment is complete. Sonatype requires a same-IP POST after the final
+ * artifact upload to transfer the implicit repository to Central Portal.
+ */
+
+def centralPortalNamespace = providers.gradleProperty('CENTRAL_PORTAL_NAMESPACE')
+        .orElse(rootProject.ext.GROUP)
+def centralPortalBaseUrl = providers.gradleProperty('CENTRAL_PORTAL_STAGING_API_URL')
+        .orElse('https://ossrh-staging-api.central.sonatype.com')
+def centralPortalPublishingType = providers.gradleProperty('CENTRAL_PORTAL_PUBLISHING_TYPE')
+        .orElse('user_managed')
+def centralPortalDryRun = providers.gradleProperty('CENTRAL_PORTAL_DRY_RUN')
+        .map { it.toBoolean() }
+        .orElse(false)
+def centralPortalRemotePublishTasks = tasks.matching {
+    it.name.startsWith('publish') &&
+            it.name.endsWith('ToMavenCentralRepository') &&
+            it.name != 'publishAllPublicationsToMavenCentralRepository'
+}
+
+tasks.register('uploadDefaultRepositoryToCentralPortal') {
+    group = 'publishing'
+    description = 'Transfers the completed OSSRH Staging API repository to Central Portal.'
+
+    onlyIf {
+        !rootProject.ext.VERSION_NAME.endsWith('-SNAPSHOT') &&
+                centralPortalRemotePublishTasks.every { it.state.failure == null }
+    }
+
+    doLast {
+        def username = providers.gradleProperty('REPOSITORY_USERNAME').orNull
+        def password = providers.gradleProperty('REPOSITORY_PASSWORD').orNull
+        if (!username || !password) {
+            throw new GradleException('Missing REPOSITORY_USERNAME or REPOSITORY_PASSWORD.')
+        }
+
+        def namespace = centralPortalNamespace.get()
+        def publishingType = centralPortalPublishingType.get()
+        if (!(publishingType in ['user_managed', 'automatic', 'portal_api'])) {
+            throw new GradleException(
+                    "Invalid CENTRAL_PORTAL_PUBLISHING_TYPE '$publishingType'. " +
+                            'Expected user_managed, automatic, or portal_api.'
+            )
+        }
+
+        def encodedNamespace = URLEncoder.encode(namespace, StandardCharsets.UTF_8)
+        def encodedType = URLEncoder.encode(publishingType, StandardCharsets.UTF_8)
+        def endpoint = "${centralPortalBaseUrl.get()}/manual/upload/defaultRepository/" +
+                "${encodedNamespace}?publishing_type=${encodedType}"
+
+        if (centralPortalDryRun.get()) {
+            logger.lifecycle("Central Portal dry run: POST $endpoint")
+            return
+        }
+
+        def bearer = Base64.encoder.encodeToString(
+                "${username}:${password}".getBytes(StandardCharsets.UTF_8)
+        )
+        def connection = new URL(endpoint).openConnection() as HttpURLConnection
+        connection.requestMethod = 'POST'
+        connection.setRequestProperty('Authorization', "Bearer $bearer")
+        connection.setRequestProperty('Accept', 'application/json')
+        connection.connectTimeout = 30_000
+        connection.readTimeout = 10 * 60_000
+
+        try {
+            def status = connection.responseCode
+            def stream = status >= 400 ? connection.errorStream : connection.inputStream
+            def response = stream != null ? stream.getText(StandardCharsets.UTF_8.name()) : ''
+            if (status < 200 || status >= 300) {
+                throw new GradleException(
+                        "Central Portal handoff failed with HTTP $status" +
+                                (response ? ": $response" : '.')
+                )
+            }
+            logger.lifecycle("Transferred '$namespace' to Central Portal ($publishingType).")
+            if (response) {
+                logger.info("Central Portal response: $response")
+            }
+        } finally {
+            connection.disconnect()
+        }
+    }
+}
+
+tasks.matching {
+    it.name == 'publishAllPublicationsToMavenCentralRepository' || it.name == 'publish'
+}.configureEach {
+    finalizedBy(tasks.named('uploadDefaultRepositoryToCentralPortal'))
+}

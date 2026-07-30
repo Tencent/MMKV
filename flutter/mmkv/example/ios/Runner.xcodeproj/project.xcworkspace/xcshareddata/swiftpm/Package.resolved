@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "mmkv",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Tencent/MMKV.git",
+      "state" : {
+        "branch" : "dev",
+        "revision" : "b48ffdd8ba651fbc2fdb6c16b4d0fee855f3ec53"
+      }
+    }
+  ],
+  "version" : 2
+}

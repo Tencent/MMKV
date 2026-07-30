@@ -32,6 +32,10 @@ ThreadLock::ThreadLock() : m_lock{0} {
 }
 
 ThreadLock::~ThreadLock() {
+    while (m_lockCount > 0) {
+        LeaveCriticalSection(&m_lock);
+        --m_lockCount;
+    }
     DeleteCriticalSection(&m_lock);
 }
 
@@ -44,9 +48,15 @@ void ThreadLock::initialize() {
 
 void ThreadLock::lock() {
     EnterCriticalSection(&m_lock);
+    ++m_lockCount;
 }
 
 void ThreadLock::unlock() {
+    if (m_lockCount == 0) {
+        MMKVError("attempt to unlock unowned lock %p", &m_lock);
+        return;
+    }
+    --m_lockCount;
     LeaveCriticalSection(&m_lock);
 }
 

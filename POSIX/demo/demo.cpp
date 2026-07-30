@@ -253,7 +253,7 @@ void *threadFunction(void *lpParam) {
 }
 
 void threadTest() {
-    pthread_t threadHandles[threadCount] = {0};
+    pthread_t threadHandles[threadCount] = {};
     for (size_t index = 0; index < threadCount; index++) {
         pthread_create(&threadHandles[index], nullptr, threadFunction, (void *) index);
     }
@@ -282,7 +282,7 @@ void brutleTest() {
 
 void processTest() {
     constexpr auto processCount = 2;
-    pid_t processHandles[processCount] = {0};
+    pid_t processHandles[processCount] = {};
     for (int &processHandle : processHandles) {
         auto pid = fork();
         // this is child
@@ -1397,6 +1397,48 @@ void testReadonlyCrash() {
     printf("value: %s\n", tmp.c_str());
 }
 
+void testOversizedKey() {
+    auto mmkv = MMKV::mmkvWithID("testOversizedKey");
+    mmkv->clearAll();
+
+    // key at the boundary (65531 bytes) should work
+    {
+        string key(65531, 'A');
+        string value = "boundary_value";
+        auto ret = mmkv->set(value, key);
+        assert(ret);
+        string out;
+        ret = mmkv->getString(key, out);
+        assert(ret && out == value);
+        mmkv->removeValueForKey(key);
+    }
+    // key at 65532 bytes must be rejected (uint16_t overflow threshold)
+    {
+        string key(65532, 'B');
+        auto ret = mmkv->set("V", key);
+        assert(!ret);
+        string out;
+        ret = mmkv->getString(key, out);
+        assert(!ret);
+    }
+    // much larger key must also be rejected
+    {
+        string key(70000, 'C');
+        auto ret = mmkv->set("V", key);
+        assert(!ret);
+    }
+    // verify normal keys still work after oversized key rejection
+    {
+        mmkv->set("world", "normal_key");
+        string out;
+        auto ret = mmkv->getString("normal_key", out);
+        assert(ret && out == "world");
+    }
+
+    mmkv->clearAll();
+    printf("test oversized key: passed\n");
+}
+
 int main() {
     locale::global(locale(""));
     wcout.imbue(locale(""));
@@ -1444,4 +1486,5 @@ int main() {
     testImport();
     itemSizeHolderTest();
     testReKey();
+    testOversizedKey();
 }

@@ -45,4 +45,13 @@ void main() {
 
     expect(mmkv.decodeBool("bool"), true);
   });
+
+  test("close is idempotent and clears the Dart handle", () {
+    final mmkv = MMKV.defaultMMKV();
+
+    mmkv.close();
+    mmkv.close();
+
+    expect(mmkv.encodeBool("afterClose", true), false);
+  });
 }

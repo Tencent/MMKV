@@ -75,6 +75,8 @@ public:
             } else {
                 mmkv::mmkvLog(level, file, line, function, message);
             }
+        } else {
+            mmkv::mmkvLog(level, file, line, function, message);
         }
     }
 
@@ -107,6 +109,9 @@ public:
     }
 
     void onContentChangedByOuterProcess(const std::string &mmapID) override {
+        if (!m_wantsContentChange) {
+            return;
+        }
         auto currentEnv = getCurrentEnv();
         if (currentEnv && g_callbackOnContentChange) {
             jstring str = string2jstring(currentEnv, mmapID);
@@ -971,11 +976,10 @@ MMKV_JNI void trim(JNIEnv *env, jobject instance) {
     }
 }
 
-MMKV_JNI void close(JNIEnv *env, jobject instance) {
-    MMKV *kv = getMMKV(env, instance);
+MMKV_JNI void close(JNIEnv *env, jclass, jlong handle) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
         kv->close();
-        env->SetLongField(instance, g_fileID, 0);
     }
 }
 
@@ -1019,6 +1023,14 @@ MMKV_JNI jlong createNB(JNIEnv *env, jobject instance, jint size) {
 
 MMKV_JNI void destroyNB(JNIEnv *env, jobject instance, jlong pointer, jint size) {
     free(reinterpret_cast<void *>(pointer));
+}
+
+MMKV_JNI void readNB(JNIEnv *env, jobject instance, jlong pointer, jbyteArray buffer, jint size) {
+    if (pointer && buffer && size > 0) {
+        auto arraySize = env->GetArrayLength(buffer);
+        auto copySize = size < arraySize ? size : arraySize;
+        env->SetByteArrayRegion(buffer, 0, copySize, reinterpret_cast<jbyte *>(pointer));
+    }
 }
 
 MMKV_JNI jint writeValueToNB(JNIEnv *env, jobject instance, jlong handle, jstring oKey, jlong pointer, jint size) {
@@ -1227,7 +1239,7 @@ static JNINativeMethod g_methods[] = {
     {"removeValuesForKeys", "([Ljava/lang/String;)V", (void *) mmkv::removeValuesForKeys},
     {"clearAll", "()V", (void *) mmkv::clearAll},
     {"trim", "()V", (void *) mmkv::trim},
-    {"close", "()V", (void *) mmkv::close},
+    {"close", "(J)V", (void *) mmkv::close},
     {"clearMemoryCache", "()V", (void *) mmkv::clearMemoryCache},
     {"sync", "(Z)V", (void *) mmkv::sync},
     {"isFileValid", "(Ljava/lang/String;Ljava/lang/String;)Z", (void *) mmkv::isFileValid},
@@ -1272,6 +1284,7 @@ static JNINativeMethod g_methods[] = {
     {"setCallbackHandler", "(ZZJ)V", (void *) mmkv::setCallbackHandler},
     {"createNB", "(I)J", (void *) mmkv::createNB},
     {"destroyNB", "(JI)V", (void *) mmkv::destroyNB},
+    {"readNB", "(J[BI)V", (void *) mmkv::readNB},
     {"writeValueToNB", "(JLjava/lang/String;JI)I", (void *) mmkv::writeValueToNB},
     {"setWantsContentChangeNotify", "(Z)V", (void *) mmkv::setWantsContentChangeNotify},
     {"checkContentChangedByOuterProcess", "()V", (void *) mmkv::checkContentChanged},

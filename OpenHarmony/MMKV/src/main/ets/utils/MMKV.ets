@@ -130,7 +130,7 @@ export class MMKV {
         return MMKV.g_rootDir;
     }
 
-    private readonly nativeHandle: bigint;
+    private nativeHandle: bigint;
 
     /**
      * Never use this constructor directly. It's visible only because ArkTS has no package-internal access control.
@@ -681,11 +681,19 @@ export class MMKV {
     }
 
     /**
-     * Call this method if the MMKV instance is no longer needed in the near future.
-     * Any subsequent call to any MMKV instances with the same ID is undefined behavior.
+     * Permanently close the underlying native MMKV instance.
+     * All references backed by the same native instance become invalid immediately.
+     * The caller must ensure no operation is running and no reference is used afterward.
+     * Discard every reference before reopening the same ID. Repeated close on this
+     * ArkTS wrapper is a no-op after its handle has been cleared.
      */
     public close(): void {
-        return native.close(this.nativeHandle);
+        const handle = this.nativeHandle;
+        if (handle === 0n) {
+            return;
+        }
+        native.close(handle);
+        this.nativeHandle = 0n;
     }
 
     /**

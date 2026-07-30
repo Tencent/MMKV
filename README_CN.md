@@ -1,5 +1,22 @@
 # MMKV——基于 mmap 的高性能通用 key-value 组件
-MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今在微信上使用，其性能和稳定性经过了时间的验证。近期也已移植到 Android / macOS / Windows / POSIX / HarmonyOS NEXT 等平台，一并开源。
+MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列化使用 protobuf 实现，性能高，稳定性强。从 2015 年中至今在微信上使用，其性能和稳定性经过了时间的验证。目前已支持 Android / iOS / macOS / Windows / POSIX / HarmonyOS NEXT，并提供实验性的 Kotlin Multiplatform 支持。
+
+## Kotlin Multiplatform 指南
+
+v2.4.1 的 Kotlin Multiplatform 包为实验性功能，目前支持 Android 与 iOS；
+后续版本可能调整 API 或产物结构。在共享模块中引入：
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("com.tencent:mmkv-kmp:2.4.1")
+        }
+    }
+}
+```
+
+支持 Android、`iosArm64`、`iosSimulatorArm64` 和 `iosX64`。初始化与打包说明请参考 [Kotlin Multiplatform 文档](./KMP/README.md)。
 
 ## MMKV 源起
 在微信客户端的日常运营中，时不时就会爆发特殊文字引起系统的 crash，[参考文章](https://mp.weixin.qq.com/s?__biz=MzAwNDY1ODY2OQ==&mid=2649286826&idx=1&sn=35601cb1156617aa235b7fd4b085bfc4)，文章里面设计的技术方案是在关键代码前后进行计数器的加减，通过检查计数器的异常，来发现引起闪退的异常文字。在会话列表、会话界面等有大量 cell 的地方，希望新加的计时器不会影响滑动性能；另外这些计数器还要永久存储下来——因为闪退随时可能发生。这就需要一个性能非常高的通用 key-value 存储组件，我们考察了 SharedPreferences、NSUserDefaults、SQLite 等常见组件，发现都没能满足如此苛刻的性能要求。考虑到这个防 crash 方案最主要的诉求还是实时写入，而 mmap 内存映射文件刚好满足这种需求，我们尝试通过它来实现一套 key-value 组件。
@@ -22,8 +39,8 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:2.4.0'
-    // replace "2.4.0" with any available version
+    implementation 'com.tencent:mmkv:2.4.1'
+    // replace "2.4.1" with any available version
 }
 ```
 从 v2.0.0 起, MMKV **去掉了 32-bit 架构的支持**、API level 22 及以下的支持, 如有这类需求，请使用 v1.3.x LTS 版本。  

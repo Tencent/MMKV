@@ -176,6 +176,34 @@ public class MMKVTest {
     }
 
     @Test
+    public void testBufferAndFeatureStateAPIs() {
+        MMKV kv = MMKV.mmkvWithID("bufferAndFeatureStateTest");
+        kv.clearAll();
+        try {
+            byte[] bytes = {'m', 'm', 'k', 'v'};
+            assertTrue(kv.encode("buffer", bytes));
+
+            byte[] output = new byte[bytes.length];
+            assertEquals(bytes.length, kv.writeValueToBuffer("buffer", output));
+            assertArrayEquals(bytes, output);
+
+            assertFalse(kv.isExpirationEnabled());
+            assertTrue(kv.enableAutoKeyExpire(MMKV.ExpireNever));
+            assertTrue(kv.isExpirationEnabled());
+            assertTrue(kv.disableAutoKeyExpire());
+            assertFalse(kv.isExpirationEnabled());
+
+            assertFalse(kv.isCompareBeforeSetEnabled());
+            kv.enableCompareBeforeSet();
+            assertTrue(kv.isCompareBeforeSetEnabled());
+            kv.disableCompareBeforeSet();
+            assertFalse(kv.isCompareBeforeSetEnabled());
+        } finally {
+            kv.clearAll();
+        }
+    }
+
+    @Test
     public void testRemove() {
         boolean ret = mmkv.encode("bool_1", true);
         ret &= mmkv.encode("int_1", Integer.MIN_VALUE);
@@ -230,6 +258,46 @@ public class MMKVTest {
 
         byte[] byteValue = mmkv.decodeBytes("bytes_1");
         assertArrayEquals(bytes, byteValue);
+    }
+
+    @Test
+    public void testExpirationOverflow() {
+        MMKV kv = MMKV.mmkvWithID("expirationOverflowTest");
+        kv.clearAll();
+        // JNI casts int to uint32_t, so -1 exercises UINT32_MAX.
+        assertTrue(kv.enableAutoKeyExpire(-1));
+
+        assertTrue(kv.encode("expiration_overflow_auto", true));
+        assertTrue(kv.decodeBool("expiration_overflow_auto"));
+
+        assertTrue(kv.encode("expiration_overflow_manual", "manual", -1));
+        assertEquals("manual", kv.decodeString("expiration_overflow_manual"));
+
+        byte[] bytes = {'d', 'a', 't', 'a'};
+        assertTrue(kv.encode("expiration_overflow_bytes", bytes, -1));
+        assertArrayEquals(bytes, kv.decodeBytes("expiration_overflow_bytes"));
+
+        assertEquals(3, kv.countNonExpiredKeys());
+        kv.clearAll();
+    }
+
+    @Test
+    public void testCloseIsIdempotentAndAllowsReopen() {
+        String mmapID = "closeLifecycleTest";
+        MMKV kv = MMKV.mmkvWithID(mmapID);
+        assertTrue(kv.encode("value", true));
+
+        kv.close();
+        kv.close();
+        assertFalse(kv.encode("afterClose", true));
+        // Two live wrappers backed by the same native instance are outside the
+        // supported close() contract. Discard the closed wrapper before reopen.
+        kv = null;
+
+        MMKV reopened = MMKV.mmkvWithID(mmapID);
+        assertTrue(reopened.decodeBool("value"));
+        reopened.clearAll();
+        reopened.close();
     }
 
     @Test

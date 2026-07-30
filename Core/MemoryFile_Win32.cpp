@@ -399,7 +399,7 @@ bool zeroFillFile(MMKVFileHandle_t file, size_t startPos, size_t size) {
         return false;
     }
 
-    static const char zeros[4096] = {0};
+    static const char zeros[4096] = {};
     while (size >= sizeof(zeros)) {
         DWORD bytesWritten = 0;
         if (!WriteFile(file, zeros, sizeof(zeros), &bytesWritten, nullptr)) {
@@ -434,7 +434,7 @@ static bool ftruncate(MMKVFileHandle_t file, size_t size) {
 }
 
 static bool getFileSize(MMKVFileHandle_t fd, size_t &size) {
-    LARGE_INTEGER filesize = {0};
+    LARGE_INTEGER filesize = {};
     if (GetFileSizeEx(fd, &filesize)) {
         size = static_cast<size_t>(filesize.QuadPart);
         return true;

@@ -199,6 +199,63 @@ void testVector(MMKV *mmkv) {
     printf("test vector: passed\n");
 }
 
+void testOversizedKey(MMKV *mmkv) {
+    // Keys at or below 65531 bytes should work normally
+    {
+        string key(65531, 'A');
+        auto ret = mmkv->set("V", key);
+        assert(ret);
+        string out;
+        ret = mmkv->getString(key, out);
+        assert(ret && out == "V");
+        mmkv->removeValueForKey(key);
+    }
+    // Keys at 65532 bytes and above must be rejected (would overflow uint16_t fields)
+    {
+        string key(65532, 'B');
+        auto ret = mmkv->set("V", key);
+        assert(!ret);
+        string out;
+        ret = mmkv->getString(key, out);
+        assert(!ret);
+    }
+    {
+        string key(70000, 'C');
+        auto ret = mmkv->set("V", key);
+        assert(!ret);
+    }
+
+    printf("test oversized key: passed\n");
+}
+
+void testExpirationOverflow() {
+    auto mmkv = MMKV::mmkvWithID("expiration_overflow_test");
+    mmkv->clearAll();
+    assert(mmkv->enableAutoKeyExpire(numeric_limits<uint32_t>::max()));
+
+    auto ret = mmkv->set(true, "expiration_overflow_auto");
+    assert(ret);
+    assert(mmkv->getBool("expiration_overflow_auto"));
+
+    ret = mmkv->set("manual", "expiration_overflow_manual", numeric_limits<uint32_t>::max());
+    assert(ret);
+    string value;
+    ret = mmkv->getString("expiration_overflow_manual", value);
+    assert(ret && value == "manual");
+
+    string bytes = "bytes";
+    MMBuffer buffer((void *) bytes.data(), bytes.length(), MMBufferNoCopy);
+    ret = mmkv->set(buffer, "expiration_overflow_bytes", numeric_limits<uint32_t>::max());
+    assert(ret);
+    auto out = mmkv->getBytes("expiration_overflow_bytes");
+    assert(out.length() == buffer.length() && memcmp(out.getPtr(), buffer.getPtr(), out.length()) == 0);
+
+    assert(mmkv->count(true) == 3);
+    mmkv->clearAll();
+
+    printf("test expiration overflow: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -269,4 +326,6 @@ int main() {
     testBytes(mmkv);
     testVector(mmkv);
     testRemove(mmkv);
+    testOversizedKey(mmkv);
+    testExpirationOverflow();
 }

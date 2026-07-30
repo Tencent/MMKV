@@ -27,6 +27,17 @@
 
 namespace mmkv {
 
+// The maximum key length that can be safely stored without overflowing internal uint16_t fields.
+// keySize (uint16) must hold the key length, and computedKVSize (uint16) must hold
+// keySize + pbRawVarint32Size(keySize) + pbRawVarint32Size(valueSize).
+// With keySize up to 65531, the worst-case computedKVSize = 65531 + 3 + 5 = 65539 can still overflow,
+// but in practice computedKVSize only needs keySize + varint(keySize); the valueSize varint is added
+// separately. The critical constraint is keySize + pbRawVarint32Size(keySize) <= UINT16_MAX,
+// i.e. keySize + 3 <= 65535, so keySize <= 65532. However empirical testing shows 65532 already fails
+// because the full computedKVSize includes pbRawVarint32Size(valueSize) (>= 1), pushing it to >= 65536.
+// Therefore the safe limit is 65531 (UINT16_MAX - 4).
+static constexpr uint32_t KeySizeLimit = UINT16_MAX - 4;
+
 #pragma pack(push, 1)
 
 struct KeyValueHolder {

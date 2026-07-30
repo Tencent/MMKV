@@ -5,20 +5,19 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/lingol/.ohos/config/default_OpenHarmony_fx90P6mRx_D3JzUF_IGOq40WUJk3NNpLuuyDcrF9K6M=.cer",
+          "certpath": "",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B54D50ACCB60BB70B8B13CAA92F7F6ECB681F2DD1A1EF23A1DC0393FD36914B4399A836C542E049",
-          "profile": "/Users/lingol/.ohos/config/default_OpenHarmony_fx90P6mRx_D3JzUF_IGOq40WUJk3NNpLuuyDcrF9K6M=.p7b",
+          "keyPassword": "",
+          "profile": "",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/lingol/.ohos/config/default_OpenHarmony_fx90P6mRx_D3JzUF_IGOq40WUJk3NNpLuuyDcrF9K6M=.p12",
-          "storePassword": "0000001B0BA6A5ECCEBF7480ACAB289971CCA74088BBCEF063599D428D51ADF773AFBB8A663275B3779CBD"
+          "storeFile": "",
+          "storePassword": ""
         }
       }
     ],
     "products": [
       {
         "name": "default",
-        "signingConfig": "default",
         "compatibleSdkVersion": "5.0.0(12)",
         "runtimeOS": "HarmonyOS",
         "targetSdkVersion": "6.0.0(20)"

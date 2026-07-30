@@ -215,7 +215,7 @@ string ASharedMemory_getName(int fd) {
     }
 #endif
 
-    char name[ASHMEM_NAME_LEN] = {0};
+    char name[ASHMEM_NAME_LEN] = {};
     if (ioctl(fd, ASHMEM_GET_NAME, name) != 0) {
         MMKVError("fail to get ashmem name:%d, %s", fd, strerror(errno));
         return "";

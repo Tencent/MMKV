@@ -13,16 +13,19 @@ android {
         multipleVariants("DefaultCppRelease") {
             includeBuildTypeValues('release')
             includeFlavorDimensionAndValues('stl_mode', 'DefaultCpp')
+            withSourcesJar()
             withJavadocJar()
         }
         multipleVariants("StaticCppRelease") {
             includeBuildTypeValues('release')
             includeFlavorDimensionAndValues('stl_mode', 'StaticCpp')
+            withSourcesJar()
             withJavadocJar()
         }
         multipleVariants("SharedCppRelease") {
             includeBuildTypeValues('release')
             includeFlavorDimensionAndValues('stl_mode', 'SharedCpp')
+            withSourcesJar()
             withJavadocJar()
         }
     }
@@ -103,6 +106,7 @@ android {
         }
     }
     buildFeatures {
+        buildConfig true
         prefab true
         prefabPublishing true
         aidl true
@@ -111,6 +115,16 @@ android {
         mmkv {
             headers "../../../Core/include"
         }
+    }
+}
+
+afterEvaluate {
+    tasks.matching { task ->
+        task.name.startsWith("source") && task.name.endsWith("ReleaseJar")
+    }.configureEach {
+        // AIDL generates ParcelableMMKV.java from the checked-in source, so
+        // the Android sources artifact otherwise sees the same path twice.
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
 
@@ -240,6 +254,8 @@ afterEvaluate {
         }
     }
 }
+
+apply from: rootProject.file('gradle/central-portal.gradle')
 
 configurations {
     javadocDeps

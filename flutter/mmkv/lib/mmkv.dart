@@ -721,10 +721,20 @@ class MMKV {
     return _importFrom(_handle, src._handle);
   }
 
-  /// Close the instance when it's no longer needed in the near future.
-  /// Any subsequent call to the instance is **undefined behavior**.
+  /// Permanently close the underlying native MMKV instance.
+  ///
+  /// All references backed by the same native instance become invalid
+  /// immediately. The caller must ensure no operation is running and no
+  /// reference is used afterward. Discard every reference before reopening the
+  /// same ID. Repeated close on this Dart wrapper is a no-op after its handle
+  /// has been cleared.
   void close() {
-    _mmkvClose(_handle);
+    final handle = _handle;
+    if (handle == nullptr) {
+      return;
+    }
+    _mmkvClose(handle);
+    _handle = nullptr;
   }
 
   /// backup one MMKV instance to [dstDir]

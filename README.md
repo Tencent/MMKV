@@ -1,11 +1,29 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-2.4.0-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
-[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
+[![Release Version](https://img.shields.io/badge/release-2.4.1-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Kotlin%20Multiplatform%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./README_CN.md)
 
-MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows**, **POSIX** and **HarmonyOS NEXT**.
+MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage framework used in the WeChat application. It's currently available on **Android**, **iOS/macOS**, **Windows**, **POSIX** and **HarmonyOS NEXT**, with experimental **Kotlin Multiplatform** support.
+
+# MMKV for Kotlin Multiplatform
+
+The v2.4.1 Kotlin Multiplatform package is experimental and currently targets
+Android and iOS. Its API and artifact layout may change in a future release.
+Add it to the shared module:
+
+```kotlin
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("com.tencent:mmkv-kmp:2.4.1")
+        }
+    }
+}
+```
+
+Supported targets are Android, `iosArm64`, `iosSimulatorArm64`, and `iosX64`. See the [Kotlin Multiplatform guide](./KMP/README.md) for initialization and packaging details.
 
 # MMKV for Android
 
@@ -28,8 +46,8 @@ Add the following lines to `build.gradle` on your app module:
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:2.4.0'
-    // replace "2.4.0" with any available version
+    implementation 'com.tencent:mmkv:2.4.1'
+    // replace "2.4.1" with any available version
 }
 ```
 

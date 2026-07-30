@@ -282,6 +282,7 @@ class MMKV_EXPORT MMKV {
     static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir);
 
     static uint32_t getCurrentTimeInSecond();
+    static uint32_t safeExpirationPlusCurrentTime(uint32_t expireDuration);
     uint32_t getExpireTimeForKey(MMKVKey_t key);
     mmkv::MMBuffer getDataWithoutMTimeForKey(MMKVKey_t key);
     size_t filterExpiredKeys();
@@ -607,8 +608,10 @@ public:
     // return count of items imported
     size_t importFrom(MMKV *src);
 
-    // call this method if the instance is no longer needed in the near future
-    // any subsequent call to the instance is undefined behavior
+    // Permanently close and destroy this instance. This is a terminal operation.
+    // All references backed by this native instance become invalid immediately.
+    // The caller must ensure close() does not race with any other operation and
+    // no reference is used afterward.
     void close();
 
     // call this method if you are facing memory-warning
@@ -697,7 +700,7 @@ bool MMKV::set(const T& value, MMKVKey_t key, uint32_t expireDuration) {
         auto tmp = mmkv::MMBuffer(data.length() + ConstFixed32Size);
         auto ptr = (uint8_t *) tmp.getPtr();
         memcpy(ptr, data.getPtr(), data.length());
-        auto time = (expireDuration != ExpireNever) ? getCurrentTimeInSecond() + expireDuration : ExpireNever;
+        auto time = (expireDuration != ExpireNever) ? safeExpirationPlusCurrentTime(expireDuration) : ExpireNever;
         memcpy(ptr + data.length(), &time, ConstFixed32Size);
         data = std::move(tmp);
     }

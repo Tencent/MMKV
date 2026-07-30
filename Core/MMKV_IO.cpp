@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#define NOMINMAX // undefine max/min
 
 #include "MMKV_IO.h"
 #include "CodedInputData.h"
@@ -124,6 +125,10 @@ void MMKV::loadFromFile() {
             }
             m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
             m_output->seek(m_actualSize);
+            // upgrade to random iv immediately by triggering a full writeback
+            if (!needFullWriteback && m_crypter && m_metaInfo->m_version < MMKVVersionRandomIV) {
+                needFullWriteback = true;
+            }
             if (needFullWriteback && !isReadOnly()) {
                 fullWriteback();
             }
@@ -901,6 +906,10 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
 KVHolderRet_t
 MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
+    if (originKeyLength > KeySizeLimit) {
+        MMKVError("[%s] reject oversized key, keyLength=%u, limit=%u", m_mmapID.c_str(), originKeyLength, KeySizeLimit);
+        return make_pair(false, KeyValueHolder());
+    }
     auto isKeyEncoded = (originKeyLength < keyData.length());
     auto keyLength = static_cast<uint32_t>(keyData.length());
     auto valueLength = static_cast<uint32_t>(data.length());
@@ -964,6 +973,10 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
                                           const MMBuffer &keyData,
                                           bool isDataHolder,
                                           uint32_t originKeyLength) {
+    if (originKeyLength > KeySizeLimit) {
+        MMKVError("[%s] reject oversized key, keyLength=%u, limit=%u", m_mmapID.c_str(), originKeyLength, KeySizeLimit);
+        return make_pair(false, KeyValueHolder());
+    }
     auto isKeyEncoded = (originKeyLength < keyData.length());
     auto keyLength = static_cast<uint32_t>(keyData.length());
     auto valueLength = static_cast<uint32_t>(data.length());
@@ -988,11 +1001,8 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
 
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
-        if (m_metaInfo->m_version >= MMKVVersionRandomIV) {
-            m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
-        } else {
-            m_crypter->resetIV();
-        }
+        assert(m_metaInfo->m_version >= MMKVVersionRandomIV);
+        m_crypter->resetIV(m_metaInfo->m_vector, sizeof(m_metaInfo->m_vector));
     }
 #endif
     try {
@@ -1593,7 +1603,7 @@ size_t MMKV::importFrom(MMKV *src) {
 
     size_t count = 0;
     bool notAutoExpire = !m_enableKeyExpire;
-    auto time = UInt32ToInt32((m_expiredInSeconds != ExpireNever) ? getCurrentTimeInSecond() + m_expiredInSeconds : ExpireNever);
+    auto time = UInt32ToInt32((m_expiredInSeconds != ExpireNever) ? safeExpirationPlusCurrentTime(m_expiredInSeconds) : ExpireNever);
     for (auto &key : src->allKeys(false)) {
         auto value = src->getDataForKey(key);
         if (value.length() > 0) {
@@ -1756,6 +1766,14 @@ uint32_t MMKV::getCurrentTimeInSecond() {
     return static_cast<uint32_t>(time);
 }
 
+uint32_t MMKV::safeExpirationPlusCurrentTime(uint32_t expireDuration) {
+    uint64_t time = getCurrentTimeInSecond() + static_cast<uint64_t>(expireDuration);
+    if (time > std::numeric_limits<uint32_t>::max()) {
+        return std::numeric_limits<uint32_t>::max();
+    }
+    return static_cast<uint32_t>(time);
+}
+
 bool MMKV::doFullWriteBack(MMKVVector &&vec) {
     auto preparedData = prepareEncode(std::move(vec));
 
@@ -1841,8 +1859,8 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
         return true;
     }
 
-    auto autoRecordExpireTime = (m_expiredInSeconds != 0);
-    auto time = autoRecordExpireTime ? getCurrentTimeInSecond() + m_expiredInSeconds : 0;
+    auto autoRecordExpireTime = (m_expiredInSeconds != ExpireNever);
+    auto time = autoRecordExpireTime ? safeExpirationPlusCurrentTime(m_expiredInSeconds) : ExpireNever;
     MMKVInfo("turn on recording expire date for all keys inside [%s] from now %u", m_mmapID.c_str(), time);
     m_metaInfo->setFlag(MMKVMetaInfo::EnableKeyExipre);
     m_metaInfo->m_version = MMKVVersionFlag;

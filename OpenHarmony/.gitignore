@@ -11,5 +11,6 @@
 **/.test
 /.appanalyzer
 /codesign
+sign-config.json
 MMKV/include
 oh-package-lock.json5

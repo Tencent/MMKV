@@ -333,7 +333,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
         [kv release];
     }
     kv->m_lastAccessTime = llround([NSDate timeIntervalSinceReferenceDate] * 1000);
-    return kv;
+    // g_instanceDic owns kv while g_lock is held. Establish an autoreleased
+    // ownership handoff before releasing the lock so auto cleanup cannot
+    // deallocate the wrapper before an ARC caller retains the return value.
+    return [[kv retain] autorelease];
 }
 
 - (instancetype)initWithMMapID:(NSString *)mmapID config:(const MMKVConfig&)config {
@@ -442,14 +445,23 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 }
 
 - (void)close {
-    SCOPED_LOCK(g_lock);
-    MMKVInfo("closing %@", m_mmapID);
+    // Keep the wrapper alive while removing the dictionary's retain.
+    [self retain];
+    mmkv::MMKV *kv = nullptr;
+    {
+        SCOPED_LOCK(g_lock);
+        MMKVInfo("closing %@", m_mmapID);
 
-    [g_instanceDic removeObjectForKey:m_mmapKey];
-
-    if (self.retainCount > 1) {
-        MMKVWarning("There's still reference on this kv: %@", m_mmapID);
+        if ([g_instanceDic objectForKey:m_mmapKey] == self) {
+            [g_instanceDic removeObjectForKey:m_mmapKey];
+        }
+        kv = m_mmkv;
+        m_mmkv = nullptr;
     }
+    if (kv) {
+        kv->close();
+    }
+    [self release];
 }
 
 - (void)trim {
@@ -1171,7 +1183,7 @@ static NSString *md5(NSString *value) {
     }
 }
 
-+ (void)unregiserHandler {
++ (void)unregisterHandler {
     SCOPED_LOCK(g_lock);
 
     g_isLogRedirecting = false;
@@ -1179,6 +1191,12 @@ static NSString *md5(NSString *value) {
     g_callbackHandler = nil;
 
     mmkv::MMKV::unRegisterHandler();
+}
+
++ (void)unregiserHandler {
+    // Kept for backward compatibility; delegates to the correctly-spelled
+    // +unregisterHandler introduced in v2.4.1.
+    [MMKV unregisterHandler];
 }
 
 + (void)setLogLevel:(MMKVLogLevel)logLevel {
