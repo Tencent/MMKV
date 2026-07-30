@@ -341,6 +341,8 @@ void MMKV::close() {
     if (itr != g_instanceDic->end()) {
         g_instanceDic->erase(itr);
     }
+    // The instance lock deliberately remains held here. Its destructor
+    // releases this thread's recursive ownership before destroying the lock.
     delete this;
 }
 

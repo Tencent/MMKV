@@ -33,6 +33,7 @@
 #ifndef MMKV_USING_PTHREAD
 #    include <atomic>
 #endif
+#include <cstdint>
 
 namespace mmkv {
 
@@ -50,6 +51,9 @@ class ThreadLock {
 #else
     CRITICAL_SECTION m_lock;
 #endif
+    // Tracks recursive ownership by the current thread. Destruction while
+    // another thread owns the lock remains unsupported.
+    uint32_t m_lockCount = 0;
 
 public:
     ThreadLock();
