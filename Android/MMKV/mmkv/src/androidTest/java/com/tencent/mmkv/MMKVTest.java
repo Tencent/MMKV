@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
 import androidx.test.InstrumentationRegistry;
+import java.util.Arrays;
 import java.util.HashSet;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -251,6 +252,37 @@ public class MMKVTest {
 
         assertEquals(3, kv.countNonExpiredKeys());
         kv.clearAll();
+    }
+
+    private static void assertOversizedKeyRejectedWithoutCorruption(String mmapID, String cryptKey) {
+        MMKV kv = MMKV.mmkvWithID(mmapID, MMKV.SINGLE_PROCESS_MODE, cryptKey);
+        kv.clearAll();
+        assertTrue(kv.encode("before", "sentinel-before"));
+
+        char[] maxKeyChars = new char[65531];
+        Arrays.fill(maxKeyChars, 'A');
+        String maxKey = new String(maxKeyChars);
+        assertTrue(kv.encode(maxKey, "boundary"));
+        assertEquals("boundary", kv.decodeString(maxKey));
+
+        char[] oversizedKeyChars = new char[65532];
+        Arrays.fill(oversizedKeyChars, 'B');
+        String oversizedKey = new String(oversizedKeyChars);
+        assertFalse(kv.encode(oversizedKey, "must-be-rejected"));
+        assertNull(kv.decodeString(oversizedKey));
+
+        assertTrue(kv.encode("after", "sentinel-after"));
+        kv.clearMemoryCache();
+        assertEquals("sentinel-before", kv.decodeString("before"));
+        assertEquals("boundary", kv.decodeString(maxKey));
+        assertEquals("sentinel-after", kv.decodeString("after"));
+        kv.clearAll();
+    }
+
+    @Test
+    public void testOversizedKeyRejectedWithoutCorruption() {
+        assertOversizedKeyRejectedWithoutCorruption("oversizedKeyTest", null);
+        assertOversizedKeyRejectedWithoutCorruption("oversizedKeyCryptTest", "UnitTestCryptKey");
     }
 
     @Test
