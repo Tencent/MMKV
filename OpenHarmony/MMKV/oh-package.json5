@@ -3,7 +3,10 @@
   "version": "1.3.17",
   "description": "The official OpenHarmony package of MMKV. An efficient, small mobile key-value storage framework developed by WeChat.",
   "main": "Index.ets",
-  "author": "guoling",
+  "author": {
+    "name": "guoling",
+    "email": "guoling@tencent.com",
+  },
   "license": "BSD 3-Clause",
   "type": "module",
   "packageType": "InterfaceHar",
