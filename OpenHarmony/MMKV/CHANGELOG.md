@@ -1,5 +1,5 @@
 # MMKV for HarmonyOS NEXT Change Log
-## v1.3.17 / 2026-07-30
+## v1.3.17 / 2026-08-03
 * **Fix:** Reject oversized keys before their length can overflow and corrupt MMKV data.
 * **Fix:** Prevent auto-expiration timestamps from overflowing for very large durations.
 * **Fix:** Harden native instance close lifecycle and recursive thread-lock destruction.
