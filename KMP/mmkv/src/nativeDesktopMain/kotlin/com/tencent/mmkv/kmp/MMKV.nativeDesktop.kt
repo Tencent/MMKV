@@ -218,12 +218,19 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
     actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = mmkv_encode_float_v2(handle, key, value, expireDuration)
     actual fun encodeDouble(key: String, value: Double): Boolean = mmkv_encode_double(handle, key, value)
     actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = mmkv_encode_double_v2(handle, key, value, expireDuration)
-    actual fun encodeString(key: String, value: String): Boolean = mmkv_encode_string(handle, key, value)
-    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = mmkv_encode_string_v2(handle, key, value, expireDuration)
+    // Core stores strings and bytes identically; the byte bridge preserves embedded NUL characters.
+    actual fun encodeString(key: String, value: String): Boolean = encodeBytes(key, value.encodeToByteArray())
+    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean =
+        encodeBytes(key, value.encodeToByteArray(), expireDuration)
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun encodeBytes(key: String, value: ByteArray): Boolean {
-        if (value.isEmpty()) return mmkv_encode_bytes(handle, key, null, 0)
+        if (value.isEmpty()) {
+            return memScoped {
+                val sentinel = alloc<ByteVar>()
+                mmkv_encode_bytes(handle, key, sentinel.ptr, 0)
+            }
+        }
         return value.usePinned { pinned ->
             mmkv_encode_bytes(handle, key, pinned.addressOf(0), value.size.toLong())
         }
@@ -231,7 +238,12 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean {
-        if (value.isEmpty()) return mmkv_encode_bytes_v2(handle, key, null, 0, expireDuration)
+        if (value.isEmpty()) {
+            return memScoped {
+                val sentinel = alloc<ByteVar>()
+                mmkv_encode_bytes_v2(handle, key, sentinel.ptr, 0, expireDuration)
+            }
+        }
         return value.usePinned { pinned ->
             mmkv_encode_bytes_v2(handle, key, pinned.addressOf(0), value.size.toLong(), expireDuration)
         }
@@ -246,12 +258,8 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
     actual fun decodeLong(key: String, defaultValue: Long): Long = mmkv_decode_int64(handle, key, defaultValue)
     actual fun decodeFloat(key: String, defaultValue: Float): Float = mmkv_decode_float(handle, key, defaultValue)
     actual fun decodeDouble(key: String, defaultValue: Double): Double = mmkv_decode_double(handle, key, defaultValue)
-    actual fun decodeString(key: String, defaultValue: String?): String? {
-        val ptr = mmkv_decode_string(handle, key) ?: return defaultValue
-        val result = ptr.toKString()
-        mmkv_free(ptr)
-        return result
-    }
+    actual fun decodeString(key: String, defaultValue: String?): String? =
+        decodeBytes(key)?.decodeToString() ?: defaultValue
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun decodeBytes(key: String): ByteArray? {
@@ -261,7 +269,7 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
             val length = lengthPtr.value.toInt()
             if (length == 0) {
                 mmkv_free(ptr)
-                return null
+                return ByteArray(0)
             }
             val bytes = ByteArray(length)
             bytes.usePinned { pinned ->

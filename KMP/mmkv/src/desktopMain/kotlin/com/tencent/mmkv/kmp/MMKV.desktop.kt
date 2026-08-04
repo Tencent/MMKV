@@ -270,18 +270,20 @@ actual class MMKV internal constructor(handle: Pointer) {
     actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = lib.mmkv_encode_float_v2(handle, key, value, expireDuration.toInt())
     actual fun encodeDouble(key: String, value: Double): Boolean = lib.mmkv_encode_double(handle, key, value)
     actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = lib.mmkv_encode_double_v2(handle, key, value, expireDuration.toInt())
-    actual fun encodeString(key: String, value: String): Boolean = lib.mmkv_encode_string(handle, key, value)
-    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = lib.mmkv_encode_string_v2(handle, key, value, expireDuration.toInt())
+    // Core stores strings and bytes identically; the byte bridge preserves embedded NUL characters.
+    actual fun encodeString(key: String, value: String): Boolean = encodeBytes(key, value.encodeToByteArray())
+    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean =
+        encodeBytes(key, value.encodeToByteArray(), expireDuration)
 
     actual fun encodeBytes(key: String, value: ByteArray): Boolean {
-        if (value.isEmpty()) return lib.mmkv_encode_bytes(handle, key, null, 0)
+        if (value.isEmpty()) return lib.mmkv_encode_bytes(handle, key, Memory(1), 0)
         val mem = Memory(value.size.toLong())
         mem.write(0, value, 0, value.size)
         return lib.mmkv_encode_bytes(handle, key, mem, value.size.toLong())
     }
 
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean {
-        if (value.isEmpty()) return lib.mmkv_encode_bytes_v2(handle, key, null, 0, expireDuration.toInt())
+        if (value.isEmpty()) return lib.mmkv_encode_bytes_v2(handle, key, Memory(1), 0, expireDuration.toInt())
         val mem = Memory(value.size.toLong())
         mem.write(0, value, 0, value.size)
         return lib.mmkv_encode_bytes_v2(handle, key, mem, value.size.toLong(), expireDuration.toInt())
@@ -297,18 +299,14 @@ actual class MMKV internal constructor(handle: Pointer) {
     actual fun decodeFloat(key: String, defaultValue: Float): Float = lib.mmkv_decode_float(handle, key, defaultValue)
     actual fun decodeDouble(key: String, defaultValue: Double): Double = lib.mmkv_decode_double(handle, key, defaultValue)
 
-    actual fun decodeString(key: String, defaultValue: String?): String? {
-        val ptr = lib.mmkv_decode_string(handle, key) ?: return defaultValue
-        val result = ptr.getString(0)
-        lib.mmkv_free(ptr)
-        return result
-    }
+    actual fun decodeString(key: String, defaultValue: String?): String? =
+        decodeBytes(key)?.decodeToString() ?: defaultValue
 
     actual fun decodeBytes(key: String): ByteArray? {
         val lengthPtr = LongByReference()
         val ptr = lib.mmkv_decode_bytes(handle, key, lengthPtr) ?: return null
         val length = lengthPtr.value.toInt()
-        if (length == 0) { lib.mmkv_free(ptr); return null }
+        if (length == 0) { lib.mmkv_free(ptr); return ByteArray(0) }
         val bytes = ptr.getByteArray(0, length)
         lib.mmkv_free(ptr)
         return bytes

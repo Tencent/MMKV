@@ -66,6 +66,22 @@ class MMKVSmokeTest {
     }
 
     @Test
+    fun stringsPreserveEmbeddedNullCharacters() {
+        val kv = fresh("embedded-null")
+        try {
+            val value = "before\u0000after"
+            assertTrue(kv.encodeString("string", value))
+            assertEquals(value, kv.decodeString("string"))
+
+            assertTrue(kv.enableAutoKeyExpire())
+            assertTrue(kv.encodeString("expiring-string", value, 60u))
+            assertEquals(value, kv.decodeString("expiring-string"))
+        } finally {
+            kv.clearAll()
+        }
+    }
+
+    @Test
     fun emptyBytesRemainDistinctFromMissingValue() {
         val kv = fresh("empty-bytes")
         try {
@@ -73,6 +89,11 @@ class MMKVSmokeTest {
             assertTrue(kv.encodeBytes("empty", ByteArray(0)))
             assertTrue(kv.containsKey("empty"))
             assertContentEquals(ByteArray(0), kv.decodeBytes("empty"))
+
+            assertTrue(kv.enableAutoKeyExpire())
+            assertTrue(kv.encodeBytes("expiring-empty", ByteArray(0), 60u))
+            assertTrue(kv.containsKey("expiring-empty"))
+            assertContentEquals(ByteArray(0), kv.decodeBytes("expiring-empty"))
         } finally {
             kv.clearAll()
         }
