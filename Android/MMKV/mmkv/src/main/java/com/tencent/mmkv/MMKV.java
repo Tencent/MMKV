@@ -1527,7 +1527,7 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     public static final int ExpireInHour = 60 * 60;
     public static final int ExpireInDay = 24 * 60 * 60;
     public static final int ExpireInMonth = 30 * 24 * 60 * 60;
-    public static final int ExpireInYear = 365 * 30 * 24 * 60 * 60;
+    public static final int ExpireInYear = 365 * 24 * 60 * 60;
 
     /**
      * Enable auto key expiration. This is a upgrade operation, the file format will change.

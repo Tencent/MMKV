@@ -37,7 +37,7 @@ typedef NS_ENUM(UInt32, MMKVExpireDuration) {
     MMKVExpireInHour = 60 * 60,
     MMKVExpireInDay = 24 * 60 * 60,
     MMKVExpireInMonth = 30 * 24 * 60 * 60,
-    MMKVExpireInYear = 365 * 30 * 24 * 60 * 60,
+    MMKVExpireInYear = 365 * 24 * 60 * 60,
 };
 
 // all-in-one configuration for creating MMKV instance
