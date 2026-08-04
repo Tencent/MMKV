@@ -20,15 +20,21 @@
 
 #include <MMKV/MMKV.h>
 #include "aes/AESCrypt.h"
+#include "MemoryFile.h"
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
 #include <iostream>
+#include <limits.h>
 #include <limits>
 #include <numeric>
 #include <new>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 using namespace mmkv;
@@ -288,6 +294,57 @@ void testCryptoRandomAndWipe() {
     printf("test crypto random and wipe: passed\n");
 }
 
+void testLongDirectoryWalk() {
+    char baseTemplate[] = "/private/tmp/mmkv-walk-XXXXXX";
+    auto base = mkdtemp(baseTemplate);
+    assert(base);
+
+    string path(base);
+    vector<pair<int, string>> directories;
+    auto currentFD = open(base, O_RDONLY | O_DIRECTORY);
+    assert(currentFD >= 0);
+
+    constexpr size_t targetPathLength = PATH_MAX - 64;
+    while (path.size() < targetPathLength) {
+        const auto remainingLength = targetPathLength - path.size();
+        if (remainingLength == 1) {
+            path.push_back('/');
+            break;
+        }
+        auto nameLength = min<size_t>(100, remainingLength - 1);
+        string name(nameLength, static_cast<char>('a' + directories.size() % 26));
+        assert(mkdirat(currentFD, name.c_str(), 0700) == 0);
+        auto childFD = openat(currentFD, name.c_str(), O_RDONLY | O_DIRECTORY);
+        assert(childFD >= 0);
+        directories.emplace_back(currentFD, name);
+        currentFD = childFD;
+        path += "/" + name;
+    }
+    assert(path.size() == targetPathLength);
+
+    const string filename(100, 'z');
+    auto fileFD = openat(currentFD, filename.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    assert(fileFD >= 0);
+    close(fileFD);
+
+    vector<string> files;
+    walkInDir(path, WalkFile, [&files](const MMKVPath_t &filePath, WalkType) {
+        files.push_back(filePath);
+    });
+    assert(files.size() == 1);
+    assert(files.front() == path + "/" + filename);
+
+    assert(unlinkat(currentFD, filename.c_str(), 0) == 0);
+    close(currentFD);
+    for (auto it = directories.rbegin(); it != directories.rend(); ++it) {
+        assert(unlinkat(it->first, it->second.c_str(), AT_REMOVEDIR) == 0);
+        close(it->first);
+    }
+    assert(rmdir(base) == 0);
+
+    printf("test long directory walk: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -361,4 +418,5 @@ int main() {
     testOversizedKey(mmkv);
     testExpirationOverflow();
     testCryptoRandomAndWipe();
+    testLongDirectoryWalk();
 }

@@ -633,29 +633,22 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD) {
 #endif // !defined(MMKV_APPLE)
 
 void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(const MMKVPath_t&, WalkType)> &walker) {
-    auto folderPathStr = dirPath.data();
-    DIR *dir = opendir(folderPathStr);
+    DIR *dir = opendir(dirPath.c_str());
     if (!dir) {
         MMKVError("opendir failed: %d(%s), %s", errno, strerror(errno), dirPath.c_str());
         return;
     }
 
-    char childPath[PATH_MAX];
-    size_t folderPathLength = dirPath.size();
-    strncpy(childPath, folderPathStr, folderPathLength + 1);
-    if (folderPathStr[folderPathLength - 1] != '/') {
-        childPath[folderPathLength] = '/';
-        folderPathLength++;
+    MMKVPath_t childPath = dirPath;
+    if (childPath.empty() || childPath.back() != '/') {
+        childPath.push_back('/');
     }
+    const auto folderPathLength = childPath.size();
 
     while (auto child = readdir(dir)) {
         if ((child->d_type & DT_REG) && (type & WalkFile)) {
-#if defined(_DIRENT_HAVE_D_NAMLEN) || defined(__APPLE__)
-            stpcpy(childPath + folderPathLength, child->d_name);
-            childPath[folderPathLength + child->d_namlen] = 0;
-#else
-            strcpy(childPath + folderPathLength, child->d_name);
-#endif
+            childPath.resize(folderPathLength);
+            childPath.append(child->d_name);
             walker(childPath, WalkFile);
         } else if ((child->d_type & DT_DIR) && (type & WalkFolder)) {
 #if defined(_DIRENT_HAVE_D_NAMLEN) || defined(__APPLE__)
@@ -663,14 +656,13 @@ void walkInDir(const MMKVPath_t &dirPath, WalkType type, const function<void(con
                 (child->d_namlen == 2 && child->d_name[0] == '.' && child->d_name[1] == '.')) {
                 continue;
             }
-            stpcpy(childPath + folderPathLength, child->d_name);
-            childPath[folderPathLength + child->d_namlen] = 0;
 #else
             if (strcmp(child->d_name, ".") == 0 || strcmp(child->d_name, "..") == 0) {
                 continue;
             }
-            strcpy(childPath + folderPathLength, child->d_name);
 #endif
+            childPath.resize(folderPathLength);
+            childPath.append(child->d_name);
             walker(childPath, WalkFolder);
         }
     }
