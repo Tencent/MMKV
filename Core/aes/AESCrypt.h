@@ -94,7 +94,7 @@ public:
     uint32_t getMaxKeyLength() const { return m_isAES256 ? AES256_KEY_LEN : AES_KEY_LEN; }
     int getMaxKeyBitLength() const { return m_isAES256 ? AES256_KEY_BITSET_LEN : AES_KEY_BITSET_LEN; }
 
-    static void fillRandomIV(void *vector);
+    static bool fillRandomIV(void *vector);
     static uint32_t randomItemSizeHolder(uint32_t size);
 
     // just forbid it for possibly misuse

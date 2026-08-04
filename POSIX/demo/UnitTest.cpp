@@ -19,6 +19,7 @@
  */
 
 #include <MMKV/MMKV.h>
+#include "aes/AESCrypt.h"
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -26,6 +27,7 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
+#include <new>
 #include <unistd.h>
 
 using namespace std;
@@ -256,6 +258,36 @@ void testExpirationOverflow() {
     printf("test expiration overflow: passed\n");
 }
 
+static bool containsBytes(const unsigned char *storage, size_t storageSize, const uint8_t *value, size_t valueSize) {
+    if (valueSize > storageSize) {
+        return false;
+    }
+    for (size_t offset = 0; offset <= storageSize - valueSize; ++offset) {
+        if (memcmp(storage + offset, value, valueSize) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void testCryptoRandomAndWipe() {
+    uint8_t firstIV[AES_IV_LEN] = {};
+    uint8_t secondIV[AES_IV_LEN] = {};
+    assert(AESCrypt::fillRandomIV(firstIV));
+    assert(AESCrypt::fillRandomIV(secondIV));
+    assert(memcmp(firstIV, secondIV, sizeof(firstIV)) != 0);
+
+    uint8_t key[AES256_KEY_LEN];
+    iota(begin(key), end(key), 1);
+    alignas(AESCrypt) unsigned char storage[sizeof(AESCrypt)] = {};
+    auto crypt = new (storage) AESCrypt(key, sizeof(key), nullptr, 0, true);
+    assert(containsBytes(storage, sizeof(storage), key, sizeof(key)));
+    crypt->~AESCrypt();
+    assert(!containsBytes(storage, sizeof(storage), key, sizeof(key)));
+
+    printf("test crypto random and wipe: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -328,4 +360,5 @@ int main() {
     testRemove(mmkv);
     testOversizedKey(mmkv);
     testExpirationOverflow();
+    testCryptoRandomAndWipe();
 }

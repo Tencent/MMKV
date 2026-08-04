@@ -1356,10 +1356,12 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
 
-    uint8_t newIV[AES_IV_LEN];
+    uint8_t newIV[AES_IV_LEN] = {};
     auto encrypter = (newCrypter == InvalidCryptPtr) ? nullptr : (newCrypter ? newCrypter : m_crypter);
     if (encrypter) {
-        AESCrypt::fillRandomIV(newIV);
+        if (!AESCrypt::fillRandomIV(newIV)) {
+            return false;
+        }
         encrypter->resetIV(newIV, sizeof(newIV));
     }
 
@@ -1558,17 +1560,24 @@ void MMKV::clearAll(bool keepSpace) {
         return;
     }
 
+#ifndef MMKV_DISABLE_CRYPT
+    uint8_t newIV[AES_IV_LEN] = {};
+    if (m_crypter) {
+        if (!AESCrypt::fillRandomIV(newIV)) {
+            return;
+        }
+    }
+#endif
+
     if (!keepSpace) {
         m_file->truncate(m_expectedCapacity);
     }
 
 #ifndef MMKV_DISABLE_CRYPT
-    uint8_t newIV[AES_IV_LEN];
-    AESCrypt::fillRandomIV(newIV);
     if (m_crypter) {
         m_crypter->resetIV(newIV, sizeof(newIV));
     }
-    writeActualSize(0, 0, newIV, IncreaseSequence);
+    writeActualSize(0, 0, m_crypter ? newIV : nullptr, IncreaseSequence);
 #else
     writeActualSize(0, 0, nullptr, IncreaseSequence);
 #endif

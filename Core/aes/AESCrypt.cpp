@@ -20,10 +20,15 @@
 
 #include "AESCrypt.h"
 #include "openssl/openssl_aes.h"
+#include <cerrno>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#ifndef MMKV_WIN32
+#    include <fcntl.h>
+#    include <unistd.h>
+#endif
 #include "../MMKVLog.h"
 #include "../MemoryFile.h"
 
@@ -96,6 +101,8 @@ AESCrypt::~AESCrypt() {
             delete m_aesRollbackKey;
         }
     }
+    secureWipe(m_key, sizeof(m_key));
+    secureWipe(m_vector, sizeof(m_vector));
 }
 
 void AESCrypt::resetIV(const void *iv, size_t ivLength) {
@@ -132,15 +139,46 @@ void AESCrypt::decrypt(const void *input, void *output, size_t length) {
     AES_cfb128_decrypt((const uint8_t *) input, (uint8_t *) output, length, m_aesKey, m_vector, &m_number);
 }
 
-void AESCrypt::fillRandomIV(void *vector) {
+bool AESCrypt::fillRandomIV(void *vector) {
     if (!vector) {
-        return;
+        return false;
     }
-    srand((unsigned) time(nullptr));
-    int *ptr = (int *) vector;
-    for (uint32_t i = 0; i < AES_IV_LEN / sizeof(int); i++) {
-        ptr[i] = rand();
+
+#ifdef MMKV_WIN32
+    HCRYPTPROV provider = 0;
+    if (!CryptAcquireContext(&provider, nullptr, nullptr, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
+        MMKVError("fail to acquire cryptographic provider, error=%lu", GetLastError());
+        return false;
     }
+    auto result = CryptGenRandom(provider, AES_IV_LEN, static_cast<BYTE *>(vector)) == TRUE;
+    if (!result) {
+        MMKVError("fail to generate random IV, error=%lu", GetLastError());
+    }
+    CryptReleaseContext(provider, 0);
+    return result;
+#else
+    auto fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) {
+        MMKVError("fail to open /dev/urandom, error=%d(%s)", errno, strerror(errno));
+        return false;
+    }
+
+    size_t offset = 0;
+    auto *bytes = static_cast<uint8_t *>(vector);
+    while (offset < AES_IV_LEN) {
+        auto count = read(fd, bytes + offset, AES_IV_LEN - offset);
+        if (count > 0) {
+            offset += static_cast<size_t>(count);
+        } else if (count < 0 && errno == EINTR) {
+            continue;
+        } else {
+            MMKVError("fail to read /dev/urandom, error=%d(%s)", errno, strerror(errno));
+            break;
+        }
+    }
+    close(fd);
+    return offset == AES_IV_LEN;
+#endif
 }
 
 static inline void
