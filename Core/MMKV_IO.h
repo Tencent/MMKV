@@ -64,6 +64,23 @@ enum : bool {
     IncreaseSequence = true,
 };
 
+namespace internal {
+struct CheckedImportResult {
+    size_t count;
+    bool incompatibleKeyRejected;
+};
+
+class CheckedImportAccess {
+public:
+    static CheckedImportResult importFrom(MMKV *destination, MMKV *source);
+    static size_t importFromUnchecked(MMKV *destination, MMKV *source);
+    static bool isKeyCompatibleForAndroid(std::string_view key);
+
+private:
+    static CheckedImportResult doImport(MMKV *destination, MMKV *source, bool checkModifiedUtf8Keys);
+};
+} // namespace internal
+
 #ifdef MMKV_ANDROID
 // status of migrating old file to new file
 enum class MigrateStatus: uint32_t {

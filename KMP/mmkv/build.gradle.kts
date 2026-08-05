@@ -19,6 +19,7 @@
  */
 
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.attributes.Attribute
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.bundling.Jar
 
@@ -30,6 +31,9 @@ plugins {
 }
 
 val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.1"
+val usePublishedAndroidArtifact =
+    providers.gradleProperty("MMKV_USE_PUBLISHED_ANDROID_ARTIFACT").orNull == "true"
+val androidStlMode = Attribute.of("stl_mode", String::class.java)
 val publishVersion = (findProperty("VERSION_NAME") as? String) ?: mmkvVersion
 val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
 val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
@@ -67,6 +71,14 @@ val mmkvGitRef = mmkvGitCommit?.takeIf { it.isNotBlank() }
 // native Android AAR with this KMP wrapper project.
 group = "$publishedGroup.kmpbuild"
 version = publishVersion
+
+if (!usePublishedAndroidArtifact) {
+    configurations.configureEach {
+        if (name.startsWith("android") && name.endsWith("Classpath")) {
+            attributes.attribute(androidStlMode, "DefaultCpp")
+        }
+    }
+}
 
 val nativeInteropDir = project.file("nativeInterop")
 val nativeBuildRoot = nativeInteropDir.resolve("build")
@@ -345,6 +357,17 @@ tasks.matching {
     it.name.startsWith("publish") && it.name.endsWith("ToSonatypeRepository")
 }.configureEach {
     dependsOn(verifySonatypePublication)
+}
+
+// A repository composite build substitutes the Android project from this checkout.
+// Publication must instead compile and resolve against the exact external AAR that
+// consumers will receive, or a missing coordinated Android API can be masked locally.
+tasks.matching { it.name.startsWith("publish") }.configureEach {
+    doFirst {
+        check(usePublishedAndroidArtifact) {
+            "Publishing KMP requires -PMMKV_USE_PUBLISHED_ANDROID_ARTIFACT=true and a matching external com.tencent:mmkv:$mmkvVersion artifact."
+        }
+    }
 }
 
 signing {

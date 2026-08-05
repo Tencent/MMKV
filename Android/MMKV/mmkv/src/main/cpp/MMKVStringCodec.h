@@ -18,30 +18,20 @@
  * limitations under the License.
  */
 
-package com.tencent.mmkv.kmp
+#ifndef MMKV_STRING_CODEC_H
+#define MMKV_STRING_CODEC_H
 
-/**
- * MMKV instance mode constants.
- */
-object MMKVMode {
-    /** Single-process mode. The default mode on an MMKV instance. */
-    const val SINGLE_PROCESS = 1 shl 0
+#include <cstdint>
+#include <string_view>
+#include <vector>
 
-    /** Multi-process mode. */
-    const val MULTI_PROCESS = 1 shl 1
+namespace mmkv::android {
 
-    /** Read-only mode. */
-    const val READ_ONLY = 1 shl 5
-}
+// Decode either strict canonical UTF-8 or strict JNI Modified UTF-8 into
+// UTF-16 code units. The input must be valid in its entirety under one of the
+// two encodings; malformed and mixed encodings are rejected.
+bool decodeUtf8OrModifiedUtf8(std::string_view input, std::vector<uint16_t> &output);
 
-/**
- * MMKV expire duration constants (in seconds).
- */
-object MMKVExpireDuration {
-    const val Never: UInt = 0u
-    const val InMinute: UInt = 60u
-    const val InHour: UInt = 3_600u
-    const val InDay: UInt = 86_400u
-    const val InMonth: UInt = 2_592_000u
-    const val InYear: UInt = 31_536_000u
-}
+} // namespace mmkv::android
+
+#endif // MMKV_STRING_CODEC_H

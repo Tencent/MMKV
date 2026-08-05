@@ -20,28 +20,9 @@
 
 package com.tencent.mmkv.kmp
 
-/**
- * MMKV instance mode constants.
- */
-object MMKVMode {
-    /** Single-process mode. The default mode on an MMKV instance. */
-    const val SINGLE_PROCESS = 1 shl 0
-
-    /** Multi-process mode. */
-    const val MULTI_PROCESS = 1 shl 1
-
-    /** Read-only mode. */
-    const val READ_ONLY = 1 shl 5
+internal fun String.requireValidMMKVKey(): String {
+    require('\u0000' !in this) { "MMKV keys must not contain NUL (\\u0000) characters" }
+    return this
 }
 
-/**
- * MMKV expire duration constants (in seconds).
- */
-object MMKVExpireDuration {
-    const val Never: UInt = 0u
-    const val InMinute: UInt = 60u
-    const val InHour: UInt = 3_600u
-    const val InDay: UInt = 86_400u
-    const val InMonth: UInt = 2_592_000u
-    const val InYear: UInt = 31_536_000u
-}
+internal fun List<String>.requireValidMMKVKeys(): List<String> = map(String::requireValidMMKVKey)

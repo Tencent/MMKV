@@ -208,16 +208,26 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
 
     // region Encode
 
-    actual fun encodeBool(key: String, value: Boolean): Boolean = mmkv_encode_bool(handle, key, value)
-    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = mmkv_encode_bool_v2(handle, key, value, expireDuration)
-    actual fun encodeInt(key: String, value: Int): Boolean = mmkv_encode_int32(handle, key, value)
-    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = mmkv_encode_int32_v2(handle, key, value, expireDuration)
-    actual fun encodeLong(key: String, value: Long): Boolean = mmkv_encode_int64(handle, key, value)
-    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = mmkv_encode_int64_v2(handle, key, value, expireDuration)
-    actual fun encodeFloat(key: String, value: Float): Boolean = mmkv_encode_float(handle, key, value)
-    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = mmkv_encode_float_v2(handle, key, value, expireDuration)
-    actual fun encodeDouble(key: String, value: Double): Boolean = mmkv_encode_double(handle, key, value)
-    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = mmkv_encode_double_v2(handle, key, value, expireDuration)
+    actual fun encodeBool(key: String, value: Boolean): Boolean =
+        mmkv_encode_bool(handle, key.requireValidMMKVKey(), value)
+    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean =
+        mmkv_encode_bool_v2(handle, key.requireValidMMKVKey(), value, expireDuration)
+    actual fun encodeInt(key: String, value: Int): Boolean =
+        mmkv_encode_int32(handle, key.requireValidMMKVKey(), value)
+    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean =
+        mmkv_encode_int32_v2(handle, key.requireValidMMKVKey(), value, expireDuration)
+    actual fun encodeLong(key: String, value: Long): Boolean =
+        mmkv_encode_int64(handle, key.requireValidMMKVKey(), value)
+    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean =
+        mmkv_encode_int64_v2(handle, key.requireValidMMKVKey(), value, expireDuration)
+    actual fun encodeFloat(key: String, value: Float): Boolean =
+        mmkv_encode_float(handle, key.requireValidMMKVKey(), value)
+    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean =
+        mmkv_encode_float_v2(handle, key.requireValidMMKVKey(), value, expireDuration)
+    actual fun encodeDouble(key: String, value: Double): Boolean =
+        mmkv_encode_double(handle, key.requireValidMMKVKey(), value)
+    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean =
+        mmkv_encode_double_v2(handle, key.requireValidMMKVKey(), value, expireDuration)
     // Core stores strings and bytes identically; the byte bridge preserves embedded NUL characters.
     actual fun encodeString(key: String, value: String): Boolean = encodeBytes(key, value.encodeToByteArray())
     actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean =
@@ -225,27 +235,29 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun encodeBytes(key: String, value: ByteArray): Boolean {
+        val validKey = key.requireValidMMKVKey()
         if (value.isEmpty()) {
             return memScoped {
                 val sentinel = alloc<ByteVar>()
-                mmkv_encode_bytes(handle, key, sentinel.ptr, 0)
+                mmkv_encode_bytes(handle, validKey, sentinel.ptr, 0)
             }
         }
         return value.usePinned { pinned ->
-            mmkv_encode_bytes(handle, key, pinned.addressOf(0), value.size.toLong())
+            mmkv_encode_bytes(handle, validKey, pinned.addressOf(0), value.size.toLong())
         }
     }
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean {
+        val validKey = key.requireValidMMKVKey()
         if (value.isEmpty()) {
             return memScoped {
                 val sentinel = alloc<ByteVar>()
-                mmkv_encode_bytes_v2(handle, key, sentinel.ptr, 0, expireDuration)
+                mmkv_encode_bytes_v2(handle, validKey, sentinel.ptr, 0, expireDuration)
             }
         }
         return value.usePinned { pinned ->
-            mmkv_encode_bytes_v2(handle, key, pinned.addressOf(0), value.size.toLong(), expireDuration)
+            mmkv_encode_bytes_v2(handle, validKey, pinned.addressOf(0), value.size.toLong(), expireDuration)
         }
     }
 
@@ -253,19 +265,25 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
 
     // region Decode
 
-    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = mmkv_decode_bool(handle, key, defaultValue)
-    actual fun decodeInt(key: String, defaultValue: Int): Int = mmkv_decode_int32(handle, key, defaultValue)
-    actual fun decodeLong(key: String, defaultValue: Long): Long = mmkv_decode_int64(handle, key, defaultValue)
-    actual fun decodeFloat(key: String, defaultValue: Float): Float = mmkv_decode_float(handle, key, defaultValue)
-    actual fun decodeDouble(key: String, defaultValue: Double): Double = mmkv_decode_double(handle, key, defaultValue)
+    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean =
+        mmkv_decode_bool(handle, key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeInt(key: String, defaultValue: Int): Int =
+        mmkv_decode_int32(handle, key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeLong(key: String, defaultValue: Long): Long =
+        mmkv_decode_int64(handle, key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeFloat(key: String, defaultValue: Float): Float =
+        mmkv_decode_float(handle, key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeDouble(key: String, defaultValue: Double): Double =
+        mmkv_decode_double(handle, key.requireValidMMKVKey(), defaultValue)
     actual fun decodeString(key: String, defaultValue: String?): String? =
         decodeBytes(key)?.decodeToString() ?: defaultValue
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun decodeBytes(key: String): ByteArray? {
+        val validKey = key.requireValidMMKVKey()
         memScoped {
             val lengthPtr = alloc<ULongVar>()
-            val ptr = mmkv_decode_bytes(handle, key, lengthPtr.ptr) ?: return null
+            val ptr = mmkv_decode_bytes(handle, validKey, lengthPtr.ptr) ?: return null
             val length = lengthPtr.value.toInt()
             if (length == 0) {
                 mmkv_free(ptr)
@@ -284,7 +302,7 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
 
     // region Key management
 
-    actual fun containsKey(key: String): Boolean = mmkv_contains_key(handle, key)
+    actual fun containsKey(key: String): Boolean = mmkv_contains_key(handle, key.requireValidMMKVKey())
 
     actual fun countNonExpiredKeys(): Long = mmkv_count(handle, true).toLong()
 
@@ -304,17 +322,18 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
         }
     }
 
-    actual fun removeValueForKey(key: String) = mmkv_remove_value(handle, key)
+    actual fun removeValueForKey(key: String) = mmkv_remove_value(handle, key.requireValidMMKVKey())
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun removeValuesForKeys(keys: List<String>) {
-        if (keys.isEmpty()) return
+        val validKeys = keys.requireValidMMKVKeys()
+        if (validKeys.isEmpty()) return
         memScoped {
-            val cArray = allocArray<CPointerVar<ByteVar>>(keys.size)
-            keys.forEachIndexed { index, key ->
+            val cArray = allocArray<CPointerVar<ByteVar>>(validKeys.size)
+            validKeys.forEachIndexed { index, key ->
                 cArray[index] = key.cstr.ptr
             }
-            mmkv_remove_values(handle, cArray, keys.size.toULong())
+            mmkv_remove_values(handle, cArray, validKeys.size.toULong())
         }
     }
 
@@ -359,13 +378,15 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
     actual fun checkContentChanged() = mmkv_check_content_changed(handle)
 
     @OptIn(ExperimentalForeignApi::class)
-    actual fun getValueSize(key: String, actualSize: Boolean): Long = mmkv_get_value_size(handle, key, actualSize).toLong()
+    actual fun getValueSize(key: String, actualSize: Boolean): Long =
+        mmkv_get_value_size(handle, key.requireValidMMKVKey(), actualSize).toLong()
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int {
+        val validKey = key.requireValidMMKVKey()
         if (buffer.isEmpty()) return -1
         return buffer.usePinned { pinned ->
-            mmkv_write_value_to_buffer(handle, key, pinned.addressOf(0), buffer.size)
+            mmkv_write_value_to_buffer(handle, validKey, pinned.addressOf(0), buffer.size)
         }
     }
 

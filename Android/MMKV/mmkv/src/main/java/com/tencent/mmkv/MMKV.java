@@ -1322,11 +1322,21 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
 
     /**
      * import all key-value items from src
-     * @return count of items imported
+     * @return count of items successfully imported
      */
     public long importFrom(MMKV src) {
         return importFrom(nativeHandle, src.nativeHandle);
     }
+
+    /**
+     * Import all items only if every source key is valid Modified UTF-8 and contains no NUL.
+     * Key validation and import are performed while the source and destination are locked.
+     * Incompatible-key rejection happens before any write. A later write failure can leave a
+     * partial import, and the return value counts only writes that succeeded.
+     *
+     * @return count of items successfully imported, or -1 when an incompatible key was found and nothing was imported
+     */
+    public native long importFromCheckingKeyEncoding(MMKV src);
 
     /**
      * Permanently close the underlying native MMKV instance.

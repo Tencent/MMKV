@@ -53,6 +53,11 @@ class NameSpace;
 
 MMKV_NAMESPACE_BEGIN
 
+class MMKV;
+namespace internal {
+class CheckedImportAccess;
+} // namespace internal
+
 enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 1 << 0,
     MMKV_MULTI_PROCESS = 1 << 1,
@@ -605,7 +610,7 @@ public:
     void trim();
 
     // import all key-value items from source
-    // return count of items imported
+    // return count of items successfully imported
     size_t importFrom(MMKV *src);
 
     // Permanently close and destroy this instance. This is a terminal operation.
@@ -682,6 +687,7 @@ public:
     MMKV &operator=(const MMKV &other) = delete;
 
     friend class mmkv::NameSpace;
+    friend class internal::CheckedImportAccess;
 };
 
 #if defined(MMKV_HAS_CPP20)

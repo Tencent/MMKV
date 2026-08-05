@@ -40,6 +40,8 @@
 #include <cstring>
 #include <ctime>
 #include <filesystem>
+#include <functional>
+#include <limits>
 
 #ifdef MMKV_IOS
 #    include "MMKV_OSX.h"
@@ -1589,49 +1591,169 @@ void MMKV::clearAll(bool keepSpace) {
 }
 
 size_t MMKV::importFrom(MMKV *src) {
+    return internal::CheckedImportAccess::importFromUnchecked(this, src);
+}
+
+static bool isModifiedUtf8KeyWithoutNul(string_view key) {
+    if (key.empty()) {
+        return false;
+    }
+    size_t index = 0;
+    while (index < key.size()) {
+        auto first = static_cast<uint8_t>(key[index]);
+        if (first >= 0x01 && first <= 0x7F) {
+            index++;
+            continue;
+        }
+
+        if (first == 0xC0) {
+            // C0 80 is the valid Modified UTF-8 spelling of U+0000, but NUL
+            // is intentionally outside KMP's cross-platform key contract.
+            return false;
+        }
+        if (first >= 0xC2 && first <= 0xDF) {
+            if (key.size() - index < 2) {
+                return false;
+            }
+            auto second = static_cast<uint8_t>(key[index + 1]);
+            if (second < 0x80 || second > 0xBF) {
+                return false;
+            }
+            index += 2;
+            continue;
+        }
+
+        if (first >= 0xE0 && first <= 0xEF) {
+            if (key.size() - index < 3) {
+                return false;
+            }
+            auto second = static_cast<uint8_t>(key[index + 1]);
+            auto third = static_cast<uint8_t>(key[index + 2]);
+            if (second < 0x80 || second > 0xBF || third < 0x80 || third > 0xBF) {
+                return false;
+            }
+            // Reject overlong three-byte encodings. Surrogate code units remain
+            // valid because Modified UTF-8 encodes supplementary characters as
+            // their two UTF-16 surrogates rather than a four-byte UTF-8 sequence.
+            if (first == 0xE0 && second < 0xA0) {
+                return false;
+            }
+            index += 3;
+            continue;
+        }
+
+        // This also rejects raw NUL, stray continuation bytes, C1, and the
+        // four-byte sequences that are valid in canonical UTF-8 but not MUTF-8.
+        return false;
+    }
+    return true;
+}
+
+internal::CheckedImportResult internal::CheckedImportAccess::doImport(MMKV *destination,
+                                                                      MMKV *src,
+                                                                      bool checkModifiedUtf8Keys) {
+    if (!destination) {
+        return {};
+    }
     if (!src) {
-        return 0;
+        return {};
     }
-    MMKVInfo("importing from [%s] to [%s]", src->m_mmapID.c_str(), m_mmapID.c_str());
-    if (isReadOnly()) {
-        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
-        return 0;
-    }
-
-    SCOPED_LOCK(m_lock);
-    SCOPED_LOCK(m_exclusiveProcessLock);
-    SCOPED_LOCK(src->m_lock);
-    SCOPED_LOCK(src->m_exclusiveProcessLock);
-
-    checkLoadData();
-    src->checkLoadData();
-    if (!isFileValid() || !src->isFileValid()) {
-        MMKVWarning("[%s] or [%s] file not valid", m_mmapID.c_str(), src->m_mmapID.c_str());
-        return 0;
+    MMKVInfo("importing from [%s] to [%s]", src->m_mmapID.c_str(), destination->m_mmapID.c_str());
+    if (destination->isReadOnly()) {
+        MMKVWarning("[%s] file readonly", destination->m_mmapID.c_str());
+        return {};
     }
 
-    size_t count = 0;
-    bool notAutoExpire = !m_enableKeyExpire;
-    auto time = UInt32ToInt32((m_expiredInSeconds != ExpireNever) ? safeExpirationPlusCurrentTime(m_expiredInSeconds) : ExpireNever);
-    for (auto &key : src->allKeys(false)) {
-        auto value = src->getDataForKey(key);
-        if (value.length() > 0) {
+    auto importWhileLocked = [&]() -> internal::CheckedImportResult {
+        destination->checkLoadData();
+        src->checkLoadData();
+        if (!destination->isFileValid() || !src->isFileValid()) {
+            MMKVWarning("[%s] or [%s] file not valid", destination->m_mmapID.c_str(), src->m_mmapID.c_str());
+            return {};
+        }
+
+        auto keys = src->allKeys(false);
+        if (checkModifiedUtf8Keys) {
+            auto invalidKey = find_if(keys.begin(), keys.end(), [](const auto &key) {
+                return !isModifiedUtf8KeyWithoutNul(key);
+            });
+            if (invalidKey != keys.end()) {
+                MMKVWarning("refusing checked import from [%s]: source contains a JNI-incompatible key", src->m_mmapID.c_str());
+                return {0, true};
+            }
+        }
+
+        size_t count = 0;
+        bool notAutoExpire = !destination->m_enableKeyExpire;
+        auto time = UInt32ToInt32((destination->m_expiredInSeconds != MMKV::ExpireNever)
+                                      ? MMKV::safeExpirationPlusCurrentTime(destination->m_expiredInSeconds)
+                                      : MMKV::ExpireNever);
+        for (auto &key : keys) {
+            auto value = src->getDataForKey(key);
+            if (value.length() == 0) {
+                continue;
+            }
+
+            bool imported = false;
             if (mmkv_likely(notAutoExpire)) {
-                setDataForKey(std::move(value), key, false);
+                imported = destination->setDataForKey(std::move(value), key, false);
             } else {
-                auto tmp = MMBuffer(value.length() + Fixed32Size);
+                if (value.length() > numeric_limits<uint32_t>::max() - Fixed32Size) {
+                    MMKVWarning("failed to import an oversized expiring value from [%s] to [%s]",
+                                src->m_mmapID.c_str(), destination->m_mmapID.c_str());
+                    continue;
+                }
+                auto lengthWithTime = value.length() + Fixed32Size;
+                auto tmp = MMBuffer(lengthWithTime);
                 CodedOutputData output(tmp.getPtr(), tmp.length());
                 // no need write size, it's already written in value
                 output.writeRawData(value);
                 output.writeRawLittleEndian32(time);
-                setDataForKey(std::move(tmp), key, false);
+                imported = destination->setDataForKey(std::move(tmp), key, false);
             }
-            count++;
+            if (imported) {
+                count++;
+            } else {
+                MMKVWarning("failed to import an item from [%s] to [%s]", src->m_mmapID.c_str(), destination->m_mmapID.c_str());
+            }
         }
+
+        MMKVInfo("imported %llu from [%s] to [%s]", count, src->m_mmapID.c_str(), destination->m_mmapID.c_str());
+        return {count, false};
+    };
+
+    // Acquire both instances in a stable storage-key order. This order must
+    // cover the in-process and inter-process locks so A <- B and B <- A cannot
+    // each hold one storage while waiting for the other.
+    if (destination == src) {
+        SCOPED_LOCK(destination->m_lock);
+        SCOPED_LOCK(destination->m_exclusiveProcessLock);
+        return importWhileLocked();
     }
 
-    MMKVInfo("imported %llu from [%s] to [%s]", count, src->m_mmapID.c_str(), m_mmapID.c_str());
-    return count;
+    MMKV *first = destination;
+    MMKV *second = src;
+    if (second->m_mmapKey < first->m_mmapKey ||
+        (second->m_mmapKey == first->m_mmapKey && std::less<MMKV *>{}(second, first))) {
+        std::swap(first, second);
+    }
+    SCOPED_LOCK(first->m_lock);
+    SCOPED_LOCK(first->m_exclusiveProcessLock);
+    SCOPED_LOCK(second->m_lock);
+    SCOPED_LOCK(second->m_exclusiveProcessLock);
+    return importWhileLocked();
+}
+
+internal::CheckedImportResult internal::CheckedImportAccess::importFrom(MMKV *destination, MMKV *source) {
+    return doImport(destination, source, true);
+}
+
+size_t internal::CheckedImportAccess::importFromUnchecked(MMKV *destination, MMKV *source) {
+    return doImport(destination, source, false).count;
+}
+
+bool internal::CheckedImportAccess::isKeyCompatibleForAndroid(string_view key) {
+    return isModifiedUtf8KeyWithoutNul(key);
 }
 
 static std::pair<MMKVPath_t, MMKVPath_t> getStorage(const std::string &mmapID, const MMKVPath_t *relatePath, std::string& realID, std::string& mmapKey) {
