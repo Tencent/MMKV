@@ -20,6 +20,9 @@
 
 #include "Checksum.h"
 
+#include <algorithm>
+#include <cstring>
+
 #ifdef MMKV_USE_ARMV8_CRC32
 
 #    ifdef CRC32
@@ -72,12 +75,16 @@ TARGET_ARM_CRC static inline uint32_t __crc32d(uint32_t a, uint64_t b) {
 
 TARGET_ARM_CRC static inline uint32_t armv8_crc32_small(uint32_t crc, const uint8_t *buf, size_t len) {
     if (len >= sizeof(uint32_t)) {
-        crc = __crc32w(crc, *(const uint32_t *) buf);
+        uint32_t word = 0;
+        memcpy(&word, buf, sizeof(word));
+        crc = __crc32w(crc, word);
         buf += sizeof(uint32_t);
         len -= sizeof(uint32_t);
     }
     if (len >= sizeof(uint16_t)) {
-        crc = __crc32h(crc, *(const uint16_t *) buf);
+        uint16_t half = 0;
+        memcpy(&half, buf, sizeof(half));
+        crc = __crc32h(crc, half);
         buf += sizeof(uint16_t);
         len -= sizeof(uint16_t);
     }
@@ -95,7 +102,7 @@ TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len
     crc = crc ^ 0xffffffffUL;
 
     // roundup to 8 byte pointer
-    auto offset = std::min(len, (uintptr_t) buf & 7);
+    auto offset = std::min(len, (size_t) ((0U - (uintptr_t) buf) & 7U));
     if (offset) {
         crc = armv8_crc32_small(crc, buf, offset);
         buf += offset;
@@ -106,24 +113,24 @@ TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len
     }
 
     // unroll to 8 * 8 byte per loop
-    auto ptr64 = (const uint64_t *) buf;
     for (constexpr auto step = 8 * sizeof(uint64_t); len >= step; len -= step) {
-        crc = __crc32d(crc, *ptr64++);
-        crc = __crc32d(crc, *ptr64++);
-        crc = __crc32d(crc, *ptr64++);
-        crc = __crc32d(crc, *ptr64++);
-        crc = __crc32d(crc, *ptr64++);
-        crc = __crc32d(crc, *ptr64++);
-        crc = __crc32d(crc, *ptr64++);
-        crc = __crc32d(crc, *ptr64++);
+        for (size_t index = 0; index < 8; index++) {
+            uint64_t word = 0;
+            memcpy(&word, buf, sizeof(word));
+            crc = __crc32d(crc, word);
+            buf += sizeof(word);
+        }
     }
 
     for (constexpr auto step = sizeof(uint64_t); len >= step; len -= step) {
-        crc = __crc32d(crc, *ptr64++);
+        uint64_t word = 0;
+        memcpy(&word, buf, sizeof(word));
+        crc = __crc32d(crc, word);
+        buf += sizeof(word);
     }
 
     if (len) {
-        crc = armv8_crc32_small(crc, (const uint8_t *) ptr64, len);
+        crc = armv8_crc32_small(crc, buf, len);
     }
 
     return crc ^ 0xffffffffUL;

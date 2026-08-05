@@ -267,8 +267,13 @@ MMKV *MMKV::getMMKVWithID(const string &mmapID, const MMKVConfig &config) {
 
 MMKV *MMKV::mmkvWithAshmemFD(const std::string &mmapID, int fd, int metaFD, const std::string *cryptKey, bool aes256) {
     MMKVConfig config;
+#    ifndef MMKV_DISABLE_CRYPT
     config.aes256 = aes256;
     config.cryptKey = cryptKey;
+#    else
+    (void) cryptKey;
+    (void) aes256;
+#    endif
     return mmkvWithAshmemFD(mmapID, fd, metaFD, config);
 }
 

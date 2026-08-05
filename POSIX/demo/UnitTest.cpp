@@ -19,25 +19,41 @@
  */
 
 #include <MMKV/MMKV.h>
+#include "CodedOutputData.h"
 #include "aes/AESCrypt.h"
 #include "MemoryFile.h"
+#include "MMKVMetaInfo.hpp"
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <dirent.h>
 #include <fcntl.h>
+#include <filesystem>
+#include <functional>
+#include <fstream>
 #include <iostream>
 #include <limits.h>
 #include <limits>
 #include <numeric>
 #include <new>
+#include <stdexcept>
 #include <sys/stat.h>
+#include <thread>
+#include <unordered_map>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 using namespace std;
 using namespace mmkv;
+namespace fs = std::filesystem;
+
+extern unordered_map<string, MMKV *> *g_instanceDic;
 
 static const string KeyNotExist = "KeyNotExist";
 
@@ -236,6 +252,77 @@ void testOversizedKey(MMKV *mmkv) {
     printf("test oversized key: passed\n");
 }
 
+void testTransactionalOutputAndOversizedValue(MMKV *mmkv) {
+    array<uint8_t, 8> storage;
+    storage.fill(0xA5);
+
+    CodedOutputData fixedOutput(storage.data(), 1);
+    bool rejected = false;
+    try {
+        fixedOutput.writeRawLittleEndian32(0x12345678);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected);
+    assert(fixedOutput.getPosition() == 0);
+    assert(storage[0] == 0xA5);
+    fixedOutput.writeBool(true);
+    assert(fixedOutput.getPosition() == 1 && storage[0] == 1);
+
+    storage.fill(0xA5);
+    CodedOutputData varintOutput(storage.data(), 1);
+    rejected = false;
+    try {
+        varintOutput.writeUInt32(128);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected);
+    assert(varintOutput.getPosition() == 0 && storage[0] == 0xA5);
+
+    CodedOutputData positionOutput(storage.data(), storage.size());
+    positionOutput.seek(2);
+    rejected = false;
+    try {
+        positionOutput.seek(numeric_limits<size_t>::max());
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && positionOutput.getPosition() == 2);
+    rejected = false;
+    try {
+        positionOutput.setPosition(storage.size() + 1);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && positionOutput.getPosition() == 2);
+
+    if constexpr (sizeof(size_t) > sizeof(uint32_t)) {
+        uint8_t sentinel = 0x7B;
+        auto oversizedLength = static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1;
+        MMBuffer oversized(&sentinel, oversizedLength, MMBufferNoCopy);
+
+        storage.fill(0xA5);
+        CodedOutputData dataOutput(storage.data(), storage.size());
+        rejected = false;
+        try {
+            dataOutput.writeData(oversized);
+        } catch (const length_error &) {
+            rejected = true;
+        }
+        assert(rejected);
+        assert(dataOutput.getPosition() == 0 && storage[0] == 0xA5);
+
+        assert(!mmkv->set(oversized, "oversized-value"));
+        assert(mmkv->set("still-writable", "after-oversized-value"));
+        string value;
+        assert(mmkv->getString("after-oversized-value", value));
+        assert(value == "still-writable");
+    }
+
+    printf("test transactional output and oversized value: passed\n");
+}
+
 void testExpirationOverflow() {
     auto mmkv = MMKV::mmkvWithID("expiration_overflow_test");
     mmkv->clearAll();
@@ -264,6 +351,7 @@ void testExpirationOverflow() {
     printf("test expiration overflow: passed\n");
 }
 
+#ifndef MMKV_DISABLE_CRYPT
 static bool containsBytes(const unsigned char *storage, size_t storageSize, const uint8_t *value, size_t valueSize) {
     if (valueSize > storageSize) {
         return false;
@@ -276,7 +364,16 @@ static bool containsBytes(const unsigned char *storage, size_t storageSize, cons
     return false;
 }
 
-void testCryptoRandomAndWipe() {
+static MMKVMetaInfo readMetaInfo(const string &path) {
+    auto fd = open(path.c_str(), O_RDONLY);
+    assert(fd >= 0);
+    MMKVMetaInfo metaInfo;
+    assert(readFileContent(fd, &metaInfo, sizeof(metaInfo)));
+    close(fd);
+    return metaInfo;
+}
+
+void testCryptoRandomAndWipe(const string &rootDir) {
     uint8_t firstIV[AES_IV_LEN] = {};
     uint8_t secondIV[AES_IV_LEN] = {};
     assert(AESCrypt::fillRandomIV(firstIV));
@@ -291,8 +388,63 @@ void testCryptoRandomAndWipe() {
     crypt->~AESCrypt();
     assert(!containsBytes(storage, sizeof(storage), key, sizeof(key)));
 
+    // Moving an owning crypter must transfer, rather than duplicate, ownership
+    // of its allocated OpenSSL key schedules.
+    {
+        AESCrypt original(key, sizeof(key), nullptr, 0, true);
+        AESCrypt moved(std::move(original));
+        assert(moved.isSameKey(key, sizeof(key), true));
+    }
+
+    const string exactAES128Key = "0123456789abcdef";
+    auto encryptedMMKV = MMKV::mmkvWithID("aes128-crypt-key", MMKV_SINGLE_PROCESS, &exactAES128Key);
+    assert(encryptedMMKV);
+    assert(encryptedMMKV->cryptKey() == exactAES128Key);
+    encryptedMMKV->clearAll();
+    encryptedMMKV->close();
+
+    const char binaryKeyBytes[] = {'0', '1', '2', '3', '\0', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    const string binaryKey(binaryKeyBytes, sizeof(binaryKeyBytes));
+    const string modeSwitchID = "binary-key-mode-switch";
+    auto modeSwitchMMKV = MMKV::mmkvWithID(modeSwitchID, MMKV_SINGLE_PROCESS, &binaryKey);
+    assert(modeSwitchMMKV);
+    modeSwitchMMKV->clearAll();
+    assert(modeSwitchMMKV->cryptKey() == binaryKey);
+    assert(modeSwitchMMKV->set("secret", "payload"));
+    assert(modeSwitchMMKV->reKey(binaryKey, true));
+    assert(modeSwitchMMKV->cryptKey() == binaryKey);
+    modeSwitchMMKV->close();
+
+    modeSwitchMMKV = MMKV::mmkvWithID(modeSwitchID, MMKV_SINGLE_PROCESS, &binaryKey, nullptr, 0, true);
+    assert(modeSwitchMMKV);
+    string decryptedValue;
+    assert(modeSwitchMMKV->getString("payload", decryptedValue));
+    assert(decryptedValue == "secret");
+
+    const auto crcPath = rootDir + "/" + modeSwitchID + ".crc";
+    const auto beforeClear = readMetaInfo(crcPath);
+    modeSwitchMMKV->clearAll(true);
+    const auto afterFirstClear = readMetaInfo(crcPath);
+    assert(afterFirstClear.m_actualSize == 0);
+    assert(memcmp(beforeClear.m_vector, afterFirstClear.m_vector, AES_IV_LEN) != 0);
+    modeSwitchMMKV->clearAll(true);
+    const auto afterSecondClear = readMetaInfo(crcPath);
+    assert(afterSecondClear.m_actualSize == 0);
+    assert(memcmp(afterFirstClear.m_vector, afterSecondClear.m_vector, AES_IV_LEN) != 0);
+    modeSwitchMMKV->close();
+
+    auto resetMMKV = MMKV::mmkvWithID("crypt-reset-transition");
+    assert(resetMMKV);
+    resetMMKV->clearAll();
+    resetMMKV->checkReSetCryptKey(&binaryKey, true);
+    assert(resetMMKV->cryptKey() == binaryKey);
+    resetMMKV->checkReSetCryptKey(nullptr);
+    assert(resetMMKV->cryptKey().empty());
+    resetMMKV->close();
+
     printf("test crypto random and wipe: passed\n");
 }
+#endif
 
 void testLongDirectoryWalk() {
     char baseTemplate[] = "/private/tmp/mmkv-walk-XXXXXX";
@@ -416,7 +568,10 @@ int main() {
     testVector(mmkv);
     testRemove(mmkv);
     testOversizedKey(mmkv);
+    testTransactionalOutputAndOversizedValue(mmkv);
     testExpirationOverflow();
-    testCryptoRandomAndWipe();
+#ifndef MMKV_DISABLE_CRYPT
+    testCryptoRandomAndWipe(rootDir);
+#endif
     testLongDirectoryWalk();
 }

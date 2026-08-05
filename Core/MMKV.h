@@ -218,7 +218,7 @@ class MMKV_EXPORT MMKV {
 
     bool checkFileCRCValid(size_t actualSize, uint32_t crcDigest);
 
-    void recalculateCRCDigestWithIV(const void *iv);
+    bool recalculateCRCDigestWithIV(const void *iv);
     void recalculateCRCDigestOnly();
 
     void updateCRCDigest(const uint8_t *ptr, size_t length);
@@ -235,9 +235,25 @@ class MMKV_EXPORT MMKV {
 
     bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr, bool onlyWhileExpire = false);
 
-    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter, bool needSync = true);
+    // Keep the original private symbol for native binary compatibility.
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData,
+                         mmkv::AESCrypt *newCrypter,
+                         bool needSync = true);
+
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData,
+                         mmkv::AESCrypt *newCrypter,
+                         bool needSync,
+                         const uint8_t *preparedIV);
 
     bool doFullWriteBack(mmkv::MMKVVector &&vec);
+
+    // Internal result-bearing variant for operations that must not report success when clear fails.
+    bool clearAllWithResult(bool keepSpace);
+
+    bool syncWithResult(SyncFlag flag);
+
+    // Drop derived dictionary/writer state and reconstruct it from the mapped files.
+    void reloadFromFileAfterWriteFailure();
 
     mmkv::MMBuffer getRawDataForKey(MMKVKey_t key);
 

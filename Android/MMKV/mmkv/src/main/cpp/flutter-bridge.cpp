@@ -130,7 +130,12 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
 
     auto config = MMKVConfig();
     config.mode = (MMKVMode) mode;
+#ifndef MMKV_DISABLE_CRYPT
     config.aes256 = aes256;
+#else
+    (void) cryptKey;
+    (void) aes256;
+#endif
     config.expectedCapacity = expectedCapacity;
     if (enableKeyExpire >= 0) {
         config.enableKeyExpire = (enableKeyExpire != 0);
@@ -143,6 +148,7 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
     config.itemSizeLimit = itemSizeLimit;
 
     bool done = false;
+#ifndef MMKV_DISABLE_CRYPT
     if (cryptKey) {
         string crypt = cryptKey;
         if (!crypt.empty()) {
@@ -163,6 +169,7 @@ MMKV_EXPORT void *getMMKVWithID(const char *mmapID, int32_t mode, const char *cr
             done = true;
         }
     }
+#endif
     if (!done) {
         if (rootPath) {
             string path = rootPath;
@@ -189,7 +196,12 @@ MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey, bool aes256
 
     auto config = MMKVConfig();
     config.mode = (MMKVMode) mode;
+#ifndef MMKV_DISABLE_CRYPT
     config.aes256 = aes256;
+#else
+    (void) cryptKey;
+    (void) aes256;
+#endif
     config.expectedCapacity = expectedCapacity;
     if (enableKeyExpire >= 0) {
         config.enableKeyExpire = (enableKeyExpire != 0);
@@ -201,6 +213,7 @@ MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey, bool aes256
     }
     config.itemSizeLimit = itemSizeLimit;
 
+#ifndef MMKV_DISABLE_CRYPT
     if (cryptKey) {
         string crypt = cryptKey;
         if (crypt.length() > 0) {
@@ -208,6 +221,7 @@ MMKV_EXPORT void *getDefaultMMKV(int32_t mode, const char *cryptKey, bool aes256
             kv = MMKV::defaultMMKV(config);
         }
     }
+#endif
     if (!kv) {
         kv = MMKV::defaultMMKV(config);
     }

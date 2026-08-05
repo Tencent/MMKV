@@ -32,8 +32,13 @@ void AES_cfb128_encrypt(const uint8_t *in, uint8_t *out, size_t len, const AES_K
     while (len >= 16) {
         AES_encrypt(ivec, ivec, key);
         for (; n < 16; n += sizeof(size_t)) {
-            *(size_t *)(out + n) =
-                *(size_t *)(ivec + n) ^= *(size_t *)(in + n);
+            size_t inputWord = 0;
+            size_t vectorWord = 0;
+            memcpy(&inputWord, in + n, sizeof(inputWord));
+            memcpy(&vectorWord, ivec + n, sizeof(vectorWord));
+            vectorWord ^= inputWord;
+            memcpy(ivec + n, &vectorWord, sizeof(vectorWord));
+            memcpy(out + n, &vectorWord, sizeof(vectorWord));
         }
         len -= 16;
         out += 16;
@@ -70,9 +75,13 @@ void AES_cfb128_decrypt(const uint8_t *in, uint8_t *out, size_t len, const AES_K
     while (len >= 16) {
         AES_encrypt(ivec, ivec, key);
         for (; n < 16; n += sizeof(size_t)) {
-            size_t t = *(size_t *)(in + n);
-            *(size_t *)(out + n) = *(size_t *)(ivec + n) ^ t;
-            *(size_t *)(ivec + n) = t;
+            size_t inputWord = 0;
+            size_t vectorWord = 0;
+            memcpy(&inputWord, in + n, sizeof(inputWord));
+            memcpy(&vectorWord, ivec + n, sizeof(vectorWord));
+            auto outputWord = vectorWord ^ inputWord;
+            memcpy(out + n, &outputWord, sizeof(outputWord));
+            memcpy(ivec + n, &inputWord, sizeof(inputWord));
         }
         len -= 16;
         out += 16;

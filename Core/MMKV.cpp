@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <unordered_set>
 #include <cassert>
 
@@ -157,8 +158,13 @@ MMKV::~MMKV() {
 MMKV *MMKV::defaultMMKV(MMKVMode mode, const string *cryptKey, bool aes256) {
     auto config = MMKVConfig();
     config.mode = mode;
+#ifndef MMKV_DISABLE_CRYPT
     config.aes256 = aes256;
     config.cryptKey = cryptKey;
+#else
+    (void) cryptKey;
+    (void) aes256;
+#endif
     return mmkvWithID(DEFAULT_MMAP_ID, config);
 }
 
@@ -388,9 +394,9 @@ string MMKV::cryptKey() const {
     SCOPED_LOCK(m_lock);
 
     if (m_crypter) {
-        char key[AES256_KEY_LEN];
+        char key[AES256_KEY_LEN] = {};
         m_crypter->getKey(key);
-        return {key, strnlen(key, AES256_KEY_LEN)};
+        return {key, m_crypter->getKeyLength()};
     }
     return "";
 }
@@ -398,37 +404,54 @@ string MMKV::cryptKey() const {
 void MMKV::checkReSetCryptKey(const string *cryptKey, bool aes256) {
     SCOPED_LOCK(m_lock);
 
-    if (m_crypter) {
-        if (cryptKey && !cryptKey->empty()) {
-            string oldKey = this->cryptKey();
-            if (oldKey != *cryptKey) {
-                MMKVInfo("setting new aes key");
-                delete m_crypter;
-                auto ptr = cryptKey->data();
-                m_crypter = new AESCrypt(ptr, cryptKey->length(), nullptr, 0, aes256);
+    const auto hasNewKey = cryptKey && !cryptKey->empty();
+    if ((!m_crypter && !hasNewKey) ||
+        (m_crypter && hasNewKey && m_crypter->isSameKey(cryptKey->data(), cryptKey->length(), aes256))) {
+        return;
+    }
 
-                checkLoadData();
-            } else {
-                // nothing to do
+    AESCrypt *newCrypter = nullptr;
+    MMKVMap *newPlainDictionary = nullptr;
+    MMKVMapCrypt *newEncryptedDictionary = nullptr;
+    try {
+        if (hasNewKey) {
+            MMKVInfo("setting new aes key");
+            newCrypter = new AESCrypt(cryptKey->data(), cryptKey->length(), nullptr, 0, aes256);
+            if (!m_dicCrypt) {
+                newEncryptedDictionary = new MMKVMapCrypt();
             }
         } else {
             MMKVInfo("reset aes key");
-            delete m_crypter;
-            m_crypter = nullptr;
-
-            checkLoadData();
+            if (!m_dic) {
+                newPlainDictionary = new MMKVMap();
+            }
         }
-    } else {
-        if (cryptKey && !cryptKey->empty()) {
-            MMKVInfo("setting new aes key");
-            auto ptr = cryptKey->data();
-            m_crypter = new AESCrypt(ptr, cryptKey->length(), nullptr, 0, aes256);
-
-            checkLoadData();
-        } else {
-            // nothing to do
-        }
+    } catch (const exception &error) {
+        MMKVError("[%s] cannot allocate replacement crypt state: %s", m_mmapID.c_str(), error.what());
+        delete newEncryptedDictionary;
+        delete newPlainDictionary;
+        delete newCrypter;
+        return;
+    } catch (...) {
+        MMKVError("[%s] cannot allocate replacement crypt state", m_mmapID.c_str());
+        delete newEncryptedDictionary;
+        delete newPlainDictionary;
+        delete newCrypter;
+        return;
     }
+
+    // The active dictionary type must always match m_crypter. Reset loaded state before switching,
+    // and preallocate the target dictionary before changing any active state.
+    clearMemoryCache();
+    if (newEncryptedDictionary) {
+        m_dicCrypt = newEncryptedDictionary;
+    }
+    if (newPlainDictionary) {
+        m_dic = newPlainDictionary;
+    }
+    delete m_crypter;
+    m_crypter = newCrypter;
+    checkLoadData();
 }
 
 #endif // MMKV_DISABLE_CRYPT
@@ -453,13 +476,13 @@ bool MMKV::checkFileCRCValid(size_t actualSize, uint32_t crcDigest) {
     return false;
 }
 
-void MMKV::recalculateCRCDigestWithIV(const void *iv) {
+bool MMKV::recalculateCRCDigestWithIV(const void *iv) {
     auto ptr = (const uint8_t *) m_file->getMemory();
-    if (ptr) {
-        m_crcDigest = 0;
-        m_crcDigest = (uint32_t) CRC32(0, ptr + Fixed32Size, (uint32_t) m_actualSize);
-        writeActualSize(m_actualSize, m_crcDigest, iv, IncreaseSequence);
+    if (!ptr) {
+        return false;
     }
+    m_crcDigest = (uint32_t) CRC32(0, ptr + Fixed32Size, (uint32_t) m_actualSize);
+    return writeActualSize(m_actualSize, m_crcDigest, iv, IncreaseSequence);
 }
 
 void MMKV::recalculateCRCDigestOnly() {
@@ -641,7 +664,17 @@ bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t ex
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
         return setDataForKey(std::move(data), key, true);
     } else {
-        auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
+        if (data.length() > numeric_limits<uint32_t>::max()) {
+            MMKVError("[%s] reject value too large to encode: %zu", m_mmapID.c_str(), data.length());
+            return false;
+        }
+        auto dataLength = static_cast<uint32_t>(data.length());
+        auto encodedLength = static_cast<uint64_t>(dataLength) + pbRawVarint32Size(dataLength) + Fixed32Size;
+        if (encodedLength > numeric_limits<uint32_t>::max()) {
+            MMKVError("[%s] reject expiring value too large to encode: %zu", m_mmapID.c_str(), data.length());
+            return false;
+        }
+        auto tmp = MMBuffer(static_cast<size_t>(encodedLength));
         CodedOutputData output(tmp.getPtr(), tmp.length());
         output.writeData(data);
         auto time = (expireDuration != ExpireNever) ? safeExpirationPlusCurrentTime(expireDuration) : ExpireNever;
@@ -1199,8 +1232,14 @@ bool MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     }
     if (deleteCount > 0) {
         m_hasFullWriteback = false;
-
-        return fullWriteback();
+        auto ret = fullWriteback();
+        if (!ret) {
+            // The map was edited before the fallible rewrite. Reload whichever state is represented
+            // by the data/meta mappings so a retry cannot incorrectly succeed as a no-op.
+            clearMemoryCache();
+            loadFromFile();
+        }
+        return ret;
     }
     return true;
 }
@@ -1209,16 +1248,24 @@ bool MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
 
 // file
 
-void MMKV::sync(SyncFlag flag) {
+bool MMKV::syncWithResult(SyncFlag flag) {
     MMKVInfo("MMKV::sync, SyncFlag = %d", flag);
     SCOPED_LOCK(m_lock);
     if (m_needLoadFromFile || !isFileValid()) {
-        return;
+        return false;
     }
     SCOPED_LOCK(m_exclusiveProcessLock);
 
-    m_file->msync(flag);
-    m_metaFile->msync(flag);
+    // Flush data before metadata for failures reported synchronously by this process.
+    // Ordering alone cannot make in-place MAP_SHARED updates crash-atomic.
+    if (!m_file->msync(flag)) {
+        return false;
+    }
+    return m_metaFile->msync(flag);
+}
+
+void MMKV::sync(SyncFlag flag) {
+    (void) syncWithResult(flag);
 }
 
 void MMKV::lock() {
