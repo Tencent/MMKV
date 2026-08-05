@@ -83,7 +83,14 @@ void MMKV::loadFromFile() {
         // because we have lazy load
         auto actualFileSize = m_file->getActualFileSize();
         if (actualFileSize != m_file->getFileSize()) {
-            m_file->reloadFromFile(m_expectedCapacity);
+            // The mapping itself proves which file is live. Remap through an
+            // identity-checked descriptor instead of resolving m_path again;
+            // a parent-directory rename may have redirected that spelling.
+            auto pinnedFD = m_file->getFd();
+            if (pinnedFD != MMKVFileHandleInvalidValue && m_file->isMappedFile(pinnedFD)) {
+                (void) m_file->reloadFromFileHandle(pinnedFD, m_expectedCapacity);
+            }
+            m_file->cleanMayflyFD(true);
         }
     }
     if (!m_file->isFileValid()) {
@@ -229,7 +236,7 @@ bool MMKV::checkFileHasDiskError() {
 
     bool needReportReadFail = false;
     if (isDiskOfMMAPFileCorrupted(m_metaFile, needReportReadFail)) {
-        m_metaFile->clearMemoryCache();
+        m_metaFile->clearMemoryCache(true);
         deleteOrRenameFile(m_metaFile->getPath());
         m_metaFile->reloadFromFile();
     }
@@ -242,7 +249,7 @@ bool MMKV::checkFileHasDiskError() {
         return false;
     }
     if (isDiskOfMMAPFileCorrupted(m_file, needReportReadFail)) {
-        m_file->clearMemoryCache();
+        m_file->clearMemoryCache(true);
         deleteOrRenameFile(m_file->getPath());
         m_file->reloadFromFile(m_expectedCapacity);
     }

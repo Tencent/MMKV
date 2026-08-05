@@ -69,6 +69,9 @@ size_t mmkv::DEFAULT_MMAP_SIZE;
 MMKV_NAMESPACE_BEGIN
 
 static MMKVPath_t encodeFilePath(const string &mmapID, const MMKVPath_t &rootDir);
+static MMKVPath_t encodeFilePathWithoutCreating(const string &mmapID);
+static MMKVPath_t mappedKVPathWithIDWithoutCreating(const string &mmapID, const MMKVPath_t &rootPath);
+static bool mmapIDHasSpecialCharacter(const string &mmapID);
 bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix);
 MMKVPath_t filename(const MMKVPath_t &path);
 
@@ -340,7 +343,7 @@ void MMKV::checkContentChanged() {
 
 void MMKV::clearMemoryCache(bool keepSpace) {
     SCOPED_LOCK(m_lock);
-    if (m_needLoadFromFile) {
+    if (m_needLoadFromFile && !keepSpace) {
         return;
     }
     MMKVInfo("clearMemoryCache [%s]", m_mmapID.c_str());
@@ -1295,106 +1298,343 @@ bool MMKV::try_lock_thread() {
 
 // backup
 
-static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    File crcFile(srcPath, OpenFlag::ReadOnly);
-    if (!crcFile.isFileValid()) {
+class ScopedFileHandle {
+    MMKVFileHandle_t m_handle;
+
+public:
+    explicit ScopedFileHandle(MMKVFileHandle_t handle) : m_handle(handle) {}
+    ~ScopedFileHandle() { closeFileHandle(m_handle); }
+
+    bool isValid() const { return m_handle != MMKVFileHandleInvalidValue; }
+    MMKVFileHandle_t get() const { return m_handle; }
+
+    explicit ScopedFileHandle(const ScopedFileHandle &) = delete;
+    ScopedFileHandle &operator=(const ScopedFileHandle &) = delete;
+};
+
+static bool syncMappedPairToPinnedHandles(MemoryFile *dataFile,
+                                          MemoryFile *metaFile,
+                                          MMKVFileHandle_t dataFD,
+                                          MMKVFileHandle_t metaFD,
+                                          bool requireDurability = true) {
+    // Flush each mapping first, then make that exact pinned file durable.
+    // In particular, do not let Win32 MMKV_SYNC reopen a mayfly path that may
+    // now name a different file. Preserve data-before-metadata publication.
+    if (dataFile->isFileValid() && !dataFile->msync(MMKV_ASYNC)) {
         return false;
     }
-
-    bool ret;
-    {
-        const auto &dstUTF8Path = MMKVPath_t2String(dstPath);
-        MMKVInfo("backup one mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), crcFile.getUTF8Path().c_str(),
-                 dstUTF8Path.c_str());
-        FileLock fileLock(crcFile.getFd());
-        InterProcessLock lock(&fileLock, SharedLockType);
-        SCOPED_LOCK(&lock);
-
-        ret = copyFile(srcPath, dstPath);
-        if (ret) {
-            auto srcCRCPath = srcPath + CRC_SUFFIX;
-            auto dstCRCPath = dstPath + CRC_SUFFIX;
-            ret = copyFile(srcCRCPath, dstCRCPath);
-        }
-        MMKVInfo("finish backup one mmkv[%s]", mmapKey.c_str());
+    if (requireDurability && !syncFile(dataFD)) {
+        return false;
     }
-    return ret;
+    if (metaFile->isFileValid() && !metaFile->msync(MMKV_ASYNC)) {
+        return false;
+    }
+    return !requireDurability || syncFile(metaFD);
 }
 
-bool MMKV::backupOneToDirectory(const string &mmapKey, const MMKVPath_t &dstPath, const MMKVPath_t &srcPath, bool compareFullPath) {
+#ifdef MMKV_WIN32
+static bool isWindowsPathSeparator(MMKVPath_t::value_type ch) {
+    return ch == L'\\' || ch == L'/';
+}
+
+static bool equalsWindowsPathASCII(MMKVPath_t::value_type left, MMKVPath_t::value_type right) {
+    if (left >= L'a' && left <= L'z') {
+        left -= L'a' - L'A';
+    }
+    if (right >= L'a' && right <= L'z') {
+        right -= L'a' - L'A';
+    }
+    return left == right;
+}
+
+static size_t findWindowsPathSeparator(const MMKVPath_t &path, size_t start) {
+    for (auto index = start; index < path.size(); index++) {
+        if (isWindowsPathSeparator(path[index])) {
+            return index;
+        }
+    }
+    return MMKVPath_t::npos;
+}
+
+static size_t windowsPathRootLength(const MMKVPath_t &path) {
+    if (path.size() >= 3 && path[1] == L':' && isWindowsPathSeparator(path[2])) {
+        return 3;
+    }
+    if (path.size() < 2 || !isWindowsPathSeparator(path[0]) || !isWindowsPathSeparator(path[1])) {
+        return 0;
+    }
+
+    if (path.size() >= 4 && path[2] == L'?' && isWindowsPathSeparator(path[3])) {
+        if (path.size() >= 7 && path[5] == L':' && isWindowsPathSeparator(path[6])) {
+            return 7;
+        }
+        const MMKVPath_t unc = L"UNC";
+        auto isExtendedUNC = path.size() >= 8 && equalsWindowsPathASCII(path[4], unc[0]) &&
+                             equalsWindowsPathASCII(path[5], unc[1]) &&
+                             equalsWindowsPathASCII(path[6], unc[2]) && isWindowsPathSeparator(path[7]);
+        auto componentStart = isExtendedUNC ? 8U : 4U;
+        auto firstEnd = findWindowsPathSeparator(path, componentStart);
+        if (firstEnd == MMKVPath_t::npos) {
+            return 0;
+        }
+        if (!isExtendedUNC) {
+            // Device roots such as \\?\Volume{GUID}\ end after one component.
+            return firstEnd + 1;
+        }
+        auto secondEnd = findWindowsPathSeparator(path, firstEnd + 1);
+        return secondEnd == MMKVPath_t::npos ? 0 : secondEnd + 1;
+    }
+
+    auto serverEnd = findWindowsPathSeparator(path, 2);
+    if (serverEnd == MMKVPath_t::npos) {
+        return 0;
+    }
+    auto shareEnd = findWindowsPathSeparator(path, serverEnd + 1);
+    return shareEnd == MMKVPath_t::npos ? 0 : shareEnd + 1;
+}
+#endif
+
+static MMKVPath_t parentDirectory(const MMKVPath_t &path) {
+#ifdef MMKV_WIN32
+    auto end = path.find_last_of(L"\\/");
+#else
+    auto end = path.rfind(MMKV_PATH_SLASH[0]);
+#endif
+    if (end == MMKVPath_t::npos) {
+        return string2MMKVPath_t(".");
+    }
+#ifdef MMKV_WIN32
+    auto rootLength = windowsPathRootLength(path);
+    if (rootLength > 0 && end < rootLength) {
+        return path.substr(0, rootLength);
+    }
+#endif
+    return path.substr(0, std::max<size_t>(1, end));
+}
+
+static bool isValidDirectoryPath(const MMKVPath_t &path) {
+    return !path.empty() && path.find(MMKVPath_t::value_type{}) == MMKVPath_t::npos;
+}
+
+static bool cachedPathMatchesPinnedChild(const MMKVPath_t &cachedPath,
+                                         MMKVFileHandle_t parentFD,
+                                         const MMKVPath_t &childName) {
+    if (parentFD == MMKVFileHandleInvalidValue || filename(cachedPath) != childName) {
+        return false;
+    }
+    ScopedFileHandle cachedParent(openDirectoryHandle(parentDirectory(cachedPath)));
+    return cachedParent.isValid() && isSameFile(cachedParent.get(), parentFD);
+}
+
+#ifdef MMKV_ANDROID
+static bool regularFileExistsInDir(MMKVFileHandle_t dirFD,
+                                   const MMKVPath_t &dirPath,
+                                   const MMKVPath_t &fileName) {
+    auto fileFD = openRegularFileInDir(dirFD, dirPath, fileName);
+    if (fileFD == MMKVFileHandleInvalidValue) {
+        return false;
+    }
+    closeFileHandle(fileFD);
+    return true;
+}
+
+static bool regularFilePairExistsInDir(MMKVFileHandle_t dirFD,
+                                       const MMKVPath_t &dirPath,
+                                       const MMKVPath_t &fileName) {
+    MMKVFileHandle_t dataFD = MMKVFileHandleInvalidValue;
+    MMKVFileHandle_t crcFD = MMKVFileHandleInvalidValue;
+    if (!openRegularFilePairInDir(dirFD, dirPath, fileName, fileName + CRC_SUFFIX, dataFD, crcFD)) {
+        return false;
+    }
+    closeFileHandle(dataFD);
+    closeFileHandle(crcFD);
+    return true;
+}
+#endif
+
+bool MMKV::backupOneToDirectoryWithHandles(const string &mmapKey,
+                                           const MMKVPath_t &dstPath,
+                                           const MMKVPath_t &srcPath,
+                                           bool compareFullPath,
+                                           MMKVFileHandle_t srcDirFD,
+                                           const MMKVPath_t &srcDirPath,
+                                           const MMKVPath_t &srcName,
+                                           MMKVFileHandle_t dstDirFD,
+                                           const MMKVPath_t &dstDirPath,
+                                           const MMKVPath_t &dstName) {
     if (!g_instanceLock) {
         return false;
     }
+
+    MMKVFileHandle_t srcFD = MMKVFileHandleInvalidValue;
+    MMKVFileHandle_t srcCRCFD = MMKVFileHandleInvalidValue;
+    if (!openRegularFilePairInDir(srcDirFD, srcDirPath, srcName, srcName + CRC_SUFFIX, srcFD, srcCRCFD)) {
+        return false;
+    }
+    ScopedFileHandle srcFile(srcFD);
+    ScopedFileHandle srcCRCFile(srcCRCFD);
+
     // we have to lock the creation of MMKV instance, regardless of in cache or not
     SCOPED_LOCK(g_instanceLock);
-    MMKV *kv = nullptr;
-    if (!compareFullPath) {
-        auto itr = g_instanceDic->find(mmapKey);
-        if (itr != g_instanceDic->end()) {
-            kv = itr->second;
+    auto matchesCachedHint = [&](const auto &entry) {
+        return entry.second &&
+               (!compareFullPath
+                    ? entry.first == mmapKey
+                    : cachedPathMatchesPinnedChild(entry.second->m_path, srcDirFD, srcName));
+    };
+    auto hasCachedHint = any_of(g_instanceDic->begin(), g_instanceDic->end(), matchesCachedHint);
+    // Cache keys and paths are only lexical hints. Android legacy names,
+    // aliases, and directory renames can all make them disagree with the
+    // actual mapped files. Scan the cache and compare the pinned source pair
+    // with identities captured from the exact handles used for mmap().
+    for (const auto &entry : *g_instanceDic) {
+        // A lexical hit names the caller's intended live instance. If its
+        // files were replaced by another cached instance's pair, selecting
+        // that second instance by identity would turn backup(A) into backup(B).
+        if (hasCachedHint && !matchesCachedHint(entry)) {
+            continue;
         }
-    } else {
-        // mmapKey is actually filename, we can't simply call find()
-        for (auto &pair : *g_instanceDic) {
-            if (pair.second->m_path == srcPath) {
-                kv = pair.second;
-                break;
-            }
+        auto kv = entry.second;
+        if (!kv) {
+            continue;
         }
-    }
-    // get one in cache, do it the easy way
-    if (kv) {
+        SCOPED_LOCK(kv->m_lock);
+        auto dataMatches = kv->m_file->isMappedFile(srcFile.get());
+        if (!dataMatches || !kv->m_metaFile->isMappedFile(srcCRCFile.get())) {
+            continue;
+        }
+        SCOPED_LOCK(kv->m_sharedProcessLock);
         const auto &srcUTF8Path = MMKVPath_t2String(srcPath);
         const auto &dstUTF8Path = MMKVPath_t2String(dstPath);
         MMKVInfo("backup one cached mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcUTF8Path.c_str(),
                  dstUTF8Path.c_str());
-        SCOPED_LOCK(kv->m_lock);
-        SCOPED_LOCK(kv->m_sharedProcessLock);
-
-        kv->sync();
-        auto ret = copyFile(kv->m_path, dstPath);
-        if (ret) {
-            auto dstCRCPath = dstPath + CRC_SUFFIX;
-            ret = copyFile(kv->m_crcPath, dstCRCPath);
+        MMKVFileHandle_t writableSrcFD = MMKVFileHandleInvalidValue;
+        MMKVFileHandle_t writableSrcCRCFD = MMKVFileHandleInvalidValue;
+        auto syncDataFD = srcFile.get();
+        auto syncMetaFD = srcCRCFile.get();
+        if (!kv->isReadOnly()) {
+            if (!openRegularFilePairInDir(srcDirFD, srcDirPath, srcName, srcName + CRC_SUFFIX,
+                                          writableSrcFD, writableSrcCRCFD, true)) {
+                return false;
+            }
         }
+        ScopedFileHandle writableSrcFile(writableSrcFD);
+        ScopedFileHandle writableSrcCRCFile(writableSrcCRCFD);
+        if (!kv->isReadOnly() &&
+            (!isSameFile(srcFile.get(), writableSrcFile.get()) ||
+             !isSameFile(srcCRCFile.get(), writableSrcCRCFile.get()))) {
+            return false;
+        }
+        if (!kv->isReadOnly()) {
+            syncDataFD = writableSrcFile.get();
+            syncMetaFD = writableSrcCRCFile.get();
+        }
+        if (!syncMappedPairToPinnedHandles(kv->m_file, kv->m_metaFile, syncDataFD, syncMetaFD,
+                                           !kv->isReadOnly())) {
+            return false;
+        }
+        auto ret = copyFilePair(srcFile.get(), srcCRCFile.get(), dstDirFD, dstDirPath, dstName,
+                                dstName + CRC_SUFFIX);
         MMKVInfo("finish backup one mmkv[%s], ret: %d", mmapKey.c_str(), ret);
         return ret;
     }
 
-    // no luck with cache, do it the hard way
-    bool ret = backupOneToDirectoryByFilePath(mmapKey, srcPath, dstPath);
-    return ret;
+    if (hasCachedHint) {
+        MMKVError("refuse to back up replacement pair for live mmkv[%s]", mmapKey.c_str());
+        return false;
+    }
+
+    FileLock fileLock(srcCRCFile.get());
+    InterProcessLock lock(&fileLock, SharedLockType);
+    SCOPED_LOCK(&lock);
+    return copyFilePair(srcFile.get(), srcCRCFile.get(), dstDirFD, dstDirPath, dstName, dstName + CRC_SUFFIX);
+}
+
+bool MMKV::backupOneToDirectory(const string &mmapKey,
+                                const MMKVPath_t &dstPath,
+                                const MMKVPath_t &srcPath,
+                                bool compareFullPath) {
+    auto srcDirPath = parentDirectory(srcPath);
+    auto dstDirPath = parentDirectory(dstPath);
+    ScopedFileHandle srcDir(openDirectoryHandle(srcDirPath));
+    ScopedFileHandle dstDir(openOrCreateDirectoryHandle(dstDirPath));
+    if (!srcDir.isValid() || !dstDir.isValid()) {
+        return false;
+    }
+    if (isSameFile(srcDir.get(), dstDir.get()) && filename(srcPath) == filename(dstPath)) {
+        return true;
+    }
+    return backupOneToDirectoryWithHandles(mmapKey, dstPath, srcPath, compareFullPath, srcDir.get(), srcDirPath,
+                                           filename(srcPath), dstDir.get(), dstDirPath, filename(dstPath));
 }
 
 bool MMKV::backupOneToDirectory(const string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
     auto rootPath = srcDir ? srcDir : &g_realRootDir;
-    if (*rootPath == dstDir) {
-        return true;
+    if (!isValidDirectoryPath(*rootPath) || !isValidDirectoryPath(dstDir)) {
+        return false;
     }
-    mkPath(dstDir);
-    auto dstPath = mappedKVPathWithID(mmapID, &dstDir);
+    ScopedFileHandle requestedRoot(openDirectoryHandle(*rootPath));
+    if (!requestedRoot.isValid()) {
+        return false;
+    }
     auto ns = nameSpace(*rootPath);
     rootPath = &ns.getRootDir();
-    string  mmapKey = mmapedKVKey(mmapID, rootPath, true);
+    ScopedFileHandle resolvedRoot(openDirectoryHandle(*rootPath));
+    if (!resolvedRoot.isValid() || !isSameFile(requestedRoot.get(), resolvedRoot.get())) {
+        return false;
+    }
+    ScopedFileHandle dstRoot(openOrCreateDirectoryHandle(dstDir));
+    if (!dstRoot.isValid()) {
+        return false;
+    }
+    if (isSameFile(resolvedRoot.get(), dstRoot.get())) {
+        return true;
+    }
+
+    // Keep the caller's lexical destination path. absolutePath() follows
+    // symlinks before the handle-relative no-follow traversal gets a chance
+    // to reject them.
+    auto dstPath = mappedKVPathWithIDWithoutCreating(mmapID, dstDir);
+    string mmapKey = mmapedKVKey(mmapID, rootPath, true);
+    auto srcInSpecialDirectory = mmapIDHasSpecialCharacter(mmapID);
+    auto srcPath = mappedKVPathWithIDWithoutCreating(mmapID, *rootPath);
+    ScopedFileHandle srcSpecialDir(srcInSpecialDirectory
+                                       ? openDirectoryInDir(resolvedRoot.get(), *rootPath,
+                                                            SPECIAL_CHARACTER_DIRECTORY_NAME, false)
+                                       : MMKVFileHandleInvalidValue);
+    auto srcParentFD = srcInSpecialDirectory ? srcSpecialDir.get() : resolvedRoot.get();
 #ifdef MMKV_ANDROID
-    string srcPath;
-    switch (tryMigrateLegacyMMKVFile(mmapID, rootPath, true)) {
-        case MigrateStatus::OldToNewMigrateFail: {
-            auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
-            srcPath = mappedKVPathWithID(legacyID, rootPath, MMKV_MULTI_PROCESS, true);
-            break;
-        }
-        case MigrateStatus::NoneExist:
+    auto currentSourceExists = (!srcInSpecialDirectory || srcSpecialDir.isValid()) &&
+                               regularFileExistsInDir(srcParentFD, parentDirectory(srcPath), filename(srcPath));
+    if (!currentSourceExists) {
+        auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
+        auto legacyPath = mappedKVPathWithIDWithoutCreating(legacyID, *rootPath);
+        if (!regularFilePairExistsInDir(resolvedRoot.get(), *rootPath, filename(legacyPath))) {
             MMKVWarning("file with ID [%s] not exist in path [%s]", mmapID.c_str(), rootPath->c_str());
             return false;
-        default:
-            srcPath = mappedKVPathWithID(mmapID, rootPath, MMKV_MULTI_PROCESS, true);
-            break;
+        }
+        srcPath = std::move(legacyPath);
+        srcInSpecialDirectory = false;
+        srcParentFD = resolvedRoot.get();
     }
 #else
-    auto srcPath = mappedKVPathWithID(mmapID, rootPath, true);
+    if (srcInSpecialDirectory && !srcSpecialDir.isValid()) {
+        return false;
+    }
 #endif
-    return backupOneToDirectory(mmapKey, dstPath, srcPath, false);
+    auto dstInSpecialDirectory = mmapIDHasSpecialCharacter(mmapID);
+    auto srcDirPath = parentDirectory(srcPath);
+    auto dstDirPath = parentDirectory(dstPath);
+    ScopedFileHandle dstSpecialDir(dstInSpecialDirectory
+                                       ? openDirectoryInDir(dstRoot.get(), dstDir, SPECIAL_CHARACTER_DIRECTORY_NAME,
+                                                            true)
+                                       : MMKVFileHandleInvalidValue);
+    if (dstInSpecialDirectory && !dstSpecialDir.isValid()) {
+        return false;
+    }
+    auto dstParentFD = dstInSpecialDirectory ? dstSpecialDir.get() : dstRoot.get();
+    return backupOneToDirectoryWithHandles(mmapKey, dstPath, srcPath, false, srcParentFD, srcDirPath,
+                                           filename(srcPath), dstParentFD, dstDirPath, filename(dstPath));
 }
 
 bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix) {
@@ -1412,34 +1652,60 @@ MMKVPath_t filename(const MMKVPath_t &path) {
     return filename;
 }
 
-size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool isInSpecialDir) {
-    unordered_set<MMKVPath_t> mmapIDSet;
-    unordered_set<MMKVPath_t> mmapIDCRCSet;
-    walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
-        if (endsWith(filePath, CRC_SUFFIX)) {
-            mmapIDCRCSet.insert(filePath);
-        } else {
-            mmapIDSet.insert(filePath);
-        }
+static MMKVPath_t pathByAppendingComponent(const MMKVPath_t &dirPath, const MMKVPath_t &component) {
+    auto path = dirPath;
+    const auto slash = MMKV_PATH_SLASH[0];
+    if (path.empty() || path.back() != slash) {
+        path.push_back(slash);
+    }
+    path += component;
+    return path;
+}
+
+size_t MMKV::backupAllToDirectoryWithHandles(const MMKVPath_t &dstDir,
+                                             const MMKVPath_t &srcDir,
+                                             bool isInSpecialDir,
+                                             MMKVFileHandle_t srcDirFD,
+                                             MMKVFileHandle_t dstDirFD) {
+    if (!isValidDirectoryPath(srcDir) || !isValidDirectoryPath(dstDir) ||
+        srcDirFD == MMKVFileHandleInvalidValue || dstDirFD == MMKVFileHandleInvalidValue) {
+        return 0;
+    }
+    if (isSameFile(srcDirFD, dstDirFD)) {
+        return true;
+    }
+    unordered_set<MMKVPath_t> regularBasenames;
+    auto walked = walkInOpenedDir(srcDirFD, srcDir, WalkFile, [&](const MMKVPath_t &basename, WalkType) {
+        regularBasenames.insert(basename);
     });
+    if (!walked) {
+        return 0;
+    }
 
     size_t count = 0;
-    if (!mmapIDSet.empty()) {
-        mkPath(dstDir);
+    if (!regularBasenames.empty()) {
         auto compareFullPath = isInSpecialDir;
-        for (auto &srcPath : mmapIDSet) {
-            auto srcCRCPath = srcPath + CRC_SUFFIX;
-            if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
-                const auto &utf8SrcCRCPath = MMKVPath_t2String(srcCRCPath);
-                MMKVWarning("crc not exist [%s]", utf8SrcCRCPath.c_str());
+        for (const auto &basename : regularBasenames) {
+            auto crcBasename = basename + CRC_SUFFIX;
+            if (regularBasenames.find(crcBasename) == regularBasenames.end()) {
+                // A metadata basename is also a valid data basename for an
+                // mmapID ending in CRC_SUFFIX. Treat it as data only when its
+                // own metadata sibling exists; otherwise it is the metadata
+                // belonging to the basename without the suffix.
+                if (!endsWith(basename, CRC_SUFFIX)) {
+                    auto srcCRCPath = pathByAppendingComponent(srcDir, crcBasename);
+                    const auto &utf8SrcCRCPath = MMKVPath_t2String(srcCRCPath);
+                    MMKVWarning("crc not exist [%s]", utf8SrcCRCPath.c_str());
+                }
                 continue;
             }
-            auto basename = filename(srcPath);
+
+            auto srcPath = pathByAppendingComponent(srcDir, basename);
             const auto &strBasename = MMKVPath_t2String(basename);
             auto mmapKey = isInSpecialDir ? strBasename : mmapedKVKey(strBasename, &srcDir);
-            auto dstPath = dstDir + MMKV_PATH_SLASH;
-            dstPath += basename;
-            if (backupOneToDirectory(mmapKey, dstPath, srcPath, compareFullPath)) {
+            auto dstPath = pathByAppendingComponent(dstDir, basename);
+            if (backupOneToDirectoryWithHandles(mmapKey, dstPath, srcPath, compareFullPath, srcDirFD, srcDir,
+                                                basename, dstDirFD, dstDir, basename)) {
                 count++;
             }
         }
@@ -1449,103 +1715,210 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &sr
 
 size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
     auto rootPath = srcDir ? srcDir : &g_realRootDir;
-    if (*rootPath == dstDir) {
+    if (!isValidDirectoryPath(*rootPath) || !isValidDirectoryPath(dstDir)) {
+        return 0;
+    }
+    ScopedFileHandle srcRoot(openDirectoryHandle(*rootPath));
+    if (!srcRoot.isValid()) {
+        return 0;
+    }
+    ScopedFileHandle dstRoot(openOrCreateDirectoryHandle(dstDir));
+    if (!dstRoot.isValid()) {
+        return 0;
+    }
+    if (isSameFile(srcRoot.get(), dstRoot.get())) {
         return true;
     }
-    auto count = backupAllToDirectory(dstDir, *rootPath, false);
+    auto count = backupAllToDirectoryWithHandles(dstDir, *rootPath, false, srcRoot.get(), dstRoot.get());
 
-    auto specialSrcDir = *rootPath + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-    if (isFileExist(specialSrcDir)) {
-        auto specialDstDir = dstDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-        count += backupAllToDirectory(specialDstDir, specialSrcDir, true);
+    ScopedFileHandle specialSrcRoot(
+        openDirectoryInDir(srcRoot.get(), *rootPath, SPECIAL_CHARACTER_DIRECTORY_NAME, false));
+    if (specialSrcRoot.isValid()) {
+        ScopedFileHandle specialDstRoot(
+            openDirectoryInDir(dstRoot.get(), dstDir, SPECIAL_CHARACTER_DIRECTORY_NAME, true));
+        if (specialDstRoot.isValid()) {
+            auto specialSrcDir = pathByAppendingComponent(*rootPath, SPECIAL_CHARACTER_DIRECTORY_NAME);
+            auto specialDstDir = pathByAppendingComponent(dstDir, SPECIAL_CHARACTER_DIRECTORY_NAME);
+            count += backupAllToDirectoryWithHandles(specialDstDir, specialSrcDir, true, specialSrcRoot.get(),
+                                                     specialDstRoot.get());
+        }
     }
     return count;
 }
 
 // restore
 
-static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    auto dstCRCPath = dstPath + CRC_SUFFIX;
-    File dstCRCFile(std::move(dstCRCPath), OpenFlag::ReadWrite | OpenFlag::Create);
-    if (!dstCRCFile.isFileValid()) {
-        return false;
-    }
-
-    bool ret;
-    {
-        const auto &srcUTF8Path = MMKVPath_t2String(srcPath);
-        const auto &dstUTF8Path = MMKVPath_t2String(dstPath);
-        MMKVInfo("restore one mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcUTF8Path.c_str(), dstUTF8Path.c_str());
-        FileLock fileLock(dstCRCFile.getFd());
-        InterProcessLock lock(&fileLock, ExclusiveLockType);
-        SCOPED_LOCK(&lock);
-
-        ret = copyFileContent(srcPath, dstPath);
-        if (ret) {
-            auto srcCRCPath = srcPath + CRC_SUFFIX;
-            ret = copyFileContent(srcCRCPath, dstCRCFile.getFd());
-        }
-        MMKVInfo("finish restore one mmkv[%s]", mmapKey.c_str());
-    }
-    return ret;
-}
-
 // We can't simply replace the existing file, because other processes might have already open it.
 // They won't know a difference when the file has been replaced.
 // We have to let them know by overriding the existing file with new content.
-bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath) {
+bool MMKV::restoreOneFromDirectoryWithHandles(const string &mmapKey,
+                                              const MMKVPath_t &srcPath,
+                                              const MMKVPath_t &dstPath,
+                                              bool compareFullPath,
+                                              MMKVFileHandle_t srcDirFD,
+                                              const MMKVPath_t &srcDirPath,
+                                              const MMKVPath_t &srcName,
+                                              MMKVFileHandle_t dstDirFD,
+                                              const MMKVPath_t &dstDirPath,
+                                              const MMKVPath_t &dstName) {
     if (!g_instanceLock) {
         return false;
     }
-    // we have to lock the creation of MMKV instance, regardless of in cache or not
-    SCOPED_LOCK(g_instanceLock);
-    MMKV *kv = nullptr;
-    if (!compareFullPath) {
-        auto itr = g_instanceDic->find(mmapKey);
-        if (itr != g_instanceDic->end()) {
-            kv = itr->second;
-        }
-    } else {
-        // mmapKey is actually filename, we can't simply call find()
-        for (auto &pair : *g_instanceDic) {
-            if (pair.second->m_path == dstPath) {
-                kv = pair.second;
-                break;
-            }
+    MMKVFileHandle_t srcFD = MMKVFileHandleInvalidValue;
+    MMKVFileHandle_t srcCRCFD = MMKVFileHandleInvalidValue;
+    if (!openRegularFilePairInDir(srcDirFD, srcDirPath, srcName, srcName + CRC_SUFFIX, srcFD, srcCRCFD)) {
+        return false;
+    }
+    ScopedFileHandle srcFile(srcFD);
+    ScopedFileHandle srcCRCFile(srcCRCFD);
+
+    // Snapshot both sources before touching a live destination. Pinned handles
+    // prevent name replacement. The CRC file is MMKV's interprocess lock file;
+    // holding its shared lock closes the data/metadata mutation window while
+    // both source snapshots are taken.
+    ScopedFileHandle stagedSrcFile(createTemporaryFileInDir(dstDirFD, dstDirPath));
+    ScopedFileHandle stagedSrcCRCFile(createTemporaryFileInDir(dstDirFD, dstDirPath));
+    if (!stagedSrcFile.isValid() || !stagedSrcCRCFile.isValid()) {
+        return false;
+    }
+    FileLock sourceFileLock(srcCRCFile.get());
+    InterProcessLock sourceLock(&sourceFileLock, SharedLockType);
+    {
+        SCOPED_LOCK(&sourceLock);
+        if (!copyFileContent(srcFile.get(), stagedSrcFile.get()) ||
+            !copyFileContent(srcCRCFile.get(), stagedSrcCRCFile.get())) {
+            return false;
         }
     }
-    // get one in cache, do it the easy way
-    if (kv) {
+
+    MMKVMetaInfo sourceMetaInfo;
+    if (!readFileContent(stagedSrcCRCFile.get(), &sourceMetaInfo, sizeof(sourceMetaInfo))) {
+        return false;
+    }
+
+    MMKVFileHandle_t dstFD = MMKVFileHandleInvalidValue;
+    MMKVFileHandle_t dstCRCFD = MMKVFileHandleInvalidValue;
+    bool dstCreated = false;
+    bool dstCRCCreated = false;
+    if (!openOrCreateRegularFilePairInDir(dstDirFD, dstDirPath, dstName, dstName + CRC_SUFFIX, dstFD, dstCRCFD,
+                                          dstCreated, dstCRCCreated)) {
+        return false;
+    }
+    ScopedFileHandle dstFile(dstFD);
+    ScopedFileHandle dstCRCFile(dstCRCFD);
+
+    // we have to lock the creation of MMKV instance, regardless of in cache or not
+    SCOPED_LOCK(g_instanceLock);
+    auto matchesCachedHint = [&](const auto &entry) {
+        return entry.second &&
+               (!compareFullPath
+                    ? entry.first == mmapKey
+                    : cachedPathMatchesPinnedChild(entry.second->m_path, dstDirFD, dstName));
+    };
+    auto hasCachedHint = any_of(g_instanceDic->begin(), g_instanceDic->end(), matchesCachedHint);
+    // Recognize live destinations by the exact mapped data/CRC identities,
+    // independent of cache-key spelling or subsequent path/root renames.
+    for (const auto &entry : *g_instanceDic) {
+        if (hasCachedHint && !matchesCachedHint(entry)) {
+            continue;
+        }
+        auto kv = entry.second;
+        if (!kv) {
+            continue;
+        }
+        SCOPED_LOCK(kv->m_lock);
+        auto dataMatches = kv->m_file->isMappedFile(dstFile.get());
+        if (!dataMatches || !kv->m_metaFile->isMappedFile(dstCRCFile.get())) {
+            continue;
+        }
+        SCOPED_LOCK(kv->m_exclusiveProcessLock);
         const auto &srcUTF8Path = MMKVPath_t2String(srcPath);
         const auto &dstUTF8Path = MMKVPath_t2String(dstPath);
         MMKVInfo("restore one cached mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcUTF8Path.c_str(),
                  dstUTF8Path.c_str());
-        SCOPED_LOCK(kv->m_lock);
-        SCOPED_LOCK(kv->m_exclusiveProcessLock);
-
-        kv->sync();
-        auto ret = copyFileContent(srcPath, kv->m_file->getFd());
-        kv->m_file->cleanMayflyFD();
-        if (ret) {
-            auto srcCRCPath = srcPath + CRC_SUFFIX;
-            // ret = copyFileContent(srcCRCPath, kv->m_metaFile->getFd());
-            // kv->m_metaFile->cleanMayflyFD();
-#ifndef MMKV_ANDROID
-            MemoryFile srcCRCFile(srcCRCPath);
-#else
-            MemoryFile srcCRCFile(srcCRCPath, MMFILE_TYPE_FILE);
-#endif
-            if (srcCRCFile.isFileValid()) {
-                memcpy(kv->m_metaFile->getMemory(), srcCRCFile.getMemory(), sizeof(MMKVMetaInfo));
-            } else {
-                ret = false;
-            }
+        if (!kv->m_metaFile->isFileValid() ||
+            !syncMappedPairToPinnedHandles(kv->m_file, kv->m_metaFile, dstFile.get(), dstCRCFile.get())) {
+            return false;
         }
 
-        // reload data after restore
+        ScopedFileHandle savedData(createTemporaryFileInDir(dstDirFD, dstDirPath));
+        ScopedFileHandle savedCRC(createTemporaryFileInDir(dstDirFD, dstDirPath));
+        if (!savedData.isValid() || !savedCRC.isValid() ||
+            !copyFileContent(dstFile.get(), savedData.get()) ||
+            !copyFileContent(dstCRCFile.get(), savedCRC.get())) {
+            return false;
+        }
+        MMKVMetaInfo savedMetaInfo;
+        memcpy(&savedMetaInfo, kv->m_metaFile->getMemory(), sizeof(savedMetaInfo));
+
+        auto ret = copyFileContent(stagedSrcFile.get(), dstFile.get());
+        auto metaAttempted = false;
+        if (ret) {
+            // The data bytes must be durable before metadata can publish
+            // the source digest/size as the current committed contents.
+            ret = syncFile(dstFile.get());
+        }
+        if (ret) {
+            // Copy every source CRC byte that exists, while retaining the
+            // live mapping's established file size for short legacy CRC
+            // files. Mark the metadata as attempted before the fallible
+            // copy so a partial write is always rolled back.
+            metaAttempted = true;
+            ret = copyFileContent(stagedSrcCRCFile.get(), dstCRCFile.get(), false);
+        }
+        if (ret) {
+            memcpy(kv->m_metaFile->getMemory(), &sourceMetaInfo, sizeof(sourceMetaInfo));
+            ret = kv->m_metaFile->msync(MMKV_ASYNC) && syncFile(dstCRCFile.get());
+        }
+        if (!ret) {
+            auto dataRestored = copyFileContent(savedData.get(), dstFile.get());
+            auto dataSynced = dataRestored && syncFile(dstFile.get());
+            auto metaRestored = true;
+            if (metaAttempted) {
+                // Preserve the complete old CRC file, including reserved
+                // or future trailing bytes. Flush it only after the data
+                // rollback has been synchronously persisted.
+                metaRestored = dataSynced && copyFileContent(savedCRC.get(), dstCRCFile.get());
+                if (metaRestored) {
+                    // Keep the live mapping coherent even on platforms
+                    // that do not promise immediate WriteFile/mmap view
+                    // coherence for writes through a second handle.
+                    memcpy(kv->m_metaFile->getMemory(), &savedMetaInfo, sizeof(savedMetaInfo));
+                    metaRestored = kv->m_metaFile->msync(MMKV_ASYNC) && syncFile(dstCRCFile.get());
+                }
+            }
+            if (!dataSynced || !metaRestored) {
+                MMKVError("failed to roll back cached restore for mmkv[%s]", mmapKey.c_str());
+            }
+        }
+        // Reload from the already pinned destination handle. Reopening m_path
+        // here would let a concurrent path/root replacement redirect the live
+        // instance after an otherwise handle-bound transaction.
         kv->clearMemoryCache();
-        kv->loadFromFile();
-        if (kv->isMultiProcess()) {
+        auto reloaded = kv->m_file->reloadFromFileHandle(dstFile.get(), kv->m_expectedCapacity);
+        if (reloaded) {
+            try {
+                kv->loadFromFile();
+            } catch (const exception &error) {
+                ret = false;
+                MMKVError("failed to decode cached restore for mmkv[%s]: %s", mmapKey.c_str(), error.what());
+                // loadFromFile() may have partially rebuilt its dictionary or
+                // writer. Keep the pinned mapping, clear derived state, and
+                // leave a lazy retry that cannot be redirected by m_path.
+                kv->clearMemoryCache(true);
+            } catch (...) {
+                ret = false;
+                MMKVError("failed to decode cached restore for mmkv[%s]", mmapKey.c_str());
+                kv->clearMemoryCache(true);
+            }
+        } else {
+            ret = false;
+            // reloadFromFileHandle() retained the expected file identity. A
+            // lazy retry may reopen only that same file, never a replacement.
+            MMKVError("failed to reload cached restore from pinned destination for mmkv[%s]", mmapKey.c_str());
+        }
+        kv->m_file->cleanMayflyFD(true);
+        if (ret && kv->isMultiProcess()) {
             kv->notifyContentChanged();
         }
 
@@ -1553,64 +1926,146 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         return ret;
     }
 
-    // no luck with cache, do it the hard way
-    bool ret = restoreOneFromDirectoryByFilePath(mmapKey, srcPath, dstPath);
-    return ret;
+    if (hasCachedHint) {
+        MMKVError("refuse to restore replacement pair over live mmkv[%s]", mmapKey.c_str());
+        return false;
+    }
+
+    FileLock fileLock(dstCRCFile.get());
+    InterProcessLock lock(&fileLock, ExclusiveLockType);
+    SCOPED_LOCK(&lock);
+    return copyFileContentPair(stagedSrcFile.get(), stagedSrcCRCFile.get(), dstFile.get(), dstCRCFile.get(),
+                               dstDirFD, dstDirPath, dstName, dstName + CRC_SUFFIX, dstCreated, dstCRCCreated);
+}
+
+bool MMKV::restoreOneFromDirectory(const string &mmapKey,
+                                   const MMKVPath_t &srcPath,
+                                   const MMKVPath_t &dstPath,
+                                   bool compareFullPath) {
+    auto srcDirPath = parentDirectory(srcPath);
+    auto dstDirPath = parentDirectory(dstPath);
+    ScopedFileHandle srcDir(openDirectoryHandle(srcDirPath));
+    ScopedFileHandle dstDir(openOrCreateDirectoryHandle(dstDirPath));
+    if (!srcDir.isValid() || !dstDir.isValid()) {
+        return false;
+    }
+    if (isSameFile(srcDir.get(), dstDir.get()) && filename(srcPath) == filename(dstPath)) {
+        return true;
+    }
+    return restoreOneFromDirectoryWithHandles(mmapKey, srcPath, dstPath, compareFullPath, srcDir.get(), srcDirPath,
+                                              filename(srcPath), dstDir.get(), dstDirPath, filename(dstPath));
 }
 
 bool MMKV::restoreOneFromDirectory(const string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
     auto rootPath = dstDir ? dstDir : &g_realRootDir;
-    if (*rootPath == srcDir) {
-        return true;
+    if (!isValidDirectoryPath(srcDir) || !isValidDirectoryPath(*rootPath)) {
+        return false;
     }
-    mkPath(*rootPath);
+    ScopedFileHandle srcRoot(openDirectoryHandle(srcDir));
+    if (!srcRoot.isValid()) {
+        return false;
+    }
+    ScopedFileHandle requestedRoot(openOrCreateDirectoryHandle(*rootPath));
+    if (!requestedRoot.isValid()) {
+        return false;
+    }
     auto ns = nameSpace(*rootPath);
     rootPath = &ns.getRootDir();
-    auto mmapKey = mmapedKVKey(mmapID, rootPath, true);
-#ifdef MMKV_ANDROID
-    auto srcPath = mappedKVPathWithID(mmapID, &srcDir, MMKV_MULTI_PROCESS, true);
-    string dstPath;
-    if (tryMigrateLegacyMMKVFile(mmapID, rootPath, true) == MigrateStatus::OldToNewMigrateFail) {
-        auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
-        dstPath = mappedKVPathWithID(legacyID, rootPath, MMKV_MULTI_PROCESS, true);
-    } else {
-        dstPath = mappedKVPathWithID(mmapID, rootPath, MMKV_MULTI_PROCESS, true);
+    ScopedFileHandle resolvedRoot(openDirectoryHandle(*rootPath));
+    if (!resolvedRoot.isValid() || !isSameFile(requestedRoot.get(), resolvedRoot.get())) {
+        return false;
     }
-#else
-    auto srcPath = mappedKVPathWithID(mmapID, &srcDir, true);
-    auto dstPath = mappedKVPathWithID(mmapID, rootPath, true);
+    if (isSameFile(srcRoot.get(), resolvedRoot.get())) {
+        return true;
+    }
+    auto mmapKey = mmapedKVKey(mmapID, rootPath, true);
+    auto srcInSpecialDirectory = mmapIDHasSpecialCharacter(mmapID);
+    auto srcPath = mappedKVPathWithIDWithoutCreating(mmapID, srcDir);
+    ScopedFileHandle srcSpecialDir(srcInSpecialDirectory
+                                       ? openDirectoryInDir(srcRoot.get(), srcDir, SPECIAL_CHARACTER_DIRECTORY_NAME,
+                                                            false)
+                                       : MMKVFileHandleInvalidValue);
+    if (srcInSpecialDirectory && !srcSpecialDir.isValid()) {
+        return false;
+    }
+    auto srcParentFD = srcInSpecialDirectory ? srcSpecialDir.get() : srcRoot.get();
+
+    bool dstInSpecialDirectory = mmapIDHasSpecialCharacter(mmapID);
+    auto dstPath = mappedKVPathWithIDWithoutCreating(mmapID, *rootPath);
+    ScopedFileHandle existingDstSpecialDir(dstInSpecialDirectory
+                                               ? openDirectoryInDir(resolvedRoot.get(), *rootPath,
+                                                                    SPECIAL_CHARACTER_DIRECTORY_NAME, false)
+                                               : MMKVFileHandleInvalidValue);
+#ifdef MMKV_ANDROID
+    auto currentDstParentFD = dstInSpecialDirectory ? existingDstSpecialDir.get() : resolvedRoot.get();
+    auto currentDestinationExists = (!dstInSpecialDirectory || existingDstSpecialDir.isValid()) &&
+                                    regularFileExistsInDir(currentDstParentFD, parentDirectory(dstPath),
+                                                           filename(dstPath));
+    if (!currentDestinationExists) {
+        auto legacyID = legacyMmapedKVKey(mmapID, rootPath);
+        auto legacyPath = mappedKVPathWithIDWithoutCreating(legacyID, *rootPath);
+        if (regularFilePairExistsInDir(resolvedRoot.get(), *rootPath, filename(legacyPath))) {
+            dstPath = std::move(legacyPath);
+            dstInSpecialDirectory = false;
+        }
+    }
 #endif
-    return restoreOneFromDirectory(mmapKey, srcPath, dstPath, false);
+    auto srcDirPath = parentDirectory(srcPath);
+    auto dstDirPath = parentDirectory(dstPath);
+    ScopedFileHandle createdDstSpecialDir(dstInSpecialDirectory && !existingDstSpecialDir.isValid()
+                                              ? openDirectoryInDir(resolvedRoot.get(), *rootPath,
+                                                                   SPECIAL_CHARACTER_DIRECTORY_NAME, true)
+                                              : MMKVFileHandleInvalidValue);
+    if (dstInSpecialDirectory && !existingDstSpecialDir.isValid() && !createdDstSpecialDir.isValid()) {
+        return false;
+    }
+    auto dstParentFD = dstInSpecialDirectory
+                           ? (existingDstSpecialDir.isValid() ? existingDstSpecialDir.get() : createdDstSpecialDir.get())
+                           : resolvedRoot.get();
+    return restoreOneFromDirectoryWithHandles(mmapKey, srcPath, dstPath, false, srcParentFD, srcDirPath,
+                                              filename(srcPath), dstParentFD, dstDirPath, filename(dstPath));
 }
 
-size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir) {
-    unordered_set<MMKVPath_t> mmapIDSet;
-    unordered_set<MMKVPath_t> mmapIDCRCSet;
-    walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
-        if (endsWith(filePath, CRC_SUFFIX)) {
-            mmapIDCRCSet.insert(filePath);
-        } else {
-            mmapIDSet.insert(filePath);
-        }
+size_t MMKV::restoreAllFromDirectoryWithHandles(const MMKVPath_t &srcDir,
+                                                const MMKVPath_t &dstDir,
+                                                bool isInSpecialDir,
+                                                MMKVFileHandle_t srcDirFD,
+                                                MMKVFileHandle_t dstDirFD) {
+    if (!isValidDirectoryPath(srcDir) || !isValidDirectoryPath(dstDir) ||
+        srcDirFD == MMKVFileHandleInvalidValue || dstDirFD == MMKVFileHandleInvalidValue) {
+        return 0;
+    }
+    if (isSameFile(srcDirFD, dstDirFD)) {
+        return true;
+    }
+    unordered_set<MMKVPath_t> regularBasenames;
+    auto walked = walkInOpenedDir(srcDirFD, srcDir, WalkFile, [&](const MMKVPath_t &basename, WalkType) {
+        regularBasenames.insert(basename);
     });
+    if (!walked) {
+        return 0;
+    }
 
     size_t count = 0;
-    if (!mmapIDSet.empty()) {
-        mkPath(dstDir);
+    if (!regularBasenames.empty()) {
         auto compareFullPath = isInSpecialDir;
-        for (auto &srcPath : mmapIDSet) {
-            auto srcCRCPath = srcPath + CRC_SUFFIX;
-            if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
-                const auto &utf8SrcCRCPath = MMKVPath_t2String(srcCRCPath);
-                MMKVWarning("crc not exist [%s]", utf8SrcCRCPath.c_str());
+        for (const auto &basename : regularBasenames) {
+            auto crcBasename = basename + CRC_SUFFIX;
+            if (regularBasenames.find(crcBasename) == regularBasenames.end()) {
+                if (!endsWith(basename, CRC_SUFFIX)) {
+                    auto srcCRCPath = pathByAppendingComponent(srcDir, crcBasename);
+                    const auto &utf8SrcCRCPath = MMKVPath_t2String(srcCRCPath);
+                    MMKVWarning("crc not exist [%s]", utf8SrcCRCPath.c_str());
+                }
                 continue;
             }
-            auto basename = filename(srcPath);
+
+            auto srcPath = pathByAppendingComponent(srcDir, basename);
             const auto &strBasename = MMKVPath_t2String(basename);
             auto mmapKey = isInSpecialDir ? strBasename : mmapedKVKey(strBasename, &dstDir);
-            auto dstPath = dstDir + MMKV_PATH_SLASH;
-            dstPath += basename;
-            if (restoreOneFromDirectory(mmapKey, srcPath, dstPath, compareFullPath)) {
+            auto dstPath = pathByAppendingComponent(dstDir, basename);
+            if (restoreOneFromDirectoryWithHandles(mmapKey, srcPath, dstPath, compareFullPath, srcDirFD, srcDir,
+                                                   basename, dstDirFD, dstDir, basename)) {
                 count++;
             }
         }
@@ -1620,15 +2075,38 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
 
 size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
     auto rootPath = dstDir ? dstDir : &g_realRootDir;
-    if (*rootPath == srcDir) {
+    if (!isValidDirectoryPath(srcDir) || !isValidDirectoryPath(*rootPath)) {
+        return 0;
+    }
+    ScopedFileHandle srcRoot(openDirectoryHandle(srcDir));
+    if (!srcRoot.isValid()) {
+        return 0;
+    }
+    ScopedFileHandle dstRoot(openOrCreateDirectoryHandle(*rootPath));
+    if (!dstRoot.isValid()) {
+        return 0;
+    }
+    if (isSameFile(srcRoot.get(), dstRoot.get())) {
         return true;
     }
-    auto count = restoreAllFromDirectory(srcDir, *rootPath, true);
+    // Match cached instances by their destination path, then verify the pinned
+    // data/meta identities before using them. On Android a live legacy instance
+    // can have a cache key derived from the original mmapID while its basename
+    // is legacyMmapedKVKey(), so a basename-derived cache lookup can miss it and
+    // overwrite its files without reloading the live instance.
+    auto count = restoreAllFromDirectoryWithHandles(srcDir, *rootPath, true, srcRoot.get(), dstRoot.get());
 
-    auto specialSrcDir = srcDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-    if (isFileExist(specialSrcDir)) {
-        auto specialDstDir = *rootPath + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-        count += restoreAllFromDirectory(specialSrcDir, specialDstDir, false);
+    ScopedFileHandle specialSrcRoot(openDirectoryInDir(srcRoot.get(), srcDir, SPECIAL_CHARACTER_DIRECTORY_NAME,
+                                                       false));
+    if (specialSrcRoot.isValid()) {
+        ScopedFileHandle specialDstRoot(
+            openDirectoryInDir(dstRoot.get(), *rootPath, SPECIAL_CHARACTER_DIRECTORY_NAME, true));
+        if (specialDstRoot.isValid()) {
+            auto specialSrcDir = pathByAppendingComponent(srcDir, SPECIAL_CHARACTER_DIRECTORY_NAME);
+            auto specialDstDir = pathByAppendingComponent(*rootPath, SPECIAL_CHARACTER_DIRECTORY_NAME);
+            count += restoreAllFromDirectoryWithHandles(specialSrcDir, specialDstDir, true, specialSrcRoot.get(),
+                                                        specialDstRoot.get());
+        }
     }
     return count;
 }
@@ -1676,45 +2154,41 @@ static string md5(const basic_string<T> &value) {
     return {buf};
 }
 
-static MMKVPath_t encodeFilePath(const string &mmapID) {
+static bool mmapIDHasSpecialCharacter(const string &mmapID) {
     const char *specialCharacters = "\\/:*?\"<>|";
-    string encodedID;
-    bool hasSpecialCharacter = false;
     for (auto ch : mmapID) {
         if (strchr(specialCharacters, ch) != nullptr) {
-            encodedID = md5(mmapID);
-            hasSpecialCharacter = true;
-            break;
+            return true;
         }
     }
-    if (hasSpecialCharacter) {
+    return false;
+}
+
+static MMKVPath_t encodeFilePathWithoutCreating(const string &mmapID) {
+    if (mmapIDHasSpecialCharacter(mmapID)) {
+        return MMKVPath_t(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKVPath_t(md5(mmapID));
+    }
+    return string2MMKVPath_t(mmapID);
+}
+
+static MMKVPath_t mappedKVPathWithIDWithoutCreating(const string &mmapID, const MMKVPath_t &rootPath) {
+    return rootPath + MMKV_PATH_SLASH + encodeFilePathWithoutCreating(mmapID);
+}
+
+static MMKVPath_t encodeFilePath(const string &mmapID) {
+    if (mmapIDHasSpecialCharacter(mmapID)) {
         static ThreadOnceToken_t once = ThreadOnceUninitialized;
         ThreadLock::ThreadOnce(&once, mkSpecialCharacterFileDirectory);
-        return MMKVPath_t(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKVPath_t(encodedID);
-    } else {
-        return string2MMKVPath_t(mmapID);
     }
+    return encodeFilePathWithoutCreating(mmapID);
 }
 
 static MMKVPath_t encodeFilePath(const string &mmapID, const MMKVPath_t &rootDir) {
-    const char *specialCharacters = "\\/:*?\"<>|";
-    string encodedID;
-    bool hasSpecialCharacter = false;
-    for (auto ch : mmapID) {
-        if (strchr(specialCharacters, ch) != nullptr) {
-            encodedID = md5(mmapID);
-            hasSpecialCharacter = true;
-            break;
-        }
-    }
-    if (hasSpecialCharacter) {
+    if (mmapIDHasSpecialCharacter(mmapID)) {
         MMKVPath_t path = rootDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
         mkPath(path);
-
-        return MMKVPath_t(SPECIAL_CHARACTER_DIRECTORY_NAME) + MMKV_PATH_SLASH + string2MMKVPath_t(encodedID);
-    } else {
-        return string2MMKVPath_t(mmapID);
     }
+    return encodeFilePathWithoutCreating(mmapID);
 }
 
 string mmapedKVKey(const string &mmapID, const MMKVPath_t *rootPath, bool alreadyAbsolute) {

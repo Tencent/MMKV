@@ -298,9 +298,38 @@ class MMKV_EXPORT MMKV {
     void checkReSetCryptKey(int fd, int metaFD, const std::string *cryptKey, bool aes256);
 #endif
     static bool backupOneToDirectory(const std::string &mmapKey, const MMKVPath_t &dstPath, const MMKVPath_t &srcPath, bool compareFullPath);
-    static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool isInSpecialDir);
+
+    static bool backupOneToDirectoryWithHandles(const std::string &mmapKey,
+                                                const MMKVPath_t &dstPath,
+                                                const MMKVPath_t &srcPath,
+                                                bool compareFullPath,
+                                                MMKVFileHandle_t srcDirFD,
+                                                const MMKVPath_t &srcDirPath,
+                                                const MMKVPath_t &srcName,
+                                                MMKVFileHandle_t dstDirFD,
+                                                const MMKVPath_t &dstDirPath,
+                                                const MMKVPath_t &dstName);
+    static size_t backupAllToDirectoryWithHandles(const MMKVPath_t &dstDir,
+                                                  const MMKVPath_t &srcDir,
+                                                  bool isInSpecialDir,
+                                                  MMKVFileHandle_t srcDirFD,
+                                                  MMKVFileHandle_t dstDirFD);
     static bool restoreOneFromDirectory(const std::string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath);
-    static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir);
+    static bool restoreOneFromDirectoryWithHandles(const std::string &mmapKey,
+                                                   const MMKVPath_t &srcPath,
+                                                   const MMKVPath_t &dstPath,
+                                                   bool compareFullPath,
+                                                   MMKVFileHandle_t srcDirFD,
+                                                   const MMKVPath_t &srcDirPath,
+                                                   const MMKVPath_t &srcName,
+                                                   MMKVFileHandle_t dstDirFD,
+                                                   const MMKVPath_t &dstDirPath,
+                                                   const MMKVPath_t &dstName);
+    static size_t restoreAllFromDirectoryWithHandles(const MMKVPath_t &srcDir,
+                                                     const MMKVPath_t &dstDir,
+                                                     bool isInSpecialDir,
+                                                     MMKVFileHandle_t srcDirFD,
+                                                     MMKVFileHandle_t dstDirFD);
 
     static uint32_t getCurrentTimeInSecond();
     static uint32_t safeExpirationPlusCurrentTime(uint32_t expireDuration);
