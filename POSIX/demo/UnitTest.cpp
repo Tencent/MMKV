@@ -19,6 +19,7 @@
  */
 
 #include "MMKV.h"
+#include "aes/AESCrypt.h"
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -26,6 +27,7 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
+#include <new>
 #include <unistd.h>
 
 using namespace std;
@@ -256,6 +258,62 @@ void testExpirationOverflow() {
     printf("test expiration overflow: passed\n");
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+static bool containsBytes(const unsigned char *storage, size_t storageSize, const uint8_t *value, size_t valueSize) {
+    if (valueSize > storageSize) {
+        return false;
+    }
+    for (size_t offset = 0; offset <= storageSize - valueSize; ++offset) {
+        if (memcmp(storage + offset, value, valueSize) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void testCryptoKeyLifecycle() {
+    uint8_t firstIV[AES_KEY_LEN] = {};
+    uint8_t secondIV[AES_KEY_LEN] = {};
+    assert(AESCrypt::fillRandomIV(firstIV));
+    assert(AESCrypt::fillRandomIV(secondIV));
+    assert(memcmp(firstIV, secondIV, sizeof(firstIV)) != 0);
+
+    uint8_t key[AES_KEY_LEN];
+    iota(begin(key), end(key), 1);
+    {
+        AESCrypt original(key, sizeof(key));
+        AESCrypt moved(std::move(original));
+        assert(moved.isSameKey(key, sizeof(key)));
+    }
+
+    alignas(AESCrypt) unsigned char storage[sizeof(AESCrypt)] = {};
+    auto crypt = new (storage) AESCrypt(key, sizeof(key));
+    assert(containsBytes(storage, sizeof(storage), key, sizeof(key)));
+    crypt->~AESCrypt();
+    assert(!containsBytes(storage, sizeof(storage), key, sizeof(key)));
+
+    const char binaryKeyBytes[] = {'0', '1', '\0', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    string binaryKey(binaryKeyBytes, sizeof(binaryKeyBytes));
+    auto binaryMMKV = MMKV::mmkvWithID("binary_key_lifecycle", MMKV_SINGLE_PROCESS, &binaryKey);
+    assert(binaryMMKV);
+    binaryMMKV->clearAll();
+    assert(binaryMMKV->cryptKey() == binaryKey);
+    assert(binaryMMKV->set("before-rekey", "value"));
+    binaryMMKV->checkReSetCryptKey(&binaryKey);
+    string value;
+    assert(binaryMMKV->getString("value", value) && value == "before-rekey");
+
+    auto changedKey = binaryKey;
+    changedKey.back() = 'g';
+    assert(binaryMMKV->reKey(changedKey));
+    assert(binaryMMKV->cryptKey() == changedKey);
+    assert(binaryMMKV->getString("value", value) && value == "before-rekey");
+    binaryMMKV->close();
+
+    printf("test crypto key lifecycle: passed\n");
+}
+#endif
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -328,4 +386,7 @@ int main() {
     testRemove(mmkv);
     testOversizedKey(mmkv);
     testExpirationOverflow();
+#ifndef MMKV_DISABLE_CRYPT
+    testCryptoKeyLifecycle();
+#endif
 }

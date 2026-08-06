@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <exception>
 #include <unordered_set>
 #include <cassert>
 
@@ -352,9 +353,9 @@ string MMKV::cryptKey() const {
     SCOPED_LOCK(m_lock);
 
     if (m_crypter) {
-        char key[AES_KEY_LEN];
+        char key[AES_KEY_LEN] = {};
         m_crypter->getKey(key);
-        return {key, strnlen(key, AES_KEY_LEN)};
+        return {key, m_crypter->getKeyLength()};
     }
     return "";
 }
@@ -362,37 +363,52 @@ string MMKV::cryptKey() const {
 void MMKV::checkReSetCryptKey(const string *cryptKey) {
     SCOPED_LOCK(m_lock);
 
-    if (m_crypter) {
-        if (cryptKey && !cryptKey->empty()) {
-            string oldKey = this->cryptKey();
-            if (oldKey != *cryptKey) {
-                MMKVInfo("setting new aes key");
-                delete m_crypter;
-                auto ptr = cryptKey->data();
-                m_crypter = new AESCrypt(ptr, cryptKey->length());
+    const auto hasNewKey = cryptKey && !cryptKey->empty();
+    if ((!m_crypter && !hasNewKey) ||
+        (m_crypter && hasNewKey && m_crypter->isSameKey(cryptKey->data(), cryptKey->length()))) {
+        return;
+    }
 
-                checkLoadData();
-            } else {
-                // nothing to do
+    AESCrypt *newCrypter = nullptr;
+    MMKVMap *newPlainDictionary = nullptr;
+    MMKVMapCrypt *newEncryptedDictionary = nullptr;
+    try {
+        if (hasNewKey) {
+            MMKVInfo("setting new aes key");
+            newCrypter = new AESCrypt(cryptKey->data(), cryptKey->length());
+            if (!m_dicCrypt) {
+                newEncryptedDictionary = new MMKVMapCrypt();
             }
         } else {
             MMKVInfo("reset aes key");
-            delete m_crypter;
-            m_crypter = nullptr;
-
-            checkLoadData();
+            if (!m_dic) {
+                newPlainDictionary = new MMKVMap();
+            }
         }
-    } else {
-        if (cryptKey && !cryptKey->empty()) {
-            MMKVInfo("setting new aes key");
-            auto ptr = cryptKey->data();
-            m_crypter = new AESCrypt(ptr, cryptKey->length());
-
-            checkLoadData();
-        } else {
-            // nothing to do
-        }
+    } catch (const exception &error) {
+        MMKVError("[%s] cannot allocate replacement crypt state: %s", m_mmapID.c_str(), error.what());
+        delete newEncryptedDictionary;
+        delete newPlainDictionary;
+        delete newCrypter;
+        return;
+    } catch (...) {
+        MMKVError("[%s] cannot allocate replacement crypt state", m_mmapID.c_str());
+        delete newEncryptedDictionary;
+        delete newPlainDictionary;
+        delete newCrypter;
+        return;
     }
+
+    clearMemoryCache();
+    if (newEncryptedDictionary) {
+        m_dicCrypt = newEncryptedDictionary;
+    }
+    if (newPlainDictionary) {
+        m_dic = newPlainDictionary;
+    }
+    delete m_crypter;
+    m_crypter = newCrypter;
+    checkLoadData();
 }
 
 #endif // MMKV_DISABLE_CRYPT

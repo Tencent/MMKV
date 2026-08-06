@@ -57,6 +57,7 @@ class CodedInputDataCrypt;
 // a AES CFB-128 encrypt-decrypt full-duplex wrapper
 class AESCrypt {
     bool m_isClone = false;
+    size_t m_keyLength = 0;
     uint32_t m_number = 0;
     openssl::AES_KEY *m_aesKey = nullptr;
     openssl::AES_KEY *m_aesRollbackKey = nullptr;
@@ -71,7 +72,7 @@ private:
 
 public:
     AESCrypt(const void *key, size_t keyLength, const void *iv = nullptr, size_t ivLength = 0);
-    AESCrypt(AESCrypt &&other) = default;
+    AESCrypt(AESCrypt &&other) noexcept;
 
     ~AESCrypt();
 
@@ -90,7 +91,10 @@ public:
     // output must have [AES_KEY_LEN] space
     void getKey(void *output) const;
 
-    static void fillRandomIV(void *vector);
+    size_t getKeyLength() const { return m_keyLength; }
+    bool isSameKey(const void *key, size_t keyLength) const;
+
+    static bool fillRandomIV(void *vector);
     static uint32_t randomItemSizeHolder(uint32_t size);
 
     // just forbid it for possibly misuse

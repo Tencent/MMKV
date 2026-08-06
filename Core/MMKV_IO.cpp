@@ -1281,10 +1281,12 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
     }
 #    endif
 
-    uint8_t newIV[AES_KEY_LEN];
+    uint8_t newIV[AES_KEY_LEN] = {};
     auto encrypter = (newCrypter == InvalidCryptPtr) ? nullptr : (newCrypter ? newCrypter : m_crypter);
     if (encrypter) {
-        AESCrypt::fillRandomIV(newIV);
+        if (!AESCrypt::fillRandomIV(newIV)) {
+            return false;
+        }
         encrypter->resetIV(newIV, sizeof(newIV));
     }
 
@@ -1363,8 +1365,7 @@ bool MMKV::reKey(const string &cryptKey) {
     bool ret = false;
     if (m_crypter) {
         if (cryptKey.length() > 0) {
-            string oldKey = this->cryptKey();
-            if (cryptKey == oldKey) {
+            if (m_crypter->isSameKey(cryptKey.data(), cryptKey.length())) {
                 return true;
             } else {
                 // change encryption key
@@ -1479,17 +1480,22 @@ void MMKV::clearAll(bool keepSpace) {
         return;
     }
 
+#ifndef MMKV_DISABLE_CRYPT
+    uint8_t newIV[AES_KEY_LEN] = {};
+    if (m_crypter && !AESCrypt::fillRandomIV(newIV)) {
+        return;
+    }
+#endif
+
     if (!keepSpace) {
         m_file->truncate(m_expectedCapacity);
     }
 
 #ifndef MMKV_DISABLE_CRYPT
-    uint8_t newIV[AES_KEY_LEN];
-    AESCrypt::fillRandomIV(newIV);
     if (m_crypter) {
         m_crypter->resetIV(newIV, sizeof(newIV));
     }
-    writeActualSize(0, 0, newIV, IncreaseSequence);
+    writeActualSize(0, 0, m_crypter ? newIV : nullptr, IncreaseSequence);
 #else
     writeActualSize(0, 0, nullptr, IncreaseSequence);
 #endif

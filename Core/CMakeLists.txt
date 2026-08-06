@@ -152,6 +152,7 @@ IF (WIN32)
     # MMKV can be used only with Unicode on Windows.
     target_compile_definitions(core PUBLIC UNICODE)
     target_compile_definitions(core PUBLIC _UNICODE)
+    target_link_libraries(core advapi32)
 ENDIF()
 
 set_target_properties(core PROPERTIES
@@ -169,4 +170,3 @@ IF (NOT zlib)
 ELSE()
     target_link_libraries(core ${zlib})
 ENDIF()
-
