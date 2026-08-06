@@ -26,8 +26,12 @@
 #    include "MMKV.h"
 #    include "MMKVLog.h"
 #    include "MemoryFile.h"
+#    include "MMKVStringCodec.h"
 #    include <cstdint>
+#    include <exception>
 #    include <jni.h>
+#    include <limits>
+#    include <new>
 #    include <string>
 #    include <android/api-level.h>
 
@@ -163,6 +167,18 @@ static MMKV *getMMKV(JNIEnv *env, jobject obj) {
     return reinterpret_cast<MMKV *>(handle);
 }
 
+static void throwJavaExceptionIfNone(JNIEnv *env, const char *className, const char *message) noexcept {
+    if (!env || env->ExceptionCheck()) {
+        return;
+    }
+    auto exceptionClass = env->FindClass(className);
+    if (!exceptionClass) {
+        return;
+    }
+    env->ThrowNew(exceptionClass, message);
+    env->DeleteLocalRef(exceptionClass);
+}
+
 static string jstring2string(JNIEnv *env, jstring str) {
     if (str) {
         const char *kstr = env->GetStringUTFChars(str, nullptr);
@@ -176,7 +192,36 @@ static string jstring2string(JNIEnv *env, jstring str) {
 }
 
 static jstring string2jstring(JNIEnv *env, const string &str) {
-    return env->NewStringUTF(str.c_str());
+    try {
+        vector<uint16_t> utf16;
+        if (!android::decodeUtf8OrModifiedUtf8(str, utf16)) {
+            return nullptr;
+        }
+        if (utf16.size() > static_cast<size_t>(numeric_limits<jsize>::max())) {
+            throwJavaExceptionIfNone(env, "java/lang/OutOfMemoryError", "native string exceeds Java size limit");
+            return nullptr;
+        }
+
+        vector<jchar> chars;
+        chars.reserve(utf16.size());
+        for (auto codeUnit : utf16) {
+            chars.push_back(static_cast<jchar>(codeUnit));
+        }
+        static constexpr jchar EmptyStringSentinel = 0;
+        const auto *data = chars.empty() ? &EmptyStringSentinel : chars.data();
+        auto result = env->NewString(data, static_cast<jsize>(chars.size()));
+        if (!result) {
+            throwJavaExceptionIfNone(env, "java/lang/OutOfMemoryError", "Java string allocation failed");
+        }
+        return result;
+    } catch (const bad_alloc &) {
+        throwJavaExceptionIfNone(env, "java/lang/OutOfMemoryError", "native string conversion ran out of memory");
+    } catch (const exception &) {
+        throwJavaExceptionIfNone(env, "java/lang/IllegalStateException", "native string conversion failed");
+    } catch (...) {
+        throwJavaExceptionIfNone(env, "java/lang/IllegalStateException", "native string conversion failed");
+    }
+    return nullptr;
 }
 
 static vector<string> jarray2vector(JNIEnv *env, jobjectArray array) {
@@ -196,12 +241,31 @@ static vector<string> jarray2vector(JNIEnv *env, jobjectArray array) {
 }
 
 static jobjectArray vector2jarray(JNIEnv *env, const vector<string> &arr) {
-    jobjectArray result = env->NewObjectArray(arr.size(), env->FindClass("java/lang/String"), nullptr);
-    if (result) {
-        for (size_t index = 0; index < arr.size(); index++) {
-            jstring value = string2jstring(env, arr[index]);
-            env->SetObjectArrayElement(result, index, value);
-            env->DeleteLocalRef(value);
+    if (arr.size() > static_cast<size_t>(numeric_limits<jsize>::max())) {
+        throwJavaExceptionIfNone(env, "java/lang/OutOfMemoryError", "native string array exceeds Java size limit");
+        return nullptr;
+    }
+    auto stringClass = env->FindClass("java/lang/String");
+    if (!stringClass) {
+        return nullptr;
+    }
+    jobjectArray result = env->NewObjectArray(static_cast<jsize>(arr.size()), stringClass, nullptr);
+    env->DeleteLocalRef(stringClass);
+    if (!result) {
+        throwJavaExceptionIfNone(env, "java/lang/OutOfMemoryError", "Java string array allocation failed");
+        return nullptr;
+    }
+    for (size_t index = 0; index < arr.size(); index++) {
+        jstring value = string2jstring(env, arr[index]);
+        if (!value) {
+            env->DeleteLocalRef(result);
+            return nullptr;
+        }
+        env->SetObjectArrayElement(result, static_cast<jsize>(index), value);
+        env->DeleteLocalRef(value);
+        if (env->ExceptionCheck()) {
+            env->DeleteLocalRef(result);
+            return nullptr;
         }
     }
     return result;
@@ -231,9 +295,11 @@ MMKVRecoverStrategic onMMKVError(const std::string &mmapID, MMKVErrorType errorT
     auto currentEnv = getCurrentEnv();
     if (currentEnv && methodID) {
         jstring str = string2jstring(currentEnv, mmapID);
-        auto strategic = currentEnv->CallStaticIntMethod(g_cls, methodID, str);
-        currentEnv->DeleteLocalRef(str);
-        return static_cast<MMKVRecoverStrategic>(strategic);
+        if (str) {
+            auto strategic = currentEnv->CallStaticIntMethod(g_cls, methodID, str);
+            currentEnv->DeleteLocalRef(str);
+            return static_cast<MMKVRecoverStrategic>(strategic);
+        }
     }
     return OnErrorDiscard;
 }
@@ -273,6 +339,18 @@ static void mmkvLog(MMKVLogLevel level, const char *file, int line, const char *
         jstring oFile = string2jstring(currentEnv, string(file));
         jstring oFunction = string2jstring(currentEnv, string(function));
         jstring oMessage = string2jstring(currentEnv, message);
+        if (!oFile || !oFunction || !oMessage) {
+            if (oMessage) {
+                currentEnv->DeleteLocalRef(oMessage);
+            }
+            if (oFunction) {
+                currentEnv->DeleteLocalRef(oFunction);
+            }
+            if (oFile) {
+                currentEnv->DeleteLocalRef(oFile);
+            }
+            return;
+        }
         int readLevel = level;
 
         currentEnv->CallStaticVoidMethod(g_cls, g_mmkvLogID, readLevel, oFile, line, oFunction, oMessage);
@@ -287,8 +365,10 @@ static void onContentChangedByOuterProcess(const std::string &mmapID) {
     auto currentEnv = getCurrentEnv();
     if (currentEnv && g_callbackOnContentChange) {
         jstring str = string2jstring(currentEnv, mmapID);
-        currentEnv->CallStaticVoidMethod(g_cls, g_callbackOnContentChange, str);
-        currentEnv->DeleteLocalRef(str);
+        if (str) {
+            currentEnv->CallStaticVoidMethod(g_cls, g_callbackOnContentChange, str);
+            currentEnv->DeleteLocalRef(str);
+        }
     }
 }
 
@@ -584,7 +664,8 @@ MMKV_JNI jstring decodeString(JNIEnv *env, jobject obj, jlong handle, jstring oK
         string value;
         bool hasValue = kv->getString(key, value);
         if (hasValue) {
-            return string2jstring(env, value);
+            auto result = string2jstring(env, value);
+            return result ? result : oDefaultValue;
         }
     }
     return oDefaultValue;

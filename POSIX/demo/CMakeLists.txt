@@ -73,8 +73,18 @@ if(BUILD_TESTING)
     add_test(NAME TestThreadLock COMMAND TestThreadLock)
 endif()
 
+add_executable(TestMMKVStringCodec
+        ../../Android/MMKV/mmkv/src/main/cpp/MMKVStringCodec.cpp
+        TestMMKVStringCodec.cpp)
+target_include_directories(TestMMKVStringCodec PRIVATE
+        ../../Android/MMKV/mmkv/src/main/cpp)
+set_target_properties(TestMMKVStringCodec PROPERTIES
+        CXX_STANDARD 17
+        )
+
 add_dependencies(demo
         process
         TestInterProcessLock
+        TestMMKVStringCodec
         TestThreadLock
         UnitTest)

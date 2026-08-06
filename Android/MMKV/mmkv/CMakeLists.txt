@@ -20,6 +20,7 @@ add_library( mmkv
 
              # Provides a relative path to your source file(s).
              src/main/cpp/native-bridge.cpp
+             src/main/cpp/MMKVStringCodec.cpp
              src/main/cpp/flutter-bridge.cpp
         )
 
