@@ -1801,7 +1801,8 @@ uint32_t MMKV::getExpireTimeForKey(MMKVKey_t key) {
         return 0;
     }
     auto ptr = (const uint8_t *) raw.getPtr() + raw.length() - Fixed32Size;
-    auto time = *(const uint32_t *) ptr;
+    uint32_t time = 0;
+    memcpy(&time, ptr, sizeof(time));
     return time;
 }
 
@@ -1825,7 +1826,8 @@ mmkv::MMBuffer MMKV::getDataWithoutMTimeForKey(MMKVKey_t key) {
     auto newLength = raw.length() - Fixed32Size;
     if (m_enableKeyExpire) {
         auto ptr = (const uint8_t *) raw.getPtr() + newLength;
-        auto time = *(const uint32_t *) ptr;
+        uint32_t time = 0;
+        memcpy(&time, ptr, sizeof(time));
         if (time != ExpireNever && time <= getCurrentTimeInSecond()) {
 #ifdef MMKV_APPLE
             MMKVInfo("deleting expired key [%@] in mmkv [%s], due date %u", key, m_mmapID.c_str(), time);
@@ -1870,7 +1872,8 @@ size_t MMKV::filterExpiredKeys() {
             auto buffer = kvHolder.toMMBuffer(basePtr, m_crypter);
             auto ptr = (uint8_t *) buffer.getPtr();
             ptr += buffer.length() - Fixed32Size;
-            auto time = *(const uint32_t *) ptr;
+            uint32_t time = 0;
+            memcpy(&time, ptr, sizeof(time));
             if (time != ExpireNever && time <= now) {
                 auto oldKey = itr->first;
                 itr = m_dicCrypt->erase(itr);
@@ -1902,7 +1905,8 @@ size_t MMKV::filterExpiredKeys() {
             }
             auto ptr = basePtr + kvHolder.offset + kvHolder.computedKVSize;
             ptr += kvHolder.valueSize - Fixed32Size;
-            auto time = *(const uint32_t *) ptr;
+            uint32_t time = 0;
+            memcpy(&time, ptr, sizeof(time));
             if (time != ExpireNever && time <= now) {
                 auto oldKey = itr->first;
                 itr = m_dic->erase(itr);

@@ -19,6 +19,7 @@
  */
 
 #include "MMKV.h"
+#include "CodedOutputData.h"
 #include "aes/AESCrypt.h"
 #include <cassert>
 #include <cmath>
@@ -28,6 +29,7 @@
 #include <limits>
 #include <numeric>
 #include <new>
+#include <stdexcept>
 #include <unistd.h>
 
 using namespace std;
@@ -258,6 +260,48 @@ void testExpirationOverflow() {
     printf("test expiration overflow: passed\n");
 }
 
+void testCodedOutputBounds() {
+    uint8_t storage[8] = {};
+    CodedOutputData output(storage, sizeof(storage));
+
+    bool rejected = false;
+    try {
+        output.setPosition(sizeof(storage) + 1);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && output.getPosition() == 0);
+
+    rejected = false;
+    try {
+        output.writeRawVarint64(-1);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && output.getPosition() == 0);
+
+    rejected = false;
+    try {
+        const uint8_t payload[8] = {};
+        MMBuffer data(const_cast<uint8_t *>(payload), sizeof(payload), MMBufferNoCopy);
+        output.writeData(data);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && output.getPosition() == 0);
+
+    output.setPosition(sizeof(storage));
+    rejected = false;
+    try {
+        output.seek(numeric_limits<size_t>::max());
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && output.getPosition() == sizeof(storage));
+
+    printf("test coded output bounds: passed\n");
+}
+
 #ifndef MMKV_DISABLE_CRYPT
 static bool containsBytes(const unsigned char *storage, size_t storageSize, const uint8_t *value, size_t valueSize) {
     if (valueSize > storageSize) {
@@ -386,6 +430,7 @@ int main() {
     testRemove(mmkv);
     testOversizedKey(mmkv);
     testExpirationOverflow();
+    testCodedOutputBounds();
 #ifndef MMKV_DISABLE_CRYPT
     testCryptoKeyLifecycle();
 #endif

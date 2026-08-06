@@ -238,8 +238,12 @@ Rollback_cfb_decrypt(const uint8_t *input, const uint8_t *output, size_t len, AE
         output -= 16;
         input -= 16;
         for (; n < 16; n += sizeof(size_t)) {
-            size_t t = *(size_t *) (output + n);
-            *(size_t *) (ivec + n) = *(size_t *) (input + n) ^ t;
+            size_t inputWord = 0;
+            size_t outputWord = 0;
+            memcpy(&inputWord, input + n, sizeof(inputWord));
+            memcpy(&outputWord, output + n, sizeof(outputWord));
+            auto vectorWord = inputWord ^ outputWord;
+            memcpy(ivec + n, &vectorWord, sizeof(vectorWord));
         }
         n = 0;
         AES_decrypt(ivec, ivec, key);

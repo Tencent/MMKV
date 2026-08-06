@@ -119,7 +119,10 @@ MMBuffer::MMBuffer(MMBuffer &&other) noexcept : type(other.type) {
 
 MMBuffer::MMBuffer(MMBuffer &&other, size_t length) noexcept : type(other.type) {
     if (type == MMBufferType_Normal) {
-        size = std::min(other.size, length);
+        // MMBuffer is packed. Passing other.size to std::min() would bind an
+        // aligned size_t reference to a potentially unaligned member.
+        auto otherSize = other.size;
+        size = otherSize < length ? otherSize : length;
         ptr = other.ptr;
         isNoCopy = other.isNoCopy;
 #ifdef MMKV_APPLE
@@ -135,11 +138,21 @@ MMBuffer::MMBuffer(MMBuffer &&other, size_t length) noexcept : type(other.type) 
 MMBuffer &MMBuffer::operator=(MMBuffer &&other) noexcept {
     if (type == MMBufferType_Normal) {
         if (other.type == MMBufferType_Normal) {
-            std::swap(isNoCopy, other.isNoCopy);
-            std::swap(size, other.size);
-            std::swap(ptr, other.ptr);
+            // Do not use std::swap() on packed members: its references carry
+            // the natural alignment of their pointee types.
+            auto oldIsNoCopy = isNoCopy;
+            auto oldSize = size;
+            auto oldPtr = ptr;
+            isNoCopy = other.isNoCopy;
+            size = other.size;
+            ptr = other.ptr;
+            other.isNoCopy = oldIsNoCopy;
+            other.size = oldSize;
+            other.ptr = oldPtr;
 #ifdef MMKV_APPLE
-            std::swap(m_data, other.m_data);
+            auto oldData = m_data;
+            m_data = other.m_data;
+            other.m_data = oldData;
 #endif
         } else {
             type = MMBufferType_Small;
@@ -201,10 +214,11 @@ MMBuffer::~MMBuffer() {
 }
 
 void MMBuffer::detach() {
-    // type = MMBufferType_Small;
-    // paddedSize = 0;
-    auto memsetPtr = (size_t *) &type;
-    *memsetPtr = 0;
+    // MMBuffer is packed, so &type is not guaranteed to satisfy size_t's
+    // alignment. Reset the moved-from state field-by-field instead of using
+    // an unaligned, type-punned size_t store.
+    type = MMBufferType_Small;
+    paddedSize = 0;
 }
 
 } // namespace mmkv
