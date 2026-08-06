@@ -238,6 +238,26 @@ void testOversizedKey(MMKV *mmkv) {
     printf("test oversized key: passed\n");
 }
 
+void testOversizedValue(MMKV *mmkv) {
+    if constexpr (numeric_limits<size_t>::max() > numeric_limits<uint32_t>::max()) {
+        uint8_t placeholder = 0;
+        MMBuffer tooLarge(&placeholder,
+                          static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1,
+                          MMBufferNoCopy);
+        assert(!mmkv->set(tooLarge, "oversized-value"));
+
+        MMBuffer prefixOverflow(&placeholder,
+                                static_cast<size_t>(numeric_limits<uint32_t>::max()),
+                                MMBufferNoCopy);
+        assert(!mmkv->set(prefixOverflow, "prefix-overflow-value"));
+        assert(mmkv->set("writer-still-valid", "after-oversized-value"));
+        string value;
+        assert(mmkv->getString("after-oversized-value", value));
+        assert(value == "writer-still-valid");
+    }
+    printf("test oversized value: passed\n");
+}
+
 void testExpirationOverflow() {
     auto mmkv = MMKV::mmkvWithID("expiration_overflow_test");
     mmkv->clearAll();
@@ -490,6 +510,7 @@ int main() {
     testVector(mmkv);
     testRemove(mmkv);
     testOversizedKey(mmkv);
+    testOversizedValue(mmkv);
     testExpirationOverflow();
     testCodedOutputBounds();
     testLongDirectoryWalk();

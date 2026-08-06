@@ -348,12 +348,95 @@ void MMKV::checkLoadData() {
 
 constexpr uint32_t ItemSizeHolderSize = 4;
 
+static bool checkedAddSize(size_t left, size_t right, size_t &result) {
+    if (left > numeric_limits<size_t>::max() - right) {
+        return false;
+    }
+    result = left + right;
+    return true;
+}
+
+static bool checkedMultiplySize(size_t left, size_t right, size_t &result) {
+    if (left != 0 && right > numeric_limits<size_t>::max() / left) {
+        return false;
+    }
+    result = left * right;
+    return true;
+}
+
+static bool checkedDataHolderSize(size_t dataLength, size_t &encodedLength) {
+    if (dataLength > numeric_limits<uint32_t>::max()) {
+        return false;
+    }
+    auto prefixSize = static_cast<size_t>(pbRawVarint32Size(static_cast<uint32_t>(dataLength)));
+    return checkedAddSize(dataLength, prefixSize, encodedLength) &&
+           encodedLength <= numeric_limits<uint32_t>::max();
+}
+
+struct EncodedEntrySize {
+    bool keyAlreadyEncoded = false;
+    uint32_t keyLength = 0;
+    uint32_t valueLength = 0;
+    size_t totalSize = 0;
+};
+
+static bool checkedEncodedEntrySize(size_t keyDataLength,
+                                    uint32_t originKeyLength,
+                                    size_t dataLength,
+                                    bool isDataHolder,
+                                    EncodedEntrySize &result) {
+    if (originKeyLength > KeySizeLimit || keyDataLength < originKeyLength ||
+        keyDataLength > numeric_limits<uint32_t>::max() ||
+        dataLength > numeric_limits<uint32_t>::max()) {
+        return false;
+    }
+
+    result.keyAlreadyEncoded = originKeyLength < keyDataLength;
+    result.keyLength = static_cast<uint32_t>(keyDataLength);
+
+    size_t storedValueLength = dataLength;
+    if (isDataHolder && !checkedDataHolderSize(dataLength, storedValueLength)) {
+        return false;
+    }
+    result.valueLength = static_cast<uint32_t>(storedValueLength);
+
+    size_t storedKeyLength = keyDataLength;
+    if (!result.keyAlreadyEncoded &&
+        !checkedAddSize(storedKeyLength,
+                        static_cast<size_t>(pbRawVarint32Size(result.keyLength)),
+                        storedKeyLength)) {
+        return false;
+    }
+    size_t storedValueWithPrefix = 0;
+    if (!checkedAddSize(storedValueLength,
+                        static_cast<size_t>(pbRawVarint32Size(result.valueLength)),
+                        storedValueWithPrefix) ||
+        !checkedAddSize(storedKeyLength, storedValueWithPrefix, result.totalSize)) {
+        return false;
+    }
+    return result.totalSize <= numeric_limits<uint32_t>::max();
+}
+
+static constexpr size_t InvalidPreparedSize = numeric_limits<size_t>::max();
+
+static pair<MMBuffer, size_t> invalidPreparedData() {
+    return make_pair(MMBuffer(), InvalidPreparedSize);
+}
+
 static pair<MMBuffer, size_t> prepareEncode(const MMKVMap &dic) {
     // make some room for placeholder
     size_t totalSize = ItemSizeHolderSize;
     for (auto &itr : dic) {
         auto &kvHolder = itr.second;
-        totalSize += kvHolder.computedKVSize + kvHolder.valueSize;
+        size_t itemSize = 0;
+        if (!checkedAddSize(static_cast<size_t>(kvHolder.computedKVSize),
+                            static_cast<size_t>(kvHolder.valueSize), itemSize) ||
+            !checkedAddSize(totalSize, itemSize, totalSize)) {
+            return invalidPreparedData();
+        }
+    }
+    if (totalSize > numeric_limits<uint32_t>::max()) {
+        return invalidPreparedData();
     }
     return make_pair(MMBuffer(), totalSize);
 }
@@ -367,7 +450,13 @@ static pair<MMBuffer, size_t> prepareEncode(const MMKVMapCrypt &dic) {
     for (auto &itr : dic) {
         auto &kvHolder = itr.second;
         if (kvHolder.type == KeyValueHolderType_Offset) {
-            totalSize += kvHolder.pbKeyValueSize + kvHolder.keySize + kvHolder.valueSize;
+            size_t itemSize = 0;
+            if (!checkedAddSize(static_cast<size_t>(kvHolder.pbKeyValueSize),
+                                static_cast<size_t>(kvHolder.keySize), itemSize) ||
+                !checkedAddSize(itemSize, static_cast<size_t>(kvHolder.valueSize), itemSize) ||
+                !checkedAddSize(totalSize, itemSize, totalSize)) {
+                return invalidPreparedData();
+            }
             smallestOffet = min(smallestOffet, kvHolder.offset);
         } else {
             vec.emplace_back(itr.first, kvHolder.toMMBuffer(nullptr, nullptr));
@@ -376,14 +465,20 @@ static pair<MMBuffer, size_t> prepareEncode(const MMKVMapCrypt &dic) {
     if (smallestOffet > 5) {
         smallestOffet = ItemSizeHolderSize;
     }
-    totalSize += smallestOffet;
+    if (!checkedAddSize(totalSize, static_cast<size_t>(smallestOffet), totalSize) ||
+        totalSize > numeric_limits<uint32_t>::max()) {
+        return invalidPreparedData();
+    }
     if (vec.empty()) {
         return make_pair(MMBuffer(), totalSize);
     }
     auto buffer = MiniPBCoder::encodeDataWithObject(vec);
     // skip the pb size of buffer
     auto sizeOfMap = CodedInputData(buffer.getPtr(), buffer.length()).readUInt32();
-    totalSize += sizeOfMap;
+    if (!checkedAddSize(totalSize, static_cast<size_t>(sizeOfMap), totalSize) ||
+        totalSize > numeric_limits<uint32_t>::max()) {
+        return invalidPreparedData();
+    }
     return make_pair(std::move(buffer), totalSize);
 }
 #endif
@@ -394,7 +489,10 @@ static pair<MMBuffer, size_t> prepareEncode(MMKVVector &&vec) {
     auto buffer = MiniPBCoder::encodeDataWithObject(vec);
     // skip the pb size of buffer
     auto sizeOfMap = CodedInputData(buffer.getPtr(), buffer.length()).readUInt32();
-    totalSize += sizeOfMap;
+    if (!checkedAddSize(totalSize, static_cast<size_t>(sizeOfMap), totalSize) ||
+        totalSize > numeric_limits<uint32_t>::max()) {
+        return invalidPreparedData();
+    }
     return make_pair(std::move(buffer), totalSize);
 }
 
@@ -413,6 +511,13 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         }
         // try a full rewrite to make space
         auto preparedData = m_crypter ? prepareEncode(*m_dicCrypt) : prepareEncode(*m_dic);
+        size_t logicalSizeAfterAppend = 0;
+        if (preparedData.second == InvalidPreparedSize ||
+            !checkedAddSize(preparedData.second, newSize, logicalSizeAfterAppend) ||
+            logicalSizeAfterAppend > numeric_limits<uint32_t>::max()) {
+            MMKVError("[%s] logical data size overflow while appending", m_mmapID.c_str());
+            return false;
+        }
         // dic.empty() means inserting key-value for the first time, no need to call msync()
         return expandAndWriteBack(newSize, std::move(preparedData), m_crypter ? !m_dicCrypt->empty() : !m_dic->empty());
     }
@@ -423,19 +528,44 @@ bool MMKV::ensureMemorySize(size_t newSize) {
 bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData, bool needSync) {
     auto fileSize = m_file->getFileSize();
     auto sizeOfDic = preparedData.second;
-    size_t lenNeeded = sizeOfDic + Fixed32Size + newSize;
+    size_t encodedSize = 0;
+    size_t lenNeeded = 0;
+    if (sizeOfDic == InvalidPreparedSize ||
+        !checkedAddSize(sizeOfDic, Fixed32Size, encodedSize) ||
+        !checkedAddSize(encodedSize, newSize, lenNeeded)) {
+        MMKVError("[%s] size overflow while expanding data file", m_mmapID.c_str());
+        return false;
+    }
     size_t nowDicCount = m_crypter ? m_dicCrypt->size() : m_dic->size();
+    if (nowDicCount == numeric_limits<size_t>::max()) {
+        MMKVError("[%s] dictionary count overflow", m_mmapID.c_str());
+        return false;
+    }
     size_t laterDicCount = std::max<size_t>(1, nowDicCount + 1);
-    // or use <cmath> ceil()
-    size_t avgItemSize = (lenNeeded + laterDicCount - 1) / laterDicCount;
-    size_t futureUsage = avgItemSize * std::max<size_t>(8, laterDicCount / 2);
+    size_t avgItemSize = lenNeeded / laterDicCount + (lenNeeded % laterDicCount != 0);
+    auto futureItemCount = std::max<size_t>(8, laterDicCount / 2);
+    size_t futureUsage = 0;
+    size_t targetUsage = 0;
+    if (!checkedMultiplySize(avgItemSize, futureItemCount, futureUsage) ||
+        !checkedAddSize(lenNeeded, futureUsage, targetUsage)) {
+        MMKVError("[%s] future-usage overflow while expanding data file", m_mmapID.c_str());
+        return false;
+    }
     // 1. no space for a full rewrite, double it
     // 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
-    if (lenNeeded >= fileSize || (needSync && (lenNeeded + futureUsage) >= fileSize)) {
+    if (lenNeeded >= fileSize || (needSync && targetUsage >= fileSize)) {
         size_t oldSize = fileSize;
+        if (fileSize == 0) {
+            MMKVError("[%s] cannot expand a zero-sized data mapping", m_mmapID.c_str());
+            return false;
+        }
         do {
+            if (fileSize > numeric_limits<size_t>::max() / 2) {
+                MMKVError("[%s] file size overflow while expanding from %zu", m_mmapID.c_str(), fileSize);
+                return false;
+            }
             fileSize *= 2;
-        } while (lenNeeded + futureUsage >= fileSize);
+        } while (targetUsage >= fileSize);
         MMKVInfo("extending [%s] file size from %zu to %zu, incoming size:%zu, future usage:%zu", m_mmapID.c_str(),
                  oldSize, fileSize, newSize, futureUsage);
 
@@ -583,6 +713,12 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     if ((!isDataHolder && data.length() == 0) || isKeyEmpty(key)) {
         return false;
     }
+    size_t encodedDataHolderSize = data.length();
+    if (data.length() > numeric_limits<uint32_t>::max() ||
+        (isDataHolder && !checkedDataHolderSize(data.length(), encodedDataHolderSize))) {
+        MMKVError("[%s] reject value too large to encode: %zu", m_mmapID.c_str(), data.length());
+        return false;
+    }
     SCOPED_LOCK(m_lock);
     SCOPED_LOCK(m_exclusiveProcessLock);
     checkLoadData();
@@ -590,8 +726,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
         if (isDataHolder) {
-            auto sizeNeededForData = pbRawVarint32Size((uint32_t) data.length()) + data.length();
-            if (!KeyValueHolderCrypt::isValueStoredAsOffset(sizeNeededForData)) {
+            if (!KeyValueHolderCrypt::isValueStoredAsOffset(encodedDataHolderSize)) {
                 data = MiniPBCoder::encodeDataWithObject(data);
                 isDataHolder = false;
             }
@@ -821,20 +956,15 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 
 KVHolderRet_t
 MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
-    if (originKeyLength > KeySizeLimit) {
-        MMKVError("[%s] reject oversized key, keyLength=%u, limit=%u", m_mmapID.c_str(), originKeyLength, KeySizeLimit);
+    EncodedEntrySize entry;
+    if (!checkedEncodedEntrySize(keyData.length(), originKeyLength, data.length(), isDataHolder, entry)) {
+        MMKVError("[%s] reject unrepresentable key/value lengths, keyData=%zu, key=%u, value=%zu",
+                  m_mmapID.c_str(), keyData.length(), originKeyLength, data.length());
         return make_pair(false, KeyValueHolder());
     }
-    auto isKeyEncoded = (originKeyLength < keyData.length());
-    auto keyLength = static_cast<uint32_t>(keyData.length());
-    auto valueLength = static_cast<uint32_t>(data.length());
-    if (isDataHolder) {
-        valueLength += pbRawVarint32Size(valueLength);
-    }
-    // size needed to encode the key
-    size_t size = isKeyEncoded ? keyLength : (keyLength + pbRawVarint32Size(keyLength));
-    // size needed to encode the value
-    size += valueLength + pbRawVarint32Size(valueLength);
+    auto isKeyEncoded = entry.keyAlreadyEncoded;
+    auto valueLength = entry.valueLength;
+    auto size = entry.totalSize;
 
     SCOPED_LOCK(m_exclusiveProcessLock);
 
@@ -891,20 +1021,15 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
                                           const MMBuffer &keyData,
                                           bool isDataHolder,
                                           uint32_t originKeyLength) {
-    if (originKeyLength > KeySizeLimit) {
-        MMKVError("[%s] reject oversized key, keyLength=%u, limit=%u", m_mmapID.c_str(), originKeyLength, KeySizeLimit);
+    EncodedEntrySize entry;
+    if (!checkedEncodedEntrySize(keyData.length(), originKeyLength, data.length(), isDataHolder, entry)) {
+        MMKVError("[%s] reject unrepresentable key/value lengths, keyData=%zu, key=%u, value=%zu",
+                  m_mmapID.c_str(), keyData.length(), originKeyLength, data.length());
         return make_pair(false, KeyValueHolder());
     }
-    auto isKeyEncoded = (originKeyLength < keyData.length());
-    auto keyLength = static_cast<uint32_t>(keyData.length());
-    auto valueLength = static_cast<uint32_t>(data.length());
-    if (isDataHolder) {
-        valueLength += pbRawVarint32Size(valueLength);
-    }
-    // size needed to encode the key
-    size_t size = isKeyEncoded ? keyLength : (keyLength + pbRawVarint32Size(keyLength));
-    // size needed to encode the value
-    size += valueLength + pbRawVarint32Size(valueLength);
+    auto isKeyEncoded = entry.keyAlreadyEncoded;
+    auto valueLength = entry.valueLength;
+    auto size = entry.totalSize;
 
     if (!checkSizeForOverride(size)) {
         return doAppendDataWithKey(data, keyData, isDataHolder, originKeyLength);
@@ -994,6 +1119,9 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, MMKVKey_t key, bool 
 #else
     auto keyData = MMBuffer((void *) key.data(), key.size(), MMBufferNoCopy);
 #endif
+    if (keyData.length() > numeric_limits<uint32_t>::max()) {
+        return make_pair(false, KeyValueHolder());
+    }
     return doAppendDataWithKey(data, keyData, isDataHolder, static_cast<uint32_t>(keyData.length()));
 }
 
@@ -1004,6 +1132,9 @@ KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, MMKVKey_t key, boo
 #else
     auto keyData = MMBuffer((void *) key.data(), key.size(), MMBufferNoCopy);
 #endif
+    if (keyData.length() > numeric_limits<uint32_t>::max()) {
+        return make_pair(false, KeyValueHolder());
+    }
     return doOverrideDataWithKey(data, keyData, isDataHolder, static_cast<uint32_t>(keyData.length()));
 }
 
@@ -1016,12 +1147,11 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder
 
     // ensureMemorySize() might change kvHolder.offset, so have to do it early
     {
-        auto valueLength = static_cast<uint32_t>(data.length());
-        if (isDataHolder) {
-            valueLength += pbRawVarint32Size(valueLength);
+        EncodedEntrySize entry;
+        if (!checkedEncodedEntrySize(rawKeySize, keyLength, data.length(), isDataHolder, entry)) {
+            return make_pair(false, KeyValueHolder());
         }
-        auto size = rawKeySize + valueLength + pbRawVarint32Size(valueLength);
-        bool hasEnoughSize = ensureMemorySize(size);
+        bool hasEnoughSize = ensureMemorySize(entry.totalSize);
         if (!hasEnoughSize) {
             return make_pair(false, KeyValueHolder());
         }
@@ -1044,12 +1174,11 @@ KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, const KeyValueHold
     // ensureMemorySize() (inside doAppendDataWithKey() which be called from doOverrideDataWithKey())
     // might change kvHolder.offset, so have to do it early
     {
-        auto valueLength = static_cast<uint32_t>(data.length());
-        if (isDataHolder) {
-            valueLength += pbRawVarint32Size(valueLength);
+        EncodedEntrySize entry;
+        if (!checkedEncodedEntrySize(rawKeySize, keyLength, data.length(), isDataHolder, entry)) {
+            return make_pair(false, KeyValueHolder());
         }
-        auto size = rawKeySize + valueLength + pbRawVarint32Size(valueLength);
-        bool hasEnoughSize = checkSizeForOverride(size);
+        bool hasEnoughSize = checkSizeForOverride(entry.totalSize);
         if (!hasEnoughSize) {
             return appendDataWithKey(data, kvHolder, isDataHolder);
         }
@@ -1093,15 +1222,24 @@ bool MMKV::fullWriteback(AESCrypt *newCrypter, bool onlyWhileExpire) {
     SCOPED_LOCK(m_exclusiveProcessLock);
     auto preparedData = m_crypter ? prepareEncode(*m_dicCrypt) : prepareEncode(*m_dic);
     auto sizeOfDic = preparedData.second;
+    if (sizeOfDic == InvalidPreparedSize) {
+        MMKVError("[%s] encoded dictionary size overflow", m_mmapID.c_str());
+        return false;
+    }
     if (sizeOfDic > 0) {
         auto fileSize = m_file->getFileSize();
-        if (sizeOfDic + Fixed32Size <= fileSize) {
+        if (fileSize >= Fixed32Size && sizeOfDic <= fileSize - Fixed32Size) {
             return doFullWriteBack(std::move(preparedData), newCrypter);
         } else {
             assert(0);
             assert(newCrypter == nullptr);
             // expandAndWriteBack() will extend file & full rewrite, no need to write back again
-            auto newSize = sizeOfDic + Fixed32Size - fileSize;
+            size_t requiredSize = 0;
+            if (!checkedAddSize(sizeOfDic, Fixed32Size, requiredSize) || requiredSize < fileSize) {
+                MMKVError("[%s] size overflow while preparing full writeback", m_mmapID.c_str());
+                return false;
+            }
+            auto newSize = requiredSize - fileSize;
             return expandAndWriteBack(newSize, std::move(preparedData));
         }
     }
@@ -1274,6 +1412,12 @@ static void fullWriteBackWholeData(MMBuffer allData, size_t totalSize, CodedOutp
 bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
+    auto fileSize = m_file->getFileSize();
+    if (totalSize == InvalidPreparedSize || totalSize > numeric_limits<uint32_t>::max() ||
+        fileSize < Fixed32Size || totalSize > fileSize - Fixed32Size) {
+        MMKVWarning("[%s] invalid full-writeback size, new:%zu file:%zu", m_mmapID.c_str(), totalSize, fileSize);
+        return false;
+    }
 #    ifdef MMKV_IOS
     auto ret = guardForBackgroundWriting(ptr + Fixed32Size, totalSize);
     if (!ret.first) {
@@ -1291,7 +1435,7 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
     }
 
     delete m_output;
-    m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
+    m_output = new CodedOutputData(ptr + Fixed32Size, fileSize - Fixed32Size);
     if (m_crypter) {
         auto decrypter = m_crypter;
         memmoveDictionary(*m_dicCrypt, m_output, ptr, decrypter, encrypter, prepared);
@@ -1324,6 +1468,12 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *newCrypter
 bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *, bool needSync) {
     auto ptr = (uint8_t *) m_file->getMemory();
     auto totalSize = prepared.second;
+    auto fileSize = m_file->getFileSize();
+    if (totalSize == InvalidPreparedSize || totalSize > numeric_limits<uint32_t>::max() ||
+        fileSize < Fixed32Size || totalSize > fileSize - Fixed32Size) {
+        MMKVWarning("[%s] invalid full-writeback size, new:%zu file:%zu", m_mmapID.c_str(), totalSize, fileSize);
+        return false;
+    }
 #    ifdef MMKV_IOS
     auto ret = guardForBackgroundWriting(ptr + Fixed32Size, totalSize);
     if (!ret.first) {
@@ -1332,7 +1482,7 @@ bool MMKV::doFullWriteBack(pair<MMBuffer, size_t> prepared, AESCrypt *, bool nee
 #    endif
 
     delete m_output;
-    m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
+    m_output = new CodedOutputData(ptr + Fixed32Size, fileSize - Fixed32Size);
     if (prepared.first.length() != 0) {
         auto &preparedData = prepared.first;
         fullWriteBackWholeData(std::move(preparedData), totalSize, m_output);
@@ -1623,6 +1773,10 @@ uint32_t MMKV::safeExpirationPlusCurrentTime(uint32_t expireDuration) {
 
 bool MMKV::doFullWriteBack(MMKVVector &&vec) {
     auto preparedData = prepareEncode(std::move(vec));
+    if (preparedData.second == InvalidPreparedSize) {
+        MMKVError("[%s] encoded imported dictionary size overflow", m_mmapID.c_str());
+        return false;
+    }
 
     // must clean before write-back and after prepareEncode()
     if (m_crypter) {
@@ -1634,11 +1788,17 @@ bool MMKV::doFullWriteBack(MMKVVector &&vec) {
     bool ret = false;
     auto sizeOfDic = preparedData.second;
     auto fileSize = m_file->getFileSize();
-    if (sizeOfDic + Fixed32Size <= fileSize) {
+    if (fileSize >= Fixed32Size && sizeOfDic <= fileSize - Fixed32Size) {
         ret = doFullWriteBack(std::move(preparedData), nullptr);
     } else {
         // expandAndWriteBack() will extend file & full rewrite, no need to write back again
-        auto newSize = sizeOfDic + Fixed32Size - fileSize;
+        size_t requiredSize = 0;
+        if (!checkedAddSize(sizeOfDic, Fixed32Size, requiredSize) || requiredSize < fileSize) {
+            MMKVError("[%s] size overflow while preparing imported writeback", m_mmapID.c_str());
+            clearMemoryCache();
+            return false;
+        }
+        auto newSize = requiredSize - fileSize;
         ret = expandAndWriteBack(newSize, std::move(preparedData));
     }
 
