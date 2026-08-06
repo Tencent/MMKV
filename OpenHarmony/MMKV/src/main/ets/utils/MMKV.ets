@@ -816,7 +816,7 @@ export class MMKV {
     public static readonly ExpireInHour = 60 * 60;
     public static readonly ExpireInDay = 24 * 60 * 60;
     public static readonly ExpireInMonth = 30 * 24 * 60 * 60;
-    public static readonly ExpireInYear = 365 * 30 * 24 * 60 * 60;
+    public static readonly ExpireInYear = 365 * 24 * 60 * 60;
 
     /**
      * Enable auto key expiration. This is a upgrade operation, the file format will change.

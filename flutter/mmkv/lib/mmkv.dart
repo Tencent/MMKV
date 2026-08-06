@@ -212,7 +212,7 @@ class MMKV {
   static const int ExpireInHour = 60 * 60;
   static const int ExpireInDay = 24 * 60 * 60;
   static const int ExpireInMonth = 30 * 24 * 60 * 60;
-  static const int ExpireInYear = 365 * 30 * 24 * 60 * 60;
+  static const int ExpireInYear = 365 * 24 * 60 * 60;
 
   /// [expireDurationInSecond] override the default duration setting from [enableAutoKeyExpire()].
   /// * Passing [MMKV.ExpireNever] (aka 0) will never expire.

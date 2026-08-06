@@ -73,7 +73,7 @@ const (
 	MMKV_Expire_Hour = 60 * 60
 	MMKV_Expire_Day = 24 * 60 * 60
 	MMKV_Expire_Month = 30 * 24 * 60 * 60
-	MMKV_Expire_Year = 365 * 30 * 24 * 60 * 60
+	MMKV_Expire_Year = 365 * 24 * 60 * 60
 )
 
 // MMBuffer a wrapper of native C memory, efficient for simple usage
