@@ -20,17 +20,23 @@
 
 #include "MMKV.h"
 #include "CodedOutputData.h"
+#include "MemoryFile.h"
 #include "aes/AESCrypt.h"
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
 #include <iostream>
+#include <limits.h>
 #include <limits>
 #include <numeric>
 #include <new>
 #include <stdexcept>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 using namespace mmkv;
@@ -302,6 +308,61 @@ void testCodedOutputBounds() {
     printf("test coded output bounds: passed\n");
 }
 
+void testLongDirectoryWalk() {
+    char workingDirectory[PATH_MAX] = {};
+    assert(getcwd(workingDirectory, sizeof(workingDirectory)));
+    string baseTemplate = string(workingDirectory) + "/mmkv-walk-XXXXXX";
+    vector<char> mutableTemplate(baseTemplate.begin(), baseTemplate.end());
+    mutableTemplate.push_back('\0');
+    auto base = mkdtemp(mutableTemplate.data());
+    assert(base);
+
+    string path(base);
+    vector<pair<int, string>> directories;
+    auto currentFD = open(base, O_RDONLY | O_DIRECTORY);
+    assert(currentFD >= 0);
+
+    constexpr size_t targetPathLength = PATH_MAX - 64;
+    while (path.size() < targetPathLength) {
+        const auto remainingLength = targetPathLength - path.size();
+        if (remainingLength == 1) {
+            path.push_back('/');
+            break;
+        }
+        auto nameLength = min<size_t>(100, remainingLength - 1);
+        string name(nameLength, static_cast<char>('a' + directories.size() % 26));
+        assert(mkdirat(currentFD, name.c_str(), 0700) == 0);
+        auto childFD = openat(currentFD, name.c_str(), O_RDONLY | O_DIRECTORY);
+        assert(childFD >= 0);
+        directories.emplace_back(currentFD, name);
+        currentFD = childFD;
+        path += "/" + name;
+    }
+    assert(path.size() == targetPathLength);
+
+    const string filename(100, 'z');
+    auto fileFD = openat(currentFD, filename.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    assert(fileFD >= 0);
+    close(fileFD);
+
+    vector<string> files;
+    walkInDir(path, WalkFile, [&files](const MMKVPath_t &filePath, WalkType) {
+        files.push_back(filePath);
+    });
+    assert(files.size() == 1);
+    assert(files.front() == path + "/" + filename);
+
+    assert(unlinkat(currentFD, filename.c_str(), 0) == 0);
+    close(currentFD);
+    for (auto it = directories.rbegin(); it != directories.rend(); ++it) {
+        assert(unlinkat(it->first, it->second.c_str(), AT_REMOVEDIR) == 0);
+        close(it->first);
+    }
+    assert(rmdir(base) == 0);
+
+    printf("test long directory walk: passed\n");
+}
+
 #ifndef MMKV_DISABLE_CRYPT
 static bool containsBytes(const unsigned char *storage, size_t storageSize, const uint8_t *value, size_t valueSize) {
     if (valueSize > storageSize) {
@@ -431,6 +492,7 @@ int main() {
     testOversizedKey(mmkv);
     testExpirationOverflow();
     testCodedOutputBounds();
+    testLongDirectoryWalk();
 #ifndef MMKV_DISABLE_CRYPT
     testCryptoKeyLifecycle();
 #endif
