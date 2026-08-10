@@ -19,6 +19,12 @@ using ErrorCallback_t = uint32_t (*)(const char *mmapID, uint32_t errorType);
 using ContenctChangeCallback_t = void (*)(const char *mmapID);
 using LogCallback_t = void (*)(uint32_t level, const char *file, int32_t line, const char *funcname, const char *message);
 
+// SwiftPM packages native targets as static archives. Dart resolves the FFI
+// entry points with dlsym(), so those lookups don't create linker references
+// that would extract this translation unit from the archive. MMKVPlugin calls
+// this anchor to keep the bridge, and therefore MMKVCore, in the final binary.
+extern "C" void mmkvEnsureCoreLinked(void);
+
 @interface MyMMKVHandler : NSObject<MMKVHandler>
 
 @property (atomic, assign) ErrorCallback_t errorCallback;

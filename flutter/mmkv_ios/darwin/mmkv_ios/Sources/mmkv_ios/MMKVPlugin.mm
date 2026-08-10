@@ -25,6 +25,8 @@
 @implementation MMKVPlugin
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
+    mmkvEnsureCoreLinked();
+
     FlutterMethodChannel *channel = [FlutterMethodChannel
         methodChannelWithName:@"mmkv"
               binaryMessenger:[registrar messenger]];
