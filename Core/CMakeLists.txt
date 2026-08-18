@@ -33,8 +33,12 @@ IF(APPLE)
     add_compile_definitions(FORCE_POSIX)
 ENDIF()
 
+project(core)
+
 set(can_use_assembler TRUE)
-enable_language(ASM)
+IF(NOT MSVC)
+    enable_language(ASM)
+ENDIF()
 IF("${ANDROID_ABI}" STREQUAL "arm64-v8a")
     SET(ASM_OPTIONS "-x assembler-with-cpp")
     SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8+crypto -D__ANDROID__")
@@ -54,9 +58,6 @@ ELSEIF(UNIX AND (NOT APPLE))
         SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS} -march=armv8-a+crypto")
     ENDIF()
 ENDIF()
-
-
-project(core)
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.

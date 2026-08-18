@@ -91,6 +91,10 @@ constexpr auto MMKV_VERSION = "v2.4.1";
 #    include <SDKDDKVer.h>
 // Exclude rarely-used stuff from Windows headers
 #    define WIN32_LEAN_AND_MEAN
+// Keep Windows min/max macros from breaking std::numeric_limits<T>::min/max.
+#    ifndef NOMINMAX
+#        define NOMINMAX
+#    endif
 // Windows Header Files
 #    include <windows.h>
 
