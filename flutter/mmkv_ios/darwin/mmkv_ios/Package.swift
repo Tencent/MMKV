@@ -17,6 +17,8 @@ let package = Package(
         .macOS("10.15")
     ],
     products: [
+        // Dart resolves the bridge functions through DynamicLibrary.process().
+        // A dynamic product keeps those symbols visible to dlsym on Apple platforms.
         .library(name: "mmkv-ios", type: .dynamic, targets: ["mmkv_ios"])
     ],
     dependencies: [
