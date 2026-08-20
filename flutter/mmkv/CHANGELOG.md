@@ -1,4 +1,9 @@
 # MMKV for Flutter Change Log
+## v2.4.2 / 2026-08-20
+* Keep up with MMKV native libraries v2.4.2 and their hotfix/data-safety fixes.
+* **Fix:** Corrected the one-year expiration constant.
+* **Fix:** Fixed Swift Package Manager linkage and Dart FFI symbol export on iOS/macOS ([#1676](https://github.com/tencent/mmkv/issues/1676)).
+
 ## v2.4.1 / 2026-07-30
 * Keep up with MMKV native libraries v2.4.1 and their maintenance/data-safety fixes.
 * **Feature:** Added Swift Package Manager support for iOS and macOS while retaining CocoaPods as a fallback.

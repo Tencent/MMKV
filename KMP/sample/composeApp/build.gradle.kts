@@ -7,7 +7,7 @@ plugins {
 }
 
 val usePublishedMMKV = providers.gradleProperty("MMKV_USE_PUBLISHED").orNull == "true"
-val mmkvVersion = providers.gradleProperty("VERSION_NAME").getOrElse("2.4.1")
+val mmkvVersion = providers.gradleProperty("VERSION_NAME").getOrElse("2.4.2")
 
 kotlin {
     androidTarget {

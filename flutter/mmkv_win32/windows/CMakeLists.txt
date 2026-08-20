@@ -14,7 +14,7 @@ cmake_policy(VERSION 3.14...3.25)
 
 # Set the version of MMKV to use. This should match the version used in the
 # mmkv_flutter plugin.
-set(MMKV_VERSION "v2.4.1")
+set(MMKV_VERSION "v2.4.2")
 
 include(FetchContent)
 FetchContent_Declare(mmkv

@@ -5,7 +5,7 @@ import com.tencent.mmkv.kmp.MMKVNameSpace
 import kotlin.random.Random
 
 fun verifyMMKVConsumer() {
-    check(MMKV.version() == "v2.4.1")
+    check(MMKV.version() == "v2.4.2")
 
     val id = "published-consumer-${Random.nextLong()}"
     val kv = MMKV.mmkvWithID(id)

@@ -6,7 +6,7 @@ let mmkvDependency: Package.Dependency
 if let localPath = Context.environment["MMKV_LOCAL_PACKAGE_PATH"], !localPath.isEmpty {
     mmkvDependency = .package(name: "MMKV", path: localPath)
 } else {
-    mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", from: "2.4.1")
+    mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", from: "2.4.2")
     // mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", branch: "dev")
 }
 

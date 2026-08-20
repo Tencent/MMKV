@@ -8,18 +8,18 @@ same build.
 Confirm that these versions match:
 
 ```text
-Core/MMKVPredef.h                         v2.4.1
-Android/MMKV/gradle.properties            2.4.1
-KMP/gradle.properties                     2.4.1
-MMKV*.podspec                             2.4.1
+Core/MMKVPredef.h                         v2.4.2
+Android/MMKV/gradle.properties            2.4.2
+KMP/gradle.properties                     2.4.2
+MMKV*.podspec                             2.4.2
 ```
 
-The release tag `v2.4.1` must exist before publishing because the standalone
+The release tag `v2.4.2` must exist before publishing because the standalone
 KMP native build fallback resolves MMKV Core from that tag.
 
 ## 2. Publish the Android dependency locally
 
-The KMP Android target depends on `com.tencent:mmkv:2.4.1`.
+The KMP Android target depends on `com.tencent:mmkv:2.4.2`.
 Use one workspace-local repository for both the Android dependency and the KMP
 publications. The commands below keep Gradle's project caches under the ignored
 KMP build directory without changing `GRADLE_USER_HOME`.
@@ -63,7 +63,7 @@ KMP/gradlew -p KMP :mmkv:connectedAndroidDeviceTest \
 ```
 
 Before release, also install the sample as an external consumer of
-`com.tencent:mmkv-kmp:2.4.1` on physical Android and iOS devices. Opting into
+`com.tencent:mmkv-kmp:2.4.2` on physical Android and iOS devices. Opting into
 the sample with `MMKV_USE_PUBLISHED=true` disables its unpublished desktop
 target and replaces `project(":mmkv")` with the root KMP coordinate:
 
@@ -226,7 +226,7 @@ After Maven Central synchronization, test a clean project without
 
 ```kotlin
 commonMain.dependencies {
-    implementation("com.tencent:mmkv-kmp:2.4.1")
+    implementation("com.tencent:mmkv-kmp:2.4.2")
 }
 ```
 

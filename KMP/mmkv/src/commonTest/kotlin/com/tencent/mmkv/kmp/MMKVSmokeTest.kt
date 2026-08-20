@@ -40,7 +40,7 @@ class MMKVSmokeTest {
     @Test
     fun releaseVersionMatchesPublishedVersion() {
         MMKVTestEnv.initialize()
-        assertEquals("v2.4.1", MMKV.version())
+        assertEquals("v2.4.2", MMKV.version())
     }
 
     @Test

@@ -30,7 +30,7 @@ plugins {
     id("signing")
 }
 
-val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.1"
+val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.2"
 val usePublishedAndroidArtifact =
     providers.gradleProperty("MMKV_USE_PUBLISHED_ANDROID_ARTIFACT").orNull == "true"
 val androidStlMode = Attribute.of("stl_mode", String::class.java)
@@ -242,7 +242,7 @@ kotlin {
         }
     }
 
-    // Minimal KMP support for v2.4.1: Android + iOS only.
+    // Experimental KMP support currently targets Android + iOS only.
     val darwinTargets = listOf(
         iosArm64(),
         iosSimulatorArm64(),
@@ -251,7 +251,7 @@ kotlin {
 
     applyDefaultHierarchyTemplate {
         common {
-            // Keep Darwin source in one shared source set while publishing only iOS targets for v2.4.1.
+            // Keep Darwin source in one shared source set while publishing only iOS targets.
             group("darwin") {
                 group("ios")
             }
