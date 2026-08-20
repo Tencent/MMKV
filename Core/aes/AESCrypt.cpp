@@ -26,7 +26,6 @@
 #include <cstring>
 #include <ctime>
 #ifdef MMKV_WIN32
-// WIN32_LEAN_AND_MEAN excludes the CryptoAPI declarations from windows.h.
 #    include <wincrypt.h>
 #    ifdef _MSC_VER
 #        pragma comment(lib, "advapi32.lib")
@@ -57,14 +56,11 @@ uint32_t AESCrypt::randomItemSizeHolder(uint32_t size) {
 
 using namespace openssl;
 
-static void secureWipe(void *ptr, size_t len) noexcept;
-
 AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivLength, bool aes256)
     : m_isAES256(aes256) {
     if (key && keyLength > 0) {
         auto maxKeyLen = getMaxKeyLength();
-        m_keyLength = (keyLength > maxKeyLen) ? maxKeyLen : keyLength;
-        memcpy(m_key, key, m_keyLength);
+        memcpy(m_key, key, (keyLength > maxKeyLen) ? maxKeyLen : keyLength);
 
         resetIV(iv, ivLength);
 
@@ -76,32 +72,10 @@ AESCrypt::AESCrypt(const void *key, size_t keyLength, const void *iv, size_t ivL
 }
 
 AESCrypt::AESCrypt(const AESCrypt &other, const AESCryptStatus &status)
-    : m_isClone(true), m_isAES256(other.m_isAES256), m_keyLength(other.m_keyLength), m_number(status.m_number) {
-    memcpy(m_key, other.m_key, sizeof(m_key));
+    : m_isClone(true), m_isAES256(other.m_isAES256), m_number(status.m_number) {
+    //memcpy(m_key, other.m_key, sizeof(m_key));
     memcpy(m_vector, status.m_vector, sizeof(m_vector));
     m_aesKey = other.m_aesKey;
-}
-
-AESCrypt::AESCrypt(AESCrypt &&other) noexcept
-    : m_isClone(other.m_isClone)
-    , m_isAES256(other.m_isAES256)
-    , m_keyLength(other.m_keyLength)
-    , m_number(other.m_number)
-    , m_aesKey(other.m_aesKey)
-    , m_aesRollbackKey(other.m_aesRollbackKey) {
-    memcpy(m_key, other.m_key, sizeof(m_key));
-    memcpy(m_vector, other.m_vector, sizeof(m_vector));
-
-    // An owning source must no longer release the transferred schedules.
-    // Clone schedules are borrowed, but clearing their source pointers keeps
-    // the moved-from object uniformly inert.
-    other.m_isClone = true;
-    other.m_aesKey = nullptr;
-    other.m_aesRollbackKey = nullptr;
-    secureWipe(other.m_key, sizeof(other.m_key));
-    secureWipe(other.m_vector, sizeof(other.m_vector));
-    other.m_keyLength = 0;
-    other.m_number = 0;
 }
 
 // Wipes a memory region in a way intended to resist dead-store elimination.
@@ -134,7 +108,6 @@ AESCrypt::~AESCrypt() {
     }
     secureWipe(m_key, sizeof(m_key));
     secureWipe(m_vector, sizeof(m_vector));
-    m_keyLength = 0;
 }
 
 void AESCrypt::resetIV(const void *iv, size_t ivLength) {
@@ -155,26 +128,6 @@ void AESCrypt::getKey(void *output) const {
     if (output) {
         memcpy(output, m_key, getMaxKeyLength());
     }
-}
-
-bool AESCrypt::isSameKey(const void *key, size_t keyLength, bool aes256) const {
-    if (aes256 != m_isAES256 || !key) {
-        return false;
-    }
-
-    auto maxKeyLength = static_cast<size_t>(getMaxKeyLength());
-    auto effectiveLength = (keyLength > maxKeyLength) ? maxKeyLength : keyLength;
-    if (effectiveLength != m_keyLength) {
-        return false;
-    }
-
-    // Keep key comparison independent of the first differing byte.
-    auto input = static_cast<const uint8_t *>(key);
-    uint8_t difference = 0;
-    for (size_t index = 0; index < effectiveLength; index++) {
-        difference |= static_cast<uint8_t>(m_key[index] ^ input[index]);
-    }
-    return difference == 0;
 }
 
 void AESCrypt::encrypt(const void *input, void *output, size_t length) {
@@ -251,12 +204,8 @@ Rollback_cfb_decrypt(const uint8_t *input, const uint8_t *output, size_t len, AE
         output -= 16;
         input -= 16;
         for (; n < 16; n += sizeof(size_t)) {
-            size_t inputWord = 0;
-            size_t outputWord = 0;
-            memcpy(&inputWord, input + n, sizeof(inputWord));
-            memcpy(&outputWord, output + n, sizeof(outputWord));
-            auto vectorWord = inputWord ^ outputWord;
-            memcpy(ivec + n, &vectorWord, sizeof(vectorWord));
+            size_t t = *(size_t *) (output + n);
+            *(size_t *) (ivec + n) = *(size_t *) (input + n) ^ t;
         }
         n = 0;
         AES_decrypt(ivec, ivec, key);

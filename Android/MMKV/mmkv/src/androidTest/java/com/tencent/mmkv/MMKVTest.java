@@ -176,25 +176,6 @@ public class MMKVTest {
     }
 
     @Test
-    public void testCheckedImportJniEntryPoint() {
-        MMKV source = MMKV.mmkvWithID("checkedImportSource");
-        MMKV destination = MMKV.mmkvWithID("checkedImportDestination");
-        source.clearAll();
-        destination.clearAll();
-        try {
-            assertTrue(source.encode("plain", "value"));
-            assertTrue(source.encode("emoji-\uD83D\uDE00", 42));
-
-            assertEquals(2, destination.importFromCheckingKeyEncoding(source));
-            assertEquals("value", destination.decodeString("plain"));
-            assertEquals(42, destination.decodeInt("emoji-\uD83D\uDE00"));
-        } finally {
-            source.clearAll();
-            destination.clearAll();
-        }
-    }
-
-    @Test
     public void testBufferAndFeatureStateAPIs() {
         MMKV kv = MMKV.mmkvWithID("bufferAndFeatureStateTest");
         kv.clearAll();

@@ -102,7 +102,9 @@ TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len
     crc = crc ^ 0xffffffffUL;
 
     // roundup to 8 byte pointer
-    auto offset = std::min(len, (size_t) ((0U - (uintptr_t) buf) & 7U));
+    auto offset = std::min(
+        len,
+        static_cast<size_t>((static_cast<uintptr_t>(0) - reinterpret_cast<uintptr_t>(buf)) & 7));
     if (offset) {
         crc = armv8_crc32_small(crc, buf, offset);
         buf += offset;
@@ -113,24 +115,24 @@ TARGET_ARM_CRC uint32_t armv8_crc32(uint32_t crc, const uint8_t *buf, size_t len
     }
 
     // unroll to 8 * 8 byte per loop
+    auto ptr64 = (const uint64_t *) buf;
     for (constexpr auto step = 8 * sizeof(uint64_t); len >= step; len -= step) {
-        for (size_t index = 0; index < 8; index++) {
-            uint64_t word = 0;
-            memcpy(&word, buf, sizeof(word));
-            crc = __crc32d(crc, word);
-            buf += sizeof(word);
-        }
+        crc = __crc32d(crc, *ptr64++);
+        crc = __crc32d(crc, *ptr64++);
+        crc = __crc32d(crc, *ptr64++);
+        crc = __crc32d(crc, *ptr64++);
+        crc = __crc32d(crc, *ptr64++);
+        crc = __crc32d(crc, *ptr64++);
+        crc = __crc32d(crc, *ptr64++);
+        crc = __crc32d(crc, *ptr64++);
     }
 
     for (constexpr auto step = sizeof(uint64_t); len >= step; len -= step) {
-        uint64_t word = 0;
-        memcpy(&word, buf, sizeof(word));
-        crc = __crc32d(crc, word);
-        buf += sizeof(word);
+        crc = __crc32d(crc, *ptr64++);
     }
 
     if (len) {
-        crc = armv8_crc32_small(crc, buf, len);
+        crc = armv8_crc32_small(crc, (const uint8_t *) ptr64, len);
     }
 
     return crc ^ 0xffffffffUL;

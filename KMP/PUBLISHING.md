@@ -47,7 +47,6 @@ KMP/gradlew -p KMP \
   :mmkv:linkDebugTestIosArm64 \
   :mmkv:linkDebugTestIosSimulatorArm64 \
   :mmkv:publishAllPublicationsToLocalTestRepository \
-  -PMMKV_USE_PUBLISHED_ANDROID_ARTIFACT=true \
   -PMMKV_LOCAL_REPOSITORY="$LOCAL_REPO" \
   --project-cache-dir "$PWD/KMP/build/gradle-project-cache"
 ```
@@ -57,7 +56,6 @@ Run the common smoke suite on a connected Android device:
 ```bash
 adb devices -l
 KMP/gradlew -p KMP :mmkv:connectedAndroidDeviceTest \
-  -PMMKV_USE_PUBLISHED_ANDROID_ARTIFACT=true \
   -PMMKV_LOCAL_REPOSITORY="$LOCAL_REPO" \
   --project-cache-dir "$PWD/KMP/build/gradle-project-cache"
 ```
@@ -71,7 +69,6 @@ target and replaces `project(":mmkv")` with the root KMP coordinate:
 KMP/gradlew -p KMP :sample:composeApp:installDebug \
   -PMMKV_INCLUDE_SAMPLE=true \
   -PMMKV_USE_PUBLISHED=true \
-  -PMMKV_USE_PUBLISHED_ANDROID_ARTIFACT=true \
   -PMMKV_LOCAL_REPOSITORY="$LOCAL_REPO" \
   --project-cache-dir "$PWD/KMP/build/gradle-project-cache"
 ```
@@ -84,7 +81,6 @@ Compose resources without creating a project-root `.gradle` directory:
 KMP/gradlew -p KMP :sample:composeApp:podInstall \
   -PMMKV_INCLUDE_SAMPLE=true \
   -PMMKV_USE_PUBLISHED=true \
-  -PMMKV_USE_PUBLISHED_ANDROID_ARTIFACT=true \
   -PMMKV_LOCAL_REPOSITORY="$LOCAL_REPO" \
   --project-cache-dir "$PWD/KMP/build/gradle-project-cache"
 
@@ -100,7 +96,6 @@ KMP/gradlew -p KMP :sample:composeApp:syncFramework \
   -Pkotlin.native.cocoapods.configuration=Debug \
   -PMMKV_INCLUDE_SAMPLE=true \
   -PMMKV_USE_PUBLISHED=true \
-  -PMMKV_USE_PUBLISHED_ANDROID_ARTIFACT=true \
   -PMMKV_LOCAL_REPOSITORY="$LOCAL_REPO" \
   --project-cache-dir "$PWD/KMP/build/gradle-project-cache"
 
@@ -178,7 +173,6 @@ cd Android/MMKV
 
 cd ../../KMP
 ./gradlew :mmkv:publishAllPublicationsToSonatypeRepository \
-  -PMMKV_USE_PUBLISHED_ANDROID_ARTIFACT=true \
   -PMMKV_USE_MAVEN_LOCAL=true
 ```
 

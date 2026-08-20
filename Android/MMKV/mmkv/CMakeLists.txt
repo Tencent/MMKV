@@ -20,7 +20,6 @@ add_library( mmkv
 
              # Provides a relative path to your source file(s).
              src/main/cpp/native-bridge.cpp
-             src/main/cpp/MMKVStringCodec.cpp
              src/main/cpp/flutter-bridge.cpp
         )
 
@@ -29,8 +28,6 @@ set_target_properties(mmkv PROPERTIES
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
         )
-
-target_include_directories(mmkv PRIVATE ../../../Core)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

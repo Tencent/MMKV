@@ -73,51 +73,6 @@ if(BUILD_TESTING)
     add_test(NAME TestThreadLock COMMAND TestThreadLock)
 endif()
 
-# Link the rollback test directly with the static core so its test-local
-# msync interposer can deterministically fail one durability barrier.
-add_executable(CryptoRollbackTest
-        CryptoRollbackTest.cpp)
-target_include_directories(CryptoRollbackTest PRIVATE
-        ../../Core)
-target_link_libraries(CryptoRollbackTest
-        core pthread ${CMAKE_DL_LIBS})
-set_target_properties(CryptoRollbackTest PROPERTIES
-        CXX_STANDARD 20
-        )
-if(BUILD_TESTING)
-    add_test(NAME CryptoRollbackTest COMMAND CryptoRollbackTest)
-    set_tests_properties(CryptoRollbackTest PROPERTIES
-            ENVIRONMENT "MMKV_TEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/rollback-test-root")
-endif()
-
-add_executable(TestImportValidation
-        TestImportValidation.cpp)
-target_include_directories(TestImportValidation PRIVATE
-        ../../Core)
-target_link_libraries(TestImportValidation
-        core
-        pthread)
-set_target_properties(TestImportValidation PROPERTIES
-        CXX_STANDARD 17
-        )
-if(BUILD_TESTING)
-    add_test(NAME TestImportValidation COMMAND TestImportValidation)
-    set_tests_properties(TestImportValidation PROPERTIES
-            ENVIRONMENT "MMKV_TEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/TestImportValidationData")
-endif()
-
-add_executable(TestMMKVStringCodec
-        TestMMKVStringCodec.cpp
-        ../../Android/MMKV/mmkv/src/main/cpp/MMKVStringCodec.cpp)
-target_include_directories(TestMMKVStringCodec PRIVATE
-        ../../Android/MMKV/mmkv/src/main/cpp)
-set_target_properties(TestMMKVStringCodec PROPERTIES
-        CXX_STANDARD 17
-        )
-if(BUILD_TESTING)
-    add_test(NAME TestMMKVStringCodec COMMAND TestMMKVStringCodec)
-endif()
-
 add_executable(demo_c
         demo_c.c)
 target_link_libraries(demo_c

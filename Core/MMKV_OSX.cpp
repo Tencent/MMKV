@@ -309,7 +309,8 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
                     return false;
                 }
                 auto dataLength = static_cast<uint32_t>(data.length());
-                auto encodedLength = static_cast<uint64_t>(dataLength) + pbRawVarint32Size(dataLength) + Fixed32Size;
+                uint64_t encodedLength =
+                    static_cast<uint64_t>(dataLength) + pbRawVarint32Size(dataLength) + Fixed32Size;
                 if (encodedLength > numeric_limits<uint32_t>::max()) {
                     MMKVError("[%s] reject expiring value too large to encode: %zu", m_mmapID.c_str(), data.length());
                     return false;
@@ -343,7 +344,7 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
                         MMBuffer data(archived, MMBufferNoCopy);
                         if (data.length() > 0) {
                             if (data.length() > numeric_limits<uint32_t>::max() - Fixed32Size) {
-                                MMKVError("[%s] reject archived value too large to add expiration metadata: %zu",
+                                MMKVError("[%s] reject expiring archived value too large to encode: %zu",
                                           m_mmapID.c_str(), data.length());
                                 return false;
                             }
@@ -528,7 +529,6 @@ bool MMKV::removeValuesForKeys(NSArray *arrKeys) {
         auto ret = fullWriteback();
         if (!ret) {
             clearMemoryCache();
-            loadFromFile();
         }
         return ret;
     }

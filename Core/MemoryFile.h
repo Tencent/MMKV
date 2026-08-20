@@ -23,7 +23,6 @@
 #ifdef __cplusplus
 
 #include "MMKVPredef.h"
-#include <array>
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -93,9 +92,7 @@ public:
 
     ~File() { close(); }
 
-    // existingOnly suppresses create/truncate semantics. It is used when a
-    // live mapping needs a temporary descriptor for its original file.
-    bool open(bool existingOnly = false);
+    bool open();
 
     void close();
 
@@ -132,17 +129,8 @@ class MemoryFile {
     size_t m_size;
     const bool m_readOnly;
     const bool m_isMayflyFD;
-    std::array<uint64_t, 2> m_mappedFileIdentity{};
-    bool m_hasMappedFileIdentity = false;
-    std::array<uint64_t, 2> m_expectedFileIdentity{};
-    bool m_hasExpectedFileIdentity = false;
-    bool m_keepFileHandleForReload = false;
 
     bool mmapOrCleanup(FileLock *fileLock);
-
-    bool captureMappedFileIdentity();
-
-    void clearMappedFileIdentity();
 
     void doCleanMemoryCache(bool forceClean);
 
@@ -173,14 +161,7 @@ public:
 
     MMKVFileHandle_t getFd();
 
-    // Compare a pinned handle with the exact file used to create the live or
-    // most recently lazy-cleared mapping. This never reopens getPath(), which
-    // is important after a path or one of its parents is renamed or replaced.
-    bool isMappedFile(MMKVFileHandle_t fileHandle) const;
-
-    // forceClean releases a handle retained by reloadFromFileHandle() after
-    // the caller's complete load/validation sequence has finished.
-    void cleanMayflyFD(bool forceClean = false);
+    void cleanMayflyFD();
 
     // the newly expanded file content will be zeroed
     bool truncate(size_t size, FileLock *fileLock = nullptr);
@@ -190,17 +171,7 @@ public:
     // call this if clearMemoryCache() has been called
     void reloadFromFile(size_t expectedCapacity = 0);
 
-    // Remap from a duplicate of an already pinned handle instead of resolving
-    // getPath(). A successful mayfly reload retains a duplicate through the
-    // caller's immediate load/size check; call cleanMayflyFD() afterward. On
-    // failure, retain the intended identity (and a duplicate when possible)
-    // so a retry cannot silently switch to a replacement at the old path.
-    bool reloadFromFileHandle(MMKVFileHandle_t fileHandle, size_t expectedCapacity = 0);
-
-    // resetFileIdentity is reserved for intentional delete/recreate recovery.
-    // Ordinary lazy clears retain the last mapped identity and fail closed if
-    // the path is replaced before the next load.
-    void clearMemoryCache(bool resetFileIdentity = false) { doCleanMemoryCache(resetFileIdentity); }
+    void clearMemoryCache() { doCleanMemoryCache(false); }
 
 #ifndef MMKV_WIN32
     bool isFileValid() { return (m_isMayflyFD || m_diskFile.isFileValid()) && m_size > 0 && m_ptr; }
@@ -226,119 +197,13 @@ extern bool getFileSize(int fd, size_t &size);
 #endif
 extern bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 
-// Open a directory without following symlinks/reparse points. Every path
-// component is opened relative to the previously verified component.
-// The caller owns the returned handle and must close it with closeFileHandle().
-extern MMKVFileHandle_t openDirectoryHandle(const MMKVPath_t &dirPath);
-
-// As above, but creates missing directory components relative to the pinned
-// parent. Existing symlinks/reparse points and lexical parent traversal are
-// rejected before any child is created through them.
-extern MMKVFileHandle_t openOrCreateDirectoryHandle(const MMKVPath_t &dirPath);
-
-// Open one direct child directory relative to an already pinned parent.
-// dirPath identifies dirFD for Windows identity revalidation; POSIX uses
-// dirFD directly. Existing symlinks/reparse points are never followed.
-extern MMKVFileHandle_t openDirectoryInDir(MMKVFileHandle_t dirFD,
-                                           const MMKVPath_t &dirPath,
-                                           const MMKVPath_t &childName,
-                                           bool create);
-
-// Open one direct child of a pinned directory without following
-// symlinks/reparse points. dirPath identifies dirFD for Windows identity
-// revalidation; POSIX uses dirFD directly. The paired form guarantees both
-// children are opened from the same pinned parent and closes both on failure.
-extern MMKVFileHandle_t openRegularFileInDir(MMKVFileHandle_t dirFD,
-                                             const MMKVPath_t &dirPath,
-                                             const MMKVPath_t &fileName);
-extern bool openRegularFilePairInDir(MMKVFileHandle_t dirFD,
-                                     const MMKVPath_t &dirPath,
-                                     const MMKVPath_t &firstName,
-                                     const MMKVPath_t &secondName,
-                                     MMKVFileHandle_t &firstFD,
-                                     MMKVFileHandle_t &secondFD,
-                                     bool writable = false);
-extern bool openOrCreateRegularFilePairInDir(MMKVFileHandle_t dirFD,
-                                             const MMKVPath_t &dirPath,
-                                             const MMKVPath_t &firstName,
-                                             const MMKVPath_t &secondName,
-                                             MMKVFileHandle_t &firstFD,
-                                             MMKVFileHandle_t &secondFD,
-                                             bool &firstCreated,
-                                             bool &secondCreated);
-
-// Open an existing regular child for read/write, or create it if missing.
-// Existing symlinks/reparse points and all non-regular entries are rejected.
-// No truncation happens until the returned descriptor is explicitly copied to.
-extern MMKVFileHandle_t openOrCreateRegularFileInDir(MMKVFileHandle_t dirFD,
-                                                     const MMKVPath_t &dirPath,
-                                                     const MMKVPath_t &fileName);
-
-// Convenience path form. It pins and verifies dirPath internally.
-extern MMKVFileHandle_t openRegularFileInDir(const MMKVPath_t &dirPath, const MMKVPath_t &fileName);
-extern void closeFileHandle(MMKVFileHandle_t handle);
-extern bool isSameFile(MMKVFileHandle_t left, MMKVFileHandle_t right);
-extern bool syncFile(MMKVFileHandle_t handle);
-// The destination buffer is left unchanged unless the full read succeeds.
-extern bool readFileContent(MMKVFileHandle_t srcFD, void *buffer, size_t size);
-
 // copy file by potentially renaming target file, might change file inode
 extern bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
-extern bool copyFile(MMKVFileHandle_t srcFD, const MMKVPath_t &dstPath);
-extern bool copyFile(MMKVFileHandle_t srcFD,
-                     MMKVFileHandle_t dstDirFD,
-                     const MMKVPath_t &dstDirPath,
-                     const MMKVPath_t &dstFileName);
-
-// Stage both source files before replacing either destination. If a
-// pre-existing regular destination pair is present, best-effort rollback
-// restores both files when either replacement fails.
-extern bool copyFilePair(MMKVFileHandle_t firstSrcFD,
-                         MMKVFileHandle_t secondSrcFD,
-                         MMKVFileHandle_t dstDirFD,
-                         const MMKVPath_t &dstDirPath,
-                         const MMKVPath_t &firstDstName,
-                         const MMKVPath_t &secondDstName);
 
 // copy file by source file content, keep file inode the same
 extern bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath);
 extern bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD);
 extern bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool needTruncate);
-extern bool copyFileContent(MMKVFileHandle_t srcFD, const MMKVPath_t &dstPath);
-extern bool copyFileContent(MMKVFileHandle_t srcFD, MMKVFileHandle_t dstFD);
-extern bool copyFileContent(MMKVFileHandle_t srcFD, MMKVFileHandle_t dstFD, bool needTruncate);
-extern bool copyFileContent(MMKVFileHandle_t srcFD,
-                            MMKVFileHandle_t dstDirFD,
-                            const MMKVPath_t &dstDirPath,
-                            const MMKVPath_t &dstFileName);
-
-// Stage both sources and snapshot both destinations before writing either
-// destination. A late failure rolls both destination contents back.
-extern bool copyFileContentPair(MMKVFileHandle_t firstSrcFD,
-                                MMKVFileHandle_t secondSrcFD,
-                                MMKVFileHandle_t firstDstFD,
-                                MMKVFileHandle_t secondDstFD,
-                                MMKVFileHandle_t tempDirFD,
-                                const MMKVPath_t &tempDirPath);
-
-// As above for destinations created by openOrCreateRegularFilePairInDir().
-// Content rollback is handle-bound. On platforms without an atomic
-// unlink-by-handle operation, a failed transaction may leave a newly created
-// entry in place rather than risk deleting a concurrent replacement by name.
-extern bool copyFileContentPair(MMKVFileHandle_t firstSrcFD,
-                                MMKVFileHandle_t secondSrcFD,
-                                MMKVFileHandle_t firstDstFD,
-                                MMKVFileHandle_t secondDstFD,
-                                MMKVFileHandle_t tempDirFD,
-                                const MMKVPath_t &tempDirPath,
-                                const MMKVPath_t &firstDstName,
-                                const MMKVPath_t &secondDstName,
-                                bool firstCreated,
-                                bool secondCreated);
-
-// Return a read/write temporary file pinned beneath dirFD. The directory entry
-// is already unlinked/delete-pending, so closing the handle cleans it up.
-extern MMKVFileHandle_t createTemporaryFileInDir(MMKVFileHandle_t dirFD, const MMKVPath_t &dirPath);
 
 //#if defined(MMKV_APPLE) || defined(MMKV_WIN32)
 bool isDiskOfMMAPFileCorrupted(MemoryFile *file, bool &needReportReadFail);
@@ -352,13 +217,6 @@ enum WalkType : uint32_t {
     WalkFile = 1 << 0,
     WalkFolder = 1 << 1,
 };
-// Enumerate direct children of a pinned directory. The callback receives a
-// basename, not a reconstructed path. It is invoked only after a successful,
-// stable enumeration.
-extern bool walkInOpenedDir(MMKVFileHandle_t dirFD,
-                            const MMKVPath_t &dirPath,
-                            WalkType type,
-                            const std::function<void(const MMKVPath_t &, WalkType)> &walker);
 extern void walkInDir(const MMKVPath_t &dirPath, WalkType type, const std::function<void(const MMKVPath_t&, WalkType)> &walker);
 
 } // namespace mmkv

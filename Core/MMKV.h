@@ -53,11 +53,6 @@ class NameSpace;
 
 MMKV_NAMESPACE_BEGIN
 
-class MMKV;
-namespace internal {
-class CheckedImportAccess;
-} // namespace internal
-
 enum MMKVMode : uint32_t {
     MMKV_SINGLE_PROCESS = 1 << 0,
     MMKV_MULTI_PROCESS = 1 << 1,
@@ -218,7 +213,7 @@ class MMKV_EXPORT MMKV {
 
     bool checkFileCRCValid(size_t actualSize, uint32_t crcDigest);
 
-    bool recalculateCRCDigestWithIV(const void *iv);
+    void recalculateCRCDigestWithIV(const void *iv);
     void recalculateCRCDigestOnly();
 
     void updateCRCDigest(const uint8_t *ptr, size_t length);
@@ -235,25 +230,9 @@ class MMKV_EXPORT MMKV {
 
     bool fullWriteback(mmkv::AESCrypt *newCrypter = nullptr, bool onlyWhileExpire = false);
 
-    // Keep the original private symbol for native binary compatibility.
-    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData,
-                         mmkv::AESCrypt *newCrypter,
-                         bool needSync = true);
-
-    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData,
-                         mmkv::AESCrypt *newCrypter,
-                         bool needSync,
-                         const uint8_t *preparedIV);
+    bool doFullWriteBack(std::pair<mmkv::MMBuffer, size_t> preparedData, mmkv::AESCrypt *newCrypter, bool needSync = true);
 
     bool doFullWriteBack(mmkv::MMKVVector &&vec);
-
-    // Internal result-bearing variant for operations that must not report success when clear fails.
-    bool clearAllWithResult(bool keepSpace);
-
-    bool syncWithResult(SyncFlag flag);
-
-    // Drop derived dictionary/writer state and reconstruct it from the mapped files.
-    void reloadFromFileAfterWriteFailure();
 
     mmkv::MMBuffer getRawDataForKey(MMKVKey_t key);
 
@@ -298,38 +277,9 @@ class MMKV_EXPORT MMKV {
     void checkReSetCryptKey(int fd, int metaFD, const std::string *cryptKey, bool aes256);
 #endif
     static bool backupOneToDirectory(const std::string &mmapKey, const MMKVPath_t &dstPath, const MMKVPath_t &srcPath, bool compareFullPath);
-
-    static bool backupOneToDirectoryWithHandles(const std::string &mmapKey,
-                                                const MMKVPath_t &dstPath,
-                                                const MMKVPath_t &srcPath,
-                                                bool compareFullPath,
-                                                MMKVFileHandle_t srcDirFD,
-                                                const MMKVPath_t &srcDirPath,
-                                                const MMKVPath_t &srcName,
-                                                MMKVFileHandle_t dstDirFD,
-                                                const MMKVPath_t &dstDirPath,
-                                                const MMKVPath_t &dstName);
-    static size_t backupAllToDirectoryWithHandles(const MMKVPath_t &dstDir,
-                                                  const MMKVPath_t &srcDir,
-                                                  bool isInSpecialDir,
-                                                  MMKVFileHandle_t srcDirFD,
-                                                  MMKVFileHandle_t dstDirFD);
+    static size_t backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool isInSpecialDir);
     static bool restoreOneFromDirectory(const std::string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath);
-    static bool restoreOneFromDirectoryWithHandles(const std::string &mmapKey,
-                                                   const MMKVPath_t &srcPath,
-                                                   const MMKVPath_t &dstPath,
-                                                   bool compareFullPath,
-                                                   MMKVFileHandle_t srcDirFD,
-                                                   const MMKVPath_t &srcDirPath,
-                                                   const MMKVPath_t &srcName,
-                                                   MMKVFileHandle_t dstDirFD,
-                                                   const MMKVPath_t &dstDirPath,
-                                                   const MMKVPath_t &dstName);
-    static size_t restoreAllFromDirectoryWithHandles(const MMKVPath_t &srcDir,
-                                                     const MMKVPath_t &dstDir,
-                                                     bool isInSpecialDir,
-                                                     MMKVFileHandle_t srcDirFD,
-                                                     MMKVFileHandle_t dstDirFD);
+    static size_t restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir);
 
     static uint32_t getCurrentTimeInSecond();
     static uint32_t safeExpirationPlusCurrentTime(uint32_t expireDuration);
@@ -655,7 +605,7 @@ public:
     void trim();
 
     // import all key-value items from source
-    // return count of items successfully imported
+    // return count of items imported
     size_t importFrom(MMKV *src);
 
     // Permanently close and destroy this instance. This is a terminal operation.
@@ -732,7 +682,6 @@ public:
     MMKV &operator=(const MMKV &other) = delete;
 
     friend class mmkv::NameSpace;
-    friend class internal::CheckedImportAccess;
 };
 
 #if defined(MMKV_HAS_CPP20)

@@ -28,10 +28,6 @@ import com.tencent.mmkv.MMKVLogLevel as AndroidMMKVLogLevel
 import com.tencent.mmkv.MMKVRecoverStrategic as AndroidMMKVRecoverStrategic
 import kotlin.text.CharacterCodingException
 
-private const val IMPORT_REJECTED_INCOMPATIBLE_ANDROID_KEY = -1L
-private const val INCOMPATIBLE_ANDROID_KEY_IMPORT_ERROR =
-    "Cannot import an Android MMKV source containing NUL or invalid Modified UTF-8 keys"
-
 // region Platform-specific initialization (Android needs Context)
 
 /**
@@ -181,10 +177,8 @@ actual class MMKV internal constructor(impl: AndroidMMKV) {
         return try {
             bytes.decodeToString(throwOnInvalidSequence = true)
         } catch (_: CharacterCodingException) {
-            // KMP used Android's JNI String bridge before canonical UTF-8 encoding was adopted.
-            // Decode validated Modified UTF-8 locally: arbitrary malformed bytes must never reach
-            // NewStringUTF(), whose input contract requires valid Modified UTF-8.
-            bytes.decodeLegacyModifiedUtf8OrNull() ?: bytes.decodeToString()
+            // Values written by older Android KMP releases used JNI Modified UTF-8.
+            impl.decodeString(validKey, defaultValue)
         }
     }
     actual fun decodeBytes(key: String): ByteArray? = impl.decodeBytes(key.requireValidMMKVKey())
@@ -223,13 +217,7 @@ actual class MMKV internal constructor(impl: AndroidMMKV) {
     }
     actual fun clearMemoryCache() = impl.clearMemoryCache()
 
-    actual fun importFrom(source: MMKV): Long {
-        val imported = impl.importFromCheckingKeyEncoding(source.impl)
-        require(imported != IMPORT_REJECTED_INCOMPATIBLE_ANDROID_KEY) { INCOMPATIBLE_ANDROID_KEY_IMPORT_ERROR }
-        return imported
-    }
-
-    internal fun removeLegacyAndroidNulKey(key: String) = impl.removeValueForKey(key)
+    actual fun importFrom(source: MMKV): Long = impl.importFrom(source.impl)
 
     actual fun enableAutoKeyExpire(expiredInSeconds: UInt): Boolean = impl.enableAutoKeyExpire(expiredInSeconds.toInt())
     actual fun disableAutoKeyExpire(): Boolean = impl.disableAutoKeyExpire()
@@ -267,64 +255,6 @@ actual class MMKV internal constructor(impl: AndroidMMKV) {
     actual val isCompareBeforeSetEnabled: Boolean get() = impl.isCompareBeforeSetEnabled()
 
     // endregion
-}
-
-/**
- * Remove a key written by an older Android KMP release through JNI Modified UTF-8.
- *
- * New KMP operations reject embedded NUL characters so their key semantics stay identical on
- * every target. Android is the only target where an older release could persist such a key; this
- * cleanup API intentionally accepts only those otherwise-invalid keys.
- */
-fun MMKV.removeLegacyNulKey(key: String) {
-    require('\u0000' in key) { "Legacy key must contain a NUL (\\u0000) character" }
-    removeLegacyAndroidNulKey(key)
-}
-
-private fun ByteArray.decodeLegacyModifiedUtf8OrNull(): String? {
-    val chars = CharArray(size)
-    var byteIndex = 0
-    var charCount = 0
-
-    while (byteIndex < size) {
-        val first = this[byteIndex].toInt() and 0xFF
-        when {
-            first in 0x01..0x7F -> {
-                chars[charCount++] = first.toChar()
-                byteIndex++
-            }
-            first in 0xC0..0xDF -> {
-                if (byteIndex + 1 >= size) return null
-                val second = this[byteIndex + 1].toInt() and 0xFF
-                if (second !in 0x80..0xBF) return null
-
-                val codeUnit = ((first and 0x1F) shl 6) or (second and 0x3F)
-                if (codeUnit == 0) {
-                    if (first != 0xC0 || second != 0x80) return null
-                } else if (codeUnit < 0x80) {
-                    return null
-                }
-                chars[charCount++] = codeUnit.toChar()
-                byteIndex += 2
-            }
-            first in 0xE0..0xEF -> {
-                if (byteIndex + 2 >= size) return null
-                val second = this[byteIndex + 1].toInt() and 0xFF
-                val third = this[byteIndex + 2].toInt() and 0xFF
-                if (second !in 0x80..0xBF || third !in 0x80..0xBF) return null
-
-                val codeUnit = ((first and 0x0F) shl 12) or
-                    ((second and 0x3F) shl 6) or
-                    (third and 0x3F)
-                if (codeUnit < 0x800) return null
-                chars[charCount++] = codeUnit.toChar()
-                byteIndex += 3
-            }
-            else -> return null
-        }
-    }
-
-    return chars.concatToString(0, charCount)
 }
 
 // region Enum conversion helpers

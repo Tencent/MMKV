@@ -71,82 +71,41 @@ class MMKVSmokeTest {
     }
 
     @Test
-    fun stringsUseCanonicalUtf8AcrossStringAndByteApis() {
-        val kv = fresh("canonical-utf8")
+    fun stringsUseCanonicalUtf8Bytes() {
+        val kv = fresh("embedded-null")
         try {
-            val values = listOf(
-                "before\u0000after",
-                "before\uD83D\uDE00after",
-            )
-            values.forEachIndexed { index, value ->
-                val stringKey = "string-$index"
-                assertTrue(kv.encodeString(stringKey, value))
-                assertEquals(value, kv.decodeString(stringKey))
-                assertContentEquals(value.encodeToByteArray(), kv.decodeBytes(stringKey))
+            val value = "before\u0000\uD83D\uDE00after"
+            assertTrue(kv.encodeString("string", value))
+            assertEquals(value, kv.decodeString("string"))
+            assertContentEquals(value.encodeToByteArray(), kv.decodeBytes("string"))
 
-                val bytesKey = "bytes-$index"
-                assertTrue(kv.encodeBytes(bytesKey, value.encodeToByteArray()))
-                assertEquals(value, kv.decodeString(bytesKey))
-            }
+            assertTrue(kv.encodeBytes("bytes", value.encodeToByteArray()))
+            assertEquals(value, kv.decodeString("bytes"))
 
             assertTrue(kv.enableAutoKeyExpire())
-            values.forEachIndexed { index, value ->
-                val stringKey = "expiring-string-$index"
-                assertTrue(kv.encodeString(stringKey, value, 60u))
-                assertContentEquals(value.encodeToByteArray(), kv.decodeBytes(stringKey))
-
-                val bytesKey = "expiring-bytes-$index"
-                assertTrue(kv.encodeBytes(bytesKey, value.encodeToByteArray(), 60u))
-                assertEquals(value, kv.decodeString(bytesKey))
-            }
+            assertTrue(kv.encodeString("expiring-string", value, 60u))
+            assertEquals(value, kv.decodeString("expiring-string"))
+            assertContentEquals(value.encodeToByteArray(), kv.decodeBytes("expiring-string"))
         } finally {
             kv.clearAll()
         }
     }
 
     @Test
-    fun embeddedNullKeysAreRejectedWithoutAliasing() {
-        val kv = fresh("invalid-key")
+    fun nulKeysAreRejectedBeforeMutation() {
+        val kv = fresh("nul-key")
         try {
-            val validKey = "account"
-            val invalidKey = "$validKey\u0000admin"
-            assertTrue(kv.encodeString(validKey, "original"))
+            val validKey = "valid"
+            val invalidKey = "invalid\u0000key"
+            assertTrue(kv.encodeString(validKey, "kept"))
 
-            val keyedOperations = listOf<() -> Unit>(
-                { kv.encodeBool(invalidKey, true) },
-                { kv.encodeBool(invalidKey, true, 60u) },
-                { kv.encodeInt(invalidKey, 1) },
-                { kv.encodeInt(invalidKey, 1, 60u) },
-                { kv.encodeLong(invalidKey, 1L) },
-                { kv.encodeLong(invalidKey, 1L, 60u) },
-                { kv.encodeFloat(invalidKey, 1f) },
-                { kv.encodeFloat(invalidKey, 1f, 60u) },
-                { kv.encodeDouble(invalidKey, 1.0) },
-                { kv.encodeDouble(invalidKey, 1.0, 60u) },
-                { kv.encodeString(invalidKey, "replacement") },
-                { kv.encodeString(invalidKey, "replacement", 60u) },
-                { kv.encodeBytes(invalidKey, byteArrayOf(1)) },
-                { kv.encodeBytes(invalidKey, byteArrayOf(1), 60u) },
-                { kv.decodeBool(invalidKey) },
-                { kv.decodeInt(invalidKey) },
-                { kv.decodeLong(invalidKey) },
-                { kv.decodeFloat(invalidKey) },
-                { kv.decodeDouble(invalidKey) },
-                { kv.decodeString(invalidKey) },
-                { kv.decodeBytes(invalidKey) },
-                { kv.containsKey(invalidKey) },
-                { kv.removeValueForKey(invalidKey) },
-                { kv.removeValuesForKeys(listOf(validKey, invalidKey)) },
-                { kv.getValueSize(invalidKey, actualSize = true) },
-                { kv.writeValueToBuffer(invalidKey, ByteArray(1)) },
-            )
-            keyedOperations.forEachIndexed { index, operation ->
-                assertFailsWith<IllegalArgumentException>("keyed operation $index accepted an embedded NUL") {
-                    operation()
-                }
+            assertFailsWith<IllegalArgumentException> { kv.encodeString(invalidKey, "value") }
+            assertFailsWith<IllegalArgumentException> { kv.decodeString(invalidKey) }
+            assertFailsWith<IllegalArgumentException> {
+                kv.removeValuesForKeys(listOf(validKey, invalidKey))
             }
 
-            assertEquals("original", kv.decodeString(validKey))
+            assertEquals("kept", kv.decodeString(validKey))
         } finally {
             kv.clearAll()
         }

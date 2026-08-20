@@ -29,8 +29,6 @@ package com.tencent.mmkv.kmp
  * while other platforms do not.
  *
  * Keys used by instance APIs must not contain NUL (`\u0000`) characters.
- * Such keys are rejected with [IllegalArgumentException] on every platform. Android additionally
- * exposes `removeLegacyNulKey()` so applications can clean up keys written by older KMP releases.
  */
 expect class MMKV {
 
@@ -293,10 +291,7 @@ expect class MMKV {
 
     /**
      * Import all key-value items from source.
-     * Android rejects a source containing keys that cannot safely cross its Modified UTF-8 JNI
-     * boundary, including legacy NUL keys, before importing any item.
-     * A later write failure can leave a partial import; the return value counts successful writes.
-     * @return Count of items successfully imported.
+     * @return Count of items imported.
      */
     fun importFrom(source: MMKV): Long
 

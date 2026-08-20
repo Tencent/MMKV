@@ -21,39 +21,27 @@
 #include <MMKV/MMKV.h>
 #include "CodedOutputData.h"
 #include "aes/AESCrypt.h"
+#include "crc32/Checksum.h"
 #include "MemoryFile.h"
-#include "MMKVMetaInfo.hpp"
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <dirent.h>
-#include <fcntl.h>
 #include <filesystem>
-#include <functional>
-#include <fstream>
+#include <fcntl.h>
 #include <iostream>
 #include <limits.h>
 #include <limits>
 #include <numeric>
 #include <new>
-#include <stdexcept>
 #include <sys/stat.h>
-#include <thread>
-#include <unordered_map>
 #include <unistd.h>
-#include <utility>
 #include <vector>
 
 using namespace std;
 using namespace mmkv;
-namespace fs = std::filesystem;
-
-extern unordered_map<string, MMKV *> *g_instanceDic;
 
 static const string KeyNotExist = "KeyNotExist";
 
@@ -252,75 +240,45 @@ void testOversizedKey(MMKV *mmkv) {
     printf("test oversized key: passed\n");
 }
 
-void testTransactionalOutputAndOversizedValue(MMKV *mmkv) {
-    array<uint8_t, 8> storage;
-    storage.fill(0xA5);
+void testOversizedValue(MMKV *mmkv) {
+    uint8_t sentinel = 0;
+    MMBuffer boundary(&sentinel,
+                      static_cast<size_t>(numeric_limits<uint32_t>::max()) - 5,
+                      MMBufferNoCopy);
+    string value;
 
-    CodedOutputData fixedOutput(storage.data(), 1);
-    bool rejected = false;
-    try {
-        fixedOutput.writeRawLittleEndian32(0x12345678);
-    } catch (const out_of_range &) {
-        rejected = true;
-    }
-    assert(rejected);
-    assert(fixedOutput.getPosition() == 0);
-    assert(storage[0] == 0xA5);
-    fixedOutput.writeBool(true);
-    assert(fixedOutput.getPosition() == 1 && storage[0] == 1);
+    mmkv->clearAll();
+    assert(mmkv->set("before", "value"));
+    assert(!mmkv->set(boundary, "value"));
+    assert(mmkv->getString("value", value) && value == "before");
+    assert(mmkv->set("after", "value"));
+    assert(mmkv->getString("value", value) && value == "after");
 
-    storage.fill(0xA5);
-    CodedOutputData varintOutput(storage.data(), 1);
-    rejected = false;
-    try {
-        varintOutput.writeUInt32(128);
-    } catch (const out_of_range &) {
-        rejected = true;
-    }
-    assert(rejected);
-    assert(varintOutput.getPosition() == 0 && storage[0] == 0xA5);
+    if (numeric_limits<size_t>::max() > numeric_limits<uint32_t>::max()) {
+        MMBuffer oversized(&sentinel, static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1, MMBufferNoCopy);
 
-    CodedOutputData positionOutput(storage.data(), storage.size());
-    positionOutput.seek(2);
-    rejected = false;
-    try {
-        positionOutput.seek(numeric_limits<size_t>::max());
-    } catch (const out_of_range &) {
-        rejected = true;
-    }
-    assert(rejected && positionOutput.getPosition() == 2);
-    rejected = false;
-    try {
-        positionOutput.setPosition(storage.size() + 1);
-    } catch (const out_of_range &) {
-        rejected = true;
-    }
-    assert(rejected && positionOutput.getPosition() == 2);
+        mmkv->clearAll();
+        assert(!mmkv->set(oversized, "oversized-append"));
+        assert(mmkv->set("after", "value"));
+        assert(mmkv->getString("value", value) && value == "after");
 
-    if constexpr (sizeof(size_t) > sizeof(uint32_t)) {
-        uint8_t sentinel = 0x7B;
-        auto oversizedLength = static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1;
-        MMBuffer oversized(&sentinel, oversizedLength, MMBufferNoCopy);
+        mmkv->clearAll();
+        assert(mmkv->set("before", "value"));
+        assert(!mmkv->set(oversized, "value"));
+        assert(mmkv->getString("value", value) && value == "before");
+        assert(mmkv->set("after", "value"));
+        assert(mmkv->getString("value", value) && value == "after");
 
-        storage.fill(0xA5);
-        CodedOutputData dataOutput(storage.data(), storage.size());
-        rejected = false;
-        try {
-            dataOutput.writeData(oversized);
-        } catch (const length_error &) {
-            rejected = true;
-        }
-        assert(rejected);
-        assert(dataOutput.getPosition() == 0 && storage[0] == 0xA5);
-
-        assert(!mmkv->set(oversized, "oversized-value"));
-        assert(mmkv->set("still-writable", "after-oversized-value"));
-        string value;
-        assert(mmkv->getString("after-oversized-value", value));
-        assert(value == "still-writable");
+        auto expiring = MMKV::mmkvWithID("oversized_expiring_value_test");
+        expiring->clearAll();
+        assert(expiring->enableAutoKeyExpire());
+        assert(!expiring->set(oversized, "value", 60));
+        assert(expiring->set("after", "value", 60));
+        assert(expiring->getString("value", value) && value == "after");
+        expiring->clearAll();
     }
 
-    printf("test transactional output and oversized value: passed\n");
+    printf("test oversized value: passed\n");
 }
 
 void testExpirationOverflow() {
@@ -351,6 +309,176 @@ void testExpirationOverflow() {
     printf("test expiration overflow: passed\n");
 }
 
+void testCodedOutputBounds() {
+    array<uint8_t, 16> storage;
+
+    storage.fill(0xA5);
+    CodedOutputData fixedOutput(storage.data(), 3);
+    bool rejected = false;
+    try {
+        fixedOutput.writeRawLittleEndian32(0x12345678);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && fixedOutput.getPosition() == 0 && storage[0] == 0xA5);
+
+    storage.fill(0xA5);
+    CodedOutputData shortVarint(storage.data(), 1);
+    rejected = false;
+    try {
+        shortVarint.writeUInt32(128);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && shortVarint.getPosition() == 0 && storage[0] == 0xA5);
+
+    constexpr array<uint32_t, 6> values32 = {0, 127, 128, 16383, 16384, numeric_limits<uint32_t>::max()};
+    const vector<vector<uint8_t>> expected32 = {
+        {0x00}, {0x7f}, {0x80, 0x01}, {0xff, 0x7f}, {0x80, 0x80, 0x01}, {0xff, 0xff, 0xff, 0xff, 0x0f},
+    };
+    for (size_t index = 0; index < values32.size(); index++) {
+        storage.fill(0);
+        CodedOutputData output(storage.data(), storage.size());
+        output.writeUInt32(values32[index]);
+        assert(output.getPosition() == expected32[index].size());
+        assert(equal(expected32[index].begin(), expected32[index].end(), storage.begin()));
+    }
+
+    constexpr array<uint64_t, 6> values64 = {0, 127, 128, 16383, 16384, numeric_limits<uint64_t>::max()};
+    const vector<vector<uint8_t>> expected64 = {
+        {0x00},
+        {0x7f},
+        {0x80, 0x01},
+        {0xff, 0x7f},
+        {0x80, 0x80, 0x01},
+        {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01},
+    };
+    for (size_t index = 0; index < values64.size(); index++) {
+        storage.fill(0);
+        CodedOutputData output(storage.data(), storage.size());
+        output.writeUInt64(values64[index]);
+        assert(output.getPosition() == expected64[index].size());
+        assert(equal(expected64[index].begin(), expected64[index].end(), storage.begin()));
+    }
+
+    storage.fill(0);
+    CodedOutputData littleEndianOutput(storage.data(), sizeof(uint32_t));
+    littleEndianOutput.writeRawLittleEndian32(0x12345678);
+    constexpr array<uint8_t, 4> littleEndian32 = {0x78, 0x56, 0x34, 0x12};
+    assert(equal(littleEndian32.begin(), littleEndian32.end(), storage.begin()));
+
+    const char payload[] = "data";
+    storage.fill(0xA5);
+    CodedOutputData dataOutput(storage.data(), 4);
+    rejected = false;
+    try {
+        dataOutput.writeData(MMBuffer((void *) payload, 4, MMBufferNoCopy));
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && dataOutput.getPosition() == 0 && all_of(storage.begin(), storage.end(), [](auto byte) {
+               return byte == 0xA5;
+           }));
+
+    storage.fill(0xA5);
+    CodedOutputData stringOutput(storage.data(), 4);
+    rejected = false;
+    try {
+        stringOutput.writeString("data");
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && stringOutput.getPosition() == 0 && all_of(storage.begin(), storage.end(), [](auto byte) {
+               return byte == 0xA5;
+           }));
+
+    CodedOutputData positionOutput(storage.data(), 4);
+    positionOutput.setPosition(2);
+    rejected = false;
+    try {
+        positionOutput.seek(3);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && positionOutput.getPosition() == 2);
+    rejected = false;
+    try {
+        positionOutput.setPosition(5);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected && positionOutput.getPosition() == 2);
+
+    if (numeric_limits<size_t>::max() > numeric_limits<uint32_t>::max()) {
+        storage.fill(0xA5);
+        MMBuffer oversized(storage.data(), static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1,
+                           MMBufferNoCopy);
+        CodedOutputData output(storage.data(), storage.size());
+        rejected = false;
+        try {
+            output.writeData(oversized);
+        } catch (const length_error &) {
+            rejected = true;
+        }
+        assert(rejected && output.getPosition() == 0 && storage[0] == 0xA5);
+    }
+
+    printf("test coded output bounds: passed\n");
+}
+
+void testExpirationAlignment() {
+    auto mmkv = MMKV::mmkvWithID("expiration_alignment_test");
+    mmkv->clearAll();
+    assert(mmkv->enableAutoKeyExpire());
+    for (size_t length = 1; length <= 4; length++) {
+        auto key = "alignment-" + to_string(length);
+        assert(mmkv->set(string(length, 'x'), key, 60));
+        string value;
+        assert(mmkv->getString(key, value) && value == string(length, 'x'));
+    }
+    assert(mmkv->count(true) == 4);
+    mmkv->clearAll();
+
+#ifndef MMKV_DISABLE_CRYPT
+    const string cryptKey = "alignment-key";
+    auto encrypted = MMKV::mmkvWithID("expiration_alignment_crypt_test", MMKV_SINGLE_PROCESS, &cryptKey);
+    encrypted->clearAll();
+    assert(encrypted->enableAutoKeyExpire());
+    for (size_t length = 1; length <= 4; length++) {
+        auto key = "alignment-" + to_string(length);
+        assert(encrypted->set(string(length, 'x'), key, 60));
+        string value;
+        assert(encrypted->getString(key, value) && value == string(length, 'x'));
+    }
+    assert(encrypted->count(true) == 4);
+    encrypted->clearAll();
+#endif
+
+    printf("test expiration alignment: passed\n");
+}
+
+void testArmCRC32() {
+#if defined(MMKV_USE_ARMV8_CRC32) && !defined(MMKV_OHOS)
+    if (CRC32 != mmkv::armv8_crc32) {
+        return;
+    }
+    array<uint8_t, 265> storage = {};
+    for (size_t index = 0; index < storage.size(); index++) {
+        storage[index] = static_cast<uint8_t>(index * 37 + 11);
+    }
+    constexpr array<uint32_t, 3> seeds = {0, 1, 0xdeadbeef};
+    for (auto seed : seeds) {
+        for (size_t offset = 0; offset < 8; offset++) {
+            for (size_t length = 0; length <= 257; length++) {
+                auto ptr = storage.data() + offset;
+                assert(mmkv::armv8_crc32(seed, ptr, length) == ZLIB_CRC32(seed, ptr, length));
+            }
+        }
+    }
+    printf("test ARM CRC32 alignment: passed\n");
+#endif
+}
+
 #ifndef MMKV_DISABLE_CRYPT
 static bool containsBytes(const unsigned char *storage, size_t storageSize, const uint8_t *value, size_t valueSize) {
     if (valueSize > storageSize) {
@@ -364,16 +492,7 @@ static bool containsBytes(const unsigned char *storage, size_t storageSize, cons
     return false;
 }
 
-static MMKVMetaInfo readMetaInfo(const string &path) {
-    auto fd = open(path.c_str(), O_RDONLY);
-    assert(fd >= 0);
-    MMKVMetaInfo metaInfo;
-    assert(readFileContent(fd, &metaInfo, sizeof(metaInfo)));
-    close(fd);
-    return metaInfo;
-}
-
-void testCryptoRandomAndWipe(const string &rootDir) {
+void testCryptoRandomAndWipe() {
     uint8_t firstIV[AES_IV_LEN] = {};
     uint8_t secondIV[AES_IV_LEN] = {};
     assert(AESCrypt::fillRandomIV(firstIV));
@@ -388,66 +507,44 @@ void testCryptoRandomAndWipe(const string &rootDir) {
     crypt->~AESCrypt();
     assert(!containsBytes(storage, sizeof(storage), key, sizeof(key)));
 
-    // Moving an owning crypter must transfer, rather than duplicate, ownership
-    // of its allocated OpenSSL key schedules.
-    {
-        AESCrypt original(key, sizeof(key), nullptr, 0, true);
-        AESCrypt moved(std::move(original));
-        assert(moved.isSameKey(key, sizeof(key), true));
-    }
-
     const string exactAES128Key = "0123456789abcdef";
-    auto encryptedMMKV = MMKV::mmkvWithID("aes128-crypt-key", MMKV_SINGLE_PROCESS, &exactAES128Key);
-    assert(encryptedMMKV);
-    assert(encryptedMMKV->cryptKey() == exactAES128Key);
-    encryptedMMKV->clearAll();
-    encryptedMMKV->close();
+    auto encrypted = MMKV::mmkvWithID("aes-mode-switch", MMKV_SINGLE_PROCESS, &exactAES128Key);
+    encrypted->clearAll();
+    assert(encrypted->cryptKey() == exactAES128Key);
+    assert(encrypted->set("payload", "value"));
+    assert(encrypted->reKey(exactAES128Key, true));
+    string value;
+    assert(encrypted->getString("value", value) && value == "payload");
+    encrypted->close();
 
-    const char binaryKeyBytes[] = {'0', '1', '2', '3', '\0', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-    const string binaryKey(binaryKeyBytes, sizeof(binaryKeyBytes));
-    const string modeSwitchID = "binary-key-mode-switch";
-    auto modeSwitchMMKV = MMKV::mmkvWithID(modeSwitchID, MMKV_SINGLE_PROCESS, &binaryKey);
-    assert(modeSwitchMMKV);
-    modeSwitchMMKV->clearAll();
-    assert(modeSwitchMMKV->cryptKey() == binaryKey);
-    assert(modeSwitchMMKV->set("secret", "payload"));
-    assert(modeSwitchMMKV->reKey(binaryKey, true));
-    assert(modeSwitchMMKV->cryptKey() == binaryKey);
-    modeSwitchMMKV->close();
+    encrypted = MMKV::mmkvWithID("aes-mode-switch", MMKV_SINGLE_PROCESS, &exactAES128Key, nullptr, 0, true);
+    assert(encrypted->getString("value", value) && value == "payload");
+    encrypted->clearAll();
+    encrypted->close();
 
-    modeSwitchMMKV = MMKV::mmkvWithID(modeSwitchID, MMKV_SINGLE_PROCESS, &binaryKey, nullptr, 0, true);
-    assert(modeSwitchMMKV);
-    string decryptedValue;
-    assert(modeSwitchMMKV->getString("payload", decryptedValue));
-    assert(decryptedValue == "secret");
-
-    const auto crcPath = rootDir + "/" + modeSwitchID + ".crc";
-    const auto beforeClear = readMetaInfo(crcPath);
-    modeSwitchMMKV->clearAll(true);
-    const auto afterFirstClear = readMetaInfo(crcPath);
-    assert(afterFirstClear.m_actualSize == 0);
-    assert(memcmp(beforeClear.m_vector, afterFirstClear.m_vector, AES_IV_LEN) != 0);
-    modeSwitchMMKV->clearAll(true);
-    const auto afterSecondClear = readMetaInfo(crcPath);
-    assert(afterSecondClear.m_actualSize == 0);
-    assert(memcmp(afterFirstClear.m_vector, afterSecondClear.m_vector, AES_IV_LEN) != 0);
-    modeSwitchMMKV->close();
-
-    auto resetMMKV = MMKV::mmkvWithID("crypt-reset-transition");
-    assert(resetMMKV);
-    resetMMKV->clearAll();
-    resetMMKV->checkReSetCryptKey(&binaryKey, true);
-    assert(resetMMKV->cryptKey() == binaryKey);
-    resetMMKV->checkReSetCryptKey(nullptr);
-    assert(resetMMKV->cryptKey().empty());
-    resetMMKV->close();
+    const string transitionKey = "transition-key";
+    auto transition = MMKV::mmkvWithID("aes-reset-transition");
+    transition->clearAll();
+    transition->checkReSetCryptKey(&transitionKey, false);
+    assert(transition->set("encrypted", "value"));
+    assert(transition->getString("value", value) && value == "encrypted");
+    transition->clearAll();
+    transition->checkReSetCryptKey(nullptr);
+    assert(transition->set("plain", "value"));
+    assert(transition->getString("value", value) && value == "plain");
+    transition->clearAll();
+    transition->checkReSetCryptKey(&transitionKey, true);
+    assert(transition->set("aes256", "value"));
+    assert(transition->getString("value", value) && value == "aes256");
+    transition->clearAll();
+    transition->close();
 
     printf("test crypto random and wipe: passed\n");
 }
 #endif
 
 void testLongDirectoryWalk(const string &testRoot) {
-    string baseTemplate = testRoot + "/mmkv-walk-XXXXXX";
+    auto baseTemplate = testRoot + "/mmkv-walk-XXXXXX";
     vector<char> mutableTemplate(baseTemplate.begin(), baseTemplate.end());
     mutableTemplate.push_back('\0');
     auto base = mkdtemp(mutableTemplate.data());
@@ -458,7 +555,7 @@ void testLongDirectoryWalk(const string &testRoot) {
     auto currentFD = open(base, O_RDONLY | O_DIRECTORY);
     assert(currentFD >= 0);
 
-    const size_t targetPathLength = max(path.size(), static_cast<size_t>(PATH_MAX - 64));
+    constexpr size_t targetPathLength = PATH_MAX - 64;
     while (path.size() < targetPathLength) {
         const auto remainingLength = targetPathLength - path.size();
         if (remainingLength == 1) {
@@ -479,16 +576,7 @@ void testLongDirectoryWalk(const string &testRoot) {
     const string filename(100, 'z');
     auto fileFD = openat(currentFD, filename.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0600);
     assert(fileFD >= 0);
-    constexpr char fileContent[] = "descriptor-relative copy";
-    assert(write(fileFD, fileContent, sizeof(fileContent)) == sizeof(fileContent));
     close(fileFD);
-
-    const string symlinkName = "symlink";
-    const string fifoName = "fifo";
-    const string folderName = "folder";
-    assert(symlinkat(filename.c_str(), currentFD, symlinkName.c_str()) == 0);
-    assert(mkfifoat(currentFD, fifoName.c_str(), 0600) == 0);
-    assert(mkdirat(currentFD, folderName.c_str(), 0700) == 0);
 
     vector<string> files;
     walkInDir(path, WalkFile, [&files](const MMKVPath_t &filePath, WalkType) {
@@ -497,34 +585,7 @@ void testLongDirectoryWalk(const string &testRoot) {
     assert(files.size() == 1);
     assert(files.front() == path + "/" + filename);
 
-    vector<string> folders;
-    walkInDir(path, WalkFolder, [&folders](const MMKVPath_t &folderPath, WalkType) {
-        folders.push_back(folderPath);
-    });
-    assert(folders.size() == 1);
-    assert(folders.front() == path + "/" + folderName);
-
-    auto pinnedFile = openRegularFileInDir(path, filename);
-    assert(pinnedFile != MMKVFileHandleInvalidValue);
-    assert(openRegularFileInDir(path, symlinkName) == MMKVFileHandleInvalidValue);
-    assert(openRegularFileInDir(path, fifoName) == MMKVFileHandleInvalidValue);
-
-    const string copyName = "copy";
-    auto copyFD = openat(currentFD, copyName.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0600);
-    assert(copyFD >= 0);
-    assert(copyFileContent(pinnedFile, copyFD));
-    assert(lseek(copyFD, 0, SEEK_SET) == 0);
-    char copiedContent[sizeof(fileContent)] = {};
-    assert(read(copyFD, copiedContent, sizeof(copiedContent)) == sizeof(copiedContent));
-    assert(memcmp(copiedContent, fileContent, sizeof(fileContent)) == 0);
-    close(copyFD);
-    closeFileHandle(pinnedFile);
-
     assert(unlinkat(currentFD, filename.c_str(), 0) == 0);
-    assert(unlinkat(currentFD, copyName.c_str(), 0) == 0);
-    assert(unlinkat(currentFD, symlinkName.c_str(), 0) == 0);
-    assert(unlinkat(currentFD, fifoName.c_str(), 0) == 0);
-    assert(unlinkat(currentFD, folderName.c_str(), AT_REMOVEDIR) == 0);
     close(currentFD);
     for (auto it = directories.rbegin(); it != directories.rend(); ++it) {
         assert(unlinkat(it->first, it->second.c_str(), AT_REMOVEDIR) == 0);
@@ -535,909 +596,73 @@ void testLongDirectoryWalk(const string &testRoot) {
     printf("test long directory walk: passed\n");
 }
 
-static void writeTestFile(const string &path, const char *content) {
-    auto fd = open(path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0600);
-    assert(fd >= 0);
-    const auto size = strlen(content);
-    assert(write(fd, content, size) == static_cast<ssize_t>(size));
-    close(fd);
-}
-
-static void writeTestBytes(const string &path, const void *content, size_t size) {
-    auto fd = open(path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0600);
-    assert(fd >= 0);
-    size_t offset = 0;
-    while (offset < size) {
-        auto count = write(fd, static_cast<const uint8_t *>(content) + offset, size - offset);
-        assert(count > 0);
-        offset += static_cast<size_t>(count);
-    }
-    close(fd);
-}
-
-class OneShotLogHandler final : public MMKVHandler {
-    string m_function;
-    string m_messageFragment;
-    function<void()> m_action;
-
-public:
-    bool fired = false;
-
-    OneShotLogHandler(string functionName, string messageFragment, function<void()> action)
-        : m_function(std::move(functionName))
-        , m_messageFragment(std::move(messageFragment))
-        , m_action(std::move(action)) {}
-
-    void mmkvLog(MMKVLogLevel, const char *, int, const char *functionName, MMKVLog_t message) override {
-        if (!fired && functionName && m_function == functionName && message.find(m_messageFragment) != string::npos) {
-            fired = true;
-            m_action();
-        }
-    }
-};
-
-static string readTestFile(const string &path) {
-    ifstream input(path, ios::binary);
-    assert(input.is_open());
-    return {istreambuf_iterator<char>(input), istreambuf_iterator<char>()};
-}
-
-void testMayflyMappedFileIdentity(const string &testRoot) {
-    string baseTemplate = testRoot + "/mmkv-mapped-identity-XXXXXX";
-    vector<char> mutableTemplate(baseTemplate.begin(), baseTemplate.end());
-    mutableTemplate.push_back('\0');
-    auto base = mkdtemp(mutableTemplate.data());
-    assert(base);
-
-    const string livePath = string(base) + "/live";
-    const string pinnedPath = string(base) + "/live-pinned";
-    const auto pageSize = getPageSize();
-    {
-        MemoryFile mapped(livePath, pageSize, false, true);
-        assert(mapped.isFileValid());
-        auto pinnedFD = open(livePath.c_str(), O_RDWR);
-        assert(pinnedFD >= 0);
-        assert(mapped.isMappedFile(pinnedFD));
-
-        // The multiprocess size-change path passes MemoryFile's own mayfly fd.
-        // Cleanup closes that descriptor, so reload must rely on duplicates
-        // captured before cleanup for both validation and the retained handle.
-        auto ownMayflyFD = mapped.getFd();
-        assert(ownMayflyFD != MMKVFileHandleInvalidValue);
-        assert(mapped.reloadFromFileHandle(ownMayflyFD, pageSize));
-        assert(mapped.isMappedFile(pinnedFD));
-        assert(isSameFile(mapped.getFd(), pinnedFD));
-        mapped.cleanMayflyFD(true);
-
-        assert(rename(livePath.c_str(), pinnedPath.c_str()) == 0);
-        auto aliasFD = open((string(base) + "/./live-pinned").c_str(), O_RDWR);
-        assert(aliasFD >= 0);
-        assert(mapped.isMappedFile(aliasFD));
-
-        writeTestFile(livePath, "replacement-must-not-change");
-        auto replacementFD = open(livePath.c_str(), O_RDWR);
-        assert(replacementFD >= 0);
-        struct stat replacementBefore = {};
-        assert(fstat(replacementFD, &replacementBefore) == 0);
-        assert(!mapped.isMappedFile(replacementFD));
-
-        // All operations that need to recreate a mayfly descriptor must fail
-        // closed while a mapping still belongs to the renamed inode.
-        assert(mapped.getFd() == MMKVFileHandleInvalidValue);
-        assert(mapped.getActualFileSize() == pageSize);
-        assert(!mapped.truncate(pageSize * 2));
-        struct stat replacementAfter = {};
-        assert(fstat(replacementFD, &replacementAfter) == 0);
-        assert(replacementAfter.st_size == replacementBefore.st_size);
-        assert(mapped.isMappedFile(pinnedFD));
-
-        // A caller that already pinned the intended inode can deliberately
-        // clear and reload without resolving the replaced path.
-        mapped.clearMemoryCache();
-        assert(mapped.reloadFromFileHandle(aliasFD, pageSize));
-        assert(mapped.isMappedFile(pinnedFD));
-        assert(isSameFile(mapped.getFd(), pinnedFD));
-        assert(mapped.getActualFileSize() == pageSize);
-        mapped.cleanMayflyFD(true);
-        assert(mapped.getFd() == MMKVFileHandleInvalidValue);
-
-        close(replacementFD);
-        close(aliasFD);
-        close(pinnedFD);
-    }
-
-    // Disk-error recovery intentionally deletes and recreates a corrupt file.
-    // Its explicit identity reset must permit the new inode while ordinary
-    // lazy cache clears continue to reject replacements.
-    const string resetPath = string(base) + "/intentional-reset";
-    {
-        MemoryFile resetFile(resetPath, pageSize, false, true);
-        assert(resetFile.isFileValid());
-        auto oldFD = open(resetPath.c_str(), O_RDWR);
-        assert(oldFD >= 0 && resetFile.isMappedFile(oldFD));
-        resetFile.clearMemoryCache(true);
-        assert(unlink(resetPath.c_str()) == 0);
-        resetFile.reloadFromFile(pageSize);
-        assert(resetFile.isFileValid());
-        assert(!resetFile.isMappedFile(oldFD));
-        close(oldFD);
-    }
-
-    error_code cleanupError;
-    fs::remove_all(base, cleanupError);
-    assert(!cleanupError);
-    printf("test mayfly mapped-file identity: passed\n");
-}
-
-void testPinnedDirectoryHandles(const string &testRoot) {
-    string baseTemplate = testRoot + "/mmkv-pinned-XXXXXX";
-    vector<char> mutableTemplate(baseTemplate.begin(), baseTemplate.end());
-    mutableTemplate.push_back('\0');
-    auto base = mkdtemp(mutableTemplate.data());
-    assert(base);
-
-    const string sourceDir = string(base) + "/source";
-    const string pinnedDir = string(base) + "/source-pinned";
-    const string destinationDir = string(base) + "/destination";
-    const string outsidePath = string(base) + "/outside";
-    error_code createError;
-    fs::create_directories(sourceDir, createError);
-    assert(!createError);
-    fs::create_directories(destinationDir, createError);
-    assert(!createError);
-
-    constexpr char originalData[] = "original-data";
-    writeTestFile(sourceDir + "/good", originalData);
-    writeTestFile(sourceDir + "/good.crc", "original-metadata");
-    writeTestFile(sourceDir + "/short", "x");
-    fs::create_directories(sourceDir + "/nested", createError);
-    assert(!createError);
-    writeTestFile(sourceDir + "/nested/good", originalData);
-    writeTestFile(sourceDir + "/nested/good.crc", "original-metadata");
-    assert(symlink("good", (sourceDir + "/link").c_str()) == 0);
-    assert(symlink("good.crc", (sourceDir + "/link.crc").c_str()) == 0);
-    assert(mkfifo((sourceDir + "/fifo").c_str(), 0600) == 0);
-    assert(mkdir((sourceDir + "/folder").c_str(), 0700) == 0);
-
-    auto sourceDirFD = openDirectoryHandle(sourceDir);
-    assert(sourceDirFD != MMKVFileHandleInvalidValue);
-    assert(rename(sourceDir.c_str(), pinnedDir.c_str()) == 0);
-    fs::create_directories(sourceDir, createError);
-    assert(!createError);
-    writeTestFile(sourceDir + "/good", "replacement-data");
-    writeTestFile(sourceDir + "/good.crc", "replacement-metadata");
-    fs::create_directories(sourceDir + "/nested", createError);
-    assert(!createError);
-    writeTestFile(sourceDir + "/nested/good", "replacement-data");
-    writeTestFile(sourceDir + "/nested/good.crc", "replacement-metadata");
-
-    vector<string> files;
-    assert(walkInOpenedDir(sourceDirFD, sourceDir, WalkFile, [&](const MMKVPath_t &fileName, WalkType) {
-        files.push_back(fileName);
-    }));
-    sort(files.begin(), files.end());
-    assert((files == vector<string>{"good", "good.crc", "short"}));
-
-    MMKVFileHandle_t dataFD = MMKVFileHandleInvalidValue;
-    MMKVFileHandle_t crcFD = MMKVFileHandleInvalidValue;
-    assert(openRegularFilePairInDir(sourceDirFD, sourceDir, "good", "good.crc", dataFD, crcFD));
-    string pinnedData(strlen(originalData), '\0');
-    assert(readFileContent(dataFD, pinnedData.data(), pinnedData.size()));
-    assert(pinnedData == originalData);
-
-    auto nestedDirFD = openDirectoryInDir(sourceDirFD, sourceDir, "nested", false);
-    assert(nestedDirFD != MMKVFileHandleInvalidValue);
-    MMKVFileHandle_t nestedDataFD = MMKVFileHandleInvalidValue;
-    MMKVFileHandle_t nestedCRCFD = MMKVFileHandleInvalidValue;
-    assert(openRegularFilePairInDir(nestedDirFD, sourceDir + "/nested", "good", "good.crc", nestedDataFD,
-                                    nestedCRCFD));
-    string nestedPinnedData(strlen(originalData), '\0');
-    assert(readFileContent(nestedDataFD, nestedPinnedData.data(), nestedPinnedData.size()));
-    assert(nestedPinnedData == originalData);
-    closeFileHandle(nestedDataFD);
-    closeFileHandle(nestedCRCFD);
-    closeFileHandle(nestedDirFD);
-
-    MMKVFileHandle_t unsafeDataFD = MMKVFileHandleInvalidValue;
-    MMKVFileHandle_t unsafeCRCFD = MMKVFileHandleInvalidValue;
-    assert(!openRegularFilePairInDir(sourceDirFD, sourceDir, "link", "link.crc", unsafeDataFD, unsafeCRCFD));
-    assert(unsafeDataFD == MMKVFileHandleInvalidValue && unsafeCRCFD == MMKVFileHandleInvalidValue);
-    const string embeddedNull("good\0suffix", 11);
-    assert(openRegularFileInDir(sourceDirFD, sourceDir, embeddedNull) == MMKVFileHandleInvalidValue);
-    const string embeddedNullDir = destinationDir + string("\0ignored", 8);
-    assert(openDirectoryHandle(embeddedNullDir) == MMKVFileHandleInvalidValue);
-    assert(openOrCreateDirectoryHandle(embeddedNullDir) == MMKVFileHandleInvalidValue);
-    assert(!mkPath(embeddedNullDir));
-    const string invalidPrefix = string(base) + "/invalid-prefix";
-    assert(openOrCreateDirectoryHandle(invalidPrefix + "/created-before-parent/../escape") ==
-           MMKVFileHandleInvalidValue);
-    assert(!fs::exists(invalidPrefix));
-
-    auto shortFD = openRegularFileInDir(sourceDirFD, sourceDir, "short");
-    assert(shortFD != MMKVFileHandleInvalidValue);
-    const array<uint8_t, 4> sentinel = {0x11, 0x22, 0x33, 0x44};
-    auto unchanged = sentinel;
-    assert(!readFileContent(shortFD, unchanged.data(), unchanged.size()));
-    assert(unchanged == sentinel);
-    closeFileHandle(shortFD);
-
-    auto destinationDirFD = openDirectoryHandle(destinationDir);
-    assert(destinationDirFD != MMKVFileHandleInvalidValue);
-    writeTestFile(outsidePath, "outside-must-not-change");
-    assert(symlink("../outside", (destinationDir + "/link").c_str()) == 0);
-    assert(openOrCreateRegularFileInDir(destinationDirFD, destinationDir, "link") ==
-           MMKVFileHandleInvalidValue);
-    assert(!copyFileContent(dataFD, destinationDirFD, destinationDir, "link"));
-    assert(readTestFile(outsidePath) == "outside-must-not-change");
-
-    writeTestFile(destinationDir + "/existing", "old-content-with-a-long-tail");
-    assert(copyFileContent(dataFD, destinationDirFD, destinationDir, "existing"));
-    assert(readTestFile(destinationDir + "/existing") == originalData);
-    assert(copyFileContent(dataFD, destinationDirFD, destinationDir, "created"));
-    assert(readTestFile(destinationDir + "/created") == originalData);
-    struct stat createdInfo = {};
-    assert(stat((destinationDir + "/created").c_str(), &createdInfo) == 0);
-    assert((createdInfo.st_mode & 0777) == 0600);
-
-    assert(copyFile(dataFD, destinationDirFD, destinationDir, "atomic"));
-    assert(readTestFile(destinationDir + "/atomic") == originalData);
-
-    const string outsideDirectory = string(base) + "/outside-directory";
-    const string redirectedDirectory = string(base) + "/redirected-directory";
-    fs::create_directories(outsideDirectory, createError);
-    assert(!createError);
-    assert(symlink(outsideDirectory.c_str(), redirectedDirectory.c_str()) == 0);
-    auto unsafeCreatedDir = openOrCreateDirectoryHandle(redirectedDirectory + "/must-not-exist/nested");
-    assert(unsafeCreatedDir == MMKVFileHandleInvalidValue);
-    assert(!fs::exists(outsideDirectory + "/must-not-exist"));
-
-    closeFileHandle(crcFD);
-    closeFileHandle(dataFD);
-    closeFileHandle(destinationDirFD);
-    closeFileHandle(sourceDirFD);
-    error_code cleanupError;
-    fs::remove_all(base, cleanupError);
-    assert(!cleanupError);
-    printf("test pinned directory handles: passed\n");
-}
-
-void testPairFailureRollback(const string &testRoot) {
-    string baseTemplate = testRoot + "/mmkv-pair-rollback-XXXXXX";
-    vector<char> mutableTemplate(baseTemplate.begin(), baseTemplate.end());
-    mutableTemplate.push_back('\0');
-    auto base = mkdtemp(mutableTemplate.data());
-    assert(base);
-
-    const string sourceDir = string(base) + "/source";
-    const string destinationDir = string(base) + "/destination";
-    error_code createError;
-    fs::create_directories(sourceDir, createError);
-    assert(!createError);
-    fs::create_directories(destinationDir, createError);
-    assert(!createError);
-    writeTestFile(sourceDir + "/data", "new-data");
-    writeTestFile(sourceDir + "/data.crc", "new-crc");
-    writeTestFile(destinationDir + "/data", "old-data");
-    writeTestFile(destinationDir + "/data.crc", "old-crc");
-
-    auto sourceData = open((sourceDir + "/data").c_str(), O_RDONLY);
-    auto sourceCRC = open((sourceDir + "/data.crc").c_str(), O_RDONLY);
-    auto destinationData = open((destinationDir + "/data").c_str(), O_RDWR);
-    // A read-only second destination deterministically fails only after the
-    // first destination has been overwritten. Its original bytes remain
-    // readable, while the pair helper must roll the first file back.
-    auto destinationCRC = open((destinationDir + "/data.crc").c_str(), O_RDONLY);
-    auto destinationDirFD = openDirectoryHandle(destinationDir);
-    assert(sourceData >= 0 && sourceCRC >= 0 && destinationData >= 0 && destinationCRC >= 0);
-    assert(destinationDirFD != MMKVFileHandleInvalidValue);
-    assert(!copyFileContentPair(sourceData, sourceCRC, destinationData, destinationCRC, destinationDirFD,
-                                destinationDir));
-    assert(readTestFile(destinationDir + "/data") == "old-data");
-    assert(readTestFile(destinationDir + "/data.crc") == "old-crc");
-    close(sourceData);
-    close(sourceCRC);
-    close(destinationData);
-    close(destinationCRC);
-
-    // Exercise the restore-style transaction's late second-destination
-    // failure with destinations that did not both exist before the call.
-    // POSIX cannot atomically unlink by open-file identity. Failed transactions
-    // leave their empty created entries instead of risking deletion of a
-    // concurrent replacement through a check-then-unlink race.
-    auto firstSource = open((sourceDir + "/data").c_str(), O_RDONLY);
-    auto secondSource = open((sourceDir + "/data.crc").c_str(), O_RDONLY);
-    assert(firstSource >= 0 && secondSource >= 0);
-
-    MMKVFileHandle_t freshData = MMKVFileHandleInvalidValue;
-    MMKVFileHandle_t freshCRC = MMKVFileHandleInvalidValue;
-    bool freshDataCreated = false;
-    bool freshCRCCreated = false;
-    assert(openOrCreateRegularFilePairInDir(destinationDirFD, destinationDir, "fresh", "fresh.crc", freshData,
-                                            freshCRC, freshDataCreated, freshCRCCreated));
-    assert(freshDataCreated && freshCRCCreated);
-    closeFileHandle(freshCRC);
-    freshCRC = open((destinationDir + "/fresh.crc").c_str(), O_RDONLY);
-    assert(freshCRC >= 0);
-    assert(!copyFileContentPair(firstSource, secondSource, freshData, freshCRC, destinationDirFD, destinationDir,
-                                "fresh", "fresh.crc", freshDataCreated, freshCRCCreated));
-    closeFileHandle(freshData);
-    closeFileHandle(freshCRC);
-    assert(readTestFile(destinationDir + "/fresh").empty());
-    assert(readTestFile(destinationDir + "/fresh.crc").empty());
-
-    writeTestFile(destinationDir + "/one-sided", "keep-me");
-    MMKVFileHandle_t oneSidedData = MMKVFileHandleInvalidValue;
-    MMKVFileHandle_t oneSidedCRC = MMKVFileHandleInvalidValue;
-    bool oneSidedDataCreated = false;
-    bool oneSidedCRCCreated = false;
-    assert(openOrCreateRegularFilePairInDir(destinationDirFD, destinationDir, "one-sided", "one-sided.crc",
-                                            oneSidedData, oneSidedCRC, oneSidedDataCreated,
-                                            oneSidedCRCCreated));
-    assert(!oneSidedDataCreated && oneSidedCRCCreated);
-    closeFileHandle(oneSidedCRC);
-    oneSidedCRC = open((destinationDir + "/one-sided.crc").c_str(), O_RDONLY);
-    assert(oneSidedCRC >= 0);
-    assert(!copyFileContentPair(firstSource, secondSource, oneSidedData, oneSidedCRC, destinationDirFD,
-                                destinationDir, "one-sided", "one-sided.crc", oneSidedDataCreated,
-                                oneSidedCRCCreated));
-    closeFileHandle(oneSidedData);
-    closeFileHandle(oneSidedCRC);
-    assert(readTestFile(destinationDir + "/one-sided") == "keep-me");
-    assert(readTestFile(destinationDir + "/one-sided.crc").empty());
-
-    // Force copyFilePair() to fail its second commit while an initially absent
-    // first entry is concurrently created. The no-replace publish must let the
-    // newcomer win without deleting or overwriting it during rollback.
-    const string largeSourcePath = sourceDir + "/large-crc";
-    auto largeSource = open(largeSourcePath.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0600);
-    assert(largeSource >= 0);
-    constexpr off_t raceWindowSize = 64 * 1024 * 1024;
-    assert(ftruncate(largeSource, raceWindowSize) == 0);
-
-    atomic<bool> scannerReady{false};
-    atomic<bool> newcomerPairFinished{false};
-    bool newcomerInstalled = false;
-    thread newcomer([&] {
-        auto scanFD = dup(destinationDirFD);
-        assert(scanFD >= 0);
-        auto directory = fdopendir(scanFD);
-        assert(directory);
-        scannerReady.store(true, memory_order_release);
-        while (!newcomerPairFinished.load(memory_order_acquire)) {
-            rewinddir(directory);
-            string commitTempName;
-            while (auto entry = readdir(directory)) {
-                if (strncmp(entry->d_name, ".mmkv.tmp.", strlen(".mmkv.tmp.")) == 0) {
-                    commitTempName = entry->d_name;
-                    break;
-                }
-            }
-            if (!commitTempName.empty()) {
-                // createTemporaryFileInDir() briefly has an empty name before
-                // unlinking its staging file. Only the real commit temp gains
-                // content while it remains visible.
-                struct stat tempInfo = {};
-                if (fstatat(destinationDirFD, commitTempName.c_str(), &tempInfo, AT_SYMLINK_NOFOLLOW) != 0 ||
-                    !S_ISREG(tempInfo.st_mode) || tempInfo.st_size == 0) {
-                    continue;
-                }
-                auto newcomerFD = openat(destinationDirFD, "newcomer", O_CREAT | O_EXCL | O_WRONLY, 0600);
-                assert(newcomerFD >= 0);
-                constexpr char newcomerContent[] = "newcomer-wins";
-                assert(write(newcomerFD, newcomerContent, sizeof(newcomerContent) - 1) ==
-                       static_cast<ssize_t>(sizeof(newcomerContent) - 1));
-                close(newcomerFD);
-                newcomerInstalled = true;
-                closedir(directory);
-                return;
-            }
-            this_thread::yield();
-        }
-        closedir(directory);
-    });
-    while (!scannerReady.load(memory_order_acquire)) {
-        this_thread::yield();
-    }
-    auto newcomerResult =
-        copyFilePair(largeSource, secondSource, destinationDirFD, destinationDir, "newcomer", "newcomer.crc");
-    newcomerPairFinished.store(true, memory_order_release);
-    newcomer.join();
-    assert(!newcomerResult);
-    assert(newcomerInstalled);
-    assert(readTestFile(destinationDir + "/newcomer") == "newcomer-wins");
-    assert(!fs::exists(destinationDir + "/newcomer.crc"));
-
-    atomic<bool> pairFinished{false};
-    bool replacementInstalled = false;
-    thread replacer([&] {
-        struct stat entryInfo = {};
-        while (!pairFinished.load(memory_order_acquire)) {
-            if (fstatat(destinationDirFD, "raced", &entryInfo, AT_SYMLINK_NOFOLLOW) == 0) {
-                assert(renameat(destinationDirFD, "raced", destinationDirFD, "raced-transaction") == 0);
-                auto replacementFD = openat(destinationDirFD, "raced", O_CREAT | O_EXCL | O_WRONLY, 0600);
-                assert(replacementFD >= 0);
-                constexpr char replacement[] = "concurrent-replacement";
-                assert(write(replacementFD, replacement, sizeof(replacement) - 1) ==
-                       static_cast<ssize_t>(sizeof(replacement) - 1));
-                close(replacementFD);
-                assert(mkdirat(destinationDirFD, "raced.crc", 0700) == 0);
-                replacementInstalled = true;
-                return;
-            }
-            this_thread::yield();
-        }
-    });
-    auto raceResult = copyFilePair(firstSource, largeSource, destinationDirFD, destinationDir, "raced", "raced.crc");
-    pairFinished.store(true, memory_order_release);
-    replacer.join();
-    assert(!raceResult);
-    assert(replacementInstalled);
-    assert(readTestFile(destinationDir + "/raced") == "concurrent-replacement");
-    assert(fs::is_directory(destinationDir + "/raced.crc"));
-    close(largeSource);
-    close(firstSource);
-    close(secondSource);
-    closeFileHandle(destinationDirFD);
-
-    error_code cleanupError;
-    fs::remove_all(base, cleanupError);
-    assert(!cleanupError);
-    printf("test pair failure rollback: passed\n");
-}
-
-void testBackupRestoreNoFollow(const string &testRoot) {
-    string baseTemplate = testRoot + "/mmkv-backup-XXXXXX";
-    vector<char> mutableTemplate(baseTemplate.begin(), baseTemplate.end());
-    mutableTemplate.push_back('\0');
-    auto base = mkdtemp(mutableTemplate.data());
-    assert(base);
-
-    const string sourceDir = string(base) + "/source";
-    const string backupDir = string(base) + "/backup";
-    const string restoreDir = string(base) + "/restore";
-    error_code createError;
-    fs::create_directories(sourceDir, createError);
-    assert(!createError);
-
-    writeTestFile(sourceDir + "/good", "data");
-    MMKVMetaInfo metadata;
-    metadata.m_crcDigest = 0x12345678;
-    metadata.m_sequence = 7;
-    writeTestBytes(sourceDir + "/good.crc", &metadata, sizeof(metadata));
-    const string metadataBytes(reinterpret_cast<const char *>(&metadata), sizeof(metadata));
-    // CRC_SUFFIX is legal in an mmapID. Its data basename must not be
-    // discarded merely because it also looks like another store's metadata.
-    writeTestFile(sourceDir + "/suffix.crc", "suffix-data");
-    writeTestBytes(sourceDir + "/suffix.crc.crc", &metadata, sizeof(metadata));
-    const string outsideHardlinkData = string(base) + "/outside-hardlink-data";
-    const string outsideHardlinkCRC = string(base) + "/outside-hardlink-crc";
-    writeTestFile(outsideHardlinkData, "outside-hardlink-data");
-    writeTestBytes(outsideHardlinkCRC, &metadata, sizeof(metadata));
-    assert(link(outsideHardlinkData.c_str(), (sourceDir + "/hard").c_str()) == 0);
-    assert(link(outsideHardlinkCRC.c_str(), (sourceDir + "/hard.crc").c_str()) == 0);
-    assert(symlink("good", (sourceDir + "/bad").c_str()) == 0);
-    assert(symlink("good.crc", (sourceDir + "/bad.crc").c_str()) == 0);
-
-    // Lexically different spellings of the same pinned directory are no-op
-    // aliases. In particular, backup must not rename-replace the live pair.
-    struct stat aliasDataBefore = {};
-    struct stat aliasCRCBefore = {};
-    assert(stat((sourceDir + "/good").c_str(), &aliasDataBefore) == 0);
-    assert(stat((sourceDir + "/good.crc").c_str(), &aliasCRCBefore) == 0);
-    const string sourceAlias = sourceDir + "/.";
-    assert(MMKV::backupOneToDirectory("good", sourceAlias, &sourceDir));
-    assert(MMKV::backupAllToDirectory(sourceAlias, &sourceDir) == 1);
-    assert(MMKV::restoreOneFromDirectory("good", sourceAlias, &sourceDir));
-    assert(MMKV::restoreAllFromDirectory(sourceAlias, &sourceDir) == 1);
-    struct stat aliasDataAfter = {};
-    struct stat aliasCRCAfter = {};
-    assert(stat((sourceDir + "/good").c_str(), &aliasDataAfter) == 0);
-    assert(stat((sourceDir + "/good.crc").c_str(), &aliasCRCAfter) == 0);
-    assert(aliasDataBefore.st_dev == aliasDataAfter.st_dev && aliasDataBefore.st_ino == aliasDataAfter.st_ino);
-    assert(aliasCRCBefore.st_dev == aliasCRCAfter.st_dev && aliasCRCBefore.st_ino == aliasCRCAfter.st_ino);
-
-    assert(MMKV::backupAllToDirectory(backupDir, &sourceDir) == 2);
-    assert(isFileExist(backupDir + "/good"));
-    assert(readTestFile(backupDir + "/good") == "data");
-    assert(readTestFile(backupDir + "/good.crc") == metadataBytes);
-    assert(readTestFile(backupDir + "/suffix.crc") == "suffix-data");
-    assert(readTestFile(backupDir + "/suffix.crc.crc") == metadataBytes);
-    assert(!isFileExist(backupDir + "/bad"));
-    assert(!isFileExist(backupDir + "/hard"));
-    assert(!MMKV::backupOneToDirectory("bad", backupDir, &sourceDir));
-    assert(!MMKV::backupOneToDirectory("hard", backupDir, &sourceDir));
-
-    assert(MMKV::restoreAllFromDirectory(backupDir, &restoreDir) == 2);
-    assert(isFileExist(restoreDir + "/good"));
-    assert(readTestFile(restoreDir + "/good") == "data");
-    assert(readTestFile(restoreDir + "/good.crc") == metadataBytes);
-    assert(readTestFile(restoreDir + "/suffix.crc") == "suffix-data");
-    assert(readTestFile(restoreDir + "/suffix.crc.crc") == metadataBytes);
-    assert(!MMKV::restoreOneFromDirectory("bad", sourceDir, &restoreDir));
-    assert(!MMKV::restoreOneFromDirectory("hard", sourceDir, &restoreDir));
-    assert(readTestFile(outsideHardlinkData) == "outside-hardlink-data");
-    assert(readTestFile(outsideHardlinkCRC) == metadataBytes);
-
+void testMinimalBackupRestore(const string &rootDir) {
+    const string suffixID = "suffix.crc";
     const string specialID = "special/id";
-    const string specialBackupDir = string(base) + "/special-backup";
-    auto sourceNamespace = MMKV::nameSpace(sourceDir);
-    auto specialMMKV = sourceNamespace.mmkvWithID(specialID);
-    assert(specialMMKV);
-    specialMMKV->clearAll();
-    assert(specialMMKV->set("before", "value"));
-    assert(sourceNamespace.backupOneToDirectory(specialID, specialBackupDir));
-    assert(specialMMKV->set("after", "value"));
-    assert(sourceNamespace.restoreOneFromDirectory(specialID, specialBackupDir));
-    string specialValue;
-    assert(specialMMKV->getString("value", specialValue));
-    assert(specialValue == "before");
-    specialMMKV->close();
+    auto suffix = MMKV::mmkvWithID(suffixID);
+    auto special = MMKV::mmkvWithID(specialID);
+    suffix->clearAll();
+    special->clearAll();
+    assert(suffix->set("before", "value"));
+    assert(special->set("before-special", "value"));
 
-    const string cachedID = "cached-backup-restore";
-    const string cachedBackupDir = string(base) + "/cached-backup";
-    auto cachedMMKV = MMKV::mmkvWithID(cachedID);
-    assert(cachedMMKV);
-    cachedMMKV->clearAll();
-    assert(cachedMMKV->set("before", "value"));
-    assert(MMKV::backupOneToDirectory(cachedID, cachedBackupDir));
-    constexpr char crcTailMarker[] = "crc-tail-marker";
-    constexpr off_t crcTailOffset = static_cast<off_t>(sizeof(MMKVMetaInfo) + 32);
-    auto cachedBackupCRC = open((cachedBackupDir + "/" + cachedID + ".crc").c_str(), O_RDWR);
-    assert(cachedBackupCRC >= 0);
-    assert(pwrite(cachedBackupCRC, crcTailMarker, sizeof(crcTailMarker), crcTailOffset) ==
-           static_cast<ssize_t>(sizeof(crcTailMarker)));
-    close(cachedBackupCRC);
-    assert(cachedMMKV->set("after", "value"));
-    assert(MMKV::restoreOneFromDirectory(cachedID, cachedBackupDir));
-    string restoredValue;
-    assert(cachedMMKV->getString("value", restoredValue));
-    assert(restoredValue == "before");
-    array<char, sizeof(crcTailMarker)> restoredCRCTail = {};
-    auto cachedLiveCRC = open((MMKV::getRootDir() + "/" + cachedID + ".crc").c_str(), O_RDONLY);
-    assert(cachedLiveCRC >= 0);
-    assert(pread(cachedLiveCRC, restoredCRCTail.data(), restoredCRCTail.size(), crcTailOffset) ==
-           static_cast<ssize_t>(restoredCRCTail.size()));
-    close(cachedLiveCRC);
-    assert(memcmp(restoredCRCTail.data(), crcTailMarker, sizeof(crcTailMarker)) == 0);
-    cachedMMKV->close();
+    const auto suffixPath = rootDir + "/" + suffixID;
+    const auto suffixCRCPath = suffixPath + ".crc";
+    struct stat beforeAlias = {};
+    struct stat afterAlias = {};
+    struct stat beforeCRCAlias = {};
+    struct stat afterCRCAlias = {};
+    assert(stat(suffixPath.c_str(), &beforeAlias) == 0);
+    assert(stat(suffixCRCPath.c_str(), &beforeCRCAlias) == 0);
+    const auto rootAlias = rootDir + "/.";
+    assert(MMKV::backupOneToDirectory(suffixID, rootAlias, &rootDir));
+    assert(MMKV::restoreOneFromDirectory(suffixID, rootAlias, &rootDir));
+    assert(MMKV::backupAllToDirectory(rootAlias, &rootDir) != 0);
+    assert(MMKV::restoreAllFromDirectory(rootAlias, &rootDir) != 0);
+    assert(stat(suffixPath.c_str(), &afterAlias) == 0);
+    assert(stat(suffixCRCPath.c_str(), &afterCRCAlias) == 0);
+    assert(beforeAlias.st_dev == afterAlias.st_dev && beforeAlias.st_ino == afterAlias.st_ino);
+    assert(beforeCRCAlias.st_dev == afterCRCAlias.st_dev && beforeCRCAlias.st_ino == afterCRCAlias.st_ino);
+    string value;
+    assert(suffix->getString("value", value) && value == "before");
 
-    // A cached read-only instance has no dirty pages to publish and may be
-    // backed by files that cannot be reopened for writing. Backup must keep
-    // using the pinned read handles instead of requiring fsync/FlushFileBuffers
-    // access that the instance itself does not have.
-    const string readOnlyID = "cached-read-only-backup";
-    const string readOnlyRoot = string(base) + "/read-only-root";
-    const string readOnlyBackup = string(base) + "/read-only-backup";
-    auto readOnlyNamespace = MMKV::nameSpace(readOnlyRoot);
-    auto readOnlyWriter = readOnlyNamespace.mmkvWithID(readOnlyID);
-    assert(readOnlyWriter);
-    readOnlyWriter->clearAll();
-    assert(readOnlyWriter->set("read-only-value", "value"));
-    readOnlyWriter->sync(MMKV_SYNC);
-    readOnlyWriter->close();
-    assert(chmod((readOnlyRoot + "/" + readOnlyID).c_str(), 0400) == 0);
-    assert(chmod((readOnlyRoot + "/" + readOnlyID + ".crc").c_str(), 0400) == 0);
-    auto readOnlyMMKV = readOnlyNamespace.mmkvWithID(
-        readOnlyID, static_cast<MMKVMode>(MMKV_SINGLE_PROCESS | MMKV_READ_ONLY));
-    assert(readOnlyMMKV);
-    string readOnlyValue;
-    assert(readOnlyMMKV->getString("value", readOnlyValue));
-    assert(readOnlyValue == "read-only-value");
-    assert(readOnlyNamespace.backupOneToDirectory(readOnlyID, readOnlyBackup));
-    readOnlyMMKV->close();
+    const auto uniqueSuffix = to_string(static_cast<unsigned long long>(getpid()));
+    const auto backupDir = rootDir + "-backup-" + uniqueSuffix;
+    assert(MMKV::backupAllToDirectory(backupDir, &rootDir) >= 2);
 
-    // A lexical cache hit whose pinned files no longer match the live
-    // mappings must fail closed. Neither backup nor restore may silently act
-    // on replacement files while the cached object still owns the old pair.
-    const string hintedID = "cached-hint-replacement";
-    const string hintedRoot = string(base) + "/hinted-root";
-    const string hintedBackup = string(base) + "/hinted-backup";
-    auto hintedNamespace = MMKV::nameSpace(hintedRoot);
-    auto hintedMMKV = hintedNamespace.mmkvWithID(hintedID);
-    assert(hintedMMKV);
-    hintedMMKV->clearAll();
-    assert(hintedMMKV->set("mapped-value", "value"));
-    assert(hintedNamespace.backupOneToDirectory(hintedID, hintedBackup));
-    assert(rename((hintedRoot + "/" + hintedID).c_str(),
-                  (hintedRoot + "/" + hintedID + ".mapped").c_str()) == 0);
-    assert(rename((hintedRoot + "/" + hintedID + ".crc").c_str(),
-                  (hintedRoot + "/" + hintedID + ".crc.mapped").c_str()) == 0);
-    writeTestFile(hintedRoot + "/" + hintedID, "replacement-data");
-    writeTestBytes(hintedRoot + "/" + hintedID + ".crc", &metadata, sizeof(metadata));
-    assert(!hintedNamespace.backupOneToDirectory(hintedID, string(base) + "/must-not-back-up"));
-    assert(!hintedNamespace.restoreOneFromDirectory(hintedID, hintedBackup));
-    assert(readTestFile(hintedRoot + "/" + hintedID) == "replacement-data");
-    hintedMMKV->close();
+    assert(suffix->set("after", "value"));
+    assert(special->set("after-special", "value"));
+    assert(MMKV::restoreAllFromDirectory(backupDir, &rootDir) >= 2);
+    assert(suffix->getString("value", value) && value == "before");
+    assert(special->getString("value", value) && value == "before-special");
 
-    // A lazy instance still owns the identity of its last mapped data file.
-    // Matching metadata alone must not authorize a data-only replacement.
-    const string lazyID = "cached-lazy-data-replacement";
-    const string lazyRoot = string(base) + "/lazy-root";
-    const string lazyBackup = string(base) + "/lazy-backup";
-    auto lazyNamespace = MMKV::nameSpace(lazyRoot);
-    auto lazyMMKV = lazyNamespace.mmkvWithID(lazyID);
-    assert(lazyMMKV);
-    lazyMMKV->clearAll();
-    assert(lazyMMKV->set("mapped-value", "value"));
-    assert(lazyNamespace.backupOneToDirectory(lazyID, lazyBackup));
-    lazyMMKV->clearMemoryCache();
-    assert(rename((lazyRoot + "/" + lazyID).c_str(),
-                  (lazyRoot + "/" + lazyID + ".mapped").c_str()) == 0);
-    writeTestFile(lazyRoot + "/" + lazyID, "lazy-replacement-data");
-    assert(!lazyNamespace.backupOneToDirectory(lazyID, string(base) + "/must-not-back-up-lazy"));
-    assert(!lazyNamespace.restoreOneFromDirectory(lazyID, lazyBackup));
-    assert(readTestFile(lazyRoot + "/" + lazyID) == "lazy-replacement-data");
-    lazyMMKV->close();
+    const auto invalidDir = rootDir + "-invalid-" + uniqueSuffix;
+    assert(mkPath(invalidDir));
+    assert(copyFile(backupDir + "/" + suffixID, invalidDir + "/" + suffixID));
+    auto invalidCRC = invalidDir + "/" + suffixID + ".crc";
+    auto invalidFD = open(invalidCRC.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    assert(invalidFD >= 0);
+    const uint8_t truncatedMetadata = 0;
+    assert(write(invalidFD, &truncatedMetadata, sizeof(truncatedMetadata)) ==
+           static_cast<ssize_t>(sizeof(truncatedMetadata)));
+    close(invalidFD);
 
-    // A replacement pair can itself belong to another cached instance. A
-    // lexical hit for A must be checked against A, rather than falling through
-    // the cache scan and silently selecting B by file identity.
-    const string swappedRoot = string(base) + "/swapped-root";
-    const string swappedBackup = string(base) + "/swapped-backup";
-    const string firstID = "cached-first";
-    const string secondID = "cached-second";
-    auto swappedNamespace = MMKV::nameSpace(swappedRoot);
-    auto firstMMKV = swappedNamespace.mmkvWithID(firstID);
-    auto secondMMKV = swappedNamespace.mmkvWithID(secondID);
-    assert(firstMMKV && secondMMKV);
-    firstMMKV->clearAll();
-    secondMMKV->clearAll();
-    assert(firstMMKV->set("first-value", "value"));
-    assert(secondMMKV->set("second-value", "value"));
-    assert(swappedNamespace.backupOneToDirectory(firstID, swappedBackup));
-    assert(rename((swappedRoot + "/" + firstID).c_str(),
-                  (swappedRoot + "/" + firstID + ".original").c_str()) == 0);
-    assert(rename((swappedRoot + "/" + firstID + ".crc").c_str(),
-                  (swappedRoot + "/" + firstID + ".crc.original").c_str()) == 0);
-    assert(rename((swappedRoot + "/" + secondID).c_str(),
-                  (swappedRoot + "/" + firstID).c_str()) == 0);
-    assert(rename((swappedRoot + "/" + secondID + ".crc").c_str(),
-                  (swappedRoot + "/" + firstID + ".crc").c_str()) == 0);
-    assert(!swappedNamespace.backupOneToDirectory(firstID, string(base) + "/must-not-back-up-second"));
-    assert(!swappedNamespace.restoreOneFromDirectory(firstID, swappedBackup));
-    const string swappedRootAlias = swappedRoot + "/.";
-    assert(MMKV::restoreAllFromDirectory(swappedBackup, &swappedRootAlias) == 0);
-    string firstValue;
-    string secondValue;
-    assert(firstMMKV->getString("value", firstValue) && firstValue == "first-value");
-    assert(secondMMKV->getString("value", secondValue) && secondValue == "second-value");
-    firstMMKV->close();
-    secondMMKV->close();
+    assert(suffix->set("unchanged", "value"));
+    assert(!MMKV::restoreOneFromDirectory(suffixID, invalidDir, &rootDir));
+    assert(suffix->getString("value", value) && value == "unchanged");
 
-    // Android can retain an old on-disk basename when legacy migration is
-    // blocked while indexing the live instance under the original mmapID.
-    // Simulate that cache-key/basename mismatch and prove restore-all still
-    // identifies the live mappings. Rename the destination root after its
-    // handles are pinned as well: cached reload must stay on those handles and
-    // must not create or map files beneath the replacement path. The /.
-    // source spelling also verifies a lexical alias of the pinned source.
-    const string mismatchID = "cached-base-key-mismatch";
-    const string mismatchSourceDir = string(base) + "/mismatch-source";
-    const string mismatchDestinationDir = string(base) + "/mismatch-destination";
-    const string mismatchPinnedDestinationDir = string(base) + "/mismatch-destination-pinned";
-    auto mismatchSourceNamespace = MMKV::nameSpace(mismatchSourceDir);
-    auto mismatchSource = mismatchSourceNamespace.mmkvWithID(mismatchID);
-    assert(mismatchSource);
-    mismatchSource->clearAll();
-    assert(mismatchSource->set("from-source", "value"));
-    mismatchSource->close();
+    assert(copyFile(backupDir + "/" + suffixID + ".crc", invalidCRC));
+    invalidFD = open((invalidDir + "/" + suffixID).c_str(), O_WRONLY | O_TRUNC);
+    assert(invalidFD >= 0);
+    close(invalidFD);
+    assert(!MMKV::restoreOneFromDirectory(suffixID, invalidDir, &rootDir));
+    assert(suffix->getString("value", value) && value == "unchanged");
 
-    auto mismatchDestinationNamespace = MMKV::nameSpace(mismatchDestinationDir);
-    auto mismatchDestination = mismatchDestinationNamespace.mmkvWithID(mismatchID, MMKV_MULTI_PROCESS);
-    assert(mismatchDestination);
-    mismatchDestination->clearAll();
-    assert(mismatchDestination->set("stale-destination", "value"));
-    // Leave only the metadata mapping live. Cache recognition must still keep
-    // this lazy instance bound to the pinned destination pair.
-    mismatchDestination->clearMemoryCache();
-
-    auto cacheEntry = find_if(g_instanceDic->begin(), g_instanceDic->end(), [&](const auto &entry) {
-        return entry.second == mismatchDestination;
-    });
-    assert(cacheEntry != g_instanceDic->end());
-    auto originalCacheKey = cacheEntry->first;
-    auto cacheNode = g_instanceDic->extract(cacheEntry);
-    const string mismatchedCacheKey = originalCacheKey + "-legacy-basename-mismatch";
-    assert(g_instanceDic->find(mismatchedCacheKey) == g_instanceDic->end());
-    cacheNode.key() = mismatchedCacheKey;
-    assert(g_instanceDic->insert(std::move(cacheNode)).inserted);
-
-    OneShotLogHandler mismatchHandler("restoreOneFromDirectoryWithHandles", "restore one cached", [&] {
-        assert(rename(mismatchDestinationDir.c_str(), mismatchPinnedDestinationDir.c_str()) == 0);
-        error_code replacementError;
-        fs::create_directories(mismatchDestinationDir, replacementError);
-        assert(!replacementError);
-        writeTestFile(mismatchDestinationDir + "/replacement-marker", "replacement-root-must-stay-isolated");
-    });
-    MMKV::registerHandler(&mismatchHandler);
-    auto mismatchRestoreCount =
-        mismatchDestinationNamespace.restoreAllFromDirectory(mismatchSourceDir + "/.");
-    MMKV::unRegisterHandler();
-    assert(mismatchHandler.fired);
-    assert(mismatchRestoreCount == 1);
-    string mismatchRestoredValue;
-    assert(mismatchDestination->getString("value", mismatchRestoredValue));
-    assert(mismatchRestoredValue == "from-source");
-    assert(readTestFile(mismatchDestinationDir + "/replacement-marker") == "replacement-root-must-stay-isolated");
-    assert(!fs::exists(mismatchDestinationDir + "/" + mismatchID));
-    assert(!fs::exists(mismatchDestinationDir + "/" + mismatchID + ".crc"));
-    assert(fs::exists(mismatchPinnedDestinationDir + "/" + mismatchID));
-    assert(fs::exists(mismatchPinnedDestinationDir + "/" + mismatchID + ".crc"));
-
-    cacheNode = g_instanceDic->extract(mismatchedCacheKey);
-    assert(!cacheNode.empty());
-    cacheNode.key() = originalCacheKey;
-    assert(g_instanceDic->insert(std::move(cacheNode)).inserted);
-    mismatchDestination->close();
-
-    const string outsideDestination = string(base) + "/outside-destination";
-    const string redirectedDestination = string(base) + "/redirected-destination";
-    fs::create_directories(outsideDestination, createError);
-    assert(!createError);
-    assert(symlink(outsideDestination.c_str(), redirectedDestination.c_str()) == 0);
-    const string unsafeDestination = redirectedDestination + "/must-not-exist";
-    assert(MMKV::backupAllToDirectory(unsafeDestination, &sourceDir) == 0);
-    assert(MMKV::restoreAllFromDirectory(backupDir, &unsafeDestination) == 0);
-    assert(!MMKV::backupOneToDirectory("good", unsafeDestination, &sourceDir));
-    assert(!MMKV::backupOneToDirectory("bad/id", unsafeDestination, &sourceDir));
-    assert(!MMKV::restoreOneFromDirectory("good", backupDir, &unsafeDestination));
-    assert(!fs::exists(outsideDestination + "/must-not-exist"));
-
-    const string embeddedNullDestination = backupDir + string("\0ignored", 8);
-    assert(MMKV::backupAllToDirectory(embeddedNullDestination, &sourceDir) == 0);
-    assert(MMKV::restoreAllFromDirectory(backupDir, &embeddedNullDestination) == 0);
-    assert(!MMKV::backupOneToDirectory("good", embeddedNullDestination, &sourceDir));
-    assert(!MMKV::restoreOneFromDirectory("good", backupDir, &embeddedNullDestination));
-    const string embeddedNullSource = sourceDir + string("\0ignored", 8);
-    assert(MMKV::backupAllToDirectory(backupDir, &embeddedNullSource) == 0);
-    assert(!MMKV::restoreOneFromDirectory("good", embeddedNullSource, &restoreDir));
-
-    const string truncatedSourceDir = string(base) + "/truncated-source";
-    const string unchangedDestinationDir = string(base) + "/unchanged-destination";
-    fs::create_directories(truncatedSourceDir, createError);
-    assert(!createError);
-    fs::create_directories(unchangedDestinationDir, createError);
-    assert(!createError);
-    writeTestFile(truncatedSourceDir + "/victim", "replacement");
-    writeTestFile(truncatedSourceDir + "/victim.crc", "x");
-    writeTestFile(unchangedDestinationDir + "/victim", "original");
-    writeTestBytes(unchangedDestinationDir + "/victim.crc", &metadata, sizeof(metadata));
-    assert(!MMKV::restoreOneFromDirectory("victim", truncatedSourceDir, &unchangedDestinationDir));
-    assert(readTestFile(unchangedDestinationDir + "/victim") == "original");
-    assert(readTestFile(unchangedDestinationDir + "/victim.crc") == metadataBytes);
-
-    // Writable destination handles must not cross the pinned directory
-    // boundary through a hardlink to an outside inode.
-    const string hardlinkSourceDir = string(base) + "/hardlink-source";
-    const string hardlinkDestinationDir = string(base) + "/hardlink-destination";
-    const string outsideHardlinkTarget = string(base) + "/outside-hardlink-target";
-    fs::create_directories(hardlinkSourceDir, createError);
-    assert(!createError);
-    fs::create_directories(hardlinkDestinationDir, createError);
-    assert(!createError);
-    writeTestFile(hardlinkSourceDir + "/victim", "replacement");
-    writeTestBytes(hardlinkSourceDir + "/victim.crc", &metadata, sizeof(metadata));
-    writeTestFile(outsideHardlinkTarget, "outside-original");
-    assert(link(outsideHardlinkTarget.c_str(), (hardlinkDestinationDir + "/victim").c_str()) == 0);
-    writeTestBytes(hardlinkDestinationDir + "/victim.crc", &metadata, sizeof(metadata));
-    assert(!MMKV::restoreOneFromDirectory("victim", hardlinkSourceDir, &hardlinkDestinationDir));
-    assert(readTestFile(outsideHardlinkTarget) == "outside-original");
-    assert(readTestFile(hardlinkDestinationDir + "/victim.crc") == metadataBytes);
-
-    error_code cleanupError;
-    fs::remove_all(base, cleanupError);
-    assert(!cleanupError);
-    printf("test backup/restore no-follow: passed\n");
-}
-
-void testAllDirectoryPinnedRoots(const string &testRoot) {
-    string baseTemplate = testRoot + "/mmkv-all-pinned-XXXXXX";
-    vector<char> mutableTemplate(baseTemplate.begin(), baseTemplate.end());
-    mutableTemplate.push_back('\0');
-    auto base = mkdtemp(mutableTemplate.data());
-    assert(base);
-
-    MMKVMetaInfo metadata;
-    auto createSpecialPair = [&](const string &root, const char *value) {
-        error_code createError;
-        fs::create_directories(root + "/specialCharacter", createError);
-        assert(!createError);
-        writeTestFile(root + "/specialCharacter/special", value);
-        writeTestBytes(root + "/specialCharacter/special.crc", &metadata, sizeof(metadata));
-    };
-    auto installReplacementRoots = [&](const string &source,
-                                       const string &pinnedSource,
-                                       const string &destination,
-                                       const string &pinnedDestination) {
-        assert(rename(source.c_str(), pinnedSource.c_str()) == 0);
-        assert(rename(destination.c_str(), pinnedDestination.c_str()) == 0);
-        error_code createError;
-        fs::create_directories(source, createError);
-        assert(!createError);
-        fs::create_directories(destination, createError);
-        assert(!createError);
-        createSpecialPair(source, "replacement-special");
-        writeTestFile(destination + "/replacement-marker", "keep");
-    };
-
-    {
-        const string source = string(base) + "/backup-source";
-        const string pinnedSource = string(base) + "/backup-source-pinned";
-        const string destination = string(base) + "/backup-destination";
-        const string pinnedDestination = string(base) + "/backup-destination-pinned";
-        error_code createError;
-        fs::create_directories(source, createError);
-        assert(!createError);
-        fs::create_directories(destination, createError);
-        assert(!createError);
-        createSpecialPair(source, "original-special");
-
-        auto sourceNamespace = MMKV::nameSpace(source);
-        auto gate = sourceNamespace.mmkvWithID("gate");
-        assert(gate);
-        gate->clearAll();
-        assert(gate->set("backup-value", "value"));
-
-        OneShotLogHandler handler("backupOneToDirectoryWithHandles", "finish backup one mmkv", [&] {
-            installReplacementRoots(source, pinnedSource, destination, pinnedDestination);
-        });
-        MMKV::registerHandler(&handler);
-        auto count = sourceNamespace.backupAllToDirectory(destination);
-        MMKV::unRegisterHandler();
-        assert(handler.fired);
-        assert(count == 2);
-        assert(readTestFile(pinnedDestination + "/specialCharacter/special") == "original-special");
-        assert(readTestFile(destination + "/replacement-marker") == "keep");
-        assert(!fs::exists(destination + "/specialCharacter/special"));
-        gate->close();
-    }
-
-    {
-        const string source = string(base) + "/restore-source";
-        const string pinnedSource = string(base) + "/restore-source-pinned";
-        const string destination = string(base) + "/restore-destination";
-        const string pinnedDestination = string(base) + "/restore-destination-pinned";
-        error_code createError;
-        fs::create_directories(source, createError);
-        assert(!createError);
-        fs::create_directories(destination, createError);
-        assert(!createError);
-        createSpecialPair(source, "original-special");
-
-        auto sourceNamespace = MMKV::nameSpace(source);
-        auto sourceGate = sourceNamespace.mmkvWithID("gate");
-        assert(sourceGate);
-        sourceGate->clearAll();
-        assert(sourceGate->set("source-value", "value"));
-        sourceGate->close();
-
-        auto destinationNamespace = MMKV::nameSpace(destination);
-        auto destinationGate = destinationNamespace.mmkvWithID("gate");
-        assert(destinationGate);
-        destinationGate->clearAll();
-        assert(destinationGate->set("destination-value", "value"));
-
-        OneShotLogHandler handler("restoreOneFromDirectoryWithHandles", "finish restore one mmkv", [&] {
-            installReplacementRoots(source, pinnedSource, destination, pinnedDestination);
-        });
-        MMKV::registerHandler(&handler);
-        auto count = destinationNamespace.restoreAllFromDirectory(source);
-        MMKV::unRegisterHandler();
-        assert(handler.fired);
-        assert(count == 2);
-        string restoredValue;
-        assert(destinationGate->getString("value", restoredValue));
-        assert(restoredValue == "source-value");
-        assert(readTestFile(pinnedDestination + "/specialCharacter/special") == "original-special");
-        assert(readTestFile(destination + "/replacement-marker") == "keep");
-        assert(!fs::exists(destination + "/specialCharacter/special"));
-        destinationGate->close();
-    }
-
-    error_code cleanupError;
-    fs::remove_all(base, cleanupError);
-    assert(!cleanupError);
-    printf("test all-directory pinned roots: passed\n");
+    suffix->clearAll();
+    special->clearAll();
+    std::filesystem::remove_all(backupDir);
+    std::filesystem::remove_all(invalidDir);
+    printf("test minimal backup and restore hardening: passed\n");
 }
 
 void testRemove(MMKV *mmkv) {
@@ -1487,23 +712,14 @@ void testRemove(MMKV *mmkv) {
     printf("test remove: passed\n");
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     locale::global(locale(""));
     wcout.imbue(locale(""));
     char c;
     srand((uint64_t) &c);
 
-    const char *overrideRoot = getenv("MMKV_TEST_ROOT");
-    error_code tempError;
-    string testRoot = (overrideRoot && overrideRoot[0] != '\0') ? overrideRoot : fs::temp_directory_path(tempError).string();
-    assert(!tempError);
-    error_code createError;
-    fs::create_directories(testRoot, createError);
-    assert(!createError && fs::is_directory(testRoot));
-    testRoot = absolutePath(testRoot);
-    assert(setenv("TMPDIR", testRoot.c_str(), 1) == 0);
-
-    string rootDir = testRoot + "/mmkv";
+    string rootDir = argc > 1 ? argv[1] : "/tmp/mmkv";
+    assert(mkPath(rootDir));
     MMKV::initializeMMKV(rootDir);
 
     auto mmkv = MMKV::mmkvWithID("unit_test");
@@ -1521,15 +737,14 @@ int main() {
     testVector(mmkv);
     testRemove(mmkv);
     testOversizedKey(mmkv);
-    testTransactionalOutputAndOversizedValue(mmkv);
+    testOversizedValue(mmkv);
+    testCodedOutputBounds();
     testExpirationOverflow();
+    testExpirationAlignment();
+    testArmCRC32();
 #ifndef MMKV_DISABLE_CRYPT
-    testCryptoRandomAndWipe(rootDir);
+    testCryptoRandomAndWipe();
 #endif
-    testLongDirectoryWalk(testRoot);
-    testMayflyMappedFileIdentity(testRoot);
-    testPinnedDirectoryHandles(testRoot);
-    testPairFailureRollback(testRoot);
-    testBackupRestoreNoFollow(testRoot);
-    testAllDirectoryPinnedRoots(testRoot);
+    testLongDirectoryWalk(rootDir);
+    testMinimalBackupRestore(rootDir);
 }

@@ -25,4 +25,7 @@ internal fun String.requireValidMMKVKey(): String {
     return this
 }
 
-internal fun List<String>.requireValidMMKVKeys(): List<String> = map(String::requireValidMMKVKey)
+internal fun List<String>.requireValidMMKVKeys(): List<String> {
+    forEach(String::requireValidMMKVKey)
+    return this
+}
