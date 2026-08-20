@@ -17,7 +17,7 @@ let package = Package(
         .macOS("10.15")
     ],
     products: [
-        .library(name: "mmkv-ios", targets: ["mmkv_ios"])
+        .library(name: "mmkv-ios", type: .dynamic, targets: ["mmkv_ios"])
     ],
     dependencies: [
         mmkvDependency,
@@ -37,6 +37,10 @@ let package = Package(
             linkerSettings: [
                 .linkedLibrary("z"),
                 .linkedLibrary("c++"),
+                .linkedFramework("UIKit", .when(platforms: [.iOS])),
+                .linkedFramework("AppKit", .when(platforms: [.macOS])),
+                .linkedFramework("Flutter", .when(platforms: [.iOS])),
+                .linkedFramework("FlutterMacOS", .when(platforms: [.macOS])),
             ]
         )
     ]
