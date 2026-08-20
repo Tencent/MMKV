@@ -170,7 +170,7 @@ bool AESCrypt::fillRandomIV(void *vector) {
 
     size_t offset = 0;
     auto *bytes = static_cast<uint8_t *>(vector);
-    while (offset < AES_IV_LEN) {
+    do {
         auto count = read(fd, bytes + offset, AES_IV_LEN - offset);
         if (count > 0) {
             offset += static_cast<size_t>(count);
@@ -180,7 +180,7 @@ bool AESCrypt::fillRandomIV(void *vector) {
             MMKVError("fail to read /dev/urandom, error=%d(%s)", errno, strerror(errno));
             break;
         }
-    }
+    } while (offset < AES_IV_LEN);
     close(fd);
     return offset == AES_IV_LEN;
 #endif
