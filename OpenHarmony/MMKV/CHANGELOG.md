@@ -1,5 +1,5 @@
 # MMKV for HarmonyOS NEXT Change Log
-## v2.4.2 / 2026-08-20
+## v2.4.2 / 2026-08-21
 * Keep up with MMKV Core v2.4.2 hotfix and data-safety fixes.
 * **Fix:** Corrected the one-year expiration constant.
 * **Change:** Added the package author email to OHPM metadata.

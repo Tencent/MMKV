@@ -1,5 +1,5 @@
 # MMKV Platform Linux Change Log
-## v2.4.2 / 2026-08-20
+## v2.4.2 / 2026-08-21
 Keep up with native lib v2.4.2.
 
 ## v2.4.1 / 2026-07-30

@@ -1,5 +1,5 @@
 # MMKV Change Log
-## v2.4.2 / 2026-08-20
+## v2.4.2 / 2026-08-21
 
 This is a hotfix release based on v2.4.1. It adds targeted encrypted-write and backup/restore checks, fixes Kotlin Multiplatform consistency issues, and repairs native package build/link regressions.
 
