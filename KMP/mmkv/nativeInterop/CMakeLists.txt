@@ -23,7 +23,7 @@ project(mmkv-kmp)
 
 # Set the version of MMKV to use. Can be overridden by Gradle via
 # -DMMKV_VERSION=v<x.y.z>. Defaults to the in-repo value when run standalone.
-set(MMKV_VERSION "v2.4.1" CACHE STRING "MMKV version to fetch when built outside the monorepo")
+set(MMKV_VERSION "v2.4.2" CACHE STRING "MMKV version to fetch when built outside the monorepo")
 set(MMKV_GIT_REPOSITORY "https://github.com/Tencent/MMKV.git" CACHE STRING "MMKV git repository to fetch when built outside the monorepo")
 set(MMKV_GIT_TAG "${MMKV_VERSION}" CACHE STRING "MMKV git tag, branch, or commit to fetch when built outside the monorepo")
 

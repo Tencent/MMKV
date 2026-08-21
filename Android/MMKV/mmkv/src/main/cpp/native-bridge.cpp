@@ -368,7 +368,12 @@ MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, js
 
     auto config = MMKVConfig();
     config.mode = (MMKVMode) mode;
+#    ifndef MMKV_DISABLE_CRYPT
     config.aes256 = aes256;
+#    else
+    (void) cryptKey;
+    (void) aes256;
+#    endif
     config.expectedCapacity = expectedCapacity;
     if (enableKeyExpire >= 0) {
         config.enableKeyExpire = (enableKeyExpire != 0);
@@ -381,6 +386,7 @@ MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, js
     config.itemSizeLimit = itemSizeLimit;
 
     bool done = false;
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
@@ -395,6 +401,7 @@ MMKV_JNI jlong getMMKVWithID(JNIEnv *env, jobject, jstring mmapID, jint mode, js
             done = true;
         }
     }
+#    endif
     if (!done) {
         if (rootPath) {
             string path = jstring2string(env, rootPath);
@@ -415,7 +422,12 @@ MMKV_JNI jlong getDefaultMMKV(JNIEnv *env, jobject obj, jint mode, jstring crypt
 
     auto config = MMKVConfig();
     config.mode = (MMKVMode) mode;
+#    ifndef MMKV_DISABLE_CRYPT
     config.aes256 = aes256;
+#    else
+    (void) cryptKey;
+    (void) aes256;
+#    endif
     config.expectedCapacity = expectedCapacity;
     if (enableKeyExpire >= 0) {
         config.enableKeyExpire = (enableKeyExpire != 0);
@@ -427,6 +439,7 @@ MMKV_JNI jlong getDefaultMMKV(JNIEnv *env, jobject obj, jint mode, jstring crypt
     }
     config.itemSizeLimit = itemSizeLimit;
 
+#    ifndef MMKV_DISABLE_CRYPT
     if (cryptKey) {
         string crypt = jstring2string(env, cryptKey);
         if (crypt.length() > 0) {
@@ -434,6 +447,7 @@ MMKV_JNI jlong getDefaultMMKV(JNIEnv *env, jobject obj, jint mode, jstring crypt
             kv = MMKV::defaultMMKV(config);
         }
     }
+#    endif
     if (!kv) {
         kv = MMKV::defaultMMKV(config);
     }

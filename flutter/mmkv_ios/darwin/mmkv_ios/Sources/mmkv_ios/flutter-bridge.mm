@@ -27,6 +27,12 @@
 
 using namespace std;
 
+extern "C" __attribute__((noinline, visibility("hidden"))) void mmkvEnsureCoreLinked(void) {
+    // The compiler must preserve this call even under whole-module optimization.
+    // Its relocation is what extracts this object from the SwiftPM archive.
+    __asm__ __volatile__("" ::: "memory");
+}
+
 MMKV_EXPORT void *mmkvInitialize(const char *rootDir, const char *groupDir, int32_t logLevel, LogCallback_t logCallback) {
     auto handler = [MyMMKVHandler getHandler];
     handler.logCallback = logCallback;

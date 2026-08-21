@@ -1,4 +1,33 @@
 # MMKV Change Log
+## v2.4.2 / 2026-08-21
+
+This is a hotfix release based on v2.4.1. It adds targeted encrypted-write and backup/restore checks, fixes Kotlin Multiplatform consistency issues, and repairs native package build/link regressions.
+
+### Changes for All Platforms
+* **Fix:** Hardened cryptographic random-IV generation, secure key cleanup, encryption-mode changes, and bounded protobuf writes.
+* **Fix:** Prevented self-backup/restore through equivalent directory aliases, fixed uncached backup locking, rejected incomplete restore sources, and handled IDs ending in `.crc`.
+* **Fix:** Corrected the one-year expiration constant, which previously represented 30 years on Android, iOS/macOS, HarmonyOS NEXT, Flutter, and Go.
+* **Fix:** Made directory walking work with long paths and made `PBUtility.h` include its `MMBuffer` dependency directly.
+
+### Kotlin Multiplatform
+* **Fix:** Preserved empty byte arrays and UTF-8 string values consistently across supported targets.
+* **Fix:** Aligned key validation and expiration behavior across Android and iOS, including consistent rejection of embedded NUL keys.
+
+### iOS/macOS
+* **Fix:** Fixed secure key wiping compilation on Apple platforms ([#1675](https://github.com/tencent/mmkv/issues/1675)).
+
+### HarmonyOS NEXT
+* **Change:** Added the package author email to OHPM metadata.
+
+### Flutter
+* **Fix:** Fixed Swift Package Manager builds so Dart FFI entry points remain linked and exported on iOS/macOS ([#1676](https://github.com/tencent/mmkv/issues/1676)).
+
+### Win32
+* **Fix:** Fixed the C bridge build with MSVC and its UTF-8/wide-path boundaries ([#1681](https://github.com/tencent/mmkv/issues/1681)).
+
+### Build
+* **Change:** Added a reusable, guarded cleanup script for generated artifacts.
+
 ## v2.4.1 / 2026-07-30
 
 This is a maintenance release based on v2.4.0. It focuses on data-safety fixes, encrypted-file compatibility, packaging/build cleanup, and experimental Kotlin Multiplatform support for Android and iOS.

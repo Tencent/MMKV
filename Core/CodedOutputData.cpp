@@ -21,6 +21,7 @@
 #include "CodedOutputData.h"
 #include "PBUtility.h"
 #include <cstring>
+#include <limits>
 #include <stdexcept>
 
 #ifdef MMKV_APPLE
@@ -33,12 +34,22 @@ using namespace std;
 
 namespace mmkv {
 
+constexpr size_t MaxVarint32Size = 5;
+constexpr size_t MaxVarint64Size = 10;
+
 CodedOutputData::CodedOutputData(void *ptr, size_t len) : m_ptr((uint8_t *) ptr), m_size(len), m_position(0) {
     MMKV_ASSERT(m_ptr);
 }
 
 uint8_t *CodedOutputData::curWritePointer() {
     return m_ptr + m_position;
+}
+
+void CodedOutputData::requireSpace(size_t length) const {
+    if (m_position > m_size || length > m_size - m_position) {
+        throw out_of_range("m_position: " + to_string(m_position) + ", length: " + to_string(length) +
+                           ", m_size: " + to_string(m_size));
+    }
 }
 
 void CodedOutputData::writeDouble(double value) {
@@ -74,18 +85,31 @@ void CodedOutputData::writeBool(bool value) {
 }
 
 void CodedOutputData::writeData(const MMBuffer &value) {
-    this->writeRawVarint32((int32_t) value.length());
-    this->writeRawData(value);
+    const auto length = value.length();
+    if (length > numeric_limits<uint32_t>::max()) {
+        throw length_error("MMBuffer is too large to encode");
+    }
+    const auto prefixSize = static_cast<size_t>(pbRawVarint32Size(static_cast<uint32_t>(length)));
+    const auto available = spaceLeft();
+    if (prefixSize > available || length > available - prefixSize) {
+        throw out_of_range("length-delimited MMBuffer exceeds output capacity");
+    }
+    writeRawVarint32Unchecked(static_cast<uint32_t>(length));
+    memcpy(m_ptr + m_position, value.getPtr(), length);
+    m_position += length;
 }
 
 void CodedOutputData::writeString(const string &value) {
-    size_t numberOfBytes = value.size();
-    this->writeRawVarint32((int32_t) numberOfBytes);
-    if (m_position + numberOfBytes > m_size) {
-        auto msg = "m_position: " + to_string(m_position) + ", numberOfBytes: " + to_string(numberOfBytes) +
-                   ", m_size: " + to_string(m_size);
-        throw out_of_range(msg);
+    const auto numberOfBytes = value.size();
+    if (numberOfBytes > numeric_limits<uint32_t>::max()) {
+        throw length_error("string is too large to encode");
     }
+    const auto prefixSize = static_cast<size_t>(pbRawVarint32Size(static_cast<uint32_t>(numberOfBytes)));
+    const auto available = spaceLeft();
+    if (prefixSize > available || numberOfBytes > available - prefixSize) {
+        throw out_of_range("length-delimited string exceeds output capacity");
+    }
+    writeRawVarint32Unchecked(static_cast<uint32_t>(numberOfBytes));
     memcpy(m_ptr + m_position, ((uint8_t *) value.data()), numberOfBytes);
     m_position += numberOfBytes;
 }
@@ -98,11 +122,8 @@ size_t CodedOutputData::spaceLeft() {
 }
 
 void CodedOutputData::seek(size_t addedSize) {
+    requireSpace(addedSize);
     m_position += addedSize;
-
-    if (m_position > m_size) {
-        throw out_of_range("OutOfSpace");
-    }
 }
 
 void CodedOutputData::reset() {
@@ -114,13 +135,15 @@ size_t CodedOutputData::getPosition() {
 }
 
 void CodedOutputData::setPosition(size_t position) {
+    if (position > m_size) {
+        throw out_of_range("position: " + to_string(position) + ", m_size: " + to_string(m_size));
+    }
     m_position = position;
 }
 
 void CodedOutputData::writeRawByte(uint8_t value) {
-    if (m_position == m_size) {
+    if (m_position >= m_size) {
         throw out_of_range("m_position: " + to_string(m_position) + " m_size: " + to_string(m_size));
-        return;
     }
 
     m_ptr[m_position++] = value;
@@ -128,55 +151,57 @@ void CodedOutputData::writeRawByte(uint8_t value) {
 
 void CodedOutputData::writeRawData(const MMBuffer &data) {
     size_t numberOfBytes = data.length();
-    if (m_position + numberOfBytes > m_size) {
-        auto msg = "m_position: " + to_string(m_position) + ", numberOfBytes: " + to_string(numberOfBytes) +
-                   ", m_size: " + to_string(m_size);
-        throw out_of_range(msg);
-    }
+    requireSpace(numberOfBytes);
     memcpy(m_ptr + m_position, data.getPtr(), numberOfBytes);
     m_position += numberOfBytes;
 }
 
 void CodedOutputData::writeRawVarint32(int32_t value) {
-    while (true) {
-        if ((value & ~0x7f) == 0) {
-            this->writeRawByte(static_cast<uint8_t>(value));
-            return;
-        } else {
-            this->writeRawByte(static_cast<uint8_t>((value & 0x7F) | 0x80));
-            value = logicalRightShift32(value, 7);
-        }
+    auto bits = static_cast<uint32_t>(value);
+    if (m_position > m_size || m_size - m_position < MaxVarint32Size) {
+        requireSpace(pbRawVarint32Size(bits));
     }
+    writeRawVarint32Unchecked(bits);
+}
+
+void CodedOutputData::writeRawVarint32Unchecked(uint32_t bits) {
+    while (bits > 0x7f) {
+        m_ptr[m_position++] = static_cast<uint8_t>((bits & 0x7f) | 0x80);
+        bits >>= 7;
+    }
+    m_ptr[m_position++] = static_cast<uint8_t>(bits);
 }
 
 void CodedOutputData::writeRawVarint64(int64_t value) {
-    while (true) {
-        if ((value & ~0x7f) == 0) {
-            this->writeRawByte(static_cast<uint8_t>(value));
-            return;
-        } else {
-            this->writeRawByte(static_cast<uint8_t>((value & 0x7f) | 0x80));
-            value = logicalRightShift64(value, 7);
-        }
+    auto bits = static_cast<uint64_t>(value);
+    if (m_position > m_size || m_size - m_position < MaxVarint64Size) {
+        requireSpace(pbUInt64Size(bits));
     }
+    writeRawVarint64Unchecked(bits);
+}
+
+void CodedOutputData::writeRawVarint64Unchecked(uint64_t bits) {
+    while (bits > 0x7f) {
+        m_ptr[m_position++] = static_cast<uint8_t>((bits & 0x7f) | 0x80);
+        bits >>= 7;
+    }
+    m_ptr[m_position++] = static_cast<uint8_t>(bits);
 }
 
 void CodedOutputData::writeRawLittleEndian32(int32_t value) {
-    this->writeRawByte(static_cast<uint8_t>((value) &0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 8) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 16) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 24) & 0xff));
+    requireSpace(sizeof(uint32_t));
+    auto bits = static_cast<uint32_t>(value);
+    for (size_t shift = 0; shift < 32; shift += 8) {
+        m_ptr[m_position++] = static_cast<uint8_t>(bits >> shift);
+    }
 }
 
 void CodedOutputData::writeRawLittleEndian64(int64_t value) {
-    this->writeRawByte(static_cast<uint8_t>((value) &0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 8) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 16) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 24) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 32) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 40) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 48) & 0xff));
-    this->writeRawByte(static_cast<uint8_t>((value >> 56) & 0xff));
+    requireSpace(sizeof(uint64_t));
+    auto bits = static_cast<uint64_t>(value);
+    for (size_t shift = 0; shift < 64; shift += 8) {
+        m_ptr[m_position++] = static_cast<uint8_t>(bits >> shift);
+    }
 }
 
 } // namespace mmkv

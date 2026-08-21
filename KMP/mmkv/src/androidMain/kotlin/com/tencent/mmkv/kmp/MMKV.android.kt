@@ -26,6 +26,7 @@ import com.tencent.mmkv.MMKVConfig as AndroidMMKVConfig
 import com.tencent.mmkv.MMKVHandler as AndroidMMKVHandler
 import com.tencent.mmkv.MMKVLogLevel as AndroidMMKVLogLevel
 import com.tencent.mmkv.MMKVRecoverStrategic as AndroidMMKVRecoverStrategic
+import kotlin.text.CharacterCodingException
 
 // region Platform-specific initialization (Android needs Context)
 
@@ -134,42 +135,64 @@ actual class MMKV internal constructor(impl: AndroidMMKV) {
 
     // region Encode
 
-    actual fun encodeBool(key: String, value: Boolean): Boolean = impl.encode(key, value)
-    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean = impl.encode(key, value, expireDuration.toInt())
-    actual fun encodeInt(key: String, value: Int): Boolean = impl.encode(key, value)
-    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean = impl.encode(key, value, expireDuration.toInt())
-    actual fun encodeLong(key: String, value: Long): Boolean = impl.encode(key, value)
-    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean = impl.encode(key, value, expireDuration.toInt())
-    actual fun encodeFloat(key: String, value: Float): Boolean = impl.encode(key, value)
-    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean = impl.encode(key, value, expireDuration.toInt())
-    actual fun encodeDouble(key: String, value: Double): Boolean = impl.encode(key, value)
-    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean = impl.encode(key, value, expireDuration.toInt())
-    actual fun encodeString(key: String, value: String): Boolean = impl.encode(key, value)
-    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean = impl.encode(key, value, expireDuration.toInt())
-    actual fun encodeBytes(key: String, value: ByteArray): Boolean = impl.encode(key, value)
-    actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean = impl.encode(key, value, expireDuration.toInt())
+    actual fun encodeBool(key: String, value: Boolean): Boolean = impl.encode(key.requireValidMMKVKey(), value)
+    actual fun encodeBool(key: String, value: Boolean, expireDuration: UInt): Boolean =
+        impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
+    actual fun encodeInt(key: String, value: Int): Boolean = impl.encode(key.requireValidMMKVKey(), value)
+    actual fun encodeInt(key: String, value: Int, expireDuration: UInt): Boolean =
+        impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
+    actual fun encodeLong(key: String, value: Long): Boolean = impl.encode(key.requireValidMMKVKey(), value)
+    actual fun encodeLong(key: String, value: Long, expireDuration: UInt): Boolean =
+        impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
+    actual fun encodeFloat(key: String, value: Float): Boolean = impl.encode(key.requireValidMMKVKey(), value)
+    actual fun encodeFloat(key: String, value: Float, expireDuration: UInt): Boolean =
+        impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
+    actual fun encodeDouble(key: String, value: Double): Boolean = impl.encode(key.requireValidMMKVKey(), value)
+    actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean =
+        impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
+    actual fun encodeString(key: String, value: String): Boolean = encodeBytes(key, value.encodeToByteArray())
+    actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean =
+        encodeBytes(key, value.encodeToByteArray(), expireDuration)
+    actual fun encodeBytes(key: String, value: ByteArray): Boolean = impl.encode(key.requireValidMMKVKey(), value)
+    actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean =
+        impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
 
     // endregion
 
     // region Decode
 
-    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean = impl.decodeBool(key, defaultValue)
-    actual fun decodeInt(key: String, defaultValue: Int): Int = impl.decodeInt(key, defaultValue)
-    actual fun decodeLong(key: String, defaultValue: Long): Long = impl.decodeLong(key, defaultValue)
-    actual fun decodeFloat(key: String, defaultValue: Float): Float = impl.decodeFloat(key, defaultValue)
-    actual fun decodeDouble(key: String, defaultValue: Double): Double = impl.decodeDouble(key, defaultValue)
-    actual fun decodeString(key: String, defaultValue: String?): String? = impl.decodeString(key, defaultValue)
-    actual fun decodeBytes(key: String): ByteArray? = impl.decodeBytes(key)
+    actual fun decodeBool(key: String, defaultValue: Boolean): Boolean =
+        impl.decodeBool(key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeInt(key: String, defaultValue: Int): Int =
+        impl.decodeInt(key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeLong(key: String, defaultValue: Long): Long =
+        impl.decodeLong(key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeFloat(key: String, defaultValue: Float): Float =
+        impl.decodeFloat(key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeDouble(key: String, defaultValue: Double): Double =
+        impl.decodeDouble(key.requireValidMMKVKey(), defaultValue)
+    actual fun decodeString(key: String, defaultValue: String?): String? {
+        val validKey = key.requireValidMMKVKey()
+        val bytes = impl.decodeBytes(validKey) ?: return defaultValue
+        return try {
+            bytes.decodeToString(throwOnInvalidSequence = true)
+        } catch (_: CharacterCodingException) {
+            // Values written by older Android KMP releases used JNI Modified UTF-8.
+            impl.decodeString(validKey, defaultValue)
+        }
+    }
+    actual fun decodeBytes(key: String): ByteArray? = impl.decodeBytes(key.requireValidMMKVKey())
 
     // endregion
 
     // region Key management
 
-    actual fun containsKey(key: String): Boolean = impl.containsKey(key)
+    actual fun containsKey(key: String): Boolean = impl.containsKey(key.requireValidMMKVKey())
     actual fun countNonExpiredKeys(): Long = impl.countNonExpiredKeys()
     actual fun allNonExpiredKeys(): List<String> = impl.allNonExpireKeys()?.toList() ?: emptyList()
-    actual fun removeValueForKey(key: String) = impl.removeValueForKey(key)
-    actual fun removeValuesForKeys(keys: List<String>) = impl.removeValuesForKeys(keys.toTypedArray())
+    actual fun removeValueForKey(key: String) = impl.removeValueForKey(key.requireValidMMKVKey())
+    actual fun removeValuesForKeys(keys: List<String>) =
+        impl.removeValuesForKeys(keys.requireValidMMKVKeys().toTypedArray())
     actual fun clearAll() = impl.clearAll()
     actual fun clearAllKeepSpace() = impl.clearAllWithKeepingSpace()
 
@@ -212,14 +235,16 @@ actual class MMKV internal constructor(impl: AndroidMMKV) {
     actual fun checkContentChanged() = impl.checkContentChangedByOuterProcess()
 
     actual fun getValueSize(key: String, actualSize: Boolean): Long {
+        val validKey = key.requireValidMMKVKey()
         return if (actualSize) {
-            impl.getValueActualSize(key).toLong()
+            impl.getValueActualSize(validKey).toLong()
         } else {
-            impl.getValueSize(key).toLong()
+            impl.getValueSize(validKey).toLong()
         }
     }
 
-    actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int = impl.writeValueToBuffer(key, buffer)
+    actual fun writeValueToBuffer(key: String, buffer: ByteArray): Int =
+        impl.writeValueToBuffer(key.requireValidMMKVKey(), buffer)
 
     actual fun lock() = impl.lock()
     actual fun unlock() = impl.unlock()

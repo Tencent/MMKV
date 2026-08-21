@@ -52,6 +52,8 @@ set_target_properties(TestInterProcessLock PROPERTIES
 
 add_executable(UnitTest
         UnitTest.cpp)
+target_include_directories(UnitTest PRIVATE
+        ../../Core)
 target_link_libraries(UnitTest
         mmkv)
 set_target_properties(UnitTest PROPERTIES

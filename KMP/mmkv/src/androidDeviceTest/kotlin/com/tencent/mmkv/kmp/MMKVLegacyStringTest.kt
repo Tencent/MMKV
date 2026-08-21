@@ -20,28 +20,26 @@
 
 package com.tencent.mmkv.kmp
 
-/**
- * MMKV instance mode constants.
- */
-object MMKVMode {
-    /** Single-process mode. The default mode on an MMKV instance. */
-    const val SINGLE_PROCESS = 1 shl 0
+import com.tencent.mmkv.MMKV as AndroidMMKV
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
-    /** Multi-process mode. */
-    const val MULTI_PROCESS = 1 shl 1
+class MMKVLegacyStringTest {
 
-    /** Read-only mode. */
-    const val READ_ONLY = 1 shl 5
-}
-
-/**
- * MMKV expire duration constants (in seconds).
- */
-object MMKVExpireDuration {
-    const val Never: UInt = 0u
-    const val InMinute: UInt = 60u
-    const val InHour: UInt = 3_600u
-    const val InDay: UInt = 86_400u
-    const val InMonth: UInt = 2_592_000u
-    const val InYear: UInt = 31_536_000u
+    @Test
+    fun modifiedUtf8ValueFromAndroidRemainsReadable() {
+        MMKVTestEnv.initialize()
+        val id = MMKVTestEnv.uniqueID("legacy-modified-utf8")
+        val android = AndroidMMKV.mmkvWithID(id)
+        val kmp = MMKV.mmkvWithID(id)
+        val value = "before\u0000\uD83D\uDE00after"
+        try {
+            assertTrue(android.encode("legacy", value))
+            assertEquals(value, kmp.decodeString("legacy"))
+        } finally {
+            kmp.clearAll()
+            kmp.close()
+        }
+    }
 }

@@ -1,6 +1,6 @@
 [![license](https://img.shields.io/badge/license-BSD_3-brightgreen.svg?style=flat)](https://github.com/Tencent/MMKV/blob/master/LICENSE.TXT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Tencent/MMKV/pulls)
-[![Release Version](https://img.shields.io/badge/release-2.4.1-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
+[![Release Version](https://img.shields.io/badge/release-2.4.2-brightgreen.svg)](https://github.com/Tencent/MMKV/releases)
 [![Platform](https://img.shields.io/badge/Platform-%20Android%20%7C%20iOS%2FmacOS%20%7C%20Kotlin%20Multiplatform%20%7C%20Windows%20%7C%20POSIX%20%7C%20HarmonyOS%20NEXT-brightgreen.svg)](https://github.com/Tencent/MMKV/wiki/home)
 
 中文版本请参看[这里](./README_CN.md)
@@ -9,7 +9,7 @@ MMKV is an **efficient**, **small**, **easy-to-use** mobile key-value storage fr
 
 # MMKV for Kotlin Multiplatform
 
-The v2.4.1 Kotlin Multiplatform package is experimental and currently targets
+The v2.4.2 Kotlin Multiplatform package is experimental and currently targets
 Android and iOS. Its API and artifact layout may change in a future release.
 Add it to the shared module:
 
@@ -17,7 +17,7 @@ Add it to the shared module:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.tencent:mmkv-kmp:2.4.1")
+            implementation("com.tencent:mmkv-kmp:2.4.2")
         }
     }
 }
@@ -46,8 +46,8 @@ Add the following lines to `build.gradle` on your app module:
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:2.4.1'
-    // replace "2.4.1" with any available version
+    implementation 'com.tencent:mmkv:2.4.2'
+    // replace "2.4.2" with any available version
 }
 ```
 

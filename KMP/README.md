@@ -11,7 +11,7 @@ Add the MMKV KMP package to your shared module:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.tencent:mmkv-kmp:2.4.1")
+            implementation("com.tencent:mmkv-kmp:2.4.2")
         }
     }
 }
@@ -23,7 +23,7 @@ Android consumers should have AndroidX enabled in `gradle.properties`:
 android.useAndroidX=true
 ```
 
-Supported targets in v2.4.1:
+Supported targets in v2.4.2:
 
 * Android
 * `iosArm64`
@@ -38,16 +38,16 @@ iOS 14.
 For this experimental release, consumers should depend only on the root artifact:
 
 ```text
-com.tencent:mmkv-kmp:2.4.1
+com.tencent:mmkv-kmp:2.4.2
 ```
 
 Gradle uses Kotlin Multiplatform metadata to select the target artifact:
 
 ```text
-com.tencent:mmkv-kmp-android:2.4.1
-com.tencent:mmkv-kmp-iosarm64:2.4.1
-com.tencent:mmkv-kmp-iossimulatorarm64:2.4.1
-com.tencent:mmkv-kmp-iosx64:2.4.1
+com.tencent:mmkv-kmp-android:2.4.2
+com.tencent:mmkv-kmp-iosarm64:2.4.2
+com.tencent:mmkv-kmp-iossimulatorarm64:2.4.2
+com.tencent:mmkv-kmp-iosx64:2.4.2
 ```
 
 Do not add the target-specific artifacts directly.
@@ -91,7 +91,7 @@ by the same native instance become invalid immediately. The caller must ensure
 that no operation is running and no reference is used afterward. Discard every
 reference before reopening the same ID.
 
-Android delegates to the native `com.tencent:mmkv:2.4.1` AAR. iOS embeds MMKV
+Android delegates to the native `com.tencent:mmkv:2.4.2` AAR. iOS embeds MMKV
 Core through the C bridge in the published native KLIBs, so consumers do not
 need CocoaPods, Swift Package Manager, or a source build.
 
@@ -110,7 +110,7 @@ cd KMP
 ```
 
 `MMKV_USE_MAVEN_LOCAL=true` is needed when the matching
-`com.tencent:mmkv:2.4.1` Android artifact has been published only to Maven
+`com.tencent:mmkv:2.4.2` Android artifact has been published only to Maven
 Local.
 
 Release maintainers should also follow [PUBLISHING.md](./PUBLISHING.md).

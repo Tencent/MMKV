@@ -40,7 +40,12 @@ class MMKVSmokeTest {
     @Test
     fun releaseVersionMatchesPublishedVersion() {
         MMKVTestEnv.initialize()
-        assertEquals("v2.4.1", MMKV.version())
+        assertEquals("v2.4.2", MMKV.version())
+    }
+
+    @Test
+    fun expirationConstantsAreExpressedInSeconds() {
+        assertEquals(31_536_000u, MMKVExpireDuration.InYear)
     }
 
     @Test
@@ -66,6 +71,47 @@ class MMKVSmokeTest {
     }
 
     @Test
+    fun stringsUseCanonicalUtf8Bytes() {
+        val kv = fresh("embedded-null")
+        try {
+            val value = "before\u0000\uD83D\uDE00after"
+            assertTrue(kv.encodeString("string", value))
+            assertEquals(value, kv.decodeString("string"))
+            assertContentEquals(value.encodeToByteArray(), kv.decodeBytes("string"))
+
+            assertTrue(kv.encodeBytes("bytes", value.encodeToByteArray()))
+            assertEquals(value, kv.decodeString("bytes"))
+
+            assertTrue(kv.enableAutoKeyExpire())
+            assertTrue(kv.encodeString("expiring-string", value, 60u))
+            assertEquals(value, kv.decodeString("expiring-string"))
+            assertContentEquals(value.encodeToByteArray(), kv.decodeBytes("expiring-string"))
+        } finally {
+            kv.clearAll()
+        }
+    }
+
+    @Test
+    fun nulKeysAreRejectedBeforeMutation() {
+        val kv = fresh("nul-key")
+        try {
+            val validKey = "valid"
+            val invalidKey = "invalid\u0000key"
+            assertTrue(kv.encodeString(validKey, "kept"))
+
+            assertFailsWith<IllegalArgumentException> { kv.encodeString(invalidKey, "value") }
+            assertFailsWith<IllegalArgumentException> { kv.decodeString(invalidKey) }
+            assertFailsWith<IllegalArgumentException> {
+                kv.removeValuesForKeys(listOf(validKey, invalidKey))
+            }
+
+            assertEquals("kept", kv.decodeString(validKey))
+        } finally {
+            kv.clearAll()
+        }
+    }
+
+    @Test
     fun emptyBytesRemainDistinctFromMissingValue() {
         val kv = fresh("empty-bytes")
         try {
@@ -73,6 +119,11 @@ class MMKVSmokeTest {
             assertTrue(kv.encodeBytes("empty", ByteArray(0)))
             assertTrue(kv.containsKey("empty"))
             assertContentEquals(ByteArray(0), kv.decodeBytes("empty"))
+
+            assertTrue(kv.enableAutoKeyExpire())
+            assertTrue(kv.encodeBytes("expiring-empty", ByteArray(0), 60u))
+            assertTrue(kv.containsKey("expiring-empty"))
+            assertContentEquals(ByteArray(0), kv.decodeBytes("expiring-empty"))
         } finally {
             kv.clearAll()
         }

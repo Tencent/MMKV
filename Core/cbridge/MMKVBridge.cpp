@@ -19,7 +19,9 @@
  */
 
 #include "MMKV.h"
+#define MMKV_CBRIDGE_IMPLEMENTATION
 #include "MMKVBridge.h"
+#undef MMKV_CBRIDGE_IMPLEMENTATION
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -34,7 +36,11 @@ using namespace std;
 #ifdef MMKV_EXPORT
 #    undef MMKV_EXPORT
 #endif
-#define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
+#ifdef _WIN32
+#    define MMKV_EXPORT extern "C" __declspec(dllexport)
+#else
+#    define MMKV_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
+#endif
 
 /* ── Handler bridge ────────────────────────────────────────────────── */
 
@@ -92,8 +98,30 @@ static inline MMKV *kvFromHandle(void *handle) {
     return static_cast<MMKV *>(handle);
 }
 
+static inline MMKVPath_t pathFromUTF8(const char *path) {
+    return string2MMKVPath_t(string(path));
+}
+
+static inline const char *pathToUTF8(const MMKVPath_t &path) {
+#ifdef MMKV_WIN32
+    static thread_local string utf8Path;
+    utf8Path = MMKVPath_t2String(path);
+    return utf8Path.c_str();
+#else
+    return path.c_str();
+#endif
+}
+
+static char *duplicateString(const string &value) {
+    auto *result = static_cast<char *>(malloc(value.size() + 1));
+    if (result) {
+        memcpy(result, value.c_str(), value.size() + 1);
+    }
+    return result;
+}
+
 static MMKVConfig buildConfig(const MMKVConfig_t &cfg,
-                              string &cryptStorage, string &pathStorage) {
+                              string &cryptStorage, MMKVPath_t &pathStorage) {
     MMKVConfig config;
     config.mode = static_cast<MMKVMode>(cfg.mode);
 #ifndef MMKV_DISABLE_CRYPT
@@ -117,7 +145,7 @@ static MMKVConfig buildConfig(const MMKVConfig_t &cfg,
     }
 #endif
     if (cfg.rootPath && cfg.rootPath[0]) {
-        pathStorage = cfg.rootPath;
+        pathStorage = pathFromUTF8(cfg.rootPath);
         config.rootPath = &pathStorage;
     }
     return config;
@@ -127,13 +155,13 @@ static MMKVConfig buildConfig(const MMKVConfig_t &cfg,
 
 MMKV_EXPORT void mmkv_initialize(const char *rootDir, int32_t logLevel) {
     if (!rootDir) { return; }
-    MMKV::initializeMMKV(string(rootDir), static_cast<MMKVLogLevel>(logLevel));
+    MMKV::initializeMMKV(pathFromUTF8(rootDir), static_cast<MMKVLogLevel>(logLevel));
 }
 
 MMKV_EXPORT void mmkv_initialize_with_handler(const char *rootDir, int32_t logLevel, MMKVHandler_t handler) {
     if (!rootDir) { return; }
     g_cHandler.m_callbacks = handler;
-    MMKV::initializeMMKV(string(rootDir), static_cast<MMKVLogLevel>(logLevel), &g_cHandler);
+    MMKV::initializeMMKV(pathFromUTF8(rootDir), static_cast<MMKVLogLevel>(logLevel), &g_cHandler);
 }
 
 MMKV_EXPORT void mmkv_register_handler(MMKVHandler_t handler) {
@@ -157,14 +185,16 @@ MMKV_EXPORT void mmkv_on_exit(void) {
 /* ── Instance management ───────────────────────────────────────────── */
 
 MMKV_EXPORT MMKVHandle_t mmkv_default(MMKVConfig_t cfg) {
-    string cryptStorage, pathStorage;
+    string cryptStorage;
+    MMKVPath_t pathStorage;
     auto config = buildConfig(cfg, cryptStorage, pathStorage);
     return MMKV::defaultMMKV(config);
 }
 
 MMKV_EXPORT MMKVHandle_t mmkv_with_id(const char *mmapID, MMKVConfig_t cfg) {
     if (!mmapID) { return nullptr; }
-    string cryptStorage, pathStorage;
+    string cryptStorage;
+    MMKVPath_t pathStorage;
     auto config = buildConfig(cfg, cryptStorage, pathStorage);
     return MMKV::mmkvWithID(string(mmapID), config);
 }
@@ -400,7 +430,7 @@ MMKV_EXPORT char *mmkv_decode_string(MMKVHandle_t handle, const char *key) {
     if (kv && key) {
         string result;
         if (kv->getString(key, result)) {
-            return strdup(result.c_str());
+            return duplicateString(result);
         }
     }
     return nullptr;
@@ -498,7 +528,7 @@ MMKV_EXPORT char **mmkv_all_keys(MMKVHandle_t handle, uint64_t *lengthPtr, bool 
             char **arr = static_cast<char **>(calloc(keys.size(), sizeof(char *)));
             if (!arr) { return nullptr; }
             for (size_t i = 0; i < keys.size(); i++) {
-                arr[i] = strdup(keys[i].c_str());
+                arr[i] = duplicateString(keys[i]);
             }
             *lengthPtr = keys.size();
             return arr;
@@ -603,38 +633,42 @@ MMKV_EXPORT bool mmkv_try_lock(MMKVHandle_t handle) {
 
 MMKV_EXPORT bool mmkv_backup_one(const char *mmapID, const char *dstDir, const char *rootPath) {
     if (!mmapID || !dstDir) { return false; }
+    auto dst = pathFromUTF8(dstDir);
     if (rootPath) {
-        string path(rootPath);
-        return MMKV::backupOneToDirectory(string(mmapID), string(dstDir), &path);
+        auto path = pathFromUTF8(rootPath);
+        return MMKV::backupOneToDirectory(string(mmapID), dst, &path);
     }
-    return MMKV::backupOneToDirectory(string(mmapID), string(dstDir), nullptr);
+    return MMKV::backupOneToDirectory(string(mmapID), dst, nullptr);
 }
 
 MMKV_EXPORT bool mmkv_restore_one(const char *mmapID, const char *srcDir, const char *rootPath) {
     if (!mmapID || !srcDir) { return false; }
+    auto src = pathFromUTF8(srcDir);
     if (rootPath) {
-        string path(rootPath);
-        return MMKV::restoreOneFromDirectory(string(mmapID), string(srcDir), &path);
+        auto path = pathFromUTF8(rootPath);
+        return MMKV::restoreOneFromDirectory(string(mmapID), src, &path);
     }
-    return MMKV::restoreOneFromDirectory(string(mmapID), string(srcDir), nullptr);
+    return MMKV::restoreOneFromDirectory(string(mmapID), src, nullptr);
 }
 
 MMKV_EXPORT uint64_t mmkv_backup_all(const char *dstDir, const char *rootPath) {
     if (!dstDir) { return 0; }
+    auto dst = pathFromUTF8(dstDir);
     if (rootPath) {
-        string path(rootPath);
-        return MMKV::backupAllToDirectory(string(dstDir), &path);
+        auto path = pathFromUTF8(rootPath);
+        return MMKV::backupAllToDirectory(dst, &path);
     }
-    return MMKV::backupAllToDirectory(string(dstDir), nullptr);
+    return MMKV::backupAllToDirectory(dst, nullptr);
 }
 
 MMKV_EXPORT uint64_t mmkv_restore_all(const char *srcDir, const char *rootPath) {
     if (!srcDir) { return 0; }
+    auto src = pathFromUTF8(srcDir);
     if (rootPath) {
-        string path(rootPath);
-        return MMKV::restoreAllFromDirectory(string(srcDir), &path);
+        auto path = pathFromUTF8(rootPath);
+        return MMKV::restoreAllFromDirectory(src, &path);
     }
-    return MMKV::restoreAllFromDirectory(string(srcDir), nullptr);
+    return MMKV::restoreAllFromDirectory(src, nullptr);
 }
 
 /* ── Features ──────────────────────────────────────────────────────── */
@@ -706,7 +740,7 @@ MMKV_EXPORT const char *mmkv_version(void) {
 }
 
 MMKV_EXPORT const char *mmkv_root_dir(void) {
-    return MMKV::getRootDir().c_str();
+    return pathToUTF8(MMKV::getRootDir());
 }
 
 /* ── Storage ───────────────────────────────────────────────────────── */
@@ -714,7 +748,7 @@ MMKV_EXPORT const char *mmkv_root_dir(void) {
 MMKV_EXPORT bool mmkv_remove_storage(const char *mmapID, const char *rootPath) {
     if (!mmapID) { return false; }
     if (rootPath) {
-        string path(rootPath);
+        auto path = pathFromUTF8(rootPath);
         return MMKV::removeStorage(string(mmapID), &path);
     }
     return MMKV::removeStorage(string(mmapID), nullptr);
@@ -723,7 +757,7 @@ MMKV_EXPORT bool mmkv_remove_storage(const char *mmapID, const char *rootPath) {
 MMKV_EXPORT bool mmkv_check_exist(const char *mmapID, const char *rootPath) {
     if (!mmapID) { return false; }
     if (rootPath) {
-        string path(rootPath);
+        auto path = pathFromUTF8(rootPath);
         return MMKV::checkExist(string(mmapID), &path);
     }
     return MMKV::checkExist(string(mmapID), nullptr);
@@ -746,7 +780,7 @@ MMKV_EXPORT bool mmkv_is_read_only(MMKVHandle_t handle) {
 MMKV_EXPORT bool mmkv_is_file_valid(const char *mmapID, const char *rootPath) {
     if (!mmapID) { return false; }
     if (rootPath) {
-        string path(rootPath);
+        auto path = pathFromUTF8(rootPath);
         return MMKV::isFileValid(string(mmapID), &path);
     }
     return MMKV::isFileValid(string(mmapID), nullptr);
@@ -766,7 +800,7 @@ static inline mmkv::NameSpace *nsFromHandle(void *handle) {
 MMKV_EXPORT MMKVNameSpace_t mmkv_namespace(const char *rootDir) {
     if (!rootDir) { return nullptr; }
     // NameSpace is a lightweight POD-like facade; we heap-allocate to return as opaque handle.
-    auto *ns = new mmkv::NameSpace(MMKV::nameSpace(string(rootDir)));
+    auto *ns = new mmkv::NameSpace(MMKV::nameSpace(pathFromUTF8(rootDir)));
     return ns;
 }
 
@@ -782,14 +816,15 @@ MMKV_EXPORT void mmkv_namespace_free(MMKVNameSpace_t handle) {
 
 MMKV_EXPORT const char *mmkv_namespace_root_dir(MMKVNameSpace_t handle) {
     auto *ns = nsFromHandle(handle);
-    if (ns) { return ns->getRootDir().c_str(); }
+    if (ns) { return pathToUTF8(ns->getRootDir()); }
     return nullptr;
 }
 
 MMKV_EXPORT MMKVHandle_t mmkv_namespace_mmkv_with_id(MMKVNameSpace_t handle, const char *mmapID, MMKVConfig_t cfg) {
     auto *ns = nsFromHandle(handle);
     if (!ns || !mmapID) { return nullptr; }
-    string cryptStorage, pathStorage;
+    string cryptStorage;
+    MMKVPath_t pathStorage;
     auto config = buildConfig(cfg, cryptStorage, pathStorage);
     return ns->mmkvWithID(string(mmapID), config);
 }
@@ -797,25 +832,25 @@ MMKV_EXPORT MMKVHandle_t mmkv_namespace_mmkv_with_id(MMKVNameSpace_t handle, con
 MMKV_EXPORT bool mmkv_namespace_backup_one(MMKVNameSpace_t handle, const char *mmapID, const char *dstDir) {
     auto *ns = nsFromHandle(handle);
     if (!ns || !mmapID || !dstDir) { return false; }
-    return ns->backupOneToDirectory(string(mmapID), string(dstDir));
+    return ns->backupOneToDirectory(string(mmapID), pathFromUTF8(dstDir));
 }
 
 MMKV_EXPORT bool mmkv_namespace_restore_one(MMKVNameSpace_t handle, const char *mmapID, const char *srcDir) {
     auto *ns = nsFromHandle(handle);
     if (!ns || !mmapID || !srcDir) { return false; }
-    return ns->restoreOneFromDirectory(string(mmapID), string(srcDir));
+    return ns->restoreOneFromDirectory(string(mmapID), pathFromUTF8(srcDir));
 }
 
 MMKV_EXPORT uint64_t mmkv_namespace_backup_all(MMKVNameSpace_t handle, const char *dstDir) {
     auto *ns = nsFromHandle(handle);
     if (!ns || !dstDir) { return 0; }
-    return ns->backupAllToDirectory(string(dstDir));
+    return ns->backupAllToDirectory(pathFromUTF8(dstDir));
 }
 
 MMKV_EXPORT uint64_t mmkv_namespace_restore_all(MMKVNameSpace_t handle, const char *srcDir) {
     auto *ns = nsFromHandle(handle);
     if (!ns || !srcDir) { return 0; }
-    return ns->restoreAllFromDirectory(string(srcDir));
+    return ns->restoreAllFromDirectory(pathFromUTF8(srcDir));
 }
 
 MMKV_EXPORT bool mmkv_namespace_is_file_valid(MMKVNameSpace_t handle, const char *mmapID) {

@@ -1344,6 +1344,7 @@ MMKV* testMMKV(const string& mmapID, const string* cryptKey, bool aes256, bool d
     return kv;
 }
 
+#ifndef MMKV_DISABLE_CRYPT
 void testReKey() {
     string mmapID = "test/AES_reKey1";
     MMKV* kv = testMMKV(mmapID, nullptr, false, false, nullptr);
@@ -1362,6 +1363,7 @@ void testReKey() {
     kv->clearMemoryCache();
     testMMKV(mmapID, nullptr, false, true, nullptr);
 }
+#endif
 
 class MyMMKVHandler : public mmkv::MMKVHandler {
 public:
@@ -1485,6 +1487,8 @@ int main() {
     testReadonlyCrash();
     testImport();
     itemSizeHolderTest();
+#ifndef MMKV_DISABLE_CRYPT
     testReKey();
+#endif
     testOversizedKey();
 }

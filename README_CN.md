@@ -3,14 +3,14 @@ MMKV 是基于 mmap 内存映射的 key-value 组件，底层序列化/反序列
 
 ## Kotlin Multiplatform 指南
 
-v2.4.1 的 Kotlin Multiplatform 包为实验性功能，目前支持 Android 与 iOS；
+v2.4.2 的 Kotlin Multiplatform 包为实验性功能，目前支持 Android 与 iOS；
 后续版本可能调整 API 或产物结构。在共享模块中引入：
 
 ```kotlin
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.tencent:mmkv-kmp:2.4.1")
+            implementation("com.tencent:mmkv-kmp:2.4.2")
         }
     }
 }
@@ -39,8 +39,8 @@ kotlin {
 
 ```gradle
 dependencies {
-    implementation 'com.tencent:mmkv:2.4.1'
-    // replace "2.4.1" with any available version
+    implementation 'com.tencent:mmkv:2.4.2'
+    // replace "2.4.2" with any available version
 }
 ```
 从 v2.0.0 起, MMKV **去掉了 32-bit 架构的支持**、API level 22 及以下的支持, 如有这类需求，请使用 v1.3.x LTS 版本。  

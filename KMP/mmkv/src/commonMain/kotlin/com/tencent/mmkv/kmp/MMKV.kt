@@ -27,6 +27,8 @@ package com.tencent.mmkv.kmp
  * Note: Platform-specific initialization methods are provided as extension functions
  * on [MMKV.Companion] in each platform source set, since Android requires [Context]
  * while other platforms do not.
+ *
+ * Keys used by instance APIs must not contain NUL (`\u0000`) characters.
  */
 expect class MMKV {
 

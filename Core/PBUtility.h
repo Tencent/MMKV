@@ -23,6 +23,7 @@
 #ifdef  __cplusplus
 
 #include "MMKVPredef.h"
+#include "MMBuffer.h"
 
 #include <cstdint>
 

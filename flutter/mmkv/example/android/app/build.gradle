@@ -52,7 +52,7 @@ android {
     }
 
     dependencies {
-        implementation('com.tencent:mmkv:2.4.1')
+        implementation('com.tencent:mmkv:2.4.2')
 
         constraints {
             implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {

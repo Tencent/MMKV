@@ -6,7 +6,7 @@ let mmkvDependency: Package.Dependency
 if let localPath = Context.environment["MMKV_LOCAL_PACKAGE_PATH"], !localPath.isEmpty {
     mmkvDependency = .package(name: "MMKV", path: localPath)
 } else {
-    mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", from: "2.4.1")
+    mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", from: "2.4.2")
     // mmkvDependency = .package(url: "https://github.com/Tencent/MMKV.git", branch: "dev")
 }
 
@@ -17,7 +17,9 @@ let package = Package(
         .macOS("10.15")
     ],
     products: [
-        .library(name: "mmkv-ios", targets: ["mmkv_ios"])
+        // Dart resolves the bridge functions through DynamicLibrary.process().
+        // A dynamic product keeps those symbols visible to dlsym on Apple platforms.
+        .library(name: "mmkv-ios", type: .dynamic, targets: ["mmkv_ios"])
     ],
     dependencies: [
         mmkvDependency,
@@ -37,6 +39,10 @@ let package = Package(
             linkerSettings: [
                 .linkedLibrary("z"),
                 .linkedLibrary("c++"),
+                .linkedFramework("UIKit", .when(platforms: [.iOS])),
+                .linkedFramework("AppKit", .when(platforms: [.macOS])),
+                .linkedFramework("Flutter", .when(platforms: [.iOS])),
+                .linkedFramework("FlutterMacOS", .when(platforms: [.macOS])),
             ]
         )
     ]

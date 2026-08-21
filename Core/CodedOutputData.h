@@ -34,6 +34,10 @@ class CodedOutputData {
     size_t m_size;
     size_t m_position;
 
+    void requireSpace(size_t length) const;
+    void writeRawVarint32Unchecked(uint32_t value);
+    void writeRawVarint64Unchecked(uint64_t value);
+
 public:
     CodedOutputData(void *ptr, size_t len);
 

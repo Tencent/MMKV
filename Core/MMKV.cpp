@@ -39,6 +39,8 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
+#include <limits>
 #include <unordered_set>
 #include <cassert>
 
@@ -56,6 +58,7 @@
 
 using namespace std;
 using namespace mmkv;
+namespace fs = std::filesystem;
 
 unordered_map<string, MMKV *> *g_instanceDic;
 ThreadLock *g_instanceLock;
@@ -68,7 +71,6 @@ size_t mmkv::DEFAULT_MMAP_SIZE;
 MMKV_NAMESPACE_BEGIN
 
 static MMKVPath_t encodeFilePath(const string &mmapID, const MMKVPath_t &rootDir);
-bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix);
 MMKVPath_t filename(const MMKVPath_t &path);
 
 #ifndef MMKV_ANDROID
@@ -157,8 +159,13 @@ MMKV::~MMKV() {
 MMKV *MMKV::defaultMMKV(MMKVMode mode, const string *cryptKey, bool aes256) {
     auto config = MMKVConfig();
     config.mode = mode;
+#ifndef MMKV_DISABLE_CRYPT
     config.aes256 = aes256;
     config.cryptKey = cryptKey;
+#else
+    (void) cryptKey;
+    (void) aes256;
+#endif
     return mmkvWithID(DEFAULT_MMAP_ID, config);
 }
 
@@ -388,7 +395,7 @@ string MMKV::cryptKey() const {
     SCOPED_LOCK(m_lock);
 
     if (m_crypter) {
-        char key[AES256_KEY_LEN];
+        char key[AES256_KEY_LEN] = {};
         m_crypter->getKey(key);
         return {key, strnlen(key, AES256_KEY_LEN)};
     }
@@ -398,37 +405,31 @@ string MMKV::cryptKey() const {
 void MMKV::checkReSetCryptKey(const string *cryptKey, bool aes256) {
     SCOPED_LOCK(m_lock);
 
-    if (m_crypter) {
-        if (cryptKey && !cryptKey->empty()) {
-            string oldKey = this->cryptKey();
-            if (oldKey != *cryptKey) {
-                MMKVInfo("setting new aes key");
-                delete m_crypter;
-                auto ptr = cryptKey->data();
-                m_crypter = new AESCrypt(ptr, cryptKey->length(), nullptr, 0, aes256);
+    const auto hasNewKey = cryptKey && !cryptKey->empty();
+    if ((!m_crypter && !hasNewKey) ||
+        (m_crypter && hasNewKey && this->cryptKey() == *cryptKey &&
+         m_crypter->getMaxKeyLength() == (aes256 ? AES256_KEY_LEN : AES_KEY_LEN))) {
+        return;
+    }
 
-                checkLoadData();
-            } else {
-                // nothing to do
-            }
-        } else {
-            MMKVInfo("reset aes key");
-            delete m_crypter;
-            m_crypter = nullptr;
-
-            checkLoadData();
+    AESCrypt *newCrypter = nullptr;
+    if (hasNewKey) {
+        MMKVInfo("setting new aes key");
+        if (!m_dicCrypt) {
+            m_dicCrypt = new MMKVMapCrypt();
         }
+        newCrypter = new AESCrypt(cryptKey->data(), cryptKey->length(), nullptr, 0, aes256);
     } else {
-        if (cryptKey && !cryptKey->empty()) {
-            MMKVInfo("setting new aes key");
-            auto ptr = cryptKey->data();
-            m_crypter = new AESCrypt(ptr, cryptKey->length(), nullptr, 0, aes256);
-
-            checkLoadData();
-        } else {
-            // nothing to do
+        MMKVInfo("reset aes key");
+        if (!m_dic) {
+            m_dic = new MMKVMap();
         }
     }
+
+    clearMemoryCache();
+    delete m_crypter;
+    m_crypter = newCrypter;
+    checkLoadData();
 }
 
 #endif // MMKV_DISABLE_CRYPT
@@ -641,7 +642,17 @@ bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t ex
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
         return setDataForKey(std::move(data), key, true);
     } else {
-        auto tmp = MMBuffer(pbMMBufferSize(data) + Fixed32Size);
+        if (data.length() > numeric_limits<uint32_t>::max()) {
+            MMKVError("[%s] reject value too large to encode: %zu", m_mmapID.c_str(), data.length());
+            return false;
+        }
+        auto dataLength = static_cast<uint32_t>(data.length());
+        uint64_t encodedLength = static_cast<uint64_t>(dataLength) + pbRawVarint32Size(dataLength) + Fixed32Size;
+        if (encodedLength > numeric_limits<uint32_t>::max()) {
+            MMKVError("[%s] reject expiring value too large to encode: %zu", m_mmapID.c_str(), data.length());
+            return false;
+        }
+        auto tmp = MMBuffer(static_cast<size_t>(encodedLength));
         CodedOutputData output(tmp.getPtr(), tmp.length());
         output.writeData(data);
         auto time = (expireDuration != ExpireNever) ? safeExpirationPlusCurrentTime(expireDuration) : ExpireNever;
@@ -1199,8 +1210,11 @@ bool MMKV::removeValuesForKeys(const vector<string> &arrKeys) {
     }
     if (deleteCount > 0) {
         m_hasFullWriteback = false;
-
-        return fullWriteback();
+        auto ret = fullWriteback();
+        if (!ret) {
+            clearMemoryCache();
+        }
+        return ret;
     }
     return true;
 }
@@ -1248,16 +1262,26 @@ bool MMKV::try_lock_thread() {
 
 // backup
 
+static bool sameDirectory(const MMKVPath_t &left, const MMKVPath_t &right) {
+    if (left == right) {
+        return true;
+    }
+    error_code error;
+    return fs::equivalent(fs::path(left), fs::path(right), error) && !error;
+}
+
 static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    File crcFile(srcPath, OpenFlag::ReadOnly);
+    auto srcCRCPath = srcPath + CRC_SUFFIX;
+    File crcFile(srcCRCPath, OpenFlag::ReadOnly);
     if (!crcFile.isFileValid()) {
         return false;
     }
 
     bool ret;
     {
+        const auto &srcUTF8Path = MMKVPath_t2String(srcPath);
         const auto &dstUTF8Path = MMKVPath_t2String(dstPath);
-        MMKVInfo("backup one mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), crcFile.getUTF8Path().c_str(),
+        MMKVInfo("backup one mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcUTF8Path.c_str(),
                  dstUTF8Path.c_str());
         FileLock fileLock(crcFile.getFd());
         InterProcessLock lock(&fileLock, SharedLockType);
@@ -1265,7 +1289,6 @@ static bool backupOneToDirectoryByFilePath(const string &mmapKey, const MMKVPath
 
         ret = copyFile(srcPath, dstPath);
         if (ret) {
-            auto srcCRCPath = srcPath + CRC_SUFFIX;
             auto dstCRCPath = dstPath + CRC_SUFFIX;
             ret = copyFile(srcCRCPath, dstCRCPath);
         }
@@ -1321,7 +1344,7 @@ bool MMKV::backupOneToDirectory(const string &mmapKey, const MMKVPath_t &dstPath
 
 bool MMKV::backupOneToDirectory(const string &mmapID, const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
     auto rootPath = srcDir ? srcDir : &g_realRootDir;
-    if (*rootPath == dstDir) {
+    if (sameDirectory(*rootPath, dstDir)) {
         return true;
     }
     mkPath(dstDir);
@@ -1350,14 +1373,6 @@ bool MMKV::backupOneToDirectory(const string &mmapID, const MMKVPath_t &dstDir, 
     return backupOneToDirectory(mmapKey, dstPath, srcPath, false);
 }
 
-bool endsWith(const MMKVPath_t &str, const MMKVPath_t &suffix) {
-    if (str.length() >= suffix.length()) {
-        return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
-    } else {
-        return false;
-    }
-}
-
 MMKVPath_t filename(const MMKVPath_t &path) {
     auto startPos = path.rfind(MMKV_PATH_SLASH);
     startPos++; // don't need to check for npos, because npos+1 == 0
@@ -1366,25 +1381,18 @@ MMKVPath_t filename(const MMKVPath_t &path) {
 }
 
 size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &srcDir, bool isInSpecialDir) {
-    unordered_set<MMKVPath_t> mmapIDSet;
-    unordered_set<MMKVPath_t> mmapIDCRCSet;
+    unordered_set<MMKVPath_t> fileSet;
     walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
-        if (endsWith(filePath, CRC_SUFFIX)) {
-            mmapIDCRCSet.insert(filePath);
-        } else {
-            mmapIDSet.insert(filePath);
-        }
+        fileSet.insert(filePath);
     });
 
     size_t count = 0;
-    if (!mmapIDSet.empty()) {
+    if (!fileSet.empty()) {
         mkPath(dstDir);
         auto compareFullPath = isInSpecialDir;
-        for (auto &srcPath : mmapIDSet) {
+        for (auto &srcPath : fileSet) {
             auto srcCRCPath = srcPath + CRC_SUFFIX;
-            if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
-                const auto &utf8SrcCRCPath = MMKVPath_t2String(srcCRCPath);
-                MMKVWarning("crc not exist [%s]", utf8SrcCRCPath.c_str());
+            if (fileSet.find(srcCRCPath) == fileSet.end()) {
                 continue;
             }
             auto basename = filename(srcPath);
@@ -1402,7 +1410,7 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t &sr
 
 size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *srcDir) {
     auto rootPath = srcDir ? srcDir : &g_realRootDir;
-    if (*rootPath == dstDir) {
+    if (sameDirectory(*rootPath, dstDir)) {
         return true;
     }
     auto count = backupAllToDirectory(dstDir, *rootPath, false);
@@ -1416,6 +1424,13 @@ size_t MMKV::backupAllToDirectory(const MMKVPath_t &dstDir, const MMKVPath_t *sr
 }
 
 // restore
+
+static bool isValidRestoreSource(const MMKVPath_t &srcPath) {
+    File srcFile(srcPath, OpenFlag::ReadOnly);
+    File srcCRCFile(srcPath + CRC_SUFFIX, OpenFlag::ReadOnly);
+    return srcFile.isFileValid() && srcFile.getActualFileSize() >= Fixed32Size && srcCRCFile.isFileValid() &&
+           srcCRCFile.getActualFileSize() >= sizeof(MMKVMetaInfo);
+}
 
 static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
     auto dstCRCPath = dstPath + CRC_SUFFIX;
@@ -1447,7 +1462,7 @@ static bool restoreOneFromDirectoryByFilePath(const string &mmapKey, const MMKVP
 // They won't know a difference when the file has been replaced.
 // We have to let them know by overriding the existing file with new content.
 bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcPath, const MMKVPath_t &dstPath, bool compareFullPath) {
-    if (!g_instanceLock) {
+    if (!g_instanceLock || !isValidRestoreSource(srcPath)) {
         return false;
     }
     // we have to lock the creation of MMKV instance, regardless of in cache or not
@@ -1473,6 +1488,17 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         const auto &dstUTF8Path = MMKVPath_t2String(dstPath);
         MMKVInfo("restore one cached mmkv[%s] from [%s] to [%s]", mmapKey.c_str(), srcUTF8Path.c_str(),
                  dstUTF8Path.c_str());
+
+        auto srcCRCPath = srcPath + CRC_SUFFIX;
+#ifndef MMKV_ANDROID
+        MemoryFile srcCRCFile(srcCRCPath, 0, true);
+#else
+        MemoryFile srcCRCFile(srcCRCPath, MMFILE_TYPE_FILE, 0, true);
+#endif
+        if (!srcCRCFile.isFileValid() || srcCRCFile.getFileSize() < sizeof(MMKVMetaInfo)) {
+            return false;
+        }
+
         SCOPED_LOCK(kv->m_lock);
         SCOPED_LOCK(kv->m_exclusiveProcessLock);
 
@@ -1480,19 +1506,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         auto ret = copyFileContent(srcPath, kv->m_file->getFd());
         kv->m_file->cleanMayflyFD();
         if (ret) {
-            auto srcCRCPath = srcPath + CRC_SUFFIX;
-            // ret = copyFileContent(srcCRCPath, kv->m_metaFile->getFd());
-            // kv->m_metaFile->cleanMayflyFD();
-#ifndef MMKV_ANDROID
-            MemoryFile srcCRCFile(srcCRCPath);
-#else
-            MemoryFile srcCRCFile(srcCRCPath, MMFILE_TYPE_FILE);
-#endif
-            if (srcCRCFile.isFileValid()) {
-                memcpy(kv->m_metaFile->getMemory(), srcCRCFile.getMemory(), sizeof(MMKVMetaInfo));
-            } else {
-                ret = false;
-            }
+            memcpy(kv->m_metaFile->getMemory(), srcCRCFile.getMemory(), sizeof(MMKVMetaInfo));
         }
 
         // reload data after restore
@@ -1513,7 +1527,7 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
 
 bool MMKV::restoreOneFromDirectory(const string &mmapID, const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
     auto rootPath = dstDir ? dstDir : &g_realRootDir;
-    if (*rootPath == srcDir) {
+    if (sameDirectory(*rootPath, srcDir)) {
         return true;
     }
     mkPath(*rootPath);
@@ -1537,25 +1551,18 @@ bool MMKV::restoreOneFromDirectory(const string &mmapID, const MMKVPath_t &srcDi
 }
 
 size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t &dstDir, bool isInSpecialDir) {
-    unordered_set<MMKVPath_t> mmapIDSet;
-    unordered_set<MMKVPath_t> mmapIDCRCSet;
+    unordered_set<MMKVPath_t> fileSet;
     walkInDir(srcDir, WalkFile, [&](const MMKVPath_t &filePath, WalkType) {
-        if (endsWith(filePath, CRC_SUFFIX)) {
-            mmapIDCRCSet.insert(filePath);
-        } else {
-            mmapIDSet.insert(filePath);
-        }
+        fileSet.insert(filePath);
     });
 
     size_t count = 0;
-    if (!mmapIDSet.empty()) {
+    if (!fileSet.empty()) {
         mkPath(dstDir);
         auto compareFullPath = isInSpecialDir;
-        for (auto &srcPath : mmapIDSet) {
+        for (auto &srcPath : fileSet) {
             auto srcCRCPath = srcPath + CRC_SUFFIX;
-            if (mmapIDCRCSet.find(srcCRCPath) == mmapIDCRCSet.end()) {
-                const auto &utf8SrcCRCPath = MMKVPath_t2String(srcCRCPath);
-                MMKVWarning("crc not exist [%s]", utf8SrcCRCPath.c_str());
+            if (fileSet.find(srcCRCPath) == fileSet.end()) {
                 continue;
             }
             auto basename = filename(srcPath);
@@ -1573,7 +1580,7 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
 
 size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t *dstDir) {
     auto rootPath = dstDir ? dstDir : &g_realRootDir;
-    if (*rootPath == srcDir) {
+    if (sameDirectory(*rootPath, srcDir)) {
         return true;
     }
     auto count = restoreAllFromDirectory(srcDir, *rootPath, true);
@@ -1581,7 +1588,7 @@ size_t MMKV::restoreAllFromDirectory(const MMKVPath_t &srcDir, const MMKVPath_t 
     auto specialSrcDir = srcDir + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
     if (isFileExist(specialSrcDir)) {
         auto specialDstDir = *rootPath + MMKV_PATH_SLASH + SPECIAL_CHARACTER_DIRECTORY_NAME;
-        count += restoreAllFromDirectory(specialSrcDir, specialDstDir, false);
+        count += restoreAllFromDirectory(specialSrcDir, specialDstDir, true);
     }
     return count;
 }
