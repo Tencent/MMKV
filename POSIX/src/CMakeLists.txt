@@ -81,3 +81,51 @@ target_link_libraries( # Specifies the target library.
                        core
         pthread
         )
+
+# Try include GNUInstallDirs
+include(GNUInstallDirs OPTIONAL)
+
+# If succeeded, then continue
+if(DEFINED CMAKE_INSTALL_LIBDIR)
+        add_executable( # Sets the name of the installer binary
+                mmkv_install
+                EXCLUDE_FROM_ALL # Do not build by default
+
+                # Provides a relative path to your source file(s).
+                libmmkv.cpp
+        )
+
+        target_include_directories(mmkv_install PUBLIC
+                ${CMAKE_CURRENT_SOURCE_DIR}/../../Core/include )
+
+        target_compile_definitions(mmkv_install PRIVATE
+                # Sets compile definition
+                POSIX_INSTALLER_MODE="ON"
+                INCLUDEDIR="${CMAKE_CURRENT_SOURCE_DIR}/../../Core/include/MMKV"
+                LIBRARY="$<TARGET_FILE:mmkv>"
+                PREFIX="${CMAKE_INSTALL_PREFIX}"
+                LIBDIR="${CMAKE_INSTALL_LIBDIR}"
+                INCLUDE="${CMAKE_INSTALL_INCLUDEDIR}"
+        )
+
+        # Get the platform-specific executable suffix (e.g. ".exe" on Windows, "" on Linux/macOS)
+        get_target_property(EXE_SUFFIX mmkv_install SUFFIX)
+        if(NOT EXE_SUFFIX)
+                set(EXE_SUFFIX "${CMAKE_EXECUTABLE_SUFFIX}")
+        endif()
+
+        install(CODE "
+        # Force CMake to build the installer binary first
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} --build \"${CMAKE_BINARY_DIR}\" --target mmkv_install
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+
+        # Run the newly built installer binary
+        execute_process(
+            COMMAND \"${CMAKE_BINARY_DIR}/src/mmkv_install${EXE_SUFFIX}\"
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+        ")
+endif()
+
