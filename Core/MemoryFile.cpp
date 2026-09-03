@@ -379,16 +379,23 @@ MMBuffer *readWholeFile(const MMKVPath_t &path) {
     if (fd >= 0) {
         auto fileLength = lseek(fd, 0, SEEK_END);
         if (fileLength > 0) {
-            buffer = new MMBuffer(static_cast<size_t>(fileLength));
+            auto expectedSize = static_cast<size_t>(fileLength);
+            buffer = new MMBuffer(expectedSize);
             lseek(fd, 0, SEEK_SET);
-            auto readSize = read(fd, buffer->getPtr(), static_cast<size_t>(fileLength));
-            if (readSize != -1) {
-                //fileSize = readSize;
-            } else {
-                MMKVWarning("fail to read %s: %s", path.c_str(), strerror(errno));
-
-                delete buffer;
-                buffer = nullptr;
+            auto ptr = static_cast<uint8_t *>(buffer->getPtr());
+            size_t offset = 0;
+            while (offset < expectedSize) {
+                auto readSize = read(fd, ptr + offset, expectedSize - offset);
+                if (readSize > 0) {
+                    offset += static_cast<size_t>(readSize);
+                } else if (readSize < 0 && errno == EINTR) {
+                    continue;
+                } else {
+                    MMKVWarning("fail to read all of %s, read %zu of %zu bytes", path.c_str(), offset, expectedSize);
+                    delete buffer;
+                    buffer = nullptr;
+                    break;
+                }
             }
         }
         close(fd);

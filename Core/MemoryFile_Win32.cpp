@@ -364,16 +364,31 @@ MMBuffer *readWholeFile(const MMKVPath_t &nsFilePath) {
         size_t fileLength = 0;
         getFileSize(fd, fileLength);
         if (fileLength > 0) {
-            buffer = new MMBuffer(static_cast<size_t>(fileLength));
+            buffer = new MMBuffer(fileLength);
             SetFilePointer(fd, 0, 0, FILE_BEGIN);
-            DWORD readSize = 0;
-            if (ReadFile(fd, buffer->getPtr(), (DWORD) fileLength, &readSize, nullptr)) {
-                //fileSize = readSize;
-            } else {
-                const auto &utf8Path = MMKVPath_t2String(nsFilePath);
-                MMKVWarning("fail to read %s: %d", utf8Path.c_str(), GetLastError());
-                delete buffer;
-                buffer = nullptr;
+            auto ptr = static_cast<uint8_t *>(buffer->getPtr());
+            size_t offset = 0;
+            while (offset < fileLength) {
+                auto remaining = fileLength - offset;
+                auto requestSize = remaining > MAXDWORD ? MAXDWORD : static_cast<DWORD>(remaining);
+                DWORD readSize = 0;
+                if (!ReadFile(fd, ptr + offset, requestSize, &readSize, nullptr)) {
+                    const auto &utf8Path = MMKVPath_t2String(nsFilePath);
+                    MMKVWarning("fail to read all of %s, read %zu of %zu bytes, error:%d", utf8Path.c_str(), offset,
+                                fileLength, GetLastError());
+                    delete buffer;
+                    buffer = nullptr;
+                    break;
+                }
+                if (readSize == 0) {
+                    const auto &utf8Path = MMKVPath_t2String(nsFilePath);
+                    MMKVWarning("fail to read all of %s, read %zu of %zu bytes: no progress", utf8Path.c_str(),
+                                offset, fileLength);
+                    delete buffer;
+                    buffer = nullptr;
+                    break;
+                }
+                offset += readSize;
             }
         }
         CloseHandle(fd);
