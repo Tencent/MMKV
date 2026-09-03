@@ -198,10 +198,8 @@ MMBuffer::~MMBuffer() {
 }
 
 void MMBuffer::detach() {
-    // type = MMBufferType_Small;
-    // paddedSize = 0;
-    auto memsetPtr = (size_t *) &type;
-    *memsetPtr = 0;
+    type = MMBufferType_Small;
+    paddedSize = 0;
 }
 
 #ifdef MMKV_APPLE
