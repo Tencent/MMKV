@@ -91,9 +91,10 @@ void MMKV::loadFromFile() {
         // error checking
         bool loadFromFile = false, needFullWriteback = false;
         checkDataValid(loadFromFile, needFullWriteback);
+        auto fileSize = m_file->getFileSize();
         MMKVInfo("loading [%s] with %zu actual size, file size %zu, InterProcess %d, meta info "
                  "version:%u",
-                 m_mmapID.c_str(), m_actualSize, m_file->getFileSize(), isMultiProcess(), m_metaInfo->m_version);
+                 m_mmapID.c_str(), m_actualSize, fileSize, isMultiProcess(), m_metaInfo->m_version);
         auto ptr = (uint8_t *) m_file->getMemory();
         // loading
         if (loadFromFile && m_actualSize > 0) {
@@ -124,7 +125,7 @@ void MMKV::loadFromFile() {
                     MiniPBCoder::decodeMap(*m_dic, inputBuffer);
                 }
             }
-            m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
+            m_output = new CodedOutputData(ptr + Fixed32Size, fileSize - Fixed32Size);
             m_output->seek(m_actualSize);
             // upgrade to random iv immediately by triggering a full writeback
             if (!needFullWriteback && m_crypter && m_metaInfo->m_version < MMKVVersionRandomIV) {
@@ -137,7 +138,8 @@ void MMKV::loadFromFile() {
             // file not valid or empty, discard everything
             SCOPED_LOCK(m_exclusiveProcessLock);
 
-            m_output = new CodedOutputData(ptr + Fixed32Size, m_file->getFileSize() - Fixed32Size);
+            auto dataOffset = std::min<size_t>(fileSize, Fixed32Size);
+            m_output = new CodedOutputData(ptr + dataOffset, fileSize - dataOffset);
             if (isReadOnly()) {
                 // do nothing
             } else if (m_actualSize > 0) {
@@ -302,6 +304,14 @@ void MMKV::loadMetaInfoAndCheck() {
 void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
     // try auto recover from last confirmed location
     auto fileSize = m_file->getFileSize();
+    if (fileSize < Fixed32Size) {
+        MMKVError("check [%s] error: file size %zu is too small", m_mmapID.c_str(), fileSize);
+        auto strategic = onMMKVFileLengthError(m_mmapID);
+        strategic = m_recoverStrategic.has_value() ? m_recoverStrategic.value() : strategic;
+        MMKVInfo("recover strategic for [%s] is %d", m_mmapID.c_str(), strategic);
+        m_actualSize = 0;
+        return;
+    }
     auto checkLastConfirmedInfo = [&] {
         if (m_metaInfo->m_version >= MMKVVersionActualSize) {
             // downgrade & upgrade support

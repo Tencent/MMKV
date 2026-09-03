@@ -20,6 +20,7 @@
 
 #include <MMKV/MMKV.h>
 #include "CodedOutputData.h"
+#include "PBUtility.h"
 #include "aes/AESCrypt.h"
 #include "crc32/Checksum.h"
 #include "MemoryFile.h"
@@ -320,6 +321,40 @@ void testFileValidation(const string &rootDir) {
     assert(MMKV::removeStorage(validationID));
 
     printf("test file validation: passed\n");
+}
+
+void testTinyFileRecovery(const string &rootDir) {
+    class RecoverHandler final : public MMKVHandler {
+    public:
+        size_t fileLengthErrorCount = 0;
+        MMKVRecoverStrategic onMMKVFileLengthError(const string &) override {
+            fileLengthErrorCount++;
+            return OnErrorRecover;
+        }
+    } handler;
+    MMKV::registerHandler(&handler);
+    for (size_t fileSize = 1; fileSize <= Fixed32Size; fileSize++) {
+        auto mmapID = "tiny_file_" + to_string(fileSize);
+        MMKV::removeStorage(mmapID);
+        auto mmkv = MMKV::mmkvWithID(mmapID);
+        mmkv->clearAll();
+        assert(mmkv->set("value", "key"));
+        mmkv->sync(MMKV_SYNC);
+        mmkv->close();
+
+        auto path = rootDir + "/" + mmapID;
+        assert(truncate(path.c_str(), static_cast<off_t>(fileSize)) == 0);
+        assert(!MMKV::isFileValid(mmapID));
+
+        auto readOnly = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS | MMKV_READ_ONLY);
+        assert(readOnly && readOnly->count() == 0);
+        assert(handler.fileLengthErrorCount == fileSize);
+        readOnly->close();
+        assert(MMKV::removeStorage(mmapID));
+    }
+    MMKV::unRegisterHandler();
+
+    printf("test tiny-file recovery: passed\n");
 }
 
 void testExpirationOverflow() {
@@ -785,6 +820,7 @@ int main(int argc, char *argv[]) {
     testOversizedKey(mmkv);
     testOversizedValue(mmkv);
     testFileValidation(rootDir);
+    testTinyFileRecovery(rootDir);
     testCodedOutputBounds();
     testExpirationOverflow();
     testExpirationAlignment();
