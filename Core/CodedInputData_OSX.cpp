@@ -60,6 +60,9 @@ NSString *CodedInputData::readNSString(KeyValueHolder &kvHolder) {
 
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
+        if (s_size > mmkv::KeySizeLimit) {
+            throw length_error("MMKV key too large for uint16 holder");
+        }
         kvHolder.keySize = static_cast<uint16_t>(s_size);
 
         auto ptr = m_ptr + m_position;
