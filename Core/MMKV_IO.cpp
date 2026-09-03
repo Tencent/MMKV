@@ -1934,6 +1934,55 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
         return false;
     }
 
+    auto hasExpireFlag = m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre);
+    MMKVVector vec;
+    uint32_t time = ExpireNever;
+    if (!hasExpireFlag) {
+        time = (expiredInSeconds != ExpireNever) ? safeExpirationPlusCurrentTime(expiredInSeconds) : ExpireNever;
+        auto packKeyValue = [&](const auto &key, const MMBuffer &value) {
+#ifdef MMKV_APPLE
+            auto keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
+            auto keyLength = static_cast<size_t>(keyData.length);
+#else
+            auto keyLength = key.length();
+#endif
+            auto dataLength = value.length() + Fixed32Size;
+            EncodedEntrySize entry;
+            if (!encodedEntrySize(keyLength, static_cast<uint32_t>(keyLength), dataLength, false, m_crypter == nullptr,
+                                  entry)) {
+                MMKVError("[%s] reject enabling expiration: encoded data would be too large", m_mmapID.c_str());
+                return false;
+            }
+
+            MMBuffer data(dataLength);
+            auto ptr = (uint8_t *) data.getPtr();
+            memcpy(ptr, value.getPtr(), value.length());
+            memcpy(ptr + value.length(), &time, Fixed32Size);
+            vec.emplace_back(key, std::move(data));
+            return true;
+        };
+
+        auto basePtr = (uint8_t *) (m_file->getMemory()) + Fixed32Size;
+#ifndef MMKV_DISABLE_CRYPT
+        if (m_crypter) {
+            for (auto &pair : *m_dicCrypt) {
+                auto buffer = pair.second.toMMBuffer(basePtr, m_crypter);
+                if (!packKeyValue(pair.first, buffer)) {
+                    return false;
+                }
+            }
+        } else
+#endif
+        {
+            for (auto &pair : *m_dic) {
+                auto buffer = pair.second.toMMBuffer(basePtr);
+                if (!packKeyValue(pair.first, buffer)) {
+                    return false;
+                }
+            }
+        }
+    }
+
     if (m_enableCompareBeforeSet) {
         MMKVError("enableCompareBeforeSet will be invalid when Expiration is on");
         m_enableCompareBeforeSet = false;
@@ -1944,12 +1993,10 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
         m_expiredInSeconds = expiredInSeconds;
     }
     m_enableKeyExpire = true;
-    if (m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre)) {
+    if (hasExpireFlag) {
         return true;
     }
 
-    auto autoRecordExpireTime = (m_expiredInSeconds != ExpireNever);
-    auto time = autoRecordExpireTime ? safeExpirationPlusCurrentTime(m_expiredInSeconds) : ExpireNever;
     MMKVInfo("turn on recording expire date for all keys inside [%s] from now %u", m_mmapID.c_str(), time);
     m_metaInfo->setFlag(MMKVMetaInfo::EnableKeyExipre);
     m_metaInfo->m_version = MMKVVersionFlag;
@@ -1959,35 +2006,6 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
         writeActualSize(0, 0, nullptr, IncreaseSequence);
         m_metaFile->msync(MMKV_SYNC);
         return true;
-    }
-
-    MMKVVector vec;
-    auto packKeyValue = [&](const auto &key, const MMBuffer &value) {
-        MMBuffer data(value.length() + Fixed32Size);
-        auto ptr = (uint8_t *) data.getPtr();
-        memcpy(ptr, value.getPtr(), value.length());
-        memcpy(ptr + value.length(), &time, Fixed32Size);
-        vec.emplace_back(key, std::move(data));
-    };
-
-    auto basePtr = (uint8_t *) (m_file->getMemory()) + Fixed32Size;
-#ifndef MMKV_DISABLE_CRYPT
-    if (m_crypter) {
-        for (auto &pair : *m_dicCrypt) {
-            auto &key = pair.first;
-            auto &value = pair.second;
-            auto buffer = value.toMMBuffer(basePtr, m_crypter);
-            packKeyValue(key, buffer);
-        }
-    } else
-#endif
-    {
-        for (auto &pair : *m_dic) {
-            auto &key = pair.first;
-            auto &value = pair.second;
-            auto buffer = value.toMMBuffer(basePtr);
-            packKeyValue(key, buffer);
-        }
     }
 
     return doFullWriteBack(std::move(vec));

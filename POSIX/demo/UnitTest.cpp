@@ -244,6 +244,18 @@ void testOversizedKey(MMKV *mmkv) {
         auto ret = mmkv->set("V", key);
         assert(!ret);
     }
+    {
+        auto expiring = MMKV::mmkvWithID("oversized_expiration_transition_test");
+        expiring->clearAll();
+        string key(65531, 'D');
+        string storedValue(124, 'V');
+        assert(expiring->set(storedValue, key));
+        assert(!expiring->enableAutoKeyExpire());
+        assert(!expiring->isExpirationEnabled());
+        string out;
+        assert(expiring->getString(key, out) && out == storedValue);
+        expiring->clearAll();
+    }
 
     printf("test oversized key: passed\n");
 }
