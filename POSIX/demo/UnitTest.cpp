@@ -301,6 +301,27 @@ void testOversizedValue(MMKV *mmkv) {
     printf("test oversized value: passed\n");
 }
 
+void testFileValidation(const string &rootDir) {
+    const string validationID = "file_validation_test";
+    MMKV::removeStorage(validationID);
+    auto mmkv = MMKV::mmkvWithID(validationID);
+    mmkv->clearAll();
+    assert(mmkv->set("value", "key"));
+    mmkv->sync(MMKV_SYNC);
+    mmkv->close();
+
+    // Current-format files keep their actual size in metadata, not in the
+    // first four data bytes.
+    assert(MMKV::isFileValid(validationID));
+
+    auto crcPath = rootDir + "/" + validationID + ".crc";
+    assert(truncate(crcPath.c_str(), sizeof(uint32_t)) == 0);
+    assert(!MMKV::isFileValid(validationID));
+    assert(MMKV::removeStorage(validationID));
+
+    printf("test file validation: passed\n");
+}
+
 void testExpirationOverflow() {
     auto mmkv = MMKV::mmkvWithID("expiration_overflow_test");
     mmkv->clearAll();
@@ -763,6 +784,7 @@ int main(int argc, char *argv[]) {
     testRemove(mmkv);
     testOversizedKey(mmkv);
     testOversizedValue(mmkv);
+    testFileValidation(rootDir);
     testCodedOutputBounds();
     testExpirationOverflow();
     testExpirationAlignment();
