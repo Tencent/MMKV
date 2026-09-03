@@ -423,6 +423,12 @@ void MMKV::checkLoadData() {
 
 constexpr uint32_t ItemSizeHolderSize = 4;
 
+static size_t maxActualSize() {
+    auto maxFileSize = numeric_limits<size_t>::max();
+    maxFileSize -= maxFileSize % DEFAULT_MMAP_SIZE;
+    return std::min<size_t>(numeric_limits<uint32_t>::max(), maxFileSize - Fixed32Size);
+}
+
 static bool encodedValueLength(size_t dataLength, bool isDataHolder, uint32_t &result) {
     constexpr auto MaxEncodedLength = numeric_limits<uint32_t>::max();
     if (dataLength > MaxEncodedLength) {
@@ -538,13 +544,24 @@ bool MMKV::ensureMemorySize(size_t newSize) {
         return false;
     }
 
-    if (newSize >= m_output->spaceLeft() || (m_crypter ? m_dicCrypt->empty() : m_dic->empty())) {
+    auto maximumActualSize = maxActualSize();
+    if (newSize > maximumActualSize) {
+        return false;
+    }
+    auto exceedsActualSize = m_actualSize > maximumActualSize - newSize;
+    if (newSize >= m_output->spaceLeft() || (m_crypter ? m_dicCrypt->empty() : m_dic->empty()) ||
+        exceedsActualSize) {
         // remove expired keys
         if (m_enableKeyExpire) {
             filterExpiredKeys();
         }
         // try a full rewrite to make space
         auto preparedData = m_crypter ? prepareEncode(*m_dicCrypt) : prepareEncode(*m_dic);
+        if (preparedData.second > maximumActualSize - newSize) {
+            MMKVError("[%s] reject write exceeding maximum actual size, compacted=%zu, incoming=%zu",
+                      m_mmapID.c_str(), preparedData.second, newSize);
+            return false;
+        }
         // dic.empty() means inserting key-value for the first time, no need to call msync()
         return expandAndWriteBack(newSize, std::move(preparedData), m_crypter ? !m_dicCrypt->empty() : !m_dic->empty());
     }
@@ -572,19 +589,31 @@ bool MMKV::checkSizeLimit(size_t size, const MMBuffer &keyData, uint32_t originK
 bool MMKV::expandAndWriteBack(size_t newSize, std::pair<mmkv::MMBuffer, size_t> preparedData, bool needSync) {
     auto fileSize = m_file->getFileSize();
     auto sizeOfDic = preparedData.second;
+    constexpr auto MaxSize = numeric_limits<size_t>::max();
+    if (sizeOfDic > MaxSize - Fixed32Size || newSize > MaxSize - Fixed32Size - sizeOfDic) {
+        return false;
+    }
     size_t lenNeeded = sizeOfDic + Fixed32Size + newSize;
     size_t nowDicCount = m_crypter ? m_dicCrypt->size() : m_dic->size();
     size_t laterDicCount = std::max<size_t>(1, nowDicCount + 1);
-    // or use <cmath> ceil()
-    size_t avgItemSize = (lenNeeded + laterDicCount - 1) / laterDicCount;
-    size_t futureUsage = avgItemSize * std::max<size_t>(8, laterDicCount / 2);
+    size_t avgItemSize = lenNeeded / laterDicCount + (lenNeeded % laterDicCount != 0);
+    size_t futureItemCount = std::max<size_t>(8, laterDicCount / 2);
+    size_t futureUsage = 0;
+    if (avgItemSize <= (MaxSize - lenNeeded) / futureItemCount) {
+        futureUsage = avgItemSize * futureItemCount;
+    }
+    auto expectedUsage = lenNeeded + futureUsage;
     // 1. no space for a full rewrite, double it
     // 2. or space is not large enough for future usage, double it to avoid frequently full rewrite
-    if (lenNeeded >= fileSize || (needSync && (lenNeeded + futureUsage) >= fileSize)) {
+    if (lenNeeded >= fileSize || (needSync && expectedUsage >= fileSize)) {
         size_t oldSize = fileSize;
         do {
+            if (fileSize > MaxSize / 2) {
+                fileSize = std::max(fileSize, lenNeeded);
+                break;
+            }
             fileSize *= 2;
-        } while (lenNeeded + futureUsage >= fileSize);
+        } while (expectedUsage >= fileSize);
         MMKVInfo("extending [%s] file size from %zu to %zu, incoming size:%zu, future usage:%zu", m_mmapID.c_str(),
                  oldSize, fileSize, newSize, futureUsage);
 
@@ -1852,8 +1881,7 @@ bool MMKV::doFullWriteBack(MMKVVector &&vec) {
         ret = doFullWriteBack(std::move(preparedData), nullptr);
     } else {
         // expandAndWriteBack() will extend file & full rewrite, no need to write back again
-        auto newSize = sizeOfDic + Fixed32Size - fileSize;
-        ret = expandAndWriteBack(newSize, std::move(preparedData));
+        ret = expandAndWriteBack(0, std::move(preparedData));
     }
 
     clearMemoryCache();
