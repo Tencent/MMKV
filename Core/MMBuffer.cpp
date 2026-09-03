@@ -127,7 +127,7 @@ MMBuffer::MMBuffer(MMBuffer &&other, size_t length) noexcept : type(other.type) 
 #endif
         other.detach();
     } else {
-        paddedSize = std::min(other.paddedSize, static_cast<uint8_t>(length));
+        paddedSize = static_cast<uint8_t>(std::min<size_t>(other.paddedSize, length));
         memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
     }
 }

@@ -38,6 +38,7 @@
 #include <new>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 using namespace std;
@@ -422,6 +423,11 @@ void testCodedOutputBounds() {
         }
         assert(rejected && output.getPosition() == 0 && storage[0] == 0xA5);
     }
+
+    MMBuffer smallBuffer(16);
+    memset(smallBuffer.getPtr(), 0x5A, smallBuffer.length());
+    MMBuffer limitedBuffer(std::move(smallBuffer), 256);
+    assert(limitedBuffer.length() == 16);
 
     printf("test coded output bounds: passed\n");
 }
