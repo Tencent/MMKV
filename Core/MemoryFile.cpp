@@ -26,6 +26,7 @@
 #    include "MMBuffer.h"
 #    include "MMKVLog.h"
 #    include "ScopedLock.hpp"
+#    include <algorithm>
 #    include <cerrno>
 #    include <utility>
 #    include <fcntl.h>
@@ -416,18 +417,21 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
     }
 
     static const char zeros[4096] = {};
-    while (size >= sizeof(zeros)) {
-        if (write(fd, zeros, sizeof(zeros)) < 0) {
+    while (size > 0) {
+        auto chunkSize = std::min(size, sizeof(zeros));
+        auto written = write(fd, zeros, chunkSize);
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written < 0) {
             MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
             return false;
         }
-        size -= sizeof(zeros);
-    }
-    if (size > 0) {
-        if (write(fd, zeros, size) < 0) {
-            MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
+        if (written == 0) {
+            MMKVError("fail to write fd[%d]: no progress", fd);
             return false;
         }
+        size -= static_cast<size_t>(written);
     }
     return true;
 }

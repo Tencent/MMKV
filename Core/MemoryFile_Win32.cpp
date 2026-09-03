@@ -415,20 +415,18 @@ bool zeroFillFile(MMKVFileHandle_t file, size_t startPos, size_t size) {
     }
 
     static const char zeros[4096] = {};
-    while (size >= sizeof(zeros)) {
+    while (size > 0) {
+        auto requestSize = size > sizeof(zeros) ? static_cast<DWORD>(sizeof(zeros)) : static_cast<DWORD>(size);
         DWORD bytesWritten = 0;
-        if (!WriteFile(file, zeros, sizeof(zeros), &bytesWritten, nullptr)) {
+        if (!WriteFile(file, zeros, requestSize, &bytesWritten, nullptr)) {
             MMKVError("fail to write fd[%p], error:%d", file, GetLastError());
+            return false;
+        }
+        if (bytesWritten == 0) {
+            MMKVError("fail to write fd[%p]: no progress", file);
             return false;
         }
         size -= bytesWritten;
-    }
-    if (size > 0) {
-        DWORD bytesWritten = 0;
-        if (!WriteFile(file, zeros, (DWORD) size, &bytesWritten, nullptr)) {
-            MMKVError("fail to write fd[%p], error:%d", file, GetLastError());
-            return false;
-        }
     }
     return true;
 }
