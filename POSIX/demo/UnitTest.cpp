@@ -19,6 +19,7 @@
  */
 
 #include <MMKV/MMKV.h>
+#include "CodedInputData.h"
 #include "CodedOutputData.h"
 #include "PBUtility.h"
 #include "aes/AESCrypt.h"
@@ -289,15 +290,18 @@ void testOversizedValue(MMKV *mmkv) {
         assert(mmkv->getString("value", value) && value == "before");
         assert(mmkv->set("after", "value"));
         assert(mmkv->getString("value", value) && value == "after");
-
-        auto expiring = MMKV::mmkvWithID("oversized_expiring_value_test");
-        expiring->clearAll();
-        assert(expiring->enableAutoKeyExpire());
-        assert(!expiring->set(oversized, "value", 60));
-        assert(expiring->set("after", "value", 60));
-        assert(expiring->getString("value", value) && value == "after");
-        expiring->clearAll();
     }
+
+    auto expiring = MMKV::mmkvWithID("oversized_expiring_value_test");
+    expiring->clearAll();
+    assert(expiring->enableAutoKeyExpire());
+    if (numeric_limits<size_t>::max() > numeric_limits<uint32_t>::max()) {
+        MMBuffer oversized(&sentinel, static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1, MMBufferNoCopy);
+        assert(!expiring->set(oversized, "value", 60));
+    }
+    assert(expiring->set("after", "value", 60));
+    assert(expiring->getString("value", value) && value == "after");
+    expiring->clearAll();
 
     printf("test oversized value: passed\n");
 }
@@ -420,6 +424,22 @@ void testCodedOutputBounds() {
         assert(equal(expected32[index].begin(), expected32[index].end(), storage.begin()));
     }
 
+    constexpr array<uint8_t, 5> wideLength = {0x80, 0x80, 0x80, 0x80, 0x08};
+    CodedInputData wideInput(wideLength.data(), wideLength.size());
+    rejected = false;
+    try {
+        wideInput.readData(false);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected);
+
+    storage.fill(0);
+    CodedOutputData signedOutput(storage.data(), storage.size());
+    signedOutput.writeInt32(-1);
+    CodedInputData signedInput(storage.data(), signedOutput.getPosition());
+    assert(signedInput.readInt32() == -1);
+
     constexpr array<uint64_t, 6> values64 = {0, 127, 128, 16383, 16384, numeric_limits<uint64_t>::max()};
     const vector<vector<uint8_t>> expected64 = {
         {0x00},
@@ -485,6 +505,18 @@ void testCodedOutputBounds() {
     }
     assert(rejected && positionOutput.getPosition() == 2);
 
+    if (numeric_limits<size_t>::max() > numeric_limits<int32_t>::max()) {
+        storage.fill(0xA5);
+        MMBuffer wideValue(storage.data(), static_cast<size_t>(numeric_limits<int32_t>::max()) + 1, MMBufferNoCopy);
+        CodedOutputData output(storage.data(), storage.size());
+        rejected = false;
+        try {
+            output.writeData(wideValue);
+        } catch (const out_of_range &) {
+            rejected = true;
+        }
+        assert(rejected && output.getPosition() == 0 && storage[0] == 0xA5);
+    }
     if (numeric_limits<size_t>::max() > numeric_limits<uint32_t>::max()) {
         storage.fill(0xA5);
         MMBuffer oversized(storage.data(), static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1,

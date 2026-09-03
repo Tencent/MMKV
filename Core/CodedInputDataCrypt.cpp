@@ -185,7 +185,7 @@ int32_t CodedInputDataCrypt::readRawVarint32(bool discardPreData) {
     if (tmp >= 0) {
         return tmp;
     }
-    int32_t result = tmp & 0x7f;
+    uint32_t result = tmp & 0x7f;
     if ((tmp = this->readRawByte()) >= 0) {
         result |= tmp << 7;
     } else {
@@ -198,12 +198,13 @@ int32_t CodedInputDataCrypt::readRawVarint32(bool discardPreData) {
                 result |= tmp << 21;
             } else {
                 result |= (tmp & 0x7f) << 21;
-                result |= (tmp = this->readRawByte()) << 28;
+                tmp = this->readRawByte();
+                result |= static_cast<uint32_t>(static_cast<uint8_t>(tmp)) << 28;
                 if (tmp < 0) {
                     // discard upper 32 bits
                     for (int i = 0; i < 5; i++) {
                         if (this->readRawByte() >= 0) {
-                            return result;
+                            return UInt32ToInt32(result);
                         }
                     }
                     throw invalid_argument("InvalidProtocolBuffer malformed varint32");
@@ -211,7 +212,7 @@ int32_t CodedInputDataCrypt::readRawVarint32(bool discardPreData) {
             }
         }
     }
-    return result;
+    return UInt32ToInt32(result);
 }
 
 int32_t CodedInputDataCrypt::readInt32() {
@@ -221,11 +222,7 @@ int32_t CodedInputDataCrypt::readInt32() {
 string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
-    int32_t size = this->readRawVarint32(true);
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = static_cast<uint32_t>(readRawVarint32(true));
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         consumeBytes(s_size);
@@ -245,11 +242,7 @@ string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
 }
 
 void CodedInputDataCrypt::readData(KeyValueHolderCrypt &kvHolder) {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = static_cast<uint32_t>(readRawVarint32());
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         if (KeyValueHolderCrypt::isValueStoredAsOffset(s_size)) {

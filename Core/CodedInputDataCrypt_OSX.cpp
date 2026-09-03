@@ -36,11 +36,7 @@ namespace mmkv {
 NSString *CodedInputDataCrypt::readNSString(KeyValueHolderCrypt &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
-    int32_t size = this->readRawVarint32(true);
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = static_cast<uint32_t>(readRawVarint32(true));
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         if (s_size > mmkv::KeySizeLimit) {

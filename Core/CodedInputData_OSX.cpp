@@ -34,11 +34,7 @@ using namespace std;
 namespace mmkv {
 
 NSString *CodedInputData::readNSString() {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         auto ptr = m_ptr + m_position;
@@ -53,11 +49,7 @@ NSString *CodedInputData::readNSString() {
 NSString *CodedInputData::readNSString(KeyValueHolder &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         if (s_size > mmkv::KeySizeLimit) {
@@ -75,11 +67,7 @@ NSString *CodedInputData::readNSString(KeyValueHolder &kvHolder) {
 }
 
 NSData *CodedInputData::readNSData() {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         NSData *result = [NSData dataWithBytes:(m_ptr + m_position) length:s_size];

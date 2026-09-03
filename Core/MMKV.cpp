@@ -1039,12 +1039,10 @@ size_t MMKV::getValueSize(MMKVKey_t key, bool actualSize) {
     if (actualSize) {
         try {
             CodedInputData input(data.getPtr(), data.length());
-            auto length = input.readInt32();
-            if (length >= 0) {
-                auto s_length = static_cast<size_t>(length);
-                if (pbRawVarint32Size(length) + s_length == data.length()) {
-                    return s_length;
-                }
+            auto length = input.readUInt32();
+            auto s_length = static_cast<size_t>(length);
+            if (pbRawVarint32Size(length) + s_length == data.length()) {
+                return s_length;
             }
         } catch (std::exception &exception) {
             MMKVError("%s", exception.what());
