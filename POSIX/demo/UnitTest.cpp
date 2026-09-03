@@ -221,7 +221,14 @@ void testOversizedKey(MMKV *mmkv) {
         string out;
         ret = mmkv->getString(key, out);
         assert(ret && out == "V");
+
+        // The key still fits, but a two-byte value-length prefix would overflow
+        // KeyValueHolder::computedKVSize. Reject the update before writing it.
+        assert(!mmkv->set(string(127, 'V'), key));
+        assert(mmkv->getString(key, out) && out == "V");
         mmkv->removeValueForKey(key);
+        assert(!mmkv->set(string(127, 'V'), key));
+        assert(!mmkv->containsKey(key));
     }
     // Keys at 65532 bytes and above must be rejected (would overflow uint16_t fields)
     {

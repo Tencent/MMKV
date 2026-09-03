@@ -449,6 +449,7 @@ static bool encodedEntrySize(size_t keyDataLength,
                              uint32_t originKeyLength,
                              size_t dataLength,
                              bool isDataHolder,
+                             bool needsPlainHolder,
                              EncodedEntrySize &result) {
     constexpr auto MaxEncodedLength = numeric_limits<uint32_t>::max();
     if (originKeyLength > KeySizeLimit || keyDataLength < originKeyLength || keyDataLength > MaxEncodedLength) {
@@ -460,11 +461,14 @@ static bool encodedEntrySize(size_t keyDataLength,
         return false;
     }
 
-    uint64_t totalSize =
-        static_cast<uint64_t>(keyDataLength) + result.valueLength + pbRawVarint32Size(result.valueLength);
+    uint64_t keyValueSize = static_cast<uint64_t>(keyDataLength) + pbRawVarint32Size(result.valueLength);
     if (!result.keyAlreadyEncoded) {
-        totalSize += pbRawVarint32Size(static_cast<uint32_t>(keyDataLength));
+        keyValueSize += pbRawVarint32Size(static_cast<uint32_t>(keyDataLength));
     }
+    if (needsPlainHolder && keyValueSize > numeric_limits<uint16_t>::max()) {
+        return false;
+    }
+    auto totalSize = keyValueSize + result.valueLength;
     if (totalSize > MaxEncodedLength) {
         return false;
     }
@@ -962,7 +966,8 @@ bool MMKV::removeDataForKey(MMKVKey_t key) {
 KVHolderRet_t
 MMKV::doAppendDataWithKey(const MMBuffer &data, const MMBuffer &keyData, bool isDataHolder, uint32_t originKeyLength) {
     EncodedEntrySize entry;
-    if (!encodedEntrySize(keyData.length(), originKeyLength, data.length(), isDataHolder, entry)) {
+    if (!encodedEntrySize(keyData.length(), originKeyLength, data.length(), isDataHolder, m_crypter == nullptr,
+                          entry)) {
         MMKVError("[%s] reject unrepresentable key/value lengths, keyData=%zu, key=%u, value=%zu",
                   m_mmapID.c_str(), keyData.length(), originKeyLength, data.length());
         return make_pair(false, KeyValueHolder());
@@ -1024,7 +1029,8 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
                                           bool isDataHolder,
                                           uint32_t originKeyLength) {
     EncodedEntrySize entry;
-    if (!encodedEntrySize(keyData.length(), originKeyLength, data.length(), isDataHolder, entry)) {
+    if (!encodedEntrySize(keyData.length(), originKeyLength, data.length(), isDataHolder, m_crypter == nullptr,
+                          entry)) {
         MMKVError("[%s] reject unrepresentable key/value lengths, keyData=%zu, key=%u, value=%zu",
                   m_mmapID.c_str(), keyData.length(), originKeyLength, data.length());
         return make_pair(false, KeyValueHolder());
@@ -1139,7 +1145,7 @@ KVHolderRet_t MMKV::appendDataWithKey(const MMBuffer &data, const KeyValueHolder
     // ensureMemorySize() might change kvHolder.offset, so have to do it early
     {
         EncodedEntrySize entry;
-        if (!encodedEntrySize(rawKeySize, keyLength, data.length(), isDataHolder, entry)) {
+        if (!encodedEntrySize(rawKeySize, keyLength, data.length(), isDataHolder, m_crypter == nullptr, entry)) {
             return make_pair(false, KeyValueHolder());
         }
         bool hasEnoughSize = ensureMemorySize(entry.totalSize);
@@ -1166,7 +1172,7 @@ KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, const KeyValueHold
     // might change kvHolder.offset, so have to do it early
     {
         EncodedEntrySize entry;
-        if (!encodedEntrySize(rawKeySize, keyLength, data.length(), isDataHolder, entry)) {
+        if (!encodedEntrySize(rawKeySize, keyLength, data.length(), isDataHolder, m_crypter == nullptr, entry)) {
             return make_pair(false, KeyValueHolder());
         }
         bool hasEnoughSize = checkSizeForOverride(entry.totalSize);
