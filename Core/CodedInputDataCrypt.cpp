@@ -225,11 +225,10 @@ string CodedInputDataCrypt::readString(KeyValueHolderCrypt &kvHolder) {
     uint32_t size = static_cast<uint32_t>(readRawVarint32(true));
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
-        consumeBytes(s_size);
-
         if (s_size > mmkv::KeySizeLimit) {
             throw length_error("MMKV key too large for uint16 holder");
         }
+        consumeBytes(s_size);
         kvHolder.keySize = static_cast<uint16_t>(s_size);
 
         string result((char *) (m_decryptBuffer + m_decryptBufferPosition), s_size);
