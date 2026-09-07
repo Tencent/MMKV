@@ -1726,16 +1726,15 @@ size_t MMKV::importFrom(MMKV *src) {
         auto value = src->getDataForKey(key);
         if (value.length() > 0) {
             if (mmkv_likely(notAutoExpire)) {
-                setDataForKey(std::move(value), key, false);
+                count += setDataForKey(std::move(value), key, false);
             } else {
                 auto tmp = MMBuffer(value.length() + Fixed32Size);
                 CodedOutputData output(tmp.getPtr(), tmp.length());
                 // no need write size, it's already written in value
                 output.writeRawData(value);
                 output.writeRawLittleEndian32(time);
-                setDataForKey(std::move(tmp), key, false);
+                count += setDataForKey(std::move(tmp), key, false);
             }
-            count++;
         }
     }
 

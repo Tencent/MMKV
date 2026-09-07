@@ -919,6 +919,28 @@ void testReadOnlyRecovery(const string &rootDir) {
     printf("test readonly recovery: passed\n");
 }
 
+void testImportRejectedWrites() {
+    auto source = MMKV::mmkvWithID("import-count-source");
+    source->clearAll();
+    assert(source->set("kept", "small"));
+    assert(source->set(string(64, 'v'), "large"));
+    for (bool expire : {false, true}) {
+        MMKVConfig config;
+        config.itemSizeLimit = 32;
+        config.enableKeyExpire = expire;
+        auto dest = MMKV::mmkvWithID(expire ? "import-count-expiring" : "import-count-plain", config);
+        dest->clearAll();
+        assert(dest->importFrom(source) == 1);
+        assert(dest->count() == 1);
+        string value;
+        assert(dest->getString("small", value) && value == "kept");
+        assert(!dest->containsKey("large"));
+        dest->close();
+    }
+    source->close();
+    printf("test import rejected writes: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -1007,4 +1029,5 @@ int main(int argc, char *argv[]) {
     testMinimalBackupRestore(rootDir);
     testCachedRestore(rootDir);
     testReadOnlyRecovery(rootDir);
+    testImportRejectedWrites();
 }
