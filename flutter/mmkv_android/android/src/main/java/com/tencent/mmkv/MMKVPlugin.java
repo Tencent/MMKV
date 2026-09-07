@@ -39,7 +39,16 @@ public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-        loadLibrary();
+        // The published `com.tencent:mmkv` AAR ships native libs for arm64-v8a
+        // and x86_64 only. On an armeabi-v7a / x86 device `System.loadLibrary`
+        // throws UnsatisfiedLinkError here; without this guard `channel` is
+        // never assigned and onDetachedFromEngine() then NPEs on activity
+        // destroy ("Unable to destroy activity"), a fatal crash on every exit.
+        try {
+            loadLibrary();
+        } catch (UnsatisfiedLinkError e) {
+            android.util.Log.w("MMKVPlugin", "libmmkv.so not available for this ABI; MMKV disabled", e);
+        }
 
         context = flutterPluginBinding.getApplicationContext();
         channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "mmkv");
@@ -68,7 +77,10 @@ public class MMKVPlugin implements FlutterPlugin, MethodCallHandler {
 
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-        channel.setMethodCallHandler(null);
+        if (channel != null) {
+            channel.setMethodCallHandler(null);
+            channel = null;
+        }
     }
 
     private static boolean isLibraryLoaded = false;
