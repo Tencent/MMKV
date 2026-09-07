@@ -150,9 +150,10 @@ actual class MMKV internal constructor(impl: AndroidMMKV) {
     actual fun encodeDouble(key: String, value: Double): Boolean = impl.encode(key.requireValidMMKVKey(), value)
     actual fun encodeDouble(key: String, value: Double, expireDuration: UInt): Boolean =
         impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
-    actual fun encodeString(key: String, value: String): Boolean = encodeBytes(key, value.encodeToByteArray())
+    actual fun encodeString(key: String, value: String): Boolean =
+        impl.encode(key.requireValidMMKVKey(), value)
     actual fun encodeString(key: String, value: String, expireDuration: UInt): Boolean =
-        encodeBytes(key, value.encodeToByteArray(), expireDuration)
+        impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
     actual fun encodeBytes(key: String, value: ByteArray): Boolean = impl.encode(key.requireValidMMKVKey(), value)
     actual fun encodeBytes(key: String, value: ByteArray, expireDuration: UInt): Boolean =
         impl.encode(key.requireValidMMKVKey(), value, expireDuration.toInt())
