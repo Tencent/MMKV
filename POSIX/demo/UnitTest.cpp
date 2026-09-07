@@ -961,6 +961,51 @@ void testFirstReadAfterReopenRespectsExpiration() {
     printf("test first read after reopen respects expiration: passed\n");
 }
 
+void testReadOnlyExpiration() {
+    for (bool encrypted : {false, true}) {
+#ifdef MMKV_DISABLE_CRYPT
+        if (encrypted) {
+            continue;
+        }
+#endif
+        const string cryptKey = "expiration-key";
+        const string id = encrypted ? "readonly-expiration-crypt" : "readonly-expiration-plain";
+        auto kv = MMKV::mmkvWithID(id, MMKV_SINGLE_PROCESS, encrypted ? &cryptKey : nullptr);
+        kv->clearAll();
+        assert(kv->enableAutoKeyExpire());
+        assert(kv->set(uint32_t(123), "expired", 1));
+        assert(kv->set("live", "live"));
+        kv->sync(MMKV_SYNC);
+        kv->close();
+        sleep(2);
+
+        const auto mode = MMKV_SINGLE_PROCESS | MMKV_READ_ONLY;
+        // Each API is the FIRST operation on its own read-only instance.
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        bool found = true;
+        const auto value = kv->getUInt32("expired", 0, &found);
+        assert(value == 0 && !found); // Previously returned 123: the metadata flag was ignored.
+        kv->close();
+
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        const auto keys = kv->allKeys(true);
+        assert(keys == vector<string>{"live"}); // Filtering must not require a writeback.
+        kv->close();
+
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        const auto count = kv->count(true);
+        assert(count == 1);
+        kv->close();
+
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        assert(kv->count(false) == 2); // Read-only filtering must leave the stored entries intact.
+        string live;
+        assert(kv->getString("live", live) && live == "live");
+        kv->close();
+    }
+    printf("test read-only expiration: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -1051,4 +1096,5 @@ int main(int argc, char *argv[]) {
     testReadOnlyRecovery(rootDir);
     testImportRejectedWrites();
     testFirstReadAfterReopenRespectsExpiration();
+    testReadOnlyExpiration();
 }

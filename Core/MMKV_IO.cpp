@@ -271,6 +271,9 @@ void MMKV::loadMetaInfoAndCheck() {
 
     m_metaInfo->read(m_metaFile->getMemory());
 
+    m_enableKeyExpire = m_metaInfo->m_version >= MMKVVersionFlag &&
+                        m_metaInfo->m_version < MMKVVersionHolder &&
+                        m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre);
     if (isReadOnly()) {
         return;
     }
@@ -287,7 +290,6 @@ void MMKV::loadMetaInfoAndCheck() {
     }
 
     if (m_metaInfo->m_version >= MMKVVersionFlag) {
-        m_enableKeyExpire = m_metaInfo->hasFlag(MMKVMetaInfo::EnableKeyExipre);
         if (m_enableKeyExpire && m_enableCompareBeforeSet) {
             MMKVError("enableCompareBeforeSet will be invalid when Expiration is on");
             m_enableCompareBeforeSet = false;

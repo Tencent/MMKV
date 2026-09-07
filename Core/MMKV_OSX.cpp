@@ -458,8 +458,12 @@ NSArray *MMKV::allKeysObjC(bool filterExpire) {
     checkLoadData();
 
     if (mmkv_unlikely(filterExpire && m_enableKeyExpire)) {
-        SCOPED_LOCK(m_exclusiveProcessLock);
-        fullWriteback(nullptr, true);
+        if (isReadOnly()) {
+            filterExpiredKeys();
+        } else {
+            SCOPED_LOCK(m_exclusiveProcessLock);
+            fullWriteback(nullptr, true);
+        }
     }
 
     NSMutableArray *keys = [NSMutableArray array];
