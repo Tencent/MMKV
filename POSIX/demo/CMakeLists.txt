@@ -71,7 +71,7 @@ set_target_properties(TestThreadLock PROPERTIES
         )
 if(BUILD_TESTING)
     add_test(NAME TestThreadLock COMMAND TestThreadLock)
-    if(APPLE)
+    if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
         add_executable(TestFileCopy TestFileCopy.cpp)
         target_include_directories(TestFileCopy PRIVATE ../../Core)
         target_link_libraries(TestFileCopy core ${CMAKE_DL_LIBS})
