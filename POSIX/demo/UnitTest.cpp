@@ -1006,6 +1006,76 @@ void testReadOnlyExpiration() {
     printf("test read-only expiration: passed\n");
 }
 
+void testFirstWriteAfterReopenPreservesValue() {
+    const string id = "first-write-expiration";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->enableAutoKeyExpire());
+    assert(kv->set("persisted", "existing"));
+    kv->sync(MMKV_SYNC);
+    kv->close();
+
+    kv = MMKV::mmkvWithID(id);
+    // This set MUST be the first operation: metadata has not been lazily loaded yet.
+    // Even ExpireNever needs a four-byte suffix when the store has expiration enabled.
+    const auto written = kv->set("ABCD", "new");
+    assert(written); // Before the fix, set succeeded but omitted that suffix.
+    string value;
+    const auto found = kv->getString("new", value);
+    assert(found && value == "ABCD"); // The payload must not be mistaken for a timestamp.
+    kv->close();
+    printf("test first write after reopen preserves value: passed\n");
+}
+
+// Coverage for the separate scalar, buffer, and vector encoding paths.
+// The minimal reproducer above explains the failure; this sweep guards each overload.
+void testFirstWriteAfterReopenOverloads() {
+    const string id = "first-write-expiration-overloads";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->enableAutoKeyExpire());
+    auto reopen = [&] {
+        kv->close();
+        kv = MMKV::mmkvWithID(id);
+    };
+    // No getter or other warm-up is allowed between reopen() and each set().
+    reopen();
+    assert(kv->set(true, "bool", 60) && kv->getBool("bool"));
+    reopen();
+    assert(kv->set(int32_t(-123), "i32", 60) && kv->getInt32("i32") == -123);
+    reopen();
+    assert(kv->set(uint32_t(123), "u32", 60) && kv->getUInt32("u32") == 123);
+    reopen();
+    assert(kv->set(int64_t(-123), "i64", 60) && kv->getInt64("i64") == -123);
+    reopen();
+    assert(kv->set(uint64_t(123), "u64", 60) && kv->getUInt64("u64") == 123);
+    reopen();
+    assert(kv->set(1.5f, "float", 60) && kv->getFloat("float") == 1.5f);
+    reopen();
+    assert(kv->set(1.5, "double", 60) && kv->getDouble("double") == 1.5);
+    string result;
+    reopen();
+    assert(kv->set(string("ABCD"), "string", 60) && kv->getString("string", result) && result == "ABCD");
+    reopen();
+    assert(kv->set(string_view("ABCD"), "view", 60) && kv->getString("view", result) && result == "ABCD");
+    reopen();
+    char byteValue[] = "ABCD";
+    MMBuffer bytes(byteValue, 4, MMBufferNoCopy);
+    assert(kv->set(bytes, "bytes", 60) && kv->getBytes("bytes") == bytes);
+    reopen();
+    const vector<string> strings = {"ABCD", "EFGH"};
+    vector<string> stringsResult;
+    assert(kv->set(strings, "strings", 60) && kv->getVector("strings", stringsResult) && stringsResult == strings);
+#ifdef MMKV_HAS_CPP20
+    reopen();
+    const vector<int32_t> ints = {1, 2, 3};
+    vector<int32_t> intsResult;
+    assert(kv->set(ints, "ints", 60) && kv->getVector("ints", intsResult) && intsResult == ints);
+#endif
+    kv->close();
+    printf("test first write after reopen overloads: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -1097,4 +1167,6 @@ int main(int argc, char *argv[]) {
     testImportRejectedWrites();
     testFirstReadAfterReopenRespectsExpiration();
     testReadOnlyExpiration();
+    testFirstWriteAfterReopenPreservesValue();
+    testFirstWriteAfterReopenOverloads();
 }

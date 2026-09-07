@@ -246,6 +246,11 @@ bool MMKV::setDataForKey(mmkv::MMBuffer &&data, std::string_view key, bool isDat
     return setDataForKey(std::move(data), hybridKey.str, isDataHolder);
 }
 
+bool MMKV::setDataForKey(mmkv::MMBuffer &&data, std::string_view key, uint32_t expireDuration, bool isDataHolder) {
+    HybridStringCP hybridKey = key;
+    return setDataForKey(std::move(data), hybridKey.str, expireDuration, isDataHolder);
+}
+
 bool MMKV::getVector(std::string_view key, std::vector<std::string> &result) {
     HybridString hybridKey = key;
     return getVector(hybridKey.str, result);
@@ -289,6 +294,9 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
         return true;
     }
 
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     NSData *tmpData = nil;
     if ([obj isKindOfClass:NSString.class]) {
         auto str = (NSString *) obj;

@@ -491,6 +491,9 @@ bool MMKV::set(bool value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbBoolSize() : pbBoolSize();
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -513,6 +516,9 @@ bool MMKV::set(int32_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbInt32Size(value) : pbInt32Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -535,6 +541,9 @@ bool MMKV::set(uint32_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbUInt32Size(value) : pbUInt32Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -557,6 +566,9 @@ bool MMKV::set(int64_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbInt64Size(value) : pbInt64Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -579,6 +591,9 @@ bool MMKV::set(uint64_t value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbUInt64Size(value) : pbUInt64Size(value);
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -601,6 +616,9 @@ bool MMKV::set(float value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbFloatSize() : pbFloatSize();
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -623,6 +641,9 @@ bool MMKV::set(double value, MMKVKey_t key, uint32_t expireDuration) {
     if (isKeyEmpty(key)) {
         return false;
     }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     size_t size = mmkv_unlikely(m_enableKeyExpire) ? Fixed32Size + pbDoubleSize() : pbDoubleSize();
     MMBuffer data(size);
     CodedOutputData output(data.getPtr(), size);
@@ -637,24 +658,35 @@ bool MMKV::set(double value, MMKVKey_t key, uint32_t expireDuration) {
     return setDataForKey(std::move(data), key);
 }
 
-bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t expireDuration) {
+bool MMKV::setDataForKey(mmkv::MMBuffer &&data, MMKV::MMKVKey_t key, uint32_t expireDuration, bool isDataHolder) {
+    if (!isDataHolder && data.length() == 0) {
+        return false;
+    }
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     if (mmkv_likely(!m_enableKeyExpire)) {
         assert(expireDuration == ExpireNever && "setting expire duration without calling enableAutoKeyExpire() first");
-        return setDataForKey(std::move(data), key, true);
+        return setDataForKey(std::move(data), key, isDataHolder);
     } else {
         if (data.length() > numeric_limits<uint32_t>::max()) {
             MMKVError("[%s] reject value too large to encode: %zu", m_mmapID.c_str(), data.length());
             return false;
         }
         auto dataLength = static_cast<uint32_t>(data.length());
-        uint64_t encodedLength = static_cast<uint64_t>(dataLength) + pbRawVarint32Size(dataLength) + Fixed32Size;
+        uint64_t encodedLength = static_cast<uint64_t>(dataLength) +
+                                 (isDataHolder ? pbRawVarint32Size(dataLength) : 0) + Fixed32Size;
         if (encodedLength > numeric_limits<uint32_t>::max()) {
             MMKVError("[%s] reject expiring value too large to encode: %zu", m_mmapID.c_str(), data.length());
             return false;
         }
         auto tmp = MMBuffer(static_cast<size_t>(encodedLength));
         CodedOutputData output(tmp.getPtr(), tmp.length());
-        output.writeData(data);
+        if (isDataHolder) {
+            output.writeData(data);
+        } else {
+            output.writeRawData(data);
+        }
         auto time = (expireDuration != ExpireNever) ? safeExpirationPlusCurrentTime(expireDuration) : ExpireNever;
         output.writeRawLittleEndian32(UInt32ToInt32(time));
         return setDataForKey(std::move(tmp), key);
@@ -719,15 +751,7 @@ bool MMKV::set(const vector<string> &v, MMKVKey_t key, uint32_t expireDuration) 
 #else
     auto data = MiniPBCoder::encodeDataWithObject(v);
 #endif
-    if (mmkv_unlikely(m_enableKeyExpire) && data.length() > 0) {
-        auto tmp = MMBuffer(data.length() + Fixed32Size);
-        auto ptr = (uint8_t *) tmp.getPtr();
-        memcpy(ptr, data.getPtr(), data.length());
-        auto time = (expireDuration != ExpireNever) ? safeExpirationPlusCurrentTime(expireDuration) : ExpireNever;
-        memcpy(ptr + data.length(), &time, Fixed32Size);
-        data = std::move(tmp);
-    }
-    return setDataForKey(std::move(data), key);
+    return setDataForKey(std::move(data), key, expireDuration, false);
 }
 
 bool MMKV::getString(MMKVKey_t key, string &result, bool inplaceModification) {

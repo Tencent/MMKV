@@ -773,10 +773,6 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
         MMKVError("[%s] reject value too large to encode: %zu", m_mmapID.c_str(), data.length());
         return false;
     }
-    SCOPED_LOCK(m_lock);
-    SCOPED_LOCK(m_exclusiveProcessLock);
-    checkLoadData();
-
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
         if (isDataHolder) {
