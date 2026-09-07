@@ -21,6 +21,7 @@
 #include <MMKV/MMKV.h>
 #include "CodedInputData.h"
 #include "CodedOutputData.h"
+#include "KeyValueHolder.h"
 #include "PBUtility.h"
 #include "aes/AESCrypt.h"
 #include "crc32/Checksum.h"
@@ -212,6 +213,46 @@ void testVector(MMKV *mmkv) {
     assert(ret && value == v);
 
     printf("test vector: passed\n");
+}
+
+namespace {
+// Test-only access to synthesize a large logical value without allocating it.
+MMKVMap *&expirationTestDictionary(MMKV &kv);
+template <MMKVMap *MMKV::*Member> struct ExpirationDictionaryAccess {
+    friend MMKVMap *&expirationTestDictionary(MMKV &kv) { return kv.*Member; }
+};
+template struct ExpirationDictionaryAccess<&MMKV::m_dic>;
+}
+
+void testExpirationMigrationAggregateLimit() {
+    const string id = "expiration_aggregate_limit_test";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->set("before", "k"));
+    assert(kv->enableCompareBeforeSet());
+
+    auto &holder = expirationTestDictionary(*kv)->at("k");
+    const auto originalSize = holder.valueSize;
+    // With a one-byte key, migration adds 11 bytes per entry and a four-byte
+    // map placeholder. UINT32_MAX total is one byte beyond the temporary
+    // protobuf buffer's limit; the next case also exceeds the file-size limit.
+    for (uint32_t extra = 0; extra <= 1; ++extra) {
+        holder.valueSize = numeric_limits<uint32_t>::max() - 15 + extra;
+        const auto enabled = kv->enableAutoKeyExpire(60);
+        holder.valueSize = originalSize;
+        assert(!enabled);
+        assert(!kv->isExpirationEnabled());
+        assert(kv->isCompareBeforeSetEnabled());
+        string value;
+        assert(kv->getString("k", value) && value == "before");
+    }
+    kv->close();
+    kv = MMKV::mmkvWithID(id);
+    string value;
+    assert(kv->getString("k", value) && value == "before");
+    assert(!kv->isExpirationEnabled());
+    kv->close();
+    printf("test expiration migration aggregate limit: passed\n");
 }
 
 void testOversizedKey(MMKV *mmkv) {
@@ -849,6 +890,7 @@ int main(int argc, char *argv[]) {
     testBytes(mmkv);
     testVector(mmkv);
     testRemove(mmkv);
+    testExpirationMigrationAggregateLimit();
     testOversizedKey(mmkv);
     testOversizedValue(mmkv);
     testFileValidation(rootDir);

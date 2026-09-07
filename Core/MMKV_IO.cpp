@@ -1948,6 +1948,13 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
     uint32_t time = ExpireNever;
     if (!hasExpireFlag) {
         time = (expiredInSeconds != ExpireNever) ? safeExpirationPlusCurrentTime(expiredInSeconds) : ExpireNever;
+        const auto maximumActualSize = maxActualSize();
+        constexpr auto MaxEncodedLength = numeric_limits<uint32_t>::max();
+        // MiniPBCoder keeps the map size plus its varint prefix in a uint32_t.
+        const auto maxMapSize = MaxEncodedLength - pbRawVarint32Size(MaxEncodedLength);
+        const auto maximumMigrationSize =
+            std::min<size_t>(maximumActualSize, maxMapSize + ItemSizeHolderSize);
+        size_t prospectiveSize = ItemSizeHolderSize;
         auto packKeyValue = [&](const auto &key, const MMBuffer &value) {
 #ifdef MMKV_APPLE
             auto keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
@@ -1962,6 +1969,11 @@ bool MMKV::enableAutoKeyExpire(uint32_t expiredInSeconds) {
                 MMKVError("[%s] reject enabling expiration: encoded data would be too large", m_mmapID.c_str());
                 return false;
             }
+            if (entry.totalSize > maximumMigrationSize - prospectiveSize) {
+                MMKVError("[%s] reject enabling expiration: total encoded data would be too large", m_mmapID.c_str());
+                return false;
+            }
+            prospectiveSize += entry.totalSize;
 
             MMBuffer data(dataLength);
             auto ptr = (uint8_t *) data.getPtr();
