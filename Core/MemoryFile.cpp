@@ -546,12 +546,20 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
         MMKVError("fail to malloc size %zu, %d(%s)", bufferSize, errno, strerror(errno));
         goto errorOut;
     }
-    lseek(dstFD, 0, SEEK_SET);
+    if (lseek(dstFD, 0, SEEK_SET) < 0) {
+        goto errorOut;
+    }
 
     // the POSIX standard don't have sendfile()/fcopyfile() equivalent, do it the hard way
     while (true) {
         auto sizeRead = read(srcFile.getFd(), buffer, bufferSize);
+        if (sizeRead == 0) {
+            break;
+        }
         if (sizeRead < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
             MMKVError("fail to read file [%s], %d(%s)", srcPath.c_str(), errno, strerror(errno));
             goto errorOut;
         }
@@ -559,16 +567,15 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
         size_t totalWrite = 0;
         do {
             auto sizeWrite = write(dstFD, buffer + totalWrite, sizeRead - totalWrite);
-            if (sizeWrite < 0) {
+            if (sizeWrite <= 0) {
+                if (sizeWrite < 0 && errno == EINTR) {
+                    continue;
+                }
                 MMKVError("fail to write fd [%d], %d(%s)", dstFD, errno, strerror(errno));
                 goto errorOut;
             }
             totalWrite += sizeWrite;
         } while (totalWrite < sizeRead);
-
-        if (sizeRead < bufferSize) {
-            break;
-        }
     }
     if (needTruncate) {
         size_t dstFileSize = 0;
