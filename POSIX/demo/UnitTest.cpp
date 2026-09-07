@@ -846,6 +846,38 @@ void testDecryptToPlainKeyLimit() {
 }
 #endif
 
+void testCachedRestore(const string &rootDir) {
+    const string backupDir = rootDir + "/cached-restore-backup";
+    const string value(DEFAULT_MMAP_SIZE * 2, 'v');
+    auto backup = MMKV::nameSpace(backupDir).mmkvWithID("cached-restore");
+    assert(backup->set(value, "key"));
+    backup->sync(MMKV_SYNC);
+    auto backupSize = backup->totalSize();
+    backup->close();
+    for (auto capacity : {DEFAULT_MMAP_SIZE, backupSize * 2}) {
+        MMKVConfig config;
+        config.expectedCapacity = capacity;
+        auto kv = MMKV::mmkvWithID("cached-restore", config);
+        assert(MMKV::restoreOneFromDirectory("cached-restore", backupDir));
+        string result;
+        assert(kv->getString("key", result) && result == value);
+        assert(kv->set(value, "another"));
+        kv->close();
+        MMKV::removeStorage("cached-restore");
+    }
+
+    backup = MMKV::nameSpace(backupDir).mmkvWithID("invalid-restore-meta");
+    assert(backup->set(value, "key"));
+    backup->sync(MMKV_SYNC);
+    backup->close();
+    assert(mkPath(rootDir + "/invalid-restore-meta.crc"));
+    auto invalid = MMKV::mmkvWithID("invalid-restore-meta");
+    assert(invalid);
+    assert(!MMKV::restoreOneFromDirectory("invalid-restore-meta", backupDir));
+    invalid->close();
+    printf("test cached restore: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -932,4 +964,5 @@ int main(int argc, char *argv[]) {
 #endif
     testLongDirectoryWalk(rootDir);
     testMinimalBackupRestore(rootDir);
+    testCachedRestore(rootDir);
 }

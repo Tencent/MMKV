@@ -1500,6 +1500,9 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
         SCOPED_LOCK(kv->m_lock);
         SCOPED_LOCK(kv->m_exclusiveProcessLock);
 
+        if (kv->isReadOnly() || !kv->m_metaFile->isFileValid()) {
+            return false;
+        }
         kv->sync();
         auto ret = copyFileContent(srcPath, kv->m_file->getFd());
         kv->m_file->cleanMayflyFD();
@@ -1509,6 +1512,8 @@ bool MMKV::restoreOneFromDirectory(const string &mmapKey, const MMKVPath_t &srcP
 
         // reload data after restore
         kv->clearMemoryCache();
+        // A still-lazy instance skips clearMemoryCache(), but its mapping may have changed size.
+        kv->m_file->clearMemoryCache();
         kv->loadFromFile();
         if (kv->isMultiProcess()) {
             kv->notifyContentChanged();
