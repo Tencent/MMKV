@@ -434,6 +434,9 @@ void MMKV::checkLoadData() {
 constexpr uint32_t ItemSizeHolderSize = 4;
 
 static size_t maxActualSize() {
+    if constexpr (sizeof(size_t) > sizeof(uint32_t)) {
+        return numeric_limits<uint32_t>::max();
+    }
     auto maxFileSize = numeric_limits<size_t>::max();
     maxFileSize -= maxFileSize % DEFAULT_MMAP_SIZE;
     return std::min<size_t>(numeric_limits<uint32_t>::max(), maxFileSize - Fixed32Size);
