@@ -819,6 +819,33 @@ void testMinimalBackupRestore(const string &rootDir) {
     printf("test minimal backup and restore hardening: passed\n");
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+void testDecryptToPlainKeyLimit() {
+    const string cryptKey = "plain-holder-test";
+    for (auto valueSize : {128, 300}) {
+        auto kv = MMKV::mmkvWithID("decrypt_plain_key_limit_" + to_string(valueSize), MMKV_SINGLE_PROCESS, &cryptKey);
+        kv->clearAll();
+        const string key(KeySizeLimit, 'k');
+        const string value(valueSize, 'v');
+        assert(kv->set(value, key));
+        assert(kv->set("intact", "ordinary"));
+        assert(!kv->reKey(""));
+        assert(kv->isEncryptionEnabled());
+        kv->clearMemoryCache();
+        string result;
+        assert(kv->getString(key, result) && result == value);
+        assert(kv->getString("ordinary", result) && result == "intact");
+        assert(kv->removeValueForKey(key));
+        assert(kv->set(value, key.substr(1)));
+        assert(kv->reKey(""));
+        assert(kv->getString(key.substr(1), result) && result == value);
+        assert(kv->getString("ordinary", result) && result == "intact");
+        kv->close();
+    }
+    printf("test decrypt to plain key limit: passed\n");
+}
+#endif
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -901,6 +928,7 @@ int main(int argc, char *argv[]) {
     testArmCRC32();
 #ifndef MMKV_DISABLE_CRYPT
     testCryptoRandomAndWipe();
+    testDecryptToPlainKeyLimit();
 #endif
     testLongDirectoryWalk(rootDir);
     testMinimalBackupRestore(rootDir);

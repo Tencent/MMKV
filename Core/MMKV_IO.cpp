@@ -1548,6 +1548,19 @@ bool MMKV::reKey(const string &cryptKey, bool aes256) {
             }
         } else {
             // decryption to plain text
+            for (const auto &pair : *m_dicCrypt) {
+#ifdef MMKV_APPLE
+                auto keyLength = [pair.first lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+#else
+                auto keyLength = pair.first.length();
+#endif
+                EncodedEntrySize entry;
+                if (!encodedEntrySize(keyLength, static_cast<uint32_t>(keyLength), pair.second.realValueSize(),
+                                      false, true, entry)) {
+                    MMKVError("[%s] reject decryption: key/value cannot fit a plain holder", m_mmapID.c_str());
+                    return false;
+                }
+            }
             MMKVInfo("reKey to no aes key");
             m_hasFullWriteback = false;
             ret = fullWriteback(InvalidCryptPtr);
