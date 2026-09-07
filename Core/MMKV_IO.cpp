@@ -725,7 +725,6 @@ bool MMKV::writeActualSize(size_t size, uint32_t crcDigest, const void *iv, bool
 }
 
 MMBuffer MMKV::getRawDataForKey(MMKVKey_t key) {
-    checkLoadData();
 #ifndef MMKV_DISABLE_CRYPT
     if (m_crypter) {
         auto itr = m_dicCrypt->find(key);
@@ -747,6 +746,7 @@ MMBuffer MMKV::getRawDataForKey(MMKVKey_t key) {
 }
 
 mmkv::MMBuffer MMKV::getDataForKey(MMKVKey_t key) {
+    checkLoadData();
     if (mmkv_unlikely(m_enableKeyExpire)) {
         return getDataWithoutMTimeForKey(key);
     }

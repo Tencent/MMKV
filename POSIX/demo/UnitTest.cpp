@@ -941,6 +941,26 @@ void testImportRejectedWrites() {
     printf("test import rejected writes: passed\n");
 }
 
+void testFirstReadAfterReopenRespectsExpiration() {
+    const string id = "first-read-expiration";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->enableAutoKeyExpire());
+    assert(kv->set(uint32_t(123), "expired", 1));
+    kv->sync(MMKV_SYNC);
+    kv->close();
+    sleep(2);
+
+    kv = MMKV::mmkvWithID(id);
+    // Do not warm the lazy instance with count(), containsKey(), etc.
+    // Before the fix, this FIRST getter returned 123; only the second getter missed.
+    bool found = true;
+    const auto value = kv->getUInt32("expired", 0, &found);
+    assert(value == 0 && !found);
+    kv->close();
+    printf("test first read after reopen respects expiration: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -1030,4 +1050,5 @@ int main(int argc, char *argv[]) {
     testCachedRestore(rootDir);
     testReadOnlyRecovery(rootDir);
     testImportRejectedWrites();
+    testFirstReadAfterReopenRespectsExpiration();
 }
