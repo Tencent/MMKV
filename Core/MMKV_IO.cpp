@@ -324,6 +324,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
                     if (checkFileCRCValid(oldStyleActualSize, m_metaInfo->m_crcDigest)) {
                         MMKVInfo("looks like [%s] been downgrade & upgrade again", m_mmapID.c_str());
                         loadFromFile = true;
+                        m_actualSize = oldStyleActualSize;
                         writeActualSize(oldStyleActualSize, m_metaInfo->m_crcDigest, nullptr, KeepSequence);
                         return;
                     }
@@ -337,6 +338,7 @@ void MMKV::checkDataValid(bool &loadFromFile, bool &needFullWriteback) {
                 auto lastCRCDigest = m_metaInfo->m_lastConfirmedMetaInfo.lastCRCDigest;
                 if (checkFileCRCValid(lastActualSize, lastCRCDigest)) {
                     loadFromFile = true;
+                    m_actualSize = lastActualSize;
                     writeActualSize(lastActualSize, lastCRCDigest, nullptr, KeepSequence);
                 } else {
                     MMKVError("check [%s] error: lastActualSize %u, lastActualCRC %u", m_mmapID.c_str(), lastActualSize,

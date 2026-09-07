@@ -26,6 +26,7 @@
 #include "aes/AESCrypt.h"
 #include "crc32/Checksum.h"
 #include "MemoryFile.h"
+#include "MMKVMetaInfo.hpp"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -878,6 +879,46 @@ void testCachedRestore(const string &rootDir) {
     printf("test cached restore: passed\n");
 }
 
+void testReadOnlyRecovery(const string &rootDir) {
+    for (bool useLastConfirmed : {false, true}) {
+        const string id = useLastConfirmed ? "readonly-confirmed" : "readonly-header";
+        auto kv = MMKV::mmkvWithID(id);
+        assert(kv->set("intact", "key"));
+        auto goodSize = static_cast<uint32_t>(kv->actualSize());
+        auto badSize = static_cast<uint32_t>(kv->totalSize() + 4);
+        kv->sync(MMKV_SYNC);
+        kv->close();
+
+        auto fd = open((rootDir + "/" + id + ".crc").c_str(), O_RDWR);
+        assert(fd >= 0);
+        MMKVMetaInfo meta;
+        assert(pread(fd, &meta, sizeof(meta), 0) == sizeof(meta));
+        meta.m_lastConfirmedMetaInfo.lastActualSize = goodSize;
+        meta.m_lastConfirmedMetaInfo.lastCRCDigest = meta.m_crcDigest;
+        meta.m_actualSize = badSize;
+        assert(pwrite(fd, &meta, sizeof(meta), 0) == sizeof(meta));
+        close(fd);
+        fd = open((rootDir + "/" + id).c_str(), O_RDWR);
+        assert(fd >= 0);
+        auto headerSize = useLastConfirmed ? badSize : goodSize;
+        assert(pwrite(fd, &headerSize, sizeof(headerSize), 0) == sizeof(headerSize));
+        close(fd);
+
+        kv = MMKV::mmkvWithID(id, MMKV_SINGLE_PROCESS | MMKV_READ_ONLY);
+        string result;
+        assert(kv->getString("key", result) && result == "intact");
+        assert(kv->actualSize() == goodSize);
+        kv->close();
+        fd = open((rootDir + "/" + id + ".crc").c_str(), O_RDONLY);
+        assert(fd >= 0);
+        MMKVMetaInfo after;
+        assert(pread(fd, &after, sizeof(after), 0) == sizeof(after));
+        assert(memcmp(&meta, &after, sizeof(meta)) == 0);
+        close(fd);
+    }
+    printf("test readonly recovery: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -965,4 +1006,5 @@ int main(int argc, char *argv[]) {
     testLongDirectoryWalk(rootDir);
     testMinimalBackupRestore(rootDir);
     testCachedRestore(rootDir);
+    testReadOnlyRecovery(rootDir);
 }
