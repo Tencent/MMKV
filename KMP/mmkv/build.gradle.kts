@@ -296,6 +296,7 @@ kotlin {
         androidMain {
             dependencies {
                 implementation("com.tencent:mmkv:$mmkvVersion")
+                implementation("androidx.startup:startup-runtime:1.2.0")
             }
         }
 

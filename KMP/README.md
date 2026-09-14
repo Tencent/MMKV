@@ -69,6 +69,54 @@ class App : Application() {
 }
 ```
 
+`mmkv-kmp` also bundles an AndroidX App Startup `Initializer` that captures the
+application `Context` automatically in the default process, with no manifest
+edits, code, or Gradle configuration beyond the dependency. This lets you call
+the Context-free overload instead:
+
+```kotlin
+import com.tencent.mmkv.kmp.MMKV
+import com.tencent.mmkv.kmp.initialize
+
+MMKV.initialize() // uses the automatically captured Context
+```
+
+If this overload is invoked before any `Context` was captured (for example, if
+the App Startup provider was disabled, or in a secondary process that never
+declared it), it throws `IllegalStateException` naming `initialize(context, ...)`
+as the fallback — it never throws `NullPointerException` and never silently
+proceeds with a null or default `Context`.
+
+For a secondary process, declare an extra `<provider>` entry with the same
+authority in your app's manifest so App Startup also runs there:
+
+```xml
+<provider
+    android:name="androidx.startup.InitializationProvider"
+    android:authorities="${applicationId}.androidx-startup"
+    android:exported="false"
+    android:process=":your_secondary_process"
+    tools:node="merge">
+    <meta-data
+        android:name="com.tencent.mmkv.kmp.MMKVContextInitializer"
+        android:value="androidx.startup" />
+</provider>
+```
+
+To opt out of automatic capture entirely and always call `MMKV.initialize(context, ...)`
+explicitly, remove the `<meta-data>` entry from your manifest:
+
+```xml
+<provider
+    android:name="androidx.startup.InitializationProvider"
+    android:authorities="${applicationId}.androidx-startup"
+    tools:node="merge">
+    <meta-data
+        android:name="com.tencent.mmkv.kmp.MMKVContextInitializer"
+        tools:node="remove" />
+</provider>
+```
+
 iOS:
 
 ```kotlin

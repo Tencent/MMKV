@@ -46,6 +46,22 @@ fun MMKV.Companion.initialize(
 }
 
 /**
+ * Initialize MMKV without an explicit [Context], using the application [Context] captured
+ * automatically by the bundled AndroidX App Startup [MMKVContextInitializer].
+ *
+ * You must call one of the initialize() methods on App startup process before using MMKV.
+ *
+ * @param logLevel The log level of MMKV, defaults to [MMKVLogLevel.Info].
+ * @return The root folder of MMKV, defaults to $(FilesDir)/mmkv.
+ * @throws IllegalStateException if no [Context] was captured, e.g. because the consumer removed
+ * the App Startup `<meta-data>` entry via `tools:node="remove"`. Call
+ * [initialize] with an explicit [Context] instead.
+ */
+fun MMKV.Companion.initialize(logLevel: MMKVLogLevel = MMKVLogLevel.Info): String {
+    return initialize(requireCapturedContext(MMKVContextHolder.applicationContext), logLevel)
+}
+
+/**
  * Initialize MMKV with customize root folder.
  *
  * @param context The context of Android App, usually from Application.
