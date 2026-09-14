@@ -29,7 +29,9 @@
 #include "MMKVMetaInfo.hpp"
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -41,6 +43,7 @@
 #include <numeric>
 #include <new>
 #include <sys/stat.h>
+#include <thread>
 #include <unistd.h>
 #include <utility>
 #include <vector>
@@ -941,6 +944,48 @@ void testImportRejectedWrites() {
     printf("test import rejected writes: passed\n");
 }
 
+#ifndef MMKV_WIN32
+void testImportUsesStableLockOrder() {
+    auto first = MMKV::mmkvWithID("import-lock-order-a");
+    auto second = MMKV::mmkvWithID("import-lock-order-b");
+    first->clearAll();
+    second->clearAll();
+    assert(first->set("value", "key"));
+
+    // Hold the lexicographically later store. A reverse-direction import must
+    // lock the earlier store first, then wait for this lock.
+    second->lock_thread();
+    atomic<bool> started{false};
+    thread worker([&] {
+        started.store(true, memory_order_release);
+        assert(second->importFrom(first) == 1);
+    });
+    while (!started.load(memory_order_acquire)) {
+        this_thread::yield();
+    }
+
+    bool firstWasLocked = false;
+    for (size_t attempt = 0; attempt < 5000; attempt++) {
+        if (!first->try_lock_thread()) {
+            firstWasLocked = true;
+            break;
+        }
+        first->unlock_thread();
+        this_thread::sleep_for(chrono::milliseconds(1));
+    }
+
+    second->unlock_thread();
+    worker.join();
+    assert(firstWasLocked);
+
+    string value;
+    assert(second->getString("key", value) && value == "value");
+    first->close();
+    second->close();
+    printf("test import stable lock order: passed\n");
+}
+#endif
+
 void testFirstReadAfterReopenRespectsExpiration() {
     const string id = "first-read-expiration";
     auto kv = MMKV::mmkvWithID(id);
@@ -1165,6 +1210,9 @@ int main(int argc, char *argv[]) {
     testCachedRestore(rootDir);
     testReadOnlyRecovery(rootDir);
     testImportRejectedWrites();
+#ifndef MMKV_WIN32
+    testImportUsesStableLockOrder();
+#endif
     testFirstReadAfterReopenRespectsExpiration();
     testReadOnlyExpiration();
     testFirstWriteAfterReopenPreservesValue();

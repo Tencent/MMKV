@@ -40,6 +40,7 @@
 #include <cstring>
 #include <ctime>
 #include <filesystem>
+#include <functional>
 #include <limits>
 
 #ifdef MMKV_IOS
@@ -1705,10 +1706,21 @@ size_t MMKV::importFrom(MMKV *src) {
         return 0;
     }
 
-    SCOPED_LOCK(m_lock);
-    SCOPED_LOCK(m_exclusiveProcessLock);
-    SCOPED_LOCK(src->m_lock);
-    SCOPED_LOCK(src->m_exclusiveProcessLock);
+    // A pair of stores must always be locked in the same order. Otherwise,
+    // concurrent A <- B and B <- A imports can each hold one lock forever.
+    // Use the storage path so the order is stable across processes as well.
+    MMKV *first = this;
+    MMKV *second = src;
+    if (src->m_path < m_path ||
+        (src->m_path == m_path && std::less<MMKV *>{}(src, this))) {
+        std::swap(first, second);
+    }
+
+    // Preserve the normal per-instance ThreadLock -> file-lock hierarchy.
+    SCOPED_LOCK(first->m_lock);
+    SCOPED_LOCK(first->m_exclusiveProcessLock);
+    SCOPED_LOCK(second->m_lock);
+    SCOPED_LOCK(second->m_exclusiveProcessLock);
 
     checkLoadData();
     src->checkLoadData();
