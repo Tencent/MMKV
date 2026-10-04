@@ -178,7 +178,7 @@ Due to the current limitation of Flutter runtime, we can't redirect log on the F
     mmkv.reKey("Key_Seq_Very_Looooooooong", aes256: true);
 
     // change from encrypted to unencrypted
-    kmmkv.reKey(null);
+    mmkv.reKey(null);
     ```
  
 ### Customize location
