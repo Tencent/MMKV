@@ -92,7 +92,7 @@ export default class EntryAbility extends UIAbility {
 
     let arr = new Uint8Array([0, 255, 1, 255]);
     mmkv.encodeTypedArray('uint8-array', arr);
-    let newUI8Arr = kv.decodeUint8Array('uint8-array');
+    let newUI8Arr = mmkv.decodeUint8Array('uint8-array');
     console.info('uint8-array = ', newUI8Arr);
     ```
 
@@ -163,11 +163,11 @@ Due to the current limitation of NAPI runtime, we **can't efficiently** redirect
     // change from unencrypted to encrypted with AES-128 key length
     mmkv.reKey('Key_seq_1');
 
-    // change encryption key with AES-258 key length
+    // change encryption key with AES-256 key length
     mmkv.reKey('Key_Seq_Very_Looooooooong', true);
 
     // change from encrypted to unencrypted
-    kmmkv.reKey();
+    mmkv.reKey();
     ```
  
 ### Customize location
