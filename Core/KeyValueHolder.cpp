@@ -77,6 +77,15 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(MMBuffer &&data) {
             return;
         }
 #    endif
+        if (data.isNoCopy == MMBufferNoCopy) {
+            // a view of memory owned elsewhere (e.g. importFrom()'s source): copy it, don't adopt it
+            memPtr = malloc(memSize);
+            if (!memPtr) {
+                throw std::runtime_error(strerror(errno));
+            }
+            memcpy(memPtr, data.getPtr(), memSize);
+            return;
+        }
         memPtr = data.getPtr();
         data.detach();
     }

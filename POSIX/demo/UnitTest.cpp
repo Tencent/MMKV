@@ -986,6 +986,57 @@ void testImportUsesStableLockOrder() {
 }
 #endif
 
+#ifndef MMKV_DISABLE_CRYPT
+// importFrom() hands the destination no-copy views of the source's values;
+// an encrypted destination must copy them, not take ownership of them.
+void testImportIntoEncrypted() {
+    const string sourceKey = "import-source-key";
+    const string destKey = "import-dest-key";
+    const string destKey256 = "import-dest-key-32-bytes-long-ab";
+    const string medium(100, 'm'), large(300, 'l');
+    for (bool encryptedSource : {false, true}) {
+        for (bool aes256 : {false, true}) {
+            const string suffix = string(encryptedSource ? "-crypt" : "-plain") + (aes256 ? "-256" : "-128");
+            MMKVConfig sourceConfig;
+            sourceConfig.cryptKey = encryptedSource ? &sourceKey : nullptr;
+            auto source = MMKV::mmkvWithID("import-encrypted-source" + suffix, sourceConfig);
+            source->clearAll();
+            assert(source->set("short", "s"));
+            assert(source->set(medium, "m"));
+            assert(source->set(large, "l"));
+            assert(source->set(int32_t(-42), "i"));
+            assert(source->set(true, "b"));
+
+            MMKVConfig destConfig;
+            destConfig.cryptKey = aes256 ? &destKey256 : &destKey;
+            destConfig.aes256 = aes256;
+            auto dest = MMKV::mmkvWithID("import-encrypted-dest" + suffix, destConfig);
+            dest->clearAll();
+            assert(dest->importFrom(source) == 5);
+
+            // overwriting and removing release what the destination holds
+            assert(dest->set("changed", "s"));
+            assert(dest->removeValueForKey("m"));
+            // the source releases its own values
+            source->clearAll();
+            source->close();
+
+            string value;
+            assert(dest->getString("s", value) && value == "changed");
+            assert(!dest->containsKey("m"));
+            assert(dest->getString("l", value) && value == large);
+            assert(dest->getInt32("i") == -42);
+            assert(dest->getBool("b"));
+            dest->clearMemoryCache();
+            assert(dest->getString("l", value) && value == large);
+            assert(dest->getInt32("i") == -42);
+            dest->close();
+        }
+    }
+    printf("test import into encrypted: passed\n");
+}
+#endif
+
 void testFirstReadAfterReopenRespectsExpiration() {
     const string id = "first-read-expiration";
     auto kv = MMKV::mmkvWithID(id);
@@ -1212,6 +1263,9 @@ int main(int argc, char *argv[]) {
     testImportRejectedWrites();
 #ifndef MMKV_WIN32
     testImportUsesStableLockOrder();
+#endif
+#ifndef MMKV_DISABLE_CRYPT
+    testImportIntoEncrypted();
 #endif
     testFirstReadAfterReopenRespectsExpiration();
     testReadOnlyExpiration();
