@@ -1697,7 +1697,7 @@ void MMKV::clearAll(bool keepSpace) {
 }
 
 size_t MMKV::importFrom(MMKV *src) {
-    if (!src) {
+    if (!src || src == this) {
         return 0;
     }
     MMKVInfo("importing from [%s] to [%s]", src->m_mmapID.c_str(), m_mmapID.c_str());

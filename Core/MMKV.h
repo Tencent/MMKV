@@ -606,6 +606,7 @@ public:
     void trim();
 
     // import all key-value items from source
+    // null source and self-import are rejected without changes and return 0
     // return count of items imported
     size_t importFrom(MMKV *src);
 

@@ -944,6 +944,49 @@ void testImportRejectedWrites() {
     printf("test import rejected writes: passed\n");
 }
 
+void testImportRejectsSelf() {
+#ifndef MMKV_DISABLE_CRYPT
+    const string key128 = "self-import-key";
+    const string key256 = "0123456789abcdef0123456789abcdef";
+    constexpr int cipherModes = 3;
+#else
+    constexpr int cipherModes = 1;
+#endif
+    const string medium(100, 'm'), large(300, 'l');
+    for (int cipher = 0; cipher < cipherModes; cipher++) {
+        for (bool expire : {false, true}) {
+            MMKVConfig config;
+#ifndef MMKV_DISABLE_CRYPT
+            config.cryptKey = cipher == 0 ? nullptr : (cipher == 1 ? &key128 : &key256);
+            config.aes256 = cipher == 2;
+#endif
+            config.enableKeyExpire = expire;
+            config.expiredInSeconds = 3600;
+            auto kv = MMKV::mmkvWithID("import-self-" + to_string(cipher) + (expire ? "-expiring" : "-plain"), config);
+            kv->clearAll();
+            assert(kv->set("short", "s"));
+            assert(kv->set(medium, "m"));
+            assert(kv->set(large, "l"));
+            const auto sizeBefore = kv->actualSize();
+
+            for (bool reload : {false, true}) {
+                if (reload) {
+                    kv->clearMemoryCache();
+                }
+                assert(kv->importFrom(kv) == 0);
+                assert(kv->actualSize() == sizeBefore);
+                assert(kv->count() == 3);
+                string value;
+                assert(kv->getString("s", value) && value == "short");
+                assert(kv->getString("m", value) && value == medium);
+                assert(kv->getString("l", value) && value == large);
+            }
+            kv->close();
+        }
+    }
+    printf("test import rejects self: passed\n");
+}
+
 #ifndef MMKV_WIN32
 void testImportUsesStableLockOrder() {
     auto first = MMKV::mmkvWithID("import-lock-order-a");
@@ -987,6 +1030,32 @@ void testImportUsesStableLockOrder() {
 #endif
 
 #ifndef MMKV_DISABLE_CRYPT
+void testBorrowedValueStorage() {
+    const auto inlineSize = KeyValueHolderCrypt::SmallBufferSize();
+    for (size_t size : {size_t(1), inlineSize, inlineSize + 1}) {
+        vector<uint8_t> source(size, 0x5a);
+        MMBuffer borrowed(source.data(), source.size(), MMBufferNoCopy);
+        KeyValueHolderCrypt holder(std::move(borrowed));
+        // Borrowed values that fit must not need a heap allocation.
+        assert(holder.type == (size <= inlineSize ? KeyValueHolderType_Direct : KeyValueHolderType_Memory));
+        auto stored = holder.toMMBuffer(nullptr, nullptr);
+        assert(stored.length() == source.size());
+        assert(stored.getPtr() != source.data());
+        fill(source.begin(), source.end(), 0);
+        const auto bytes = static_cast<const uint8_t *>(stored.getPtr());
+        assert(all_of(bytes, bytes + stored.length(), [](uint8_t value) { return value == 0x5a; }));
+    }
+
+    // An owned heap buffer must still transfer its allocation without copying.
+    MMBuffer owned(inlineSize + 1);
+    const auto ptr = owned.getPtr();
+    KeyValueHolderCrypt holder(std::move(owned));
+    assert(holder.type == KeyValueHolderType_Memory);
+    assert(holder.memPtr == ptr);
+    assert(owned.length() == 0);
+    printf("test borrowed value storage: passed\n");
+}
+
 // importFrom() hands the destination no-copy views of the source's values;
 // an encrypted destination must copy them, not take ownership of them.
 void testImportIntoEncrypted() {
@@ -1003,6 +1072,7 @@ void testImportIntoEncrypted() {
             source->clearAll();
             assert(source->set("short", "s"));
             assert(source->set(medium, "m"));
+            assert(source->set(medium, "m-retained"));
             assert(source->set(large, "l"));
             assert(source->set(int32_t(-42), "i"));
             assert(source->set(true, "b"));
@@ -1012,7 +1082,14 @@ void testImportIntoEncrypted() {
             destConfig.aes256 = aes256;
             auto dest = MMKV::mmkvWithID("import-encrypted-dest" + suffix, destConfig);
             dest->clearAll();
-            assert(dest->importFrom(source) == 5);
+            assert(dest->importFrom(source) == 6);
+
+            // Import again over existing inline and heap-backed values.
+            assert(dest->set("outdated", "s"));
+            assert(dest->set(string(100, 'x'), "m-retained"));
+            assert(dest->importFrom(source) == 6);
+            string value;
+            assert(dest->getString("s", value) && value == "short");
 
             // overwriting and removing release what the destination holds
             assert(dest->set("changed", "s"));
@@ -1021,15 +1098,18 @@ void testImportIntoEncrypted() {
             source->clearAll();
             source->close();
 
-            string value;
             assert(dest->getString("s", value) && value == "changed");
             assert(!dest->containsKey("m"));
+            assert(dest->getString("m-retained", value) && value == medium);
             assert(dest->getString("l", value) && value == large);
             assert(dest->getInt32("i") == -42);
             assert(dest->getBool("b"));
+            dest->trim();
             dest->clearMemoryCache();
+            assert(dest->getString("m-retained", value) && value == medium);
             assert(dest->getString("l", value) && value == large);
             assert(dest->getInt32("i") == -42);
+            assert(dest->getBool("b"));
             dest->close();
         }
     }
@@ -1261,10 +1341,12 @@ int main(int argc, char *argv[]) {
     testCachedRestore(rootDir);
     testReadOnlyRecovery(rootDir);
     testImportRejectedWrites();
+    testImportRejectsSelf();
 #ifndef MMKV_WIN32
     testImportUsesStableLockOrder();
 #endif
 #ifndef MMKV_DISABLE_CRYPT
+    testBorrowedValueStorage();
     testImportIntoEncrypted();
 #endif
     testFirstReadAfterReopenRespectsExpiration();

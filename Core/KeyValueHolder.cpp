@@ -58,7 +58,8 @@ KeyValueHolderCrypt::KeyValueHolderCrypt(const void *src, size_t length) {
 }
 
 KeyValueHolderCrypt::KeyValueHolderCrypt(MMBuffer &&data) {
-    if (data.type == MMBuffer::MMBufferType_Small) {
+    if (data.type == MMBuffer::MMBufferType_Small ||
+        (data.isNoCopy == MMBufferNoCopy && data.length() <= SmallBufferSize())) {
         static_assert(SmallBufferSize() >= MMBuffer::SmallBufferSize(), "KeyValueHolderCrypt can't hold MMBuffer");
 
         type = KeyValueHolderType_Direct;
