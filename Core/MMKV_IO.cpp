@@ -1086,7 +1086,9 @@ KVHolderRet_t MMKV::doOverrideDataWithKey(const MMBuffer &data,
         return make_pair(false, KeyValueHolder());
     }
 
-    if (!checkSizeForOverride(size)) {
+    // Encrypted rewrites would reuse the IV. Append instead; compaction rotates
+    // the IV and synchronizes the rewritten data and metadata when needed.
+    if (m_crypter || !checkSizeForOverride(size)) {
         return doAppendDataWithKey(data, keyData, isDataHolder, originKeyLength);
     }
 
