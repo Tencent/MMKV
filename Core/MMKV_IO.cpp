@@ -1858,15 +1858,17 @@ bool MMKV::removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath
         deleteFile(kvPath);
         return true;
     }
-    FileLock fileLock(crcFile.getFd());
-    InterProcessLock lock(&fileLock, ExclusiveLockType);
-    SCOPED_LOCK(&lock);
-
+    // Close before taking the deletion lock: writers hold the instance mutex
+    // while acquiring the file lock. crcFile owns a separate fd that survives close().
     auto itr = g_instanceDic->find(mmapKey);
     if (itr != g_instanceDic->end()) {
         itr->second->close();
         // itr is not valid after this
     }
+
+    FileLock fileLock(crcFile.getFd());
+    InterProcessLock lock(&fileLock, ExclusiveLockType);
+    SCOPED_LOCK(&lock);
 
     deleteFile(kvPath);
     deleteFile(crcPath);

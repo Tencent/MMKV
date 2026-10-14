@@ -674,6 +674,7 @@ public:
 
     // remove the storage of the MMKV, including the data file & meta file (.crc)
     // Note: the existing instance (if any) will be closed & destroyed
+    // The caller must prevent concurrent use of that instance and any use afterward.
     static bool removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
     // check the existence of the MMKV file
@@ -773,6 +774,7 @@ public:
 
     // remove the storage of the MMKV, including the data file & meta file (.crc)
     // Note: the existing instance (if any) will be closed & destroyed
+    // The caller must prevent concurrent use of that instance and any use afterward.
     bool removeStorage(const std::string &mmapID);
 
     // check the existence of the MMKV file
