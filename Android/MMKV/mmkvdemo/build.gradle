@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android'
 android {
     namespace "com.tencent.mmkvdemo"
     compileSdk rootProject.ext.compileSdk
+    ndkVersion rootProject.ext.ndkVersion
 
     signingConfigs {
         config {
@@ -36,7 +37,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.config
 //            debuggable true
 //            jniDebuggable true
@@ -73,6 +74,10 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     /*splits {
         // Configures multiple APKs based on ABI.
         abi {
@@ -107,11 +112,11 @@ dependencies {
 //    implementation "com.tencent:mmkv:$mmkvVersion"
 //    implementation "com.tencent:mmkv-static:$mmkvVersion" // this is identical to 'com.tencent:mmkv'
 //    implementation "com.tencent:mmkv-shared:$mmkvVersion" // with prefab functionality
-    implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.7.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'com.getkeepsafe.relinker:relinker:1.4.5'
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.constraintlayout
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.runner
+    androidTestImplementation libs.androidx.espresso.core
+    implementation libs.kotlin.stdlib
+    implementation libs.relinker
 }

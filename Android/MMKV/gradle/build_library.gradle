@@ -12,7 +12,6 @@ android {
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
     }
 
     signingConfigs {
@@ -40,8 +39,7 @@ android {
         release {
             signingConfig signingConfigs.configRelease
             minifyEnabled true
-            proguardFile getDefaultProguardFile('proguard-android.txt')
-            proguardFile project.file('proguard-rules-android-lib.pro') // NOTE: default rules for android library if this file exists
+            proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
         }
     }
 }

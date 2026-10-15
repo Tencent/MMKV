@@ -1,0 +1,24 @@
+[versions]
+annotation = "1.9.1"
+appcompat = "1.8.0"
+constraintlayout = "2.2.2"
+espressoCore = "3.7.0"
+gradle = "9.4.1"
+junit = "4.13.2"
+kotlin = "2.4.21"
+ndk = "30.0.16248370"
+relinker = "1.4.5"
+runner = "1.7.0"
+compileSdk = "37"
+
+[libraries]
+androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
+gradle = { group = "com.android.tools.build", name = "gradle", version.ref = "gradle" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
+relinker = { group = "com.getkeepsafe.relinker", name = "relinker", version.ref = "relinker" }
