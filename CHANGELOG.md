@@ -1,4 +1,34 @@
 # MMKV Change Log
+## v2.4.3 / 2026-10-16
+
+This is a bugfix release based on v2.4.2, focused on encryption, expiration, imports, and file recovery. It also adds Android KMP initialization without an explicit Context and non-expired-key enumeration on Apple platforms.
+
+### Changes for All Platforms
+* **Fix:** Prevented IV reuse when repeatedly updating an encrypted store containing a single key.
+* **Fix:** Loaded expiration state before the first read or write after reopening a store, and honored expiration in read-only reads, key lists, and counts.
+* **Fix:** Fixed lock-order deadlocks in `importFrom()` ([#1688](https://github.com/tencent/mmkv/issues/1688)) and `removeStorage()`. Callers must still prevent concurrent use of an instance being removed.
+* **Fix:** Preserved source values when importing into encrypted stores, rejected self-import, and counted only successful imports.
+* **Fix:** Corrected unsigned protobuf value-length decoding and hardened key/value length checks, payload growth, expiration migration, and encryption removal against oversized or unrepresentable data.
+* **Fix:** Corrected file-size validation, undersized-file handling, read-only recovery, and cached restore mapping checks; required complete whole-file reads and zero-fill writes.
+* **Fix:** Corrected small-buffer moves and resets to avoid truncation errors and unaligned access.
+
+### Kotlin Multiplatform
+* **Fix:** Restored Android string-write interoperability with the native Java API.
+* **Feature:** Added Android `MMKV.initialize()` without an explicit Context using AndroidX App Startup. Explicit Context initialization remains available.
+
+### iOS/macOS
+* **Fix:** Made `enumerateKeys:` safe when callbacks read expired values.
+* **Feature:** Added `enumerateNonExpiredKeys:` to filter expired keys at the start of enumeration.
+
+### HarmonyOS NEXT
+* **Fix:** Validated ArrayBuffer slice ranges, backing-buffer bounds, and typed-array alignment before accessing memory.
+
+### Flutter
+* **Fix:** Prevented an Android plugin detach crash when `libmmkv.so` is unavailable for the device ABI ([#1687](https://github.com/tencent/mmkv/pull/1687)).
+
+### POSIX/Linux
+* **Fix:** Completed short and interrupted file-copy operations, including Linux `sendfile()` transfers.
+
 ## v2.4.2 / 2026-08-21
 
 This is a hotfix release based on v2.4.1. It adds targeted encrypted-write and backup/restore checks, fixes Kotlin Multiplatform consistency issues, and repairs native package build/link regressions.

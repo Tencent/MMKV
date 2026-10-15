@@ -1,4 +1,7 @@
 # MMKV Platform iOS Change Log
+## v2.4.3 / 2026-10-16
+* Keep up with native lib v2.4.3 encryption, expiration, import, and file-recovery fixes.
+
 ## v2.4.2 / 2026-08-21
 * Keep up with native lib v2.4.2.
 * Fix Swift Package Manager linkage and Dart FFI symbol export ([#1676](https://github.com/tencent/mmkv/issues/1676)).

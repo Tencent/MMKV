@@ -1,4 +1,8 @@
 # MMKV for HarmonyOS NEXT Change Log
+## v2.4.3 / 2026-10-16
+* Keep up with MMKV Core v2.4.3 encryption, expiration, import, and file-recovery fixes.
+* Validate ArrayBuffer slice ranges, backing-buffer bounds, and typed-array alignment before accessing memory.
+
 ## v2.4.2 / 2026-08-21
 * Keep up with MMKV Core v2.4.2 hotfix and data-safety fixes.
 * **Fix:** Corrected the one-year expiration constant.

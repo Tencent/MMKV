@@ -1,4 +1,9 @@
 # MMKV for Flutter Change Log
+## v2.4.3 / 2026-10-16
+* Keep up with MMKV native libraries v2.4.3, including encryption, expiration, import, and file-recovery fixes.
+* Android: Prevent a plugin detach crash when the native library is unavailable for the device ABI ([#1687](https://github.com/tencent/mmkv/pull/1687)).
+* HarmonyOS NEXT: Validate ArrayBuffer slice bounds and typed-array alignment.
+
 ## v2.4.2 / 2026-08-21
 * Keep up with MMKV native libraries v2.4.2 and their hotfix/data-safety fixes.
 * **Fix:** Corrected the one-year expiration constant.

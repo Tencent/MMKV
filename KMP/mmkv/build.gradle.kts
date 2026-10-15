@@ -29,7 +29,7 @@ plugins {
     id("signing")
 }
 
-val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.2"
+val mmkvVersion = (findProperty("MMKV_VERSION") as? String) ?: "2.4.3"
 val publishVersion = (findProperty("VERSION_NAME") as? String) ?: mmkvVersion
 val baseArtifactId = (findProperty("POM_ARTIFACT_ID") as? String) ?: "mmkv-kmp"
 val publishedGroup = (findProperty("GROUP") as? String) ?: "com.tencent"
