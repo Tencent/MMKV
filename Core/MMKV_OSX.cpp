@@ -560,7 +560,7 @@ bool MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
     return ret;
 }
 
-void MMKV::enumerateKeys(EnumerateBlock block) {
+void MMKV::enumerateKeys(EnumerateBlock block, bool filterExpire) {
     if (block == nil) {
         return;
     }
@@ -568,7 +568,20 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     checkLoadData();
 
     MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-    if (m_crypter) {
+    if (m_enableKeyExpire) {
+        // A callback can remove expired entries just by reading them. Snapshot
+        // and retain the keys so both iteration and callback key lifetimes stay valid.
+        @autoreleasepool {
+            auto keys = allKeysObjC(filterExpire);
+            for (NSString *key in keys) {
+                BOOL stop = NO;
+                block(key, &stop);
+                if (stop) {
+                    break;
+                }
+            }
+        }
+    } else if (m_crypter) {
         for (const auto &pair : *m_dicCrypt) {
             BOOL stop = NO;
             block(pair.first, &stop);

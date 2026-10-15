@@ -577,7 +577,8 @@ public:
     bool removeValuesForKeys(NSArray *arrKeys);
 
     typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
-    void enumerateKeys(EnumerateBlock block);
+    // filterExpire: filter expired keys at the start, keep in mind it comes with additional cost.
+    void enumerateKeys(EnumerateBlock block, bool filterExpire = false);
 #endif // __OBJC__
     // filterExpire: return all non-expired keys, keep in mind it comes with cost
     std::vector<std::string> allKeys(bool filterExpire = false);
