@@ -26,6 +26,9 @@ dependencyResolutionManagement {
 }
 
 include(":mmkv")
-if (providers.gradleProperty("MMKV_INCLUDE_SAMPLE").orNull == "true") {
+// Xcode's generated CocoaPods script passes platform/arch/configuration, but
+// does not forward the MMKV_INCLUDE_SAMPLE flag used during pod installation.
+val isCocoaPodsBuild = providers.gradleProperty("kotlin.native.cocoapods.platform").isPresent
+if (providers.gradleProperty("MMKV_INCLUDE_SAMPLE").orNull == "true" || isCocoaPodsBuild) {
     include(":sample:composeApp")
 }

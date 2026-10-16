@@ -7,6 +7,10 @@ plugins {
 }
 
 val usePublishedMMKV = providers.gradleProperty("MMKV_USE_PUBLISHED").orNull == "true"
+// The MMKV wrapper currently has no JVM target. Keep the desktop scaffold
+// opt-in so normal imports and aggregate builds only use supported targets.
+val enableDesktop = !usePublishedMMKV &&
+    providers.gradleProperty("MMKV_ENABLE_DESKTOP").orNull == "true"
 val mmkvVersion = providers.gradleProperty("VERSION_NAME").getOrElse("2.4.3")
 
 kotlin {
@@ -16,8 +20,7 @@ kotlin {
         }
     }
 
-    if (!usePublishedMMKV) {
-        // Desktop is available only when the sample consumes the in-tree project.
+    if (enableDesktop) {
         jvm("desktop") {
             compilerOptions {
                 jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
@@ -61,7 +64,7 @@ kotlin {
                 implementation("androidx.activity:activity-compose:1.10.1")
             }
         }
-        if (!usePublishedMMKV) {
+        if (enableDesktop) {
             val desktopMain by getting {
                 dependencies {
                     implementation(compose.desktop.currentOs)
@@ -71,7 +74,7 @@ kotlin {
     }
 }
 
-if (!usePublishedMMKV) {
+if (enableDesktop) {
     compose.desktop {
         application {
             mainClass = "com.tencent.mmkv.sample.MainKt"

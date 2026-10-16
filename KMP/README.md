@@ -150,7 +150,30 @@ duplicate native symbols.
 ## Build from source
 
 Building the KMP project and its iOS targets requires macOS, Xcode command-line
-tools, CMake, and JDK 11 or newer:
+tools, CMake, and JDK 21. The checked-in Gradle daemon JVM criteria select JDK 21
+for both command-line builds and Android Studio imports; install it before syncing.
+
+If Android Studio cannot find `cmake` on its PATH, set `cmake.dir` to the CMake
+installation directory containing `bin/cmake` in the untracked
+`KMP/local.properties`. For example, with Homebrew on Apple Silicon:
+
+```properties
+cmake.dir=/opt/homebrew
+```
+
+Both native configure and build tasks use this path. When `cmake.dir` is unset,
+they use `cmake` from PATH.
+
+Open the `KMP` directory in Android Studio. The sample is enabled by
+`MMKV_INCLUDE_SAMPLE=true` in `gradle.properties`. After syncing, select the
+Android App run configuration for `:sample:composeApp` to run the Android sample.
+Use `-PMMKV_INCLUDE_SAMPLE=false` for a library-only build.
+
+The sample enables Android and iOS by default. Its desktop configuration is
+disabled because the MMKV wrapper does not yet provide a JVM target. The existing
+desktop scaffold is retained behind `-PMMKV_ENABLE_DESKTOP=true` for development;
+it still requires JVM support in the wrapper before it can build. Published-MMKV
+mode always disables desktop, even when this flag is set.
 
 ```bash
 cd KMP
@@ -160,5 +183,23 @@ cd KMP
 `MMKV_USE_MAVEN_LOCAL=true` is needed when the matching
 `com.tencent:mmkv:2.4.3` Android artifact has been published only to Maven
 Local.
+
+To prepare the iOS sample, install CocoaPods and run the following from `KMP`:
+
+```bash
+./gradlew :sample:composeApp:podInstall -PMMKV_INCLUDE_SAMPLE=true
+open sample/iosApp/iosApp.xcworkspace
+```
+
+This generates the Pods support files, including the `.xcconfig` files referenced
+by the Xcode project. Use the generated workspace for Xcode builds. The sample is
+included automatically when Xcode invokes Gradle through the CocoaPods build script.
+
+When running the iOS sample from Android Studio, its linked Xcode project must
+use `sample/iosApp/iosApp.xcworkspace` as well. If the IDE linked the `.xcodeproj`
+before `podInstall` created the workspace, invoke **Unlink Xcode project** via
+**Find Action**, then **Sync Project with Gradle Files** to detect the workspace.
+Building the standalone project omits the Pods target and can fail with
+`Framework 'Pods_iosApp' not found`.
 
 Release maintainers should also follow [PUBLISHING.md](./PUBLISHING.md).
