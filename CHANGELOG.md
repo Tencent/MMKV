@@ -3,6 +3,8 @@
 
 This is a bugfix release based on v2.4.2, focused on encryption, expiration, imports, and file recovery. It also adds Android KMP initialization without an explicit Context and non-expired-key enumeration on Apple platforms.
 
+**Upcoming compatibility change:** The release after v2.4.3 will raise the minimum supported versions from iOS 13.0 to **iOS 15.0** and from watchOS 6.0 to **watchOS 9.0**, to align with Xcode 27's supported deployment targets. The minimum deployment targets in v2.4.3 remain unchanged.
+
 ### Changes for All Platforms
 * **Fix:** Prevented IV reuse when repeatedly updating an encrypted store containing a single key.
 * **Fix:** Loaded expiration state before the first read or write after reopening a store, and honored expiration in read-only reads, key lists, and counts.

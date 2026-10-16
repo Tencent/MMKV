@@ -19,7 +19,9 @@
  */
 
 import abilityTest from './Ability.test';
+import arrayBufferBoundsTest from './ArrayBufferBounds.test';
 
 export default function testsuite() {
   abilityTest();
+  arrayBufferBoundsTest();
 }
