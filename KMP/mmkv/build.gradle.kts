@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 
+import java.util.Properties
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.bundling.Jar
@@ -71,6 +72,19 @@ version = publishVersion
 val nativeInteropDir = project.file("nativeInterop")
 val nativeBuildRoot = nativeInteropDir.resolve("build")
 
+// These custom Exec tasks do not use AGP's CMake discovery. Honor cmake.dir so
+// IDE imports do not depend on the GUI process inheriting the shell's PATH.
+val localProperties = Properties().apply {
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.isFile) {
+        propertiesFile.inputStream().use { load(it) }
+    }
+}
+val cmakeExecutable = localProperties.getProperty("cmake.dir")
+    ?.trim()?.takeIf { it.isNotEmpty() }
+    ?.let { rootProject.file(it).resolve("bin/cmake").absolutePath }
+    ?: "cmake"
+
 fun taskSuffix(label: String): String =
     label.split('-', '_')
         .filter { it.isNotBlank() }
@@ -90,6 +104,7 @@ fun registerCMakeBuildTask(
 
         inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
         inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
+        inputs.property("cmakeExecutable", cmakeExecutable)
         outputs.file(buildDir.resolve("CMakeCache.txt"))
         outputs.file(buildDir.resolve("include/MMKVBridge.h"))
 
@@ -98,7 +113,7 @@ fun registerCMakeBuildTask(
         workingDir = nativeInteropDir
         commandLine(
             buildList {
-                add("cmake")
+                add(cmakeExecutable)
                 add("-S")
                 add(".")
                 add("-B")
@@ -126,6 +141,7 @@ fun registerCMakeBuildTask(
 
         inputs.file(nativeInteropDir.resolve("CMakeLists.txt"))
         inputs.file(nativeInteropDir.resolve("cinterop/mmkv.def"))
+        inputs.property("cmakeExecutable", cmakeExecutable)
         outputs.file(buildDir.resolve("libmmkv-kmp.a"))
         // Let CMake perform its own incremental source check. Gradle cannot
         // reliably model FetchContent/local Core source inputs here.
@@ -134,7 +150,7 @@ fun registerCMakeBuildTask(
         workingDir = nativeInteropDir
         commandLine(
             buildList {
-                add("cmake")
+                add(cmakeExecutable)
                 add("--build")
                 add(buildDir.absolutePath)
                 add("--config")
