@@ -11,7 +11,7 @@ Add the MMKV KMP package to your shared module:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.tencent:mmkv-kmp:2.4.2")
+            implementation("com.tencent:mmkv-kmp:2.4.3")
         }
     }
 }
@@ -23,7 +23,7 @@ Android consumers should have AndroidX enabled in `gradle.properties`:
 android.useAndroidX=true
 ```
 
-Supported targets in v2.4.2:
+Supported targets in v2.4.3:
 
 * Android
 * `iosArm64`
@@ -38,16 +38,16 @@ iOS 14.
 For this experimental release, consumers should depend only on the root artifact:
 
 ```text
-com.tencent:mmkv-kmp:2.4.2
+com.tencent:mmkv-kmp:2.4.3
 ```
 
 Gradle uses Kotlin Multiplatform metadata to select the target artifact:
 
 ```text
-com.tencent:mmkv-kmp-android:2.4.2
-com.tencent:mmkv-kmp-iosarm64:2.4.2
-com.tencent:mmkv-kmp-iossimulatorarm64:2.4.2
-com.tencent:mmkv-kmp-iosx64:2.4.2
+com.tencent:mmkv-kmp-android:2.4.3
+com.tencent:mmkv-kmp-iosarm64:2.4.3
+com.tencent:mmkv-kmp-iossimulatorarm64:2.4.3
+com.tencent:mmkv-kmp-iosx64:2.4.3
 ```
 
 Do not add the target-specific artifacts directly.
@@ -67,6 +67,54 @@ class App : Application() {
         MMKV.initialize(this)
     }
 }
+```
+
+`mmkv-kmp` also bundles an AndroidX App Startup `Initializer` that captures the
+application `Context` automatically in the default process, with no manifest
+edits, code, or Gradle configuration beyond the dependency. This lets you call
+the Context-free overload instead:
+
+```kotlin
+import com.tencent.mmkv.kmp.MMKV
+import com.tencent.mmkv.kmp.initialize
+
+MMKV.initialize() // uses the automatically captured Context
+```
+
+If this overload is invoked before any `Context` was captured (for example, if
+the App Startup provider was disabled, or in a secondary process that never
+declared it), it throws `IllegalStateException` naming `initialize(context, ...)`
+as the fallback — it never throws `NullPointerException` and never silently
+proceeds with a null or default `Context`.
+
+For a secondary process, declare an extra `<provider>` entry with the same
+authority in your app's manifest so App Startup also runs there:
+
+```xml
+<provider
+    android:name="androidx.startup.InitializationProvider"
+    android:authorities="${applicationId}.androidx-startup"
+    android:exported="false"
+    android:process=":your_secondary_process"
+    tools:node="merge">
+    <meta-data
+        android:name="com.tencent.mmkv.kmp.MMKVContextInitializer"
+        android:value="androidx.startup" />
+</provider>
+```
+
+To opt out of automatic capture entirely and always call `MMKV.initialize(context, ...)`
+explicitly, remove the `<meta-data>` entry from your manifest:
+
+```xml
+<provider
+    android:name="androidx.startup.InitializationProvider"
+    android:authorities="${applicationId}.androidx-startup"
+    tools:node="merge">
+    <meta-data
+        android:name="com.tencent.mmkv.kmp.MMKVContextInitializer"
+        tools:node="remove" />
+</provider>
 ```
 
 iOS:
@@ -91,7 +139,7 @@ by the same native instance become invalid immediately. The caller must ensure
 that no operation is running and no reference is used afterward. Discard every
 reference before reopening the same ID.
 
-Android delegates to the native `com.tencent:mmkv:2.4.2` AAR. iOS embeds MMKV
+Android delegates to the native `com.tencent:mmkv:2.4.3` AAR. iOS embeds MMKV
 Core through the C bridge in the published native KLIBs, so consumers do not
 need CocoaPods, Swift Package Manager, or a source build.
 
@@ -110,7 +158,7 @@ cd KMP
 ```
 
 `MMKV_USE_MAVEN_LOCAL=true` is needed when the matching
-`com.tencent:mmkv:2.4.2` Android artifact has been published only to Maven
+`com.tencent:mmkv:2.4.3` Android artifact has been published only to Maven
 Local.
 
 Release maintainers should also follow [PUBLISHING.md](./PUBLISHING.md).

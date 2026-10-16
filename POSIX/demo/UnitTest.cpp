@@ -19,13 +19,19 @@
  */
 
 #include <MMKV/MMKV.h>
+#include "CodedInputData.h"
 #include "CodedOutputData.h"
+#include "KeyValueHolder.h"
+#include "PBUtility.h"
 #include "aes/AESCrypt.h"
 #include "crc32/Checksum.h"
 #include "MemoryFile.h"
+#include "MMKVMetaInfo.hpp"
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -37,7 +43,9 @@
 #include <numeric>
 #include <new>
 #include <sys/stat.h>
+#include <thread>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 using namespace std;
@@ -211,6 +219,46 @@ void testVector(MMKV *mmkv) {
     printf("test vector: passed\n");
 }
 
+namespace {
+// Test-only access to synthesize a large logical value without allocating it.
+MMKVMap *&expirationTestDictionary(MMKV &kv);
+template <MMKVMap *MMKV::*Member> struct ExpirationDictionaryAccess {
+    friend MMKVMap *&expirationTestDictionary(MMKV &kv) { return kv.*Member; }
+};
+template struct ExpirationDictionaryAccess<&MMKV::m_dic>;
+}
+
+void testExpirationMigrationAggregateLimit() {
+    const string id = "expiration_aggregate_limit_test";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->set("before", "k"));
+    assert(kv->enableCompareBeforeSet());
+
+    auto &holder = expirationTestDictionary(*kv)->at("k");
+    const auto originalSize = holder.valueSize;
+    // With a one-byte key, migration adds 11 bytes per entry and a four-byte
+    // map placeholder. UINT32_MAX total is one byte beyond the temporary
+    // protobuf buffer's limit; the next case also exceeds the file-size limit.
+    for (uint32_t extra = 0; extra <= 1; ++extra) {
+        holder.valueSize = numeric_limits<uint32_t>::max() - 15 + extra;
+        const auto enabled = kv->enableAutoKeyExpire(60);
+        holder.valueSize = originalSize;
+        assert(!enabled);
+        assert(!kv->isExpirationEnabled());
+        assert(kv->isCompareBeforeSetEnabled());
+        string value;
+        assert(kv->getString("k", value) && value == "before");
+    }
+    kv->close();
+    kv = MMKV::mmkvWithID(id);
+    string value;
+    assert(kv->getString("k", value) && value == "before");
+    assert(!kv->isExpirationEnabled());
+    kv->close();
+    printf("test expiration migration aggregate limit: passed\n");
+}
+
 void testOversizedKey(MMKV *mmkv) {
     // Keys at or below 65531 bytes should work normally
     {
@@ -220,7 +268,14 @@ void testOversizedKey(MMKV *mmkv) {
         string out;
         ret = mmkv->getString(key, out);
         assert(ret && out == "V");
+
+        // The key still fits, but a two-byte value-length prefix would overflow
+        // KeyValueHolder::computedKVSize. Reject the update before writing it.
+        assert(!mmkv->set(string(127, 'V'), key));
+        assert(mmkv->getString(key, out) && out == "V");
         mmkv->removeValueForKey(key);
+        assert(!mmkv->set(string(127, 'V'), key));
+        assert(!mmkv->containsKey(key));
     }
     // Keys at 65532 bytes and above must be rejected (would overflow uint16_t fields)
     {
@@ -235,6 +290,18 @@ void testOversizedKey(MMKV *mmkv) {
         string key(70000, 'C');
         auto ret = mmkv->set("V", key);
         assert(!ret);
+    }
+    {
+        auto expiring = MMKV::mmkvWithID("oversized_expiration_transition_test");
+        expiring->clearAll();
+        string key(65531, 'D');
+        string storedValue(124, 'V');
+        assert(expiring->set(storedValue, key));
+        assert(!expiring->enableAutoKeyExpire());
+        assert(!expiring->isExpirationEnabled());
+        string out;
+        assert(expiring->getString(key, out) && out == storedValue);
+        expiring->clearAll();
     }
 
     printf("test oversized key: passed\n");
@@ -268,17 +335,75 @@ void testOversizedValue(MMKV *mmkv) {
         assert(mmkv->getString("value", value) && value == "before");
         assert(mmkv->set("after", "value"));
         assert(mmkv->getString("value", value) && value == "after");
-
-        auto expiring = MMKV::mmkvWithID("oversized_expiring_value_test");
-        expiring->clearAll();
-        assert(expiring->enableAutoKeyExpire());
-        assert(!expiring->set(oversized, "value", 60));
-        assert(expiring->set("after", "value", 60));
-        assert(expiring->getString("value", value) && value == "after");
-        expiring->clearAll();
     }
 
+    auto expiring = MMKV::mmkvWithID("oversized_expiring_value_test");
+    expiring->clearAll();
+    assert(expiring->enableAutoKeyExpire());
+    if (numeric_limits<size_t>::max() > numeric_limits<uint32_t>::max()) {
+        MMBuffer oversized(&sentinel, static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1, MMBufferNoCopy);
+        assert(!expiring->set(oversized, "value", 60));
+    }
+    assert(expiring->set("after", "value", 60));
+    assert(expiring->getString("value", value) && value == "after");
+    expiring->clearAll();
+
     printf("test oversized value: passed\n");
+}
+
+void testFileValidation(const string &rootDir) {
+    const string validationID = "file_validation_test";
+    MMKV::removeStorage(validationID);
+    auto mmkv = MMKV::mmkvWithID(validationID);
+    mmkv->clearAll();
+    assert(mmkv->set("value", "key"));
+    mmkv->sync(MMKV_SYNC);
+    mmkv->close();
+
+    // Current-format files keep their actual size in metadata, not in the
+    // first four data bytes.
+    assert(MMKV::isFileValid(validationID));
+
+    auto crcPath = rootDir + "/" + validationID + ".crc";
+    assert(truncate(crcPath.c_str(), sizeof(uint32_t)) == 0);
+    assert(!MMKV::isFileValid(validationID));
+    assert(MMKV::removeStorage(validationID));
+
+    printf("test file validation: passed\n");
+}
+
+void testTinyFileRecovery(const string &rootDir) {
+    class RecoverHandler final : public MMKVHandler {
+    public:
+        size_t fileLengthErrorCount = 0;
+        MMKVRecoverStrategic onMMKVFileLengthError(const string &) override {
+            fileLengthErrorCount++;
+            return OnErrorRecover;
+        }
+    } handler;
+    MMKV::registerHandler(&handler);
+    for (size_t fileSize = 1; fileSize <= Fixed32Size; fileSize++) {
+        auto mmapID = "tiny_file_" + to_string(fileSize);
+        MMKV::removeStorage(mmapID);
+        auto mmkv = MMKV::mmkvWithID(mmapID);
+        mmkv->clearAll();
+        assert(mmkv->set("value", "key"));
+        mmkv->sync(MMKV_SYNC);
+        mmkv->close();
+
+        auto path = rootDir + "/" + mmapID;
+        assert(truncate(path.c_str(), static_cast<off_t>(fileSize)) == 0);
+        assert(!MMKV::isFileValid(mmapID));
+
+        auto readOnly = MMKV::mmkvWithID(mmapID, MMKV_SINGLE_PROCESS | MMKV_READ_ONLY);
+        assert(readOnly && readOnly->count() == 0);
+        assert(handler.fileLengthErrorCount == fileSize);
+        readOnly->close();
+        assert(MMKV::removeStorage(mmapID));
+    }
+    MMKV::unRegisterHandler();
+
+    printf("test tiny-file recovery: passed\n");
 }
 
 void testExpirationOverflow() {
@@ -343,6 +468,22 @@ void testCodedOutputBounds() {
         assert(output.getPosition() == expected32[index].size());
         assert(equal(expected32[index].begin(), expected32[index].end(), storage.begin()));
     }
+
+    constexpr array<uint8_t, 5> wideLength = {0x80, 0x80, 0x80, 0x80, 0x08};
+    CodedInputData wideInput(wideLength.data(), wideLength.size());
+    rejected = false;
+    try {
+        wideInput.readData(false);
+    } catch (const out_of_range &) {
+        rejected = true;
+    }
+    assert(rejected);
+
+    storage.fill(0);
+    CodedOutputData signedOutput(storage.data(), storage.size());
+    signedOutput.writeInt32(-1);
+    CodedInputData signedInput(storage.data(), signedOutput.getPosition());
+    assert(signedInput.readInt32() == -1);
 
     constexpr array<uint64_t, 6> values64 = {0, 127, 128, 16383, 16384, numeric_limits<uint64_t>::max()};
     const vector<vector<uint8_t>> expected64 = {
@@ -409,6 +550,18 @@ void testCodedOutputBounds() {
     }
     assert(rejected && positionOutput.getPosition() == 2);
 
+    if (numeric_limits<size_t>::max() > numeric_limits<int32_t>::max()) {
+        storage.fill(0xA5);
+        MMBuffer wideValue(storage.data(), static_cast<size_t>(numeric_limits<int32_t>::max()) + 1, MMBufferNoCopy);
+        CodedOutputData output(storage.data(), storage.size());
+        rejected = false;
+        try {
+            output.writeData(wideValue);
+        } catch (const out_of_range &) {
+            rejected = true;
+        }
+        assert(rejected && output.getPosition() == 0 && storage[0] == 0xA5);
+    }
     if (numeric_limits<size_t>::max() > numeric_limits<uint32_t>::max()) {
         storage.fill(0xA5);
         MMBuffer oversized(storage.data(), static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1,
@@ -422,6 +575,11 @@ void testCodedOutputBounds() {
         }
         assert(rejected && output.getPosition() == 0 && storage[0] == 0xA5);
     }
+
+    MMBuffer smallBuffer(16);
+    memset(smallBuffer.getPtr(), 0x5A, smallBuffer.length());
+    MMBuffer limitedBuffer(std::move(smallBuffer), 256);
+    assert(limitedBuffer.length() == 16);
 
     printf("test coded output bounds: passed\n");
 }
@@ -665,6 +823,435 @@ void testMinimalBackupRestore(const string &rootDir) {
     printf("test minimal backup and restore hardening: passed\n");
 }
 
+#ifndef MMKV_DISABLE_CRYPT
+void testDecryptToPlainKeyLimit() {
+    const string cryptKey = "plain-holder-test";
+    for (auto valueSize : {128, 300}) {
+        auto kv = MMKV::mmkvWithID("decrypt_plain_key_limit_" + to_string(valueSize), MMKV_SINGLE_PROCESS, &cryptKey);
+        kv->clearAll();
+        const string key(KeySizeLimit, 'k');
+        const string value(valueSize, 'v');
+        assert(kv->set(value, key));
+        assert(kv->set("intact", "ordinary"));
+        assert(!kv->reKey(""));
+        assert(kv->isEncryptionEnabled());
+        kv->clearMemoryCache();
+        string result;
+        assert(kv->getString(key, result) && result == value);
+        assert(kv->getString("ordinary", result) && result == "intact");
+        assert(kv->removeValueForKey(key));
+        assert(kv->set(value, key.substr(1)));
+        assert(kv->reKey(""));
+        assert(kv->getString(key.substr(1), result) && result == value);
+        assert(kv->getString("ordinary", result) && result == "intact");
+        kv->close();
+    }
+    printf("test decrypt to plain key limit: passed\n");
+}
+#endif
+
+void testCachedRestore(const string &rootDir) {
+    const string backupDir = rootDir + "/cached-restore-backup";
+    const string value(DEFAULT_MMAP_SIZE * 2, 'v');
+    auto backup = MMKV::nameSpace(backupDir).mmkvWithID("cached-restore");
+    assert(backup->set(value, "key"));
+    backup->sync(MMKV_SYNC);
+    auto backupSize = backup->totalSize();
+    backup->close();
+    for (auto capacity : {DEFAULT_MMAP_SIZE, backupSize * 2}) {
+        MMKVConfig config;
+        config.expectedCapacity = capacity;
+        auto kv = MMKV::mmkvWithID("cached-restore", config);
+        assert(MMKV::restoreOneFromDirectory("cached-restore", backupDir));
+        string result;
+        assert(kv->getString("key", result) && result == value);
+        assert(kv->set(value, "another"));
+        kv->close();
+        MMKV::removeStorage("cached-restore");
+    }
+
+    backup = MMKV::nameSpace(backupDir).mmkvWithID("invalid-restore-meta");
+    assert(backup->set(value, "key"));
+    backup->sync(MMKV_SYNC);
+    backup->close();
+    assert(mkPath(rootDir + "/invalid-restore-meta.crc"));
+    auto invalid = MMKV::mmkvWithID("invalid-restore-meta");
+    assert(invalid);
+    assert(!MMKV::restoreOneFromDirectory("invalid-restore-meta", backupDir));
+    invalid->close();
+    printf("test cached restore: passed\n");
+}
+
+void testReadOnlyRecovery(const string &rootDir) {
+    for (bool useLastConfirmed : {false, true}) {
+        const string id = useLastConfirmed ? "readonly-confirmed" : "readonly-header";
+        auto kv = MMKV::mmkvWithID(id);
+        assert(kv->set("intact", "key"));
+        auto goodSize = static_cast<uint32_t>(kv->actualSize());
+        auto badSize = static_cast<uint32_t>(kv->totalSize() + 4);
+        kv->sync(MMKV_SYNC);
+        kv->close();
+
+        auto fd = open((rootDir + "/" + id + ".crc").c_str(), O_RDWR);
+        assert(fd >= 0);
+        MMKVMetaInfo meta;
+        assert(pread(fd, &meta, sizeof(meta), 0) == sizeof(meta));
+        meta.m_lastConfirmedMetaInfo.lastActualSize = goodSize;
+        meta.m_lastConfirmedMetaInfo.lastCRCDigest = meta.m_crcDigest;
+        meta.m_actualSize = badSize;
+        assert(pwrite(fd, &meta, sizeof(meta), 0) == sizeof(meta));
+        close(fd);
+        fd = open((rootDir + "/" + id).c_str(), O_RDWR);
+        assert(fd >= 0);
+        auto headerSize = useLastConfirmed ? badSize : goodSize;
+        assert(pwrite(fd, &headerSize, sizeof(headerSize), 0) == sizeof(headerSize));
+        close(fd);
+
+        kv = MMKV::mmkvWithID(id, MMKV_SINGLE_PROCESS | MMKV_READ_ONLY);
+        string result;
+        assert(kv->getString("key", result) && result == "intact");
+        assert(kv->actualSize() == goodSize);
+        kv->close();
+        fd = open((rootDir + "/" + id + ".crc").c_str(), O_RDONLY);
+        assert(fd >= 0);
+        MMKVMetaInfo after;
+        assert(pread(fd, &after, sizeof(after), 0) == sizeof(after));
+        assert(memcmp(&meta, &after, sizeof(meta)) == 0);
+        close(fd);
+    }
+    printf("test readonly recovery: passed\n");
+}
+
+void testImportRejectedWrites() {
+    auto source = MMKV::mmkvWithID("import-count-source");
+    source->clearAll();
+    assert(source->set("kept", "small"));
+    assert(source->set(string(64, 'v'), "large"));
+    for (bool expire : {false, true}) {
+        MMKVConfig config;
+        config.itemSizeLimit = 32;
+        config.enableKeyExpire = expire;
+        auto dest = MMKV::mmkvWithID(expire ? "import-count-expiring" : "import-count-plain", config);
+        dest->clearAll();
+        assert(dest->importFrom(source) == 1);
+        assert(dest->count() == 1);
+        string value;
+        assert(dest->getString("small", value) && value == "kept");
+        assert(!dest->containsKey("large"));
+        dest->close();
+    }
+    source->close();
+    printf("test import rejected writes: passed\n");
+}
+
+void testImportRejectsSelf() {
+#ifndef MMKV_DISABLE_CRYPT
+    const string key128 = "self-import-key";
+    const string key256 = "0123456789abcdef0123456789abcdef";
+    constexpr int cipherModes = 3;
+#else
+    constexpr int cipherModes = 1;
+#endif
+    const string medium(100, 'm'), large(300, 'l');
+    for (int cipher = 0; cipher < cipherModes; cipher++) {
+        for (bool expire : {false, true}) {
+            MMKVConfig config;
+#ifndef MMKV_DISABLE_CRYPT
+            config.cryptKey = cipher == 0 ? nullptr : (cipher == 1 ? &key128 : &key256);
+            config.aes256 = cipher == 2;
+#endif
+            config.enableKeyExpire = expire;
+            config.expiredInSeconds = 3600;
+            auto kv = MMKV::mmkvWithID("import-self-" + to_string(cipher) + (expire ? "-expiring" : "-plain"), config);
+            kv->clearAll();
+            assert(kv->set("short", "s"));
+            assert(kv->set(medium, "m"));
+            assert(kv->set(large, "l"));
+            const auto sizeBefore = kv->actualSize();
+
+            for (bool reload : {false, true}) {
+                if (reload) {
+                    kv->clearMemoryCache();
+                }
+                assert(kv->importFrom(kv) == 0);
+                assert(kv->actualSize() == sizeBefore);
+                assert(kv->count() == 3);
+                string value;
+                assert(kv->getString("s", value) && value == "short");
+                assert(kv->getString("m", value) && value == medium);
+                assert(kv->getString("l", value) && value == large);
+            }
+            kv->close();
+        }
+    }
+    printf("test import rejects self: passed\n");
+}
+
+#ifndef MMKV_WIN32
+void testImportUsesStableLockOrder() {
+    auto first = MMKV::mmkvWithID("import-lock-order-a");
+    auto second = MMKV::mmkvWithID("import-lock-order-b");
+    first->clearAll();
+    second->clearAll();
+    assert(first->set("value", "key"));
+
+    // Hold the lexicographically later store. A reverse-direction import must
+    // lock the earlier store first, then wait for this lock.
+    second->lock_thread();
+    atomic<bool> started{false};
+    thread worker([&] {
+        started.store(true, memory_order_release);
+        assert(second->importFrom(first) == 1);
+    });
+    while (!started.load(memory_order_acquire)) {
+        this_thread::yield();
+    }
+
+    bool firstWasLocked = false;
+    for (size_t attempt = 0; attempt < 5000; attempt++) {
+        if (!first->try_lock_thread()) {
+            firstWasLocked = true;
+            break;
+        }
+        first->unlock_thread();
+        this_thread::sleep_for(chrono::milliseconds(1));
+    }
+
+    second->unlock_thread();
+    worker.join();
+    assert(firstWasLocked);
+
+    string value;
+    assert(second->getString("key", value) && value == "value");
+    first->close();
+    second->close();
+    printf("test import stable lock order: passed\n");
+}
+#endif
+
+#ifndef MMKV_DISABLE_CRYPT
+void testBorrowedValueStorage() {
+    const auto inlineSize = KeyValueHolderCrypt::SmallBufferSize();
+    for (size_t size : {size_t(1), inlineSize, inlineSize + 1}) {
+        vector<uint8_t> source(size, 0x5a);
+        MMBuffer borrowed(source.data(), source.size(), MMBufferNoCopy);
+        KeyValueHolderCrypt holder(std::move(borrowed));
+        // Borrowed values that fit must not need a heap allocation.
+        assert(holder.type == (size <= inlineSize ? KeyValueHolderType_Direct : KeyValueHolderType_Memory));
+        auto stored = holder.toMMBuffer(nullptr, nullptr);
+        assert(stored.length() == source.size());
+        assert(stored.getPtr() != source.data());
+        fill(source.begin(), source.end(), 0);
+        const auto bytes = static_cast<const uint8_t *>(stored.getPtr());
+        assert(all_of(bytes, bytes + stored.length(), [](uint8_t value) { return value == 0x5a; }));
+    }
+
+    // An owned heap buffer must still transfer its allocation without copying.
+    MMBuffer owned(inlineSize + 1);
+    const auto ptr = owned.getPtr();
+    KeyValueHolderCrypt holder(std::move(owned));
+    assert(holder.type == KeyValueHolderType_Memory);
+    assert(holder.memPtr == ptr);
+    assert(owned.length() == 0);
+    printf("test borrowed value storage: passed\n");
+}
+
+// importFrom() hands the destination no-copy views of the source's values;
+// an encrypted destination must copy them, not take ownership of them.
+void testImportIntoEncrypted() {
+    const string sourceKey = "import-source-key";
+    const string destKey = "import-dest-key";
+    const string destKey256 = "import-dest-key-32-bytes-long-ab";
+    const string medium(100, 'm'), large(300, 'l');
+    for (bool encryptedSource : {false, true}) {
+        for (bool aes256 : {false, true}) {
+            const string suffix = string(encryptedSource ? "-crypt" : "-plain") + (aes256 ? "-256" : "-128");
+            MMKVConfig sourceConfig;
+            sourceConfig.cryptKey = encryptedSource ? &sourceKey : nullptr;
+            auto source = MMKV::mmkvWithID("import-encrypted-source" + suffix, sourceConfig);
+            source->clearAll();
+            assert(source->set("short", "s"));
+            assert(source->set(medium, "m"));
+            assert(source->set(medium, "m-retained"));
+            assert(source->set(large, "l"));
+            assert(source->set(int32_t(-42), "i"));
+            assert(source->set(true, "b"));
+
+            MMKVConfig destConfig;
+            destConfig.cryptKey = aes256 ? &destKey256 : &destKey;
+            destConfig.aes256 = aes256;
+            auto dest = MMKV::mmkvWithID("import-encrypted-dest" + suffix, destConfig);
+            dest->clearAll();
+            assert(dest->importFrom(source) == 6);
+
+            // Import again over existing inline and heap-backed values.
+            assert(dest->set("outdated", "s"));
+            assert(dest->set(string(100, 'x'), "m-retained"));
+            assert(dest->importFrom(source) == 6);
+            string value;
+            assert(dest->getString("s", value) && value == "short");
+
+            // overwriting and removing release what the destination holds
+            assert(dest->set("changed", "s"));
+            assert(dest->removeValueForKey("m"));
+            // the source releases its own values
+            source->clearAll();
+            source->close();
+
+            assert(dest->getString("s", value) && value == "changed");
+            assert(!dest->containsKey("m"));
+            assert(dest->getString("m-retained", value) && value == medium);
+            assert(dest->getString("l", value) && value == large);
+            assert(dest->getInt32("i") == -42);
+            assert(dest->getBool("b"));
+            dest->trim();
+            dest->clearMemoryCache();
+            assert(dest->getString("m-retained", value) && value == medium);
+            assert(dest->getString("l", value) && value == large);
+            assert(dest->getInt32("i") == -42);
+            assert(dest->getBool("b"));
+            dest->close();
+        }
+    }
+    printf("test import into encrypted: passed\n");
+}
+#endif
+
+void testFirstReadAfterReopenRespectsExpiration() {
+    const string id = "first-read-expiration";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->enableAutoKeyExpire());
+    assert(kv->set(uint32_t(123), "expired", 1));
+    kv->sync(MMKV_SYNC);
+    kv->close();
+    sleep(2);
+
+    kv = MMKV::mmkvWithID(id);
+    // Do not warm the lazy instance with count(), containsKey(), etc.
+    // Before the fix, this FIRST getter returned 123; only the second getter missed.
+    bool found = true;
+    const auto value = kv->getUInt32("expired", 0, &found);
+    assert(value == 0 && !found);
+    kv->close();
+    printf("test first read after reopen respects expiration: passed\n");
+}
+
+void testReadOnlyExpiration() {
+    for (bool encrypted : {false, true}) {
+#ifdef MMKV_DISABLE_CRYPT
+        if (encrypted) {
+            continue;
+        }
+#endif
+        const string cryptKey = "expiration-key";
+        const string id = encrypted ? "readonly-expiration-crypt" : "readonly-expiration-plain";
+        auto kv = MMKV::mmkvWithID(id, MMKV_SINGLE_PROCESS, encrypted ? &cryptKey : nullptr);
+        kv->clearAll();
+        assert(kv->enableAutoKeyExpire());
+        assert(kv->set(uint32_t(123), "expired", 1));
+        assert(kv->set("live", "live"));
+        kv->sync(MMKV_SYNC);
+        kv->close();
+        sleep(2);
+
+        const auto mode = MMKV_SINGLE_PROCESS | MMKV_READ_ONLY;
+        // Each API is the FIRST operation on its own read-only instance.
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        bool found = true;
+        const auto value = kv->getUInt32("expired", 0, &found);
+        assert(value == 0 && !found); // Previously returned 123: the metadata flag was ignored.
+        kv->close();
+
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        const auto keys = kv->allKeys(true);
+        assert(keys == vector<string>{"live"}); // Filtering must not require a writeback.
+        kv->close();
+
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        const auto count = kv->count(true);
+        assert(count == 1);
+        kv->close();
+
+        kv = MMKV::mmkvWithID(id, mode, encrypted ? &cryptKey : nullptr);
+        assert(kv->count(false) == 2); // Read-only filtering must leave the stored entries intact.
+        string live;
+        assert(kv->getString("live", live) && live == "live");
+        kv->close();
+    }
+    printf("test read-only expiration: passed\n");
+}
+
+void testFirstWriteAfterReopenPreservesValue() {
+    const string id = "first-write-expiration";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->enableAutoKeyExpire());
+    assert(kv->set("persisted", "existing"));
+    kv->sync(MMKV_SYNC);
+    kv->close();
+
+    kv = MMKV::mmkvWithID(id);
+    // This set MUST be the first operation: metadata has not been lazily loaded yet.
+    // Even ExpireNever needs a four-byte suffix when the store has expiration enabled.
+    const auto written = kv->set("ABCD", "new");
+    assert(written); // Before the fix, set succeeded but omitted that suffix.
+    string value;
+    const auto found = kv->getString("new", value);
+    assert(found && value == "ABCD"); // The payload must not be mistaken for a timestamp.
+    kv->close();
+    printf("test first write after reopen preserves value: passed\n");
+}
+
+// Coverage for the separate scalar, buffer, and vector encoding paths.
+// The minimal reproducer above explains the failure; this sweep guards each overload.
+void testFirstWriteAfterReopenOverloads() {
+    const string id = "first-write-expiration-overloads";
+    auto kv = MMKV::mmkvWithID(id);
+    kv->clearAll();
+    assert(kv->enableAutoKeyExpire());
+    auto reopen = [&] {
+        kv->close();
+        kv = MMKV::mmkvWithID(id);
+    };
+    // No getter or other warm-up is allowed between reopen() and each set().
+    reopen();
+    assert(kv->set(true, "bool", 60) && kv->getBool("bool"));
+    reopen();
+    assert(kv->set(int32_t(-123), "i32", 60) && kv->getInt32("i32") == -123);
+    reopen();
+    assert(kv->set(uint32_t(123), "u32", 60) && kv->getUInt32("u32") == 123);
+    reopen();
+    assert(kv->set(int64_t(-123), "i64", 60) && kv->getInt64("i64") == -123);
+    reopen();
+    assert(kv->set(uint64_t(123), "u64", 60) && kv->getUInt64("u64") == 123);
+    reopen();
+    assert(kv->set(1.5f, "float", 60) && kv->getFloat("float") == 1.5f);
+    reopen();
+    assert(kv->set(1.5, "double", 60) && kv->getDouble("double") == 1.5);
+    string result;
+    reopen();
+    assert(kv->set(string("ABCD"), "string", 60) && kv->getString("string", result) && result == "ABCD");
+    reopen();
+    assert(kv->set(string_view("ABCD"), "view", 60) && kv->getString("view", result) && result == "ABCD");
+    reopen();
+    char byteValue[] = "ABCD";
+    MMBuffer bytes(byteValue, 4, MMBufferNoCopy);
+    assert(kv->set(bytes, "bytes", 60) && kv->getBytes("bytes") == bytes);
+    reopen();
+    const vector<string> strings = {"ABCD", "EFGH"};
+    vector<string> stringsResult;
+    assert(kv->set(strings, "strings", 60) && kv->getVector("strings", stringsResult) && stringsResult == strings);
+#ifdef MMKV_HAS_CPP20
+    reopen();
+    const vector<int32_t> ints = {1, 2, 3};
+    vector<int32_t> intsResult;
+    assert(kv->set(ints, "ints", 60) && kv->getVector("ints", intsResult) && intsResult == ints);
+#endif
+    kv->close();
+    printf("test first write after reopen overloads: passed\n");
+}
+
 void testRemove(MMKV *mmkv) {
     auto ret = mmkv->set(true, "bool_1");
     ret &= mmkv->set(numeric_limits<int32_t>::max(), "int_1");
@@ -736,15 +1323,34 @@ int main(int argc, char *argv[]) {
     testBytes(mmkv);
     testVector(mmkv);
     testRemove(mmkv);
+    testExpirationMigrationAggregateLimit();
     testOversizedKey(mmkv);
     testOversizedValue(mmkv);
+    testFileValidation(rootDir);
+    testTinyFileRecovery(rootDir);
     testCodedOutputBounds();
     testExpirationOverflow();
     testExpirationAlignment();
     testArmCRC32();
 #ifndef MMKV_DISABLE_CRYPT
     testCryptoRandomAndWipe();
+    testDecryptToPlainKeyLimit();
 #endif
     testLongDirectoryWalk(rootDir);
     testMinimalBackupRestore(rootDir);
+    testCachedRestore(rootDir);
+    testReadOnlyRecovery(rootDir);
+    testImportRejectedWrites();
+    testImportRejectsSelf();
+#ifndef MMKV_WIN32
+    testImportUsesStableLockOrder();
+#endif
+#ifndef MMKV_DISABLE_CRYPT
+    testBorrowedValueStorage();
+    testImportIntoEncrypted();
+#endif
+    testFirstReadAfterReopenRespectsExpiration();
+    testReadOnlyExpiration();
+    testFirstWriteAfterReopenPreservesValue();
+    testFirstWriteAfterReopenOverloads();
 }

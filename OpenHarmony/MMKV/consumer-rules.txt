@@ -68,5 +68,5 @@ recover
 itemSizeLimit
 
 -keep-dts
-/Users/lingol/Developer/mmkv/OpenHarmony/MMKV/src/main/cpp/types/libmmkv/
+/Users/guoling/Developer/mmkv/OpenHarmony/MMKV/src/main/cpp/types/libmmkv/
 

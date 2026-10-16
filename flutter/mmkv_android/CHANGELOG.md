@@ -1,4 +1,8 @@
 # MMKV Platform Android Change Log
+## v2.4.3 / 2026-10-16
+* Keep up with native lib v2.4.3.
+* Prevent a plugin detach crash when `libmmkv.so` is unavailable for the device ABI ([#1687](https://github.com/tencent/mmkv/pull/1687)).
+
 ## v2.4.2 / 2026-08-21
 Keep up with native lib v2.4.2.
 

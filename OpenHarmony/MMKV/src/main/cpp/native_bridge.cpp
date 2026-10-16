@@ -24,6 +24,7 @@
 #include <MMKV/MemoryFile.h>
 #include <MMKV/MiniPBCoder.h>
 #include "napi/native_api.h"
+#include "CheckedArrayBufferSlice.h"
 #include <cstdint>
 #include <string>
 
@@ -183,23 +184,10 @@ static void my_finalizer(napi_env env, void *finalize_data, void *finalize_hint)
     free(finalize_data);
 }
 
-static MMBuffer NValueToMMBuffer(napi_env env, napi_value value, bool maybeUndefined = false) {
-    if (maybeUndefined && IsNValueUndefined(env, value)) {
-        return MMBuffer();
-    }
-
-    void *data = nullptr;
-    size_t length = 0;
-    if (napi_get_arraybuffer_info(env, value, &data, &length) == napi_ok) {
-        return MMBuffer(data, length, mmkv::MMBufferNoCopy);
-    }
-    return MMBuffer();
-}
-
 static napi_value MMBufferToNValue(napi_env env, const MMBuffer &value) {
     napi_value result = nullptr;
     void *data = nullptr;
-    if (napi_create_arraybuffer(env, value.length(), &data, &result) == napi_ok) {
+    if (napi_create_arraybuffer(env, value.length(), &data, &result) == napi_ok && value.length() > 0) {
         memcpy(data, value.getPtr(), value.length());
     }
     return result;
@@ -1136,15 +1124,20 @@ static napi_value encodeBytes(napi_env env, napi_callback_info info) {
     napi_value args[6] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
+    if (argc < 5) {
+        return BoolToNValue(env, false);
+    }
+
     auto handle = NValueToUInt64(env, args[0]);
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        auto buffer = NValueToMMBuffer(env, args[2]);
-        auto offset = NValueToUInt32(env, args[3]);
-        auto length = NValueToUInt32(env, args[4]);
-        auto value = MMBuffer((uint8_t *)buffer.getPtr() + offset, length, mmkv::MMBufferNoCopy);
-        if (IsNValueUndefined(env, args[5])) {
+        mmkv::ohos::ArrayBufferSlice slice;
+        if (!mmkv::ohos::NValueToArrayBufferSlice(env, args[2], args[3], args[4], slice)) {
+            return BoolToNValue(env, false);
+        }
+        auto value = slice.length == 0 ? MMBuffer() : MMBuffer(slice.data, slice.length, mmkv::MMBufferNoCopy);
+        if (argc < 6 || IsNValueUndefined(env, args[5])) {
             auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
@@ -1178,16 +1171,24 @@ napi_value encodeArray(napi_env env, napi_callback_info info) {
     napi_value args[6] = {nullptr};
     NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
 
+    if (argc < 5) {
+        return BoolToNValue(env, false);
+    }
+
     auto handle = NValueToUInt64(env, args[0]);
     auto key = NValueToString(env, args[1]);
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv && key.length() > 0) {
-        auto buffer = NValueToMMBuffer(env, args[2]);
-        auto offset = NValueToUInt32(env, args[3]);
-        auto length = NValueToUInt32(env, args[4]);
-        auto ptr = (uint8_t *)buffer.getPtr() + offset;
-        std::span<T> value((T *)ptr, length / sizeof(T));
-        if (IsNValueUndefined(env, args[5])) {
+        mmkv::ohos::ArrayBufferSlice slice;
+        if (!mmkv::ohos::NValueToArrayBufferSlice(env, args[2], args[3], args[4], slice) ||
+            !mmkv::ohos::IsTypedArraySlice<T>(slice)) {
+            return BoolToNValue(env, false);
+        }
+        std::span<T> value;
+        if (slice.length > 0) {
+            value = std::span<T>(reinterpret_cast<T *>(slice.data), slice.length / sizeof(T));
+        }
+        if (argc < 6 || IsNValueUndefined(env, args[5])) {
             auto ret = kv->set(value, key);
             return BoolToNValue(env, ret);
         }
@@ -1210,7 +1211,7 @@ napi_value decodeArray(napi_env env, napi_callback_info info) {
     if (kv && key.length() > 0) {
         std::vector<T> vec;
         if (kv->getVector(key, vec)) {
-            MMBuffer result(vec.data(), vec.size() * sizeof(T));
+            MMBuffer result = vec.empty() ? MMBuffer() : MMBuffer(vec.data(), vec.size() * sizeof(T));
             return MMBufferToNValue(env, std::move(result));
         }
     }

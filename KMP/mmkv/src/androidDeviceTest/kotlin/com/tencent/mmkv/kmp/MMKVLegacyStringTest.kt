@@ -42,4 +42,24 @@ class MMKVLegacyStringTest {
             kmp.close()
         }
     }
+
+    @Test
+    fun modifiedUtf8ValuesFromKmpRemainReadableByAndroid() {
+        MMKVTestEnv.initialize()
+        val id = MMKVTestEnv.uniqueID("kmp-modified-utf8")
+        val kmp = MMKV.mmkvWithID(id)
+        val android = AndroidMMKV.mmkvWithID(id)
+        val value = "before\u0000\uD83D\uDE00after"
+        try {
+            assertTrue(kmp.encodeString("current", value))
+            assertEquals(value, android.decodeString("current"))
+
+            assertTrue(kmp.enableAutoKeyExpire())
+            assertTrue(kmp.encodeString("current-expiring", value, 60u))
+            assertEquals(value, android.decodeString("current-expiring"))
+        } finally {
+            kmp.clearAll()
+            kmp.close()
+        }
+    }
 }

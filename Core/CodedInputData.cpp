@@ -85,11 +85,7 @@ bool CodedInputData::readBool() {
 }
 
 string CodedInputData::readString() {
-    int32_t size = readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         string result((char *) (m_ptr + m_position), s_size);
@@ -101,11 +97,7 @@ string CodedInputData::readString() {
 }
 
 void CodedInputData::readString(string &s) {
-    int32_t size = readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         s.resize(s_size);
@@ -119,11 +111,7 @@ void CodedInputData::readString(string &s) {
 string CodedInputData::readString(KeyValueHolder &kvHolder) {
     kvHolder.offset = static_cast<uint32_t>(m_position);
 
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         if (s_size > mmkv::KeySizeLimit) {
@@ -146,11 +134,7 @@ MMBuffer CodedInputData::readRealData(mmkv::MMBuffer & data) {
 }
 
 MMBuffer CodedInputData::readData(bool copy, bool exactly) {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     bool isSizeValid = exactly ? (s_size == m_size - m_position) : (s_size <= m_size - m_position);
     if (isSizeValid) {
@@ -164,11 +148,7 @@ MMBuffer CodedInputData::readData(bool copy, bool exactly) {
 }
 
 void CodedInputData::readData(KeyValueHolder &kvHolder) {
-    int32_t size = this->readRawVarint32();
-    if (size < 0) {
-        throw length_error("InvalidProtocolBuffer negativeSize");
-    }
-
+    uint32_t size = readUInt32();
     auto s_size = static_cast<size_t>(size);
     if (s_size <= m_size - m_position) {
         auto kvSize = m_position - kvHolder.offset;
@@ -189,7 +169,7 @@ int32_t CodedInputData::readRawVarint32() {
     if (tmp >= 0) {
         return tmp;
     }
-    int32_t result = tmp & 0x7f;
+    uint32_t result = tmp & 0x7f;
     if ((tmp = this->readRawByte()) >= 0) {
         result |= tmp << 7;
     } else {
@@ -202,12 +182,13 @@ int32_t CodedInputData::readRawVarint32() {
                 result |= tmp << 21;
             } else {
                 result |= (tmp & 0x7f) << 21;
-                result |= (tmp = this->readRawByte()) << 28;
+                tmp = this->readRawByte();
+                result |= static_cast<uint32_t>(static_cast<uint8_t>(tmp)) << 28;
                 if (tmp < 0) {
                     // discard upper 32 bits
                     for (int i = 0; i < 5; i++) {
                         if (this->readRawByte() >= 0) {
-                            return result;
+                            return UInt32ToInt32(result);
                         }
                     }
                     throw invalid_argument("InvalidProtocolBuffer malformed varint32");
@@ -215,7 +196,7 @@ int32_t CodedInputData::readRawVarint32() {
             }
         }
     }
-    return result;
+    return UInt32ToInt32(result);
 }
 
 int32_t CodedInputData::readRawLittleEndian32() {

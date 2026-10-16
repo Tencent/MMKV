@@ -1,4 +1,8 @@
 # MMKV Platform OHOS Change Log
+## v2.4.3 / 2026-10-16
+* Keep up with native lib v2.4.3.
+* Validate ArrayBuffer slice bounds and typed-array alignment in the native library.
+
 ## v2.4.2 / 2026-08-21
 Keep up with native lib v2.4.2.
 

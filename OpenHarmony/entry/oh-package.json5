@@ -7,7 +7,10 @@
   "license": "BSD 3-Clause",
   "dependencies": {
     "@tencent/mmkv": "file:../MMKV",
-//  "@tencent/mmkv": "~2.4.2",
+//  "@tencent/mmkv": "~2.4.3",
     "libentry.so": "file:./src/main/cpp/types/libentry",
+  },
+  "devDependencies": {
+    "libmmkv.so": "file:../MMKV/src/main/cpp/types/libmmkv"
   }
 }

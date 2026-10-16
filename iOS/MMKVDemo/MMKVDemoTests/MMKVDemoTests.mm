@@ -427,6 +427,109 @@ using namespace std;
     XCTAssertEqualObjects(sValue, @"hello");
 }
 
+- (void)checkEnumerationWithCryptKey:(NSData *)cryptKey
+            expireDuringEnumeration:(BOOL)expireDuringEnumeration
+                     nonExpiredOnly:(BOOL)nonExpiredOnly {
+    NSString *mmapID = [@"enumeration_expiration_" stringByAppendingString:NSUUID.UUID.UUIDString];
+    MMKV *kv = [MMKV mmkvWithID:mmapID cryptKey:cryptKey];
+    XCTAssertNotNil(kv);
+    XCTAssertTrue([kv enableAutoKeyExpire:MMKVExpireNever]);
+
+    __block NSUInteger emptyCount = 0;
+    [kv enumerateNonExpiredKeys:^(NSString *key, BOOL *stop) {
+        ++emptyCount;
+    }];
+    XCTAssertEqual(emptyCount, (NSUInteger) 0);
+
+    // Leave the dictionary as the sole owner of these non-tagged NSStrings.
+    @autoreleasepool {
+        for (NSUInteger index = 0; index < 16; ++index) {
+            NSString *key = [NSString stringWithFormat:@"expired-dynamically-allocated-enumeration-key-%lu",
+                                                      (unsigned long) index];
+            XCTAssertTrue([kv setInt32:42 forKey:key expireDuration:expireDuringEnumeration ? 2 : 1]);
+        }
+    }
+    XCTAssertTrue([kv setInt32:7 forKey:@"live-key" expireDuration:MMKVExpireNever]);
+
+    if (!expireDuringEnumeration) {
+        [NSThread sleepForTimeInterval:1.1];
+    }
+    // enumerateKeys: includes expired entries without filtering.
+    XCTAssertEqual(kv.count, (size_t) 17);
+    __block NSUInteger unfilteredCount = 0;
+    [kv enumerateKeys:^(NSString *key, BOOL *stop) {
+        ++unfilteredCount;
+    }];
+    XCTAssertEqual(unfilteredCount, (NSUInteger) 17);
+    __block NSUInteger stoppedCount = 0;
+    [kv enumerateKeys:^(NSString *key, BOOL *stop) {
+        ++stoppedCount;
+        *stop = YES;
+    }];
+    XCTAssertEqual(stoppedCount, (NSUInteger) 1);
+
+    NSMutableSet<NSString *> *visited = [NSMutableSet set];
+    void (^readValue)(NSString *, BOOL *) = ^(NSString *key, BOOL *stop) {
+        if (expireDuringEnumeration && visited.count == 0) {
+            // Filtering once before iteration cannot protect against this case.
+            [NSThread sleepForTimeInterval:2.1];
+        }
+        BOOL expired = [key hasPrefix:@"expired-"];
+        if ([key hasSuffix:@"0"]) {
+            XCTAssertFalse([kv containsKey:key]);
+        } else {
+            BOOL hasValue = NO;
+            XCTAssertEqual([kv getInt32ForKey:key defaultValue:-1 hasValue:&hasValue], expired ? -1 : 7);
+            XCTAssertEqual(hasValue, !expired);
+        }
+        // The getter can erase the entry; the callback key must remain usable.
+        XCTAssertFalse([visited containsObject:key]);
+        [visited addObject:key];
+    };
+    if (nonExpiredOnly) {
+        [kv enumerateNonExpiredKeys:readValue];
+    } else {
+        [kv enumerateKeys:readValue];
+    }
+    XCTAssertEqual(visited.count, (NSUInteger) ((!nonExpiredOnly || expireDuringEnumeration) ? 17 : 1));
+    XCTAssertTrue([visited containsObject:@"live-key"]);
+    XCTAssertEqual(kv.count, (size_t) 1);
+    XCTAssertEqual([kv getInt32ForKey:@"live-key"], 7);
+
+    XCTAssertTrue([kv setInt32:8 forKey:@"another-live-key" expireDuration:MMKVExpireNever]);
+    stoppedCount = 0;
+    [kv enumerateNonExpiredKeys:^(NSString *key, BOOL *stop) {
+        ++stoppedCount;
+        *stop = YES;
+    }];
+    XCTAssertEqual(stoppedCount, (NSUInteger) 1);
+    [kv close];
+    XCTAssertTrue([MMKV removeStorage:mmapID rootPath:nil]);
+}
+
+- (void)checkEnumerationWithCryptKey:(NSData *)cryptKey expireDuringEnumeration:(BOOL)expireDuringEnumeration {
+    [self checkEnumerationWithCryptKey:cryptKey expireDuringEnumeration:expireDuringEnumeration nonExpiredOnly:NO];
+    [self checkEnumerationWithCryptKey:cryptKey expireDuringEnumeration:expireDuringEnumeration nonExpiredOnly:YES];
+}
+
+- (void)testEnumerateExpiredKeys {
+    [self checkEnumerationWithCryptKey:nil expireDuringEnumeration:NO];
+}
+
+- (void)testEnumerateExpiredKeysEncrypted {
+    [self checkEnumerationWithCryptKey:[@"enumerate-secret" dataUsingEncoding:NSUTF8StringEncoding]
+             expireDuringEnumeration:NO];
+}
+
+- (void)testKeysExpireDuringEnumeration {
+    [self checkEnumerationWithCryptKey:nil expireDuringEnumeration:YES];
+}
+
+- (void)testKeysExpireDuringEnumerationEncrypted {
+    [self checkEnumerationWithCryptKey:[@"enumerate-secret" dataUsingEncoding:NSUTF8StringEncoding]
+             expireDuringEnumeration:YES];
+}
+
 - (void)testExpirationOverflow {
     MMKV *kv = [MMKV mmkvWithID:@"expiration_overflow_test"];
     [kv clearAll];

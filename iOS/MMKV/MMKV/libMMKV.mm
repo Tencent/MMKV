@@ -796,6 +796,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     m_mmkv->enumerateKeys(block);
 }
 
+- (void)enumerateNonExpiredKeys:(void (^)(NSString *key, BOOL *stop))block {
+    m_mmkv->enumerateKeys(block, true);
+}
+
 - (NSArray *)allKeys {
     return m_mmkv->allKeysObjC();
 }

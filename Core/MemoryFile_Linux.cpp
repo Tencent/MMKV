@@ -97,28 +97,37 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
     }
     auto srcFileSize = srcFile.getActualFileSize();
 
-    lseek(dstFD, 0, SEEK_SET);
-    auto writtenSize = ::sendfile(dstFD, srcFile.getFd(), nullptr, srcFileSize);
-    auto ret = (writtenSize == srcFileSize);
-    if (!ret) {
-        if (writtenSize < 0) {
+    if (lseek(dstFD, 0, SEEK_SET) < 0) {
+        return false;
+    }
+    size_t writtenSize = 0;
+    while (writtenSize < srcFileSize) {
+        auto count = ::sendfile(dstFD, srcFile.getFd(), nullptr, srcFileSize - writtenSize);
+        if (count > 0) {
+            writtenSize += static_cast<size_t>(count);
+            continue;
+        }
+        if (count < 0 && errno == EINTR) {
+            continue;
+        }
+        if (count < 0) {
             MMKVError("fail to sendfile() %s to fd[%d], %d(%s)", srcPath.c_str(), dstFD, errno, strerror(errno));
         } else {
-            MMKVError("sendfile() %s to fd[%d], written %lld < %zu", srcPath.c_str(), dstFD, writtenSize, srcFileSize);
+            MMKVError("sendfile() %s to fd[%d], written %zu < %zu", srcPath.c_str(), dstFD, writtenSize, srcFileSize);
         }
-    } else if (needTruncate) {
+        return false;
+    }
+    if (needTruncate) {
         size_t dstFileSize = 0;
         getFileSize(dstFD, dstFileSize);
         if ((dstFileSize != srcFileSize) && (::ftruncate(dstFD, static_cast<off_t>(srcFileSize)) != 0)) {
             MMKVError("fail to truncate [%d] to size [%zu], %d(%s)", dstFD, srcFileSize, errno, strerror(errno));
-            ret = false;
+            return false;
         }
     }
 
-    if (ret) {
-        MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
-    }
-    return ret;
+    MMKVInfo("copy content from %s to fd[%d] finish", srcPath.c_str(), dstFD);
+    return true;
 }
 
 } // namespace mmkv

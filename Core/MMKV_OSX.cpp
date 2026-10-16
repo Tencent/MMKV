@@ -246,6 +246,11 @@ bool MMKV::setDataForKey(mmkv::MMBuffer &&data, std::string_view key, bool isDat
     return setDataForKey(std::move(data), hybridKey.str, isDataHolder);
 }
 
+bool MMKV::setDataForKey(mmkv::MMBuffer &&data, std::string_view key, uint32_t expireDuration, bool isDataHolder) {
+    HybridStringCP hybridKey = key;
+    return setDataForKey(std::move(data), hybridKey.str, expireDuration, isDataHolder);
+}
+
 bool MMKV::getVector(std::string_view key, std::vector<std::string> &result) {
     HybridString hybridKey = key;
     return getVector(hybridKey.str, result);
@@ -289,6 +294,9 @@ bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key, uint3
         return true;
     }
 
+    SCOPED_LOCK(m_lock);
+    SCOPED_LOCK(m_exclusiveProcessLock);
+    checkLoadData();
     NSData *tmpData = nil;
     if ([obj isKindOfClass:NSString.class]) {
         auto str = (NSString *) obj;
@@ -458,8 +466,12 @@ NSArray *MMKV::allKeysObjC(bool filterExpire) {
     checkLoadData();
 
     if (mmkv_unlikely(filterExpire && m_enableKeyExpire)) {
-        SCOPED_LOCK(m_exclusiveProcessLock);
-        fullWriteback(nullptr, true);
+        if (isReadOnly()) {
+            filterExpiredKeys();
+        } else {
+            SCOPED_LOCK(m_exclusiveProcessLock);
+            fullWriteback(nullptr, true);
+        }
     }
 
     NSMutableArray *keys = [NSMutableArray array];
@@ -548,7 +560,7 @@ bool MMKV::removeValuesForKeys(const std::vector<std::string> &arrKeys) {
     return ret;
 }
 
-void MMKV::enumerateKeys(EnumerateBlock block) {
+void MMKV::enumerateKeys(EnumerateBlock block, bool filterExpire) {
     if (block == nil) {
         return;
     }
@@ -556,7 +568,20 @@ void MMKV::enumerateKeys(EnumerateBlock block) {
     checkLoadData();
 
     MMKVInfo("enumerate [%s] begin", m_mmapID.c_str());
-    if (m_crypter) {
+    if (m_enableKeyExpire) {
+        // A callback can remove expired entries just by reading them. Snapshot
+        // and retain the keys so both iteration and callback key lifetimes stay valid.
+        @autoreleasepool {
+            auto keys = allKeysObjC(filterExpire);
+            for (NSString *key in keys) {
+                BOOL stop = NO;
+                block(key, &stop);
+                if (stop) {
+                    break;
+                }
+            }
+        }
+    } else if (m_crypter) {
         for (const auto &pair : *m_dicCrypt) {
             BOOL stop = NO;
             block(pair.first, &stop);

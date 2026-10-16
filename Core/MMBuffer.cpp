@@ -127,7 +127,7 @@ MMBuffer::MMBuffer(MMBuffer &&other, size_t length) noexcept : type(other.type) 
 #endif
         other.detach();
     } else {
-        paddedSize = std::min(other.paddedSize, static_cast<uint8_t>(length));
+        paddedSize = static_cast<uint8_t>(std::min<size_t>(other.paddedSize, length));
         memcpy(paddedBuffer, other.paddedBuffer, paddedSize);
     }
 }
@@ -198,10 +198,8 @@ MMBuffer::~MMBuffer() {
 }
 
 void MMBuffer::detach() {
-    // type = MMBufferType_Small;
-    // paddedSize = 0;
-    auto memsetPtr = (size_t *) &type;
-    *memsetPtr = 0;
+    type = MMBufferType_Small;
+    paddedSize = 0;
 }
 
 #ifdef MMKV_APPLE

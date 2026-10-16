@@ -10,8 +10,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Android-specific initialization (requires Context)
-        MMKV.initialize(this)
+        // App Startup already captured the Context; no Context needed here.
+        MMKV.initialize()
         verifyMMKVConsumer()
 
         setContent {

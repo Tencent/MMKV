@@ -26,6 +26,7 @@
 #    include "MMBuffer.h"
 #    include "MMKVLog.h"
 #    include "ScopedLock.hpp"
+#    include <algorithm>
 #    include <cerrno>
 #    include <utility>
 #    include <fcntl.h>
@@ -379,16 +380,23 @@ MMBuffer *readWholeFile(const MMKVPath_t &path) {
     if (fd >= 0) {
         auto fileLength = lseek(fd, 0, SEEK_END);
         if (fileLength > 0) {
-            buffer = new MMBuffer(static_cast<size_t>(fileLength));
+            auto expectedSize = static_cast<size_t>(fileLength);
+            buffer = new MMBuffer(expectedSize);
             lseek(fd, 0, SEEK_SET);
-            auto readSize = read(fd, buffer->getPtr(), static_cast<size_t>(fileLength));
-            if (readSize != -1) {
-                //fileSize = readSize;
-            } else {
-                MMKVWarning("fail to read %s: %s", path.c_str(), strerror(errno));
-
-                delete buffer;
-                buffer = nullptr;
+            auto ptr = static_cast<uint8_t *>(buffer->getPtr());
+            size_t offset = 0;
+            while (offset < expectedSize) {
+                auto readSize = read(fd, ptr + offset, expectedSize - offset);
+                if (readSize > 0) {
+                    offset += static_cast<size_t>(readSize);
+                } else if (readSize < 0 && errno == EINTR) {
+                    continue;
+                } else {
+                    MMKVWarning("fail to read all of %s, read %zu of %zu bytes", path.c_str(), offset, expectedSize);
+                    delete buffer;
+                    buffer = nullptr;
+                    break;
+                }
             }
         }
         close(fd);
@@ -409,18 +417,21 @@ bool zeroFillFile(int fd, size_t startPos, size_t size) {
     }
 
     static const char zeros[4096] = {};
-    while (size >= sizeof(zeros)) {
-        if (write(fd, zeros, sizeof(zeros)) < 0) {
+    while (size > 0) {
+        auto chunkSize = std::min(size, sizeof(zeros));
+        auto written = write(fd, zeros, chunkSize);
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written < 0) {
             MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
             return false;
         }
-        size -= sizeof(zeros);
-    }
-    if (size > 0) {
-        if (write(fd, zeros, size) < 0) {
-            MMKVError("fail to write fd[%d], error:%s", fd, strerror(errno));
+        if (written == 0) {
+            MMKVError("fail to write fd[%d]: no progress", fd);
             return false;
         }
+        size -= static_cast<size_t>(written);
     }
     return true;
 }
@@ -535,12 +546,20 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
         MMKVError("fail to malloc size %zu, %d(%s)", bufferSize, errno, strerror(errno));
         goto errorOut;
     }
-    lseek(dstFD, 0, SEEK_SET);
+    if (lseek(dstFD, 0, SEEK_SET) < 0) {
+        goto errorOut;
+    }
 
     // the POSIX standard don't have sendfile()/fcopyfile() equivalent, do it the hard way
     while (true) {
         auto sizeRead = read(srcFile.getFd(), buffer, bufferSize);
+        if (sizeRead == 0) {
+            break;
+        }
         if (sizeRead < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
             MMKVError("fail to read file [%s], %d(%s)", srcPath.c_str(), errno, strerror(errno));
             goto errorOut;
         }
@@ -548,16 +567,15 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
         size_t totalWrite = 0;
         do {
             auto sizeWrite = write(dstFD, buffer + totalWrite, sizeRead - totalWrite);
-            if (sizeWrite < 0) {
+            if (sizeWrite <= 0) {
+                if (sizeWrite < 0 && errno == EINTR) {
+                    continue;
+                }
                 MMKVError("fail to write fd [%d], %d(%s)", dstFD, errno, strerror(errno));
                 goto errorOut;
             }
             totalWrite += sizeWrite;
         } while (totalWrite < sizeRead);
-
-        if (sizeRead < bufferSize) {
-            break;
-        }
     }
     if (needTruncate) {
         size_t dstFileSize = 0;

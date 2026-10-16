@@ -9,6 +9,7 @@ apply from: rootProject.file('gradle/build_library.gradle')
 android {
     namespace "com.tencent.mmkv"
     compileSdk rootProject.ext.compileSdk
+    ndkVersion rootProject.ext.ndkVersion
     publishing {
         multipleVariants("DefaultCppRelease") {
             includeBuildTypeValues('release')
@@ -31,15 +32,17 @@ android {
     }
 
     defaultConfig {
+        // A newer build SDK must not force existing MMKV consumers to upgrade theirs.
+        aarMetadata {
+            minCompileSdk rootProject.ext.minSdkVersion
+        }
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
                 abiFilters 'arm64-v8a', 'x86_64'
             }
         }
-        ndkVersion "28.1.13356709"
         minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
     }
     buildTypes {
         release {
@@ -115,6 +118,12 @@ android {
         mmkv {
             headers "../../../Core/include"
         }
+    }
+    testOptions {
+        targetSdk rootProject.ext.targetSdkVersion
+    }
+    lint {
+        targetSdk rootProject.ext.targetSdkVersion
     }
 }
 
@@ -263,11 +272,11 @@ configurations {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.annotation:annotation:1.9.1'
-    javadocDeps 'androidx.annotation:annotation:1.9.1'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.7.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    implementation libs.androidx.annotation
+    javadocDeps libs.androidx.annotation
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.runner
+    androidTestImplementation libs.androidx.espresso.core
 
     compileOnly project(':mmkvannotation')
 }

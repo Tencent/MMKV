@@ -5,6 +5,12 @@ android {
 
     compileSdk rootProject.ext.compileSdk
 
+    // Keep the platform annotation stub outside Java's module package checks.
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -13,7 +19,6 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            consumerProguardFiles 'proguard-rules.pro'
         }
     }
 
@@ -26,9 +31,9 @@ configurations {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.annotation:annotation:1.9.1'
-    javadocDeps 'androidx.annotation:annotation:1.9.1'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.6.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    implementation libs.androidx.annotation
+    javadocDeps libs.androidx.annotation
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.runner
+    androidTestImplementation libs.androidx.espresso.core
 }

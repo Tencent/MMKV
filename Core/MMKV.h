@@ -238,10 +238,11 @@ class MMKV_EXPORT MMKV {
 
     mmkv::MMBuffer getDataForKey(MMKVKey_t key);
 
+    // Caller holds the thread/process locks and has loaded the data.
     // isDataHolder: avoid memory copying
     bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, bool isDataHolder = false);
 
-    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, uint32_t expireDuration);
+    bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, uint32_t expireDuration, bool isDataHolder = true);
 
     bool removeDataForKey(MMKVKey_t key);
 
@@ -259,6 +260,7 @@ class MMKV_EXPORT MMKV {
 #ifdef __OBJC__
     mmkv::MMBuffer getDataForKey(std::string_view key);
     bool setDataForKey(mmkv::MMBuffer &&data, std::string_view key, bool isDataHolder = false);
+    bool setDataForKey(mmkv::MMBuffer &&data, std::string_view key, uint32_t expireDuration, bool isDataHolder);
 #endif
     KVHolderRet_t appendDataWithKey(const mmkv::MMBuffer &data,
                                     MMKVKey_t key,
@@ -287,7 +289,6 @@ class MMKV_EXPORT MMKV {
     mmkv::MMBuffer getDataWithoutMTimeForKey(MMKVKey_t key);
     size_t filterExpiredKeys();
 
-    static constexpr uint32_t ConstFixed32Size = 4;
     void shared_lock();
     void shared_unlock();
 
@@ -576,7 +577,8 @@ public:
     bool removeValuesForKeys(NSArray *arrKeys);
 
     typedef void (^EnumerateBlock)(NSString *key, BOOL *stop);
-    void enumerateKeys(EnumerateBlock block);
+    // filterExpire: filter expired keys at the start, keep in mind it comes with additional cost.
+    void enumerateKeys(EnumerateBlock block, bool filterExpire = false);
 #endif // __OBJC__
     // filterExpire: return all non-expired keys, keep in mind it comes with cost
     std::vector<std::string> allKeys(bool filterExpire = false);
@@ -605,6 +607,7 @@ public:
     void trim();
 
     // import all key-value items from source
+    // null source and self-import are rejected without changes and return 0
     // return count of items imported
     size_t importFrom(MMKV *src);
 
@@ -672,6 +675,7 @@ public:
 
     // remove the storage of the MMKV, including the data file & meta file (.crc)
     // Note: the existing instance (if any) will be closed & destroyed
+    // The caller must prevent concurrent use of that instance and any use afterward.
     static bool removeStorage(const std::string &mmapID, const MMKVPath_t *relatePath = nullptr);
 
     // check the existence of the MMKV file
@@ -696,15 +700,7 @@ bool MMKV::set(const T& value, MMKVKey_t key, uint32_t expireDuration) {
     } else {
         data = mmkv::MiniPBCoder::encodeDataWithObject(std::span(value));
     }
-    if (mmkv_unlikely(m_enableKeyExpire) && data.length() > 0) {
-        auto tmp = mmkv::MMBuffer(data.length() + ConstFixed32Size);
-        auto ptr = (uint8_t *) tmp.getPtr();
-        memcpy(ptr, data.getPtr(), data.length());
-        auto time = (expireDuration != ExpireNever) ? safeExpirationPlusCurrentTime(expireDuration) : ExpireNever;
-        memcpy(ptr + data.length(), &time, ConstFixed32Size);
-        data = std::move(tmp);
-    }
-    return setDataForKey(std::move(data), key);
+    return setDataForKey(std::move(data), key, expireDuration, false);
 }
 
 template<MMKV_SUPPORTED_VECTOR_VALUE_TYPE T>
@@ -779,6 +775,7 @@ public:
 
     // remove the storage of the MMKV, including the data file & meta file (.crc)
     // Note: the existing instance (if any) will be closed & destroyed
+    // The caller must prevent concurrent use of that instance and any use afterward.
     bool removeStorage(const std::string &mmapID);
 
     // check the existence of the MMKV file

@@ -105,8 +105,8 @@ AESCrypt::~AESCrypt() {
             secureWipe(m_aesRollbackKey, sizeof(AES_KEY));
             delete m_aesRollbackKey;
         }
+        secureWipe(m_key, sizeof(m_key));
     }
-    secureWipe(m_key, sizeof(m_key));
     secureWipe(m_vector, sizeof(m_vector));
 }
 

@@ -39,7 +39,7 @@ feature/bugfix PR
 ```  
 
 ### Make Pull Requests
-The code team will monitor all pull request, we run some code check and test on it. After all tests passed, we will accecpt this PR. But it won't merge to `master` branch at once, which have some delay.
+The code team will monitor all pull request, we run some code check and test on it. After all tests passed, we will accept this PR. But it won't merge to `master` branch at once, which have some delay.
 
 Before submitting a pull request, please make sure the followings are done:
 
@@ -54,7 +54,7 @@ Before submitting a pull request, please make sure the followings are done:
 We choose the `LLVM code style` for MMKV project, with the specialization that using 4 space width for indent, and using tab for ObjC indentation. To make things simple, we have already defined our code style inside [clang-format](./.clang-format).  
 You can just run `make format_code` on top directory to format all your changes before committing them.  
 
-Additionly, check out [Code Style](./Android/MMKV/checkstyle.xml) for Java and Android.
+Additionally, check out [Code Style](./Android/MMKV/checkstyle.xml) for Java and Android.
 
 ## License
 By contributing to MMKV, you agree that your contributions will be licensed

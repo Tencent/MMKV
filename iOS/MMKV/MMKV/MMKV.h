@@ -359,7 +359,10 @@ class MMKV;
 
 + (NSString *)version;
 
+/// Includes stored expired keys; callbacks can safely read their values.
 - (void)enumerateKeys:(void (^)(NSString *key, BOOL *stop))block;
+/// Enumerates non-expired keys at the start, with additional cost.
+- (void)enumerateNonExpiredKeys:(void (^)(NSString *key, BOOL *stop))block;
 - (NSArray *)allKeys;
 
 /// return count of non-expired keys, keep in mind that it comes with cost

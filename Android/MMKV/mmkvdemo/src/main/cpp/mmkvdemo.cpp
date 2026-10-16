@@ -21,6 +21,7 @@
 // A demo for using MMKV C++ interface in native code
 
 #include <string>
+#include <vector>
 #include <jni.h>
 #include <android/log.h>
 #ifdef ENABLE_MMKV_NATIVE

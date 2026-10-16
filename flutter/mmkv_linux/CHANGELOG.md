@@ -1,4 +1,8 @@
 # MMKV Platform Linux Change Log
+## v2.4.3 / 2026-10-16
+* Keep up with native lib v2.4.3.
+* Complete short and interrupted file copies, including Linux `sendfile()` transfers.
+
 ## v2.4.2 / 2026-08-21
 Keep up with native lib v2.4.2.
 
