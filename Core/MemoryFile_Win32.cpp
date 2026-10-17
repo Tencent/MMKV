@@ -58,10 +58,10 @@ static pair<int, int> OpenFlag2NativeFlag(OpenFlag flag) {
         create = OPEN_ALWAYS;
     }
     if (flag & OpenFlag::Excel) {
-        access = CREATE_NEW;
+        create = CREATE_NEW;
     }
     if (flag & OpenFlag::Truncate) {
-        access = CREATE_ALWAYS;
+        create = CREATE_ALWAYS;
     }
     return {access, create};
 }
