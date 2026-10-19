@@ -58,10 +58,10 @@ static pair<int, int> OpenFlag2NativeFlag(OpenFlag flag) {
         create = OPEN_ALWAYS;
     }
     if (flag & OpenFlag::Excel) {
-        access = CREATE_NEW;
+        create = CREATE_NEW;
     }
     if (flag & OpenFlag::Truncate) {
-        access = CREATE_ALWAYS;
+        create = CREATE_ALWAYS;
     }
     return {access, create};
 }
@@ -150,7 +150,8 @@ bool MemoryFile::truncate(size_t size, FileLock *fileLock) {
     }
 
     if (!ftruncate(m_diskFile.getFd(), m_size)) {
-        MMKVError("fail to truncate [%s] to size %zu", m_diskFile.getUTF8Path().c_str(), m_size);
+        MMKVError("fail to truncate [%s] to size %zu, error %d", m_diskFile.getUTF8Path().c_str(), m_size,
+                  GetLastError());
         m_size = oldSize;
         if (needMMapOnFailure) {
             mmapOrCleanup(fileLock);
@@ -438,12 +439,10 @@ static bool ftruncate(MMKVFileHandle_t file, size_t size) {
         if (SetEndOfFile(file)) {
             return true;
         }
-        MMKVError("fail to SetEndOfFile:%d", GetLastError());
-        return false;
-    } else {
-        MMKVError("fail to SetFilePointer:%d", GetLastError());
-        return false;
     }
+    // no logging here: the callers decide whether the failure is expected (a mapped file) and
+    // GetLastError() would be overwritten by the log handler before they can look at it
+    return false;
 }
 
 static bool getFileSize(MMKVFileHandle_t fd, size_t &size) {
@@ -539,8 +538,18 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
         getFileSize(dstFD, dstFileSize);
         auto srcFileSize = srcFile.getActualFileSize();
         if ((dstFileSize != srcFileSize) && !ftruncate(dstFD, srcFileSize)) {
-            MMKVError("fail to truncate [%d] to size [%zu]", dstFD, srcFileSize);
-            goto errorOut;
+            auto error = GetLastError();
+            if (error == ERROR_USER_MAPPED_FILE) {
+                // The destination is mapped, so Windows refuses to change its size. The payload
+                // has been copied already and the caller copies the CRC meta afterwards; failing
+                // here would leave the data and the CRC inconsistent. Keep the old size: the tail
+                // beyond srcFileSize is unreachable through the new meta info.
+                MMKVWarning("destination [%d] is mapped, keep file size [%zu] instead of [%zu]", dstFD,
+                            dstFileSize, srcFileSize);
+            } else {
+                MMKVError("fail to truncate [%d] to size [%zu], error %d", dstFD, srcFileSize, error);
+                goto errorOut;
+            }
         }
     }
 
@@ -584,11 +593,14 @@ bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
 }
 
 bool copyFileContent(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    File dstFile(dstPath, OpenFlag::WriteOnly | OpenFlag::Create | OpenFlag::Truncate);
+    // Don't truncate on open: CREATE_ALWAYS fails with ERROR_USER_MAPPED_FILE (1224) while
+    // another process keeps the destination mapped, even when the sizes are equal.
+    // copyFileContent() below only truncates when the source is shorter than the destination.
+    File dstFile(dstPath, OpenFlag::WriteOnly | OpenFlag::Create);
     if (!dstFile.isFileValid()) {
         return false;
     }
-    auto ret = copyFileContent(srcPath, dstFile.getFd(), false);
+    auto ret = copyFileContent(srcPath, dstFile.getFd(), true);
     if (!ret) {
         MMKVError("fail to copyfile(): target file %s", dstFile.getUTF8Path().c_str());
     } else {
