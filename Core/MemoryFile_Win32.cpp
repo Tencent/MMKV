@@ -538,7 +538,7 @@ bool copyFileContent(const MMKVPath_t &srcPath, MMKVFileHandle_t dstFD, bool nee
         size_t dstFileSize = 0;
         getFileSize(dstFD, dstFileSize);
         auto srcFileSize = srcFile.getActualFileSize();
-        if ((dstFileSize != srcFileSize) && !ftruncate(dstFD, static_cast<off_t>(srcFileSize))) {
+        if ((dstFileSize != srcFileSize) && !ftruncate(dstFD, srcFileSize)) {
             MMKVError("fail to truncate [%d] to size [%zu]", dstFD, srcFileSize);
             goto errorOut;
         }
