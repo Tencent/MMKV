@@ -88,10 +88,10 @@ bool tryAtomicRename(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
 }
 
 bool copyFile(const MMKVPath_t &srcPath, const MMKVPath_t &dstPath) {
-    // prepare a temp file for atomic rename, avoid data corruption of sudden crash
-    NSString *uniqueFileName = [NSString stringWithFormat:@"mmkv_%zu", (size_t) NSDate.timeIntervalSinceReferenceDate];
+    // COPYFILE_CLONE implies exclusive creation; never unlink another operation's temporary file.
+    NSString *uniqueFileName = [NSString stringWithFormat:@"mmkv_%@", NSUUID.UUID.UUIDString];
     NSString *tmpFile = [NSTemporaryDirectory() stringByAppendingPathComponent:uniqueFileName];
-    if (copyfile(srcPath.c_str(), tmpFile.UTF8String, nullptr, COPYFILE_UNLINK | COPYFILE_CLONE) != 0) {
+    if (copyfile(srcPath.c_str(), tmpFile.UTF8String, nullptr, COPYFILE_CLONE) != 0) {
         MMKVError("fail to copyfile [%s] to [%s], %s", srcPath.c_str(), tmpFile.UTF8String, strerror(errno));
         return false;
     }
