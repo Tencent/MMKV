@@ -758,7 +758,7 @@ mmkv::MMBuffer MMKV::getDataForKey(MMKVKey_t key) {
 
 #ifndef MMKV_DISABLE_CRYPT
 // for Apple watch simulator
-#    if defined(TARGET_OS_SIMULATOR) && defined(TARGET_CPU_X86)
+#    if TARGET_OS_SIMULATOR && TARGET_CPU_X86
 static AESCryptStatus t_status;
 #    else
 thread_local AESCryptStatus t_status;
