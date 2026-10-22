@@ -179,7 +179,6 @@ static void initialize() {
     g_instanceLock->initialize();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
-    MMKVInfo("version %s, page size %d, arch %s", MMKV_VERSION, DEFAULT_MMAP_SIZE, MMKV_ABI);
 
     // get CPU status of ARMv8 extensions (CRC32, AES)
 #if defined(__aarch64__) && defined(__linux__) && !defined (MMKV_OHOS)
@@ -190,17 +189,11 @@ static void initialize() {
         openssl::AES_set_decrypt_key = openssl_aes_arm_set_decrypt_key;
         openssl::AES_encrypt = openssl_aes_arm_encrypt;
         openssl::AES_decrypt = openssl_aes_arm_decrypt;
-        MMKVInfo("armv8 AES instructions is supported");
-    } else {
-        MMKVInfo("armv8 AES instructions is not supported");
     }
 #    endif // MMKV_DISABLE_CRYPT
 #    ifdef MMKV_USE_ARMV8_CRC32
     if (hwcaps & HWCAP_CRC32) {
         CRC32 = mmkv::armv8_crc32;
-        MMKVInfo("armv8 CRC32 instructions is supported");
-    } else {
-        MMKVInfo("armv8 CRC32 instructions is not supported");
     }
 #    endif // MMKV_USE_ARMV8_CRC32
 #endif     // __aarch64__ && defined(__linux__) && !defined (MMKV_OHOS)
@@ -221,6 +214,18 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
     g_handler = handler;
 
     ensureMinimalInitialize();
+
+    // User log handlers may request a namespace, so log only after initialization completes.
+    MMKVInfo("version %s, page size %d, arch %s", MMKV_VERSION, DEFAULT_MMAP_SIZE, MMKV_ABI);
+#if defined(__aarch64__) && defined(__linux__) && !defined(MMKV_OHOS)
+    auto hwcaps = getauxval(AT_HWCAP);
+#    ifndef MMKV_DISABLE_CRYPT
+    MMKVInfo("armv8 AES instructions is %ssupported", (hwcaps & HWCAP_AES) ? "" : "not ");
+#    endif
+#    ifdef MMKV_USE_ARMV8_CRC32
+    MMKVInfo("armv8 CRC32 instructions is %ssupported", (hwcaps & HWCAP_CRC32) ? "" : "not ");
+#    endif
+#endif
 
 #ifdef MMKV_APPLE
     // crc32 instruction requires A10 chip, aka iPhone 7 or iPad 6th generation
@@ -1786,9 +1791,7 @@ MMKVRecoverStrategic onMMKVFileLengthError(const string &mmapID) {
 // NameSpace
 
 NameSpace MMKV::nameSpace(const MMKVPath_t &rootDir) {
-    if (!g_instanceLock) {
-        ensureMinimalInitialize();
-    }
+    ensureMinimalInitialize();
 
     static ThreadOnceToken_t once = ThreadOnceUninitialized;
     ThreadLock::ThreadOnce(&once, []{
