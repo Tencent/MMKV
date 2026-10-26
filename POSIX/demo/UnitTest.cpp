@@ -1182,6 +1182,20 @@ void testReadOnlyExpiration() {
     printf("test read-only expiration: passed\n");
 }
 
+void testReadOnlyRejectsSet() {
+    auto kv = MMKV::mmkvWithID("read_only_set");
+    kv->clearAll();
+    assert(kv->set("value1", "key"));
+    kv->close();
+
+    kv = MMKV::mmkvWithID("read_only_set", MMKV_SINGLE_PROCESS | MMKV_READ_ONLY);
+    assert(!kv->set("value2", "key"));
+    string value;
+    assert(kv->getString("key", value) && value == "value1");
+    kv->close();
+    printf("test read-only set: passed\n");
+}
+
 void testFirstWriteAfterReopenPreservesValue() {
     const string id = "first-write-expiration";
     auto kv = MMKV::mmkvWithID(id);
@@ -1351,6 +1365,7 @@ int main(int argc, char *argv[]) {
 #endif
     testFirstReadAfterReopenRespectsExpiration();
     testReadOnlyExpiration();
+    testReadOnlyRejectsSet();
     testFirstWriteAfterReopenPreservesValue();
     testFirstWriteAfterReopenOverloads();
 }

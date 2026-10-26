@@ -769,6 +769,10 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
     if ((!isDataHolder && data.length() == 0) || isKeyEmpty(key)) {
         return false;
     }
+    if (isReadOnly()) {
+        MMKVWarning("[%s] file readonly", m_mmapID.c_str());
+        return false;
+    }
     uint32_t ignoredValueLength = 0;
     if (!encodedValueLength(data.length(), isDataHolder, ignoredValueLength)) {
         MMKVError("[%s] reject value too large to encode: %zu", m_mmapID.c_str(), data.length());
