@@ -76,9 +76,7 @@ public final class ParcelableMMKV implements Parcelable {
             flags = flags | Parcelable.PARCELABLE_WRITE_RETURN_VALUE;
             fd.writeToParcel(dest, flags);
             metaFD.writeToParcel(dest, flags);
-            if (cryptKey != null) {
-                dest.writeString(cryptKey);
-            }
+            dest.writeString(cryptKey);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -24,6 +24,7 @@ import static org.junit.Assert.*;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Parcel;
 import android.os.SystemClock;
 import androidx.test.InstrumentationRegistry;
 import java.util.HashSet;
@@ -378,5 +379,62 @@ public class MMKVTest {
         SystemClock.sleep(1000 * 3);
         ret = mmkv.tryLock();
         assertEquals(ret, true);
+    }
+
+    @Test
+    public void testParcelableMMKVUnencrypted() {
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        MMKV ashmemMMKV = MMKV.mmkvWithAshmemID(appContext, "testAshmemUnencrypted", 4096, MMKV.MULTI_PROCESS_MODE, null);
+        assertNotNull(ashmemMMKV);
+        ashmemMMKV.encode("test_key_unencrypted", 98765);
+
+        ParcelableMMKV original = new ParcelableMMKV(ashmemMMKV);
+        Parcel parcel = Parcel.obtain();
+        try {
+            original.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+
+            ParcelableMMKV unmarshaled = ParcelableMMKV.CREATOR.createFromParcel(parcel);
+            assertNotNull("Unmarshaled ParcelableMMKV should not be null", unmarshaled);
+
+            MMKV recovered = unmarshaled.toMMKV();
+            assertNotNull("Recovered MMKV should not be null", recovered);
+            assertEquals(ashmemMMKV.mmapID(), recovered.mmapID());
+
+            // Ensure the sender's Ashmem MMKV instance remains operational and its FDs are intact
+            assertEquals(98765, ashmemMMKV.decodeInt("test_key_unencrypted"));
+            assertTrue(ashmemMMKV.encode("sender_alive_check", true));
+            assertTrue(ashmemMMKV.decodeBool("sender_alive_check"));
+        } finally {
+            ashmemMMKV.clearAll();
+            parcel.recycle();
+        }
+    }
+
+    @Test
+    public void testParcelableMMKVEncrypted() {
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        MMKV ashmemMMKV = MMKV.mmkvWithAshmemID(appContext, "testAshmemEncrypted", 4096, MMKV.MULTI_PROCESS_MODE, "MyAshmemKey");
+        assertNotNull(ashmemMMKV);
+        ashmemMMKV.encode("test_key_encrypted", "secret_value");
+
+        ParcelableMMKV original = new ParcelableMMKV(ashmemMMKV);
+        Parcel parcel = Parcel.obtain();
+        try {
+            original.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+
+            ParcelableMMKV unmarshaled = ParcelableMMKV.CREATOR.createFromParcel(parcel);
+            assertNotNull("Unmarshaled encrypted ParcelableMMKV should not be null", unmarshaled);
+
+            MMKV recovered = unmarshaled.toMMKV();
+            assertNotNull("Recovered encrypted MMKV should not be null", recovered);
+            assertEquals(ashmemMMKV.mmapID(), recovered.mmapID());
+
+            assertEquals("secret_value", ashmemMMKV.decodeString("test_key_encrypted"));
+        } finally {
+            ashmemMMKV.clearAll();
+            parcel.recycle();
+        }
     }
 }
