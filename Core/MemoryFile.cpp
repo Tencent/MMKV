@@ -507,7 +507,8 @@ extern MMKVPath_t absolutePath(const MMKVPath_t &path) {
 static pair<MMKVPath_t, int> createUniqueTempFile(const char *prefix) {
     char path[PATH_MAX];
 #ifdef MMKV_ANDROID
-    snprintf(path, PATH_MAX, "%s/%s.XXXXXX", g_android_tmpDir.c_str(), prefix);
+    auto tmpDir = getAndroidTmpDir();
+    snprintf(path, PATH_MAX, "%s/%s.XXXXXX", tmpDir.c_str(), prefix);
 #else
     snprintf(path, PATH_MAX, "%s/%s.XXXXXX", P_tmpdir, prefix);
 #endif

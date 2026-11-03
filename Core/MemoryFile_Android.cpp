@@ -114,7 +114,6 @@ constexpr auto ASHMEM_IOC = 0x77;
 #ifndef MMKV_OHOS
 int g_android_api = __ANDROID_API_L__;
 #endif
-std::string g_android_tmpDir = "/data/local/tmp/";
 
 #ifndef MMKV_OHOS
 void *loadLibrary() {

@@ -34,7 +34,8 @@ long long getFileModifyTimeInMS(const char *path);
 
 namespace mmkv {
 extern int g_android_api;
-extern std::string g_android_tmpDir;
+void setAndroidTmpDir(const std::string &tmpDir);
+std::string getAndroidTmpDir();
 
 enum FileType : bool { MMFILE_TYPE_FILE = false, MMFILE_TYPE_ASHMEM = true };
 } // namespace mmkv

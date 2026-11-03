@@ -538,7 +538,7 @@ static napi_value initialize(napi_env env, napi_callback_info info) {
         rootDir.c_str(), cacheDir.c_str(), logLevel, hasCallback, wantLogRedirect);
 
     MMKV::initializeMMKV(rootDir, (MMKVLogLevel) logLevel, handler);
-    g_android_tmpDir = cacheDir;
+    setAndroidTmpDir(cacheDir);
 
     if (hasCallback || wantLogRedirect || wantContentChangeNotification) {
         MMKV::registerHandler(&g_napiHandler);
