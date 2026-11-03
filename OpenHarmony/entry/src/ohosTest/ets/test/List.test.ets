@@ -20,8 +20,10 @@
 
 import abilityTest from './Ability.test';
 import arrayBufferBoundsTest from './ArrayBufferBounds.test';
+import expireTimeTest from './ExpireTime.test';
 
 export default function testsuite() {
   abilityTest();
   arrayBufferBoundsTest();
+  expireTimeTest();
 }

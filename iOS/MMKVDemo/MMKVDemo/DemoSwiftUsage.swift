@@ -78,5 +78,9 @@ class DemoSwiftUsage : NSObject {
 
         mmkv.enableAutoKeyExpire(expiredInSeconds: MMKVExpireDuration.never.rawValue)
         mmkv.set(true, forKey: "key", expireDuration: MMKVExpireDuration.never.rawValue)
+        let never: UInt32 = mmkv.expireTime(forKey: "key")
+        assert(never == 0)
+        mmkv.set(true, forKey: "farFuture", expireDuration: UInt32.max)
+        assert(mmkv.expireTime(forKey: "farFuture") == UInt32.max)
     }
 }

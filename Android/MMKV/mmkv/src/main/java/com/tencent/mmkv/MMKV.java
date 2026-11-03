@@ -1245,6 +1245,16 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     }
 
     /**
+     * Get the key's stored expiration time in Unix epoch seconds.
+     *
+     * @return 0 if expiration is disabled, the key is missing, or the key never expires.
+     *         An expired key returns its stored timestamp until it is removed.
+     */
+    public long getExpireTimeForKey(String key) {
+        return getExpireTimeForKey(nativeHandle, key);
+    }
+
+    /**
      * @return All the keys.
      */
     @Nullable
@@ -2086,6 +2096,8 @@ public class MMKV implements SharedPreferences, SharedPreferences.Editor {
     private native byte[] decodeBytes(long handle, String key);
 
     private native boolean containsKey(long handle, String key);
+
+    private native long getExpireTimeForKey(long handle, String key);
 
     private native String[] allKeys(long handle, boolean filterExpire);
 

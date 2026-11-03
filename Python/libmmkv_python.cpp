@@ -386,6 +386,9 @@ PYBIND11_MODULE(mmkv, m) {
     clsMMKV.def("enableAutoKeyExpire", &MMKV::enableAutoKeyExpire, py::arg("expireDurationInSecond"),
                 "turn on auto key expiration, passing 0 means never expire");
     clsMMKV.def("disableAutoKeyExpire", &MMKV::disableAutoKeyExpire, "turn off auto key expiration");
+    clsMMKV.def("getExpireTimeForKey", &MMKV::getExpireTimeForKey, py::arg("key"),
+                "get the absolute expiration time in Unix seconds; 0 if expiration is disabled, the key is missing, "
+                "or it never expires. An expired entry returns its timestamp until removed; this call does not remove it.");
 
     clsMMKV.def("enableCompareBeforeSet", &MMKV::enableCompareBeforeSet, "turn on compare before set/update");
     clsMMKV.def("disableCompareBeforeSet", &MMKV::disableCompareBeforeSet, "turn off compare before set/update");

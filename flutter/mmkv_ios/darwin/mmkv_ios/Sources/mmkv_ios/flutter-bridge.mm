@@ -395,6 +395,15 @@ MMKV_EXPORT uint64_t MMKV_FUNC(allKeys)(const void *handle, char ***keyArrayPtr,
     return 0;
 }
 
+MMKV_EXPORT uint32_t MMKV_FUNC(getExpireTimeForKey)(const void *handle, const char *oKey) {
+    MMKV *kv = (__bridge MMKV *) handle;
+    if (kv && oKey) {
+        auto key = [NSString stringWithUTF8String:oKey];
+        return [kv getExpireTimeForKey:key];
+    }
+    return 0;
+}
+
 MMKV_EXPORT bool MMKV_FUNC(containsKey)(const void *handle, char *oKey) {
     MMKV *kv = (__bridge MMKV *) handle;
     if (kv && oKey) {

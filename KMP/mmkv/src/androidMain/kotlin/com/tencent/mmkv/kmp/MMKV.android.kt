@@ -205,6 +205,7 @@ actual class MMKV internal constructor(impl: AndroidMMKV) {
     // region Key management
 
     actual fun containsKey(key: String): Boolean = impl.containsKey(key.requireValidMMKVKey())
+    actual fun getExpireTimeForKey(key: String): UInt = impl.getExpireTimeForKey(key.requireValidMMKVKey()).toUInt()
     actual fun countNonExpiredKeys(): Long = impl.countNonExpiredKeys()
     actual fun allNonExpiredKeys(): List<String> = impl.allNonExpireKeys()?.toList() ?: emptyList()
     actual fun removeValueForKey(key: String) = impl.removeValueForKey(key.requireValidMMKVKey())

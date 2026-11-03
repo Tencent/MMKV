@@ -826,6 +826,10 @@ static BOOL g_hasCalledInitializeMMKV = NO;
     return m_mmkv->disableAutoKeyExpire();
 }
 
+- (uint32_t)getExpireTimeForKey:(NSString *)key {
+    return m_mmkv->getExpireTimeForKey(key);
+}
+
 - (BOOL)enableCompareBeforeSet {
     if (m_mmkv->isExpirationEnabled()) {
         MMKVWarning("enableCompareBeforeSet is invalid when Expiration is on");

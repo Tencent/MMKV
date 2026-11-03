@@ -261,6 +261,50 @@ public class MMKVTest {
     }
 
     @Test
+    public void testGetExpireTimeForKey() throws InterruptedException {
+        MMKV kv = MMKV.mmkvWithID("expireTimeTest");
+        kv.clearAll();
+        try {
+            assertTrue(kv.disableAutoKeyExpire());
+            assertTrue(kv.encode("disabled", true));
+            assertEquals(0L, kv.getExpireTimeForKey("disabled"));
+            assertEquals(0L, kv.getExpireTimeForKey("missing"));
+
+            assertTrue(kv.enableAutoKeyExpire(60));
+            assertEquals(0L, kv.getExpireTimeForKey("missing"));
+            assertTrue(kv.encode("never", true, MMKV.ExpireNever));
+            assertEquals(0L, kv.getExpireTimeForKey("never"));
+
+            long before = System.currentTimeMillis() / 1000;
+            assertTrue(kv.encode("default", true));
+            long after = System.currentTimeMillis() / 1000;
+            long defaultExpiration = kv.getExpireTimeForKey("default");
+            assertTrue(defaultExpiration >= before + 60);
+            assertTrue(defaultExpiration <= after + 60);
+
+            // A uint32_t timestamp must remain positive across JNI, including after 2038.
+            assertTrue(kv.encode("unsigned", true, -1));
+            assertEquals(0xFFFFFFFFL, kv.getExpireTimeForKey("unsigned"));
+
+            assertTrue(kv.encode("expired", true, 1));
+            long expiration = kv.getExpireTimeForKey("expired");
+            assertTrue(expiration > 0);
+            Thread.sleep(2100);
+            assertEquals(expiration, kv.getExpireTimeForKey("expired"));
+            assertFalse(kv.containsKey("expired"));
+            assertEquals(0L, kv.getExpireTimeForKey("expired"));
+
+            kv.removeValueForKey("default");
+            assertEquals(0L, kv.getExpireTimeForKey("default"));
+            assertTrue(kv.disableAutoKeyExpire());
+            assertEquals(0L, kv.getExpireTimeForKey("unsigned"));
+        } finally {
+            kv.clearAll();
+            kv.close();
+        }
+    }
+
+    @Test
     public void testExpirationOverflow() {
         MMKV kv = MMKV.mmkvWithID("expirationOverflowTest");
         kv.clearAll();

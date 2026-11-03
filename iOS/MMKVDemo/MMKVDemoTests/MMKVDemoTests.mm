@@ -553,6 +553,51 @@ using namespace std;
     [kv clearAll];
 }
 
+- (void)testGetExpireTimeForKey {
+    NSString *mmapID = [@"expire_time_" stringByAppendingString:NSUUID.UUID.UUIDString];
+    MMKV *kv = [MMKV mmkvWithID:mmapID];
+    XCTAssertTrue([kv setBool:YES forKey:@"disabled"]);
+    XCTAssertEqual([kv getExpireTimeForKey:@"disabled"], (uint32_t) 0);
+    XCTAssertTrue([kv enableAutoKeyExpire:60]);
+    XCTAssertEqual([kv getExpireTimeForKey:@"missing"], (uint32_t) 0);
+    XCTAssertEqual([kv getExpireTimeForKey:@""], (uint32_t) 0);
+    XCTAssertTrue([kv setBool:YES forKey:@"never" expireDuration:MMKVExpireNever]);
+    XCTAssertEqual([kv getExpireTimeForKey:@"never"], (uint32_t) 0);
+
+    uint32_t before = (uint32_t) NSDate.date.timeIntervalSince1970;
+    XCTAssertTrue([kv setBool:YES forKey:@"default"]);
+    XCTAssertTrue([kv setBool:YES forKey:@"explicit" expireDuration:120]);
+    uint32_t after = (uint32_t) NSDate.date.timeIntervalSince1970;
+    uint32_t defaultTime = [kv getExpireTimeForKey:@"default"];
+    uint32_t explicitTime = [kv getExpireTimeForKey:@"explicit"];
+    XCTAssertGreaterThanOrEqual(defaultTime, before + 60);
+    XCTAssertLessThanOrEqual(defaultTime, after + 60);
+    XCTAssertGreaterThanOrEqual(explicitTime, before + 120);
+    XCTAssertLessThanOrEqual(explicitTime, after + 120);
+    XCTAssertTrue([kv setBool:YES forKey:@"maximum" expireDuration:UINT32_MAX]);
+    XCTAssertEqual([kv getExpireTimeForKey:@"maximum"], UINT32_MAX);
+
+    [kv clearMemoryCache];
+    XCTAssertEqual([kv getExpireTimeForKey:@"explicit"], explicitTime);
+    [kv close];
+    kv = [MMKV mmkvWithID:mmapID];
+    XCTAssertEqual([kv getExpireTimeForKey:@"default"], defaultTime);
+    [kv removeValueForKey:@"explicit"];
+    XCTAssertEqual([kv getExpireTimeForKey:@"explicit"], (uint32_t) 0);
+
+    XCTAssertTrue([kv setBool:YES forKey:@"expired" expireDuration:1]);
+    uint32_t expiredTime = [kv getExpireTimeForKey:@"expired"];
+    XCTAssertGreaterThan(expiredTime, (uint32_t) 0);
+    [NSThread sleepForTimeInterval:1.1];
+    XCTAssertEqual([kv getExpireTimeForKey:@"expired"], expiredTime);
+    XCTAssertFalse([kv containsKey:@"expired"]);
+    XCTAssertEqual([kv getExpireTimeForKey:@"expired"], (uint32_t) 0);
+    XCTAssertTrue([kv disableAutoKeyExpire]);
+    XCTAssertEqual([kv getExpireTimeForKey:@"maximum"], (uint32_t) 0);
+    [kv close];
+    XCTAssertTrue([MMKV removeStorage:mmapID rootPath:nil]);
+}
+
 - (void)testCloseIsIdempotentAndAllowsReopen {
     NSString *mmapID = @"close_lifecycle_test";
     MMKV *kv = [MMKV mmkvWithID:mmapID];

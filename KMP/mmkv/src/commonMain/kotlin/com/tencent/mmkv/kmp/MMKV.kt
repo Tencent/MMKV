@@ -215,6 +215,13 @@ expect class MMKV {
     fun containsKey(key: String): Boolean
 
     /**
+     * Get the key's stored expiration time in Unix epoch seconds.
+     * Returns 0 if expiration is disabled, the key is missing, or the key never expires.
+     * An expired key returns its stored timestamp until it is removed.
+     */
+    fun getExpireTimeForKey(key: String): UInt
+
+    /**
      * @return Count of non-expired keys. Note that this call has costs.
      */
     fun countNonExpiredKeys(): Long

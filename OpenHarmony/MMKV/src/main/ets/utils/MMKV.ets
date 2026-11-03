@@ -894,6 +894,15 @@ export class MMKV {
     public static readonly ExpireInYear = 365 * 24 * 60 * 60;
 
     /**
+     * Get the stored expiration time as absolute Unix seconds, not a remaining duration.
+     * Returns 0 when expiration is disabled, the key is missing, or it never expires.
+     * An expired key can retain its timestamp until another operation removes it.
+     */
+    public getExpireTimeForKey(key: string): number {
+        return native.getExpireTimeForKey(this.nativeHandle, key);
+    }
+
+    /**
      * Enable auto key expiration. This is a upgrade operation, the file format will change.
      * And the file won't be accessed correctly by older version (v1.2.16) of MMKV.
      * NOTICE: enableCompareBeforeSet will be invalid when Expiration is on

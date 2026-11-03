@@ -685,6 +685,12 @@ MMKV_EXPORT bool mmkv_disable_auto_expire(MMKVHandle_t handle) {
     return false;
 }
 
+MMKV_EXPORT uint32_t mmkv_get_expire_time_for_key(MMKVHandle_t handle, const char *key) {
+    MMKV *kv = kvFromHandle(handle);
+    if (kv && key) { return kv->getExpireTimeForKey(key); }
+    return 0;
+}
+
 MMKV_EXPORT bool mmkv_enable_compare_before_set(MMKVHandle_t handle) {
     MMKV *kv = kvFromHandle(handle);
     if (kv) { return kv->enableCompareBeforeSet(); }

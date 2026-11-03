@@ -378,6 +378,10 @@ class MMKV;
 
 - (BOOL)disableAutoKeyExpire;
 
+/// Returns the stored expiration time in Unix seconds, or 0 for a missing/non-expiring key or disabled expiration.
+/// Expired entries retain their timestamp until removed; this query does not filter them.
+- (uint32_t)getExpireTimeForKey:(NSString *)key NS_SWIFT_NAME(expireTime(forKey:));
+
 /// Enable data compare before set, for better performance
 /// If data for key seldom changes, use it
 /// Notice: When encryption or expiration is on, compare-before-set will be invalid.

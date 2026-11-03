@@ -182,6 +182,13 @@ class MMKVPluginPlatformFFI extends MMKVPluginPlatform {
   }
 
   @override
+  int Function(Pointer<Void>, Pointer<Utf8>) getExpireTimeForKeyFunc() {
+    return nativeLib()
+        .lookup<NativeFunction<Uint32 Function(Pointer<Void>, Pointer<Utf8>)>>(nativeFuncName("getExpireTimeForKey"))
+        .asFunction();
+  }
+
+  @override
   int Function(Pointer<Void>, Pointer<Utf8>) containsKeyFunc() {
     return nativeLib().lookup<NativeFunction<Int8 Function(Pointer<Void>, Pointer<Utf8>)>>(nativeFuncName("containsKey")).asFunction();
   }

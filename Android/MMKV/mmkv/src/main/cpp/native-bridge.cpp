@@ -769,6 +769,15 @@ MMKV_JNI jboolean containsKey(JNIEnv *env, jobject instance, jlong handle, jstri
     return (jboolean) false;
 }
 
+MMKV_JNI jlong getExpireTimeForKey(JNIEnv *env, jobject instance, jlong handle, jstring oKey) {
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key = jstring2string(env, oKey);
+        return static_cast<jlong>(kv->getExpireTimeForKey(key));
+    }
+    return 0;
+}
+
 MMKV_JNI jlong count(JNIEnv *env, jobject instance, jlong handle, jboolean filterExpire) {
     MMKV *kv = reinterpret_cast<MMKV *>(handle);
     if (kv) {
@@ -1289,6 +1298,7 @@ static JNINativeMethod g_methods[] = {
     {"encodeBytes_2", "(JLjava/lang/String;[BI)Z", (void *) mmkv::encodeBytes_2},
     {"decodeBytes", "(JLjava/lang/String;)[B", (void *) mmkv::decodeBytes},
     {"containsKey", "(JLjava/lang/String;)Z", (void *) mmkv::containsKey},
+    {"getExpireTimeForKey", "(JLjava/lang/String;)J", (void *) mmkv::getExpireTimeForKey},
     {"count", "(JZ)J", (void *) mmkv::count},
     {"totalSize", "(J)J", (void *) mmkv::totalSize},
     {"actualSize", "(J)J", (void *) mmkv::actualSize},

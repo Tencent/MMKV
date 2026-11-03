@@ -1250,6 +1250,20 @@ static napi_value decodeUInt64Array(napi_env env, napi_callback_info info) {
     return decodeArray<uint64_t>(env, info);
 }
 
+static napi_value getExpireTimeForKey(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[2] = {nullptr};
+    NAPI_CALL(napi_get_cb_info(env, info, &argc, args, nullptr, nullptr));
+
+    auto handle = NValueToUInt64(env, args[0]);
+    auto key = NValueToString(env, args[1]);
+    MMKV *kv = reinterpret_cast<MMKV *>(handle);
+    if (kv && key.length() > 0) {
+        return UInt32ToNValue(env, kv->getExpireTimeForKey(key));
+    }
+    return UInt32ToNValue(env, 0);
+}
+
 static napi_value containsKey(napi_env env, napi_callback_info info) {
     size_t argc = 2;
     napi_value args[2] = {nullptr};
@@ -1851,6 +1865,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         { "decodeInt64Array", nullptr, decodeInt64Array, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "encodeUInt64Array", nullptr, encodeUInt64Array, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "decodeUInt64Array", nullptr, decodeUInt64Array, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "getExpireTimeForKey", nullptr, getExpireTimeForKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "containsKey", nullptr, containsKey, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "count", nullptr, count, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "allKeys", nullptr, allKeys, nullptr, nullptr, nullptr, napi_default, nullptr },

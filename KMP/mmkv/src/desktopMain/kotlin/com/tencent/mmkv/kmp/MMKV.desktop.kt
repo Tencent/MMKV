@@ -66,6 +66,7 @@ internal interface MMKVLib : Library {
 
     fun mmkv_all_keys(handle: Pointer, lengthPtr: LongByReference, filterExpire: Boolean): Pointer?
     fun mmkv_contains_key(handle: Pointer, key: String): Boolean
+    fun mmkv_get_expire_time_for_key(handle: Pointer, key: String): Int
     fun mmkv_count(handle: Pointer, filterExpire: Boolean): Long
     fun mmkv_total_size(handle: Pointer): Long
     fun mmkv_actual_size(handle: Pointer): Long
@@ -335,6 +336,7 @@ actual class MMKV internal constructor(handle: Pointer) {
     // region Key management
 
     actual fun containsKey(key: String): Boolean = lib.mmkv_contains_key(handle, key.requireValidMMKVKey())
+    actual fun getExpireTimeForKey(key: String): UInt = lib.mmkv_get_expire_time_for_key(handle, key.requireValidMMKVKey()).toUInt()
     actual fun countNonExpiredKeys(): Long = lib.mmkv_count(handle, true)
 
     actual fun allNonExpiredKeys(): List<String> {

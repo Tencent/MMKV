@@ -285,7 +285,6 @@ class MMKV_EXPORT MMKV {
 
     static uint32_t getCurrentTimeInSecond();
     static uint32_t safeExpirationPlusCurrentTime(uint32_t expireDuration);
-    uint32_t getExpireTimeForKey(MMKVKey_t key);
     mmkv::MMBuffer getDataWithoutMTimeForKey(MMKVKey_t key);
     size_t filterExpiredKeys();
 
@@ -560,6 +559,10 @@ public:
     bool enableAutoKeyExpire(uint32_t expiredInSeconds = 0);
 
     bool disableAutoKeyExpire();
+
+    // Returns the stored expiration time in Unix seconds, or 0 for a missing/non-expiring key or disabled expiration.
+    // Expired entries retain their timestamp until removed; this query does not filter them.
+    uint32_t getExpireTimeForKey(MMKVKey_t key);
 
     // compare value for key before set, to reduce the possibility of file expanding
     bool enableCompareBeforeSet();

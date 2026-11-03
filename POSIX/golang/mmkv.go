@@ -305,6 +305,11 @@ type MMKV interface {
 
 	DisableAutoKeyExpire() bool
 
+	// GetExpireTimeForKey returns the absolute expiration time in Unix seconds.
+	// It returns 0 if expiration is disabled, the key is missing, or it never expires.
+	// An expired entry returns its timestamp until removed; this call does not remove it.
+	GetExpireTimeForKey(key string) uint32
+
 	EnableCompareBeforeSet() bool
 	DisableCompareBeforeSet() bool
 
@@ -796,6 +801,10 @@ func (kv ctorMMKV) EnableAutoKeyExpire(expireDurationInSecond uint32) bool {
 func (kv ctorMMKV) DisableAutoKeyExpire() bool {
 	ret := C.disableAutoExpire(unsafe.Pointer(kv))
 	return bool(ret)
+}
+
+func (kv ctorMMKV) GetExpireTimeForKey(key string) uint32 {
+	return uint32(C.getExpireTimeForKey(unsafe.Pointer(kv), C.wrapGoString(key)))
 }
 
 func (kv ctorMMKV) EnableCompareBeforeSet() bool {

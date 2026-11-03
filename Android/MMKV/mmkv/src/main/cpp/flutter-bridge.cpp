@@ -507,6 +507,15 @@ MMKV_EXPORT bool containsKey(void *handle, char *oKey) {
     return false;
 }
 
+MMKV_EXPORT uint32_t getExpireTimeForKey(void *handle, const char *oKey) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey) {
+        string key(oKey);
+        return kv->getExpireTimeForKey(key);
+    }
+    return 0;
+}
+
 MMKV_EXPORT uint64_t count(void *handle, bool filterExpire) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {

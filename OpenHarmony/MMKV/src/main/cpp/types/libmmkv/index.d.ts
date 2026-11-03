@@ -40,6 +40,7 @@ export const encodeInt64Array: (handle: bigint, key: string, value: ArrayBuffer,
 export const decodeInt64Array: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
 export const encodeUInt64Array: (handle: bigint, key: string, value: ArrayBuffer, offset: number, length: number, expiration?: number) => boolean;
 export const decodeUInt64Array: (handle: bigint, key: string, defaultValue?: ArrayBuffer) => ArrayBuffer;
+export const getExpireTimeForKey: (handle: bigint, key: string) => number;
 export const containsKey: (handle: bigint, key: string) => boolean;
 export const count: (handle: bigint, filterExpire: boolean) => bigint;
 export const allKeys: (handle: bigint, filterExpire: boolean) => string[];

@@ -615,6 +615,16 @@ class MMKV {
     return keys;
   }
 
+  /// Get the stored expiration time as absolute Unix seconds, not a remaining duration.
+  /// Returns 0 when expiration is disabled, the key is missing, or it never expires.
+  /// An expired key can retain its timestamp until another operation removes it.
+  int getExpireTimeForKey(String key) {
+    final keyPtr = key.toNativeUtf8();
+    final ret = _getExpireTimeForKey(_handle, keyPtr);
+    calloc.free(keyPtr);
+    return ret;
+  }
+
   bool containsKey(String key) {
     final keyPtr = key.toNativeUtf8();
     final ret = _containsKey(_handle, keyPtr);
@@ -1021,6 +1031,8 @@ final int Function(Pointer<Void>, Pointer<Utf8>, int) _valueSize = _mmkvPlatform
 final int Function(Pointer<Void>, Pointer<Utf8>, Pointer<Void>, int) _writeValueToNB =  _mmkvPlatform.writeValueToNBFunc();
 
 final int Function(Pointer<Void>, Pointer<Pointer<Pointer<Utf8>>>, Pointer<Pointer<Uint32>>, int) _allKeys =  _mmkvPlatform.allKeysFunc();
+final int Function(Pointer<Void>, Pointer<Utf8>) _getExpireTimeForKey = _mmkvPlatform.getExpireTimeForKeyFunc();
+
 final int Function(Pointer<Void>, Pointer<Utf8>) _containsKey = _mmkvPlatform.containsKeyFunc();
 
 final int Function(Pointer<Void>, int) _count = _mmkvPlatform.countFunc();

@@ -434,6 +434,67 @@ void testExpirationOverflow() {
     printf("test expiration overflow: passed\n");
 }
 
+void testGetExpireTimeForKey() {
+    auto now = []() {
+        return chrono::duration_cast<chrono::seconds>(chrono::system_clock::now().time_since_epoch()).count();
+    };
+    for (bool encrypted : {false, true}) {
+#ifdef MMKV_DISABLE_CRYPT
+        if (encrypted) {
+            continue;
+        }
+#endif
+        const string id = encrypted ? "expire-time-crypt" : "expire-time-plain";
+        const string cryptKey = "expire-time-key";
+        auto kv = MMKV::mmkvWithID(id, MMKV_SINGLE_PROCESS, encrypted ? &cryptKey : nullptr);
+        kv->clearAll();
+        assert(kv->disableAutoKeyExpire());
+        assert(kv->set(true, "disabled"));
+        assert(kv->getExpireTimeForKey("disabled") == 0);
+        assert(kv->enableAutoKeyExpire(60));
+        assert(kv->getExpireTimeForKey("") == 0);
+        assert(kv->getExpireTimeForKey("missing") == 0);
+        assert(kv->set(true, "never", MMKV::ExpireNever));
+        assert(kv->getExpireTimeForKey("never") == 0);
+
+        const auto before = now();
+        assert(kv->set(true, "default"));
+        assert(kv->set(string(256, 'v'), "explicit", 120));
+        const auto after = now();
+        const auto defaultTime = kv->getExpireTimeForKey("default");
+        const auto explicitTime = kv->getExpireTimeForKey("explicit");
+        assert(defaultTime >= before + 60 && defaultTime <= after + 60);
+        assert(explicitTime >= before + 120 && explicitTime <= after + 120);
+        assert(kv->set(true, "maximum", numeric_limits<uint32_t>::max()));
+        assert(kv->getExpireTimeForKey("maximum") == numeric_limits<uint32_t>::max());
+
+        kv->clearMemoryCache();
+        assert(kv->getExpireTimeForKey("explicit") == explicitTime);
+        kv->close();
+        kv = MMKV::mmkvWithID(id, MMKV_SINGLE_PROCESS, encrypted ? &cryptKey : nullptr);
+        assert(kv->getExpireTimeForKey("default") == defaultTime);
+        assert(kv->set(false, "default", MMKV::ExpireNever));
+        assert(kv->getExpireTimeForKey("default") == 0);
+        kv->removeValueForKey("explicit");
+        assert(kv->getExpireTimeForKey("explicit") == 0);
+
+        assert(kv->set(true, "expired", 1));
+        const auto expiredTime = kv->getExpireTimeForKey("expired");
+        assert(expiredTime > 0);
+        this_thread::sleep_for(chrono::milliseconds(1100));
+        // Query before a value read or filtered enumeration can remove the entry.
+        assert(expiredTime <= now());
+        assert(kv->getExpireTimeForKey("expired") == expiredTime);
+        assert(!kv->containsKey("expired"));
+        assert(kv->getExpireTimeForKey("expired") == 0);
+        assert(kv->disableAutoKeyExpire());
+        assert(kv->getExpireTimeForKey("maximum") == 0);
+        kv->close();
+        assert(MMKV::removeStorage(id));
+    }
+    printf("test get expiration time: passed\n");
+}
+
 void testCodedOutputBounds() {
     array<uint8_t, 16> storage;
 
@@ -1344,6 +1405,7 @@ int main(int argc, char *argv[]) {
     testTinyFileRecovery(rootDir);
     testCodedOutputBounds();
     testExpirationOverflow();
+    testGetExpireTimeForKey();
     testExpirationAlignment();
     testArmCRC32();
 #ifndef MMKV_DISABLE_CRYPT

@@ -329,6 +329,8 @@ actual class MMKV internal constructor(handle: COpaquePointer) {
 
     actual fun containsKey(key: String): Boolean = mmkv_contains_key(handle, key.requireValidMMKVKey())
 
+    actual fun getExpireTimeForKey(key: String): UInt = mmkv_get_expire_time_for_key(handle, key.requireValidMMKVKey())
+
     actual fun countNonExpiredKeys(): Long = mmkv_count(handle, true).toLong()
 
     actual fun allNonExpiredKeys(): List<String> {

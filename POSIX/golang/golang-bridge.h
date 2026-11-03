@@ -125,6 +125,7 @@ uint64_t restoreAllFromDirectory(GoStringWrap_t srcDir, GoStringWrap_t dstDir);
 
 bool enableAutoExpire(void *handle, uint32_t expireDuration);
 bool disableAutoExpire(void *handle);
+uint32_t getExpireTimeForKey(void *handle, GoStringWrap_t oKey);
 bool enableCompareBeforeSet(void *handle);
 bool disableCompareBeforeSet(void *handle);
 

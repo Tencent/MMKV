@@ -156,6 +156,43 @@ class MMKVSmokeTest {
     }
 
     @Test
+    fun expirationTimeUsesStoredUnsignedTimestamp() {
+        val kv = fresh("expire-time")
+        try {
+            assertTrue(kv.encodeBool("disabled", true))
+            assertEquals(0u, kv.getExpireTimeForKey("disabled"))
+            assertEquals(0u, kv.getExpireTimeForKey("missing"))
+
+            assertTrue(kv.enableAutoKeyExpire(60u))
+            assertEquals(0u, kv.getExpireTimeForKey("missing"))
+            assertTrue(kv.encodeBool("never", true, MMKVExpireDuration.Never))
+            assertEquals(0u, kv.getExpireTimeForKey("never"))
+
+            assertTrue(kv.encodeBool("default", true))
+            val expiration = kv.getExpireTimeForKey("default")
+            assertTrue(expiration > 60u)
+            assertTrue(expiration < UInt.MAX_VALUE)
+            assertEquals(expiration, kv.getExpireTimeForKey("default"))
+
+            assertTrue(kv.encodeBool("unsigned", true, UInt.MAX_VALUE))
+            assertEquals(UInt.MAX_VALUE, kv.getExpireTimeForKey("unsigned"))
+
+            assertTrue(kv.encodeBool("default", true, MMKVExpireDuration.Never))
+            assertEquals(0u, kv.getExpireTimeForKey("default"))
+            kv.removeValueForKey("unsigned")
+            assertEquals(0u, kv.getExpireTimeForKey("unsigned"))
+
+            assertTrue(kv.encodeBool("still-expiring", true))
+            assertTrue(kv.getExpireTimeForKey("still-expiring") > 0u)
+            assertTrue(kv.disableAutoKeyExpire())
+            assertEquals(0u, kv.getExpireTimeForKey("still-expiring"))
+            assertFailsWith<IllegalArgumentException> { kv.getExpireTimeForKey("invalid\u0000key") }
+        } finally {
+            kv.clearAll()
+        }
+    }
+
+    @Test
     fun namespaceIsUsable() {
         MMKVTestEnv.initialize()
         val namespace = MMKVNameSpace.of(MMKVTestEnv.uniquePath("namespace"))

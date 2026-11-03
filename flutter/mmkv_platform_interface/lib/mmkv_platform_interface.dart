@@ -205,6 +205,10 @@ class MMKVPluginPlatform {
     throw UnimplementedError();
   }
 
+  int Function(Pointer<Void>, Pointer<Utf8>) getExpireTimeForKeyFunc() {
+    throw UnimplementedError();
+  }
+
   int Function(Pointer<Void>, Pointer<Utf8>) containsKeyFunc() {
     throw UnimplementedError();
   }

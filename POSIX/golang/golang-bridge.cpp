@@ -683,6 +683,15 @@ MMKV_EXPORT bool disableAutoExpire(void *handle) {
     return false;
 }
 
+MMKV_EXPORT uint32_t getExpireTimeForKey(void *handle, GoStringWrap oKey) {
+    MMKV *kv = static_cast<MMKV *>(handle);
+    if (kv && oKey.ptr) {
+        auto key = string(oKey.ptr, oKey.length);
+        return kv->getExpireTimeForKey(key);
+    }
+    return 0;
+}
+
 MMKV_EXPORT bool enableCompareBeforeSet(void *handle) {
     MMKV *kv = static_cast<MMKV *>(handle);
     if (kv) {

@@ -212,6 +212,9 @@ MMKV_CBRIDGE_API uint64_t mmkv_restore_all(const char *srcDir, const char *rootP
 
 MMKV_CBRIDGE_API bool mmkv_enable_auto_expire(MMKVHandle_t handle, uint32_t expireDuration);
 MMKV_CBRIDGE_API bool mmkv_disable_auto_expire(MMKVHandle_t handle);
+/* Stored expiration time in Unix seconds, or 0 for missing/non-expiring keys or disabled expiration.
+   Expired entries retain their timestamp until removed; this query does not filter them. */
+MMKV_CBRIDGE_API uint32_t mmkv_get_expire_time_for_key(MMKVHandle_t handle, const char *key);
 MMKV_CBRIDGE_API bool mmkv_enable_compare_before_set(MMKVHandle_t handle);
 MMKV_CBRIDGE_API bool mmkv_disable_compare_before_set(MMKVHandle_t handle);
 
