@@ -65,6 +65,7 @@ ThreadLock *g_instanceLock;
 MMKVPath_t g_rootDir;
 MMKVPath_t g_realRootDir;
 static ThreadLock *g_namespaceLock;
+static ThreadLock *g_initializeLock;
 static unordered_map<MMKVPath_t, MMKVPath_t> g_realRootMap;
 size_t mmkv::DEFAULT_MMAP_SIZE;
 
@@ -177,6 +178,8 @@ static void initialize() {
     g_instanceDic = new unordered_map<string, MMKV *>;
     g_instanceLock = new ThreadLock();
     g_instanceLock->initialize();
+    g_initializeLock = new ThreadLock();
+    g_initializeLock->initialize();
 
     mmkv::DEFAULT_MMAP_SIZE = mmkv::getPageSize();
 
@@ -210,10 +213,18 @@ static void ensureMinimalInitialize() {
 }
 
 void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::MMKVHandler *handler) {
-    g_currentLogLevel = logLevel;
-    g_handler = handler;
-
     ensureMinimalInitialize();
+    {
+        SCOPED_LOCK(g_initializeLock);
+        g_currentLogLevel = logLevel;
+        g_handler = handler;
+        if (g_rootDir.empty()) {
+            g_rootDir = rootDir;
+            // avoid operating g_realRootMap directly
+            g_realRootDir = nameSpace(rootDir).getRootDir();
+            mkPath(g_realRootDir);
+        }
+    }
 
     // User log handlers may request a namespace, so log only after initialization completes.
     MMKVInfo("version %s, page size %d, arch %s", MMKV_VERSION, DEFAULT_MMAP_SIZE, MMKV_ABI);
@@ -234,15 +245,30 @@ void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv
     MMKVInfo("Apple Device: %d, version: %d", device, version);
 #endif
 
-    if (g_rootDir.empty()) {
-        g_rootDir = rootDir;
-        // avoid operating g_realRootMap directly
-        g_realRootDir = nameSpace(rootDir).getRootDir();
-        mkPath(g_realRootDir);
-    }
     const auto &rootDirStr = MMKVPath_t2String(g_realRootDir);
     MMKVInfo("root dir: %s", rootDirStr.c_str());
 }
+
+#ifdef MMKV_ANDROID
+static std::string g_android_tmpDir;
+
+void mmkv::setAndroidTmpDir(const std::string &tmpDir) {
+    if (tmpDir.empty()) {
+        return;
+    }
+    ensureMinimalInitialize();
+    SCOPED_LOCK(g_initializeLock);
+    if (g_android_tmpDir.empty()) {
+        g_android_tmpDir = tmpDir;
+    }
+}
+
+std::string mmkv::getAndroidTmpDir() {
+    ensureMinimalInitialize();
+    SCOPED_LOCK(g_initializeLock);
+    return g_android_tmpDir.empty() ? "/data/local/tmp/" : g_android_tmpDir;
+}
+#endif
 
 const MMKVPath_t &MMKV::getRootDir() {
     // for backword consistency we can't return g_realRootDir

@@ -32,7 +32,7 @@ using namespace std;
 
 namespace mmkv {
 extern int g_android_api;
-extern string g_android_tmpDir;
+void setAndroidTmpDir(const std::string &tmpDir);
 }
 
 #    ifdef MMKV_EXPORT
@@ -91,7 +91,7 @@ MMKV_EXPORT void *mmkvInitialize_v2(const char *rootDir, const char *cacheDir, i
         return nullptr;
     }
     if (cacheDir) {
-        g_android_tmpDir = string(cacheDir);
+        setAndroidTmpDir(cacheDir);
     }
 
     g_android_api = sdkInt;

@@ -232,7 +232,7 @@ MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jstring c
         MMKV::initializeMMKV(kstr, (MMKVLogLevel) logLevel, handler);
         env->ReleaseStringUTFChars(rootDir, kstr);
 
-        g_android_tmpDir = jstring2string(env, cacheDir);
+        setAndroidTmpDir(jstring2string(env, cacheDir));
 
         if (hasCallback == JNI_TRUE || logReDirecting == JNI_TRUE) {
             MMKV::registerHandler(&g_jniHandler);
