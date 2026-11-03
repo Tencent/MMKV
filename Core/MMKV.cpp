@@ -214,15 +214,23 @@ static void ensureMinimalInitialize() {
 
 void MMKV::initializeMMKV(const MMKVPath_t &rootDir, MMKVLogLevel logLevel, mmkv::MMKVHandler *handler) {
     ensureMinimalInitialize();
+    bool needsRootDir;
     {
         SCOPED_LOCK(g_initializeLock);
         g_currentLogLevel = logLevel;
         g_handler = handler;
+        needsRootDir = g_rootDir.empty();
+    }
+    if (needsRootDir) {
+        // resolving & creating the dir may log, which calls into the user's handler, keep it out of the lock
+        // avoid operating g_realRootMap directly
+        auto realRootDir = nameSpace(rootDir).getRootDir();
+        mkPath(realRootDir);
+
+        SCOPED_LOCK(g_initializeLock);
         if (g_rootDir.empty()) {
             g_rootDir = rootDir;
-            // avoid operating g_realRootMap directly
-            g_realRootDir = nameSpace(rootDir).getRootDir();
-            mkPath(g_realRootDir);
+            g_realRootDir = realRootDir;
         }
     }
 
