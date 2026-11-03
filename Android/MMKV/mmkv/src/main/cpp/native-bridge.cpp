@@ -28,6 +28,7 @@
 #    include <MMKV/MemoryFile.h>
 #    include <cstdint>
 #    include <jni.h>
+#    include <mutex>
 #    include <string>
 #    include <android/api-level.h>
 
@@ -232,7 +233,15 @@ MMKV_JNI void jniInitialize(JNIEnv *env, jobject obj, jstring rootDir, jstring c
         MMKV::initializeMMKV(kstr, (MMKVLogLevel) logLevel, handler);
         env->ReleaseStringUTFChars(rootDir, kstr);
 
-        g_android_tmpDir = jstring2string(env, cacheDir);
+        static std::once_flag s_tmpDirOnceFlag;
+        if (cacheDir) {
+            std::call_once(s_tmpDirOnceFlag, [env, cacheDir] {
+                auto tmpDir = jstring2string(env, cacheDir);
+                if (!tmpDir.empty()) {
+                    g_android_tmpDir = std::move(tmpDir);
+                }
+            });
+        }
 
         if (hasCallback == JNI_TRUE || logReDirecting == JNI_TRUE) {
             MMKV::registerHandler(&g_jniHandler);

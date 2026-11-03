@@ -25,6 +25,7 @@
 #    include <MMKV/MMKV.h>
 #    include <MMKV/MMKVLog.h>
 #    include <cstdint>
+#    include <mutex>
 #    include <string>
 
 using namespace mmkv;
@@ -91,7 +92,8 @@ MMKV_EXPORT void *mmkvInitialize_v2(const char *rootDir, const char *cacheDir, i
         return nullptr;
     }
     if (cacheDir) {
-        g_android_tmpDir = string(cacheDir);
+        static std::once_flag s_tmpDirOnceFlag;
+        std::call_once(s_tmpDirOnceFlag, [cacheDir] { g_android_tmpDir = string(cacheDir); });
     }
 
     g_android_api = sdkInt;
