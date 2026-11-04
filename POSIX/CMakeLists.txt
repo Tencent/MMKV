@@ -26,3 +26,7 @@ include(CTest)
 
 add_subdirectory(src)
 add_subdirectory(demo)
+
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
