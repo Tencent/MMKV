@@ -34,7 +34,9 @@
 // GNU ld wraps only this executable's time() calls, including the static Core.
 // No sleeps or production clock hooks are needed to cross expiration boundaries.
 static std::time_t now = 1700000000;
+static size_t timeCalls = 0;
 extern "C" std::time_t __wrap_time(std::time_t *result) {
+    timeCalls++;
     if (result) {
         *result = now;
     }
@@ -118,6 +120,37 @@ static void testExpiration(bool encrypted, bool countFirst, bool allExpire, int 
     kv->close();
 }
 
+static void testCompletedWritebackFastPath(bool encrypted) {
+    now += 100;
+    const std::string id = encrypted ? "fast-path-encrypted" : "fast-path-plain";
+    const std::string cryptKey = "expiration-test";
+    auto *kv = MMKV::mmkvWithID(id, MMKV_SINGLE_PROCESS, encrypted ? &cryptKey : nullptr);
+    require(kv != nullptr, "cannot open fast-path MMKV");
+    require(kv->enableAutoKeyExpire(), "cannot enable fast-path expiration");
+    // Keep the compacted store larger than one page so every trim reaches fullWriteback().
+    for (int i = 0; i < 512; i++) {
+        require(kv->set(std::string(256, 'x'), "long-lived-" + std::to_string(i), 600), "cannot write long-lived key");
+    }
+    require(kv->set("short", "expired-later", 1), "cannot write short-lived key");
+    require(kv->set("remove", "first") && kv->set("remove", "second"), "cannot write removable values");
+    require(kv->removeValuesForKeys({"first", "second"}), "cannot complete writeback");
+    require(kv->actualSize() > static_cast<size_t>(sysconf(_SC_PAGESIZE)), "fast-path store is too small");
+    now += 2;
+    const auto callsBeforeTrim = timeCalls;
+    for (int i = 0; i < 100; i++) {
+        kv->trim();
+    }
+    std::printf("Completed-writeback trims (%s): %zu clock reads for 100 calls\n", encrypted ? "encrypted" : "plain",
+                timeCalls - callsBeforeTrim);
+    require(timeCalls == callsBeforeTrim, "ordinary trim rescanned expiration after completed writeback");
+    require(kv->count() == 513, "ordinary trim unexpectedly filtered expired keys");
+    require(kv->count(true) == 512, "explicit expiration cleanup skipped after ordinary trim");
+    require(kv->allKeys(true).size() == 512, "filtered enumeration disagrees after ordinary trim");
+    std::string value;
+    require(kv->getString("long-lived-0", value) && value == std::string(256, 'x'), "trim changed surviving value");
+    kv->close();
+}
+
 static void testWithoutExpiration() {
     auto *kv = MMKV::mmkvWithID("no-expiration");
     require(kv != nullptr, "cannot open non-expiring MMKV");
@@ -147,6 +180,7 @@ int main() {
                 continue;
             }
 #endif
+            testCompletedWritebackFastPath(encrypted);
             for (bool countFirst : {false, true}) {
                 for (bool allExpire : {false, true}) {
                     for (int reopenMode : {0, 1, 2}) {

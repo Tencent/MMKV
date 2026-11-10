@@ -1241,8 +1241,8 @@ KVHolderRet_t MMKV::overrideDataWithKey(const MMBuffer &data, const KeyValueHold
 }
 
 bool MMKV::fullWriteback(AESCrypt *newCrypter, bool onlyWhileExpire) {
-    // Time passing can expire more keys even after a complete writeback.
-    if (m_hasFullWriteback && !m_enableKeyExpire) {
+    // Explicit expiration cleanup must recheck keys even after a complete writeback.
+    if (m_hasFullWriteback && !(onlyWhileExpire && m_enableKeyExpire)) {
         return true;
     }
     if (m_needLoadFromFile) {
