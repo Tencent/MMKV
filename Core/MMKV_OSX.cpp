@@ -492,7 +492,7 @@ std::vector<std::string> MMKV::allKeys(bool filterExpire) {
         auto arrKeys = allKeysObjC(filterExpire);
         std::vector<std::string> vec;
         for (NSString* str in arrKeys) {
-            vec.push_back(str.UTF8String);
+            vec.emplace_back(str.UTF8String, [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         }
         return vec;
     }
